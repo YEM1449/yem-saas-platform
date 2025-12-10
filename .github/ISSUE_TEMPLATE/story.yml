@@ -1,0 +1,21 @@
+name: User Story
+description: Créer une user story
+title: "US - "
+labels: ["story"]
+body:
+  - type: input
+    id: role
+    attributes:
+      label: En tant que...
+  - type: input
+    id: goal
+    attributes:
+      label: Je veux...
+  - type: input
+    id: why
+    attributes:
+      label: Afin de...
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critères d’acceptation
