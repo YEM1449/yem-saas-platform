@@ -1,0 +1,14 @@
+name: Epic
+description: Créer un epic
+title: "EPIC - "
+labels: ["epic"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: textarea
+    id: stories
+    attributes:
+      label: Stories incluses
+      description: Liste des user stories (checkbox)
