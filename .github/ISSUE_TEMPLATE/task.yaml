@@ -1,0 +1,13 @@
+name: Technical Task
+description: Créer une tâche technique
+title: "TASK - "
+labels: ["task"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of Done
