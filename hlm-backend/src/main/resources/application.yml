@@ -1,18 +1,18 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/yem_dev
-    username: yem
-    password: yem
+    url: jdbc:postgresql://aws-1-eu-north-1.pooler.supabase.com:6543/postgres?user=postgres.eppdxlhfqmwemkdblsse&password=HLMProject123*$
   jpa:
     hibernate:
       ddl-auto: validate
+      default_schema: public
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
-
+    default-schema: public
 server:
   port: 8080
 
