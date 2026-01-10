@@ -6,7 +6,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class PasswordEncoderTest {
+public class PasswordEncoderTest  {
     @Test
     public void bcryt_should_match(){
         var encoder = new BCryptPasswordEncoder();
