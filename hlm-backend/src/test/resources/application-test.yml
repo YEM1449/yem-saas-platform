@@ -1,7 +1,21 @@
 spring:
+  # Safety: refuse de partir sur une DB cloud par défaut
+  datasource:
+    url: jdbc:postgresql://localhost:1/should_not_be_used
+    username: disabled
+    password: disabled
+
   liquibase:
     enabled: true
+
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+# ✅ Obligatoire: ton code JwtEncoder a besoin d’un secret non-null
+security:
+  jwt:
+    # Secret uniquement pour les tests (NE PAS utiliser en prod)
+    # Important: pour HS256, vise au moins 32 caractères (>= 256 bits en gros)
+    secret: "test-secret-32-chars-minimum-123456"
+    ttl-seconds: 3600

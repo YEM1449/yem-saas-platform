@@ -1,56 +1,64 @@
 package com.yem.hlm.backend.auth.config;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Classe de configuration Spring pour JWT.
- *
- * Elle déclare :
- * - JwtEncoder → pour CRÉER des tokens
- * - JwtDecoder → pour LIRE / VALIDER des tokens
- */
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
 public class JwtBeansConfig {
 
-    /**
-     * Bean responsable de la génération (signature) des JWT.
-     */
+    private static final MacAlgorithm ALG = MacAlgorithm.HS256;
+
     @Bean
     public JwtEncoder jwtEncoder(JwtProperties props) {
+        String secret = props.secret();
 
-        // Conversion du secret en tableau de bytes UTF-8
-        byte[] keyBytes = props.secret().getBytes(StandardCharsets.UTF_8);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "security.jwt.secret is missing (null/blank). " +
+                            "Set it in application.yml / application-test.yml"
+            );
+        }
 
-        // Création de la clé HMAC SHA-256 à partir du secret
-        var secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
 
-        // NimbusJwtEncoder utilise cette clé pour signer les tokens
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
+        // ✅ IMPORTANT: le generic est SecurityContext (Nimbus), pas byte[]
+        ImmutableSecret<SecurityContext> jwkSource = new ImmutableSecret<>(secretBytes);
+
+        return new NimbusJwtEncoder(jwkSource);
     }
 
-    /**
-     * Bean responsable de la validation et du décodage des JWT.
-     */
     @Bean
     public JwtDecoder jwtDecoder(JwtProperties props) {
+        String secret = props.secret();
 
-        // Même clé secrète que pour l’encoder
-        byte[] keyBytes = props.secret().getBytes(StandardCharsets.UTF_8);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "security.jwt.secret is missing (null/blank). " +
+                            "Set it in application.yml / application-test.yml"
+            );
+        }
 
-        // Clé HMAC SHA-256
-        var secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        SecretKey secretKey = new SecretKeySpec(
+                secret.getBytes(StandardCharsets.UTF_8),
+                "HmacSHA256"
+        );
 
-        // Le decoder vérifiera automatiquement :
-        // - la signature
-        // - l’expiration
-        // - la structure du token
-        return NimbusJwtDecoder.withSecretKey(secretKey).build();
+        return NimbusJwtDecoder
+                .withSecretKey(secretKey)
+                .macAlgorithm(ALG)
+                .build();
     }
 }
