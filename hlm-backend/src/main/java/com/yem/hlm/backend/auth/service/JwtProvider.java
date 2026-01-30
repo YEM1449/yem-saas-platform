@@ -124,10 +124,12 @@ public class JwtProvider {
      */
     public UUID extractTenantId(String token) {
 
-        // Décodage du token
         Jwt jwt = decoder.decode(token);
 
-        // Lecture du claim custom "tid"
-        return UUID.fromString(jwt.getClaimAsString("tid"));
+        String tid = jwt.getClaimAsString("tid");
+        if (tid == null || tid.isBlank()) {
+            throw new JwtException("Missing required claim: tid");
+        }
+        return UUID.fromString(tid);
     }
 }
