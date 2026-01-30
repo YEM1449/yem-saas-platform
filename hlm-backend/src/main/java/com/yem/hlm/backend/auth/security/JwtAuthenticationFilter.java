@@ -67,29 +67,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+            try{
+                // 5) Extraire userId (subject) et tenantId (claim "tid")
+                var userId = jwtProvider.extractUserId(token);
+                var tenantId = jwtProvider.extractTenantId(token);
 
-            // 5) Extraire userId (subject) et tenantId (claim "tid")
-            var userId = jwtProvider.extractUserId(token);
-            var tenantId = jwtProvider.extractTenantId(token);
+                // 6) Remplir le TenantContext (utile pour le multi-tenant dans tes services)
+                TenantContext.setUserId(userId);
+                TenantContext.setTenantId(tenantId);
 
-            // 6) Remplir le TenantContext (utile pour le multi-tenant dans tes services)
-            TenantContext.setUserId(userId);
-            TenantContext.setTenantId(tenantId);
-
-            // 7) Remplir le SecurityContext (utile pour Spring Security)
-            //    Ici on crée une Authentication minimale :
-            //    - principal = userId (string)
-            //    - credentials = null (jamais stocké)
-            //    - authorities = vide (roles viendront plus tard)
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    userId.toString(),
-                    null,
-                    List.of()
+                // 7) Remplir le SecurityContext (utile pour Spring Security)
+                //    Ici on crée une Authentication minimale :
+                //    - principal = userId (string)
+                //    - credentials = null (jamais stocké)
+                //    - authorities = vide (roles viendront plus tard)
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        userId.toString(),
+                        null,
+                        List.of()
             );
 
             // 8) Stocker cette authentication dans le contexte de sécurité
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
+            } catch (RuntimeException ex) {
+                // Claim manquant / UUID invalide / etc.
+                // => on considère le token inutilisable pour l'app
+                // => on ne set rien dans les contextes
+            }
             // 9) Continuer vers le prochain filtre / controller
             filterChain.doFilter(request, response);
 

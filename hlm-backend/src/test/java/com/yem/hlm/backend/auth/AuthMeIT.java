@@ -6,9 +6,13 @@ import com.yem.hlm.backend.support.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +24,7 @@ class AuthMeIT extends IntegrationTestBase {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired JwtEncoder jwtEncoder;
 
     @Test
     void me_withoutToken_returns401() throws Exception {
@@ -78,5 +83,27 @@ class AuthMeIT extends IntegrationTestBase {
 
         assertDoesNotThrow(() -> UUID.fromString(userId), "userId doit être un UUID valide");
         assertDoesNotThrow(() -> UUID.fromString(tenantId), "tenantId doit être un UUID valide");
+    }
+
+    @Test
+    void me_withValidToken_butMissingTidClaim_returns401() throws Exception {
+        Instant now = Instant.now();
+
+        // token "cryptographiquement valide" (signé), mais incomplet pour notre app (pas de tid)
+        String tokenWithoutTid = jwtEncoder.encode(
+                JwtEncoderParameters.from(
+                        JwtClaimsSet.builder()
+                                .issuedAt(now)
+                                .expiresAt(now.plusSeconds(3600))
+                                .subject(UUID.randomUUID().toString()) // userId
+                                // .claim("tid", "...")  <-- volontairement absent
+                                .build()
+                )
+        ).getTokenValue();
+
+        mockMvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + tokenWithoutTid)
+                )
+                .andExpect(status().isUnauthorized());
     }
 }
