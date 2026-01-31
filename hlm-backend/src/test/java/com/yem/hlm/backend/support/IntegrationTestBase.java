@@ -1,8 +1,6 @@
 package com.yem.hlm.backend.support;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Assumptions;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -12,6 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.opentest4j.TestAbortedException;
 
 /**
  * Base class for integration tests.
@@ -45,14 +44,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 public abstract class IntegrationTestBase {
 
-    @BeforeAll
-    static void ensureDockerAvailable() {
-        Assumptions.assumeTrue(
-                DockerClientFactory.instance().isDockerAvailable(),
-                "Docker not available, skipping integration tests"
-        );
-    }
-
     /**
      * Static container = 1 container partagé pour la classe de test,
      * ce qui accélère énormément les tests.
@@ -70,6 +61,7 @@ public abstract class IntegrationTestBase {
      */
     @DynamicPropertySource
     static void registerDatasourceProps(DynamicPropertyRegistry registry) {
+        startPostgresIfNeeded();
         // URL JDBC du container
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
 
@@ -82,5 +74,14 @@ public abstract class IntegrationTestBase {
 
         // Liquibase ON: on veut que le schéma soit appliqué pour chaque run
         registry.add("spring.liquibase.enabled", () -> "true");
+    }
+
+    private static void startPostgresIfNeeded() {
+        if (!DockerClientFactory.instance().isDockerAvailable()) {
+            throw new TestAbortedException("Docker not available, skipping integration tests");
+        }
+        if (!POSTGRES.isRunning()) {
+            POSTGRES.start();
+        }
     }
 }
