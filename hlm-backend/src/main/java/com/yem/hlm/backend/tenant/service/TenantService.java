@@ -8,6 +8,7 @@ import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,13 +40,19 @@ public class TenantService {
             throw new TenantKeyAlreadyExistsException(normalizedKey);
         }
 
-        Tenant tenant = tenantRepository.save(new Tenant(normalizedKey, request.name()));
-        User owner = new User(
-                tenant,
-                request.ownerEmail(),
-                passwordEncoder.encode(request.ownerPassword())
-        );
-        owner = userRepository.save(owner);
+        Tenant tenant;
+        User owner;
+        try {
+            tenant = tenantRepository.save(new Tenant(normalizedKey, request.name()));
+            owner = new User(
+                    tenant,
+                    request.ownerEmail(),
+                    passwordEncoder.encode(request.ownerPassword())
+            );
+            owner = userRepository.save(owner);
+        } catch (DataIntegrityViolationException ex) {
+            throw new TenantKeyAlreadyExistsException(normalizedKey);
+        }
 
         return toResponse(tenant, owner);
     }
