@@ -1,12 +1,15 @@
 package com.yem.hlm.backend.support;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Assumptions;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -41,6 +44,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 // (Optionnel : si tu n’en as pas besoin, tu peux l’enlever.)
 
 public abstract class IntegrationTestBase {
+
+    @BeforeAll
+    static void ensureDockerAvailable() {
+        Assumptions.assumeTrue(
+                DockerClientFactory.instance().isDockerAvailable(),
+                "Docker not available, skipping integration tests"
+        );
+    }
 
     /**
      * Static container = 1 container partagé pour la classe de test,
