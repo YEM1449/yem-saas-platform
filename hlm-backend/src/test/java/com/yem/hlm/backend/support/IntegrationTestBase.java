@@ -1,12 +1,16 @@
 package com.yem.hlm.backend.support;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Assumptions;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.DockerClientFactory;
+import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -17,7 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * - Inject its JDBC properties into Spring Boot at runtime
  * - Run Liquibase migrations automatically
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 // ✅ Active l’intégration JUnit 5 ↔ Testcontainers.
 // Concrètement : les containers démarrent/stop automatiquement pour tes tests.
 
@@ -41,20 +45,24 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 public abstract class IntegrationTestBase {
 
+    @BeforeAll
+    static void ensureDockerAvailable() {
+        Assumptions.assumeTrue(
+                DockerClientFactory.instance().isDockerAvailable(),
+                "Docker not available, skipping integration tests"
+        );
+    }
+
     /**
      * Static container = 1 container partagé pour la classe de test,
      * ce qui accélère énormément les tests.
      */
+    @Container
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16-alpine")
                     .withDatabaseName("hlm_test") // nom DB dans le container
                     .withUsername("hlm")         // user DB
                     .withPassword("hlm");        // password DB
-
-    static {
-        // Démarre le container au chargement de la classe
-        POSTGRES.start();
-    }
 
     /**
      * Injecte dynamiquement les properties DB dans Spring Boot.

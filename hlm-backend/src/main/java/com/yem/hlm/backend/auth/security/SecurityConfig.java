@@ -34,6 +34,7 @@ public class SecurityConfig {
                 // règles d'accès
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // public
+                        .requestMatchers(HttpMethod.POST, "/tenants").permitAll() // public tenant signup
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll() // public
                         .anyRequest().authenticated() // le reste protégé
                 )

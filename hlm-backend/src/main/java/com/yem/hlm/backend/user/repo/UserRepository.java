@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByTenant_IdAndEmail(UUID tenantId, String email);
+    Optional<User> findFirstByTenant_IdOrderByEmailAsc(UUID tenantId);
 }
