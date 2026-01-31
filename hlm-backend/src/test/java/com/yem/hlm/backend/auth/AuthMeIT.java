@@ -43,9 +43,9 @@ class AuthMeIT extends IntegrationTestBase {
     @Autowired JwtEncoder jwtEncoder;
 
     // Matches Liquibase seed in 002-seed-tenant-owner.yaml
-    private static final String TENANT_KEY = "demo";
-    private static final String EMAIL = "owner@demo.io";
-    private static final String PASSWORD = "Password123!";
+    private static final String TENANT_KEY = "acme";
+    private static final String EMAIL = "admin@acme.com";
+    private static final String PASSWORD = "Admin123!";
 
     @Test
     void me_withoutToken_returns401() throws Exception {
