@@ -1,110 +1,134 @@
 package com.yem.hlm.backend.auth.security;
 
-import com.yem.hlm.backend.auth.service.JwtProvider;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import java.io.IOException;
+import java.util.UUID;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
+import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.tenant.context.TenantContext;
 
 /**
- * JwtAuthenticationFilter : s'exécute une seule fois par requête.
+ * JWT Authentication Filter (OncePerRequestFilter).
  *
- * Rôle :
- * - lire Authorization: Bearer <token>
- * - valider le token
- * - extraire userId + tenantId
- * - initialiser SecurityContext (Spring Security)
- * - initialiser TenantContext (multi-tenant)
- * - nettoyer en fin de requête (très important)
+ * <p>Responsibilities:</p>
+ * <ul>
+ *   <li>Read Bearer token from Authorization header</li>
+ *   <li>Validate signature + expiration</li>
+ *   <li>Extract mandatory claims:
+ *       <ul>
+ *         <li>subject = userId (UUID string)</li>
+ *         <li>tid = tenantId (UUID string)</li>
+ *       </ul>
+ *   </li>
+ *   <li>Populate {@link TenantContext} (ThreadLocal) for multi-tenant isolation</li>
+ *   <li>Populate Spring Security Authentication</li>
+ * </ul>
+ *
+ * <p>Design choice:</p>
+ * <ul>
+ *   <li>If token is missing / invalid / malformed => no exception here.</li>
+ *   <li>We leave SecurityContext empty and let Spring Security handle 401 for protected endpoints.</li>
+ * </ul>
  */
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    // Service JWT (créé en AUTH-04) : generate/validate/extract
     private final JwtProvider jwtProvider;
 
-    // Injection par constructeur : rend le filtre testable et propre
     public JwtAuthenticationFilter(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
     }
 
-    /**
-     * Méthode appelée automatiquement par Spring Security à chaque requête.
-     */
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,   // la requête entrante
-            HttpServletResponse response, // la réponse HTTP
-            FilterChain filterChain       // la chaîne de filtres à continuer
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
     ) throws ServletException, IOException {
 
         try {
-            // 1) Lire le header Authorization
-            String authHeader = request.getHeader("Authorization");
+            // 1) Parse "Authorization: Bearer <token>"
+            String token = resolveBearerToken(request);
 
-            // 2) Si le header n'existe pas ou ne commence pas par "Bearer ",
-            //    on ne fait rien et on laisse la requête continuer.
-            //    Spring Security décidera ensuite si la route est publique ou protégée.
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return; // on sort du filtre ici
+            if (token != null && jwtProvider.isValid(token)) {
+                // 2) Extract required claims.
+                //    If any required claim is missing/malformed => treat as invalid token.
+                UUID tenantId = safeExtractTenantId(token);
+                UUID userId = safeExtractUserId(token);
+
+                if (tenantId != null && userId != null) {
+                    // 3) Store multi-tenant context in ThreadLocal (scoped to this request thread)
+                    TenantContext.setTenantId(tenantId);
+                    TenantContext.setUserId(userId);
+
+                    // 4) Build an Authentication object.
+                    //    For now: principal = userId, no authorities (RBAC later).
+                    var auth = new UsernamePasswordAuthenticationToken(userId, null, java.util.List.of());
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
 
-            // 3) Extraire le token (après "Bearer ")
-            //    "Bearer " fait 7 caractères.
-            String token = authHeader.substring(7).trim();
-
-            // 4) Valider le token : signature + expiration
-            //    Si invalide, on ne met rien dans les contextes et on continue.
-            //    La sécurité refusera ensuite l'accès aux endpoints protégés.
-            if (!jwtProvider.isValid(token)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-            try{
-                // 5) Extraire userId (subject) et tenantId (claim "tid")
-                var userId = jwtProvider.extractUserId(token);
-                var tenantId = jwtProvider.extractTenantId(token);
-
-                // 6) Remplir le TenantContext (utile pour le multi-tenant dans tes services)
-                TenantContext.setUserId(userId);
-                TenantContext.setTenantId(tenantId);
-
-                // 7) Remplir le SecurityContext (utile pour Spring Security)
-                //    Ici on crée une Authentication minimale :
-                //    - principal = userId (string)
-                //    - credentials = null (jamais stocké)
-                //    - authorities = vide (roles viendront plus tard)
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        userId.toString(),
-                        null,
-                        List.of()
-            );
-
-            // 8) Stocker cette authentication dans le contexte de sécurité
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (RuntimeException ex) {
-                // Claim manquant / UUID invalide / etc.
-                // => on considère le token inutilisable pour l'app
-                // => on ne set rien dans les contextes
-            }
-            // 9) Continuer vers le prochain filtre / controller
+            // Continue the chain; access control is enforced later by Spring Security.
             filterChain.doFilter(request, response);
 
         } finally {
-            // 10) Nettoyage OBLIGATOIRE :
-            // - évite qu'un tenant "reste" dans le ThreadLocal pour une autre requête
-            // - évite des bugs inter-tenant très graves (fuites de données)
+            // Critical: clear ThreadLocal to avoid leaking tenant/user between requests
+            // when the container reuses threads.
             TenantContext.clear();
+        }
+    }
 
-            // Nettoyage SecurityContext aussi (bonne hygiène)
-            SecurityContextHolder.clearContext();
+    /**
+     * Extracts the JWT from the Authorization header if it uses the Bearer scheme.
+     */
+    private String resolveBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null || authHeader.isBlank()) {
+            return null;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authHeader.substring("Bearer ".length()).trim();
+        return token.isEmpty() ? null : token;
+    }
+
+    /**
+     * Extract tenantId from JWT. Returns null if missing/malformed.
+     */
+    private UUID safeExtractTenantId(String token) {
+        try {
+            return jwtProvider.extractTenantId(token);
+        } catch (RuntimeException ex) {
+            // Missing claim "tid" or invalid UUID format => token is not usable in SaaS context.
+            return null;
+        }
+    }
+
+    /**
+     * Extract userId from JWT subject. Returns null if missing/malformed.
+     */
+    private UUID safeExtractUserId(String token) {
+        try {
+            return jwtProvider.extractUserId(token);
+        } catch (RuntimeException ex) {
+            // Missing subject or invalid UUID format => treat token as invalid.
+            return null;
         }
     }
 }

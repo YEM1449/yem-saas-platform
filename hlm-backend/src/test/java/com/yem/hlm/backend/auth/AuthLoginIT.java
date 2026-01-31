@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -96,5 +97,12 @@ class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement 
                         .accept(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized()); // ✅ 401
+    }
+
+    @Test
+    void login_get_notPermitted_returns401() throws Exception {
+        mockMvc.perform(get("/auth/login")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
     }
 }

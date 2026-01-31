@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 /**
  * Configuration Spring Security :
@@ -32,7 +33,7 @@ public class SecurityConfig {
 
                 // règles d'accès
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll() // public
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // public
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll() // public
                         .anyRequest().authenticated() // le reste protégé
                 )
