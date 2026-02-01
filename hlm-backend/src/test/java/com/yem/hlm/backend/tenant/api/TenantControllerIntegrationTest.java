@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.tenant.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yem.hlm.backend.auth.config.TestJwtConfig;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.tenant.domain.Tenant;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Locale;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Import(TestJwtConfig.class)
 class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired
