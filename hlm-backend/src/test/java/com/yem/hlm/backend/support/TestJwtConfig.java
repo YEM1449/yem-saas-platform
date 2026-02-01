@@ -2,6 +2,7 @@ package com.yem.hlm.backend.support;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSelector;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -29,6 +30,7 @@ public class TestJwtConfig {
     JwtEncoder testJwtEncoder() {
         OctetSequenceKey jwk = new OctetSequenceKey.Builder(TEST_SECRET)
                 .keyID(UUID.randomUUID().toString())
+                .keyUse(KeyUse.SIGNATURE)
                 .algorithm(JWSAlgorithm.HS256)
                 .build();
 

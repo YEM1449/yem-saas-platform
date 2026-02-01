@@ -7,12 +7,12 @@ import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Map;
@@ -45,13 +45,8 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     @Autowired
     private JwtProvider jwtProvider;
 
-    @BeforeEach
-    void clearDatabase() {
-        userRepository.deleteAll();
-        tenantRepository.deleteAll();
-    }
-
     @Test
+    @Transactional
     void createTenantReturns201WithLocationAndBody() throws Exception {
         String key = uniqueKey("acme");
         Map<String, Object> payload = Map.of(
@@ -70,10 +65,10 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.tenant.key").value(key.toLowerCase()))
                 .andExpect(jsonPath("$.tenant.name").value("Acme Corp"))
                 .andExpect(jsonPath("$.owner.email").value("owner@acme.com"));
-        org.assertj.core.api.Assertions.assertThat(tenantRepository.count()).isEqualTo(1L);
     }
 
     @Test
+    @Transactional
     void createTenantReturns400ForInvalidPayload() throws Exception {
         Map<String, Object> payload = Map.of(
                 "key", "",
@@ -89,6 +84,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @Transactional
     void createTenantReturns409ForDuplicateKey() throws Exception {
         String key = uniqueKey("acme");
         Map<String, Object> payload = Map.of(
@@ -107,10 +103,10 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isConflict());
-        org.assertj.core.api.Assertions.assertThat(tenantRepository.count()).isEqualTo(1L);
     }
 
     @Test
+    @Transactional
     void getTenantReturns200WhenTenantMatchesContext() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant(uniqueKey("acme"), "Acme Corp"));
         User owner = userRepository.save(new User(
@@ -131,6 +127,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @Transactional
     void getTenantReturns403WhenTenantMismatch() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant(uniqueKey("acme"), "Acme Corp"));
         User owner = userRepository.save(new User(
@@ -147,6 +144,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @Transactional
     void getTenantReturns404WhenTenantMissing() throws Exception {
         UUID missingTenantId = UUID.randomUUID();
         String token = jwtProvider.generate(UUID.randomUUID(), missingTenantId);

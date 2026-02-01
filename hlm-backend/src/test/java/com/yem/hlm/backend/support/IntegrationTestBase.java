@@ -11,6 +11,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.lifecycle.Startables;
 import org.opentest4j.TestAbortedException;
 
 /**
@@ -59,13 +60,16 @@ public abstract class IntegrationTestBase {
                     .withUsername("hlm")         // user DB
                     .withPassword("hlm");        // password DB
 
+    static {
+        startPostgresIfNeeded();
+    }
+
     /**
      * Injecte dynamiquement les properties DB dans Spring Boot.
      * Ce mécanisme override application.yml/test.yml.
      */
     @DynamicPropertySource
     static void registerDatasourceProps(DynamicPropertyRegistry registry) {
-        startPostgresIfNeeded();
         // URL JDBC du container
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
 
@@ -85,7 +89,7 @@ public abstract class IntegrationTestBase {
             throw new TestAbortedException("Docker not available, skipping integration tests");
         }
         if (!POSTGRES.isRunning()) {
-            POSTGRES.start();
+            Startables.deepStart(POSTGRES).join();
         }
     }
 }
