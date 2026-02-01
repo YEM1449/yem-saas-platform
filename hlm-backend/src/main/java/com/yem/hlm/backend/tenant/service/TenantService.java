@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -35,11 +36,11 @@ public class TenantService {
 
     @Transactional
     public TenantResponse createTenantWithOwner(TenantCreateRequest request) {
-        String normalizedKey = request.key();
+        String normalizedKey = normalizeKey(request.key());
         Tenant tenant;
         User owner;
         try {
-            if (tenantRepository.findByKey(normalizedKey).isPresent()) {
+            if (tenantRepository.existsByKey(normalizedKey)) {
                 throw new TenantKeyAlreadyExistsException(normalizedKey);
             }
             tenant = tenantRepository.save(new Tenant(normalizedKey, request.name()));
@@ -81,5 +82,12 @@ public class TenantService {
                 : new OwnerResponse(owner.getId(), owner.getEmail(), owner.isEnabled());
 
         return new TenantResponse(tenantInfo, ownerResponse);
+    }
+
+    private String normalizeKey(String key) {
+        if (key == null) {
+            return null;
+        }
+        return key.trim().toLowerCase(Locale.ROOT);
     }
 }

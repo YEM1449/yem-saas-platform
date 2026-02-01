@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Transactional
 class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired
@@ -54,7 +53,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createTenantReturns201WithLocationAndBody() throws Exception {
-        String key = "Acme-" + UUID.randomUUID();
+        String key = uniqueKey("acme");
         Map<String, Object> payload = Map.of(
                 "key", key,
                 "name", "Acme Corp",
@@ -91,14 +90,18 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createTenantReturns409ForDuplicateKey() throws Exception {
-        tenantRepository.save(new Tenant("acme", "Existing"));
-
+        String key = uniqueKey("acme");
         Map<String, Object> payload = Map.of(
-                "key", "Acme",
+                "key", key,
                 "name", "Acme Corp",
                 "ownerEmail", "owner@acme.com",
                 "ownerPassword", "supersecret"
         );
+
+        mockMvc.perform(post("/tenants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/tenants")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +112,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void getTenantReturns200WhenTenantMatchesContext() throws Exception {
-        Tenant tenant = tenantRepository.save(new Tenant("acme", "Acme Corp"));
+        Tenant tenant = tenantRepository.save(new Tenant(uniqueKey("acme"), "Acme Corp"));
         User owner = userRepository.save(new User(
                 tenant,
                 "owner@acme.com",
@@ -129,7 +132,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void getTenantReturns403WhenTenantMismatch() throws Exception {
-        Tenant tenant = tenantRepository.save(new Tenant("acme", "Acme Corp"));
+        Tenant tenant = tenantRepository.save(new Tenant(uniqueKey("acme"), "Acme Corp"));
         User owner = userRepository.save(new User(
                 tenant,
                 "owner@acme.com",
@@ -151,5 +154,10 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/tenants/{id}", missingTenantId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    private String uniqueKey(String prefix) {
+        return (prefix + "-" + UUID.randomUUID())
+                .toLowerCase(Locale.ROOT);
     }
 }
