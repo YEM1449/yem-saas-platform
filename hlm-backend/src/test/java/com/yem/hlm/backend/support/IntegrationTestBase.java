@@ -3,6 +3,7 @@ package com.yem.hlm.backend.support;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -32,6 +33,9 @@ import org.opentest4j.TestAbortedException;
 @AutoConfigureMockMvc
 // ✅ Demande explicitement à Spring de créer le bean MockMvc.
 // Sans ça, @Autowired MockMvc = NoSuchBeanDefinitionException.
+
+@Import(TestJwtConfig.class)
+// ✅ Override JWT encoder/decoder for integration tests.
 
 @ActiveProfiles("test")
 // ✅ Active le profil "test" → Spring charge application-test.yml.
