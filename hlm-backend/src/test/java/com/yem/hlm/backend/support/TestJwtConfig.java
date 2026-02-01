@@ -1,10 +1,6 @@
 package com.yem.hlm.backend.support;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.JWKSelector;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +14,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
-import java.util.UUID;
 
 @TestConfiguration
 public class TestJwtConfig {
@@ -28,15 +23,7 @@ public class TestJwtConfig {
     @Bean
     @Primary
     JwtEncoder testJwtEncoder() {
-        OctetSequenceKey jwk = new OctetSequenceKey.Builder(TEST_SECRET)
-                .keyID(UUID.randomUUID().toString())
-                .keyUse(KeyUse.SIGNATURE)
-                .algorithm(JWSAlgorithm.HS256)
-                .build();
-
-        JWKSource<SecurityContext> jwkSource = (JWKSelector selector, SecurityContext context) ->
-                selector.select(new com.nimbusds.jose.jwk.JWKSet(jwk));
-
+        ImmutableSecret<SecurityContext> jwkSource = new ImmutableSecret<>(TEST_SECRET);
         return new NimbusJwtEncoder(jwkSource);
     }
 
