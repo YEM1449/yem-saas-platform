@@ -7,6 +7,7 @@ import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -45,10 +46,17 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     @Autowired
     private JwtProvider jwtProvider;
 
+    @BeforeEach
+    void clearDatabase() {
+        userRepository.deleteAll();
+        tenantRepository.deleteAll();
+    }
+
     @Test
     void createTenantReturns201WithLocationAndBody() throws Exception {
+        String key = "Acme-" + UUID.randomUUID();
         Map<String, Object> payload = Map.of(
-                "key", "acme",
+                "key", key,
                 "name", "Acme Corp",
                 "ownerEmail", "owner@acme.com",
                 "ownerPassword", "supersecret"
@@ -60,9 +68,10 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", matchesPattern("/tenants/.*")))
                 .andExpect(jsonPath("$.tenant.id").exists())
-                .andExpect(jsonPath("$.tenant.key").value("acme"))
+                .andExpect(jsonPath("$.tenant.key").value(key.toLowerCase()))
                 .andExpect(jsonPath("$.tenant.name").value("Acme Corp"))
                 .andExpect(jsonPath("$.owner.email").value("owner@acme.com"));
+        org.assertj.core.api.Assertions.assertThat(tenantRepository.count()).isEqualTo(1L);
     }
 
     @Test
@@ -95,6 +104,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isConflict());
+        org.assertj.core.api.Assertions.assertThat(tenantRepository.count()).isEqualTo(1L);
     }
 
     @Test
@@ -107,6 +117,8 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
         ));
 
         String token = jwtProvider.generate(owner.getId(), tenant.getId());
+        org.assertj.core.api.Assertions.assertThat(jwtProvider.extractTenantId(token)).isEqualTo(tenant.getId());
+        org.assertj.core.api.Assertions.assertThat(jwtProvider.extractUserId(token)).isEqualTo(owner.getId());
 
         mockMvc.perform(get("/tenants/{id}", tenant.getId())
                         .header("Authorization", "Bearer " + token))

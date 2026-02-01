@@ -36,13 +36,12 @@ public class TenantService {
     @Transactional
     public TenantResponse createTenantWithOwner(TenantCreateRequest request) {
         String normalizedKey = request.key();
-        if (tenantRepository.findByKey(normalizedKey).isPresent()) {
-            throw new TenantKeyAlreadyExistsException(normalizedKey);
-        }
-
         Tenant tenant;
         User owner;
         try {
+            if (tenantRepository.findByKey(normalizedKey).isPresent()) {
+                throw new TenantKeyAlreadyExistsException(normalizedKey);
+            }
             tenant = tenantRepository.save(new Tenant(normalizedKey, request.name()));
             owner = new User(
                     tenant,
