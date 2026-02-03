@@ -2,6 +2,7 @@ package com.yem.hlm.backend.auth.service;
 
 import com.yem.hlm.backend.auth.config.JwtProperties;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -79,9 +80,11 @@ public class JwtProvider {
 
                 .build();
 
+        var headers = JwsHeader.with(MacAlgorithm.HS256).build();
+
         // Signature + encodage du token
         return encoder
-                .encode(JwtEncoderParameters.from(claims))
+                .encode(JwtEncoderParameters.from(headers, claims))
                 .getTokenValue();
     }
 

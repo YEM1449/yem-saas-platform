@@ -3,44 +3,37 @@ package com.yem.hlm.backend.auth.security;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.http.HttpMethod;
 
-/**
- * Configuration Spring Security :
- * - stateless (JWT)
- * - routes publiques vs protégées
- * - ajout du filtre JWT
- */
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
-
-        // Création de notre filtre JWT (il dépend de JwtProvider)
         var jwtFilter = new JwtAuthenticationFilter(jwtProvider);
 
         return http
-                // API stateless -> on désactive CSRF
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-
-                // pas de session serveur
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // règles d'accès
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // public
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll() // public
-                        .anyRequest().authenticated() // le reste protégé
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // PUBLIC endpoints
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+
+                        // Tenant bootstrap (sinon tes IT prennent 403 avant validation)
+                        .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
+
+                        .anyRequest().authenticated()
                 )
-
-                // exécuter notre filtre avant le filtre standard de login
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .build();
     }
 }

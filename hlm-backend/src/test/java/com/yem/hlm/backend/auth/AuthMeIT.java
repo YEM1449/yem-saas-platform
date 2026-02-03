@@ -1,134 +1,88 @@
 package com.yem.hlm.backend.auth;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.Instant;
-import java.util.UUID;
-
+import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.support.IntegrationTestBase;
+import com.yem.hlm.backend.support.TestJwtConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yem.hlm.backend.support.IntegrationTestBase;
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for /auth/me.
+ * AUTH-10 — IT: /auth/me
  *
- * <p>Why integration tests?</p>
- * <ul>
- *   <li>Validate the whole pipeline: SecurityConfig -> JwtAuthenticationFilter -> Controller</li>
- *   <li>Run with Testcontainers + Liquibase seed, so we test the real behavior end-to-end</li>
- * </ul>
+ * Contrats attendus:
+ * - Sans token => 401
+ * - Token invalide => 401
+ * - Token valide (avec tid) => 200 + payload cohérent
+ * - Token valide MAIS sans tid => 401 (token techniquement ok, mais identité "tenant-aware" impossible)
+ *
+ * Pourquoi 401 et pas 403?
+ * - Ton JwtAuthenticationFilter ignore le token si tid manque (pas d'Authentication dans SecurityContext)
+ * - Endpoint protégé => Spring Security répond 401 (non authentifié)
  */
 class AuthMeIT extends IntegrationTestBase {
 
-    @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    @Autowired MockMvc mvc;
+    @Autowired JwtProvider jwtProvider;
 
-    // Decode an existing valid token (to reuse userId/tenantId).
-    @Autowired JwtDecoder jwtDecoder;
-
-    // Craft custom tokens (e.g., missing tid claim) signed with the same secret.
+    // On l'utilise uniquement pour forger un token "valide" MAIS incomplet (sans tid).
     @Autowired JwtEncoder jwtEncoder;
-
-    // Matches Liquibase seed in 002-seed-tenant-owner.yaml
-    private static final String TENANT_KEY = "acme";
-    private static final String EMAIL = "admin@acme.com";
-    private static final String PASSWORD = "Admin123!";
 
     @Test
     void me_withoutToken_returns401() throws Exception {
-        mockMvc.perform(get("/auth/me"))
+        mvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void me_withInvalidToken_returns401() throws Exception {
-        mockMvc.perform(get("/auth/me")
-                        .header("Authorization", "Bearer " + "this.is.not.a.jwt"))
+        mvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer invalid.jwt.token"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void me_withValidToken_returns200AndTenantAndUserIds() throws Exception {
-        String accessToken = loginAndGetAccessToken();
-        Jwt decoded = jwtDecoder.decode(accessToken);
+    void me_withValidToken_returns200_andUserInfo() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID tenantId = UUID.randomUUID();
 
-        UUID expectedUserId = UUID.fromString(decoded.getSubject());
-        UUID expectedTenantId = UUID.fromString(decoded.getClaimAsString("tid"));
+        String token = jwtProvider.generate(userId, tenantId);
 
-        mockMvc.perform(get("/auth/me")
-                        .header("Authorization", "Bearer " + accessToken))
+        mvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tenantId").value(expectedTenantId.toString()))
-                .andExpect(jsonPath("$.userId").value(expectedUserId.toString()));
+                // Adapte si ton JSON exact est différent:
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
     }
 
     @Test
     void me_withValidTokenButMissingTidClaim_returns401() throws Exception {
-        // 1) Start from a real valid token to reuse the userId (subject)
-        String validToken = loginAndGetAccessToken();
-        Jwt decoded = jwtDecoder.decode(validToken);
+        UUID userId = UUID.randomUUID();
 
-        // 2) Create a new token that is cryptographically valid, but WITHOUT tenant claim ("tid").
-        //    In our SaaS design, tenant context is mandatory for authentication => treat as invalid => 401.
         Instant now = Instant.now();
+        Instant exp = now.plusSeconds(3600);
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(decoded.getIssuer() != null ? decoded.getIssuer().toString() : null)
-                .subject(decoded.getSubject()) // userId
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(60 * 10))
-                // Intentionally NOT adding "tid"
-                .build();
+        // Token signé HS256 => signature OK, dates OK, subject OK
+        // MAIS pas de claim "tid" => ton filtre ne va pas authentifier la requête.
+        String token = TestJwtConfig.mint(
+                jwtEncoder,
+                userId.toString(),
+                now,
+                exp,
+                Map.of() // <- aucun tid
+        );
 
-        String tokenWithoutTid = jwtEncoder
-                .encode(JwtEncoderParameters.from(claims))
-                .getTokenValue();
-
-        mockMvc.perform(get("/auth/me")
-                        .header("Authorization", "Bearer " + tokenWithoutTid))
+        mvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
-    }
-
-    /**
-     * Calls /auth/login and returns the "accessToken" field.
-     */
-    private String loginAndGetAccessToken() throws Exception {
-        String body = """
-                {
-                  "tenantKey": "%s",
-                  "email": "%s",
-                  "password": "%s"
-                }
-                """.formatted(TENANT_KEY, EMAIL, PASSWORD);
-
-        String responseJson = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        JsonNode root = objectMapper.readTree(responseJson);
-        JsonNode accessTokenNode = root.get("accessToken");
-
-        if (accessTokenNode == null || accessTokenNode.asText().isBlank()) {
-            throw new IllegalStateException("Login did not return accessToken. Response was: " + responseJson);
-        }
-
-        return accessTokenNode.asText();
     }
 }

@@ -8,5 +8,6 @@ import java.util.UUID;
 
 
 public interface TenantRepository extends JpaRepository <Tenant, UUID> {
+    boolean existsByKey(String key);
     Optional<Tenant> findByKey(String key);
 }
