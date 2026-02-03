@@ -9,8 +9,11 @@ import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,29 +24,20 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 class TenantControllerIntegrationTest extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired MockMvc mockMvc;
+    @Autowired ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired TenantRepository tenantRepository;
+    @Autowired UserRepository userRepository;
 
-    @Autowired
-    private TenantRepository tenantRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtProvider jwtProvider;
+    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired JwtProvider jwtProvider;
 
     @Test
     @Transactional
@@ -115,6 +109,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                 passwordEncoder.encode("supersecret")
         ));
 
+        // “senior check”: on valide explicitement que le token porte les bons claims
         String token = jwtProvider.generate(owner.getId(), tenant.getId());
         org.assertj.core.api.Assertions.assertThat(jwtProvider.extractTenantId(token)).isEqualTo(tenant.getId());
         org.assertj.core.api.Assertions.assertThat(jwtProvider.extractUserId(token)).isEqualTo(owner.getId());
@@ -136,6 +131,7 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
                 passwordEncoder.encode("supersecret")
         ));
 
+        // Token valide mais tid != tenantId demandé => 403 attendu (contrôle multi-tenant)
         String token = jwtProvider.generate(owner.getId(), UUID.randomUUID());
 
         mockMvc.perform(get("/tenants/{id}", tenant.getId())
@@ -155,7 +151,6 @@ class TenantControllerIntegrationTest extends IntegrationTestBase {
     }
 
     private String uniqueKey(String prefix) {
-        return (prefix + "-" + UUID.randomUUID())
-                .toLowerCase(Locale.ROOT);
+        return (prefix + "-" + UUID.randomUUID()).toLowerCase(Locale.ROOT);
     }
 }
