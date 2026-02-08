@@ -144,7 +144,7 @@ databaseChangeLog:
                   type: uuid
               - column:
                   name: currency
-                  type: char(3)
+                  type: varchar(3)
                   defaultValue: MAD
               - column:
                   name: due_date

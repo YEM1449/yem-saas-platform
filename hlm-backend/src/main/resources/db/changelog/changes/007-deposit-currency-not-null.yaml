@@ -22,4 +22,4 @@ databaseChangeLog:
         - addNotNullConstraint:
             tableName: deposit
             columnName: currency
-            columnDataType: char(3)
+            columnDataType: varchar(3)

@@ -1,7 +1,9 @@
 package com.yem.hlm.backend.auth.security;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -72,9 +76,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     TenantContext.setTenantId(tenantId);
                     TenantContext.setUserId(userId);
 
-                    // 4) Build an Authentication object.
-                    //    For now: principal = userId, no authorities (RBAC later).
-                    var auth = new UsernamePasswordAuthenticationToken(userId, null, java.util.List.of());
+                    // 4) Extract roles from JWT for RBAC
+                    List<GrantedAuthority> authorities = safeExtractAuthorities(token);
+
+                    // 5) Build an Authentication object with authorities.
+                    //    principal = userId, authorities = roles from JWT
+                    var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
@@ -129,6 +136,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (RuntimeException ex) {
             // Missing subject or invalid UUID format => treat token as invalid.
             return null;
+        }
+    }
+
+    /**
+     * Extract roles from JWT and convert to Spring Security authorities.
+     * Returns empty list if roles are missing (backward compatibility).
+     */
+    private List<GrantedAuthority> safeExtractAuthorities(String token) {
+        try {
+            List<String> roles = jwtProvider.extractRoles(token);
+            return roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+        } catch (RuntimeException ex) {
+            // If role extraction fails, return empty authorities (least privilege)
+            return java.util.List.of();
         }
     }
 }

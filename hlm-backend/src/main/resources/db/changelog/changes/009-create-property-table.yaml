@@ -1,0 +1,304 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-property-table
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Create property table with all CEO-grade fields
+        # =========================================
+        - createTable:
+            tableName: property
+            columns:
+              # Core identity
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              # Classification
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: reference_code
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: text
+
+              - column:
+                  name: notes
+                  type: text
+
+              # Financial
+              - column:
+                  name: price
+                  type: decimal(15,2)
+
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  defaultValue: MAD
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: commission_rate
+                  type: decimal(5,2)
+
+              - column:
+                  name: estimated_value
+                  type: decimal(15,2)
+
+              # Location
+              - column:
+                  name: address
+                  type: varchar(500)
+
+              - column:
+                  name: city
+                  type: varchar(100)
+
+              - column:
+                  name: region
+                  type: varchar(100)
+
+              - column:
+                  name: postal_code
+                  type: varchar(20)
+
+              - column:
+                  name: latitude
+                  type: decimal(10,7)
+
+              - column:
+                  name: longitude
+                  type: decimal(10,7)
+
+              # Legal
+              - column:
+                  name: title_deed_number
+                  type: varchar(100)
+
+              - column:
+                  name: cadastral_reference
+                  type: varchar(100)
+
+              - column:
+                  name: owner_name
+                  type: varchar(200)
+
+              - column:
+                  name: legal_status
+                  type: varchar(50)
+
+              # Physical characteristics (type-specific, nullable)
+              - column:
+                  name: surface_area_sqm
+                  type: decimal(10,2)
+
+              - column:
+                  name: land_area_sqm
+                  type: decimal(10,2)
+
+              - column:
+                  name: bedrooms
+                  type: int
+
+              - column:
+                  name: bathrooms
+                  type: int
+
+              - column:
+                  name: floors
+                  type: int
+
+              - column:
+                  name: parking_spaces
+                  type: int
+
+              - column:
+                  name: has_garden
+                  type: boolean
+
+              - column:
+                  name: has_pool
+                  type: boolean
+
+              - column:
+                  name: building_year
+                  type: int
+
+              - column:
+                  name: floor_number
+                  type: int
+
+              - column:
+                  name: zoning
+                  type: varchar(50)
+
+              - column:
+                  name: is_serviced
+                  type: boolean
+
+              # Lifecycle
+              - column:
+                  name: created_by
+                  type: uuid
+
+              - column:
+                  name: updated_by
+                  type: uuid
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: deleted_at
+                  type: timestamp
+
+              - column:
+                  name: published_at
+                  type: timestamp
+
+              - column:
+                  name: sold_at
+                  type: timestamp
+
+        # =========================================
+        # Foreign keys
+        # =========================================
+        - addForeignKeyConstraint:
+            baseTableName: property
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_property_tenant
+
+        # =========================================
+        # Indexes for performance
+        # =========================================
+        - createIndex:
+            indexName: idx_property_tenant_id
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: id
+
+        - createIndex:
+            indexName: idx_property_tenant_status
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+
+        - createIndex:
+            indexName: idx_property_tenant_type_status
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: type
+              - column:
+                  name: status
+
+        - createIndex:
+            indexName: idx_property_tenant_city_region
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: city
+              - column:
+                  name: region
+
+        - createIndex:
+            indexName: idx_property_tenant_price
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: price
+
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE INDEX idx_property_tenant_created_at
+              ON property (tenant_id, created_at DESC);
+
+        - createIndex:
+            indexName: idx_property_tenant_deleted_at
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: deleted_at
+
+        # =========================================
+        # Unique constraint for reference code per tenant
+        # =========================================
+        - addUniqueConstraint:
+            tableName: property
+            columnNames: tenant_id,reference_code
+            constraintName: uk_property_tenant_reference
+
+        # =========================================
+        # FINALLY: Add foreign keys from existing tables to property
+        # This completes the TODOs from changesets 004 and 005
+        # =========================================
+        - addForeignKeyConstraint:
+            baseTableName: contact_interest
+            baseColumnNames: property_id
+            referencedTableName: property
+            referencedColumnNames: id
+            constraintName: fk_contact_interest_property
+
+        - addForeignKeyConstraint:
+            baseTableName: deposit
+            baseColumnNames: property_id
+            referencedTableName: property
+            referencedColumnNames: id
+            constraintName: fk_deposit_property

@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-add-user-roles
+      author: crm-hlm
+      changes:
+        # Add role column to app_user table for RBAC support.
+        # Default is ROLE_AGENT for all existing and new users.
+        # Supports ROLE_ADMIN, ROLE_MANAGER, ROLE_AGENT.
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: role
+                  type: varchar(20)
+                  defaultValue: ROLE_AGENT
+                  constraints:
+                    nullable: false
+
+        # Create index for role-based queries (useful for user management UIs)
+        - createIndex:
+            indexName: idx_user_tenant_role
+            tableName: app_user
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: role

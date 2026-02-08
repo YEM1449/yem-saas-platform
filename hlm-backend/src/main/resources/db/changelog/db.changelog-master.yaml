@@ -13,3 +13,7 @@ databaseChangeLog:
       file: db/changelog/changes/006-deposit-uniques-and-notification-dedupe.yaml
   - include:
       file: db/changelog/changes/007-deposit-currency-not-null.yaml
+  - include:
+      file: db/changelog/changes/008-add-user-roles.yaml
+  - include:
+      file: db/changelog/changes/009-create-property-table.yaml

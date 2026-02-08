@@ -15,8 +15,7 @@ databaseChangeLog:
         # Property can be reserved by at most 1 active deposit (PENDING or CONFIRMED)
         # Liquibase doesn't support partial unique indexes portably, so we use SQL for PostgreSQL.
         - sql:
-            splitStatements: true
-            stripComments: true
+            splitStatements: false
             sql: |
               DO $$
               BEGIN
@@ -44,8 +43,7 @@ databaseChangeLog:
         # NOTIFICATION: dedupe for event per ref_id
         # ---------------------------------
         - sql:
-            splitStatements: true
-            stripComments: true
+            splitStatements: false
             sql: |
               DO $$
               BEGIN

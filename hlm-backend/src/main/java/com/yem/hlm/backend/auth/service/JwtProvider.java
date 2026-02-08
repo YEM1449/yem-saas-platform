@@ -1,11 +1,13 @@
 package com.yem.hlm.backend.auth.service;
 
 import com.yem.hlm.backend.auth.config.JwtProperties;
+import com.yem.hlm.backend.user.domain.UserRole;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,13 +49,26 @@ public class JwtProvider {
     }
 
     /**
-     * Génère un JWT signé.
+     * Génère un JWT signé (backward compatible version without role).
+     * Defaults to ROLE_AGENT if no role is provided.
      *
      * @param userId   identifiant de l'utilisateur (subject)
      * @param tenantId identifiant du tenant (claim custom)
      * @return JWT signé sous forme de String
      */
     public String generate(UUID userId, UUID tenantId) {
+        return generate(userId, tenantId, UserRole.ROLE_AGENT);
+    }
+
+    /**
+     * Génère un JWT signé avec le rôle de l'utilisateur.
+     *
+     * @param userId   identifiant de l'utilisateur (subject)
+     * @param tenantId identifiant du tenant (claim custom)
+     * @param role     rôle de l'utilisateur (pour RBAC)
+     * @return JWT signé sous forme de String
+     */
+    public String generate(UUID userId, UUID tenantId, UserRole role) {
 
         // Instant actuel (iat)
         Instant now = Instant.now();
@@ -77,6 +92,10 @@ public class JwtProvider {
                 // Claim custom pour le tenant
                 // → essentiel pour le multi-tenant
                 .claim("tid", tenantId.toString())
+
+                // Claim pour les rôles (RBAC)
+                // Spring Security attend une liste pour les authorities
+                .claim("roles", List.of(role.name()))
 
                 .build();
 
@@ -134,5 +153,27 @@ public class JwtProvider {
             throw new JwtException("Missing required claim: tid");
         }
         return UUID.fromString(tid);
+    }
+
+    /**
+     * Extrait les rôles depuis le token pour RBAC.
+     * Retourne une liste vide si aucun rôle n'est présent (backward compatibility).
+     *
+     * @param token JWT
+     * @return Liste des rôles (ex: ["ROLE_ADMIN"])
+     */
+    public List<String> extractRoles(String token) {
+
+        Jwt jwt = decoder.decode(token);
+
+        // Le claim "roles" est une liste de strings
+        List<String> roles = jwt.getClaimAsStringList("roles");
+
+        // Backward compatibility: si pas de claim roles, retourner ROLE_AGENT par défaut
+        if (roles == null || roles.isEmpty()) {
+            return List.of(UserRole.ROLE_AGENT.name());
+        }
+
+        return roles;
     }
 }
