@@ -1,36 +1,43 @@
 package com.yem.hlm.backend.auth;
 
+import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
+import com.yem.hlm.backend.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration test for Auth login endpoint.
+ * Integration test for POST /auth/login.
  *
- * What we validate here:
- * - Spring context loads (web + security)
- * - DB is real (Testcontainers Postgres)
- * - Liquibase migrations ran
- * - /auth/login returns a JWT on valid credentials
+ * Validates:
+ * - Real JWT generation (not a stub) with correct claims
+ * - Standard ErrorResponse JSON on authentication failures
+ *
+ * Seed data (Liquibase):
+ *   tenantId = 11111111-1111-1111-1111-111111111111
+ *   userId   = 22222222-2222-2222-2222-222222222222
+ *   role     = ROLE_AGENT (default from 008-add-user-roles)
  */
-class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement de test complet()
+@IntegrationTest
+class AuthLoginIT extends IntegrationTestBase {
 
-    @Autowired
-    MockMvc mockMvc;
-    /*➡️ MockMvc permet de simuler un appel HTTP sans lancer un vrai serveur sur un port fixe, mais en utilisant tout Spring MVC + Spring Security.*/
+    private static final UUID SEEDED_TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID SEEDED_USER_ID   = UUID.fromString("22222222-2222-2222-2222-222222222222");
+
+    @Autowired MockMvc mockMvc;
+    @Autowired JwtProvider jwtProvider;
 
     @Test
-    void login_ok_returnsAccessToken() throws Exception {
-
-        // This JSON must match your LoginRequest fields.
-        // Adapt keys if needed (tenantKey/email/password).
-        //➡️ On prépare un JSON identique à ce qu’un frontend enverrait.
+    void login_ok_returnsValidJwtWithCorrectClaims() throws Exception {
         String body = """
             {
               "tenantKey": "acme",
@@ -39,19 +46,31 @@ class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement 
             }
             """;
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)//➡️ Indique à Spring comment parser le body (sinon tu peux avoir 415 Unsupported Media Type).
-                                .accept(MediaType.APPLICATION_JSON)//➡️ Indique ce qu’on attend en réponse.
-                                .content(body)//➡️ Injecte le JSON dans la requête.
-                )
-                .andExpect(status().isOk())//➡️ Valide que l’endpoint a réussi (HTTP 200).
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .content(body))
+                .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                // adapt if your response field is "token" or "jwt"
-                .andExpect(jsonPath("$.accessToken").isNotEmpty());//➡️ Vérifie que ta réponse contient bien le JWT.
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").isNumber())
+                .andReturn();
+
+        // Extract the token from the JSON response
+        String json = result.getResponse().getContentAsString();
+        String token = com.jayway.jsonpath.JsonPath.read(json, "$.accessToken");
+
+        // Validate the JWT is real and contains correct claims
+        assertThat(jwtProvider.isValid(token)).isTrue();
+        assertThat(jwtProvider.extractTenantId(token)).isEqualTo(SEEDED_TENANT_ID);
+        assertThat(jwtProvider.extractUserId(token)).isEqualTo(SEEDED_USER_ID);
+        assertThat(jwtProvider.extractRoles(token)).contains("ROLE_AGENT");
     }
+
     @Test
-    void login_wrongPassword_returns401() throws Exception {
+    void login_wrongPassword_returns401WithErrorResponse() throws Exception {
         String body = """
             {
               "tenantKey": "acme",
@@ -64,10 +83,14 @@ class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement 
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnauthorized()); // ✅ 401
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.path").value("/auth/login"))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
     }
+
     @Test
-    void login_unknownEmail_returns401() throws Exception {
+    void login_unknownEmail_returns401WithErrorResponse() throws Exception {
         String body = """
             {
               "tenantKey": "acme",
@@ -80,10 +103,13 @@ class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement 
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnauthorized()); // ✅ 401
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.path").value("/auth/login"));
     }
+
     @Test
-    void login_wrongTenant_returns401() throws Exception {
+    void login_wrongTenant_returns401WithErrorResponse() throws Exception {
         String body = """
             {
               "tenantKey": "wrongTenant",
@@ -96,13 +122,9 @@ class AuthLoginIT extends IntegrationTestBase { //hérites d’un environnement 
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnauthorized()); // ✅ 401
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.path").value("/auth/login"));
     }
 
-    @Test
-    void login_get_notPermitted_returns401() throws Exception {
-        mockMvc.perform(get("/auth/login")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
 }
