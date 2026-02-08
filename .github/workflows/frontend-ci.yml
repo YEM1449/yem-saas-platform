@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Prevent failures if frontend folder doesn't exist yet
+    # Prevent failure if frontend folder doesn't exist yet
     if: ${{ hashFiles('frontend/package.json') != '' }}
 
     defaults:
@@ -30,8 +30,7 @@ jobs:
         working-directory: frontend
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node 18
         uses: actions/setup-node@v4
@@ -44,4 +43,4 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm 
+        run: npm run build
