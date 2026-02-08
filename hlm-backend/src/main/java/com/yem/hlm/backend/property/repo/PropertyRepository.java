@@ -24,13 +24,22 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
     // ===== Standard CRUD Queries (Tenant-Scoped) =====
 
     /**
-     * Find property by ID within a specific tenant.
+     * Find property by ID within a specific tenant (including soft-deleted).
      *
      * @param tenantId the tenant ID
      * @param propertyId the property ID
      * @return Optional containing the property if found
      */
     Optional<Property> findByTenant_IdAndId(UUID tenantId, UUID propertyId);
+
+    /**
+     * Find property by ID within a specific tenant (excluding soft-deleted).
+     *
+     * @param tenantId the tenant ID
+     * @param propertyId the property ID
+     * @return Optional containing the property if found and not deleted
+     */
+    Optional<Property> findByTenant_IdAndIdAndDeletedAtIsNull(UUID tenantId, UUID propertyId);
 
     /**
      * Find all non-deleted properties for a tenant.
@@ -57,6 +66,16 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
      * @return list of properties
      */
     List<Property> findByTenant_IdAndTypeAndDeletedAtIsNull(UUID tenantId, PropertyType type);
+
+    /**
+     * Find properties by type and status (excluding deleted).
+     *
+     * @param tenantId the tenant ID
+     * @param type the property type
+     * @param status the property status
+     * @return list of properties
+     */
+    List<Property> findByTenant_IdAndTypeAndStatusAndDeletedAtIsNull(UUID tenantId, PropertyType type, PropertyStatus status);
 
     /**
      * Find property by reference code within a tenant.

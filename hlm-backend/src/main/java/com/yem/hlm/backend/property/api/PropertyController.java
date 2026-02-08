@@ -3,6 +3,8 @@ package com.yem.hlm.backend.property.api;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.service.PropertyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -58,14 +60,19 @@ public class PropertyController {
     }
 
     /**
-     * List all non-deleted properties for the current tenant.
+     * List all non-deleted properties for the current tenant with optional filtering.
      * All authenticated users can read.
      *
+     * @param type optional property type filter
+     * @param status optional property status filter
      * @return 200 OK with list of PropertyResponse
      */
     @GetMapping
-    public List<PropertyResponse> list() {
-        return propertyService.listAll();
+    public List<PropertyResponse> list(
+            @RequestParam(required = false) PropertyType type,
+            @RequestParam(required = false) PropertyStatus status
+    ) {
+        return propertyService.listAll(type, status);
     }
 
     /**

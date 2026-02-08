@@ -76,31 +76,53 @@ public class PropertyService {
     }
 
     /**
-     * Gets a property by ID (tenant-scoped).
+     * Gets a property by ID (tenant-scoped, excluding soft-deleted).
      *
      * @param propertyId the property ID
      * @return the property response
-     * @throws PropertyNotFoundException if property not found
+     * @throws PropertyNotFoundException if property not found or soft-deleted
      */
     public PropertyResponse getById(UUID propertyId) {
         UUID tenantId = TenantContext.getTenantId();
 
-        var property = propertyRepository.findByTenant_IdAndId(tenantId, propertyId)
+        var property = propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         return PropertyResponse.from(property);
     }
 
     /**
-     * Lists all non-deleted properties for the current tenant.
+     * Lists all non-deleted properties for the current tenant (no filtering).
+     * Convenience method that delegates to listAll(null, null).
      *
-     * @return list of property responses
+     * @return list of all property responses
      */
     public List<PropertyResponse> listAll() {
+        return listAll(null, null);
+    }
+
+    /**
+     * Lists all non-deleted properties for the current tenant with optional filtering.
+     *
+     * @param type optional property type filter
+     * @param status optional property status filter
+     * @return list of property responses
+     */
+    public List<PropertyResponse> listAll(PropertyType type, PropertyStatus status) {
         UUID tenantId = TenantContext.getTenantId();
 
-        return propertyRepository.findByTenant_IdAndDeletedAtIsNull(tenantId)
-                .stream()
+        List<Property> properties;
+        if (type != null && status != null) {
+            properties = propertyRepository.findByTenant_IdAndTypeAndStatusAndDeletedAtIsNull(tenantId, type, status);
+        } else if (type != null) {
+            properties = propertyRepository.findByTenant_IdAndTypeAndDeletedAtIsNull(tenantId, type);
+        } else if (status != null) {
+            properties = propertyRepository.findByTenant_IdAndStatusAndDeletedAtIsNull(tenantId, status);
+        } else {
+            properties = propertyRepository.findByTenant_IdAndDeletedAtIsNull(tenantId);
+        }
+
+        return properties.stream()
                 .map(PropertyResponse::from)
                 .collect(Collectors.toList());
     }
