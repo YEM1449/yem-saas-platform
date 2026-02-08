@@ -1,0 +1,216 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-contact-v2-and-interests
+      author: yem
+      changes:
+        # --- CONTACT TABLE EVOLUTION (single-table PROSPECT/CLIENT) ---
+        # We DO NOT modify 003 (already applied). We evolve the schema here.
+        # Existing columns from 003 are kept for backward-compatibility
+        # (full_name, contact_type, deposit/project tables). The application
+        # now uses the new columns below.
+
+        - addColumn:
+            tableName: contact
+            columns:
+              - column:
+                  name: status
+                  type: varchar(16)
+              - column:
+                  name: first_name
+                  type: varchar(120)
+              - column:
+                  name: last_name
+                  type: varchar(120)
+              - column:
+                  name: national_id
+                  type: varchar(100)
+              - column:
+                  name: address
+                  type: varchar(500)
+              - column:
+                  name: notes
+                  type: varchar(2000)
+              - column:
+                  name: deposit_amount
+                  type: decimal(10,2)
+              - column:
+                  name: deposit_date
+                  type: date
+              - column:
+                  name: deposit_reference
+                  type: varchar(50)
+              - column:
+                  name: signature_date
+                  type: date
+              - column:
+                  name: signature_reference
+                  type: varchar(50)
+
+        # Backfill for existing rows (safe if table is empty).
+        # - status derived from contact_type when present; otherwise PROSPECT
+        # - first_name/last_name derived from full_name when present
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              UPDATE contact
+              SET
+                status = COALESCE(status,
+                  CASE
+                    WHEN contact_type = 'CLIENT' THEN 'CLIENT'
+                    ELSE 'PROSPECT'
+                  END
+                ),
+                first_name = COALESCE(first_name,
+                  NULLIF(split_part(full_name, ' ', 1), '')
+                ),
+                last_name = COALESCE(last_name,
+                  NULLIF(trim(substring(full_name from position(' ' in full_name) + 1)), '')
+                )
+              WHERE status IS NULL OR first_name IS NULL OR last_name IS NULL;
+
+              UPDATE contact
+              SET first_name = 'Unknown'
+              WHERE first_name IS NULL;
+
+              UPDATE contact
+              SET last_name = 'Unknown'
+              WHERE last_name IS NULL;
+
+        # Enforce NOT NULL constraints required by the new application model.
+        - addNotNullConstraint:
+            tableName: contact
+            columnName: status
+            columnDataType: varchar(16)
+        - addNotNullConstraint:
+            tableName: contact
+            columnName: first_name
+            columnDataType: varchar(120)
+        - addNotNullConstraint:
+            tableName: contact
+            columnName: last_name
+            columnDataType: varchar(120)
+
+        # New indexes for the new access patterns.
+        - createIndex:
+            tableName: contact
+            indexName: idx_contact_tenant_status
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: contact
+            indexName: idx_contact_tenant_last_name
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: last_name
+
+        - createIndex:
+            tableName: contact
+            indexName: idx_contact_tenant_created_at
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: created_at
+
+        # Optional DB-level consistency: require client fields when status=CLIENT.
+        # This is recommended for strong integrity, but can be enabled later.
+        # - sql:
+        #     sql: |
+        #       ALTER TABLE contact ADD CONSTRAINT chk_contact_client_fields
+        #       CHECK (
+        #         status <> 'CLIENT'
+        #         OR (
+        #           deposit_amount IS NOT NULL AND deposit_amount > 0
+        #           AND deposit_date IS NOT NULL
+        #           AND signature_date IS NOT NULL
+        #         )
+        #       );
+
+        # --- CONTACT INTEREST JOIN TABLE ---
+        - createTable:
+            tableName: contact_interest
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: interest_status
+                  type: varchar(32)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: contact_interest
+            columnNames: tenant_id,contact_id,property_id
+            constraintName: uk_contact_interest_tenant_contact_property
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_interest
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_ci_tenant
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: contact_interest
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_ci_contact
+            onDelete: CASCADE
+
+        # TODO: add FK to base_property once property table name is confirmed.
+        # - addForeignKeyConstraint:
+        #     baseTableName: contact_interest
+        #     baseColumnNames: property_id
+        #     referencedTableName: base_property
+        #     referencedColumnNames: id
+        #     constraintName: fk_ci_property
+        #     onDelete: RESTRICT
+
+        - createIndex:
+            tableName: contact_interest
+            indexName: idx_ci_tenant_contact
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contact_id
+
+        - createIndex:
+            tableName: contact_interest
+            indexName: idx_ci_tenant_property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: property_id

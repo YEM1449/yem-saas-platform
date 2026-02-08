@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-class HlmBackendApplicationTests extends IntegrationTestBase {
+class HlmBackendApplicationIT extends IntegrationTestBase {
 
 	@Test
 	void contextLoads() {

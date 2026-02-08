@@ -3,58 +3,28 @@ package com.yem.hlm.backend.support;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Base commune pour les tests d’intégration (IT).
+ * Base commune pour les tests d’intégration.
  *
- * Objectifs :
- * - Démarrer un Postgres éphémère via Testcontainers
- * - Injecter dynamiquement les propriétés datasource Spring au démarrage du contexte
- * - Garantir un environnement reproductible (profil "test")
- *
- * IMPORTANT :
- * - @Testcontainers est indispensable ici, sinon le container ne démarre pas
- *   et Spring tente de lire getJdbcUrl() => "Mapped port can only be obtained..."
- * - On n’ajoute PAS @SpringBootTest ici : certains tests peuvent être @WebMvcTest
- *   ou d’autres slices. Chaque IT choisit son style d’initialisation.
+ * On utilise un container Postgres *singleton* pour éviter un piège classique :
+ * Spring Boot cache le contexte entre classes, mais Testcontainers redémarre
+ * parfois le container par classe => l'URL JDBC (port) devient périmée =>
+ * "Connection refused".
  */
-@Testcontainers
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 
-    /**
-     * Container Postgres partagé pour la classe de test.
-     *
-     * Notes “senior” :
-     * - static : un seul container pour tous les tests d’une même JVM (plus rapide).
-     * - @Container : géré par l’extension JUnit Testcontainers.
-     * - Image : garde une version stable (évite latest).
-     */
-    @Container
-    @SuppressWarnings("resource") // géré par Testcontainers
-    public static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>("postgres:16-alpine")
-                    .withDatabaseName("hlm_test")
-                    .withUsername("test")
-                    .withPassword("test");
+    /** Container Postgres démarré une seule fois pour toute la JVM de tests. */
+    protected static final SingletonPostgresContainer POSTGRES = SingletonPostgresContainer.getInstance();
 
-    /**
-     * Injection dynamique des propriétés Spring *avant* l'initialisation du contexte.
-     *
-     * Crucial : à ce moment, on a besoin que le container soit déjà "started",
-     * ce que garantit @Testcontainers + @Container.
-     */
     @DynamicPropertySource
     static void registerDataSourceProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
 
-        // Optionnel mais utile en test :
-        // - si tu relies Liquibase à la même datasource, c’est déjà implicite.
-        // - sinon tu peux aussi fixer : registry.add("spring.liquibase.enabled", () -> "true");
+        // Pour éviter des warnings Hikari sur des connexions fermées durant les tests.
+        registry.add("spring.datasource.hikari.maxLifetime", () -> "250000");
     }
 }

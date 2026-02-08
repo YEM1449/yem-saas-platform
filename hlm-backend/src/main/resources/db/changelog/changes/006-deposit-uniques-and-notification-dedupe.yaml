@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-deposit-uniques-and-notification-dedupe
+      author: crm-hlm
+      changes:
+        # ---------------------------------
+        # DEPOSIT: uniqueness & workflow indexes
+        # ---------------------------------
+        # One deposit per (contact, property) for MVP (no multi-history yet)
+        - addUniqueConstraint:
+            tableName: deposit
+            columnNames: tenant_id,contact_id,property_id
+            constraintName: uk_deposit_tenant_contact_property
+
+        # Property can be reserved by at most 1 active deposit (PENDING or CONFIRMED)
+        # Liquibase doesn't support partial unique indexes portably, so we use SQL for PostgreSQL.
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              DO $$
+              BEGIN
+                IF NOT EXISTS (
+                  SELECT 1 FROM pg_indexes
+                  WHERE schemaname = current_schema()
+                    AND indexname = 'ux_deposit_active_reservation_per_property'
+                ) THEN
+                  EXECUTE 'CREATE UNIQUE INDEX ux_deposit_active_reservation_per_property '
+                       || 'ON deposit (tenant_id, property_id) '
+                       || 'WHERE status IN (''PENDING'', ''CONFIRMED'')';
+                END IF;
+              END $$;
+
+        - createIndex:
+            indexName: idx_deposit_tenant_due_date
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: due_date
+
+        # ---------------------------------
+        # NOTIFICATION: dedupe for event per ref_id
+        # ---------------------------------
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              DO $$
+              BEGIN
+                IF NOT EXISTS (
+                  SELECT 1 FROM pg_indexes
+                  WHERE schemaname = current_schema()
+                    AND indexname = 'ux_notification_dedupe_by_ref'
+                ) THEN
+                  EXECUTE 'CREATE UNIQUE INDEX ux_notification_dedupe_by_ref '
+                       || 'ON notification (tenant_id, recipient_user_id, type, ref_id) '
+                       || 'WHERE ref_id IS NOT NULL';
+                END IF;
+              END $$;

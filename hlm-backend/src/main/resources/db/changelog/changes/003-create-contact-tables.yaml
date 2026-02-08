@@ -1,0 +1,234 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-contact-tables
+      author: yem
+      changes:
+        # Table principale contact
+        - createTable:
+            tableName: contact
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: varchar(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(160)
+              - column:
+                  name: phone
+                  type: varchar(30)
+              - column:
+                  name: contact_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_deposit_amount
+                  type: decimal(10,2)
+              - column:
+                  name: current_deposit_date
+                  type: date
+              - column:
+                  name: current_deposit_reference
+                  type: varchar(50)
+              - column:
+                  name: current_company_name
+                  type: varchar(160)
+              - column:
+                  name: current_siret
+                  type: varchar(14)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValueBoolean: false
+
+        # Table deposit (acomptes)
+        - createTable:
+            tableName: deposit
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deposit_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reference
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        # Table project (projets clients)
+        - createTable:
+            tableName: project
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: decimal(12,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PLANNED
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_date
+                  type: date
+              - column:
+                  name: end_date
+                  type: date
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        # Contraintes et indexes
+        - addForeignKeyConstraint:
+            baseTableName: contact
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_contact_tenant
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: deposit
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_deposit_contact
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: project
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_project_contact
+            onDelete: RESTRICT
+
+        - addForeignKeyConstraint:
+            baseTableName: project
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_project_tenant
+            onDelete: CASCADE
+
+        # Indexes pour performance
+        - createIndex:
+            tableName: contact
+            indexName: idx_contact_tenant_type
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contact_type
+
+        - createIndex:
+            tableName: contact
+            indexName: idx_contact_deposit_status
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: current_deposit_amount
+            where: current_deposit_amount IS NOT NULL
+
+        - createIndex:
+            tableName: deposit
+            indexName: idx_deposit_contact_status
+            columns:
+              - column:
+                  name: contact_id
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: project
+            indexName: idx_project_contact_status
+            columns:
+              - column:
+                  name: contact_id
+              - column:
+                  name: status
