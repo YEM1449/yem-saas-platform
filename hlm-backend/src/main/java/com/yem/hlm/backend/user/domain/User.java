@@ -30,12 +30,18 @@ public class User {
     @Column (name = "enabled", nullable = false)
     private boolean enabled = true;
 
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role = UserRole.ROLE_AGENT;
+
     protected User() {}
 
     public User(Tenant tenant, String email, String passwordHash) {
         this.tenant = tenant;
         this.email = email;
         this.passwordHash = passwordHash;
+        this.role = UserRole.ROLE_AGENT; // default role for new users
     }
 
     public UUID getId() {return id;}
@@ -43,6 +49,7 @@ public class User {
     public String getEmail() {return email;}
     public String getPasswordHash() {return passwordHash;}
     public boolean isEnabled() {return enabled;}
+    public UserRole getRole() {return role;}
 
 
 }

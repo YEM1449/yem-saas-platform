@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-deposit-currency-not-null
+      author: crm-hlm
+      changes:
+        # Ensure currency is always set (Hibernate ddl-auto=validate expects NOT NULL).
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              update deposit
+              set currency = 'MAD'
+              where currency is null
+                 or btrim(currency) = '';
+
+        # Keep a default at the DB level (already present from 005, but safe to re-apply).
+        - addDefaultValue:
+            tableName: deposit
+            columnName: currency
+            defaultValue: MAD
+
+        - addNotNullConstraint:
+            tableName: deposit
+            columnName: currency
+            columnDataType: varchar(3)

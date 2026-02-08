@@ -1,0 +1,108 @@
+package com.yem.hlm.backend.property.api;
+
+import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
+import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.domain.PropertyType;
+import com.yem.hlm.backend.property.service.PropertyService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * REST controller for Property CRUD operations.
+ * <p>
+ * RBAC Rules:
+ * - ADMIN: Full CRUD access (create, read, update, delete)
+ * - MANAGER: Can create, read, update (but not delete)
+ * - AGENT: Can only read (list and get details)
+ */
+@RestController
+@RequestMapping("/api/properties")
+public class PropertyController {
+
+    private final PropertyService propertyService;
+
+    public PropertyController(PropertyService propertyService) {
+        this.propertyService = propertyService;
+    }
+
+    /**
+     * Create a new property.
+     * Requires ADMIN or MANAGER role.
+     *
+     * @param request the property creation request
+     * @return 201 CREATED with PropertyResponse
+     */
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyCreateRequest request) {
+        PropertyResponse response = propertyService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Get property by ID.
+     * All authenticated users can read.
+     *
+     * @param id the property ID
+     * @return 200 OK with PropertyResponse, or 404 NOT_FOUND
+     */
+    @GetMapping("/{id}")
+    public PropertyResponse getById(@PathVariable UUID id) {
+        return propertyService.getById(id);
+    }
+
+    /**
+     * List all non-deleted properties for the current tenant with optional filtering.
+     * All authenticated users can read.
+     *
+     * @param type optional property type filter
+     * @param status optional property status filter
+     * @return 200 OK with list of PropertyResponse
+     */
+    @GetMapping
+    public List<PropertyResponse> list(
+            @RequestParam(required = false) PropertyType type,
+            @RequestParam(required = false) PropertyStatus status
+    ) {
+        return propertyService.listAll(type, status);
+    }
+
+    /**
+     * Update an existing property.
+     * Requires ADMIN or MANAGER role.
+     *
+     * @param id the property ID
+     * @param request the update request
+     * @return 200 OK with updated PropertyResponse, or 404 NOT_FOUND
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public PropertyResponse update(
+            @PathVariable UUID id,
+            @Valid @RequestBody PropertyUpdateRequest request
+    ) {
+        return propertyService.update(id, request);
+    }
+
+    /**
+     * Soft delete a property.
+     * Requires ADMIN role only.
+     *
+     * @param id the property ID
+     * @return 204 NO_CONTENT, or 404 NOT_FOUND
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        propertyService.softDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+}

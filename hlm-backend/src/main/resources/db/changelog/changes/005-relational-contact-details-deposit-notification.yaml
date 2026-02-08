@@ -1,0 +1,341 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-relational-contact-details-deposit-notification
+      author: crm-hlm
+      changes:
+        # CONTACT: extend existing table
+        - modifyDataType:
+            tableName: contact
+            columnName: status
+            newDataType: varchar(32)
+
+        - addColumn:
+            tableName: contact
+            columns:
+              - column:
+                  name: qualified
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: temp_client_until
+                  type: timestamp
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+              - column:
+                  name: lost_reason
+                  type: varchar(255)
+
+        # Backfill full_name for legacy rows (DB column is NOT NULL)
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              update contact
+              set full_name = trim(coalesce(first_name, '') || ' ' || coalesce(last_name, ''))
+              where (full_name is null or full_name = '')
+                and (first_name is not null or last_name is not null);
+
+        # -----------------------------
+        # PROSPECT DETAIL (1-1)
+        # -----------------------------
+        - createTable:
+            tableName: prospect_detail
+            columns:
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: budget_min
+                  type: numeric(19,2)
+              - column:
+                  name: budget_max
+                  type: numeric(19,2)
+              - column:
+                  name: source
+                  type: varchar(80)
+              - column:
+                  name: notes
+                  type: varchar(1000)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_prospect_detail_contact
+            baseTableName: prospect_detail
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # -----------------------------
+        # CLIENT DETAIL (1-1)
+        # -----------------------------
+        - createTable:
+            tableName: client_detail
+            columns:
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: client_kind
+                  type: varchar(32)
+              - column:
+                  name: company_name
+                  type: varchar(180)
+              - column:
+                  name: ice
+                  type: varchar(32)
+              - column:
+                  name: siret
+                  type: varchar(32)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_client_detail_contact
+            baseTableName: client_detail
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # -----------------------------
+        # DEPOSIT: extend existing table
+        # -----------------------------
+        - addColumn:
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+                  type: uuid
+              - column:
+                  name: agent_id
+                  type: uuid
+              - column:
+                  name: property_id
+                  type: uuid
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  defaultValue: MAD
+              - column:
+                  name: due_date
+                  type: timestamp
+              - column:
+                  name: confirmed_at
+                  type: timestamp
+              - column:
+                  name: cancelled_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              -- Backfill tenant_id from contact
+              update deposit d
+              set tenant_id = c.tenant_id
+              from contact c
+              where d.contact_id = c.id
+                and d.tenant_id is null;
+
+              -- Backfill agent_id with the first user of the tenant (MVP)
+              update deposit d
+              set agent_id = (
+                select u.id from app_user u
+                where u.tenant_id = d.tenant_id
+                order by u.id
+                limit 1
+              )
+              where d.agent_id is null
+                and d.tenant_id is not null;
+
+              -- Default due_date = created_at + 7 days for pending deposits
+              update deposit
+              set due_date = created_at + interval '7 days'
+              where due_date is null
+                and status = 'PENDING';
+
+              -- Default updated_at to created_at
+              update deposit
+              set updated_at = created_at
+              where updated_at is null;
+
+        - addNotNullConstraint:
+            tableName: deposit
+            columnName: tenant_id
+
+        - addNotNullConstraint:
+            tableName: deposit
+            columnName: agent_id
+
+        - addNotNullConstraint:
+            tableName: deposit
+            columnName: updated_at
+
+        - addForeignKeyConstraint:
+            constraintName: fk_deposit_tenant
+            baseTableName: deposit
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_deposit_agent
+            baseTableName: deposit
+            baseColumnNames: agent_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+
+        # FK to property table is added later when Property module exists.
+
+        - createIndex:
+            indexName: idx_deposit_tenant_status
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+
+        - createIndex:
+            indexName: idx_deposit_tenant_contact
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contact_id
+
+        - createIndex:
+            indexName: idx_deposit_tenant_property
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: property_id
+
+        - createIndex:
+            indexName: idx_deposit_tenant_agent
+            tableName: deposit
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: agent_id
+
+        # -----------------------------
+        # NOTIFICATION: internal inbox
+        # -----------------------------
+        - createTable:
+            tableName: notification
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recipient_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ref_id
+                  type: uuid
+              - column:
+                  name: payload
+                  type: jsonb
+              - column:
+                  name: is_read
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_notification_tenant
+            baseTableName: notification
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_notification_recipient
+            baseTableName: notification
+            baseColumnNames: recipient_user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+
+        - createIndex:
+            indexName: idx_notification_tenant_recipient_read
+            tableName: notification
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: recipient_user_id
+              - column:
+                  name: is_read
+
+        - createIndex:
+            indexName: idx_notification_tenant_recipient_created
+            tableName: notification
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: recipient_user_id
+              - column:
+                  name: created_at
+

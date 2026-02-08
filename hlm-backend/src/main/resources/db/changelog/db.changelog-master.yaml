@@ -3,3 +3,17 @@ databaseChangeLog:
       file: db/changelog/changes/001-init-tenant-user.yaml
   - include:
       file: db/changelog/changes/002-seed-tenant-owner.yaml
+  - include:
+      file: db/changelog/changes/003-create-contact-tables.yaml
+  - include:
+      file: db/changelog/changes/004-contact-v2-and-interests.yaml
+  - include:
+      file: db/changelog/changes/005-relational-contact-details-deposit-notification.yaml
+  - include:
+      file: db/changelog/changes/006-deposit-uniques-and-notification-dedupe.yaml
+  - include:
+      file: db/changelog/changes/007-deposit-currency-not-null.yaml
+  - include:
+      file: db/changelog/changes/008-add-user-roles.yaml
+  - include:
+      file: db/changelog/changes/009-create-property-table.yaml

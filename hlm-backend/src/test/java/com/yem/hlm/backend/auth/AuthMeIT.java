@@ -2,11 +2,11 @@ package com.yem.hlm.backend.auth;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.support.TestJwtConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import com.yem.hlm.backend.support.TestJwtConfig;
 
 import java.time.Instant;
 import java.util.Map;
