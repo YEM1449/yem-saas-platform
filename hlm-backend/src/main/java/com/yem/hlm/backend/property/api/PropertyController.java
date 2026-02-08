@@ -41,7 +41,7 @@ public class PropertyController {
      * @return 201 CREATED with PropertyResponse
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyCreateRequest request) {
         PropertyResponse response = propertyService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -84,7 +84,7 @@ public class PropertyController {
      * @return 200 OK with updated PropertyResponse, or 404 NOT_FOUND
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public PropertyResponse update(
             @PathVariable UUID id,
             @Valid @RequestBody PropertyUpdateRequest request
@@ -100,7 +100,7 @@ public class PropertyController {
      * @return 204 NO_CONTENT, or 404 NOT_FOUND
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         propertyService.softDelete(id);
         return ResponseEntity.noContent().build();
