@@ -1,12 +1,5 @@
-# Environment files (secrets)
-.env
-!.env.example
-
 # Compiled class file
 *.class
-
-# Build output
-**/target/
 
 # Log file
 *.log
