@@ -7,6 +7,7 @@ import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.domain.User;
+import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,7 @@ public class TenantService {
                     request.ownerEmail(),
                     passwordEncoder.encode(request.ownerPassword())
             );
+            owner.setRole(UserRole.ROLE_ADMIN);
             owner = userRepository.save(owner);
         } catch (DataIntegrityViolationException ex) {
             throw new TenantKeyAlreadyExistsException(normalizedKey);

@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Seed data (Liquibase):
  *   tenantId = 11111111-1111-1111-1111-111111111111
  *   userId   = 22222222-2222-2222-2222-222222222222
- *   role     = ROLE_AGENT (default from 008-add-user-roles)
+ *   role     = ROLE_ADMIN (fixed by 010-fix-seed-owner-role)
  */
 @IntegrationTest
 class AuthLoginIT extends IntegrationTestBase {
@@ -66,7 +66,7 @@ class AuthLoginIT extends IntegrationTestBase {
         assertThat(jwtProvider.isValid(token)).isTrue();
         assertThat(jwtProvider.extractTenantId(token)).isEqualTo(SEEDED_TENANT_ID);
         assertThat(jwtProvider.extractUserId(token)).isEqualTo(SEEDED_USER_ID);
-        assertThat(jwtProvider.extractRoles(token)).contains("ROLE_AGENT");
+        assertThat(jwtProvider.extractRoles(token)).contains("ROLE_ADMIN");
     }
 
     @Test
