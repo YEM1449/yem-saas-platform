@@ -60,7 +60,7 @@ public class JwtBeansConfig {
     JwtDecoder jwtDecoder(JwtProperties props) {
         String secret = props.secret();
         if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("app.security.jwt.secret must be configured (non-empty)");
+            throw new IllegalStateException("security.jwt.secret must be configured (non-empty)");
         }
 
         byte[] secretBytes = secret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
