@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.common.error;
 
+import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.deposit.service.*;
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
@@ -249,6 +250,26 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // ========== 401 Unauthorized ==========
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ErrorCode.UNAUTHORIZED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("Authentication failed on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     // ========== 403 Forbidden ==========

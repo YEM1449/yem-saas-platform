@@ -2,6 +2,7 @@ package com.yem.hlm.backend.auth.service;
 
 import com.yem.hlm.backend.auth.api.dto.LoginRequest;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
+import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,13 +13,19 @@ public class AuthService {
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder   passwordEncoder;
+    private final JwtProvider        jwtProvider;
+    private final JwtProperties      jwtProperties;
 
-    public AuthService(TenantRepository tenantRepository
-            , UserRepository userRepository
-            , PasswordEncoder passwordEncoder){
+    public AuthService(TenantRepository tenantRepository,
+                       UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtProvider jwtProvider,
+                       JwtProperties jwtProperties) {
         this.tenantRepository = tenantRepository;
         this.userRepository   = userRepository;
         this.passwordEncoder  = passwordEncoder;
+        this.jwtProvider      = jwtProvider;
+        this.jwtProperties    = jwtProperties;
     }
     public LoginResponse login (LoginRequest req){
         // 1) Normaliser l’input (important pour éviter admin@X.com vs admin@x.com)
@@ -43,10 +50,10 @@ public class AuthService {
             throw new UnauthorizedException();
         }
 
-        // 6) Token (stub tant que AUTH-04 n’est pas branché)
-        String tokenStub = "TODO_JWT_IN_AUTH_04";
-        long expiresInSeconds = 3600;
+        // 6) Generate real JWT
+        String token = jwtProvider.generate(user.getId(), tenant.getId(), user.getRole());
+        long expiresInSeconds = jwtProperties.ttlSeconds();
 
-        return LoginResponse.bearer(tokenStub, expiresInSeconds);
+        return LoginResponse.bearer(token, expiresInSeconds);
     }
 }
