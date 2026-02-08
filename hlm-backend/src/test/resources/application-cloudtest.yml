@@ -11,3 +11,9 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  security:
+  jwt:
+    # Test-only secret for cloudtest profile (NOT shipped in prod artifact)
+    secret: "CLOUDTEST_ONLY_DO_NOT_USE_IN_PROD_0123456789abcdef0123456789abcdef"
+    ttl-seconds: 3600
+
