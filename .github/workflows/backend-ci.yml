@@ -3,20 +3,50 @@ name: Backend CI
 on:
   push:
     paths:
-      - "backend/**"
+      - "hlm-backend/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
-      - "backend/**"
+      - "hlm-backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
-      - name: Build with Maven
-        run: mvn -B -f backend/pom.xml clean install
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify Docker (for Testcontainers)
+        run: docker info
+
+      - name: Run tests (Maven Wrapper)
+        working-directory: hlm-backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test
+
+      - name: Upload test reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-failsafe-reports
+          path: |
+            hlm-backend/target/surefire-reports/**
+            hlm-backend/target/failsafe-reports/**
