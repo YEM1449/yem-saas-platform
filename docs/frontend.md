@@ -9,7 +9,7 @@
 
 ### Install
 ```bash
-cd frontend
+cd hlm-frontend
 npm ci
 ```
 
@@ -18,7 +18,7 @@ npm ci
 npm start
 ```
 
-The app runs on `http://localhost:4200`. A dev proxy (`proxy.conf.json`) forwards `/auth`, `/api`, and `/actuator` to the backend at `http://localhost:8080` so CORS does not block local calls.
+The app runs on `http://localhost:4200`. A dev proxy (`proxy.conf.json`) forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to the backend at `http://localhost:8080` so CORS does not block local calls.
 
 ### Build (production)
 ```bash
@@ -35,7 +35,7 @@ The output is written to `dist/frontend/` and uses the production environment co
 
 1. Login form submits `tenantKey`, `email`, and `password` to `/auth/login`.
 2. The `AuthService` stores `accessToken` in `localStorage`.
-3. `authInterceptor` attaches the `Authorization` header to every request and logs the user out on 401 errors.
+3. `authInterceptor` attaches the `Authorization` header to protected requests (skips `/auth/login`) and logs the user out on 401 errors.
 
 ## Routing
 - `/login` is public and renders the login page.

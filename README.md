@@ -7,7 +7,7 @@ RBAC with three roles: ADMIN, MANAGER, AGENT (see [docs/runbook.md](docs/runbook
 ## Prerequisites
 
 - **Java 21** (see `hlm-backend/pom.xml`)
-- **Node 18+** and **npm 9+** (for `frontend/`)
+- **Node 18+** and **npm 9+** (for `hlm-frontend/`)
 - **Docker** (required for Testcontainers integration tests and local PostgreSQL)
 - **PostgreSQL** (local instance or Docker container)
 
@@ -40,12 +40,12 @@ curl -i http://localhost:8080/actuator/health
 ## Quickstart (frontend)
 
 ```bash
-cd frontend
+cd hlm-frontend
 npm ci
 npm start
 ```
 
-The app starts on **http://localhost:4200**. A dev proxy forwards `/auth`, `/api`, and `/actuator` to the backend. See [docs/frontend.md](docs/frontend.md) for details.
+The app starts on **http://localhost:4200**. A dev proxy forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to the backend. See [docs/frontend.md](docs/frontend.md) for details.
 
 ## Required Environment Variables
 
@@ -139,7 +139,7 @@ curl -s http://localhost:8080/api/properties \
 
 ```
 hlm-backend/   # Spring Boot backend (JWT + multi-tenancy)
-frontend/      # Angular SPA (auth + properties)
+hlm-frontend/  # Angular SPA (auth + properties)
 docs/          # Full documentation set
 scripts/       # Utility scripts
 ```

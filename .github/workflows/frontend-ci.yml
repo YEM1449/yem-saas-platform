@@ -3,11 +3,11 @@ name: Frontend CI
 on:
   push:
     paths:
-      - "frontend/**"
+      - "hlm-frontend/**"
       - ".github/workflows/frontend-ci.yml"
   pull_request:
     paths:
-      - "frontend/**"
+      - "hlm-frontend/**"
       - ".github/workflows/frontend-ci.yml"
 
 permissions:
@@ -23,11 +23,11 @@ jobs:
     timeout-minutes: 15
 
     # Prevent failure if frontend folder doesn't exist yet
-    if: ${{ hashFiles('frontend/package.json') != '' }}
+    if: ${{ hashFiles('hlm-frontend/package.json') != '' }}
 
     defaults:
       run:
-        working-directory: frontend
+        working-directory: hlm-frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "18"
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: hlm-frontend/package-lock.json
 
       - name: Install deps
         run: npm ci

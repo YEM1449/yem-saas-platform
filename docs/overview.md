@@ -8,7 +8,7 @@ YEM SaaS Platform is a multi-tenant CRM for real estate promotion and constructi
 ```
 .
 ├── hlm-backend/          # Spring Boot 3.x backend (Java 21)
-├── frontend/             # Angular 19 SPA
+├── hlm-frontend/         # Angular 19 SPA
 ├── docs/                 # Architecture, API, runbook, and operations guides
 ├── scripts/              # Utility scripts (smoke tests)
 └── README.md             # Quickstart and entry point
@@ -25,7 +25,7 @@ YEM SaaS Platform is a multi-tenant CRM for real estate promotion and constructi
 ### Frontend (Angular)
 - **Auth flow:** Login returns JWT which is stored in `localStorage`. An HTTP interceptor attaches `Authorization: Bearer <token>` to requests and logs out on 401.
 - **Routing:** `/login` is public; `/app/*` routes require authentication and include the properties view.
-- **API integration:** Dev proxy forwards `/auth`, `/api`, and `/actuator` to the backend to avoid CORS.
+- **API integration:** Dev proxy forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to the backend to avoid CORS.
 
 ## Documentation map
 - [Architecture](architecture.md)
@@ -47,7 +47,7 @@ YEM SaaS Platform is a multi-tenant CRM for real estate promotion and constructi
 3. Run `./mvnw spring-boot:run` from `hlm-backend/`.
 
 ### Local frontend
-1. Install dependencies with `npm ci` in `frontend/`.
+1. Install dependencies with `npm ci` in `hlm-frontend/`.
 2. Start with `npm start` and use the dev proxy to access the backend.
 
 ### API smoke test
