@@ -3,6 +3,7 @@
 ## Core docs
 - [Architecture](architecture.md)
 - [API Catalog](api.md)
+- [API Quickstart](api-quickstart.md) — curl flows for frontend integration
 - [Database](database.md)
 - [Security](security.md)
 - [Runbook](runbook.md)

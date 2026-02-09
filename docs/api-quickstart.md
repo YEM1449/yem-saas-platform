@@ -1,8 +1,16 @@
 # API Quickstart
 
-Copy-paste curl flows for frontend integration. All examples assume the backend runs at `http://localhost:8080`.
+Minimum calls to integrate a frontend. All examples assume `http://localhost:8080`.
 
-## 1. Login
+## Step 0 — Health check
+
+```bash
+curl -i http://localhost:8080/actuator/health
+```
+
+Expected: `200 {"status":"UP"}`. If this fails, the backend is not running — check logs for `Tomcat started on port(s): 8080`.
+
+## Step 1 — Login
 
 ```bash
 curl -s -X POST http://localhost:8080/auth/login \
@@ -30,9 +38,9 @@ curl -s -X POST http://localhost:8080/auth/login \
 }
 ```
 
-Save `accessToken` for subsequent requests.
+Save `accessToken` — all subsequent requests need it.
 
-## 2. Verify identity
+## Step 2 — Verify identity
 
 ```bash
 TOKEN="<paste accessToken here>"
@@ -49,18 +57,18 @@ curl -s http://localhost:8080/auth/me \
 }
 ```
 
-## 3. List properties (protected, all roles)
+## Step 3 — List properties (protected, all roles)
 
 ```bash
 curl -s http://localhost:8080/api/properties \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-**Response** (200 OK): array of `PropertyResponse` objects.
+**Response** (200 OK): JSON array of `PropertyResponse` objects.
 
 Optional query params: `?type=APARTMENT&status=AVAILABLE`.
 
-## 4. List contacts (protected, all roles)
+## Step 4 — List contacts (protected, all roles)
 
 ```bash
 curl -s http://localhost:8080/api/contacts \
@@ -69,7 +77,7 @@ curl -s http://localhost:8080/api/contacts \
 
 ## Error responses
 
-All errors return a consistent `ErrorResponse` shape:
+All errors return a consistent `ErrorResponse` shape (see `common/error/ErrorResponse.java`):
 
 ### 401 Unauthorized — missing or invalid token
 
@@ -128,12 +136,12 @@ All errors return a consistent `ErrorResponse` shape:
 
 ## RBAC summary
 
-| Endpoint pattern        | ADMIN | MANAGER | AGENT |
-|-------------------------|-------|---------|-------|
-| `POST /api/properties`  | yes   | yes     | 403   |
-| `GET /api/properties`   | yes   | yes     | yes   |
-| `PUT /api/properties/*` | yes   | yes     | 403   |
-| `DELETE /api/properties/*` | yes | 403     | 403   |
+| Endpoint pattern           | ADMIN | MANAGER | AGENT |
+|----------------------------|-------|---------|-------|
+| `POST /api/properties`     | yes   | yes     | 403   |
+| `GET /api/properties`      | yes   | yes     | yes   |
+| `PUT /api/properties/{id}` | yes   | yes     | 403   |
+| `DELETE /api/properties/{id}` | yes | 403     | 403   |
 
 ## JWT claims reference
 
