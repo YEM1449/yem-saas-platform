@@ -1,6 +1,8 @@
 # Deep Context (Structured)
 
 ## Module map
+
+### Backend (Spring Boot)
 - `hlm-backend/src/main/java/com/yem/hlm/backend/auth`
   - `api/AuthController`, `api/AuthMeController`
   - `security/SecurityConfig`, `JwtAuthenticationFilter`
@@ -29,13 +31,27 @@
 - `hlm-backend/src/main/java/com/yem/hlm/backend/common/error`
   - `ErrorResponse`, `ErrorCode`, `GlobalExceptionHandler`
 
+### Frontend (Angular)
+- `frontend/src/app/core/auth`
+  - `AuthService` (login, logout, token storage)
+  - `authInterceptor` (adds Bearer token, logs out on 401)
+  - `authGuard` (protects `/app/*` routes)
+- `frontend/src/app/features`
+  - `login` (login page)
+  - `shell` (app shell + navigation)
+  - `properties` (properties list view)
+- `frontend/src/environments`
+  - `environment.ts` (dev config, proxy-friendly)
+  - `environment.production.ts` (prod config)
+- Proxy: `frontend/proxy.conf.json`
+
 ## Key flows
 
 ### Login / JWT / TenantContext
 - `/auth/login` authenticates tenant+user and returns JWT.
 - `JwtProvider` signs HS256 tokens with claims: `sub`, `tid`, `roles`.
 - `JwtAuthenticationFilter` validates tokens, sets `TenantContext`, and adds authorities.
-- All non-public endpoints require authentication (`SecurityConfig`).
+- Angular `AuthService` stores `accessToken` in `localStorage`; `authInterceptor` attaches it.
 
 ### Property lifecycle
 - Create: `PropertyService.create` validates type-specific required fields, ensures unique reference code per tenant.
@@ -53,6 +69,16 @@
 ### Notifications
 - `NotificationService.notify` persists tenant+recipient notifications; dedupe is enforced by DB unique index.
 - `list` fetches notifications for current tenant/user; `markRead` updates read state.
+
+## Environments & configs
+- Backend config: `hlm-backend/src/main/resources/application.yml`.
+- Required env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, optional `JWT_TTL_SECONDS`.
+- Frontend dev proxy avoids CORS by forwarding `/auth`, `/api`, `/actuator` to `http://localhost:8080`.
+
+## Tests & tooling
+- Backend unit tests: `./mvnw test`.
+- Backend integration tests: `./mvnw failsafe:integration-test` (requires Docker).
+- Frontend: `npm start`, `npm run build`.
 
 ## Known gaps / next steps
 - Contact interest creation has a TODO to verify property ownership within tenant scope before insert.

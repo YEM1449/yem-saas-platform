@@ -1,0 +1,40 @@
+<h2>Properties</h2>
+
+@if (loading) {
+  <p>Loading properties...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && !error && properties.length === 0) {
+  <p>No properties found.</p>
+}
+
+@if (!loading && properties.length > 0) {
+  <table>
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>City</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of properties; track p.id) {
+        <tr>
+          <td>{{ p.referenceCode }}</td>
+          <td>{{ p.title }}</td>
+          <td>{{ p.type }}</td>
+          <td>{{ p.status }}</td>
+          <td>{{ p.city }}</td>
+          <td>{{ p.price | number:'1.0-0' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

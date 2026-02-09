@@ -1,7 +1,10 @@
 # Documentation Index
 
 ## Core docs
+- [Overview](overview.md)
 - [Architecture](architecture.md)
+- [Backend Guide](backend.md)
+- [Frontend Guide](frontend.md)
 - [API Catalog](api.md)
 - [API Quickstart](api-quickstart.md) — curl flows for frontend integration
 - [Database](database.md)
