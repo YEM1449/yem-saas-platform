@@ -1,0 +1,28 @@
+<div class="login-container">
+  <h1>HLM Login</h1>
+
+  <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+    <div class="field">
+      <label for="tenantKey">Tenant Key</label>
+      <input id="tenantKey" name="tenantKey" [(ngModel)]="form.tenantKey" required />
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" [(ngModel)]="form.email" required />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" [(ngModel)]="form.password" required />
+    </div>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    <button type="submit" [disabled]="loading || loginForm.invalid">
+      {{ loading ? 'Signing in...' : 'Sign in' }}
+    </button>
+  </form>
+</div>
