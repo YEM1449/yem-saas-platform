@@ -32,18 +32,18 @@
   - `ErrorResponse`, `ErrorCode`, `GlobalExceptionHandler`
 
 ### Frontend (Angular)
-- `frontend/src/app/core/auth`
+- `hlm-frontend/src/app/core/auth`
   - `AuthService` (login, logout, token storage)
   - `authInterceptor` (adds Bearer token, logs out on 401)
   - `authGuard` (protects `/app/*` routes)
-- `frontend/src/app/features`
+- `hlm-frontend/src/app/features`
   - `login` (login page)
   - `shell` (app shell + navigation)
   - `properties` (properties list view)
-- `frontend/src/environments`
+- `hlm-frontend/src/environments`
   - `environment.ts` (dev config, proxy-friendly)
   - `environment.production.ts` (prod config)
-- Proxy: `frontend/proxy.conf.json`
+- Proxy: `hlm-frontend/proxy.conf.json`
 
 ## Key flows
 
@@ -73,7 +73,7 @@
 ## Environments & configs
 - Backend config: `hlm-backend/src/main/resources/application.yml`.
 - Required env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, optional `JWT_TTL_SECONDS`.
-- Frontend dev proxy avoids CORS by forwarding `/auth`, `/api`, `/actuator` to `http://localhost:8080`.
+- Frontend dev proxy avoids CORS by forwarding `/auth`, `/api`, `/dashboard`, `/actuator` to `http://localhost:8080`.
 
 ## Tests & tooling
 - Backend unit tests: `./mvnw test`.
