@@ -29,3 +29,8 @@ Use these templates to keep responses short, grounded, and citation-ready.
 - Goal: Refactor <area> without behavior changes.
 - Constraints: Keep API + DB stable.
 - Output: Use required format; include file-path citations.
+
+## Template: Documentation
+- Goal: Document <scope> (setup, architecture, workflows).
+- Constraints: Keep content aligned to code/configs; no secrets.
+- Output: Use required format; include file-path citations.

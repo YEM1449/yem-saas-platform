@@ -1,12 +1,13 @@
 # YEM SaaS Platform
 
-Multi-tenant CRM backend for real estate promotion and construction teams.
+Multi-tenant CRM backend for real estate promotion and construction teams, plus an Angular SPA.
 Tenant isolation via JWT claim `tid` → request-scoped `TenantContext`.
 RBAC with three roles: ADMIN, MANAGER, AGENT (see [docs/runbook.md](docs/runbook.md#rbac-conventions)).
 
 ## Prerequisites
 
 - **Java 21** (see `hlm-backend/pom.xml`)
+- **Node 18+** and **npm 9+** (for `frontend/`)
 - **Docker** (required for Testcontainers integration tests and local PostgreSQL)
 - **PostgreSQL** (local instance or Docker container)
 
@@ -35,6 +36,16 @@ curl -i http://localhost:8080/actuator/health
 # If it fails: backend isn't running or is on another port.
 # Check logs for "Tomcat started on port(s): 8080"
 ```
+
+## Quickstart (frontend)
+
+```bash
+cd frontend
+npm ci
+npm start
+```
+
+The app starts on **http://localhost:4200**. A dev proxy forwards `/auth`, `/api`, and `/actuator` to the backend. See [docs/frontend.md](docs/frontend.md) for details.
 
 ## Required Environment Variables
 
@@ -124,9 +135,21 @@ curl -s http://localhost:8080/api/properties \
 > Troubleshooting (401/403/CORS): [docs/runbook.md](docs/runbook.md)
 > Smoke test script: [scripts/smoke-auth.sh](scripts/smoke-auth.sh)
 
+## Repository map
+
+```
+hlm-backend/   # Spring Boot backend (JWT + multi-tenancy)
+frontend/      # Angular SPA (auth + properties)
+docs/          # Full documentation set
+scripts/       # Utility scripts
+```
+
 ## Documentation
 
 - [docs/index.md](docs/index.md) — full doc index
+- [docs/overview.md](docs/overview.md) — platform summary and workflows
+- [docs/backend.md](docs/backend.md) — backend architecture and operations
+- [docs/frontend.md](docs/frontend.md) — frontend setup and structure
 - [docs/api-quickstart.md](docs/api-quickstart.md) — curl flows for frontend integration
 - [docs/runbook.md](docs/runbook.md) — local run, troubleshooting, CORS, RBAC
 - AI Context Pack: [docs/ai/quick-context.md](docs/ai/quick-context.md) | [docs/ai/deep-context.md](docs/ai/deep-context.md) | [docs/ai/prompt-playbook.md](docs/ai/prompt-playbook.md)
