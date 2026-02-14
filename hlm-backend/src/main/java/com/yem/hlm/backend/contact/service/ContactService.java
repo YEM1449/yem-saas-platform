@@ -69,10 +69,10 @@ public class ContactService {
         return toResponse(contact);
     }
 
-    public Page<ContactResponse> list(ContactStatus status, String q, Pageable pageable) {
+    public Page<ContactResponse> list(ContactType contactType, ContactStatus status, String q, Pageable pageable) {
         UUID tenantId = requireTenantId();
         String query = (q == null || q.isBlank()) ? null : q.trim();
-        return contactRepository.search(tenantId, status, query, pageable).map(this::toResponse);
+        return contactRepository.search(tenantId, contactType, status, query, pageable).map(this::toResponse);
     }
 
     public ContactResponse update(UUID contactId, UpdateContactRequest req) {
@@ -94,6 +94,19 @@ public class ContactService {
         if (req.notes() != null) contact.setNotes(req.notes());
 
         // IMPORTANT: status/type/qualified/tempClientUntil are not editable here.
+        contact.markUpdatedBy(actorUserId);
+
+        Contact saved = contactRepository.save(contact);
+        return toResponse(saved);
+    }
+
+    public ContactResponse updateStatus(UUID contactId, ContactStatus newStatus) {
+        UUID tenantId = requireTenantId();
+        UUID actorUserId = requireUserId();
+        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+
+        contact.setStatus(newStatus);
         contact.markUpdatedBy(actorUserId);
 
         Contact saved = contactRepository.save(contact);

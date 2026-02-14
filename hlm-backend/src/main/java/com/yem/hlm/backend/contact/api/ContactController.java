@@ -2,6 +2,7 @@ package com.yem.hlm.backend.contact.api;
 
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
+import com.yem.hlm.backend.contact.domain.ContactType;
 import com.yem.hlm.backend.contact.service.ContactService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -36,16 +37,22 @@ public class ContactController {
 
     @GetMapping("/contacts")
     public Page<ContactResponse> list(
+            @RequestParam(value = "contactType", required = false) ContactType contactType,
             @RequestParam(value = "status", required = false) ContactStatus status,
             @RequestParam(value = "q", required = false) String q,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        return contactService.list(status, q, pageable);
+        return contactService.list(contactType, status, q, pageable);
     }
 
     @PatchMapping("/contacts/{id}")
     public ContactResponse update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateContactRequest request) {
         return contactService.update(id, request);
+    }
+
+    @PatchMapping("/contacts/{id}/status")
+    public ContactResponse updateStatus(@PathVariable("id") UUID id, @Valid @RequestBody UpdateStatusRequest request) {
+        return contactService.updateStatus(id, request.status());
     }
 
     @PostMapping("/contacts/{id}/convert-to-client")
