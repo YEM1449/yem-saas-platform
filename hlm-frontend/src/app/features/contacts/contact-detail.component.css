@@ -1,0 +1,33 @@
+h2 {
+  margin: 0 0 16px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+}
+
+dt {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+dd {
+  margin: 0;
+}
+
+a {
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: #d32f2f;
+}
