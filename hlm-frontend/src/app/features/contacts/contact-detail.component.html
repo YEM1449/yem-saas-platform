@@ -1,0 +1,45 @@
+<p><a routerLink="/app/contacts">&larr; Back to Contacts</a></p>
+
+@if (loading) {
+  <p>Loading contact...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && contact) {
+  <h2>{{ contact.fullName }}</h2>
+
+  <dl>
+    <dt>Type</dt>
+    <dd>{{ contact.contactType }}</dd>
+
+    <dt>Status</dt>
+    <dd>{{ contact.status }}</dd>
+
+    <dt>Qualified</dt>
+    <dd>{{ contact.qualified ? 'Yes' : 'No' }}</dd>
+
+    <dt>Email</dt>
+    <dd>{{ contact.email ?? '—' }}</dd>
+
+    <dt>Phone</dt>
+    <dd>{{ contact.phone ?? '—' }}</dd>
+
+    <dt>National ID</dt>
+    <dd>{{ contact.nationalId ?? '—' }}</dd>
+
+    <dt>Address</dt>
+    <dd>{{ contact.address ?? '—' }}</dd>
+
+    <dt>Notes</dt>
+    <dd>{{ contact.notes ?? '—' }}</dd>
+
+    <dt>Created</dt>
+    <dd>{{ contact.createdAt }}</dd>
+
+    <dt>Updated</dt>
+    <dd>{{ contact.updatedAt }}</dd>
+  </dl>
+}

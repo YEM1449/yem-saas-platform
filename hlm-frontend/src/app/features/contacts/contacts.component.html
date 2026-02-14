@@ -1,0 +1,38 @@
+<h2>Contacts</h2>
+
+@if (loading) {
+  <p>Loading contacts...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && !error && contacts.length === 0) {
+  <p>No contacts found.</p>
+}
+
+@if (!loading && contacts.length > 0) {
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Type</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of contacts; track c.id) {
+        <tr class="clickable" [routerLink]="['/app/contacts', c.id]">
+          <td>{{ c.fullName }}</td>
+          <td>{{ c.email ?? '—' }}</td>
+          <td>{{ c.phone ?? '—' }}</td>
+          <td>{{ c.contactType }}</td>
+          <td>{{ c.status }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
