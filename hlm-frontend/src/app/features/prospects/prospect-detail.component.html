@@ -1,0 +1,108 @@
+<p><a routerLink="/app/prospects">&larr; Back to Prospects</a></p>
+
+@if (loading) {
+  <p>Loading prospect...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && prospect) {
+  <h2>{{ prospect.fullName }}</h2>
+
+  <div class="status-control">
+    <label for="status">Status:</label>
+    <select id="status" [(ngModel)]="selectedStatus" (change)="onStatusChange()" [disabled]="updating">
+      @for (s of statuses; track s) {
+        <option [value]="s">{{ s }}</option>
+      }
+    </select>
+    @if (updating) {
+      <span class="updating">Updating...</span>
+    }
+    @if (statusMessage) {
+      <span class="status-msg">{{ statusMessage }}</span>
+    }
+  </div>
+
+  <dl>
+    <dt>Email</dt>
+    <dd>{{ prospect.email ?? '—' }}</dd>
+
+    <dt>Phone</dt>
+    <dd>{{ prospect.phone ?? '—' }}</dd>
+
+    <dt>Qualified</dt>
+    <dd>{{ prospect.qualified ? 'Yes' : 'No' }}</dd>
+
+    <dt>National ID</dt>
+    <dd>{{ prospect.nationalId ?? '—' }}</dd>
+
+    <dt>Address</dt>
+    <dd>{{ prospect.address ?? '—' }}</dd>
+
+    <dt>Notes</dt>
+    <dd>{{ prospect.notes ?? '—' }}</dd>
+
+    <dt>Created</dt>
+    <dd>{{ prospect.createdAt }}</dd>
+
+    <dt>Updated</dt>
+    <dd>{{ prospect.updatedAt }}</dd>
+  </dl>
+
+  <h3>Interested Properties</h3>
+
+  @if (interestError) {
+    <p class="error">{{ interestError }}</p>
+  }
+
+  <div class="add-interest">
+    <select [(ngModel)]="selectedPropertyId" [disabled]="addingInterest">
+      <option value="">-- Select a property --</option>
+      @for (p of availableProperties; track p.id) {
+        <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
+      }
+    </select>
+    <button (click)="addInterest()" [disabled]="!selectedPropertyId || addingInterest">
+      {{ addingInterest ? 'Adding...' : 'Add' }}
+    </button>
+  </div>
+
+  @if (interestsLoading) {
+    <p>Loading interests...</p>
+  }
+
+  @if (!interestsLoading && interests.length === 0) {
+    <p class="muted">No interested properties yet.</p>
+  }
+
+  @if (!interestsLoading && interests.length > 0) {
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Status</th>
+          <th>Added</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (i of interests; track i.propertyId) {
+          <tr>
+            <td>{{ propertyTitle(i.propertyId) }}</td>
+            <td>{{ i.interestStatus }}</td>
+            <td>{{ i.createdAt }}</td>
+            <td>
+              <button class="remove-btn" (click)="removeInterest(i.propertyId)"
+                      [disabled]="removingPropertyId === i.propertyId">
+                {{ removingPropertyId === i.propertyId ? 'Removing...' : 'Remove' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}
