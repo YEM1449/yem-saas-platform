@@ -52,76 +52,54 @@
     <dd>{{ prospect.updatedAt }}</dd>
   </dl>
 
-  <!-- Deposit / Reservation Section -->
-  <h3>Réservation / Acompte</h3>
+  <h3>Interested Properties</h3>
 
-  @if (depositError) {
-    <p class="error">{{ depositError }}</p>
-  }
-  @if (depositSuccess) {
-    <p class="success">{{ depositSuccess }}</p>
+  @if (interestError) {
+    <p class="error">{{ interestError }}</p>
   }
 
-  <div class="deposit-form">
-    <div class="form-row">
-      <label for="dep-property">Property</label>
-      <select id="dep-property" [(ngModel)]="selectedPropertyId" [disabled]="creatingDeposit">
-        <option value="">-- Select a property --</option>
-        @for (p of properties; track p.id) {
-          <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
-        }
-      </select>
-    </div>
-    <div class="form-row">
-      <label for="dep-amount">Amount</label>
-      <input id="dep-amount" type="number" min="1" step="0.01"
-             [(ngModel)]="depositAmount" [disabled]="creatingDeposit"
-             placeholder="e.g. 5000" />
-    </div>
-    <div class="form-row">
-      <label for="dep-notes">Notes</label>
-      <input id="dep-notes" type="text" [(ngModel)]="depositNotes"
-             [disabled]="creatingDeposit" placeholder="Optional" />
-    </div>
-    <button (click)="createDeposit()"
-            [disabled]="!selectedPropertyId || !depositAmount || creatingDeposit">
-      {{ creatingDeposit ? 'Creating...' : 'Create Deposit' }}
+  <div class="add-interest">
+    <select [(ngModel)]="selectedPropertyId" [disabled]="addingInterest">
+      <option value="">-- Select a property --</option>
+      @for (p of availableProperties; track p.id) {
+        <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
+      }
+    </select>
+    <button (click)="addInterest()" [disabled]="!selectedPropertyId || addingInterest">
+      {{ addingInterest ? 'Adding...' : 'Add' }}
     </button>
   </div>
 
-  @if (depositsLoading) {
-    <p>Loading deposits...</p>
+  @if (interestsLoading) {
+    <p>Loading interests...</p>
   }
 
-  @if (!depositsLoading && deposits.length === 0) {
-    <p class="muted">No deposits yet.</p>
+  @if (!interestsLoading && interests.length === 0) {
+    <p class="muted">No interested properties yet.</p>
   }
 
-  @if (!depositsLoading && deposits.length > 0) {
+  @if (!interestsLoading && interests.length > 0) {
     <table>
       <thead>
         <tr>
           <th>Property</th>
-          <th>Amount</th>
           <th>Status</th>
-          <th>Reference</th>
-          <th>Due Date</th>
-          <th>Created</th>
+          <th>Added</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (d of deposits; track d.id) {
+        @for (i of interests; track i.propertyId) {
           <tr>
-            <td>{{ propertyTitle(d.propertyId) }}</td>
-            <td>{{ d.amount }} {{ d.currency }}</td>
+            <td>{{ propertyTitle(i.propertyId) }}</td>
+            <td>{{ i.interestStatus }}</td>
+            <td>{{ i.createdAt }}</td>
             <td>
-              <span class="badge" [class]="'badge-' + d.status.toLowerCase()">
-                {{ d.status }}
-              </span>
+              <button class="remove-btn" (click)="removeInterest(i.propertyId)"
+                      [disabled]="removingPropertyId === i.propertyId">
+                {{ removingPropertyId === i.propertyId ? 'Removing...' : 'Remove' }}
+              </button>
             </td>
-            <td>{{ d.reference }}</td>
-            <td>{{ d.dueDate ?? '—' }}</td>
-            <td>{{ d.createdAt }}</td>
           </tr>
         }
       </tbody>

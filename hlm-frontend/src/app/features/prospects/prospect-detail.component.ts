@@ -4,10 +4,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProspectService } from './prospect.service';
-import { DepositService, CreateDepositRequest } from './deposit.service';
+import { ContactInterestService } from './contact-interest.service';
 import { PropertyService } from '../properties/property.service';
 import { Prospect, PROSPECT_STATUSES } from '../../core/models/prospect.model';
-import { Deposit } from '../../core/models/deposit.model';
+import { ContactInterest } from '../../core/models/contact-interest.model';
 import { Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 
@@ -20,7 +20,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 })
 export class ProspectDetailComponent implements OnInit {
   private svc = inject(ProspectService);
-  private depositSvc = inject(DepositService);
+  private interestSvc = inject(ContactInterestService);
   private propertySvc = inject(PropertyService);
   private route = inject(ActivatedRoute);
 
@@ -32,16 +32,13 @@ export class ProspectDetailComponent implements OnInit {
   updating = false;
   statuses = PROSPECT_STATUSES;
 
-  // Deposit section
-  deposits: Deposit[] = [];
+  interests: ContactInterest[] = [];
   properties: Property[] = [];
-  depositsLoading = false;
-  depositError = '';
-  depositSuccess = '';
+  interestsLoading = false;
+  interestError = '';
   selectedPropertyId = '';
-  depositAmount: number | null = null;
-  depositNotes = '';
-  creatingDeposit = false;
+  addingInterest = false;
+  removingPropertyId = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -50,7 +47,7 @@ export class ProspectDetailComponent implements OnInit {
         this.prospect = data;
         this.selectedStatus = data.status;
         this.loading = false;
-        this.loadDeposits();
+        this.loadInterests();
         this.loadProperties();
       },
       error: (err: HttpErrorResponse) => {
@@ -91,19 +88,19 @@ export class ProspectDetailComponent implements OnInit {
     });
   }
 
-  loadDeposits(): void {
+  loadInterests(): void {
     if (!this.prospect) return;
-    this.depositsLoading = true;
-    this.depositError = '';
-    this.depositSvc.listByContact(this.prospect.id).subscribe({
+    this.interestsLoading = true;
+    this.interestError = '';
+    this.interestSvc.list(this.prospect.id).subscribe({
       next: (data) => {
-        this.deposits = data;
-        this.depositsLoading = false;
+        this.interests = data;
+        this.interestsLoading = false;
       },
       error: (err: HttpErrorResponse) => {
-        this.depositsLoading = false;
+        this.interestsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Failed to load deposits (${err.status})`;
+        this.interestError = body?.message ?? `Failed to load interests (${err.status})`;
       },
     });
   }
@@ -120,40 +117,42 @@ export class ProspectDetailComponent implements OnInit {
     return p ? `${p.title} (${p.referenceCode})` : propertyId;
   }
 
-  createDeposit(): void {
-    if (!this.prospect || !this.selectedPropertyId || !this.depositAmount) return;
+  get availableProperties(): Property[] {
+    const interestedIds = new Set(this.interests.map((i) => i.propertyId));
+    return this.properties.filter((p) => !interestedIds.has(p.id));
+  }
 
-    this.creatingDeposit = true;
-    this.depositError = '';
-    this.depositSuccess = '';
-
-    const req: CreateDepositRequest = {
-      contactId: this.prospect.id,
-      propertyId: this.selectedPropertyId,
-      amount: this.depositAmount,
-      notes: this.depositNotes || undefined,
-    };
-
-    this.depositSvc.create(req).subscribe({
+  addInterest(): void {
+    if (!this.prospect || !this.selectedPropertyId) return;
+    this.addingInterest = true;
+    this.interestError = '';
+    this.interestSvc.add(this.prospect.id, this.selectedPropertyId).subscribe({
       next: () => {
-        this.creatingDeposit = false;
-        this.depositSuccess = 'Deposit created successfully.';
         this.selectedPropertyId = '';
-        this.depositAmount = null;
-        this.depositNotes = '';
-        this.loadDeposits();
-        // Refresh prospect to reflect status change
-        this.svc.getById(this.prospect!.id).subscribe({
-          next: (updated) => {
-            this.prospect = updated;
-            this.selectedStatus = updated.status;
-          },
-        });
+        this.addingInterest = false;
+        this.loadInterests();
       },
       error: (err: HttpErrorResponse) => {
-        this.creatingDeposit = false;
+        this.addingInterest = false;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Failed to create deposit (${err.status})`;
+        this.interestError = body?.message ?? `Failed to add interest (${err.status})`;
+      },
+    });
+  }
+
+  removeInterest(propertyId: string): void {
+    if (!this.prospect) return;
+    this.removingPropertyId = propertyId;
+    this.interestError = '';
+    this.interestSvc.remove(this.prospect.id, propertyId).subscribe({
+      next: () => {
+        this.removingPropertyId = '';
+        this.loadInterests();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.removingPropertyId = '';
+        const body = err.error as ErrorResponse | null;
+        this.interestError = body?.message ?? `Failed to remove interest (${err.status})`;
       },
     });
   }
