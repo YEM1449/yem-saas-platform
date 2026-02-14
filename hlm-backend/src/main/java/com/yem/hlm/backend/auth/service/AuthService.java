@@ -5,16 +5,22 @@ import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
-    private final PasswordEncoder   passwordEncoder;
-    private final JwtProvider        jwtProvider;
-    private final JwtProperties      jwtProperties;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
+    private final JwtProperties jwtProperties;
 
     public AuthService(TenantRepository tenantRepository,
                        UserRepository userRepository,
@@ -27,30 +33,30 @@ public class AuthService {
         this.jwtProvider      = jwtProvider;
         this.jwtProperties    = jwtProperties;
     }
-    public LoginResponse login (LoginRequest req){
-        // 1) Normaliser l’input (important pour éviter admin@X.com vs admin@x.com)
+
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest req) {
         String tenantKey = req.tenantKey().trim().toLowerCase();
         String email     = req.email().trim().toLowerCase();
         String password  = req.password();
 
-        // 2) Charger tenant
         var tenant = tenantRepository.findByKey(tenantKey)
-                        .orElseThrow(UnauthorizedException::new); // ne révèle pas si tenant existe
-        // 3) Charger user
+                .orElseThrow(UnauthorizedException::new);
+
         var user = userRepository.findByTenant_IdAndEmail(tenant.getId(), email)
                 .orElseThrow(UnauthorizedException::new);
 
-        // 4) Vérifier enabled
-        if (!user.isEnabled()){
+        if (!user.isEnabled()) {
             throw new UnauthorizedException();
         }
 
-        // 5) Vérifier password (BCrypt)
-        if (!passwordEncoder.matches(password, user.getPasswordHash())){
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new UnauthorizedException();
         }
 
-        // 6) Generate real JWT
+        log.debug("Login successful for tenant={} user={} role={}",
+                tenantKey, email, user.getRole());
+
         String token = jwtProvider.generate(user.getId(), tenant.getId(), user.getRole());
         long expiresInSeconds = jwtProperties.ttlSeconds();
 

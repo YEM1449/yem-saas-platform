@@ -15,3 +15,14 @@
 - `cd hlm-backend`
 - `./mvnw test`
 - Optional: `./mvnw -DskipTests=false verify`
+
+## Board hygiene
+
+A GitHub issue is **Done** when all of the following are true:
+
+1. Code changes are merged to `main`.
+2. Unit tests pass (`./mvnw test` for backend, `npm run build` for frontend).
+3. Integration tests pass if the issue touches backend logic (`./mvnw failsafe:integration-test`).
+4. Documentation is updated (README, runbook, API docs) if the change affects developer-facing behavior.
+
+Move the issue to **Done** only after merge. If CI is red on `main`, reopen.

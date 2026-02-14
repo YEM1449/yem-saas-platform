@@ -16,7 +16,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
@@ -25,27 +24,9 @@ import com.yem.hlm.backend.tenant.context.TenantContext;
 /**
  * JWT Authentication Filter (OncePerRequestFilter).
  *
- * <p>Responsibilities:</p>
- * <ul>
- *   <li>Read Bearer token from Authorization header</li>
- *   <li>Validate signature + expiration</li>
- *   <li>Extract mandatory claims:
- *       <ul>
- *         <li>subject = userId (UUID string)</li>
- *         <li>tid = tenantId (UUID string)</li>
- *       </ul>
- *   </li>
- *   <li>Populate {@link TenantContext} (ThreadLocal) for multi-tenant isolation</li>
- *   <li>Populate Spring Security Authentication</li>
- * </ul>
- *
- * <p>Design choice:</p>
- * <ul>
- *   <li>If token is missing / invalid / malformed => no exception here.</li>
- *   <li>We leave SecurityContext empty and let Spring Security handle 401 for protected endpoints.</li>
- * </ul>
+ * <p>Not a @Component: instantiated explicitly by {@link SecurityConfig} to avoid
+ * double-registration (once as a servlet filter, once in the security chain).</p>
  */
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;

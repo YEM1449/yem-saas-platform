@@ -9,6 +9,7 @@
 - [API Quickstart](api-quickstart.md) — curl flows for frontend integration
 - [Database](database.md)
 - [Security](security.md)
+- [Local Development Guide](local-dev.md)
 - [Runbook](runbook.md)
 - [Contributing](contributing.md)
 

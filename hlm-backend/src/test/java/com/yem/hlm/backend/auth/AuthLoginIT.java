@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -106,6 +107,87 @@ class AuthLoginIT extends IntegrationTestBase {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.path").value("/auth/login"));
+    }
+
+    @Test
+    void createTenantThenLogin_returns200WithValidJwt() throws Exception {
+        String key = "repro-" + UUID.randomUUID().toString().substring(0, 8);
+        String createBody = """
+            {
+              "key": "%s",
+              "name": "Repro Tenant",
+              "ownerEmail": "owner@repro.com",
+              "ownerPassword": "Admin123!"
+            }
+            """.formatted(key);
+
+        // 1) Create tenant
+        mockMvc.perform(post("/tenants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody))
+                .andExpect(status().isCreated());
+
+        // 2) Login with owner creds — should be 200, NOT 500
+        String loginBody = """
+            {
+              "tenantKey": "%s",
+              "email": "owner@repro.com",
+              "password": "Admin123!"
+            }
+            """.formatted(key);
+
+        MvcResult result = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andReturn();
+
+        // 3) Validate JWT claims
+        String token = com.jayway.jsonpath.JsonPath.read(
+                result.getResponse().getContentAsString(), "$.accessToken");
+        assertThat(jwtProvider.isValid(token)).isTrue();
+        assertThat(jwtProvider.extractRoles(token)).contains("ROLE_ADMIN");
+
+        // 4) Call /auth/me with the token — validates end-to-end flow
+        mockMvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").isNotEmpty())
+                .andExpect(jsonPath("$.tenantId").isNotEmpty());
+    }
+
+    @Test
+    void createTenantThenLoginWrongPassword_returns401() throws Exception {
+        String key = "repro2-" + UUID.randomUUID().toString().substring(0, 8);
+        String createBody = """
+            {
+              "key": "%s",
+              "name": "Repro Tenant 2",
+              "ownerEmail": "owner@repro2.com",
+              "ownerPassword": "Admin123!"
+            }
+            """.formatted(key);
+
+        mockMvc.perform(post("/tenants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody))
+                .andExpect(status().isCreated());
+
+        String loginBody = """
+            {
+              "tenantKey": "%s",
+              "email": "owner@repro2.com",
+              "password": "WRONG"
+            }
+            """.formatted(key);
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
