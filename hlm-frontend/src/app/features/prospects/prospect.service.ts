@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Prospect, ProspectPage } from '../../core/models/prospect.model';
@@ -9,7 +9,10 @@ export class ProspectService {
   private http = inject(HttpClient);
 
   list(): Observable<ProspectPage> {
-    return this.http.get<ProspectPage>(`${environment.apiUrl}/api/contacts?contactType=PROSPECT`);
+    const params = new HttpParams()
+      .append('contactType', 'PROSPECT')
+      .append('contactType', 'TEMP_CLIENT');
+    return this.http.get<ProspectPage>(`${environment.apiUrl}/api/contacts`, { params });
   }
 
   getById(id: string): Observable<Prospect> {

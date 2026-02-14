@@ -37,7 +37,7 @@ public class ContactController {
 
     @GetMapping("/contacts")
     public Page<ContactResponse> list(
-            @RequestParam(value = "contactType", required = false) ContactType contactType,
+            @RequestParam(value = "contactType", required = false) List<ContactType> contactType,
             @RequestParam(value = "status", required = false) ContactStatus status,
             @RequestParam(value = "q", required = false) String q,
             @PageableDefault(size = 20) Pageable pageable

@@ -156,7 +156,7 @@ class ContactServiceIT extends IntegrationTestBase {
         contactService.create(new CreateContactRequest("Boubker", "Hamzaoui", null, "bob@example.com", null, null, null));
         contactService.create(new CreateContactRequest("hamza", "Igaman", null, "john2@example.com", null, null, null));
 
-        var page = contactService.list(null, ContactStatus.PROSPECT, "hamza", PageRequest.of(0, 10));
+        var page = contactService.list(null, ContactStatus.PROSPECT, "hamza", PageRequest.of(0, 10));  // null = no type filter
         assertThat(page.getTotalElements()).isEqualTo(3); // Abou Hamza Louz, Boubker Hamzaoui, hamza Igaman
     }
 }
