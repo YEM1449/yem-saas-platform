@@ -1,0 +1,129 @@
+h2 {
+  margin: 0 0 16px;
+}
+
+.status-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.status-control label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.status-control select {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.updating {
+  color: #1a73e8;
+  font-size: 0.85rem;
+}
+
+.status-msg {
+  font-size: 0.85rem;
+  color: #388e3c;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+}
+
+dt {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+dd {
+  margin: 0;
+}
+
+a {
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h3 {
+  margin: 32px 0 12px;
+  font-size: 1.1rem;
+}
+
+.add-interest {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.add-interest select {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  min-width: 260px;
+}
+
+.add-interest button {
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.remove-btn {
+  background: none;
+  border: 1px solid #d32f2f;
+  color: #d32f2f;
+  padding: 2px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.remove-btn:hover:not(:disabled) {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #d32f2f;
+}

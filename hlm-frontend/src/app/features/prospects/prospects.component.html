@@ -1,0 +1,38 @@
+<h2>Prospects</h2>
+
+@if (loading) {
+  <p>Loading prospects...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && !error && prospects.length === 0) {
+  <p>No prospects found.</p>
+}
+
+@if (!loading && prospects.length > 0) {
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Qualified</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of prospects; track p.id) {
+        <tr class="clickable" [routerLink]="['/app/prospects', p.id]">
+          <td>{{ p.fullName }}</td>
+          <td>{{ p.email ?? '—' }}</td>
+          <td>{{ p.phone ?? '—' }}</td>
+          <td>{{ p.status }}</td>
+          <td>{{ p.qualified ? 'Yes' : 'No' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
