@@ -69,10 +69,12 @@ public class ContactService {
         return toResponse(contact);
     }
 
-    public Page<ContactResponse> list(ContactType contactType, ContactStatus status, String q, Pageable pageable) {
+    public Page<ContactResponse> list(List<ContactType> contactTypes, ContactStatus status, String q, Pageable pageable) {
         UUID tenantId = requireTenantId();
         String query = (q == null || q.isBlank()) ? null : q.trim();
-        return contactRepository.search(tenantId, contactType, status, query, pageable).map(this::toResponse);
+        boolean filterByType = contactTypes != null && !contactTypes.isEmpty();
+        return contactRepository.search(tenantId, filterByType, filterByType ? contactTypes : List.of(), status, query, pageable)
+                .map(this::toResponse);
     }
 
     public ContactResponse update(UUID contactId, UpdateContactRequest req) {

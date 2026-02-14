@@ -162,7 +162,36 @@ curl -s -X PATCH http://localhost:8080/api/contacts/<id>/status \
 3. Click a prospect row → `/app/prospects/:id` (details page)
 4. Change the **Status** dropdown → status updates immediately
 
-## 8. Running tests
+## 8. Demo: Deposit / Reservation flow
+
+### Via curl
+
+```bash
+TOKEN="<paste accessToken from login>"
+
+# Create a deposit for a prospect on a property
+CONTACT_ID="<prospect UUID>"
+PROPERTY_ID="<property UUID>"
+curl -s -X POST http://localhost:8080/api/deposits \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"contactId\":\"$CONTACT_ID\",\"propertyId\":\"$PROPERTY_ID\",\"amount\":5000}"
+
+# List deposits for a contact
+curl -s "http://localhost:8080/api/deposits/report?contactId=$CONTACT_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Via the Angular app
+
+1. Login at http://localhost:4200
+2. Click **Prospects** in the nav bar → `/app/prospects`
+3. Click a prospect row → `/app/prospects/:id` (details page)
+4. Scroll to **Réservation / Acompte** section
+5. Select a property, enter an amount, click **Create Deposit**
+6. Deposit appears in the table below; prospect status updates automatically
+
+## 9. Running tests
 
 ```bash
 cd hlm-backend

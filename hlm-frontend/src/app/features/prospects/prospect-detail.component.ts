@@ -5,9 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProspectService } from './prospect.service';
 import { ContactInterestService } from './contact-interest.service';
+import { DepositService, CreateDepositRequest } from './deposit.service';
 import { PropertyService } from '../properties/property.service';
 import { Prospect, PROSPECT_STATUSES } from '../../core/models/prospect.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
+import { Deposit } from '../../core/models/deposit.model';
 import { Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 
@@ -21,6 +23,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 export class ProspectDetailComponent implements OnInit {
   private svc = inject(ProspectService);
   private interestSvc = inject(ContactInterestService);
+  private depositSvc = inject(DepositService);
   private propertySvc = inject(PropertyService);
   private route = inject(ActivatedRoute);
 
@@ -40,6 +43,15 @@ export class ProspectDetailComponent implements OnInit {
   addingInterest = false;
   removingPropertyId = '';
 
+  deposits: Deposit[] = [];
+  depositsLoading = false;
+  depositError = '';
+  depositSuccess = '';
+  depositPropertyId = '';
+  depositAmount: number | null = null;
+  depositNotes = '';
+  creatingDeposit = false;
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.getById(id).subscribe({
@@ -48,6 +60,7 @@ export class ProspectDetailComponent implements OnInit {
         this.selectedStatus = data.status;
         this.loading = false;
         this.loadInterests();
+        this.loadDeposits();
         this.loadProperties();
       },
       error: (err: HttpErrorResponse) => {
@@ -153,6 +166,60 @@ export class ProspectDetailComponent implements OnInit {
         this.removingPropertyId = '';
         const body = err.error as ErrorResponse | null;
         this.interestError = body?.message ?? `Failed to remove interest (${err.status})`;
+      },
+    });
+  }
+
+  loadDeposits(): void {
+    if (!this.prospect) return;
+    this.depositsLoading = true;
+    this.depositError = '';
+    this.depositSvc.listByContact(this.prospect.id).subscribe({
+      next: (data) => {
+        this.deposits = data;
+        this.depositsLoading = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.depositsLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.depositError = body?.message ?? `Failed to load deposits (${err.status})`;
+      },
+    });
+  }
+
+  createDeposit(): void {
+    if (!this.prospect || !this.depositPropertyId || !this.depositAmount) return;
+    this.creatingDeposit = true;
+    this.depositError = '';
+    this.depositSuccess = '';
+
+    const req: CreateDepositRequest = {
+      contactId: this.prospect.id,
+      propertyId: this.depositPropertyId,
+      amount: this.depositAmount,
+      notes: this.depositNotes || undefined,
+    };
+
+    this.depositSvc.create(req).subscribe({
+      next: () => {
+        this.creatingDeposit = false;
+        this.depositSuccess = 'Deposit created successfully.';
+        this.depositPropertyId = '';
+        this.depositAmount = null;
+        this.depositNotes = '';
+        this.loadDeposits();
+        // Refresh prospect to reflect status/type change from workflow
+        this.svc.getById(this.prospect!.id).subscribe({
+          next: (updated) => {
+            this.prospect = updated;
+            this.selectedStatus = updated.status;
+          },
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.creatingDeposit = false;
+        const body = err.error as ErrorResponse | null;
+        this.depositError = body?.message ?? `Failed to create deposit (${err.status})`;
       },
     });
   }

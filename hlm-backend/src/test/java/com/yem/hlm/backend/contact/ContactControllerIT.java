@@ -317,4 +317,50 @@ class ContactControllerIT extends IntegrationTestBase {
                         .content("{\"status\":\"QUALIFIED_PROSPECT\"}"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void listContacts_multipleContactTypes_includesTempClient() throws Exception {
+        // Create a PROSPECT contact, then deposit converts it to TEMP_CLIENT
+        var req = new CreateContactRequest("TempClient", "Prospect", null, "tempclient@acme.com", null, null, null);
+        String json = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(json, ContactResponse.class).id();
+
+        // Manually update to TEMP_CLIENT to simulate deposit workflow
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"QUALIFIED_PROSPECT\"}"))
+                .andExpect(status().isOk());
+
+        // Filter by PROSPECT only — should NOT include TEMP_CLIENT contacts
+        // (the contact is still PROSPECT type at this point since status ≠ type)
+        // Now create another contact that stays PROSPECT
+        var req2 = new CreateContactRequest("StillProspect", "Test", null, "stillprospect@acme.com", null, null, null);
+        mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req2)))
+                .andExpect(status().isCreated());
+
+        // Filter by both PROSPECT and TEMP_CLIENT — should include both types
+        String multiJson = mvc.perform(get("/api/contacts")
+                        .param("contactType", "PROSPECT", "TEMP_CLIENT")
+                        .header("Authorization", bearer))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        var multiPage = objectMapper.readTree(multiJson);
+        var multiContent = multiPage.get("content");
+        assertThat(multiContent.isArray()).isTrue();
+        assertThat(multiContent.size()).isGreaterThanOrEqualTo(2);
+        for (var node : multiContent) {
+            String type = node.get("contactType").asText();
+            assertThat(type).isIn("PROSPECT", "TEMP_CLIENT");
+        }
+    }
 }

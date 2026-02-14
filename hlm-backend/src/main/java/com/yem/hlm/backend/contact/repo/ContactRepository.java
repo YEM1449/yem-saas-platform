@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
     @Query("""
             select c from Contact c
             where c.tenant.id = :tenantId
-              and (:contactType is null or c.contactType = :contactType)
+              and (:filterByType = false or c.contactType IN :contactTypes)
               and (:status is null or c.status = :status)
               and (
                    :q is null
@@ -35,7 +36,8 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
             """)
     Page<Contact> search(
             @Param("tenantId") UUID tenantId,
-            @Param("contactType") ContactType contactType,
+            @Param("filterByType") boolean filterByType,
+            @Param("contactTypes") Collection<ContactType> contactTypes,
             @Param("status") ContactStatus status,
             @Param("q") String q,
             Pageable pageable

@@ -105,4 +105,80 @@
       </tbody>
     </table>
   }
+
+  <!-- Deposit / Reservation Section -->
+  <h3>Réservation / Acompte</h3>
+
+  @if (depositError) {
+    <p class="error">{{ depositError }}</p>
+  }
+  @if (depositSuccess) {
+    <p class="success">{{ depositSuccess }}</p>
+  }
+
+  <div class="deposit-form">
+    <div class="form-row">
+      <label for="dep-property">Property</label>
+      <select id="dep-property" [(ngModel)]="depositPropertyId" [disabled]="creatingDeposit">
+        <option value="">-- Select a property --</option>
+        @for (p of properties; track p.id) {
+          <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
+        }
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="dep-amount">Amount</label>
+      <input id="dep-amount" type="number" min="1" step="0.01"
+             [(ngModel)]="depositAmount" [disabled]="creatingDeposit"
+             placeholder="e.g. 5000" />
+    </div>
+    <div class="form-row">
+      <label for="dep-notes">Notes</label>
+      <input id="dep-notes" type="text" [(ngModel)]="depositNotes"
+             [disabled]="creatingDeposit" placeholder="Optional" />
+    </div>
+    <button (click)="createDeposit()"
+            [disabled]="!depositPropertyId || !depositAmount || creatingDeposit">
+      {{ creatingDeposit ? 'Creating...' : 'Create Deposit' }}
+    </button>
+  </div>
+
+  @if (depositsLoading) {
+    <p>Loading deposits...</p>
+  }
+
+  @if (!depositsLoading && deposits.length === 0) {
+    <p class="muted">No deposits yet.</p>
+  }
+
+  @if (!depositsLoading && deposits.length > 0) {
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Reference</th>
+          <th>Due Date</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of deposits; track d.id) {
+          <tr>
+            <td>{{ propertyTitle(d.propertyId) }}</td>
+            <td>{{ d.amount }} {{ d.currency }}</td>
+            <td>
+              <span class="badge" [class]="'badge-' + d.status.toLowerCase()">
+                {{ d.status }}
+              </span>
+            </td>
+            <td>{{ d.reference }}</td>
+            <td>{{ d.dueDate ?? '—' }}</td>
+            <td>{{ d.createdAt }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 }
