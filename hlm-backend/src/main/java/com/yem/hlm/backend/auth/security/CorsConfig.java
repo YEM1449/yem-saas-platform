@@ -17,6 +17,7 @@ public class CorsConfig {
 
         // ✅ Mets ici les origins de ton frontend (dev)
         config.setAllowedOrigins(List.of(
+                "http://localhost:4200", // Angular dev
                 "http://localhost:5173", // Vite
                 "http://localhost:3000"  // CRA / Next dev
         ));
