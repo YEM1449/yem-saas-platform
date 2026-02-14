@@ -137,7 +137,32 @@ curl -s http://localhost:8080/api/contacts/<id> \
 2. Click **Contacts** in the nav bar → `/app/contacts`
 3. Click a contact row → `/app/contacts/:id` (details page)
 
-## 7. Running tests
+## 7. Demo: Prospects flow
+
+### Via curl
+
+```bash
+TOKEN="<paste accessToken from login>"
+
+# List prospects only (contacts filtered by type)
+curl -s "http://localhost:8080/api/contacts?contactType=PROSPECT" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Update a prospect's status
+curl -s -X PATCH http://localhost:8080/api/contacts/<id>/status \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"QUALIFIED_PROSPECT"}'
+```
+
+### Via the Angular app
+
+1. Login at http://localhost:4200
+2. Click **Prospects** in the nav bar → `/app/prospects`
+3. Click a prospect row → `/app/prospects/:id` (details page)
+4. Change the **Status** dropdown → status updates immediately
+
+## 8. Running tests
 
 ```bash
 cd hlm-backend

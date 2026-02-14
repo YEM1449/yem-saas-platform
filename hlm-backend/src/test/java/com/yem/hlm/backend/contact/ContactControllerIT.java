@@ -213,4 +213,108 @@ class ContactControllerIT extends IntegrationTestBase {
                         .header("Authorization", bearerB))
                 .andExpect(status().isNotFound());
     }
+
+    // ===== Prospect-specific Tests =====
+
+    @Test
+    void listContacts_filterByContactType_returnsOnlyProspects() throws Exception {
+        // Create a contact (defaults to PROSPECT type)
+        var req = new CreateContactRequest("Filtered", "Prospect", null, "fp@acme.com", null, null, null);
+        mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+
+        // List with contactType=PROSPECT filter
+        String json = mvc.perform(get("/api/contacts")
+                        .param("contactType", "PROSPECT")
+                        .header("Authorization", bearer))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        var page = objectMapper.readTree(json);
+        var content = page.get("content");
+        assertThat(content.isArray()).isTrue();
+        for (var node : content) {
+            assertThat(node.get("contactType").asText()).isEqualTo("PROSPECT");
+        }
+    }
+
+    @Test
+    void updateStatus_validTransition_returnsUpdated() throws Exception {
+        // Create contact
+        var req = new CreateContactRequest("Status", "Test", null, "status@acme.com", null, null, null);
+        String json = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PROSPECT"))
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(json, ContactResponse.class).id();
+
+        // Update status to QUALIFIED_PROSPECT
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"QUALIFIED_PROSPECT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("QUALIFIED_PROSPECT"));
+    }
+
+    @Test
+    void updateStatus_invalidValue_returns400() throws Exception {
+        var req = new CreateContactRequest("Bad", "Status", null, "badstatus@acme.com", null, null, null);
+        String json = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(json, ContactResponse.class).id();
+
+        // Invalid enum value
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INVALID_STATUS\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateStatus_crossTenant_returns404() throws Exception {
+        // Create contact in tenant A
+        var req = new CreateContactRequest("CrossStatus", "Test", null, "crossstatus@acme.com", null, null, null);
+        String json = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(json, ContactResponse.class).id();
+
+        // Create tenant B
+        String otherKey = "iso-status-" + UUID.randomUUID().toString().substring(0, 8);
+        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Status Isolation"));
+        User userB = new User(tenantB, "admin@iso-status.com", "hashedPass");
+        userB.setRole(UserRole.ROLE_ADMIN);
+        userB = userRepository.save(userB);
+        String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
+
+        // Tenant B tries to update status of tenant A's contact — must be 404
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearerB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"QUALIFIED_PROSPECT\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateStatus_unauthenticated_returns401() throws Exception {
+        mvc.perform(patch("/api/contacts/{id}/status", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"QUALIFIED_PROSPECT\"}"))
+                .andExpect(status().isUnauthorized());
+    }
 }
