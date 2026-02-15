@@ -8,6 +8,14 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return auth.verifySession().pipe(
-    map((valid) => valid || router.createUrlTree(['/login']))
+    map((status) => {
+      if (status === 'valid' || status === 'unknown') {
+        // 'valid' = confirmed by backend
+        // 'unknown' = network/5xx — keep user in app (token still present)
+        return true;
+      }
+      // 'invalid' = 401/403 or no token → redirect to login
+      return router.createUrlTree(['/login']);
+    })
   );
 };
