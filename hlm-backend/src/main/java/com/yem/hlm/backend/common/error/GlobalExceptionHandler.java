@@ -5,6 +5,8 @@ import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.deposit.service.*;
 
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
+import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
+import com.yem.hlm.backend.user.service.UserNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
@@ -124,7 +126,8 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             DepositNotFoundException.class,
             NotificationNotFoundException.class,
-            PropertyNotFoundException.class
+            PropertyNotFoundException.class,
+            UserNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,
@@ -170,6 +173,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.CONTACT_EMAIL_EXISTS,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(UserEmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserEmailExists(
+            UserEmailAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.USER_EMAIL_EXISTS,
                 ex.getMessage(),
                 request.getRequestURI()
         );
