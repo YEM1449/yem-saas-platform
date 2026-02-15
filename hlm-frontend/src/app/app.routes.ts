@@ -13,6 +13,7 @@ export const routes: Routes = [
       { path: 'contacts/:id', loadComponent: () => import('./features/contacts/contact-detail.component').then(m => m.ContactDetailComponent) },
       { path: 'prospects', loadComponent: () => import('./features/prospects/prospects.component').then(m => m.ProspectsComponent) },
       { path: 'prospects/:id', loadComponent: () => import('./features/prospects/prospect-detail.component').then(m => m.ProspectDetailComponent) },
+      { path: 'notifications', loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: '', redirectTo: 'properties', pathMatch: 'full' },
     ],
   },

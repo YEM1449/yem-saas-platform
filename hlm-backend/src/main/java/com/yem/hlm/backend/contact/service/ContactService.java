@@ -6,6 +6,7 @@ import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.deposit.service.DepositService;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -25,6 +26,7 @@ public class ContactService {
     private final ContactInterestRepository contactInterestRepository;
     private final TenantRepository tenantRepository;
     private final ProspectDetailRepository prospectDetailRepository;
+    private final PropertyRepository propertyRepository;
     private final DepositService depositService;
 
     public ContactService(
@@ -32,12 +34,14 @@ public class ContactService {
             ContactInterestRepository contactInterestRepository,
             TenantRepository tenantRepository,
             ProspectDetailRepository prospectDetailRepository,
+            PropertyRepository propertyRepository,
             DepositService depositService
     ) {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
         this.tenantRepository = tenantRepository;
         this.prospectDetailRepository = prospectDetailRepository;
+        this.propertyRepository = propertyRepository;
         this.depositService = depositService;
     }
 
@@ -108,6 +112,11 @@ public class ContactService {
         Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
+        ContactStatus current = contact.getStatus();
+        if (!current.canTransitionTo(newStatus)) {
+            throw new InvalidStatusTransitionException(current, newStatus);
+        }
+
         contact.setStatus(newStatus);
         contact.markUpdatedBy(actorUserId);
 
@@ -133,8 +142,9 @@ public class ContactService {
 
         UUID propertyId = req.propertyId();
 
-        // TODO: once property module exists, verify property belongs to tenantId
-        // e.g. propertyRepository.existsByTenant_IdAndId(tenantId, propertyId)
+        // Verify property exists and belongs to current tenant
+        propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         if (contactInterestRepository.existsByTenant_IdAndContactIdAndPropertyId(tenantId, contactId, propertyId)) {
             throw new ContactInterestAlreadyExistsException(contactId, propertyId);

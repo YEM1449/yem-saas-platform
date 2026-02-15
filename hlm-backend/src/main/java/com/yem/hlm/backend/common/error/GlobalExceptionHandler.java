@@ -3,6 +3,7 @@ package com.yem.hlm.backend.common.error;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.deposit.service.*;
+
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -61,6 +63,27 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation error on {}: {} field(s) invalid",
                 request.getRequestURI(), fieldErrors.size());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handle malformed JSON or invalid enum values in request bodies.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.VALIDATION_ERROR,
+                "Malformed request body",
+                request.getRequestURI()
+        );
+
+        log.warn("Unreadable request on {}: {}", request.getRequestURI(), ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -211,6 +234,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.INVALID_DEPOSIT_STATE,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
+            InvalidStatusTransitionException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_STATUS_TRANSITION,
                 ex.getMessage(),
                 request.getRequestURI()
         );

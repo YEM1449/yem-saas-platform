@@ -1,0 +1,35 @@
+<h2>Notifications</h2>
+
+<div class="toolbar">
+  <button (click)="toggleFilter()" [class.active]="filterUnread">
+    {{ filterUnread ? 'Show all' : 'Unread only' }}
+  </button>
+</div>
+
+@if (loading) {
+  <p>Loading notifications...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && !error && notifications.length === 0) {
+  <p>No notifications.</p>
+}
+
+@if (!loading && notifications.length > 0) {
+  <ul class="notif-list">
+    @for (n of notifications; track n.id) {
+      <li [class.unread]="!n.read" (click)="markAsRead(n)">
+        <div class="notif-header">
+          <span class="notif-type">{{ formatType(n.type) }}</span>
+          <span class="notif-date">{{ n.createdAt | date:'short' }}</span>
+        </div>
+        @if (!n.read) {
+          <span class="badge">NEW</span>
+        }
+      </li>
+    }
+  </ul>
+}

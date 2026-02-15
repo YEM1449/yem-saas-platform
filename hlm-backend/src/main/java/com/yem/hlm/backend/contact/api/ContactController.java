@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class ContactController {
 
     @PostMapping("/contacts")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse create(@Valid @RequestBody CreateContactRequest request) {
         return contactService.create(request);
     }
@@ -46,28 +48,33 @@ public class ContactController {
     }
 
     @PatchMapping("/contacts/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateContactRequest request) {
         return contactService.update(id, request);
     }
 
     @PatchMapping("/contacts/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse updateStatus(@PathVariable("id") UUID id, @Valid @RequestBody UpdateStatusRequest request) {
         return contactService.updateStatus(id, request.status());
     }
 
     @PostMapping("/contacts/{id}/convert-to-client")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse convert(@PathVariable("id") UUID id, @Valid @RequestBody ConvertToClientRequest request) {
         return contactService.convertToClient(id, request);
     }
 
     @PostMapping("/contacts/{id}/interests")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public void addInterest(@PathVariable("id") UUID id, @Valid @RequestBody ContactInterestRequest request) {
         contactService.addInterest(id, request);
     }
 
     @DeleteMapping("/contacts/{id}/interests/{propertyId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     public void removeInterest(@PathVariable("id") UUID id, @PathVariable UUID propertyId) {
         contactService.removeInterest(id, propertyId);
     }
