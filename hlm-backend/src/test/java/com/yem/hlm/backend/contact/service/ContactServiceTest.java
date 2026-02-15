@@ -7,6 +7,8 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.deposit.service.InvalidDepositRequestException;
+import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -36,6 +38,7 @@ class ContactServiceTest {
     @Mock ContactInterestRepository contactInterestRepository;
     @Mock TenantRepository tenantRepository;
     @Mock ProspectDetailRepository prospectDetailRepository;
+    @Mock PropertyRepository propertyRepository;
     @Mock DepositService depositService;
 
     @InjectMocks ContactService service;
@@ -128,10 +131,43 @@ class ContactServiceTest {
         UUID propertyId = UUID.randomUUID();
 
         when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(mock(Contact.class)));
+        when(propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(TENANT_ID, propertyId)).thenReturn(Optional.of(mock(Property.class)));
         when(contactInterestRepository.existsByTenant_IdAndContactIdAndPropertyId(TENANT_ID, contactId, propertyId))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> service.addInterest(contactId, new ContactInterestRequest(propertyId, null)))
                 .isInstanceOf(ContactInterestAlreadyExistsException.class);
+    }
+
+    @Test
+    void updateStatus_validTransition_succeeds() {
+        UUID contactId = UUID.randomUUID();
+        Contact contact = mock(Contact.class);
+        when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
+        when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
+        when(contactRepository.save(any(Contact.class))).thenReturn(contact);
+        when(contact.getId()).thenReturn(contactId);
+        when(contact.getFirstName()).thenReturn("John");
+        when(contact.getLastName()).thenReturn("Doe");
+        when(contact.getFullName()).thenReturn("John Doe");
+
+        ContactResponse res = service.updateStatus(contactId, ContactStatus.QUALIFIED_PROSPECT);
+
+        verify(contact).setStatus(ContactStatus.QUALIFIED_PROSPECT);
+        assertThat(res).isNotNull();
+    }
+
+    @Test
+    void updateStatus_invalidTransition_throws409() {
+        UUID contactId = UUID.randomUUID();
+        Contact contact = mock(Contact.class);
+        when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
+        when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
+
+        // PROSPECT → CLIENT is not allowed (must go through QUALIFIED_PROSPECT first)
+        assertThatThrownBy(() -> service.updateStatus(contactId, ContactStatus.CLIENT))
+                .isInstanceOf(InvalidStatusTransitionException.class)
+                .hasMessageContaining("PROSPECT")
+                .hasMessageContaining("CLIENT");
     }
 }

@@ -6,6 +6,7 @@ import com.yem.hlm.backend.deposit.service.DepositService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class DepositController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public DepositResponse create(@Valid @RequestBody CreateDepositRequest request) {
         return depositService.create(request);
     }
@@ -33,16 +35,19 @@ public class DepositController {
     }
 
     @PostMapping("/{id}/confirm")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public DepositResponse confirm(@PathVariable UUID id) {
         return depositService.confirm(id);
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public DepositResponse cancel(@PathVariable UUID id) {
         return depositService.cancel(id);
     }
 
     @GetMapping("/report")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public DepositReportResponse report(
             @RequestParam(value = "status", required = false) DepositStatus status,
             @RequestParam(value = "agentId", required = false) UUID agentId,

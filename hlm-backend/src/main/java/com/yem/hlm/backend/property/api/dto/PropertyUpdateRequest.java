@@ -15,6 +15,19 @@ public record PropertyUpdateRequest(
         String city,
         String region,
         String postalCode,
-        String legalStatus
+        String legalStatus,
+        // Type-specific fields (partial update — null = no change)
+        BigDecimal surfaceAreaSqm,
+        BigDecimal landAreaSqm,
+        Integer bedrooms,
+        Integer bathrooms,
+        Integer floors,
+        Integer parkingSpaces,
+        Boolean hasGarden,
+        Boolean hasPool,
+        Integer buildingYear,
+        Integer floorNumber,
+        String zoning,
+        Boolean isServiced
 ) {
 }

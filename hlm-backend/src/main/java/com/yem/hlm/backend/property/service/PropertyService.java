@@ -249,8 +249,20 @@ public class PropertyService {
     }
 
     private void validateTypeSpecificFieldsForUpdate(PropertyType type, PropertyUpdateRequest req) {
-        // Similar validation logic for updates (if fields are being modified)
-        // For simplicity, we skip validation on update if fields are null (partial update)
+        // Enforce forbidden fields per type (same rules as create)
+        switch (type) {
+            case LOT -> {
+                if (req.bedrooms() != null || req.bathrooms() != null || req.buildingYear() != null) {
+                    throw new InvalidPropertyTypeException("Bedrooms/bathrooms/building_year not applicable to LOT");
+                }
+            }
+            case TERRAIN_VIERGE -> {
+                if (req.bedrooms() != null || req.bathrooms() != null || req.buildingYear() != null || req.surfaceAreaSqm() != null) {
+                    throw new InvalidPropertyTypeException("Bedrooms/bathrooms/building_year/surface_area not applicable to TERRAIN_VIERGE");
+                }
+            }
+            default -> { /* VILLA, DUPLEX, APPARTEMENT: all fields allowed */ }
+        }
     }
 
     private void mapRequestToEntity(PropertyCreateRequest req, Property property) {
@@ -298,6 +310,18 @@ public class PropertyService {
         if (req.region() != null) property.setRegion(req.region());
         if (req.postalCode() != null) property.setPostalCode(req.postalCode());
         if (req.legalStatus() != null) property.setLegalStatus(req.legalStatus());
-        // Add other fields as needed for partial updates
+        // Type-specific fields (partial update)
+        if (req.surfaceAreaSqm() != null) property.setSurfaceAreaSqm(req.surfaceAreaSqm());
+        if (req.landAreaSqm() != null) property.setLandAreaSqm(req.landAreaSqm());
+        if (req.bedrooms() != null) property.setBedrooms(req.bedrooms());
+        if (req.bathrooms() != null) property.setBathrooms(req.bathrooms());
+        if (req.floors() != null) property.setFloors(req.floors());
+        if (req.parkingSpaces() != null) property.setParkingSpaces(req.parkingSpaces());
+        if (req.hasGarden() != null) property.setHasGarden(req.hasGarden());
+        if (req.hasPool() != null) property.setHasPool(req.hasPool());
+        if (req.buildingYear() != null) property.setBuildingYear(req.buildingYear());
+        if (req.floorNumber() != null) property.setFloorNumber(req.floorNumber());
+        if (req.zoning() != null) property.setZoning(req.zoning());
+        if (req.isServiced() != null) property.setIsServiced(req.isServiced());
     }
 }

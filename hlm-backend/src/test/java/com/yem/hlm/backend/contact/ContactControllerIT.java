@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
+import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
+import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -40,10 +45,11 @@ class ContactControllerIT extends IntegrationTestBase {
     @Autowired UserRepository userRepository;
 
     private String bearer;
+    private int refCounter = 0;
 
     @BeforeEach
     void setupToken() {
-        bearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID);
+        bearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
     }
 
     @Test
@@ -108,7 +114,7 @@ class ContactControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         ContactResponse created = objectMapper.readValue(json, ContactResponse.class);
 
-        UUID propertyId = UUID.randomUUID();
+        UUID propertyId = createActiveProperty();
         var interestReq = new ContactInterestRequest(propertyId, null);
 
         mvc.perform(post("/api/contacts/{id}/interests", created.id())
@@ -135,7 +141,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void unknownTenant_returns403() throws Exception {
         UUID unknownTenant = UUID.randomUUID();
-        String badBearer = "Bearer " + jwtProvider.generate(USER_ID, unknownTenant);
+        String badBearer = "Bearer " + jwtProvider.generate(USER_ID, unknownTenant, UserRole.ROLE_ADMIN);
 
         mvc.perform(post("/api/contacts")
                         .header("Authorization", badBearer)
@@ -311,6 +317,25 @@ class ContactControllerIT extends IntegrationTestBase {
     }
 
     @Test
+    void updateStatus_invalidTransition_returns409() throws Exception {
+        var req = new CreateContactRequest("Machine", "Test", null, "machine@acme.com", null, null, null);
+        String json = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(json, ContactResponse.class).id();
+
+        // PROSPECT → CLIENT is invalid (must go through QUALIFIED_PROSPECT first)
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"CLIENT\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void updateStatus_unauthenticated_returns401() throws Exception {
         mvc.perform(patch("/api/contacts/{id}/status", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -362,5 +387,38 @@ class ContactControllerIT extends IntegrationTestBase {
             String type = node.get("contactType").asText();
             assertThat(type).isIn("PROSPECT", "TEMP_CLIENT");
         }
+    }
+
+    // ===== Helpers =====
+
+    private UUID createActiveProperty() throws Exception {
+        String ref = "CCIT-" + (++refCounter);
+        var propReq = new PropertyCreateRequest(
+                PropertyType.VILLA, "Test Villa " + ref, ref,
+                new BigDecimal("1000000"), "MAD",
+                null, null, null, "Casablanca", null, null, null, null,
+                null, null, null, null,
+                new BigDecimal("200"), new BigDecimal("400"),
+                3, 2, 2, null, null, null, null, null, null, null, null, null
+        );
+
+        String body = mvc.perform(post("/api/properties")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(propReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        PropertyResponse created = objectMapper.readValue(body, PropertyResponse.class);
+
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        mvc.perform(put("/api/properties/{id}", created.id())
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk());
+
+        return created.id();
     }
 }

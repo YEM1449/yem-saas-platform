@@ -357,7 +357,7 @@ class DepositControllerIT extends IntegrationTestBase {
 
         // Activate the property (DRAFT → ACTIVE)
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearerToken)
                         .contentType(MediaType.APPLICATION_JSON)

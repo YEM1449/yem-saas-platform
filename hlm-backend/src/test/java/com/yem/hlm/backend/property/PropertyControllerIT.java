@@ -153,7 +153,8 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, // notes
                 new BigDecimal("6000000.00"),
                 PropertyStatus.ACTIVE,
-                null, null, null, null, null
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -180,7 +181,8 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         // Try to update as AGENT
         var updateReq = new PropertyUpdateRequest(
-                "Hacked Title", null, null, null, null, null, null, null, null, null
+                "Hacked Title", null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -380,7 +382,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
         // Update to ACTIVE
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null);
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -406,7 +408,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null);
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -558,6 +560,84 @@ class PropertyControllerIT extends IntegrationTestBase {
         mvc.perform(get("/dashboard/properties/summary?from=2024-12-31&to=2024-01-01")
                         .header("Authorization", adminBearer))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ===== Update Validation Tests =====
+
+    @Test
+    void updateLot_withForbiddenBedrooms_returns400() throws Exception {
+        // Create LOT
+        var lotReq = new PropertyCreateRequest(
+                PropertyType.LOT, "Test Lot", "LOT-UPD-001", new BigDecimal("300000"), "MAD",
+                null, null, null, "Rabat", null, null, null, null, null, null, null, null,
+                null, new BigDecimal("500"), null, null, null, null, null, null, null, null, "residential", true,
+                null, null
+        );
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(lotReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID lotId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        // Try to update with forbidden bedrooms → 400
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
+                null, null, 3, null, null, null, null, null, null, null, null, null);
+        mvc.perform(put("/api/properties/{id}", lotId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTerrainVierge_withForbiddenSurface_returns400() throws Exception {
+        // Create TERRAIN_VIERGE
+        var terrainReq = new PropertyCreateRequest(
+                PropertyType.TERRAIN_VIERGE, "Raw Land", "TER-UPD-001", new BigDecimal("200000"), "MAD",
+                null, null, null, "Kenitra", null, null, null, null, null, null, null, null,
+                null, new BigDecimal("1000"), null, null, null, null, null, null, null, null, null, null,
+                null, null
+        );
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(terrainReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID terrainId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        // Try to update with forbidden surfaceAreaSqm → 400
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null);
+        mvc.perform(put("/api/properties/{id}", terrainId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateVilla_withAllowedSurface_returns200() throws Exception {
+        var villaReq = createValidVillaRequest("VIL-UPD-SURF-001");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(villaReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        // Update surfaceAreaSqm on VILLA → allowed
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null);
+        mvc.perform(put("/api/properties/{id}", villaId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.surfaceAreaSqm").value(500));
     }
 
     // ===== Helper Methods =====

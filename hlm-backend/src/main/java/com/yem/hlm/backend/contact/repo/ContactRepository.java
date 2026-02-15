@@ -25,13 +25,13 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
             select c from Contact c
             where c.tenant.id = :tenantId
               and (:filterByType = false or c.contactType IN :contactTypes)
-              and (:status is null or c.status = :status)
+              and (cast(:status as string) is null or c.status = :status)
               and (
-                   :q is null
-                or lower(c.firstName) like lower(concat('%', :q, '%'))
-                or lower(c.lastName)  like lower(concat('%', :q, '%'))
-                or lower(c.email)     like lower(concat('%', :q, '%'))
-                or lower(c.phone)     like lower(concat('%', :q, '%'))
+                   cast(:q as string) is null
+                or lower(c.firstName) like lower(concat('%', cast(:q as string), '%'))
+                or lower(c.lastName)  like lower(concat('%', cast(:q as string), '%'))
+                or lower(c.email)     like lower(concat('%', cast(:q as string), '%'))
+                or lower(c.phone)     like lower(concat('%', cast(:q as string), '%'))
               )
             """)
     Page<Contact> search(
