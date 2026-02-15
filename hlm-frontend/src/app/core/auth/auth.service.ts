@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
+
+export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
 const TOKEN_KEY = 'hlm_access_token';
 
@@ -39,20 +41,29 @@ export class AuthService {
   /**
    * Verify session by calling /auth/me.
    * Caches the result so subsequent guard checks don't re-fetch.
+   *
+   * Returns:
+   * - 'valid'   — token verified by backend
+   * - 'invalid' — 401/403 from backend → session cleared
+   * - 'unknown' — network/5xx error → token kept, user stays in app
    */
-  verifySession(): Observable<boolean> {
+  verifySession(): Observable<SessionStatus> {
     if (this.cachedUser) {
-      return of(true);
+      return of('valid');
     }
     if (!this.token) {
-      return of(false);
+      return of('invalid');
     }
     return this.me().pipe(
       tap((user) => (this.cachedUser = user)),
-      map(() => true),
-      catchError(() => {
-        this.clearSession();
-        return of(false);
+      map((): SessionStatus => 'valid'),
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 401 || err.status === 403) {
+          this.clearSession();
+          return of('invalid' as SessionStatus);
+        }
+        // Network error / 5xx — keep token, don't force logout
+        return of('unknown' as SessionStatus);
       })
     );
   }

@@ -32,8 +32,13 @@ export class NotificationsComponent implements OnInit {
     if (n.read) return;
     this.svc.markRead(n.id).subscribe({
       next: (updated) => {
-        const idx = this.notifications.findIndex((x) => x.id === updated.id);
-        if (idx >= 0) this.notifications[idx] = updated;
+        if (this.filterUnread) {
+          // Remove from list — it's now read and filter shows unread only
+          this.notifications = this.notifications.filter((x) => x.id !== updated.id);
+        } else {
+          const idx = this.notifications.findIndex((x) => x.id === updated.id);
+          if (idx >= 0) this.notifications[idx] = updated;
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.error = `Failed to mark notification as read (${err.status})`;

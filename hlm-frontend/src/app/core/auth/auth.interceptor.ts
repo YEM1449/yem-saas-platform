@@ -9,6 +9,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Don't attach token to login requests (public endpoint)
   const skipAuth = req.url.endsWith('/auth/login');
+  // Don't auto-logout on /auth/me — verifySession handles that path
+  const isAuthMe = req.url.endsWith('/auth/me');
 
   const authReq = token && !skipAuth
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
@@ -19,7 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       error: (err) => {
         // On 401 from protected endpoints, clear token and redirect to login.
         // Skip for /auth/login itself to avoid redirect loop on bad credentials.
-        if (err.status === 401 && !skipAuth) {
+        if (err.status === 401 && !skipAuth && !isAuthMe) {
           auth.logout();
         }
       },
