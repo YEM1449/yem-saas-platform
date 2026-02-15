@@ -22,3 +22,36 @@ th {
 .error {
   color: #d32f2f;
 }
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-draft {
+  background: #e0e0e0;
+  color: #616161;
+}
+
+.badge-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-reserved {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-sold {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-withdrawn,
+.badge-archived {
+  background: #fce4ec;
+  color: #c62828;
+}

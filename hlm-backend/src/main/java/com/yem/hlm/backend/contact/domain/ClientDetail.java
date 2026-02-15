@@ -2,6 +2,7 @@ package com.yem.hlm.backend.contact.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "client_detail")
-public class ClientDetail {
+public class ClientDetail implements Persistable<UUID> {
 
     @Id
     @Column(name = "contact_id")
@@ -20,6 +21,25 @@ public class ClientDetail {
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id", nullable = false, foreignKey = @ForeignKey(name = "fk_client_detail_contact"))
     private Contact contact;
+
+    @Transient
+    private boolean isNewEntity = true;
+
+    @Override
+    public UUID getId() {
+        return contactId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNewEntity;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNewEntity = false;
+    }
 
     @Setter
     @Enumerated(EnumType.STRING)

@@ -5,8 +5,14 @@ import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.deposit.service.DepositAlreadyExistsException;
 import com.yem.hlm.backend.deposit.service.InvalidDepositRequestException;
+import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.domain.PropertyType;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +34,12 @@ class ContactServiceIT extends IntegrationTestBase {
 
     @Autowired
     private ContactService contactService;
+
+    @Autowired
+    private PropertyRepository propertyRepository;
+
+    @Autowired
+    private TenantRepository tenantRepository;
 
     @BeforeEach
     void setUpTenantContext() {
@@ -102,8 +114,10 @@ class ContactServiceIT extends IntegrationTestBase {
                 null
         ));
 
+        UUID propertyId = createActiveProperty();
+
         ContactResponse converted = contactService.convertToClient(created.id(), new ConvertToClientRequest(
-                UUID.randomUUID(),
+                propertyId,
                 new BigDecimal("5000.00"),
                 LocalDate.of(2026, 2, 1),
                 null,
@@ -129,7 +143,7 @@ class ContactServiceIT extends IntegrationTestBase {
                 null
         ));
 
-        UUID propertyId = UUID.randomUUID();
+        UUID propertyId = createActiveProperty();
 
         contactService.convertToClient(created.id(), new ConvertToClientRequest(
                 propertyId,
@@ -158,5 +172,19 @@ class ContactServiceIT extends IntegrationTestBase {
 
         var page = contactService.list(null, ContactStatus.PROSPECT, "hamza", PageRequest.of(0, 10));  // null = no type filter
         assertThat(page.getTotalElements()).isEqualTo(3); // Abou Hamza Louz, Boubker Hamzaoui, hamza Igaman
+    }
+
+    // ── helpers ──
+
+    private int refCounter = 0;
+
+    private UUID createActiveProperty() {
+        Tenant tenant = tenantRepository.getReferenceById(TENANT_ID);
+        Property property = new Property(tenant, PropertyType.VILLA, TenantContext.getUserId());
+        property.setReferenceCode("CSI-" + (++refCounter));
+        property.setTitle("Test Property " + refCounter);
+        property.setPrice(new BigDecimal("500000"));
+        property.setStatus(PropertyStatus.ACTIVE);
+        return propertyRepository.saveAndFlush(property).getId();
     }
 }

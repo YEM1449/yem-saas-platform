@@ -36,8 +36,8 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
               and (:agentId is null or d.agent.id = :agentId)
               and (:contactId is null or d.contact.id = :contactId)
               and (:propertyId is null or d.propertyId = :propertyId)
-              and (:from is null or d.createdAt >= :from)
-              and (:to is null or d.createdAt <= :to)
+              and (cast(:from as LocalDateTime) is null or d.createdAt >= :from)
+              and (cast(:to as LocalDateTime) is null or d.createdAt <= :to)
             order by d.createdAt desc
             """)
     List<Deposit> report(

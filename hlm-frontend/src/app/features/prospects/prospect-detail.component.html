@@ -121,7 +121,7 @@
       <label for="dep-property">Property</label>
       <select id="dep-property" [(ngModel)]="depositPropertyId" [disabled]="creatingDeposit">
         <option value="">-- Select a property --</option>
-        @for (p of properties; track p.id) {
+        @for (p of activeProperties; track p.id) {
           <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
         }
       </select>

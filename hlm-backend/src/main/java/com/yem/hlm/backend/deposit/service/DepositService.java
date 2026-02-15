@@ -9,12 +9,16 @@ import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.service.ContactNotFoundException;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
+import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
 import com.yem.hlm.backend.deposit.api.dto.*;
 import com.yem.hlm.backend.deposit.domain.Deposit;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.notification.domain.NotificationType;
 import com.yem.hlm.backend.notification.service.NotificationService;
+import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -39,6 +43,7 @@ public class DepositService {
     private final ContactRepository contactRepository;
     private final ContactInterestRepository contactInterestRepository;
     private final ClientDetailRepository clientDetailRepository;
+    private final PropertyRepository propertyRepository;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
@@ -49,6 +54,7 @@ public class DepositService {
             ContactRepository contactRepository,
             ContactInterestRepository contactInterestRepository,
             ClientDetailRepository clientDetailRepository,
+            PropertyRepository propertyRepository,
             TenantRepository tenantRepository,
             UserRepository userRepository,
             NotificationService notificationService,
@@ -58,6 +64,7 @@ public class DepositService {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
         this.clientDetailRepository = clientDetailRepository;
+        this.propertyRepository = propertyRepository;
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
@@ -110,6 +117,14 @@ public class DepositService {
             throw new PropertyAlreadyReservedException(propertyId);
         }
 
+        // Load property with pessimistic lock — validates existence + tenant isolation + availability
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+
+        if (property.getStatus() != PropertyStatus.ACTIVE) {
+            throw new PropertyAlreadyReservedException(propertyId);
+        }
+
         LocalDate depositDate = (req.depositDate() == null) ? LocalDate.now() : req.depositDate();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime dueDate = (req.dueDate() == null) ? now.plusDays(7) : req.dueDate();
@@ -129,6 +144,10 @@ public class DepositService {
         try {
             Deposit saved = depositRepository.save(deposit);
             depositRepository.flush();
+
+            // Mark property as RESERVED
+            property.setStatus(PropertyStatus.RESERVED);
+            propertyRepository.save(property);
 
             // Ensure interest link exists (contact remains "interested" even if deposit expires).
             ensureInterestExists(tenantId, tenant, contact.getId(), propertyId);
@@ -232,6 +251,9 @@ public class DepositService {
         deposit.setStatus(DepositStatus.CANCELLED);
         deposit.setCancelledAt(LocalDateTime.now());
 
+        // Release property reservation
+        releasePropertyReservation(deposit);
+
         Contact contact = deposit.getContact();
         // If not a real client, revert to prospect (qualified stays true)
         if (contact.getContactType() != ContactType.CLIENT) {
@@ -329,6 +351,9 @@ public class DepositService {
         d.setCancelledAt(LocalDateTime.now());
         depositRepository.save(d);
 
+        // Release property reservation
+        releasePropertyReservation(d);
+
         Contact contact = d.getContact();
         if (contact.getContactType() != ContactType.CLIENT) {
             contact.setContactType(ContactType.PROSPECT);
@@ -345,6 +370,17 @@ public class DepositService {
                 d.getId(),
                 toPayload(Map.of("depositId", d.getId(), "status", d.getStatus(), "expiredAt", d.getCancelledAt()))
         );
+    }
+
+    private void releasePropertyReservation(Deposit deposit) {
+        if (deposit.getPropertyId() == null) return;
+        propertyRepository.findByTenant_IdAndId(deposit.getTenant().getId(), deposit.getPropertyId())
+                .ifPresent(property -> {
+                    if (property.getStatus() == PropertyStatus.RESERVED) {
+                        property.setStatus(PropertyStatus.ACTIVE);
+                        propertyRepository.save(property);
+                    }
+                });
     }
 
     private void ensureInterestExists(UUID tenantId, Tenant tenant, UUID contactId, UUID propertyId) {
