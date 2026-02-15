@@ -3,7 +3,9 @@ package com.yem.hlm.backend.property.repo;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -94,6 +96,14 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
      * @return true if exists
      */
     boolean existsByTenant_IdAndReferenceCode(UUID tenantId, String referenceCode);
+
+    /**
+     * Find property with pessimistic write lock (SELECT ... FOR UPDATE).
+     * Used by DepositService to atomically check + reserve a property.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Property p WHERE p.tenant.id = :tenantId AND p.id = :propertyId AND p.deletedAt IS NULL")
+    Optional<Property> findByTenantIdAndIdForUpdate(@Param("tenantId") UUID tenantId, @Param("propertyId") UUID propertyId);
 
     // ===== Search Queries =====
 

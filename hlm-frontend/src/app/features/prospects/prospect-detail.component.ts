@@ -135,6 +135,10 @@ export class ProspectDetailComponent implements OnInit {
     return this.properties.filter((p) => !interestedIds.has(p.id));
   }
 
+  get activeProperties(): Property[] {
+    return this.properties.filter((p) => p.status === 'ACTIVE');
+  }
+
   addInterest(): void {
     if (!this.prospect || !this.selectedPropertyId) return;
     this.addingInterest = true;
@@ -208,6 +212,7 @@ export class ProspectDetailComponent implements OnInit {
         this.depositAmount = null;
         this.depositNotes = '';
         this.loadDeposits();
+        this.loadProperties();
         // Refresh prospect to reflect status/type change from workflow
         this.svc.getById(this.prospect!.id).subscribe({
           next: (updated) => {
@@ -219,7 +224,12 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.creatingDeposit = false;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Failed to create deposit (${err.status})`;
+        if (err.status === 409) {
+          this.depositError = 'Ce bien est déjà réservé ou un acompte existe déjà.';
+          this.loadProperties();
+        } else {
+          this.depositError = body?.message ?? `Failed to create deposit (${err.status})`;
+        }
       },
     });
   }

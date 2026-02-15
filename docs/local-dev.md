@@ -164,18 +164,32 @@ curl -s -X PATCH http://localhost:8080/api/contacts/<id>/status \
 
 ## 8. Demo: Deposit / Reservation flow
 
+Creating a deposit automatically marks the property as **RESERVED**. Only **ACTIVE** properties can receive a deposit. Cancelling or expiring a deposit releases the property back to **ACTIVE**.
+
 ### Via curl
 
 ```bash
 TOKEN="<paste accessToken from login>"
 
-# Create a deposit for a prospect on a property
+# Create a deposit — property moves from ACTIVE → RESERVED
 CONTACT_ID="<prospect UUID>"
-PROPERTY_ID="<property UUID>"
+PROPERTY_ID="<property UUID (must be ACTIVE)>"
 curl -s -X POST http://localhost:8080/api/deposits \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"contactId\":\"$CONTACT_ID\",\"propertyId\":\"$PROPERTY_ID\",\"amount\":5000}"
+
+# Verify property is now RESERVED
+curl -s http://localhost:8080/api/properties/$PROPERTY_ID \
+  -H "Authorization: Bearer $TOKEN" | jq .status
+# Expected: "RESERVED"
+
+# Attempt a second deposit on the same property → 409
+curl -s -w "\n%{http_code}" -X POST http://localhost:8080/api/deposits \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"contactId\":\"<another-contact-id>\",\"propertyId\":\"$PROPERTY_ID\",\"amount\":3000}"
+# Expected: 409 — property is already reserved
 
 # List deposits for a contact
 curl -s "http://localhost:8080/api/deposits/report?contactId=$CONTACT_ID" \
@@ -185,11 +199,13 @@ curl -s "http://localhost:8080/api/deposits/report?contactId=$CONTACT_ID" \
 ### Via the Angular app
 
 1. Login at http://localhost:4200
-2. Click **Prospects** in the nav bar → `/app/prospects`
-3. Click a prospect row → `/app/prospects/:id` (details page)
-4. Scroll to **Réservation / Acompte** section
+2. Click **Properties** → verify status badges (DRAFT, ACTIVE, RESERVED, etc.)
+3. Click **Prospects** → click a prospect → scroll to **Réservation / Acompte**
+4. The property dropdown shows only **ACTIVE** properties
 5. Select a property, enter an amount, click **Create Deposit**
-6. Deposit appears in the table below; prospect status updates automatically
+6. Deposit appears in the table; prospect status updates; property moves to RESERVED
+7. Go back to **Properties** — the property now shows a RESERVED badge
+8. Try creating another deposit on the same property → error: "Ce bien est déjà réservé"
 
 ## 9. Running tests
 

@@ -2,6 +2,7 @@ package com.yem.hlm.backend.contact.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "prospect_detail")
-public class ProspectDetail {
+public class ProspectDetail implements Persistable<UUID> {
 
     @Id
     @Column(name = "contact_id")
@@ -21,6 +22,25 @@ public class ProspectDetail {
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id", nullable = false, foreignKey = @ForeignKey(name = "fk_prospect_detail_contact"))
     private Contact contact;
+
+    @Transient
+    private boolean isNewEntity = true;
+
+    @Override
+    public UUID getId() {
+        return contactId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNewEntity;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNewEntity = false;
+    }
 
     @Setter
     @Column(name = "budget_min", precision = 19, scale = 2)

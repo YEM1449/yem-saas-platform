@@ -30,7 +30,11 @@
           <td>{{ p.referenceCode }}</td>
           <td>{{ p.title }}</td>
           <td>{{ p.type }}</td>
-          <td>{{ p.status }}</td>
+          <td>
+            <span class="badge" [class]="'badge-' + p.status.toLowerCase()">
+              {{ p.status }}
+            </span>
+          </td>
           <td>{{ p.city }}</td>
           <td>{{ p.price | number:'1.0-0' }}</td>
         </tr>
