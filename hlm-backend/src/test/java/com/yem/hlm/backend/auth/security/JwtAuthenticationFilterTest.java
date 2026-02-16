@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.auth.security;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
+import com.yem.hlm.backend.auth.service.UserSecurityInfo;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -39,7 +41,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_no_authorization_header() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -66,7 +68,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_authorization_header_is_not_bearer() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Basic abc123");
@@ -93,7 +95,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_token_is_invalid() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer invalid.token.here");
@@ -125,7 +127,8 @@ class JwtAuthenticationFilterTest {
     void should_set_contexts_when_token_is_valid_and_clear_after_chain() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider);
+        UserSecurityCacheService cacheService = mock(UserSecurityCacheService.class);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, cacheService);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer good.token");
@@ -142,6 +145,10 @@ class JwtAuthenticationFilterTest {
         // extraction claims (Option A : on travaille en UUID côté app)
         when(jwtProvider.extractUserId("good.token")).thenReturn(userId);
         when(jwtProvider.extractTenantId("good.token")).thenReturn(tenantId);
+
+        // tokenVersion check: token has tv=0, cache returns matching info
+        when(jwtProvider.extractTokenVersion("good.token")).thenReturn(0);
+        when(cacheService.getSecurityInfo(userId)).thenReturn(new UserSecurityInfo(true, 0));
 
         // On mock la chain pour vérifier :
         // - que pendant l'exécution de la chain, les contextes sont bien remplis

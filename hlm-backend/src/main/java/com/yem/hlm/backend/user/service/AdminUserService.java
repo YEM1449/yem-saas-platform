@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.user.service;
 
+import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -21,14 +22,17 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserSecurityCacheService userSecurityCacheService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AdminUserService(UserRepository userRepository,
                             TenantRepository tenantRepository,
-                            PasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder,
+                            UserSecurityCacheService userSecurityCacheService) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userSecurityCacheService = userSecurityCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -61,7 +65,9 @@ public class AdminUserService {
     public UserResponse changeRole(UUID userId, ChangeRoleRequest request) {
         User user = findUserInTenant(userId);
         user.setRole(request.role());
+        user.incrementTokenVersion();
         User saved = userRepository.save(user);
+        userSecurityCacheService.evict(userId);
         return UserResponse.from(saved);
     }
 
@@ -69,7 +75,9 @@ public class AdminUserService {
     public UserResponse setEnabled(UUID userId, SetEnabledRequest request) {
         User user = findUserInTenant(userId);
         user.setEnabled(request.enabled());
+        user.incrementTokenVersion();
         User saved = userRepository.save(user);
+        userSecurityCacheService.evict(userId);
         return UserResponse.from(saved);
     }
 
@@ -78,7 +86,9 @@ public class AdminUserService {
         User user = findUserInTenant(userId);
         String tempPassword = generateTempPassword();
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
+        user.incrementTokenVersion();
         userRepository.save(user);
+        userSecurityCacheService.evict(userId);
         return new ResetPasswordResponse(tempPassword);
     }
 

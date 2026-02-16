@@ -35,13 +35,16 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role = UserRole.ROLE_AGENT;
 
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     protected User() {}
 
     public User(Tenant tenant, String email, String passwordHash) {
         this.tenant = tenant;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.role = UserRole.ROLE_AGENT; // default role for new users
+        this.role = UserRole.ROLE_AGENT;
     }
 
     public UUID getId() {return id;}
@@ -50,6 +53,9 @@ public class User {
     public String getPasswordHash() {return passwordHash;}
     public boolean isEnabled() {return enabled;}
     public UserRole getRole() {return role;}
+    public int getTokenVersion() {return tokenVersion;}
 
-
+    public void incrementTokenVersion() {
+        this.tokenVersion++;
+    }
 }

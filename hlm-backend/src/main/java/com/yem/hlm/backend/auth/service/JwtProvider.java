@@ -57,51 +57,28 @@ public class JwtProvider {
      * @return JWT signé sous forme de String
      */
     public String generate(UUID userId, UUID tenantId) {
-        return generate(userId, tenantId, UserRole.ROLE_AGENT);
+        return generate(userId, tenantId, UserRole.ROLE_AGENT, 0);
     }
 
-    /**
-     * Génère un JWT signé avec le rôle de l'utilisateur.
-     *
-     * @param userId   identifiant de l'utilisateur (subject)
-     * @param tenantId identifiant du tenant (claim custom)
-     * @param role     rôle de l'utilisateur (pour RBAC)
-     * @return JWT signé sous forme de String
-     */
     public String generate(UUID userId, UUID tenantId, UserRole role) {
+        return generate(userId, tenantId, role, 0);
+    }
 
-        // Instant actuel (iat)
+    public String generate(UUID userId, UUID tenantId, UserRole role, int tokenVersion) {
         Instant now = Instant.now();
-
-        // Date d'expiration du token
         Instant expiresAt = now.plusSeconds(ttlSeconds);
 
-        // Construction des claims JWT
         var claims = JwtClaimsSet.builder()
-
-                // Date de création du token
                 .issuedAt(now)
-
-                // Date d'expiration
                 .expiresAt(expiresAt)
-
-                // Subject du token (standard JWT)
-                // → ici : userId
                 .subject(userId.toString())
-
-                // Claim custom pour le tenant
-                // → essentiel pour le multi-tenant
                 .claim("tid", tenantId.toString())
-
-                // Claim pour les rôles (RBAC)
-                // Spring Security attend une liste pour les authorities
                 .claim("roles", List.of(role.name()))
-
+                .claim("tv", tokenVersion)
                 .build();
 
         var headers = JwsHeader.with(MacAlgorithm.HS256).build();
 
-        // Signature + encodage du token
         return encoder
                 .encode(JwtEncoderParameters.from(headers, claims))
                 .getTokenValue();
@@ -175,5 +152,17 @@ public class JwtProvider {
         }
 
         return roles;
+    }
+
+    /**
+     * Extract tokenVersion from JWT. Returns 0 if claim is missing (backward compat).
+     */
+    public int extractTokenVersion(String token) {
+        Jwt jwt = decoder.decode(token);
+        Object tv = jwt.getClaim("tv");
+        if (tv instanceof Number n) {
+            return n.intValue();
+        }
+        return 0;
     }
 }

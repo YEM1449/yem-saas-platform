@@ -57,7 +57,7 @@ public class AuthService {
         log.debug("Login successful for tenant={} user={} role={}",
                 tenantKey, email, user.getRole());
 
-        String token = jwtProvider.generate(user.getId(), tenant.getId(), user.getRole());
+        String token = jwtProvider.generate(user.getId(), tenant.getId(), user.getRole(), user.getTokenVersion());
         long expiresInSeconds = jwtProperties.ttlSeconds();
 
         return LoginResponse.bearer(token, expiresInSeconds);
