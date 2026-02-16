@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: "011-add-user-token-version"
+      author: crm-hlm
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: token_version
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false

@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/changes/009-create-property-table.yaml
   - include:
       file: db/changelog/changes/010-fix-seed-owner-role.yaml
+  - include:
+      file: db/changelog/changes/011-add-user-token-version.yaml

@@ -19,6 +19,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
+import com.yem.hlm.backend.auth.service.UserSecurityInfo;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 
 /**
@@ -30,9 +32,11 @@ import com.yem.hlm.backend.tenant.context.TenantContext;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserSecurityCacheService userSecurityCacheService;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+    public JwtAuthenticationFilter(JwtProvider jwtProvider, UserSecurityCacheService userSecurityCacheService) {
         this.jwtProvider = jwtProvider;
+        this.userSecurityCacheService = userSecurityCacheService;
     }
 
     @Override
@@ -53,14 +57,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = safeExtractUserId(token);
 
                 if (tenantId != null && userId != null) {
-                    // 3) Store multi-tenant context in ThreadLocal (scoped to this request thread)
+                    // 3) Server-side revocation check: verify user is still enabled
+                    //    and token version matches (role change / disable increments version)
+                    int tokenTv = safeExtractTokenVersion(token);
+                    UserSecurityInfo secInfo = userSecurityCacheService.getSecurityInfo(userId);
+                    if (secInfo == null || !secInfo.enabled() || secInfo.tokenVersion() != tokenTv) {
+                        // Token revoked: skip authentication, let Spring Security return 401
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
+                    // 4) Store multi-tenant context in ThreadLocal (scoped to this request thread)
                     TenantContext.setTenantId(tenantId);
                     TenantContext.setUserId(userId);
 
-                    // 4) Extract roles from JWT for RBAC
+                    // 5) Extract roles from JWT for RBAC
                     List<GrantedAuthority> authorities = safeExtractAuthorities(token);
 
-                    // 5) Build an Authentication object with authorities.
+                    // 6) Build an Authentication object with authorities.
                     //    principal = userId, authorities = roles from JWT
                     var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -117,6 +131,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (RuntimeException ex) {
             // Missing subject or invalid UUID format => treat token as invalid.
             return null;
+        }
+    }
+
+    /**
+     * Extract tokenVersion from JWT. Returns 0 if missing (backward compat).
+     */
+    private int safeExtractTokenVersion(String token) {
+        try {
+            return jwtProvider.extractTokenVersion(token);
+        } catch (RuntimeException ex) {
+            return 0;
         }
     }
 

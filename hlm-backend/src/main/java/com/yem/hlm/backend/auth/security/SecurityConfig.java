@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.auth.security;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,10 +20,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtProvider jwtProvider,
+            UserSecurityCacheService userSecurityCacheService,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
-        var jwtFilter = new JwtAuthenticationFilter(jwtProvider);
+        var jwtFilter = new JwtAuthenticationFilter(jwtProvider, userSecurityCacheService);
 
         return http
                 .cors(Customizer.withDefaults())
