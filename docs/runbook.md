@@ -25,6 +25,16 @@
 - `TenantContext` is cleared automatically at end of each request.
 - Seeded tenant: key `acme`, id `11111111-1111-1111-1111-111111111111`.
 
+### Tenant = Societe; Group dashboards
+
+- **Tenant == Societe**: each tenant maps 1:1 to a legal entity (societe).
+- **Consolidation via Groups**: a "Group" concept sits above tenants for Direction-level KPIs.
+- Group dashboards return **aggregates only** -- no cross-tenant entity listing.
+- MVP: a tenant belongs to **max 1 group** (nullable `group_id` FK on `tenant`).
+- Group membership is a separate mapping (`group_membership`), not tied to per-tenant `app_user`.
+- Cross-tenant raw entity access remains prohibited.
+- See [ADR-001](adr/ADR-001-tenant-is-societe-group-dashboards.md) for full rationale.
+
 ## RBAC conventions
 
 | Role          | Abilities                             |
