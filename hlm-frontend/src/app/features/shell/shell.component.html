@@ -4,6 +4,9 @@
   <a routerLink="/app/contacts">Contacts</a>
   <a routerLink="/app/prospects">Prospects</a>
   <a routerLink="/app/notifications">Notifications</a>
+  @if (isAdmin) {
+    <a routerLink="/app/admin/users">Users</a>
+  }
   <button class="logout" (click)="logout()">Logout</button>
 </nav>
 <main class="content">

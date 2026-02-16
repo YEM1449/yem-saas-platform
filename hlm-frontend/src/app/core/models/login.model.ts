@@ -13,4 +13,5 @@ export interface LoginResponse {
 export interface MeResponse {
   userId: string;
   tenantId: string;
+  role?: string;
 }

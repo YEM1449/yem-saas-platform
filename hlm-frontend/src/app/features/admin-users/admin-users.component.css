@@ -1,0 +1,173 @@
+h2 {
+  margin: 0 0 16px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  width: 220px;
+}
+
+.toolbar button {
+  padding: 6px 14px;
+  border: 1px solid #1a73e8;
+  background: #fff;
+  color: #1a73e8;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-primary {
+  background: #1a73e8 !important;
+  color: #fff !important;
+  border: 1px solid #1a73e8;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+td select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  background: #fff;
+  color: #1a73e8;
+  border: 1px solid #1a73e8;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-small:hover {
+  background: #e8f0fe;
+}
+
+.btn-secondary {
+  color: #555;
+  border-color: #999;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-disabled {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.create-form {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  max-width: 400px;
+}
+
+.create-form h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.create-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.create-form input,
+.create-form select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.temp-password-box {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.temp-password-box code {
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: 1px solid #e0e0e0;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+.success {
+  color: #2e7d32;
+}

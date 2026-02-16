@@ -10,7 +10,11 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './shell.component.css',
 })
 export class ShellComponent {
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
+
+  get isAdmin(): boolean {
+    return this.auth.user?.role === 'ROLE_ADMIN';
+  }
 
   logout(): void {
     this.auth.logout();
