@@ -34,3 +34,7 @@ export GH_OWNER=<org-or-user>
 - Reuses existing board by title.
 - Reuses existing fields by name.
 - Skips draft item creation if an item with same title (`REQ-###: <title>`) already exists.
+
+## Failure behavior
+- The script is **fail-fast** on GraphQL errors.
+- Any failed field update mutation (Status/Module/Priority/Requirement ID) stops execution immediately and prints the GraphQL error message(s), preventing false-positive "Added" output.

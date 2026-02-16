@@ -35,8 +35,22 @@ api_graphql() {
     -d "$(jq -cn --arg q "$query" --argjson v "$variables_json" '{query:$q,variables:$v}')"
 }
 
+require_graphql_success() {
+  local response="$1"
+  local context="$2"
+
+  local has_errors
+  has_errors="$(echo "$response" | jq 'has("errors") and (.errors | length > 0)')"
+  if [[ "$has_errors" == "true" ]]; then
+    echo "ERROR: GraphQL failure during: $context" >&2
+    echo "$response" | jq -r '.errors[] | "- " + (.message // "unknown error")' >&2
+    exit 1
+  fi
+}
+
 owner_query='query($login:String!){ organization(login:$login){id login} user(login:$login){id login} }'
 owner_resp="$(api_graphql "$owner_query" "$(jq -cn --arg login "$GH_OWNER" '{login:$login}')")"
+require_graphql_success "$owner_resp" "owner lookup"
 owner_id="$(echo "$owner_resp" | jq -r '.data.organization.id // .data.user.id // empty')"
 if [[ -z "$owner_id" ]]; then
   echo "ERROR: could not resolve owner '$GH_OWNER' (org or user)." >&2
@@ -46,11 +60,13 @@ fi
 
 projects_query='query($login:String!){ organization(login:$login){projectsV2(first:100){nodes{id title number}}} user(login:$login){projectsV2(first:100){nodes{id title number}}} }'
 projects_resp="$(api_graphql "$projects_query" "$(jq -cn --arg login "$GH_OWNER" '{login:$login}')")"
+require_graphql_success "$projects_resp" "project listing"
 project_id="$(echo "$projects_resp" | jq -r --arg t "$BOARD_TITLE" '[.data.organization.projectsV2.nodes[]?, .data.user.projectsV2.nodes[]?] | map(select(.title==$t)) | .[0].id // empty')"
 
 if [[ -z "$project_id" ]]; then
   create_project_mut='mutation($owner:ID!,$title:String!){ createProjectV2(input:{ownerId:$owner,title:$title}) { projectV2{id title number} } }'
   create_resp="$(api_graphql "$create_project_mut" "$(jq -cn --arg owner "$owner_id" --arg title "$BOARD_TITLE" '{owner:$owner,title:$title}')")"
+  require_graphql_success "$create_resp" "project creation"
   project_id="$(echo "$create_resp" | jq -r '.data.createProjectV2.projectV2.id // empty')"
   if [[ -z "$project_id" ]]; then
     echo "ERROR: failed to create project." >&2
@@ -70,6 +86,7 @@ ensure_field_single_select() {
 
   local fields_resp existing
   fields_resp="$(api_graphql "$project_fields_query" "$(jq -cn --arg id "$project_id" '{id:$id}')")"
+  require_graphql_success "$fields_resp" "field lookup ($name)"
   existing="$(echo "$fields_resp" | jq -r --arg n "$name" '.data.node.fields.nodes[]? | select(.name==$n) | .id' | head -n1)"
 
   if [[ -n "$existing" ]]; then
@@ -80,6 +97,7 @@ ensure_field_single_select() {
   local mut='mutation($project:ID!,$name:String!,$opts:[ProjectV2SingleSelectFieldOptionInput!]!){ createProjectV2Field(input:{projectId:$project,name:$name,dataType:SINGLE_SELECT,singleSelectOptions:$opts}){ projectV2Field{... on ProjectV2SingleSelectField{id name}} } }'
   local resp
   resp="$(api_graphql "$mut" "$(jq -cn --arg project "$project_id" --arg name "$name" --argjson opts "$options_json" '{project:$project,name:$name,opts:$opts}')")"
+  require_graphql_success "$resp" "field creation ($name)"
   echo "$resp" | jq -r '.data.createProjectV2Field.projectV2Field.id'
 }
 
@@ -88,6 +106,7 @@ ensure_field_text() {
 
   local fields_resp existing
   fields_resp="$(api_graphql "$project_fields_query" "$(jq -cn --arg id "$project_id" '{id:$id}')")"
+  require_graphql_success "$fields_resp" "field lookup ($name)"
   existing="$(echo "$fields_resp" | jq -r --arg n "$name" '.data.node.fields.nodes[]? | select(.name==$n) | .id' | head -n1)"
 
   if [[ -n "$existing" ]]; then
@@ -98,6 +117,7 @@ ensure_field_text() {
   local mut='mutation($project:ID!,$name:String!){ createProjectV2Field(input:{projectId:$project,name:$name,dataType:TEXT}){ projectV2Field{... on ProjectV2Field{id} ... on ProjectV2FieldCommon{id}} } }'
   local resp
   resp="$(api_graphql "$mut" "$(jq -cn --arg project "$project_id" --arg name "$name" '{project:$project,name:$name}')")"
+  require_graphql_success "$resp" "field creation ($name)"
   echo "$resp" | jq -r '.data.createProjectV2Field.projectV2Field.id'
 }
 
@@ -107,6 +127,7 @@ priority_field_id="$(ensure_field_single_select "Priority" '[{"name":"P0","color
 reqid_field_id="$(ensure_field_text "Requirement ID")"
 
 fields_resp="$(api_graphql "$project_fields_query" "$(jq -cn --arg id "$project_id" '{id:$id}')")"
+require_graphql_success "$fields_resp" "field options fetch"
 option_id() {
   local field_name="$1"
   local option_name="$2"
@@ -130,6 +151,7 @@ done
 
 items_query='query($id:ID!){ node(id:$id){ ... on ProjectV2 { items(first:200){nodes{id content{... on DraftIssue {title}}}}}}}'
 items_resp="$(api_graphql "$items_query" "$(jq -cn --arg id "$project_id" '{id:$id}')")"
+require_graphql_success "$items_resp" "item listing"
 existing_titles="$(echo "$items_resp" | jq -r '.data.node.items.nodes[]?.content.title // empty')"
 
 # JSON list of requirements from YAML
@@ -172,6 +194,7 @@ while IFS= read -r req; do
   body="Auto-synced from requirements baseline.\n\n- Requirement: $id\n- Module: $module\n- Priority: $prio\n- Audit Status: $raw_status"
 
   add_resp="$(api_graphql "$add_draft_mut" "$(jq -cn --arg project "$project_id" --arg title "$full_title" --arg body "$body" '{project:$project,title:$title,body:$body}')")"
+  require_graphql_success "$add_resp" "add draft issue ($id)"
   item_id="$(echo "$add_resp" | jq -r '.data.addProjectV2DraftIssue.projectItem.id // empty')"
   if [[ -z "$item_id" ]]; then
     echo "WARN: could not add item for $id" >&2
@@ -179,10 +202,27 @@ while IFS= read -r req; do
     continue
   fi
 
-  api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$status_field_id" --arg opt "$status_opt" '{project:$project,item:$item,field:$field,opt:$opt}')" >/dev/null
-  [[ -n "$mod_opt" ]] && api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$module_field_id" --arg opt "$mod_opt" '{project:$project,item:$item,field:$field,opt:$opt}')" >/dev/null
-  [[ -n "$prio_opt" ]] && api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$priority_field_id" --arg opt "$prio_opt" '{project:$project,item:$item,field:$field,opt:$opt}')" >/dev/null
-  api_graphql "$set_text_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$reqid_field_id" --arg text "$id" '{project:$project,item:$item,field:$field,text:$text}')" >/dev/null
+  update_status_resp="$(api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$status_field_id" --arg opt "$status_opt" '{project:$project,item:$item,field:$field,opt:$opt}')")"
+  require_graphql_success "$update_status_resp" "set Status for $id"
+
+  if [[ -n "$mod_opt" ]]; then
+    update_module_resp="$(api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$module_field_id" --arg opt "$mod_opt" '{project:$project,item:$item,field:$field,opt:$opt}')")"
+    require_graphql_success "$update_module_resp" "set Module for $id"
+  else
+    echo "ERROR: missing Module option id for '$module'" >&2
+    exit 1
+  fi
+
+  if [[ -n "$prio_opt" ]]; then
+    update_priority_resp="$(api_graphql "$set_select_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$priority_field_id" --arg opt "$prio_opt" '{project:$project,item:$item,field:$field,opt:$opt}')")"
+    require_graphql_success "$update_priority_resp" "set Priority for $id"
+  else
+    echo "ERROR: missing Priority option id for '$prio'" >&2
+    exit 1
+  fi
+
+  update_reqid_resp="$(api_graphql "$set_text_mut" "$(jq -cn --arg project "$project_id" --arg item "$item_id" --arg field "$reqid_field_id" --arg text "$id" '{project:$project,item:$item,field:$field,text:$text}')")"
+  require_graphql_success "$update_reqid_resp" "set Requirement ID for $id"
 
   count=$((count + 1))
   echo "Added: $full_title ($board_status)"
