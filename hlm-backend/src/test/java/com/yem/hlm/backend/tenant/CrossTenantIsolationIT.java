@@ -24,6 +24,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yem.hlm.backend.contact.api.dto.UpdateContactRequest;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -142,6 +144,62 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound());
     }
 
+    // ===== GET deposit isolation =====
+
+    @Test
+    void getDeposit_crossTenant_returns404() throws Exception {
+        // Create contact in tenant A, then deposit in tenant A
+        UUID contactA = createContactAs(bearerA, "deposit-owner@tenant-a.test");
+        UUID depositA = createDepositAs(bearerA, contactA, propertyA);
+
+        // Tenant B tries to GET tenant A's deposit → 404
+        mvc.perform(get("/api/deposits/{id}", depositA)
+                        .header("Authorization", bearerB))
+                .andExpect(status().isNotFound());
+    }
+
+    // ===== Confirm deposit isolation =====
+
+    @Test
+    void confirmDeposit_crossTenant_returns404() throws Exception {
+        UUID contactA = createContactAs(bearerA, "dep-confirm@tenant-a.test");
+        UUID depositA = createDepositAs(bearerA, contactA, propertyA);
+
+        // Tenant B tries to confirm tenant A's deposit → 404
+        mvc.perform(post("/api/deposits/{id}/confirm", depositA)
+                        .header("Authorization", bearerB))
+                .andExpect(status().isNotFound());
+    }
+
+    // ===== UPDATE contact isolation =====
+
+    @Test
+    void updateContact_crossTenant_returns404() throws Exception {
+        UUID contactA = createContactAs(bearerA, "upd-cross@tenant-a.test");
+
+        // Tenant B tries to update tenant A's contact → 404
+        var req = new UpdateContactRequest("Hacked", null, null, null, null, null, null);
+        mvc.perform(patch("/api/contacts/{id}", contactA)
+                        .header("Authorization", bearerB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(req)))
+                .andExpect(status().isNotFound());
+    }
+
+    // ===== UPDATE property isolation =====
+
+    @Test
+    void updateProperty_crossTenant_returns404() throws Exception {
+        // Tenant B tries to update tenant A's property → 404
+        var req = new PropertyUpdateRequest(null, "Hacked", null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        mvc.perform(put("/api/properties/{id}", propertyA)
+                        .header("Authorization", bearerB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(req)))
+                .andExpect(status().isNotFound());
+    }
+
     // ===== Helpers =====
 
     private UUID createContactAs(String bearer, String email) throws Exception {
@@ -185,5 +243,19 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         return created.id();
+    }
+
+    private UUID createDepositAs(String bearer, UUID contactId, UUID propertyId) throws Exception {
+        var req = new CreateDepositRequest(
+                contactId, propertyId, new BigDecimal("5000.00"),
+                null, null, "MAD", null, null
+        );
+        String body = mvc.perform(post("/api/deposits")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return json.readTree(body).get("id").asText().transform(UUID::fromString);
     }
 }

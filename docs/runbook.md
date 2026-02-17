@@ -139,6 +139,19 @@ If your frontend runs on a different port, add it to `CorsConfig.allowedOrigins`
 - **Cause:** `JwtProperties` has `@Validated` + `@NotBlank` — no fallback.
 - **Fix:** set `JWT_SECRET` env var (≥32 characters for HS256).
 
+## API Documentation (Swagger / OpenAPI)
+
+- **Swagger UI:** http://localhost:8080/swagger-ui/index.html (public, no token needed to browse)
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+- Click **Authorize** in Swagger UI and paste a Bearer token from `POST /auth/login` to test secured endpoints.
+- The spec includes the standard `ErrorResponse` schema used by all error responses.
+
+## Tenancy Regression Tests
+
+- `CrossTenantIsolationIT` (9 tests) covers cross-tenant reads, writes, deposits, and mutations.
+- `TenantScopedRepoGuardTest` (unit) statically scans service/controller code and fails if a guarded repo is called via bare `.findById()` instead of tenant-scoped methods.
+- IT tests require Docker (Testcontainers). CI integration is tracked under S0-E0.
+
 ## Operational notes
 
 - **Secret rotation:** rotate `JWT_SECRET` during maintenance and invalidate old tokens by expiring TTLs.
