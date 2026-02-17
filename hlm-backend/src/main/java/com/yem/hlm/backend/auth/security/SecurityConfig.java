@@ -37,6 +37,9 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
+                        // OpenAPI / Swagger UI
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
                         // Tenant bootstrap (sinon tes IT prennent 403 avant validation)
                         .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
 
