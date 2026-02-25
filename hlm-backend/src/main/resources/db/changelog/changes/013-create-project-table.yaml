@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: "013-create-project-table"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Create project table
+        # A Project groups many Properties for a given Tenant.
+        # =========================================
+        - createTable:
+            tableName: project
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: text
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: project
+            baseColumnNames: tenant_id
+            constraintName: fk_project_tenant
+            referencedTableName: tenant
+            referencedColumnNames: id
+
+        - addUniqueConstraint:
+            tableName: project
+            columnNames: tenant_id, name
+            constraintName: uk_project_tenant_name
+
+        - createIndex:
+            indexName: idx_project_tenant_id
+            tableName: project
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: id
+
+        - createIndex:
+            indexName: idx_project_tenant_status
+            tableName: project
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status

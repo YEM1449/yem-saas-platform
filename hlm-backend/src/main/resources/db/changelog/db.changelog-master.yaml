@@ -21,3 +21,11 @@ databaseChangeLog:
       file: db/changelog/changes/010-fix-seed-owner-role.yaml
   - include:
       file: db/changelog/changes/011-add-user-token-version.yaml
+  - include:
+      file: db/changelog/changes/012-property-listed-for-sale-project-building.yaml
+  - include:
+      file: db/changelog/changes/012b-rename-legacy-project-table.yaml
+  - include:
+      file: db/changelog/changes/013-create-project-table.yaml
+  - include:
+      file: db/changelog/changes/014-property-add-project-fk.yaml

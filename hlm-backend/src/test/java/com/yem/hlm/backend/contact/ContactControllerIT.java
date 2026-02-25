@@ -393,13 +393,21 @@ class ContactControllerIT extends IntegrationTestBase {
 
     private UUID createActiveProperty() throws Exception {
         String ref = "CCIT-" + (++refCounter);
+        String projectBody = mvc.perform(post("/api/projects")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Project " + ref + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID projId = UUID.fromString(objectMapper.readTree(projectBody).get("id").asText());
         var propReq = new PropertyCreateRequest(
                 PropertyType.VILLA, "Test Villa " + ref, ref,
                 new BigDecimal("1000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
-                3, 2, 2, null, null, null, null, null, null, null, null, null
+                3, 2, 2, null, null, null, null, null, null, null, null, null,
+                null, projId, null
         );
 
         String body = mvc.perform(post("/api/properties")
@@ -412,7 +420,8 @@ class ContactControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(body, PropertyResponse.class);
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)

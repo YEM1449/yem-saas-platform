@@ -3,6 +3,8 @@ package com.yem.hlm.backend.property.api.dto;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import jakarta.validation.constraints.*;
 
+import java.util.UUID;
+
 import java.math.BigDecimal;
 
 public record PropertyCreateRequest(
@@ -36,7 +38,10 @@ public record PropertyCreateRequest(
         String zoning,
         Boolean isServiced,
         String description,
-        String notes
+        String notes,
+        Boolean listedForSale,
+        @NotNull UUID projectId,
+        @Size(max = 100) String buildingName
 ) {
     public PropertyCreateRequest {
         if (currency == null || currency.isBlank()) currency = "MAD";

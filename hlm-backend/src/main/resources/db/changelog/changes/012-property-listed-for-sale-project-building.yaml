@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: "012-property-listed-for-sale-project-building"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Add listed_for_sale flag + project/building classification fields
+        # =========================================
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: listed_for_sale
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: project_name
+                  type: varchar(200)
+
+              - column:
+                  name: building_name
+                  type: varchar(100)
+
+        # =========================================
+        # Indexes for project/building dashboard queries
+        # =========================================
+        - createIndex:
+            indexName: idx_property_tenant_project
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: project_name
+
+        - createIndex:
+            indexName: idx_property_tenant_building
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: building_name

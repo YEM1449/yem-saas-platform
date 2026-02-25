@@ -2,11 +2,20 @@ package com.yem.hlm.backend.auth;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
+import com.yem.hlm.backend.support.TestJwtConfig;
+import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.user.domain.User;
+import com.yem.hlm.backend.user.domain.UserRole;
+import com.yem.hlm.backend.user.repo.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import com.yem.hlm.backend.support.TestJwtConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
@@ -16,25 +25,33 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * AUTH-10 — IT: /auth/me
- *
- * Contrats attendus:
- * - Sans token => 401
- * - Token invalide => 401
- * - Token valide (avec tid) => 200 + payload cohérent
- * - Token valide MAIS sans tid => 401 (token techniquement ok, mais identité "tenant-aware" impossible)
- *
- * Pourquoi 401 et pas 403?
- * - Ton JwtAuthenticationFilter ignore le token si tid manque (pas d'Authentication dans SecurityContext)
- * - Endpoint protégé => Spring Security répond 401 (non authentifié)
+ * IT: /auth/me
+ * - No token => 401
+ * - Invalid token => 401
+ * - Valid token (with tid) => 200
+ * - Valid token without tid => 401
  */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
 class AuthMeIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwtProvider;
-
-    // On l'utilise uniquement pour forger un token "valide" MAIS incomplet (sans tid).
     @Autowired JwtEncoder jwtEncoder;
+    @Autowired TenantRepository tenantRepository;
+    @Autowired UserRepository userRepository;
+
+    private User user;
+    private Tenant tenant;
+
+    @BeforeEach
+    void setup() {
+        tenant = tenantRepository.save(new Tenant("me-" + UUID.randomUUID().toString().substring(0, 8), "Me Tenant"));
+        user = new User(tenant, "me@test.com", "hash");
+        user.setRole(UserRole.ROLE_ADMIN);
+        user = userRepository.save(user);
+    }
 
     @Test
     void me_withoutToken_returns401() throws Exception {
@@ -51,34 +68,27 @@ class AuthMeIT extends IntegrationTestBase {
 
     @Test
     void me_withValidToken_returns200_andUserInfo() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UUID tenantId = UUID.randomUUID();
-
-        String token = jwtProvider.generate(userId, tenantId);
+        String token = jwtProvider.generate(user.getId(), tenant.getId());
 
         mvc.perform(get("/auth/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                // Adapte si ton JSON exact est différent:
-                .andExpect(jsonPath("$.userId").value(userId.toString()))
-                .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
+                .andExpect(jsonPath("$.userId").value(user.getId().toString()))
+                .andExpect(jsonPath("$.tenantId").value(tenant.getId().toString()));
     }
 
     @Test
     void me_withValidTokenButMissingTidClaim_returns401() throws Exception {
-        UUID userId = UUID.randomUUID();
-
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(3600);
 
-        // Token signé HS256 => signature OK, dates OK, subject OK
-        // MAIS pas de claim "tid" => ton filtre ne va pas authentifier la requête.
+        // Signed token, valid subject, but no tid claim => filter skips auth
         String token = TestJwtConfig.mint(
                 jwtEncoder,
-                userId.toString(),
+                user.getId().toString(),
                 now,
                 exp,
-                Map.of() // <- aucun tid
+                Map.of()
         );
 
         mvc.perform(get("/auth/me")

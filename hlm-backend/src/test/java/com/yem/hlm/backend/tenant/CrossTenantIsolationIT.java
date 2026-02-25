@@ -192,7 +192,8 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
     void updateProperty_crossTenant_returns404() throws Exception {
         // Tenant B tries to update tenant A's property → 404
         var req = new PropertyUpdateRequest(null, "Hacked", null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", propertyA)
                         .header("Authorization", bearerB)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -215,13 +216,21 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
 
     private UUID createActivePropertyAs(String bearer) throws Exception {
         String ref = "XISO-" + (++refCounter);
+        String projectBody = mvc.perform(post("/api/projects")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Project " + ref + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID projId = UUID.fromString(json.readTree(projectBody).get("id").asText());
         var propReq = new PropertyCreateRequest(
                 PropertyType.VILLA, "XTenant Villa " + ref, ref,
                 new BigDecimal("1000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
-                3, 2, 2, null, null, null, null, null, null, null, null, null
+                3, 2, 2, null, null, null, null, null, null, null, null, null,
+                null, projId, null
         );
 
         String body = mvc.perform(post("/api/properties")
@@ -235,7 +244,8 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
 
         // Activate: DRAFT → ACTIVE
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)

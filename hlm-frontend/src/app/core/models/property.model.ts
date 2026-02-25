@@ -1,6 +1,7 @@
 export interface Property {
   id: string;
   type: string;
+  category: string | null;
   status: string;
   referenceCode: string;
   title: string;
@@ -13,5 +14,9 @@ export interface Property {
   surfaceAreaSqm: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
+  listedForSale: boolean;
+  projectId: string | null;
+  projectName: string | null;
+  buildingName: string | null;
   createdAt: string;
 }
