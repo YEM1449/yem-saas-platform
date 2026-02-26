@@ -139,7 +139,8 @@ class PropertyControllerTest {
                 java.time.LocalDateTime.now(), // updatedAt
                 null, // deletedAt
                 null, // publishedAt
-                null // soldAt
+                null, // soldAt
+                null  // reservedAt
         );
     }
 }
