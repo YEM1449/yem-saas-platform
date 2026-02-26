@@ -56,7 +56,7 @@ public class PropertyCommercialWorkflowService {
 
     /**
      * Transitions a property to {@code SOLD} and stamps {@code soldAt}.
-     * Intended for use by {@code SaleContractService} once implemented.
+     * Called by {@code SaleContractService} on contract sign.
      *
      * @param property the loaded, tenant-scoped property entity
      * @param soldAt   the timestamp to record (typically contract sign date)
@@ -65,6 +65,37 @@ public class PropertyCommercialWorkflowService {
     public void sell(Property property, LocalDateTime soldAt) {
         property.setStatus(PropertyStatus.SOLD);
         property.setSoldAt(soldAt);
+        propertyRepository.save(property);
+    }
+
+    /**
+     * Reverts a {@code SOLD} property back to {@code ACTIVE} when the sale contract
+     * is canceled and <em>no</em> active confirmed deposit remains.
+     * Clears both {@code soldAt} and {@code reservedAt}.
+     *
+     * @param property the loaded, tenant-scoped property entity
+     */
+    @Transactional
+    public void cancelSaleToAvailable(Property property) {
+        property.setStatus(PropertyStatus.ACTIVE);
+        property.setReservedAt(null);
+        property.setSoldAt(null);
+        propertyRepository.save(property);
+    }
+
+    /**
+     * Reverts a {@code SOLD} property back to {@code RESERVED} when the sale contract
+     * is canceled but an active confirmed deposit still holds the reservation.
+     * Re-stamps {@code reservedAt} to {@code now} (original timestamp was cleared at sale time).
+     * Clears {@code soldAt}.
+     *
+     * @param property the loaded, tenant-scoped property entity
+     */
+    @Transactional
+    public void cancelSaleToReserved(Property property) {
+        property.setStatus(PropertyStatus.RESERVED);
+        property.setReservedAt(LocalDateTime.now());
+        property.setSoldAt(null);
         propertyRepository.save(property);
     }
 }
