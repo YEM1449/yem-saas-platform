@@ -2,7 +2,7 @@ package com.yem.hlm.backend.property.service;
 
 import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
 import com.yem.hlm.backend.project.domain.Project;
-import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
@@ -41,7 +41,7 @@ class PropertyServiceTest {
     private TenantRepository tenantRepository;
 
     @Mock
-    private ProjectRepository projectRepository;
+    private ProjectActiveGuard projectActiveGuard;
 
     @InjectMocks
     private PropertyService propertyService;
