@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.property.repo;
 
+import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
@@ -201,6 +202,58 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
            "AND p.price IS NOT NULL")
     Long totalValueSoldInPeriod(
             @Param("tenantId") UUID tenantId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    // ===== Sales KPI Queries =====
+
+    /**
+     * Sales per project per agent: counts CONFIRMED deposits grouped by property.projectName
+     * and deposit.agent, for a given period (filtered by deposit.confirmedAt).
+     * <p>
+     * Returns rows: [agentId (UUID), agentEmail (String), projectName (String), count (Long), totalValue (BigDecimal)]
+     */
+    @Query("""
+            SELECT d.agent.id, d.agent.email, p.project.name, COUNT(d.id), COALESCE(SUM(p.price), 0)
+            FROM com.yem.hlm.backend.deposit.domain.Deposit d,
+                 Property p
+            WHERE d.propertyId = p.id
+              AND d.tenant.id = :tenantId
+              AND p.tenant.id = :tenantId
+              AND d.status = :confirmedStatus
+              AND d.confirmedAt BETWEEN :from AND :to
+            GROUP BY d.agent.id, d.agent.email, p.project.name
+            ORDER BY p.project.name ASC, COUNT(d.id) DESC
+            """)
+    List<Object[]> salesByProjectAndAgent(
+            @Param("tenantId") UUID tenantId,
+            @Param("confirmedStatus") DepositStatus confirmedStatus,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    /**
+     * Sales per building: counts CONFIRMED deposits grouped by property.buildingName,
+     * for a given period (filtered by deposit.confirmedAt).
+     * <p>
+     * Returns rows: [buildingName (String), count (Long), totalValue (BigDecimal)]
+     */
+    @Query("""
+            SELECT p.buildingName, COUNT(d.id), COALESCE(SUM(p.price), 0)
+            FROM com.yem.hlm.backend.deposit.domain.Deposit d,
+                 Property p
+            WHERE d.propertyId = p.id
+              AND d.tenant.id = :tenantId
+              AND p.tenant.id = :tenantId
+              AND d.status = :confirmedStatus
+              AND d.confirmedAt BETWEEN :from AND :to
+            GROUP BY p.buildingName
+            ORDER BY COUNT(d.id) DESC
+            """)
+    List<Object[]> salesByBuilding(
+            @Param("tenantId") UUID tenantId,
+            @Param("confirmedStatus") DepositStatus confirmedStatus,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );

@@ -337,13 +337,21 @@ class DepositControllerIT extends IntegrationTestBase {
 
     private UUID createActivePropertyForBearer(String bearerToken) throws Exception {
         String ref = "DEP-TEST-" + (++refCounter);
+        String projectBody = mvc.perform(post("/api/projects")
+                        .header("Authorization", bearerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Project " + ref + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID projId = UUID.fromString(objectMapper.readTree(projectBody).get("id").asText());
         var propReq = new PropertyCreateRequest(
                 PropertyType.VILLA, "Test Villa " + ref, ref,
                 new BigDecimal("1000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
-                3, 2, 2, null, null, null, null, null, null, null, null, null
+                3, 2, 2, null, null, null, null, null, null, null, null, null,
+                null, projId, null
         );
 
         String json = mvc.perform(post("/api/properties")
@@ -357,7 +365,8 @@ class DepositControllerIT extends IntegrationTestBase {
 
         // Activate the property (DRAFT → ACTIVE)
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearerToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -369,13 +378,21 @@ class DepositControllerIT extends IntegrationTestBase {
 
     private UUID createDraftProperty() throws Exception {
         String ref = "DEP-DRAFT-" + (++refCounter);
+        String projectBody = mvc.perform(post("/api/projects")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Draft Project " + ref + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID projId = UUID.fromString(objectMapper.readTree(projectBody).get("id").asText());
         var propReq = new PropertyCreateRequest(
                 PropertyType.VILLA, "Draft Villa " + ref, ref,
                 new BigDecimal("500000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("150"), new BigDecimal("300"),
-                2, 1, 1, null, null, null, null, null, null, null, null, null
+                2, 1, 1, null, null, null, null, null, null, null, null, null,
+                null, projId, null
         );
 
         String json = mvc.perform(post("/api/properties")

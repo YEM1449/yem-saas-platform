@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.property.api;
 
 import com.yem.hlm.backend.property.api.dto.DashboardPeriod;
+import com.yem.hlm.backend.property.api.dto.PropertySalesKpiDTO;
 import com.yem.hlm.backend.property.api.dto.PropertySummaryDTO;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.PeriodCalculator;
@@ -49,30 +50,48 @@ public class PropertyDashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) DashboardPeriod preset
     ) {
-        // Compute from/to from preset if provided
+        var range = resolvePeriod(from, to, preset);
+        return dashboardService.getSummary(range.from(), range.to());
+    }
+
+    /**
+     * Get sales KPIs broken down by project+agent and by building for a given period.
+     * <p>
+     * A "sale" is a deposit with status CONFIRMED during the period (by confirmedAt).
+     * <p>
+     * Period defaults to LAST_30_DAYS if no parameters provided.
+     *
+     * @param from start date (optional)
+     * @param to end date (optional)
+     * @param preset period preset (optional)
+     * @return PropertySalesKpiDTO with breakdown rows
+     * @throws InvalidPeriodException if period validation fails
+     */
+    @GetMapping("/sales-kpi")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public PropertySalesKpiDTO getSalesKpi(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) DashboardPeriod preset
+    ) {
+        var range = resolvePeriod(from, to, preset);
+        return dashboardService.getSalesKpi(range.from(), range.to());
+    }
+
+    private PeriodCalculator.DateRange resolvePeriod(LocalDate from, LocalDate to, DashboardPeriod preset) {
         if (preset != null) {
-            var range = PeriodCalculator.calculate(preset);
-            from = range.from();
-            to = range.to();
+            return PeriodCalculator.calculate(preset);
         }
-
-        // Default to LAST_30_DAYS if not specified
         if (from == null || to == null) {
-            var range = PeriodCalculator.calculate(DashboardPeriod.LAST_30_DAYS);
-            from = range.from();
-            to = range.to();
+            return PeriodCalculator.calculate(DashboardPeriod.LAST_30_DAYS);
         }
-
-        // Validate period
         if (from.isAfter(to)) {
             throw new InvalidPeriodException("'from' date must be before or equal to 'to' date");
         }
-
         long daysBetween = ChronoUnit.DAYS.between(from, to);
         if (daysBetween > 366) {
             throw new InvalidPeriodException("Period cannot exceed 366 days (from: " + from + ", to: " + to + ")");
         }
-
-        return dashboardService.getSummary(from, to);
+        return new PeriodCalculator.DateRange(from, to);
     }
 }

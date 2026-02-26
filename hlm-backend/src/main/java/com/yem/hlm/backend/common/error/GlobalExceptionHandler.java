@@ -7,6 +7,9 @@ import com.yem.hlm.backend.deposit.service.*;
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
+import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
+import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
+import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
@@ -24,6 +27,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -126,6 +130,7 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             DepositNotFoundException.class,
             NotificationNotFoundException.class,
+            ProjectNotFoundException.class,
             PropertyNotFoundException.class,
             UserNotFoundException.class
     })
@@ -384,6 +389,38 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(ProjectNameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleProjectNameExists(
+            ProjectNameAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.PROJECT_NAME_EXISTS,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ArchivedProjectAssignmentException.class)
+    public ResponseEntity<ErrorResponse> handleArchivedProject(
+            ArchivedProjectAssignmentException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.ARCHIVED_PROJECT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(InvalidPeriodException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPeriod(
             InvalidPeriodException ex,
@@ -422,6 +459,36 @@ public class GlobalExceptionHandler {
         log.warn("Access denied on {}: {}", request.getRequestURI(), ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    // ========== ResponseStatusException (pass-through) ==========
+
+    /**
+     * Handle ResponseStatusException thrown by controllers/services.
+     * Maps the embedded status code to the appropriate ErrorCode.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(
+            ResponseStatusException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        ErrorCode code = switch (status) {
+            case FORBIDDEN -> ErrorCode.FORBIDDEN;
+            case NOT_FOUND -> ErrorCode.NOT_FOUND;
+            case UNAUTHORIZED -> ErrorCode.UNAUTHORIZED;
+            default -> ErrorCode.INTERNAL_ERROR;
+        };
+
+        ErrorResponse error = ErrorResponse.of(
+                status.value(),
+                status.getReasonPhrase(),
+                code,
+                ex.getReason() != null ? ex.getReason() : status.getReasonPhrase(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(status).body(error);
     }
 
     // ========== 500 Internal Server Error ==========

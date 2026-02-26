@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.property.api;
 
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.property.domain.PropertyCategory;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.service.PropertyService;
@@ -96,6 +97,7 @@ class PropertyControllerTest {
         return new PropertyResponse(
                 UUID.randomUUID(), // id
                 PropertyType.VILLA, // type
+                PropertyCategory.VILLA, // category
                 PropertyStatus.DRAFT, // status
                 "TEST-001", // referenceCode
                 "Test Villa", // title
@@ -127,6 +129,10 @@ class PropertyControllerTest {
                 null, // floorNumber
                 null, // zoning
                 null, // isServiced
+                false, // listedForSale
+                UUID.randomUUID(), // projectId
+                "Test Project", // projectName
+                null, // buildingName
                 UUID.randomUUID(), // createdBy
                 UUID.randomUUID(), // updatedBy
                 java.time.LocalDateTime.now(), // createdAt

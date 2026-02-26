@@ -4,6 +4,7 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record PropertyUpdateRequest(
         @Size(max = 200) String title,
@@ -28,6 +29,10 @@ public record PropertyUpdateRequest(
         Integer buildingYear,
         Integer floorNumber,
         String zoning,
-        Boolean isServiced
+        Boolean isServiced,
+        // Listing + project/building fields
+        Boolean listedForSale,
+        UUID projectId,
+        @Size(max = 100) String buildingName
 ) {
 }

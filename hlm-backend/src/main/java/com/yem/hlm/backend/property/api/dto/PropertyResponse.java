@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.property.api.dto;
 
 import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.domain.PropertyCategory;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 public record PropertyResponse(
         UUID id,
         PropertyType type,
+        PropertyCategory category,
         PropertyStatus status,
         String referenceCode,
         String title,
@@ -42,6 +44,10 @@ public record PropertyResponse(
         Integer floorNumber,
         String zoning,
         Boolean isServiced,
+        boolean listedForSale,
+        UUID projectId,
+        String projectName,
+        String buildingName,
         UUID createdBy,
         UUID updatedBy,
         LocalDateTime createdAt,
@@ -52,7 +58,8 @@ public record PropertyResponse(
 ) {
     public static PropertyResponse from(Property p) {
         return new PropertyResponse(
-                p.getId(), p.getType(), p.getStatus(), p.getReferenceCode(), p.getTitle(),
+                p.getId(), p.getType(), p.getType().category(), p.getStatus(),
+                p.getReferenceCode(), p.getTitle(),
                 p.getDescription(), p.getNotes(), p.getPrice(), p.getCurrency(),
                 p.getCommissionRate(), p.getEstimatedValue(), p.getAddress(), p.getCity(),
                 p.getRegion(), p.getPostalCode(), p.getLatitude(), p.getLongitude(),
@@ -60,7 +67,10 @@ public record PropertyResponse(
                 p.getLegalStatus(), p.getSurfaceAreaSqm(), p.getLandAreaSqm(),
                 p.getBedrooms(), p.getBathrooms(), p.getFloors(), p.getParkingSpaces(),
                 p.getHasGarden(), p.getHasPool(), p.getBuildingYear(), p.getFloorNumber(),
-                p.getZoning(), p.getIsServiced(), p.getCreatedBy(), p.getUpdatedBy(),
+                p.getZoning(), p.getIsServiced(), p.isListedForSale(),
+                p.getProject() != null ? p.getProject().getId() : null,
+                p.getProjectName(), p.getBuildingName(),
+                p.getCreatedBy(), p.getUpdatedBy(),
                 p.getCreatedAt(), p.getUpdatedAt(), p.getDeletedAt(), p.getPublishedAt(),
                 p.getSoldAt()
         );

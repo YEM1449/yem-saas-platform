@@ -141,8 +141,13 @@ class TenantControllerIT extends IntegrationTestBase {
     @Test
     @Transactional
     void getTenantReturns404WhenTenantMissing() throws Exception {
+        // Create a real user so token revocation check passes
         UUID missingTenantId = UUID.randomUUID();
-        String token = jwtProvider.generate(UUID.randomUUID(), missingTenantId);
+        Tenant tempTenant = tenantRepository.save(new Tenant(uniqueKey("tmp"), "Temp"));
+        User tempUser = userRepository.save(new User(tempTenant, "tmp@test.com", "hash"));
+
+        // Token with real userId but a tenantId that doesn't exist in DB
+        String token = jwtProvider.generate(tempUser.getId(), missingTenantId);
 
         mockMvc.perform(get("/tenants/{id}", missingTenantId)
                         .header("Authorization", "Bearer " + token))

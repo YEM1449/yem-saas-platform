@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./mvnw clean:*)"
+      "Bash(./mvnw clean:*)",
+      "Read(//home/yem/.docker/run/**)",
+      "Bash(docker run:*)",
+      "Read(//home/yem/**)",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw failsafe:integration-test:*)",
+      "Read(//tmp/**)",
+      "Bash(./mvnw test-compile -q)",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw -Dtest=AuthMeIT -e test)"
     ]
   }
 }

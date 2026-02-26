@@ -5,6 +5,8 @@ import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.deposit.service.DepositAlreadyExistsException;
 import com.yem.hlm.backend.deposit.service.InvalidDepositRequestException;
+import com.yem.hlm.backend.project.domain.Project;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
@@ -37,6 +39,9 @@ class ContactServiceIT extends IntegrationTestBase {
 
     @Autowired
     private PropertyRepository propertyRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private TenantRepository tenantRepository;
@@ -179,10 +184,12 @@ class ContactServiceIT extends IntegrationTestBase {
     private int refCounter = 0;
 
     private UUID createActiveProperty() {
+        int ref = ++refCounter;
         Tenant tenant = tenantRepository.getReferenceById(TENANT_ID);
-        Property property = new Property(tenant, PropertyType.VILLA, TenantContext.getUserId());
-        property.setReferenceCode("CSI-" + (++refCounter));
-        property.setTitle("Test Property " + refCounter);
+        Project project = projectRepository.saveAndFlush(new Project(tenant, "CSI-Project-" + ref));
+        Property property = new Property(tenant, project, PropertyType.VILLA, TenantContext.getUserId());
+        property.setReferenceCode("CSI-" + ref);
+        property.setTitle("Test Property " + ref);
         property.setPrice(new BigDecimal("500000"));
         property.setStatus(PropertyStatus.ACTIVE);
         return propertyRepository.saveAndFlush(property).getId();

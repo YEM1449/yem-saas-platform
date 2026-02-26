@@ -1,0 +1,116 @@
+databaseChangeLog:
+  - changeSet:
+      id: "014-property-add-project-fk-nullable"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Step 1: Add project_id nullable so we can backfill
+        # =========================================
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: project_id
+                  type: uuid
+
+  - changeSet:
+      id: "014-property-backfill-projects"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Step 2: Backfill projects from existing project_name values.
+        #
+        # Strategy:
+        #   a) For each distinct (tenant_id, project_name) pair where project_name IS NOT NULL,
+        #      create a project row. Then assign property.project_id.
+        #   b) For tenants with properties that have no project_name,
+        #      create an "Unassigned" project and assign it.
+        #
+        # This is idempotent because the unique constraint uk_project_tenant_name
+        # prevents duplicate (tenant_id, name) pairs.
+        # =========================================
+        - sql:
+            sql: |
+              -- (a) Create one project per distinct (tenant_id, project_name) where project_name is set
+              INSERT INTO project (id, tenant_id, name, status, created_at, updated_at)
+              SELECT gen_random_uuid(),
+                     sub.tenant_id,
+                     sub.project_name,
+                     'ACTIVE',
+                     NOW(),
+                     NOW()
+              FROM (
+                SELECT DISTINCT tenant_id, project_name
+                FROM property
+                WHERE project_name IS NOT NULL
+              ) sub
+              ON CONFLICT (tenant_id, name) DO NOTHING;
+
+              -- (b) Create an "Unassigned" project for every tenant that owns any property
+              INSERT INTO project (id, tenant_id, name, status, created_at, updated_at)
+              SELECT gen_random_uuid(),
+                     sub.tenant_id,
+                     'Unassigned',
+                     'ACTIVE',
+                     NOW(),
+                     NOW()
+              FROM (
+                SELECT DISTINCT tenant_id FROM property
+              ) sub
+              ON CONFLICT (tenant_id, name) DO NOTHING;
+
+              -- (c) Link properties that have a project_name to the matching project
+              UPDATE property p
+              SET project_id = proj.id
+              FROM project proj
+              WHERE p.tenant_id = proj.tenant_id
+                AND p.project_name = proj.name
+                AND p.project_id IS NULL;
+
+              -- (d) Link remaining properties (null project_name) to the "Unassigned" project
+              UPDATE property p
+              SET project_id = proj.id
+              FROM project proj
+              WHERE p.tenant_id = proj.tenant_id
+                AND proj.name = 'Unassigned'
+                AND p.project_id IS NULL;
+
+  - changeSet:
+      id: "014-property-project-fk-not-null"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Step 3: Add FK constraint and make NOT NULL
+        # =========================================
+        - addForeignKeyConstraint:
+            baseTableName: property
+            baseColumnNames: project_id
+            constraintName: fk_property_project
+            referencedTableName: project
+            referencedColumnNames: id
+
+        - addNotNullConstraint:
+            tableName: property
+            columnName: project_id
+            columnDataType: uuid
+
+        # =========================================
+        # Step 4: Remove the now-redundant project_name column
+        #         (project.name is the canonical name going forward)
+        # =========================================
+        - dropIndex:
+            tableName: property
+            indexName: idx_property_tenant_project
+
+        - dropColumn:
+            tableName: property
+            columnName: project_name
+
+        - createIndex:
+            indexName: idx_property_tenant_project_id
+            tableName: property
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: project_id

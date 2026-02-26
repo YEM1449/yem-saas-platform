@@ -1,6 +1,10 @@
 package com.yem.hlm.backend.property.service;
 
+import com.yem.hlm.backend.deposit.domain.DepositStatus;
+import com.yem.hlm.backend.property.api.dto.PropertySalesKpiDTO;
 import com.yem.hlm.backend.property.api.dto.PropertySummaryDTO;
+import com.yem.hlm.backend.property.api.dto.SalesByBuildingRow;
+import com.yem.hlm.backend.property.api.dto.SalesByProjectAgentRow;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
@@ -12,7 +16,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -83,5 +89,48 @@ public class PropertyDashboardService {
                 soldInPeriod,
                 totalValueSold
         );
+    }
+
+    /**
+     * Get sales KPIs broken down by project+agent and by building for a given period.
+     * <p>
+     * A "sale" is a deposit with status CONFIRMED during the period (by confirmedAt).
+     *
+     * @param from start date of period
+     * @param to end date of period
+     * @return PropertySalesKpiDTO with breakdown rows
+     */
+    public PropertySalesKpiDTO getSalesKpi(LocalDate from, LocalDate to) {
+        UUID tenantId = TenantContext.getTenantId();
+
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
+
+        List<SalesByProjectAgentRow> byProjectAgent = new ArrayList<>();
+        propertyRepository.salesByProjectAndAgent(tenantId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
+                .forEach(row -> byProjectAgent.add(new SalesByProjectAgentRow(
+                        (String) row[2],                        // projectName
+                        (UUID) row[0],                          // agentId
+                        (String) row[1],                        // agentEmail
+                        ((Long) row[3]),                        // count
+                        toBigDecimal(row[4])                    // totalValue
+                )));
+
+        List<SalesByBuildingRow> byBuilding = new ArrayList<>();
+        propertyRepository.salesByBuilding(tenantId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
+                .forEach(row -> byBuilding.add(new SalesByBuildingRow(
+                        (String) row[0],                        // buildingName
+                        ((Long) row[1]),                        // count
+                        toBigDecimal(row[2])                    // totalValue
+                )));
+
+        return new PropertySalesKpiDTO(from, to, byProjectAgent, byBuilding);
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value == null) return BigDecimal.ZERO;
+        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+        return BigDecimal.ZERO;
     }
 }

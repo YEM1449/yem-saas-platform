@@ -1,6 +1,10 @@
 package com.yem.hlm.backend.property.service;
 
 import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.project.domain.ProjectStatus;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
+import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
@@ -34,10 +38,14 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final TenantRepository tenantRepository;
+    private final ProjectRepository projectRepository;
 
-    public PropertyService(PropertyRepository propertyRepository, TenantRepository tenantRepository) {
+    public PropertyService(PropertyRepository propertyRepository,
+                           TenantRepository tenantRepository,
+                           ProjectRepository projectRepository) {
         this.propertyRepository = propertyRepository;
         this.tenantRepository = tenantRepository;
+        this.projectRepository = projectRepository;
     }
 
     /**
@@ -65,8 +73,17 @@ public class PropertyService {
         var tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new IllegalStateException("Tenant not found"));
 
+        // Load and validate project (must belong to same tenant)
+        var project = projectRepository.findByTenant_IdAndId(tenantId, request.projectId())
+                .orElseThrow(() -> new ProjectNotFoundException(request.projectId()));
+
+        // Only ACTIVE projects may receive new properties
+        if (project.getStatus() != ProjectStatus.ACTIVE) {
+            throw new ArchivedProjectAssignmentException(project.getId());
+        }
+
         // Create entity
-        var property = new Property(tenant, request.type(), userId);
+        var property = new Property(tenant, project, request.type(), userId);
         mapRequestToEntity(request, property);
 
         // Save
@@ -223,11 +240,18 @@ public class PropertyService {
                 if (req.bathrooms() == null) throw new InvalidPropertyTypeException("Bathrooms required for DUPLEX");
                 if (req.floors() == null) throw new InvalidPropertyTypeException("Floors required for DUPLEX");
             }
-            case APPARTEMENT -> {
-                if (req.surfaceAreaSqm() == null) throw new InvalidPropertyTypeException("Surface area required for APPARTEMENT");
-                if (req.bedrooms() == null) throw new InvalidPropertyTypeException("Bedrooms required for APPARTEMENT");
-                if (req.bathrooms() == null) throw new InvalidPropertyTypeException("Bathrooms required for APPARTEMENT");
-                if (req.floorNumber() == null) throw new InvalidPropertyTypeException("Floor number required for APPARTEMENT");
+            case APPARTEMENT, T2, T3 -> {
+                if (req.surfaceAreaSqm() == null) throw new InvalidPropertyTypeException("Surface area required for " + type);
+                if (req.bedrooms() == null) throw new InvalidPropertyTypeException("Bedrooms required for " + type);
+                if (req.bathrooms() == null) throw new InvalidPropertyTypeException("Bathrooms required for " + type);
+                if (req.floorNumber() == null) throw new InvalidPropertyTypeException("Floor number required for " + type);
+            }
+            case STUDIO -> {
+                if (req.surfaceAreaSqm() == null) throw new InvalidPropertyTypeException("Surface area required for STUDIO");
+                if (req.floorNumber() == null) throw new InvalidPropertyTypeException("Floor number required for STUDIO");
+            }
+            case COMMERCE -> {
+                if (req.surfaceAreaSqm() == null) throw new InvalidPropertyTypeException("Surface area required for COMMERCE");
             }
             case LOT -> {
                 if (req.landAreaSqm() == null) throw new InvalidPropertyTypeException("Land area required for LOT");
@@ -261,7 +285,7 @@ public class PropertyService {
                     throw new InvalidPropertyTypeException("Bedrooms/bathrooms/building_year/surface_area not applicable to TERRAIN_VIERGE");
                 }
             }
-            default -> { /* VILLA, DUPLEX, APPARTEMENT: all fields allowed */ }
+            default -> { /* all other types: partial updates on physical fields are allowed */ }
         }
     }
 
@@ -296,6 +320,9 @@ public class PropertyService {
         property.setFloorNumber(req.floorNumber());
         property.setZoning(req.zoning());
         property.setIsServiced(req.isServiced());
+        property.setListedForSale(req.listedForSale() != null && req.listedForSale());
+        // project is already set in the constructor via the loaded project entity
+        property.setBuildingName(req.buildingName());
     }
 
     private void mapUpdateRequestToEntity(PropertyUpdateRequest req, Property property) {
@@ -323,5 +350,17 @@ public class PropertyService {
         if (req.floorNumber() != null) property.setFloorNumber(req.floorNumber());
         if (req.zoning() != null) property.setZoning(req.zoning());
         if (req.isServiced() != null) property.setIsServiced(req.isServiced());
+        // Listing + project/building fields
+        if (req.listedForSale() != null) property.setListedForSale(req.listedForSale());
+        if (req.projectId() != null) {
+            UUID tenantId = TenantContext.getTenantId();
+            var project = projectRepository.findByTenant_IdAndId(tenantId, req.projectId())
+                    .orElseThrow(() -> new ProjectNotFoundException(req.projectId()));
+            if (project.getStatus() != ProjectStatus.ACTIVE) {
+                throw new ArchivedProjectAssignmentException(project.getId());
+            }
+            property.setProject(project);
+        }
+        if (req.buildingName() != null) property.setBuildingName(req.buildingName());
     }
 }

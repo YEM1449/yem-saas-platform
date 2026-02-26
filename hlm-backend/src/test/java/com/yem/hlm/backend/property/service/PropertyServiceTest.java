@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.property.service;
 
 import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.project.domain.Project;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
@@ -38,6 +40,9 @@ class PropertyServiceTest {
     @Mock
     private TenantRepository tenantRepository;
 
+    @Mock
+    private ProjectRepository projectRepository;
+
     @InjectMocks
     private PropertyService propertyService;
 
@@ -51,7 +56,8 @@ class PropertyServiceTest {
         TenantContext.setUserId(UUID.randomUUID());
 
         Tenant mockTenant = new Tenant("test-key", "Test Tenant");
-        mockProperty = new Property(mockTenant, PropertyType.VILLA, UUID.randomUUID());
+        Project mockProject = mock(Project.class);
+        mockProperty = new Property(mockTenant, mockProject, PropertyType.VILLA, UUID.randomUUID());
     }
 
     @AfterEach

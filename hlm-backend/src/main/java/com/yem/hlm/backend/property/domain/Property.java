@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.property.domain;
 
+import com.yem.hlm.backend.project.domain.Project;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,8 +12,8 @@ import java.util.UUID;
 /**
  * Property entity for the CRM-HLM real estate system.
  * <p>
- * Supports 5 property types with type-specific validation:
- * VILLA, DUPLEX, APPARTEMENT, LOT, TERRAIN_VIERGE
+ * Supports 9 property types with type-specific validation:
+ * VILLA, APPARTEMENT, DUPLEX, STUDIO, T2, T3, COMMERCE, LOT, TERRAIN_VIERGE
  * <p>
  * Uses single-table approach with nullable type-specific fields.
  * Validation is enforced at the service layer based on the {@link PropertyType}.
@@ -44,6 +45,11 @@ public class Property {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_property_tenant"))
     private Tenant tenant;
+
+    @Setter
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false, foreignKey = @ForeignKey(name = "fk_property_project"))
+    private Project project;
 
     // ===== Core Classification Fields =====
 
@@ -240,6 +246,32 @@ public class Property {
     @Column(name = "is_serviced")
     private Boolean isServiced;
 
+    // ===== Commercial Listing Fields =====
+
+    /**
+     * Indicates the property is actively listed for sale (mise en vente).
+     * Default: false (DRAFT properties are not listed).
+     */
+    @Setter
+    @Column(name = "listed_for_sale", nullable = false)
+    private boolean listedForSale;
+
+    /**
+     * Building within a project (e.g., "Tour A", "Bâtiment B").
+     * Optional — used for building-level dashboard aggregations.
+     */
+    @Setter
+    @Column(name = "building_name", length = 100)
+    private String buildingName;
+
+    /**
+     * Convenience accessor — returns the project name for display purposes.
+     * Delegates to the mandatory {@link #project} FK.
+     */
+    public String getProjectName() {
+        return project != null ? project.getName() : null;
+    }
+
     // ===== Lifecycle Fields =====
 
     @Setter
@@ -296,11 +328,13 @@ public class Property {
      * Creates a new property in DRAFT status.
      *
      * @param tenant        the tenant owning this property
+     * @param project       the project this property belongs to (mandatory)
      * @param type          the property type (VILLA, DUPLEX, etc.)
      * @param actorUserId   the user creating this property
      */
-    public Property(Tenant tenant, PropertyType type, UUID actorUserId) {
+    public Property(Tenant tenant, Project project, PropertyType type, UUID actorUserId) {
         this.tenant = tenant;
+        this.project = project;
         this.type = type;
         this.status = PropertyStatus.DRAFT;
         this.currency = "MAD"; // default currency

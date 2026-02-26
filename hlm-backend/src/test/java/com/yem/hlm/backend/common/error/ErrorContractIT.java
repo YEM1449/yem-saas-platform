@@ -2,13 +2,19 @@ package com.yem.hlm.backend.common.error;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.api.dto.TenantCreateRequest;
+import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.user.domain.User;
+import com.yem.hlm.backend.user.domain.UserRole;
+import com.yem.hlm.backend.user.repo.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -18,22 +24,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests verifying the standard error response contract.
- * Tests all error scenarios (400, 401, 404, 409, 500) return stable JSON structure.
+ * Tests all error scenarios (400, 401, 404, 409) return stable JSON structure.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 class ErrorContractIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwtProvider;
+    @Autowired TenantRepository tenantRepository;
+    @Autowired UserRepository userRepository;
 
-    /**
-     * Test 400 BAD_REQUEST with validation errors.
-     * Validates that fieldErrors array is present with field-level details.
-     */
+    private String validBearer;
+
+    @BeforeEach
+    void setup() {
+        Tenant tenant = tenantRepository.save(new Tenant("err-" + UUID.randomUUID().toString().substring(0, 8), "Err Tenant"));
+        User user = new User(tenant, "err@test.com", "hash");
+        user.setRole(UserRole.ROLE_ADMIN);
+        user = userRepository.save(user);
+        validBearer = "Bearer " + jwtProvider.generate(user.getId(), tenant.getId());
+    }
+
     @Test
     void validationError_returns400WithFieldErrors() throws Exception {
-        // Invalid payload: blank key, invalid email, short password
         var invalidPayload = """
                 {
                     "key": "",
@@ -47,42 +62,31 @@ class ErrorContractIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
-                // Standard error structure
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("Validation failed for request"))
                 .andExpect(jsonPath("$.path").value("/tenants"))
-                // Field errors present
                 .andExpect(jsonPath("$.fieldErrors").isArray())
                 .andExpect(jsonPath("$.fieldErrors.length()").value(greaterThanOrEqualTo(3)))
                 .andExpect(jsonPath("$.fieldErrors[*].field").value(hasItems("key", "ownerEmail", "ownerPassword")))
                 .andExpect(jsonPath("$.fieldErrors[*].message").exists());
     }
 
-    /**
-     * Test 401 UNAUTHORIZED when accessing protected endpoint without token.
-     * Validates stable JSON structure (not Spring Security's default).
-     */
     @Test
     void missingToken_returns401WithStandardError() throws Exception {
         mvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized())
-                // Standard error structure
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"))
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.message").value("Authentication required"))
                 .andExpect(jsonPath("$.path").value("/auth/me"))
-                // No field errors for auth failures
                 .andExpect(jsonPath("$.fieldErrors").doesNotExist());
     }
 
-    /**
-     * Test 401 UNAUTHORIZED with invalid JWT token.
-     */
     @Test
     void invalidToken_returns401WithStandardError() throws Exception {
         mvc.perform(get("/auth/me")
@@ -94,36 +98,22 @@ class ErrorContractIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.path").value("/auth/me"));
     }
 
-    /**
-     * Test 404 NOT_FOUND for missing resource.
-     * Uses contact endpoint as example.
-     */
     @Test
     void missingResource_returns404WithStandardError() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UUID tenantId = UUID.randomUUID();
-        String token = jwtProvider.generate(userId, tenantId);
-
         UUID nonExistentContactId = UUID.randomUUID();
 
         mvc.perform(get("/api/contacts/" + nonExistentContactId)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", validBearer))
                 .andExpect(status().isNotFound())
-                // Standard error structure
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value(containsString(nonExistentContactId.toString())))
                 .andExpect(jsonPath("$.path").value("/api/contacts/" + nonExistentContactId))
-                // No field errors for not found
                 .andExpect(jsonPath("$.fieldErrors").doesNotExist());
     }
 
-    /**
-     * Test 409 CONFLICT for duplicate tenant key.
-     * Creates tenant twice with same key.
-     */
     @Test
     void duplicateTenantKey_returns409WithStandardError() throws Exception {
         String uniqueKey = "error-test-" + UUID.randomUUID().toString().substring(0, 8);
@@ -137,40 +127,26 @@ class ErrorContractIT extends IntegrationTestBase {
                 }
                 """.formatted(uniqueKey);
 
-        // First create succeeds
         mvc.perform(post("/tenants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated());
 
-        // Second create fails with 409
         mvc.perform(post("/tenants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isConflict())
-                // Standard error structure
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.code").value("TENANT_KEY_EXISTS"))
                 .andExpect(jsonPath("$.message").value(containsString(uniqueKey)))
                 .andExpect(jsonPath("$.path").value("/tenants"))
-                // No field errors for business logic conflicts
                 .andExpect(jsonPath("$.fieldErrors").doesNotExist());
     }
 
-    /**
-     * Test 500 INTERNAL_SERVER_ERROR with safe error message.
-     * Uses test-only scenario: violating NOT NULL constraint via incomplete data.
-     */
     @Test
-    void unexpectedError_returns500WithSafeMessage() throws Exception {
-        UUID userId = UUID.randomUUID();
-        UUID tenantId = UUID.randomUUID();
-        String token = jwtProvider.generate(userId, tenantId);
-
-        // Invalid payload that will cause internal error: missing required @NotNull fields
-        // This should trigger server error due to constraint violation or NPE
+    void validationError_onAuthenticatedEndpoint_returns400() throws Exception {
         var malformedPayload = """
                 {
                     "firstName": "Test"
@@ -178,13 +154,12 @@ class ErrorContractIT extends IntegrationTestBase {
                 """;
 
         mvc.perform(post("/api/contacts")
-                        .header("Authorization", "Bearer " + token)
+                        .header("Authorization", validBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(malformedPayload))
-                .andExpect(status().isBadRequest()) // Actually this will be 400 due to validation
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
-
 }

@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: "012b-rename-legacy-project-table"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # The "project" table created by 003-create-contact-tables was a legacy
+        # CRM "projet client" concept that has since been replaced by
+        # ContactInterest, ClientDetail, and Deposit.
+        # No JPA entity maps to it.
+        #
+        # Drop the FK constraint whose name clashes with the new real-estate
+        # Project entity (013-create-project-table uses the same name
+        # "fk_project_tenant"), then rename the orphaned table to free up the
+        # canonical name "project" for the new entity.
+        # =========================================
+        # Drop the FK whose name clashes with the new real-estate project entity
+        - dropForeignKeyConstraint:
+            baseTableName: project
+            constraintName: fk_project_tenant
+
+        # In Postgres, constraint names are schema-scoped and survive a table rename.
+        # The auto-generated PK name "project_pkey" would clash when 013 creates
+        # the new project table. Rename it first.
+        - sql:
+            sql: "ALTER TABLE project RENAME CONSTRAINT project_pkey TO crm_project_legacy_pkey;"
+
+        - renameTable:
+            oldTableName: project
+            newTableName: crm_project_legacy

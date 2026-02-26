@@ -36,6 +36,12 @@ public enum ErrorCode {
     PROPERTY_REFERENCE_CODE_EXISTS,
     INVALID_PERIOD,
 
+    // Project errors (409)
+    PROJECT_NAME_EXISTS,
+
+    // Project assignment errors (400)
+    ARCHIVED_PROJECT,
+
     // Server errors (500)
     INTERNAL_ERROR
 }

@@ -2,9 +2,13 @@ package com.yem.hlm.backend.property;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.project.domain.Project;
+import com.yem.hlm.backend.project.domain.ProjectStatus;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
+import com.yem.hlm.backend.property.domain.PropertyCategory;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
@@ -35,10 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>
  * Tests cover:
  * - CRUD operations with RBAC (ADMIN, MANAGER, AGENT)
- * - Type-specific validation for all 5 property types
+ * - Type-specific validation for all property types
  * - Tenant isolation
  * - Property filtering by type and status
- * - Dashboard summary endpoint
+ * - Dashboard summary and sales KPI endpoints
+ * - New features: listedForSale, projectId/projectName, buildingName, category
  * - Error scenarios (401, 403, 404, 400, 409)
  */
 @SpringBootTest
@@ -51,6 +56,7 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Autowired JwtProvider jwtProvider;
     @Autowired TenantRepository tenantRepository;
     @Autowired UserRepository userRepository;
+    @Autowired ProjectRepository projectRepository;
 
     private Tenant tenant;
     private User adminUser;
@@ -61,14 +67,18 @@ class PropertyControllerIT extends IntegrationTestBase {
     private String managerBearer;
     private String agentBearer;
 
+    private UUID projectId;
+
     @BeforeEach
     void setupTestData() {
-        // Create unique tenant for this test
         String uniqueKey = "prop-test-" + UUID.randomUUID().toString().substring(0, 8);
         tenant = new Tenant(uniqueKey, "Property Test Tenant");
         tenant = tenantRepository.save(tenant);
 
-        // Create users with different roles
+        var project = new Project(tenant, "Test Project");
+        project = projectRepository.save(project);
+        projectId = project.getId();
+
         adminUser = new User(tenant, "admin@proptest.com", "hashedPass");
         adminUser.setRole(UserRole.ROLE_ADMIN);
         adminUser = userRepository.save(adminUser);
@@ -81,7 +91,6 @@ class PropertyControllerIT extends IntegrationTestBase {
         agentUser.setRole(UserRole.ROLE_AGENT);
         agentUser = userRepository.save(agentUser);
 
-        // Generate JWT tokens with roles
         adminBearer = "Bearer " + jwtProvider.generate(adminUser.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
         managerBearer = "Bearer " + jwtProvider.generate(managerUser.getId(), tenant.getId(), UserRole.ROLE_MANAGER);
         agentBearer = "Bearer " + jwtProvider.generate(agentUser.getId(), tenant.getId(), UserRole.ROLE_AGENT);
@@ -100,8 +109,11 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.type").value("VILLA"))
+                .andExpect(jsonPath("$.category").value("VILLA"))
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andExpect(jsonPath("$.referenceCode").value("VIL-ADMIN-001"))
+                .andExpect(jsonPath("$.projectId").value(projectId.toString()))
+                .andExpect(jsonPath("$.projectName").value("Test Project"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -109,6 +121,8 @@ class PropertyControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
         assertThat(created.title()).isEqualTo("Luxury Villa in Casablanca");
         assertThat(created.bedrooms()).isEqualTo(5);
+        assertThat(created.category()).isEqualTo(PropertyCategory.VILLA);
+        assertThat(created.listedForSale()).isFalse();
     }
 
     @Test
@@ -136,7 +150,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProperty_asManager_returns200() throws Exception {
-        // Create property as ADMIN
         var createReq = createValidVillaRequest("VIL-UPD-001");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -146,15 +159,12 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        // Update as MANAGER
         var updateReq = new PropertyUpdateRequest(
-                "Updated Villa Title",
-                null, // description
-                null, // notes
-                new BigDecimal("6000000.00"),
-                PropertyStatus.ACTIVE,
+                "Updated Villa Title", null, null,
+                new BigDecimal("6000000.00"), PropertyStatus.ACTIVE,
                 null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -169,7 +179,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProperty_asAgent_returns403() throws Exception {
-        // Create property as ADMIN
         var createReq = createValidVillaRequest("VIL-UPD-002");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -179,10 +188,10 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        // Try to update as AGENT
         var updateReq = new PropertyUpdateRequest(
                 "Hacked Title", null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -194,7 +203,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void deleteProperty_asAdmin_returns204() throws Exception {
-        // Create property
         var createReq = createValidVillaRequest("VIL-DEL-001");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -204,12 +212,10 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        // Delete as ADMIN
         mvc.perform(delete("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer))
                 .andExpect(status().isNoContent());
 
-        // Verify it's soft-deleted (404 on GET)
         mvc.perform(get("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer))
                 .andExpect(status().isNotFound());
@@ -217,7 +223,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void deleteProperty_asManager_returns403() throws Exception {
-        // Create property
         var createReq = createValidVillaRequest("VIL-DEL-002");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -227,7 +232,6 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        // Try to delete as MANAGER
         mvc.perform(delete("/api/properties/{id}", created.id())
                         .header("Authorization", managerBearer))
                 .andExpect(status().isForbidden());
@@ -235,7 +239,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void listProperties_asAgent_returns200() throws Exception {
-        // AGENT can read/list properties
         mvc.perform(get("/api/properties")
                         .header("Authorization", agentBearer))
                 .andExpect(status().isOk());
@@ -248,11 +251,9 @@ class PropertyControllerIT extends IntegrationTestBase {
         var req = new PropertyCreateRequest(
                 PropertyType.VILLA, "Incomplete Villa", "VIL-BAD-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, // missing surfaceAreaSqm
-                null, // missing landAreaSqm
-                null, // missing bedrooms
-                null, // missing bathrooms
-                null, null, null, null, null, null, null, null, null, null
+                null, null, null, null, // missing surfaceArea, landArea, bedrooms, bathrooms
+                null, null, null, null, null, null, null, null, null, null,
+                null, projectId, null
         );
 
         mvc.perform(post("/api/properties")
@@ -268,10 +269,11 @@ class PropertyControllerIT extends IntegrationTestBase {
         var req = new PropertyCreateRequest(
                 PropertyType.TERRAIN_VIERGE, "Undeveloped Land", "TER-BAD-001", new BigDecimal("800000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("2000"), // surfaceAreaSqm - FORBIDDEN for TERRAIN_VIERGE
+                new BigDecimal("2000"), // surfaceAreaSqm - FORBIDDEN
                 new BigDecimal("2000"), // landAreaSqm - OK
                 3, // bedrooms - FORBIDDEN
-                null, null, null, null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null, null, null, null,
+                null, projectId, null
         );
 
         mvc.perform(post("/api/properties")
@@ -287,13 +289,9 @@ class PropertyControllerIT extends IntegrationTestBase {
         var req = new PropertyCreateRequest(
                 PropertyType.APPARTEMENT, "Modern Apartment", "APP-001", new BigDecimal("1500000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("120"), // surfaceAreaSqm
-                null, // landAreaSqm - not needed
-                3, // bedrooms
-                2, // bathrooms
-                null, // floors - not needed
-                null, null, null, 2023, 5, // floorNumber
-                null, null, null, null
+                new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
+                null, null, null, null,
+                null, projectId, null
         );
 
         mvc.perform(post("/api/properties")
@@ -302,6 +300,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type").value("APPARTEMENT"))
+                .andExpect(jsonPath("$.category").value("APARTMENT"))
                 .andExpect(jsonPath("$.floorNumber").value(5));
     }
 
@@ -310,14 +309,9 @@ class PropertyControllerIT extends IntegrationTestBase {
         var req = new PropertyCreateRequest(
                 PropertyType.LOT, "Serviced Land Plot", "LOT-001", new BigDecimal("1200000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, // surfaceAreaSqm - not needed
-                new BigDecimal("500"), // landAreaSqm
-                null, // bedrooms - forbidden
-                null, // bathrooms - forbidden
-                null, null, null, null, null, null,
-                "RESIDENTIAL", // zoning
-                true, // isServiced
-                null, null
+                null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
+                "RESIDENTIAL", true, null, null,
+                null, projectId, null
         );
 
         mvc.perform(post("/api/properties")
@@ -326,15 +320,124 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type").value("LOT"))
+                .andExpect(jsonPath("$.category").value("LAND"))
                 .andExpect(jsonPath("$.zoning").value("RESIDENTIAL"))
                 .andExpect(jsonPath("$.isServiced").value(true));
+    }
+
+    @Test
+    void createStudio_withRequiredFields_returns201() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.STUDIO, "Studio Agdal", "STU-001", new BigDecimal("600000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("35"), null, null, null, null, null, null, null, null, 3,
+                null, null, null, null,
+                null, projectId, null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("STUDIO"))
+                .andExpect(jsonPath("$.category").value("APARTMENT"));
+    }
+
+    @Test
+    void createT2_withRequiredFields_returns201() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.T2, "T2 Agdal", "T2-001", new BigDecimal("900000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("65"), null, 2, 1, null, null, null, null, null, 2,
+                null, null, null, null,
+                null, projectId, null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("T2"))
+                .andExpect(jsonPath("$.category").value("APARTMENT"));
+    }
+
+    @Test
+    void createCommerce_withRequiredFields_returns201() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.COMMERCE, "Local Commercial", "COM-001", new BigDecimal("2000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("150"), null, null, null, null, null, null, null, null, 0,
+                null, null, null, null,
+                null, projectId, null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("COMMERCE"))
+                .andExpect(jsonPath("$.category").value("COMMERCE"));
+    }
+
+    @Test
+    void createProperty_withListedForSaleAndProject_returnsCorrectFields() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Project Villa", "VIL-PROJ-001", new BigDecimal("5000000"), "MAD",
+                new BigDecimal("5.0"), null, "123 Palm Ave", "Casablanca", "Grand Casablanca", "20000",
+                null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa with pool", null,
+                true,      // listedForSale
+                projectId, // projectId
+                "Villa A"  // buildingName
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.listedForSale").value(true))
+                .andExpect(jsonPath("$.projectId").value(projectId.toString()))
+                .andExpect(jsonPath("$.projectName").value("Test Project"))
+                .andExpect(jsonPath("$.buildingName").value("Villa A"));
+    }
+
+    @Test
+    void updateProperty_setListedForSale_persists() throws Exception {
+        var createReq = createValidVillaRequest("VIL-LIST-001");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
+        assertThat(created.listedForSale()).isFalse();
+
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                true, null, "Bâtiment B"
+        );
+
+        mvc.perform(put("/api/properties/{id}", created.id())
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.listedForSale").value(true))
+                .andExpect(jsonPath("$.projectName").value("Test Project"))
+                .andExpect(jsonPath("$.buildingName").value("Bâtiment B"));
     }
 
     // ===== Filtering Tests =====
 
     @Test
     void listProperties_filterByType_returnsOnlyVillas() throws Exception {
-        // Create VILLA
         var villa = createValidVillaRequest("VIL-FILTER-001");
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -342,11 +445,11 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(villa)))
                 .andExpect(status().isCreated());
 
-        // Create APPARTEMENT
         var app = new PropertyCreateRequest(
                 PropertyType.APPARTEMENT, "Apartment", "APP-FILTER-001", new BigDecimal("1000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("80"), null, 2, 1, null, null, null, null, 2020, 3, null, null, null, null
+                new BigDecimal("80"), null, 2, 1, null, null, null, null, 2020, 3, null, null, null, null,
+                null, projectId, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -354,7 +457,6 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(app)))
                 .andExpect(status().isCreated());
 
-        // Filter by VILLA type
         mvc.perform(get("/api/properties?type=VILLA")
                         .header("Authorization", agentBearer))
                 .andExpect(status().isOk())
@@ -363,7 +465,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void listProperties_filterByStatus_returnsOnlyActive() throws Exception {
-        // Create DRAFT property
         var draft = createValidVillaRequest("VIL-DRAFT-001");
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -371,7 +472,6 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(draft)))
                 .andExpect(status().isCreated());
 
-        // Create ACTIVE property
         var active = createValidVillaRequest("VIL-ACTIVE-001");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -381,15 +481,15 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        // Update to ACTIVE
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk());
 
-        // Filter by ACTIVE status
         mvc.perform(get("/api/properties?status=ACTIVE")
                         .header("Authorization", agentBearer))
                 .andExpect(status().isOk())
@@ -398,7 +498,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void listProperties_filterByTypeAndStatus_returnsCombined() throws Exception {
-        // Create VILLA ACTIVE
         var villa = createValidVillaRequest("VIL-COMBO-001");
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -408,14 +507,15 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk());
 
-        // Create VILLA DRAFT (won't match filter)
         var draftVilla = createValidVillaRequest("VIL-COMBO-002");
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -423,7 +523,6 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(draftVilla)))
                 .andExpect(status().isCreated());
 
-        // Filter by VILLA AND ACTIVE
         mvc.perform(get("/api/properties?type=VILLA&status=ACTIVE")
                         .header("Authorization", agentBearer))
                 .andExpect(status().isOk())
@@ -434,7 +533,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void listProperties_tenantIsolation_returnsOnlyOwnProperties() throws Exception {
-        // Create property in current tenant
         var prop1 = createValidVillaRequest("VIL-TENANT-001");
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -442,26 +540,34 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(prop1)))
                 .andExpect(status().isCreated());
 
-        // Create another tenant
         String otherKey = "prop-test-other-" + UUID.randomUUID().toString().substring(0, 8);
         Tenant otherTenant = new Tenant(otherKey, "Other Tenant");
         otherTenant = tenantRepository.save(otherTenant);
 
+        var otherProject = new Project(otherTenant, "Other Project");
+        otherProject = projectRepository.save(otherProject);
+        UUID otherProjectId = otherProject.getId();
+
         User otherAdmin = new User(otherTenant, "admin@other.com", "hashedPass");
         otherAdmin.setRole(UserRole.ROLE_ADMIN);
         otherAdmin = userRepository.save(otherAdmin);
-
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
-        // Create property in other tenant
-        var prop2 = createValidVillaRequest("VIL-TENANT-002");
+        var prop2 = new PropertyCreateRequest(
+                PropertyType.VILLA, "Luxury Villa in Casablanca", "VIL-TENANT-002",
+                new BigDecimal("5000000.00"), "MAD",
+                new BigDecimal("5.0"), null, "123 Palm Avenue", "Casablanca", "Grand Casablanca", "20000",
+                null, null, null, null, null, null,
+                new BigDecimal("350.00"), new BigDecimal("800.00"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa with beautiful garden and pool", null,
+                null, otherProjectId, null
+        );
         mvc.perform(post("/api/properties")
                         .header("Authorization", otherBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(prop2)))
                 .andExpect(status().isCreated());
 
-        // List properties from first tenant - should only see VIL-TENANT-001
         String json = mvc.perform(get("/api/properties")
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
@@ -495,14 +601,12 @@ class PropertyControllerIT extends IntegrationTestBase {
     void createProperty_duplicateReferenceCode_returns409() throws Exception {
         var req = createValidVillaRequest("VIL-DUP-001");
 
-        // First creation succeeds
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
 
-        // Second creation with same reference code fails
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -515,7 +619,9 @@ class PropertyControllerIT extends IntegrationTestBase {
         var req = new PropertyCreateRequest(
                 PropertyType.VILLA, "", "VIL-INVALID-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("350"), new BigDecimal("800"), 5, 4, null, null, null, null, null, null, null, null, null, null
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, null, null, null, null, null, null, null, null,
+                null, null,
+                null, projectId, null
         );
 
         mvc.perform(post("/api/properties")
@@ -525,11 +631,113 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void createProperty_withoutProjectId_returns400() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa Sans Projet", "VIL-NOPROJ-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa without project", null,
+                null, null, null  // projectId is null — @NotNull should reject
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createProperty_withNonExistentProjectId_returns404() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa Bad Project", "VIL-BADPROJ-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa with bad project ref", null,
+                null, UUID.randomUUID(), null  // projectId doesn't exist
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isNotFound());
+    }
+
+    // ===== Archived Project Tests =====
+
+    @Test
+    void createProperty_withArchivedProject_returns400() throws Exception {
+        var archived = new Project(tenant, "Archived Project");
+        archived.setStatus(ProjectStatus.ARCHIVED);
+        archived = projectRepository.save(archived);
+        final UUID archivedProjectId = archived.getId();
+
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa in Archived Project", "VIL-ARCH-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Should be rejected", null,
+                null, archivedProjectId, null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void updateProperty_reassignToArchivedProject_returns400() throws Exception {
+        var createReq = createValidVillaRequest("VIL-ARCH-002");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        var archived = new Project(tenant, "Archived Target");
+        archived.setStatus(ProjectStatus.ARCHIVED);
+        archived = projectRepository.save(archived);
+        final UUID archivedProjectId = archived.getId();
+
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, archivedProjectId, null
+        );
+
+        mvc.perform(put("/api/properties/{id}", villaId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void createProperty_withActiveProject_returns201() throws Exception {
+        // The default projectId in setUp is ACTIVE — this is already covered elsewhere,
+        // but explicitly verify the happy path here for clarity.
+        var req = createValidVillaRequest("VIL-ACTIVE-PROJ-001");
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.projectId").value(projectId.toString()));
+    }
+
     // ===== Dashboard Tests =====
 
     @Test
     void getDashboardSummary_asAdmin_returns200() throws Exception {
-        // Create some test properties
         var villa = createValidVillaRequest("VIL-DASH-001");
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -537,7 +745,6 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(villa)))
                 .andExpect(status().isCreated());
 
-        // Get dashboard summary
         mvc.perform(get("/dashboard/properties/summary?preset=LAST_30_DAYS")
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
@@ -548,7 +755,6 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void getDashboardSummary_asAgent_returns403() throws Exception {
-        // AGENT cannot access dashboard
         mvc.perform(get("/dashboard/properties/summary?preset=LAST_30_DAYS")
                         .header("Authorization", agentBearer))
                 .andExpect(status().isForbidden());
@@ -556,22 +762,39 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void getDashboardSummary_invalidPeriod_returns400() throws Exception {
-        // from > to should fail
         mvc.perform(get("/dashboard/properties/summary?from=2024-12-31&to=2024-01-01")
                         .header("Authorization", adminBearer))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getSalesKpi_asAdmin_returns200WithLists() throws Exception {
+        mvc.perform(get("/dashboard/properties/sales-kpi?preset=LAST_30_DAYS")
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").exists())
+                .andExpect(jsonPath("$.to").exists())
+                .andExpect(jsonPath("$.salesByProjectAgent").isArray())
+                .andExpect(jsonPath("$.salesByBuilding").isArray());
+    }
+
+    @Test
+    void getSalesKpi_asAgent_returns403() throws Exception {
+        mvc.perform(get("/dashboard/properties/sales-kpi?preset=LAST_30_DAYS")
+                        .header("Authorization", agentBearer))
+                .andExpect(status().isForbidden());
     }
 
     // ===== Update Validation Tests =====
 
     @Test
     void updateLot_withForbiddenBedrooms_returns400() throws Exception {
-        // Create LOT
         var lotReq = new PropertyCreateRequest(
                 PropertyType.LOT, "Test Lot", "LOT-UPD-001", new BigDecimal("300000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null, null, null, null, null,
-                null, new BigDecimal("500"), null, null, null, null, null, null, null, null, "residential", true,
-                null, null
+                null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
+                "residential", true, null, null,
+                null, projectId, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -581,9 +804,8 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID lotId = objectMapper.readValue(json, PropertyResponse.class).id();
 
-        // Try to update with forbidden bedrooms → 400
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                null, null, 3, null, null, null, null, null, null, null, null, null);
+                null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", lotId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -593,12 +815,12 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void updateTerrainVierge_withForbiddenSurface_returns400() throws Exception {
-        // Create TERRAIN_VIERGE
         var terrainReq = new PropertyCreateRequest(
                 PropertyType.TERRAIN_VIERGE, "Raw Land", "TER-UPD-001", new BigDecimal("200000"), "MAD",
                 null, null, null, "Kenitra", null, null, null, null, null, null, null, null,
-                null, new BigDecimal("1000"), null, null, null, null, null, null, null, null, null, null,
-                null, null
+                null, new BigDecimal("1000"), null, null, null, null, null, null, null, null,
+                null, null, null, null,
+                null, projectId, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -608,9 +830,8 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID terrainId = objectMapper.readValue(json, PropertyResponse.class).id();
 
-        // Try to update with forbidden surfaceAreaSqm → 400
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", terrainId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -629,9 +850,8 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
 
-        // Update surfaceAreaSqm on VILLA → allowed
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", villaId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -670,11 +890,14 @@ class PropertyControllerIT extends IntegrationTestBase {
                 true, // hasGarden
                 true, // hasPool
                 2020, // buildingYear
-                null, // floorNumber - not applicable
-                null, // zoning - not applicable
-                null, // isServiced - not applicable
+                null, // floorNumber
+                null, // zoning
+                null, // isServiced
                 "Villa with beautiful garden and pool", // description
-                null  // notes
+                null,      // notes
+                null,      // listedForSale
+                projectId, // projectId
+                null       // buildingName
         );
     }
 }
