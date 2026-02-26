@@ -1,7 +1,9 @@
 package com.yem.hlm.backend.property.service;
 
 import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.project.domain.ProjectStatus;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -74,6 +76,11 @@ public class PropertyService {
         // Load and validate project (must belong to same tenant)
         var project = projectRepository.findByTenant_IdAndId(tenantId, request.projectId())
                 .orElseThrow(() -> new ProjectNotFoundException(request.projectId()));
+
+        // Only ACTIVE projects may receive new properties
+        if (project.getStatus() != ProjectStatus.ACTIVE) {
+            throw new ArchivedProjectAssignmentException(project.getId());
+        }
 
         // Create entity
         var property = new Property(tenant, project, request.type(), userId);
@@ -349,6 +356,9 @@ public class PropertyService {
             UUID tenantId = TenantContext.getTenantId();
             var project = projectRepository.findByTenant_IdAndId(tenantId, req.projectId())
                     .orElseThrow(() -> new ProjectNotFoundException(req.projectId()));
+            if (project.getStatus() != ProjectStatus.ACTIVE) {
+                throw new ArchivedProjectAssignmentException(project.getId());
+            }
             property.setProject(project);
         }
         if (req.buildingName() != null) property.setBuildingName(req.buildingName());

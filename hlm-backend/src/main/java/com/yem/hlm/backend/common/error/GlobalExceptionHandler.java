@@ -7,6 +7,7 @@ import com.yem.hlm.backend.deposit.service.*;
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
+import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
 import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
@@ -402,6 +403,22 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ArchivedProjectAssignmentException.class)
+    public ResponseEntity<ErrorResponse> handleArchivedProject(
+            ArchivedProjectAssignmentException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.ARCHIVED_PROJECT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(InvalidPeriodException.class)

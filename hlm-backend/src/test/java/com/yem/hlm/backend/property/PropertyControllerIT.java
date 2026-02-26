@@ -3,6 +3,7 @@ package com.yem.hlm.backend.property;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.project.domain.Project;
+import com.yem.hlm.backend.project.domain.ProjectStatus;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -662,6 +663,75 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound());
+    }
+
+    // ===== Archived Project Tests =====
+
+    @Test
+    void createProperty_withArchivedProject_returns400() throws Exception {
+        var archived = new Project(tenant, "Archived Project");
+        archived.setStatus(ProjectStatus.ARCHIVED);
+        archived = projectRepository.save(archived);
+        final UUID archivedProjectId = archived.getId();
+
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa in Archived Project", "VIL-ARCH-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Should be rejected", null,
+                null, archivedProjectId, null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void updateProperty_reassignToArchivedProject_returns400() throws Exception {
+        var createReq = createValidVillaRequest("VIL-ARCH-002");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        var archived = new Project(tenant, "Archived Target");
+        archived.setStatus(ProjectStatus.ARCHIVED);
+        archived = projectRepository.save(archived);
+        final UUID archivedProjectId = archived.getId();
+
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, archivedProjectId, null
+        );
+
+        mvc.perform(put("/api/properties/{id}", villaId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void createProperty_withActiveProject_returns201() throws Exception {
+        // The default projectId in setUp is ACTIVE — this is already covered elsewhere,
+        // but explicitly verify the happy path here for clarity.
+        var req = createValidVillaRequest("VIL-ACTIVE-PROJ-001");
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.projectId").value(projectId.toString()));
     }
 
     // ===== Dashboard Tests =====

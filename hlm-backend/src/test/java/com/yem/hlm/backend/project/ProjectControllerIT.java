@@ -304,6 +304,28 @@ class ProjectControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("PROJECT_NAME_EXISTS"));
     }
 
+    @Test
+    void updateProject_blankName_returns400() throws Exception {
+        mvc.perform(put("/api/projects/{id}", projectId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"   \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void updateProject_nullName_keepsExistingName() throws Exception {
+        // Partial update: null name must not overwrite the existing name
+        mvc.perform(put("/api/projects/{id}", projectId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"Updated desc\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Test Project"))
+                .andExpect(jsonPath("$.description").value("Updated desc"));
+    }
+
     // ===== Archive =====
 
     @Test
