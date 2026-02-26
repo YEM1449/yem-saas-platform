@@ -95,7 +95,7 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `notification`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
 - Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, admin-users), route config in `app.routes.ts`.
 
@@ -134,8 +134,16 @@ npm start
 - Property lifecycle enum (`PropertyStatus`): `DRAFT`, `ACTIVE`, `RESERVED`, `SOLD`, `WITHDRAWN`, `ARCHIVED`.
 - Deposit workflow (`DepositStatus` + service rules):
   - Creation sets `PENDING` and moves property to `RESERVED`.
-  - `confirm()` allows only `PENDING -> CONFIRMED`.
+  - `confirm()` allows only `PENDING -> CONFIRMED`; acquires pessimistic write lock on property and rejects if property is `SOLD` → 409.
   - `cancel()`/expiry move deposit to `CANCELLED`/`EXPIRED` and release property back to `ACTIVE` when applicable.
+- Sales Contract workflow (`SaleContractStatus`):
+  - **Sale = Contract SIGNED** (deposit is pre-sale / reservation step).
+  - Lifecycle: `DRAFT → SIGNED → CANCELED` (or `DRAFT → CANCELED`).
+  - RBAC: `POST /api/contracts` — all roles; `POST /{id}/sign`, `POST /{id}/cancel` — ADMIN/MANAGER only; `GET /api/contracts` — all roles (AGENT sees own only, enforced in service).
+  - `sign()`: property moves to `SOLD`; service-layer guard + DB partial unique index (`uk_sc_property_signed`) prevent double-selling.
+  - `cancel()` of SIGNED contract: property reverts to `RESERVED` (if a CONFIRMED deposit exists for the property, via `DepositRepository.existsActiveConfirmedDepositForProperty()`) or `ACTIVE` (= AVAILABLE). Lock ordering: Property lock acquired BEFORE contract save to prevent deadlocks with `sign()` and `DepositService.confirm()`.
+  - `ProjectActiveGuard.requireActive()` checked on both `create()` and `sign()`.
+  - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

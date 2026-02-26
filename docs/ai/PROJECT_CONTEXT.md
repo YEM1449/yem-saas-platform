@@ -27,14 +27,17 @@
 - If CDC is unclear: add `[OPEN POINT]` with 1–3 options + recommended choice.
 - Update docs when behavior/contracts change.
 
-## Implementation snapshot (as of 2026-02-26, Batch 1)
-- Implemented baseline modules: Tenant isolation, RBAC, Admin user management, Projects/Properties, Contacts/Prospects, Deposits/Reservations.
+## Implementation snapshot (as of 2026-02-26, PR-1)
+- Implemented baseline modules: Tenant isolation, RBAC, Admin user management, Projects/Properties, Contacts/Prospects, Deposits/Reservations, Sales Contracts.
 - Key domain rules:
   - Property belongs to Project (mandatory).
-  - Only ACTIVE projects accept new/reassigned properties — enforced via `ProjectActiveGuard` (reusable; also wire into `SaleContractService`).
+  - Only ACTIVE projects accept new/reassigned properties — enforced via `ProjectActiveGuard` (wired into `SaleContractService` for both create and sign).
   - JWT revocation: `tv` (tokenVersion) claim; incremented on role change or disable; `JwtAuthenticationFilter` rejects mismatched tokens immediately.
+  - **Sale = Contract SIGNED**: `SaleContract` lifecycle `DRAFT → SIGNED → CANCELED`; signing marks property `SOLD`; canceling a SIGNED contract reverts property to `RESERVED` or `ACTIVE`.
+  - Double-selling prevented by service-layer check + DB partial unique index `uk_sc_property_signed`.
+  - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
 - Project KPIs: `GET /api/projects/{id}/kpis` (ADMIN/MANAGER); Angular `project-detail` component renders KPI cards.
-- Tests hint: key IT classes include `RbacIT`, `AdminUserControllerIT`, `TenantControllerIT`, `CrossTenantIsolationIT`, `ContactServiceIT`, `PropertyControllerIT`, `ProjectControllerIT`, `TokenRevocationIT`.
+- Tests hint: key IT classes include `RbacIT`, `AdminUserControllerIT`, `TenantControllerIT`, `CrossTenantIsolationIT`, `ContactServiceIT`, `PropertyControllerIT`, `ProjectControllerIT`, `TokenRevocationIT`, `DepositControllerIT`, `ContractControllerIT`.
 
 ## Local verification commands (suggested)
 - Run a single failing IT with full stack:

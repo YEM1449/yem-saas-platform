@@ -1,0 +1,189 @@
+databaseChangeLog:
+
+  # =========================================
+  # Step 1: Create sale_contract table
+  # =========================================
+  - changeSet:
+      id: "016-create-sale-contract"
+      author: crm-hlm
+      changes:
+        - createTable:
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: buyer_contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: agent_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: agreed_price
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: list_price
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: source_deposit_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: signed_at
+                  type: timestamp
+                  constraints:
+                    nullable: true
+              - column:
+                  name: canceled_at
+                  type: timestamp
+                  constraints:
+                    nullable: true
+
+  # =========================================
+  # Step 2: Foreign key constraints
+  # (agent_id references app_user — skipped here;
+  #  enforced at service layer. See entity @ManyToOne.)
+  # =========================================
+  - changeSet:
+      id: "016-sale-contract-fk-constraints"
+      author: crm-hlm
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: tenant_id
+            constraintName: fk_sale_contract_tenant
+            referencedTableName: tenant
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: project_id
+            constraintName: fk_sale_contract_project
+            referencedTableName: project
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: property_id
+            constraintName: fk_sale_contract_property
+            referencedTableName: property
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: buyer_contact_id
+            constraintName: fk_sale_contract_contact
+            referencedTableName: contact
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: agent_id
+            constraintName: fk_sale_contract_agent
+            referencedTableName: app_user
+            referencedColumnNames: id
+
+  # =========================================
+  # Step 3: KPI performance indexes
+  # =========================================
+  - changeSet:
+      id: "016-sale-contract-indexes"
+      author: crm-hlm
+      changes:
+        - createIndex:
+            indexName: idx_sc_tenant_signed_at
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: signed_at
+
+        - createIndex:
+            indexName: idx_sc_tenant_project_signed_at
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: project_id
+              - column:
+                  name: signed_at
+
+        - createIndex:
+            indexName: idx_sc_tenant_agent_signed_at
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: agent_id
+              - column:
+                  name: signed_at
+
+        - createIndex:
+            indexName: idx_sc_tenant_property
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: property_id
+
+  # =========================================
+  # Step 4: Partial unique index — only ONE SIGNED
+  # non-canceled contract per (tenant_id, property_id).
+  # Race-condition safety net; service layer checks first.
+  # =========================================
+  - changeSet:
+      id: "016-sale-contract-partial-unique-signed"
+      author: crm-hlm
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX uk_sc_property_signed
+              ON sale_contract (tenant_id, property_id)
+              WHERE status = 'SIGNED' AND canceled_at IS NULL;

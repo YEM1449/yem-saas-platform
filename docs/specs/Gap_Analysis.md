@@ -1,6 +1,6 @@
 # Gap Analysis (CDC vs Current Implementation)
 
-_Last updated: 2026-02-26 (Batch 2)_
+_Last updated: 2026-02-26 (PR-1)_
 
 This file lists the main gaps to close between the CDC expectations and the current implementation state.
 
@@ -15,7 +15,7 @@ This file lists the main gaps to close between the CDC expectations and the curr
 
 4) **ARCHIVED project guardrail** — Property create/update must reject ARCHIVED projects. ✅ CLOSED (Batch 1): `ProjectActiveGuard` + `ArchivedProjectAssignmentException` + 400 `ARCHIVED_PROJECT` + tests.
 
-5) **Commercial MVP completeness** — SaleContract entity, lifecycle (DRAFT→SIGNED→CANCELED), property status on sign/cancel, double-booking guard. Status: PARTIAL (Batch 2 closed property status SSOT; Batch 3+ covers double-booking + SaleContract entity).
+5) **Commercial MVP completeness** — SaleContract entity, lifecycle (DRAFT→SIGNED→CANCELED), property status on sign/cancel, double-booking guard. ✅ CLOSED (PR-1 + PR-2 + tightenings): `SaleContract` + `SaleContractService` + `ContractController`; Liquibase changeset 016; double-booking guard (service + partial unique index `uk_sc_property_signed`); `DepositService.confirm()` pessimistic lock + SOLD guard; consistent lock ordering across all 4 concurrent flows; `DepositRepository.existsActiveConfirmedDepositForProperty()` for cancel-rule; `ContractControllerIT` (10 tests). Remaining open point: KPI aggregation endpoints for sales/agent dashboards.
 
 
 ## By CDC P1 backlog item

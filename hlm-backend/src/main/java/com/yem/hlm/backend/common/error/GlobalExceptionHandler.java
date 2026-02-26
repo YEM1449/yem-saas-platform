@@ -2,6 +2,10 @@ package com.yem.hlm.backend.common.error;
 
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
+import com.yem.hlm.backend.contract.service.ContractNotFoundException;
+import com.yem.hlm.backend.contract.service.InvalidContractStateException;
+import com.yem.hlm.backend.contract.service.PropertyAlreadySoldException;
 import com.yem.hlm.backend.deposit.service.*;
 
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
@@ -128,6 +132,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ContactNotFoundException.class,
             ContactInterestNotFoundException.class,
+            ContractNotFoundException.class,
             DepositNotFoundException.class,
             NotificationNotFoundException.class,
             ProjectNotFoundException.class,
@@ -459,6 +464,53 @@ public class GlobalExceptionHandler {
         log.warn("Access denied on {}: {}", request.getRequestURI(), ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    // ========== Contract Errors ==========
+
+    @ExceptionHandler(PropertyAlreadySoldException.class)
+    public ResponseEntity<ErrorResponse> handlePropertyAlreadySold(
+            PropertyAlreadySoldException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.PROPERTY_ALREADY_SOLD,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidContractStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidContractState(
+            InvalidContractStateException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_CONTRACT_STATE,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ContractDepositMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleContractDepositMismatch(
+            ContractDepositMismatchException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.CONTRACT_DEPOSIT_MISMATCH,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     // ========== ResponseStatusException (pass-through) ==========

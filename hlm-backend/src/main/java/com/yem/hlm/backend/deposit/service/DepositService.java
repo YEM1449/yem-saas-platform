@@ -121,7 +121,7 @@ public class DepositService {
             throw new PropertyAlreadyReservedException(propertyId);
         }
 
-        // Load property with pessimistic lock — validates existence + tenant isolation + availability
+        // Lock ordering: Property first to avoid deadlocks with SaleContractService flows.
         Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
@@ -204,6 +204,16 @@ public class DepositService {
 
         if (deposit.getStatus() != DepositStatus.PENDING) {
             throw new InvalidDepositStateException("Only PENDING deposits can be confirmed");
+        }
+
+        // Lock ordering: Property first to avoid deadlocks with SaleContractService flows.
+        // Prevents a concurrent contract signing from marking the property SOLD between
+        // our PENDING status check and the deposit save.
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, deposit.getPropertyId())
+                .orElseThrow(() -> new PropertyNotFoundException(deposit.getPropertyId()));
+        if (property.getStatus() == PropertyStatus.SOLD) {
+            throw new InvalidDepositStateException(
+                    "Cannot confirm deposit: property " + deposit.getPropertyId() + " is already SOLD");
         }
 
         deposit.setStatus(DepositStatus.CONFIRMED);

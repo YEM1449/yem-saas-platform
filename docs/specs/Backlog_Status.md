@@ -1,6 +1,6 @@
 # Backlog Status (CDC → Implementation snapshot)
 
-_Last updated: 2026-02-26 (Batch 1 update)_
+_Last updated: 2026-02-26 (PR-1)_
 
 This file tracks implementation progress against the CDC backlog. It does **not** replace `Backlog_Priorities.md` (which is a CDC extract).
 
@@ -15,7 +15,7 @@ Legend: **DONE / PARTIAL / NOT STARTED / UNKNOWN**.
 
 | 1 | Gestion des utilisateurs & rôles | **PARTIAL** | Endpoints + RBAC exist (AdminUserControllerIT, RbacIT). Add immediate JWT invalidation on role/disable if not already merged. |
 | 2 | Gestion multi-sociétés / multi-projets | **PARTIAL** | Tenant isolation + projects exist (TenantControllerIT, CrossTenantIsolationIT). Consolidated reporting may be pending. |
-| 3 | Module Commercial – version MVP | **PARTIAL** | Contacts/Prospects + deposits/reservations exist (ContactServiceIT, CrossTenantIsolationIT). ARCHIVED-project guardrail added (Batch 1). Project KPIs endpoint + Angular KPI view added. SaleContract entity not yet implemented (Batch 2+). |
+| 3 | Module Commercial – version MVP | **PARTIAL** | Contacts/Prospects + Deposits/Reservations + Sales Contracts (PR-1) implemented. `SaleContract` DRAFT→SIGNED→CANCELED lifecycle; property SOLD on sign; double-booking guard (service + DB). RBAC, tenant isolation, AGENT restriction all covered by `ContractControllerIT`. Remaining: KPI aggregation endpoints for sales. |
 | 4 | Prospection foncière | **NOT STARTED** | No evidence in tests/logs yet. |
 | 5 | Workflow administratif simplifié (Maroc + UE) | **NOT STARTED** | No evidence in tests/logs yet. |
 | 6 | Tableaux de bord essentiels | **PARTIAL** | Project KPIs mentioned as implemented (basic). Validate exact KPI list + UI coverage. |

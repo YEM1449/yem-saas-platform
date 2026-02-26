@@ -19,6 +19,19 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
 
     boolean existsByTenant_IdAndPropertyIdAndStatusIn(UUID tenantId, UUID propertyId, List<DepositStatus> statuses);
 
+    /** Single-status variant — used by the default helper below. */
+    boolean existsByTenant_IdAndPropertyIdAndStatus(UUID tenantId, UUID propertyId, DepositStatus status);
+
+    /**
+     * True if a CONFIRMED (active) deposit exists for the given property within the tenant.
+     * <p>
+     * Used by {@code SaleContractService.cancel()} to decide whether to revert the property
+     * to RESERVED (active reservation remains) or AVAILABLE (PropertyStatus.ACTIVE).
+     */
+    default boolean existsActiveConfirmedDepositForProperty(UUID tenantId, UUID propertyId) {
+        return existsByTenant_IdAndPropertyIdAndStatus(tenantId, propertyId, DepositStatus.CONFIRMED);
+    }
+
     List<Deposit> findAllByTenant_IdAndContact_IdAndStatus(UUID tenantId, UUID contactId, DepositStatus status);
 
     List<Deposit> findAllByTenant_IdAndStatusAndDueDateBefore(UUID tenantId, DepositStatus status, LocalDateTime before);

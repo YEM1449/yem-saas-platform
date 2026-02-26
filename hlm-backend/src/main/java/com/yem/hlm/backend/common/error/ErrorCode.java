@@ -42,6 +42,11 @@ public enum ErrorCode {
     // Project assignment errors (400)
     ARCHIVED_PROJECT,
 
+    // Contract errors
+    PROPERTY_ALREADY_SOLD,      // 409 — property already has an active SIGNED contract
+    INVALID_CONTRACT_STATE,     // 409 — action not permitted in current contract state
+    CONTRACT_DEPOSIT_MISMATCH,  // 400 — sourceDepositId doesn't match contract details or not CONFIRMED
+
     // Server errors (500)
     INTERNAL_ERROR
 }
