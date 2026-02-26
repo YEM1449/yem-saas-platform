@@ -7,8 +7,8 @@
 - Database schema is PostgreSQL + Liquibase; Hibernate runs with schema validation (`ddl-auto: validate`).
 
 ## Repo Map
-- `hlm-backend/` — Java 21 Spring Boot API (auth, tenant, users, contacts, properties, deposits, notifications).
-- `hlm-frontend/` — Angular 19 SPA (login, shell, properties, auth guard/interceptor).
+- `hlm-backend/` — Java 21 Spring Boot API (auth, tenant, users, contacts, properties, projects, deposits, notifications).
+- `hlm-frontend/` — Angular 19 SPA (login, shell, properties, projects, auth guard/interceptor).
 - `docs/` — architecture, backend/frontend guides, API docs, runbook, contributing rules.
 - `scripts/` — shell utilities (notably `smoke-auth.sh` for auth + protected endpoint verification).
 - `README.md` — top-level quickstart and env expectations.
@@ -95,14 +95,24 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `notification`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, admin-users), route config in `app.routes.ts`.
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
-- JWT claims: `sub` (user), `tid` (tenant), `roles`.
+- JWT claims: `sub` (user), `tid` (tenant), `roles`, `tv` (tokenVersion — see revocation below).
 - Error contract is standardized via `common/error/ErrorResponse` + `ErrorCode`.
 - Validation and malformed JSON errors map to HTTP 400 with stable error code fields.
+
+### Security: JWT Revocation
+- Every JWT carries a `tv` (tokenVersion) integer claim stamped at login time.
+- `User.tokenVersion` is stored in the DB and incremented when the user's role changes or the account is disabled.
+- On each request, `JwtAuthenticationFilter` calls `UserSecurityCacheService.getSecurityInfo(userId)` and rejects the token (→ 401) if:
+  - `secInfo` is null (user deleted), OR
+  - `secInfo.enabled()` is false, OR
+  - `secInfo.tokenVersion() != tv` (token issued before the last role change/disable).
+- Cache: `UserSecurityCacheService` uses Spring Cache (`userSecurityCache`) to avoid per-request DB hits; evicted on role change or disable.
 
 ### Persistence conventions
 - Never edit already-applied Liquibase changesets; create a new changeset instead.
@@ -117,6 +127,10 @@ npm start
   - `ACTIVE_CLIENT -> COMPLETED_CLIENT|LOST`
   - `COMPLETED_CLIENT -> REFERRAL`
   - `LOST -> PROSPECT`
+- Project lifecycle (`ProjectStatus`): `ACTIVE` | `ARCHIVED`.
+  - Only `ACTIVE` projects may receive new or reassigned properties; assigning to `ARCHIVED` → 400 `ARCHIVED_PROJECT`.
+  - Archive via `DELETE /api/projects/{id}` (sets status; does not physically delete).
+  - KPI aggregation: `GET /api/projects/{id}/kpis` — requires `ROLE_ADMIN` or `ROLE_MANAGER`.
 - Property lifecycle enum (`PropertyStatus`): `DRAFT`, `ACTIVE`, `RESERVED`, `SOLD`, `WITHDRAWN`, `ARCHIVED`.
 - Deposit workflow (`DepositStatus` + service rules):
   - Creation sets `PENDING` and moves property to `RESERVED`.
