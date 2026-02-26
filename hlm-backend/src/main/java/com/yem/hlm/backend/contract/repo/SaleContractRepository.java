@@ -2,6 +2,8 @@ package com.yem.hlm.backend.contract.repo;
 
 import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -52,5 +54,161 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
             @Param("agentId")   UUID agentId,
             @Param("from")      LocalDateTime from,
             @Param("to")        LocalDateTime to
+    );
+
+    // =========================================================================
+    // Dashboard aggregate queries (no entity hydration — DTO projections only)
+    // =========================================================================
+
+    /**
+     * Totals for SIGNED contracts in the given date range.
+     * Returns one Object[] row: [count(Long), sum(BigDecimal), avg(BigDecimal)].
+     */
+    @Query("""
+            SELECT COUNT(c), COALESCE(SUM(c.agreedPrice), 0), COALESCE(AVG(c.agreedPrice), 0)
+            FROM SaleContract c
+            WHERE c.tenant.id  = :tenantId
+              AND c.status     = 'SIGNED'
+              AND c.signedAt  >= :from
+              AND c.signedAt  <= :to
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+              AND (:agentId   IS NULL OR c.agent.id   = :agentId)
+            """)
+    List<Object[]> salesTotals(
+            @Param("tenantId")  UUID tenantId,
+            @Param("from")      LocalDateTime from,
+            @Param("to")        LocalDateTime to,
+            @Param("projectId") UUID projectId,
+            @Param("agentId")   UUID agentId
+    );
+
+    /**
+     * Top-N sales grouped by project (pass {@code Pageable.ofSize(10)}).
+     * Returns rows: [projectId(UUID), projectName(String), count(Long), sum(BigDecimal)].
+     */
+    @Query("""
+            SELECT c.project.id, c.project.name, COUNT(c), COALESCE(SUM(c.agreedPrice), 0)
+            FROM SaleContract c
+            WHERE c.tenant.id = :tenantId
+              AND c.status    = 'SIGNED'
+              AND c.signedAt >= :from
+              AND c.signedAt <= :to
+              AND (:agentId  IS NULL OR c.agent.id = :agentId)
+            GROUP BY c.project.id, c.project.name
+            ORDER BY COUNT(c) DESC
+            """)
+    List<Object[]> salesByProject(
+            @Param("tenantId") UUID tenantId,
+            @Param("from")     LocalDateTime from,
+            @Param("to")       LocalDateTime to,
+            @Param("agentId")  UUID agentId,
+            Pageable pageable
+    );
+
+    /**
+     * Top-N sales grouped by agent (pass {@code Pageable.ofSize(10)}).
+     * Returns rows: [agentId(UUID), agentEmail(String), count(Long), sum(BigDecimal)].
+     */
+    @Query("""
+            SELECT c.agent.id, c.agent.email, COUNT(c), COALESCE(SUM(c.agreedPrice), 0)
+            FROM SaleContract c
+            WHERE c.tenant.id  = :tenantId
+              AND c.status     = 'SIGNED'
+              AND c.signedAt  >= :from
+              AND c.signedAt  <= :to
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+            GROUP BY c.agent.id, c.agent.email
+            ORDER BY COUNT(c) DESC
+            """)
+    List<Object[]> salesByAgent(
+            @Param("tenantId")  UUID tenantId,
+            @Param("from")      LocalDateTime from,
+            @Param("to")        LocalDateTime to,
+            @Param("projectId") UUID projectId,
+            Pageable pageable
+    );
+
+    /**
+     * Daily sales amounts (trend chart). Groups SIGNED contracts by calendar day of signedAt.
+     * Returns rows: [date(LocalDate), amount(BigDecimal)], ordered by date ASC.
+     */
+    @Query("""
+            SELECT cast(c.signedAt as LocalDate), COALESCE(SUM(c.agreedPrice), 0)
+            FROM SaleContract c
+            WHERE c.tenant.id  = :tenantId
+              AND c.status     = 'SIGNED'
+              AND c.signedAt  >= :from
+              AND c.signedAt  <= :to
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+              AND (:agentId   IS NULL OR c.agent.id   = :agentId)
+            GROUP BY cast(c.signedAt as LocalDate)
+            ORDER BY cast(c.signedAt as LocalDate)
+            """)
+    List<Object[]> salesAmountByDay(
+            @Param("tenantId")  UUID tenantId,
+            @Param("from")      LocalDateTime from,
+            @Param("to")        LocalDateTime to,
+            @Param("projectId") UUID projectId,
+            @Param("agentId")   UUID agentId
+    );
+
+    /**
+     * Returns (signedAt, deposit.confirmedAt) pairs for contracts that originated
+     * from a confirmed deposit. Used to compute avgDaysDepositToSale in the service.
+     * Returns rows: [signedAt(LocalDateTime), confirmedAt(LocalDateTime)].
+     */
+    @Query("""
+            SELECT c.signedAt, d.confirmedAt
+            FROM SaleContract c, com.yem.hlm.backend.deposit.domain.Deposit d
+            WHERE d.id               = c.sourceDepositId
+              AND c.sourceDepositId IS NOT NULL
+              AND c.tenant.id        = :tenantId
+              AND c.status           = 'SIGNED'
+              AND c.signedAt        >= :from
+              AND c.signedAt        <= :to
+              AND (:agentId         IS NULL OR c.agent.id = :agentId)
+            """)
+    List<Object[]> cycleTimePairs(
+            @Param("tenantId") UUID tenantId,
+            @Param("from")     LocalDateTime from,
+            @Param("to")       LocalDateTime to,
+            @Param("agentId")  UUID agentId
+    );
+
+    /**
+     * Paged signed contracts for the drill-down sales table.
+     * Returns rows: [id, signedAt, projectName, propertyRef, buyerName, agentEmail, amount].
+     */
+    @Query(
+        value = """
+            SELECT c.id, c.signedAt, c.project.name, c.property.referenceCode,
+                   CONCAT(c.buyerContact.firstName, ' ', c.buyerContact.lastName),
+                   c.agent.email, c.agreedPrice
+            FROM SaleContract c
+            WHERE c.tenant.id  = :tenantId
+              AND c.status     = 'SIGNED'
+              AND c.signedAt  >= :from
+              AND c.signedAt  <= :to
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+              AND (:agentId   IS NULL OR c.agent.id   = :agentId)
+            ORDER BY c.signedAt DESC
+            """,
+        countQuery = """
+            SELECT COUNT(c) FROM SaleContract c
+            WHERE c.tenant.id  = :tenantId
+              AND c.status     = 'SIGNED'
+              AND c.signedAt  >= :from
+              AND c.signedAt  <= :to
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+              AND (:agentId   IS NULL OR c.agent.id   = :agentId)
+            """
+    )
+    Page<Object[]> salesForTable(
+            @Param("tenantId")  UUID tenantId,
+            @Param("from")      LocalDateTime from,
+            @Param("to")        LocalDateTime to,
+            @Param("projectId") UUID projectId,
+            @Param("agentId")   UUID agentId,
+            Pageable pageable
     );
 }

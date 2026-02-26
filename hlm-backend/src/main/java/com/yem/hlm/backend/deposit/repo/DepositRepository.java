@@ -76,4 +76,50 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    // =========================================================================
+    // Dashboard aggregate queries (no entity hydration — DTO projections only)
+    // =========================================================================
+
+    /**
+     * Totals for CONFIRMED deposits in the given date range (filtered by confirmedAt).
+     * Returns one Object[] row: [count(Long), sum(BigDecimal)].
+     */
+    @Query("""
+            SELECT COUNT(d), COALESCE(SUM(d.amount), 0)
+            FROM Deposit d
+            WHERE d.tenant.id   = :tenantId
+              AND d.status      = 'CONFIRMED'
+              AND d.confirmedAt >= :from
+              AND d.confirmedAt <= :to
+              AND (:agentId     IS NULL OR d.agent.id = :agentId)
+            """)
+    List<Object[]> depositTotals(
+            @Param("tenantId") UUID tenantId,
+            @Param("from")     LocalDateTime from,
+            @Param("to")       LocalDateTime to,
+            @Param("agentId")  UUID agentId
+    );
+
+    /**
+     * Daily deposit amounts (trend chart). Groups CONFIRMED deposits by calendar day of confirmedAt.
+     * Returns rows: [date(LocalDate), amount(BigDecimal)], ordered by date ASC.
+     */
+    @Query("""
+            SELECT cast(d.confirmedAt as LocalDate), COALESCE(SUM(d.amount), 0)
+            FROM Deposit d
+            WHERE d.tenant.id   = :tenantId
+              AND d.status      = 'CONFIRMED'
+              AND d.confirmedAt >= :from
+              AND d.confirmedAt <= :to
+              AND (:agentId     IS NULL OR d.agent.id = :agentId)
+            GROUP BY cast(d.confirmedAt as LocalDate)
+            ORDER BY cast(d.confirmedAt as LocalDate)
+            """)
+    List<Object[]> depositsAmountByDay(
+            @Param("tenantId") UUID tenantId,
+            @Param("from")     LocalDateTime from,
+            @Param("to")       LocalDateTime to,
+            @Param("agentId")  UUID agentId
+    );
 }

@@ -8,7 +8,8 @@
       "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw failsafe:integration-test:*)",
       "Read(//tmp/**)",
       "Bash(./mvnw test-compile -q)",
-      "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw -Dtest=AuthMeIT -e test)"
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw -Dtest=AuthMeIT -e test)",
+      "Bash(mvn -pl hlm-backend -Dtest=CommercialDashboardIT -DtrimStackTrace=false -e test)"
     ]
   }
 }

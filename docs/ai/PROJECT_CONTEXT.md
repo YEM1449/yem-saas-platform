@@ -27,8 +27,8 @@
 - If CDC is unclear: add `[OPEN POINT]` with 1–3 options + recommended choice.
 - Update docs when behavior/contracts change.
 
-## Implementation snapshot (as of 2026-02-26, PR-1)
-- Implemented baseline modules: Tenant isolation, RBAC, Admin user management, Projects/Properties, Contacts/Prospects, Deposits/Reservations, Sales Contracts.
+## Implementation snapshot (as of 2026-02-26, PR-3)
+- Implemented baseline modules: Tenant isolation, RBAC, Admin user management, Projects/Properties, Contacts/Prospects, Deposits/Reservations, Sales Contracts, Commercial Dashboard.
 - Key domain rules:
   - Property belongs to Project (mandatory).
   - Only ACTIVE projects accept new/reassigned properties — enforced via `ProjectActiveGuard` (wired into `SaleContractService` for both create and sign).
@@ -37,13 +37,20 @@
   - Double-selling prevented by service-layer check + DB partial unique index `uk_sc_property_signed`.
   - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
 - Project KPIs: `GET /api/projects/{id}/kpis` (ADMIN/MANAGER); Angular `project-detail` component renders KPI cards.
-- Tests hint: key IT classes include `RbacIT`, `AdminUserControllerIT`, `TenantControllerIT`, `CrossTenantIsolationIT`, `ContactServiceIT`, `PropertyControllerIT`, `ProjectControllerIT`, `TokenRevocationIT`, `DepositControllerIT`, `ContractControllerIT`.
+- Commercial Dashboard: `GET /api/dashboard/commercial/summary` + `/sales` (drill-down). Single-call, 9 aggregate queries, 30 s Caffeine cache. AGENT scope auto-enforced. Angular route `/app/dashboard/commercial`.
+- Tests hint: key IT classes include `RbacIT`, `AdminUserControllerIT`, `TenantControllerIT`, `CrossTenantIsolationIT`, `ContactServiceIT`, `PropertyControllerIT`, `ProjectControllerIT`, `TokenRevocationIT`, `DepositControllerIT`, `ContractControllerIT`, `CommercialDashboardIT`.
 
 ## Local verification commands (suggested)
 - Run a single failing IT with full stack:
   - `mvn -pl hlm-backend -Dtest=RbacIT -DtrimStackTrace=false -e test`
 - Run full backend tests:
   - `mvn -pl hlm-backend -am test`
+- Run dashboard ITs only:
+  - `cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=CommercialDashboardIT`
+- Run all backend ITs (Docker required):
+  - `cd hlm-backend && ./mvnw failsafe:integration-test`
+- Frontend build check after dashboard changes:
+  - `cd hlm-frontend && npm run build`
 
 ## Living-spec helpers
 - Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.
