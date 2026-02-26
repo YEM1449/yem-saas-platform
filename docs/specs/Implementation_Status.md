@@ -1,6 +1,6 @@
 # Implementation Status (What is done so far)
 
-_Last updated: 2026-02-26 (Batch 2)_
+_Last updated: 2026-02-26 (PR-2 tightenings)_
 
 This is a living snapshot of what is implemented in the repo, based on current test suite structure, recent changes, and project decisions.
 
@@ -28,7 +28,11 @@ This is a living snapshot of what is implemented in the repo, based on current t
 
 - **Blank project name on update**: `ProjectUpdateRequest.name` annotated `@Size(min=1, max=200)`; compact constructor trims whitespace first. `{"name":"   "}` → 400 `VALIDATION_ERROR`.
 
-- **Property commercial status — single source of truth** (Batch 2 — 2026-02-26): All property commercial status transitions route through `PropertyCommercialWorkflowService` (`property/service/`). Methods: `reserve(Property, LocalDateTime)`, `releaseReservation(Property)`, `sell(Property, LocalDateTime)`. `DepositService` and `PropertyService.markAsReserved/markAsSold` delegate to this service. `Property.reservedAt` field added (Liquibase changeset 015). `PropertyResponse` exposes `reservedAt`. Tests: `PropertyCommercialWorkflowServiceTest` (unit, 6 cases) + `DepositControllerIT` (`firstDeposit_stampsReservedAtOnProperty`, `cancelDeposit_clearsReservedAtOnProperty`).
+- **Property commercial status — single source of truth** (Batch 2 — 2026-02-26): All property commercial status transitions route through `PropertyCommercialWorkflowService` (`property/service/`). Methods: `reserve(Property, LocalDateTime)`, `releaseReservation(Property)`, `sell(Property, LocalDateTime)`, `cancelSaleToAvailable(Property)`, `cancelSaleToReserved(Property)`. `DepositService` and `PropertyService.markAsReserved/markAsSold` delegate to this service. `Property.reservedAt` field added (Liquibase changeset 015). `PropertyResponse` exposes `reservedAt`. Tests: `PropertyCommercialWorkflowServiceTest` (unit) + `DepositControllerIT`.
+
+- **Sales Contract MVP** (PR-1 — 2026-02-26): `SaleContract` entity + `SaleContractStatus` (DRAFT/SIGNED/CANCELED). Liquibase changeset 016 (`sale_contract` table + FK constraints + KPI indexes + partial unique index `uk_sc_property_signed`). API: `POST /api/contracts` (all roles), `POST /api/contracts/{id}/sign` (ADMIN/MANAGER → property SOLD), `POST /api/contracts/{id}/cancel` (ADMIN/MANAGER → property reverts), `GET /api/contracts` (all roles; AGENT sees own only). Double-selling guard: service-layer check + DB partial unique index. AGENT restriction enforced in service layer.
+
+- **Double-booking protection hardening** (PR-2 — 2026-02-26): `DepositService.confirm()` now acquires a pessimistic write lock on the property row and rejects confirmation if the property is already SOLD (`InvalidDepositStateException` → 409). Closes race window: concurrent contract sign + deposit confirm. Tests: `ContractControllerIT` extended to 10 IT cases (added `cancelSignedContract_revertsPropertyToAvailable`, `confirmDepositOnSoldProperty_returns409`, `cancelSignedContract_withConfirmedDeposit_revertsPropertyToReserved`, `agentCannotSignContract_returns403`). Lock ordering enforced across all 4 flows (Property lock always acquired before Deposit/Contract rows). `DepositRepository.existsActiveConfirmedDepositForProperty()` added as canonical method for cancel-rule check. `SaleContractService.cancel()` restructured: property lock and deposit check occur before contract save.
 
 
 ## In progress / to verify

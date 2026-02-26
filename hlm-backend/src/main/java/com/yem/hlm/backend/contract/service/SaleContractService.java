@@ -50,9 +50,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class SaleContractService {
 
-    private static final List<DepositStatus> ACTIVE_DEPOSIT_STATUSES =
-            List.of(DepositStatus.CONFIRMED);
-
     private final SaleContractRepository contractRepository;
     private final ProjectActiveGuard projectActiveGuard;
     private final PropertyRepository propertyRepository;
@@ -161,7 +158,7 @@ public class SaleContractService {
         // Assert project still ACTIVE
         projectActiveGuard.requireActive(tenantId, contract.getProject().getId());
 
-        // Load property with pessimistic write lock to prevent double-signing race conditions
+        // Lock ordering: Property first to avoid deadlocks with cancel() and DepositService flows.
         UUID propertyId = contract.getProperty().getId();
         Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -197,8 +194,8 @@ public class SaleContractService {
      * Transitions a DRAFT or SIGNED contract to CANCELED.
      * <p>
      * Side effect (only when canceling from SIGNED):
-     * If a confirmed deposit still exists for the property, reverts to RESERVED;
-     * otherwise reverts to ACTIVE (AVAILABLE).
+     * If an active CONFIRMED deposit still exists for the property, reverts to RESERVED;
+     * otherwise reverts to AVAILABLE (PropertyStatus.ACTIVE).
      *
      * @param contractId the contract to cancel
      * @return the updated contract
@@ -216,19 +213,24 @@ public class SaleContractService {
 
         boolean wasSigned = contract.getStatus() == SaleContractStatus.SIGNED;
 
+        // Lock ordering: Property first to avoid deadlocks with sign() and DepositService flows.
+        // Acquire property lock and evaluate the deposit check BEFORE saving the contract.
+        Property property = null;
+        boolean hasActiveDeposit = false;
+        if (wasSigned) {
+            UUID propertyId = contract.getProperty().getId();
+            // Lock ordering: Property first to avoid deadlocks.
+            property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, propertyId)
+                    .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+            hasActiveDeposit = depositRepository.existsActiveConfirmedDepositForProperty(tenantId, propertyId);
+        }
+
         contract.setStatus(SaleContractStatus.CANCELED);
         contract.setCanceledAt(LocalDateTime.now());
         contract = contractRepository.save(contract);
 
         // Revert property commercial status if the contract had been signed (property was SOLD)
         if (wasSigned) {
-            UUID propertyId = contract.getProperty().getId();
-            Property property = propertyRepository.findByTenant_IdAndId(tenantId, propertyId)
-                    .orElseThrow(() -> new PropertyNotFoundException(propertyId));
-
-            boolean hasActiveDeposit = depositRepository.existsByTenant_IdAndPropertyIdAndStatusIn(
-                    tenantId, propertyId, ACTIVE_DEPOSIT_STATUSES);
-
             if (hasActiveDeposit) {
                 // [OPEN POINT] Keeping buyer association on existing deposit is out-of-scope MVP
                 propertyWorkflow.cancelSaleToReserved(property);

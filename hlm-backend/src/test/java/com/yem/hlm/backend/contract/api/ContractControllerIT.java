@@ -7,6 +7,8 @@ import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
+import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
+import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
@@ -346,5 +348,143 @@ class ContractControllerIT extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readValue(json, PropertyResponse.class);
+    }
+
+    /**
+     * Confirm an existing deposit via POST /api/deposits/{id}/confirm.
+     * Side-effect: deposit moves to CONFIRMED; property stays RESERVED.
+     */
+    private void confirmDeposit(UUID depositId) throws Exception {
+        mvc.perform(post("/api/deposits/{id}/confirm", depositId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk());
+    }
+
+    /**
+     * Create a PENDING deposit for the given property + contact.
+     * Returns the deposit UUID. Side-effect: property moves to RESERVED.
+     */
+    private UUID createDeposit(UUID propertyId, UUID contactId) throws Exception {
+        var req = new CreateDepositRequest(
+                contactId, propertyId, new BigDecimal("25000.00"),
+                null, null, "MAD", null, null
+        );
+        String json = mvc.perform(post("/api/deposits")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readValue(json, DepositResponse.class).id();
+    }
+
+    // =========================================================================
+    // 7. cancelSignedContract_revertsPropertyToAvailable (no CONFIRMED deposit)
+    // "AVAILABLE" = PropertyStatus.ACTIVE in the domain enum
+    // =========================================================================
+
+    @Test
+    void cancelSignedContract_revertsPropertyToAvailable() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propertyId = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("cancel-revert@acme.com");
+        UUID contractId = createDraftContract(projectId, propertyId, buyer.id(), adminBearer);
+
+        // Sign → property SOLD
+        mvc.perform(post("/api/contracts/{id}/sign", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk());
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.SOLD);
+
+        // Cancel the signed contract — no CONFIRMED deposit exists, so property reverts to AVAILABLE
+        mvc.perform(post("/api/contracts/{id}/cancel", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(SaleContractStatus.CANCELED.name()))
+                .andExpect(jsonPath("$.canceledAt").isNotEmpty());
+
+        PropertyResponse reverted = getProperty(propertyId);
+        assertThat(reverted.status()).isEqualTo(PropertyStatus.ACTIVE); // AVAILABLE in domain terms
+        assertThat(reverted.soldAt()).isNull();
+    }
+
+    // =========================================================================
+    // 8. confirmDepositOnSoldProperty_returns409
+    // Tests that DepositService.confirm() rejects when property is SOLD
+    // =========================================================================
+
+    @Test
+    void confirmDepositOnSoldProperty_returns409() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propertyId = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("confirm-sold@acme.com");
+
+        // Create deposit → property RESERVED
+        UUID depositId = createDeposit(propertyId, buyer.id());
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.RESERVED);
+
+        // Create and sign a contract → property SOLD
+        UUID contractId = createDraftContract(projectId, propertyId, buyer.id(), adminBearer);
+        mvc.perform(post("/api/contracts/{id}/sign", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk());
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.SOLD);
+
+        // Confirm the PENDING deposit — must be blocked because property is SOLD
+        mvc.perform(post("/api/deposits/{id}/confirm", depositId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isConflict());
+    }
+
+    // =========================================================================
+    // 9. cancelSignedContract_withConfirmedDeposit_revertsPropertyToReserved
+    // Cancel rule: CONFIRMED deposit exists → revert to RESERVED (not AVAILABLE)
+    // =========================================================================
+
+    @Test
+    void cancelSignedContract_withConfirmedDeposit_revertsPropertyToReserved() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propertyId = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("cancel-revert-reserved@acme.com");
+
+        // Create deposit → property RESERVED; confirm it → deposit CONFIRMED
+        UUID depositId = createDeposit(propertyId, buyer.id());
+        confirmDeposit(depositId);
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.RESERVED);
+
+        // Sign a contract → property SOLD
+        UUID contractId = createDraftContract(projectId, propertyId, buyer.id(), adminBearer);
+        mvc.perform(post("/api/contracts/{id}/sign", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk());
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.SOLD);
+
+        // Cancel the signed contract — CONFIRMED deposit still exists → revert to RESERVED
+        mvc.perform(post("/api/contracts/{id}/cancel", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(SaleContractStatus.CANCELED.name()));
+
+        assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.RESERVED);
+    }
+
+    // =========================================================================
+    // 10. agentCannotSignContract_returns403
+    // ROLE_AGENT is not allowed to call POST /api/contracts/{id}/sign
+    // =========================================================================
+
+    @Test
+    void agentCannotSignContract_returns403() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propertyId = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("agent-sign-403@acme.com");
+        UUID contractId = createDraftContract(projectId, propertyId, buyer.id(), adminBearer);
+
+        // Create an AGENT-role token for the same tenant
+        String agentBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_AGENT);
+
+        mvc.perform(post("/api/contracts/{id}/sign", contractId)
+                        .header("Authorization", agentBearer))
+                .andExpect(status().isForbidden());
     }
 }

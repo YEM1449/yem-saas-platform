@@ -20,6 +20,12 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
      * Checks whether an active SIGNED contract already exists for a property.
      * Used as a service-layer guard before attempting to sign; the DB partial unique
      * index {@code uk_sc_property_signed} is the race-condition safety net.
+     * <p>
+     * Predicate: {@code status = SIGNED AND canceledAt IS NULL}.
+     * Invariant: cancel() always sets both {@code status = CANCELED} and {@code canceledAt != null},
+     * so a SIGNED contract will never have canceledAt set. The {@code canceledAtIsNull} predicate
+     * matches the DB partial unique index definition ({@code WHERE status = 'SIGNED' AND canceled_at IS NULL}),
+     * keeping service-layer guard and DB constraint semantically identical.
      */
     boolean existsByTenant_IdAndProperty_IdAndStatusAndCanceledAtIsNull(
             UUID tenantId, UUID propertyId, SaleContractStatus status);
