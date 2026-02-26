@@ -144,6 +144,15 @@ npm start
   - `cancel()` of SIGNED contract: property reverts to `RESERVED` (if a CONFIRMED deposit exists for the property, via `DepositRepository.existsActiveConfirmedDepositForProperty()`) or `ACTIVE` (= AVAILABLE). Lock ordering: Property lock acquired BEFORE contract save to prevent deadlocks with `sign()` and `DepositService.confirm()`.
   - `ProjectActiveGuard.requireActive()` checked on both `create()` and `sign()`.
   - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
+- Commercial Dashboard (`dashboard` package):
+  - **Endpoints**: `GET /api/dashboard/commercial/summary` + `GET /api/dashboard/commercial/sales` (drill-down, paged).
+  - **Query params**: `from`, `to` (ISO datetime, default last 30 days), `projectId` (optional), `agentId` (optional).
+  - **RBAC**: all authenticated roles; AGENT callers have `agentId` forced to self (ignoring supplied value); ADMIN/MANAGER see full tenant data.
+  - **Summary DTO** (`CommercialDashboardSummaryDTO`): `salesCount`, `salesTotalAmount`, `avgSaleValue`, `depositsCount`, `depositsTotalAmount`, `salesByProject[]` (top 10), `salesByAgent[]` (top 10), `inventoryByStatus{}`, `inventoryByType{}`, `salesAmountByDay[]`, `depositsAmountByDay[]`, `conversionDepositToSaleRate`, `avgDaysDepositToSale`.
+  - **Caching**: Caffeine cache `commercialDashboardSummaryCache`, TTL 30 s, max 500 entries. Key = `tenantId:effectiveAgentId:from:to:projectId`.
+  - **Query budget**: 9 aggregate queries per summary request; no entity hydration.
+  - **Validation**: `from > to` → 400 (`InvalidPeriodException`); unknown `projectId` in tenant → 404; unknown `agentId` in tenant → 404.
+  - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`.
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

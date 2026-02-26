@@ -257,4 +257,44 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    // =========================================================================
+    // Commercial dashboard inventory queries
+    // =========================================================================
+
+    /**
+     * Current inventory broken down by property status.
+     * Excludes soft-deleted properties. Optionally filters by project.
+     * Returns rows: [status(PropertyStatus), count(Long)].
+     */
+    @Query("""
+            SELECT p.status, COUNT(p)
+            FROM Property p
+            WHERE p.tenant.id  = :tenantId
+              AND p.deletedAt IS NULL
+              AND (:projectId IS NULL OR p.project.id = :projectId)
+            GROUP BY p.status
+            """)
+    List<Object[]> inventoryByStatus(
+            @Param("tenantId")  UUID tenantId,
+            @Param("projectId") UUID projectId
+    );
+
+    /**
+     * Current inventory broken down by property type.
+     * Excludes soft-deleted properties. Optionally filters by project.
+     * Returns rows: [type(PropertyType), count(Long)].
+     */
+    @Query("""
+            SELECT p.type, COUNT(p)
+            FROM Property p
+            WHERE p.tenant.id  = :tenantId
+              AND p.deletedAt IS NULL
+              AND (:projectId IS NULL OR p.project.id = :projectId)
+            GROUP BY p.type
+            """)
+    List<Object[]> inventoryByType(
+            @Param("tenantId")  UUID tenantId,
+            @Param("projectId") UUID projectId
+    );
 }
