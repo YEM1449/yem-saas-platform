@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: "015-property-add-reserved-at"
+      author: crm-hlm
+      changes:
+        # =========================================
+        # Add reserved_at timestamp to property table.
+        # This supports the single-source-of-truth property commercial
+        # status workflow: ACTIVE -> RESERVED (reservedAt set) -> SOLD / ACTIVE (reservedAt cleared).
+        # Nullable: not all properties have been reserved; existing rows stay NULL.
+        # =========================================
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: reserved_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true

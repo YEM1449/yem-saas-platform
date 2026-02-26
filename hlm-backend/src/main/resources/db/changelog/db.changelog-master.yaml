@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/changes/013-create-project-table.yaml
   - include:
       file: db/changelog/changes/014-property-add-project-fk.yaml
+  - include:
+      file: db/changelog/changes/015-property-add-reserved-at.yaml

@@ -36,13 +36,16 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final TenantRepository tenantRepository;
     private final ProjectActiveGuard projectActiveGuard;
+    private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
 
     public PropertyService(PropertyRepository propertyRepository,
                            TenantRepository tenantRepository,
-                           ProjectActiveGuard projectActiveGuard) {
+                           ProjectActiveGuard projectActiveGuard,
+                           PropertyCommercialWorkflowService propertyCommercialWorkflowService) {
         this.propertyRepository = propertyRepository;
         this.tenantRepository = tenantRepository;
         this.projectActiveGuard = projectActiveGuard;
+        this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
     }
 
     /**
@@ -182,7 +185,8 @@ public class PropertyService {
     }
 
     /**
-     * Marks a property as reserved (called by DepositService).
+     * Marks a property as reserved.
+     * Delegates to {@link PropertyCommercialWorkflowService} to keep timestamps consistent.
      *
      * @param propertyId the property ID
      */
@@ -193,15 +197,15 @@ public class PropertyService {
         var property = propertyRepository.findByTenant_IdAndId(tenantId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
-        property.setStatus(PropertyStatus.RESERVED);
-        propertyRepository.save(property);
+        propertyCommercialWorkflowService.reserve(property, LocalDateTime.now());
     }
 
     /**
      * Marks a property as sold.
+     * Delegates to {@link PropertyCommercialWorkflowService} to keep timestamps consistent.
      *
      * @param propertyId the property ID
-     * @param soldAt the sold timestamp
+     * @param soldAt     the sold timestamp (typically contract sign date)
      */
     @Transactional
     public void markAsSold(UUID propertyId, LocalDateTime soldAt) {
@@ -210,9 +214,7 @@ public class PropertyService {
         var property = propertyRepository.findByTenant_IdAndId(tenantId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
-        property.setStatus(PropertyStatus.SOLD);
-        property.setSoldAt(soldAt);
-        propertyRepository.save(property);
+        propertyCommercialWorkflowService.sell(property, soldAt);
     }
 
     // ===== Type-Specific Validation Logic =====
