@@ -300,6 +300,10 @@ public class Property {
     @Column(name = "sold_at")
     private LocalDateTime soldAt;
 
+    @Setter
+    @Column(name = "reserved_at")
+    private LocalDateTime reservedAt;
+
     // ===== JPA Lifecycle Callbacks =====
 
     @PrePersist

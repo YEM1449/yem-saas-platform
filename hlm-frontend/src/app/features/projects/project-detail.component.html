@@ -1,0 +1,54 @@
+@if (loadingProject) {
+  <p>Loading project...</p>
+}
+
+@if (projectError) {
+  <p class="error">{{ projectError }}</p>
+}
+
+@if (!loadingProject && project) {
+  <h2>{{ project.name }}</h2>
+  <p><strong>Status:</strong> {{ project.status }}</p>
+  @if (project.description) {
+    <p>{{ project.description }}</p>
+  }
+
+  <h3>KPIs</h3>
+
+  @if (loadingKpi) {
+    <p>Loading KPIs...</p>
+  }
+
+  @if (kpiError) {
+    <p class="error">{{ kpiError }}</p>
+  }
+
+  @if (!loadingKpi && kpi) {
+    <div class="kpi-grid">
+      @for (entry of kpiEntries; track entry.label) {
+        <div class="kpi-card">
+          <span class="kpi-label">{{ entry.label }}</span>
+          <span class="kpi-value">{{ entry.value }}</span>
+        </div>
+      }
+    </div>
+
+    @if (typeEntries.length > 0) {
+      <h4>Properties by Type</h4>
+      <ul>
+        @for (entry of typeEntries; track entry.label) {
+          <li>{{ entry.label }}: {{ entry.value }}</li>
+        }
+      </ul>
+    }
+
+    @if (statusEntries.length > 0) {
+      <h4>Properties by Status</h4>
+      <ul>
+        @for (entry of statusEntries; track entry.label) {
+          <li>{{ entry.label }}: {{ entry.value }}</li>
+        }
+      </ul>
+    }
+  }
+}

@@ -19,6 +19,7 @@ import com.yem.hlm.backend.notification.service.NotificationService;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
+import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;
@@ -48,6 +49,7 @@ public class DepositService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
+    private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
 
     public DepositService(
             DepositRepository depositRepository,
@@ -58,7 +60,8 @@ public class DepositService {
             TenantRepository tenantRepository,
             UserRepository userRepository,
             NotificationService notificationService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            PropertyCommercialWorkflowService propertyCommercialWorkflowService
     ) {
         this.depositRepository = depositRepository;
         this.contactRepository = contactRepository;
@@ -69,6 +72,7 @@ public class DepositService {
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.objectMapper = objectMapper;
+        this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
     }
 
     /**
@@ -145,9 +149,8 @@ public class DepositService {
             Deposit saved = depositRepository.save(deposit);
             depositRepository.flush();
 
-            // Mark property as RESERVED
-            property.setStatus(PropertyStatus.RESERVED);
-            propertyRepository.save(property);
+            // Mark property as RESERVED — delegate to canonical commercial workflow
+            propertyCommercialWorkflowService.reserve(property, now);
 
             // Ensure interest link exists (contact remains "interested" even if deposit expires).
             ensureInterestExists(tenantId, tenant, contact.getId(), propertyId);
@@ -377,8 +380,7 @@ public class DepositService {
         propertyRepository.findByTenant_IdAndId(deposit.getTenant().getId(), deposit.getPropertyId())
                 .ifPresent(property -> {
                     if (property.getStatus() == PropertyStatus.RESERVED) {
-                        property.setStatus(PropertyStatus.ACTIVE);
-                        propertyRepository.save(property);
+                        propertyCommercialWorkflowService.releaseReservation(property);
                     }
                 });
     }

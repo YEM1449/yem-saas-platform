@@ -54,7 +54,8 @@ public record PropertyResponse(
         LocalDateTime updatedAt,
         LocalDateTime deletedAt,
         LocalDateTime publishedAt,
-        LocalDateTime soldAt
+        LocalDateTime soldAt,
+        LocalDateTime reservedAt
 ) {
     public static PropertyResponse from(Property p) {
         return new PropertyResponse(
@@ -72,7 +73,7 @@ public record PropertyResponse(
                 p.getProjectName(), p.getBuildingName(),
                 p.getCreatedBy(), p.getUpdatedBy(),
                 p.getCreatedAt(), p.getUpdatedAt(), p.getDeletedAt(), p.getPublishedAt(),
-                p.getSoldAt()
+                p.getSoldAt(), p.getReservedAt()
         );
     }
 }

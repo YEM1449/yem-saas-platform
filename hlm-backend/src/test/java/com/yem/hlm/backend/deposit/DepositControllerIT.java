@@ -195,6 +195,55 @@ class DepositControllerIT extends IntegrationTestBase {
     }
 
     @Test
+    void firstDeposit_stampsReservedAtOnProperty() throws Exception {
+        ContactResponse contact = createContact("dep-reserved-at@acme.com");
+        UUID propertyId = createActiveProperty();
+
+        var req = new CreateDepositRequest(contact.id(), propertyId, new BigDecimal("1200.00"), null, null, "MAD", null, null);
+
+        mvc.perform(post("/api/deposits")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+
+        // reservedAt must be set
+        PropertyResponse property = getProperty(propertyId);
+        assertThat(property.status()).isEqualTo(PropertyStatus.RESERVED);
+        assertThat(property.reservedAt()).isNotNull();
+    }
+
+    @Test
+    void cancelDeposit_clearsReservedAtOnProperty() throws Exception {
+        ContactResponse contact = createContact("dep-cancel-reservedat@acme.com");
+        UUID propertyId = createActiveProperty();
+
+        var req = new CreateDepositRequest(contact.id(), propertyId, new BigDecimal("800.00"), null, null, "MAD", null, null);
+
+        String json = mvc.perform(post("/api/deposits")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        DepositResponse created = objectMapper.readValue(json, DepositResponse.class);
+
+        // Confirm reservedAt was stamped
+        assertThat(getProperty(propertyId).reservedAt()).isNotNull();
+
+        // Cancel the deposit
+        mvc.perform(post("/api/deposits/{id}/cancel", created.id())
+                        .header("Authorization", bearer))
+                .andExpect(status().isOk());
+
+        // reservedAt must be cleared and property back to ACTIVE
+        PropertyResponse released = getProperty(propertyId);
+        assertThat(released.status()).isEqualTo(PropertyStatus.ACTIVE);
+        assertThat(released.reservedAt()).isNull();
+    }
+
+    @Test
     void cancelDeposit_releasesPropertyReservation() throws Exception {
         ContactResponse contact = createContact("dep-cancel-rel@acme.com");
         UUID propertyId = createActiveProperty();
