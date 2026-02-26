@@ -136,6 +136,7 @@ npm start
   - Creation sets `PENDING` and moves property to `RESERVED`.
   - `confirm()` allows only `PENDING -> CONFIRMED`; acquires pessimistic write lock on property and rejects if property is `SOLD` → 409.
   - `cancel()`/expiry move deposit to `CANCELLED`/`EXPIRED` and release property back to `ACTIVE` when applicable.
+  - **Reservation PDF**: `GET /api/deposits/{id}/pdf` — generates a PDF attestation de réservation (Apache PDFBox 3.x, Type 1 fonts only). Tenant-scoped; cross-tenant → 404. RBAC: any authenticated role (mirrors `GET /{id}`). Response: `application/pdf`, `Content-Disposition: attachment; filename="reservation_<id>.pdf"`. Implemented in `ReservationPdfService`.
 - Sales Contract workflow (`SaleContractStatus`):
   - **Sale = Contract SIGNED** (deposit is pre-sale / reservation step).
   - Lifecycle: `DRAFT → SIGNED → CANCELED` (or `DRAFT → CANCELED`).

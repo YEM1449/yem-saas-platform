@@ -3,9 +3,13 @@ package com.yem.hlm.backend.deposit.api;
 import com.yem.hlm.backend.deposit.api.dto.*;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.service.DepositService;
+import com.yem.hlm.backend.deposit.service.ReservationPdfService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +21,12 @@ import java.util.UUID;
 public class DepositController {
 
     private final DepositService depositService;
+    private final ReservationPdfService reservationPdfService;
 
-    public DepositController(DepositService depositService) {
+    public DepositController(DepositService depositService,
+                             ReservationPdfService reservationPdfService) {
         this.depositService = depositService;
+        this.reservationPdfService = reservationPdfService;
     }
 
     @PostMapping
@@ -32,6 +39,16 @@ public class DepositController {
     @GetMapping("/{id}")
     public DepositResponse get(@PathVariable UUID id) {
         return depositService.get(id);
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) {
+        byte[] pdf = reservationPdfService.generate(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"reservation_" + id + ".pdf\"")
+                .body(pdf);
     }
 
     @PostMapping("/{id}/confirm")
