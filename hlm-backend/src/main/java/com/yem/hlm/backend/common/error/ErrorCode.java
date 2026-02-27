@@ -47,6 +47,10 @@ public enum ErrorCode {
     INVALID_CONTRACT_STATE,     // 409 — action not permitted in current contract state
     CONTRACT_DEPOSIT_MISMATCH,  // 400 — sourceDepositId doesn't match contract details or not CONFIRMED
 
+    // Outbox / messaging errors (400)
+    INVALID_RECIPIENT,          // missing or malformed recipient address / phone
+    CONTACT_CHANNEL_MISSING,    // contact found but required channel field is blank
+
     // Server errors (500)
     INTERNAL_ERROR
 }

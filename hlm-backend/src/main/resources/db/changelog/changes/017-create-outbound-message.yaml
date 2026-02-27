@@ -1,0 +1,142 @@
+databaseChangeLog:
+
+  # =========================================
+  # Step 1: Create outbound_message table
+  # Outbox for async EMAIL/SMS dispatch.
+  # =========================================
+  - changeSet:
+      id: "017-create-outbound-message"
+      author: crm-hlm
+      changes:
+        - createTable:
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: channel
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recipient
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: body
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: "PENDING"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: retries_count
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_retry_at
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_error
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: correlation_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: correlation_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp
+                  constraints:
+                    nullable: true
+
+  # =========================================
+  # Step 2: Foreign key constraints
+  # =========================================
+  - changeSet:
+      id: "017-outbound-message-fk-constraints"
+      author: crm-hlm
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: outbound_message
+            baseColumnNames: tenant_id
+            constraintName: fk_outbound_message_tenant
+            referencedTableName: tenant
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            baseTableName: outbound_message
+            baseColumnNames: created_by_user_id
+            constraintName: fk_outbound_message_user
+            referencedTableName: app_user
+            referencedColumnNames: id
+
+  # =========================================
+  # Step 3: Performance indexes
+  # =========================================
+  - changeSet:
+      id: "017-outbound-message-indexes"
+      author: crm-hlm
+      changes:
+        # Fast dispatcher scan: status + next_retry_at
+        - createIndex:
+            indexName: idx_om_tenant_status_retry
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+              - column:
+                  name: next_retry_at
+
+        # List API ordering by created_at
+        - createIndex:
+            indexName: idx_om_tenant_created
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: created_at
