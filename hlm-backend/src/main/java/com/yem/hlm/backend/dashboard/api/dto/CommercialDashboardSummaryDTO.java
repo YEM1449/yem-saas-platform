@@ -9,10 +9,11 @@ import java.util.Map;
  * Full commercial dashboard summary — returned by a single backend call.
  *
  * <h3>Query budget</h3>
- * Up to 9 aggregate queries per request (no entity hydration):
+ * Up to 10 aggregate queries per request (no entity hydration):
  * <ol>
  *   <li>Sales totals (count, sum, avg agreedPrice)</li>
- *   <li>Deposit totals (count, sum amount)</li>
+ *   <li>Deposit totals in period (count, sum amount, filtered by confirmedAt)</li>
+ *   <li>Active reservations snapshot (count, sum, avg age days — NOT date-filtered)</li>
  *   <li>Sales by project — top 10</li>
  *   <li>Sales by agent — top 10</li>
  *   <li>Inventory by property status (current state)</li>
@@ -29,6 +30,10 @@ import java.util.Map;
  *   <li>{@code conversionDepositToSaleRate} = salesCount / depositsCount; null if depositsCount = 0.</li>
  *   <li>{@code avgDaysDepositToSale} = average calendar days from deposit.confirmedAt to contract.signedAt
  *       for contracts that originated from a confirmed deposit (sourceDepositId present); null if none.</li>
+ *   <li>{@code activeReservationsCount} / {@code activeReservationsTotalAmount} /
+ *       {@code avgReservationAgeDays} — current snapshot of PENDING + CONFIRMED deposits
+ *       (not date-filtered); optionally scoped by agentId.</li>
+ *   <li>{@code asOf} — server timestamp when this DTO was assembled; use to display data freshness.</li>
  * </ul>
  */
 public record CommercialDashboardSummaryDTO(
@@ -36,14 +41,25 @@ public record CommercialDashboardSummaryDTO(
         LocalDateTime from,
         LocalDateTime to,
 
+        // ── Freshness timestamp ─────────────────────────────────────────────
+        /** Instant at which this summary was computed (before caching). */
+        LocalDateTime asOf,
+
         // ── Sales totals ────────────────────────────────────────────────────
         long salesCount,
         BigDecimal salesTotalAmount,
         BigDecimal avgSaleValue,
 
-        // ── Deposit totals ──────────────────────────────────────────────────
+        // ── Deposit totals (period-filtered, CONFIRMED) ─────────────────────
         long depositsCount,
         BigDecimal depositsTotalAmount,
+
+        // ── Active reservations snapshot (current, not date-filtered) ────────
+        /** PENDING + CONFIRMED deposits currently open for this tenant (/ agent). */
+        long activeReservationsCount,
+        BigDecimal activeReservationsTotalAmount,
+        /** Average age in days of open reservations; null when none. */
+        BigDecimal avgReservationAgeDays,
 
         // ── Breakdowns (top 10) ─────────────────────────────────────────────
         List<SalesByProjectRow> salesByProject,

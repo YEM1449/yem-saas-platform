@@ -20,11 +20,18 @@ export interface DailyPoint {
 export interface CommercialDashboardSummary {
   from: string;
   to: string;
+  /** Server timestamp when this DTO was assembled (ISO datetime string). */
+  asOf: string;
   salesCount: number;
   salesTotalAmount: number;
   avgSaleValue: number;
   depositsCount: number;
   depositsTotalAmount: number;
+  /** Current open reservations (PENDING + CONFIRMED), not date-filtered. */
+  activeReservationsCount: number;
+  activeReservationsTotalAmount: number;
+  /** Average age of open reservations in days; null when none. */
+  avgReservationAgeDays: number | null;
   salesByProject: SalesByProjectRow[];
   salesByAgent: SalesByAgentRow[];
   inventoryByStatus: Record<string, number>;

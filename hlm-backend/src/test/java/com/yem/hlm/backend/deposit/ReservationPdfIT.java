@@ -30,23 +30,27 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for GET /api/deposits/{id}/pdf
+ * Integration tests for GET /api/deposits/{id}/documents/reservation.pdf
  *
- * Verifies:
- * - 200 + Content-Type application/pdf for a valid deposit
- * - PDF body starts with %PDF and has a meaningful size
- * - 404 for a non-existent deposit ID
- * - 404 for a cross-tenant access attempt (tenant isolation)
- * - 401 when no token is provided
+ * Covers:
+ * - 200 OK + Content-Type application/pdf + %PDF magic bytes + Content-Disposition
+ * - 404 for non-existent deposit
+ * - 404 for cross-tenant access (tenant isolation)
+ * - 401 when no token provided
+ * - RBAC: AGENT can download own deposit's PDF
+ * - RBAC: AGENT is denied (404) for another agent's deposit
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 class ReservationPdfIT extends IntegrationTestBase {
+
+    private static final String PDF_ENDPOINT = "/api/deposits/{id}/documents/reservation.pdf";
 
     private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID USER_ID   = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -57,32 +61,32 @@ class ReservationPdfIT extends IntegrationTestBase {
     @Autowired TenantRepository tenantRepository;
     @Autowired UserRepository userRepository;
 
-    private String bearer;
+    private String adminBearer;
     private int refCounter = 0;
 
     @BeforeEach
     void setupToken() {
-        bearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
+        adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
     }
 
-    // ===== Happy path =====
+    // ===== Happy path (ADMIN) =====
 
     @Test
-    void downloadPdf_validDeposit_returns200WithPdfContentType() throws Exception {
-        UUID depositId = createDepositWithProperty("pdf-happy@acme.com");
+    void downloadPdf_asAdmin_returns200WithPdfContentType() throws Exception {
+        UUID depositId = createDepositWithProperty("pdf-ct@acme.com");
 
-        mvc.perform(get("/api/deposits/{id}/pdf", depositId)
-                        .header("Authorization", bearer))
+        mvc.perform(get(PDF_ENDPOINT, depositId)
+                        .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF));
     }
 
     @Test
-    void downloadPdf_validDeposit_bodyStartsWithPdfMagicBytes() throws Exception {
+    void downloadPdf_asAdmin_bodyStartsWithPdfMagicBytes() throws Exception {
         UUID depositId = createDepositWithProperty("pdf-magic@acme.com");
 
-        byte[] body = mvc.perform(get("/api/deposits/{id}/pdf", depositId)
-                        .header("Authorization", bearer))
+        byte[] body = mvc.perform(get(PDF_ENDPOINT, depositId)
+                        .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
 
@@ -91,24 +95,22 @@ class ReservationPdfIT extends IntegrationTestBase {
     }
 
     @Test
-    void downloadPdf_validDeposit_hasContentDispositionAttachment() throws Exception {
+    void downloadPdf_asAdmin_hasAttachmentContentDisposition() throws Exception {
         UUID depositId = createDepositWithProperty("pdf-disp@acme.com");
 
-        mvc.perform(get("/api/deposits/{id}/pdf", depositId)
-                        .header("Authorization", bearer))
+        mvc.perform(get(PDF_ENDPOINT, depositId)
+                        .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition",
-                        org.hamcrest.Matchers.containsString("attachment")))
-                .andExpect(header().string("Content-Disposition",
-                        org.hamcrest.Matchers.containsString("reservation_")));
+                .andExpect(header().string("Content-Disposition", containsString("attachment")))
+                .andExpect(header().string("Content-Disposition", containsString("reservation_")));
     }
 
     // ===== Not found =====
 
     @Test
     void downloadPdf_nonExistentDeposit_returns404() throws Exception {
-        mvc.perform(get("/api/deposits/{id}/pdf", UUID.randomUUID())
-                        .header("Authorization", bearer))
+        mvc.perform(get(PDF_ENDPOINT, UUID.randomUUID())
+                        .header("Authorization", adminBearer))
                 .andExpect(status().isNotFound());
     }
 
@@ -116,18 +118,12 @@ class ReservationPdfIT extends IntegrationTestBase {
 
     @Test
     void downloadPdf_crossTenant_returns404() throws Exception {
-        // Deposit created in tenant A
-        UUID depositId = createDepositWithProperty("pdf-iso@acme.com");
+        UUID depositIdA = createDepositWithProperty("pdf-iso-a@acme.com");
 
         // Tenant B user cannot access tenant A's deposit
-        String otherKey = "pdf-iso-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "PDF Isolation Tenant"));
-        User userB = new User(tenantB, "admin@pdf-iso.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
-        userB = userRepository.save(userB);
-        String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
+        String bearerB = createOtherTenantBearer("pdf-iso-b");
 
-        mvc.perform(get("/api/deposits/{id}/pdf", depositId)
+        mvc.perform(get(PDF_ENDPOINT, depositIdA)
                         .header("Authorization", bearerB))
                 .andExpect(status().isNotFound());
     }
@@ -136,16 +132,67 @@ class ReservationPdfIT extends IntegrationTestBase {
 
     @Test
     void downloadPdf_withoutToken_returns401() throws Exception {
-        mvc.perform(get("/api/deposits/{id}/pdf", UUID.randomUUID()))
+        mvc.perform(get(PDF_ENDPOINT, UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ===== RBAC — AGENT =====
+
+    @Test
+    void downloadPdf_asAgent_ownDeposit_returns200() throws Exception {
+        // Create an AGENT user in the same tenant
+        User agent = new User(
+                tenantRepository.findById(TENANT_ID).orElseThrow(),
+                "agent-pdf@acme.com", "hashedPass");
+        agent.setRole(UserRole.ROLE_AGENT);
+        agent = userRepository.save(agent);
+        String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
+
+        // Create deposit whose agent is this user (admin creates it on behalf of agent via API)
+        // The deposit's agent is set to the authenticated user at creation time.
+        // So we create the deposit as the agent.
+        UUID depositId = createDepositWithPropertyForBearer(agentBearer, "agent-buyer-own@acme.com");
+
+        mvc.perform(get(PDF_ENDPOINT, depositId)
+                        .header("Authorization", agentBearer))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
+    }
+
+    @Test
+    void downloadPdf_asAgent_otherAgentsDeposit_returns404() throws Exception {
+        // Agent A creates a deposit
+        User agentA = new User(
+                tenantRepository.findById(TENANT_ID).orElseThrow(),
+                "agent-a-pdf@acme.com", "hashedPass");
+        agentA.setRole(UserRole.ROLE_AGENT);
+        agentA = userRepository.save(agentA);
+        String bearerA = "Bearer " + jwtProvider.generate(agentA.getId(), TENANT_ID, UserRole.ROLE_AGENT);
+
+        // Agent B tries to access Agent A's deposit
+        User agentB = new User(
+                tenantRepository.findById(TENANT_ID).orElseThrow(),
+                "agent-b-pdf@acme.com", "hashedPass");
+        agentB.setRole(UserRole.ROLE_AGENT);
+        agentB = userRepository.save(agentB);
+        String bearerB = "Bearer " + jwtProvider.generate(agentB.getId(), TENANT_ID, UserRole.ROLE_AGENT);
+
+        UUID depositIdA = createDepositWithPropertyForBearer(bearerA, "buyer-agent-a@acme.com");
+
+        mvc.perform(get(PDF_ENDPOINT, depositIdA)
+                        .header("Authorization", bearerB))
+                .andExpect(status().isNotFound());
     }
 
     // ===== Helpers =====
 
-    /** Creates a deposit (PENDING) for a freshly created contact + active property. Returns deposit ID. */
     private UUID createDepositWithProperty(String contactEmail) throws Exception {
-        ContactResponse contact = createContact(contactEmail);
-        UUID propertyId = createActiveProperty();
+        return createDepositWithPropertyForBearer(adminBearer, contactEmail);
+    }
+
+    private UUID createDepositWithPropertyForBearer(String bearer, String contactEmail) throws Exception {
+        ContactResponse contact = createContact(bearer, contactEmail);
+        UUID propertyId = createActiveProperty(bearer);
 
         var req = new CreateDepositRequest(
                 contact.id(), propertyId, new BigDecimal("5000.00"),
@@ -162,7 +209,7 @@ class ReservationPdfIT extends IntegrationTestBase {
         return objectMapper.readValue(json, DepositResponse.class).id();
     }
 
-    private ContactResponse createContact(String email) throws Exception {
+    private ContactResponse createContact(String bearer, String email) throws Exception {
         var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
@@ -173,8 +220,8 @@ class ReservationPdfIT extends IntegrationTestBase {
         return objectMapper.readValue(json, ContactResponse.class);
     }
 
-    private UUID createActiveProperty() throws Exception {
-        String ref = "PDF-TEST-" + (++refCounter);
+    private UUID createActiveProperty(String bearer) throws Exception {
+        String ref = "PDF-" + (++refCounter);
         String projectBody = mvc.perform(post("/api/projects")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -188,8 +235,8 @@ class ReservationPdfIT extends IntegrationTestBase {
                 new BigDecimal("2000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
-                new BigDecimal("100"), new BigDecimal("200"),
-                2, 1, 1, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("200"), new BigDecimal("400"),
+                3, 2, 2, null, null, null, null, null, null, null, null, null,
                 null, projId, null
         );
 
@@ -212,5 +259,14 @@ class ReservationPdfIT extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         return created.id();
+    }
+
+    private String createOtherTenantBearer(String keyPrefix) {
+        String otherKey = keyPrefix + "-" + UUID.randomUUID().toString().substring(0, 8);
+        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "PDF Isolation Tenant"));
+        User userB = new User(tenantB, "admin@" + keyPrefix + ".com", "hashedPass");
+        userB.setRole(UserRole.ROLE_ADMIN);
+        userB = userRepository.save(userB);
+        return "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
     }
 }

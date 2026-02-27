@@ -42,6 +42,23 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
     List<Deposit> findAllByStatusAndDueDateBetween(DepositStatus status, LocalDateTime from, LocalDateTime to);
 
 
+    /**
+     * Loads a deposit with JOIN FETCH on tenant, contact, and agent to avoid N+1.
+     * Used by {@link com.yem.hlm.backend.deposit.service.pdf.ReservationDocumentService}
+     * when building the PDF model.
+     */
+    @Query("""
+            SELECT d FROM Deposit d
+            JOIN FETCH d.tenant
+            JOIN FETCH d.contact
+            JOIN FETCH d.agent
+            WHERE d.tenant.id = :tenantId AND d.id = :id
+            """)
+    Optional<Deposit> findForPdf(
+            @Param("tenantId") UUID tenantId,
+            @Param("id") UUID id
+    );
+
     @Query("""
             select d from Deposit d
             where d.tenant.id = :tenantId
@@ -120,6 +137,45 @@ public interface DepositRepository extends JpaRepository<Deposit, UUID> {
             @Param("tenantId") UUID tenantId,
             @Param("from")     LocalDateTime from,
             @Param("to")       LocalDateTime to,
+            @Param("agentId")  UUID agentId
+    );
+
+    /**
+     * Snapshot of currently active reservations (PENDING + CONFIRMED), not date-filtered.
+     * Used by the commercial dashboard for real-time pipeline view.
+     *
+     * <p>Returns one Object[] row:
+     * {@code [count(Long), sum(BigDecimal), depositDates(List<LocalDate>)]} — actually
+     * three separate scalar projections: count, totalAmount, and a list of depositDate values
+     * is NOT returned here; see {@link #activeReservationDepositDates} for age calculation.
+     *
+     * <p>Returns one Object[] row: {@code [count(Long), totalAmount(BigDecimal)]}.
+     */
+    @Query("""
+            SELECT COUNT(d), COALESCE(SUM(d.amount), 0)
+            FROM Deposit d
+            WHERE d.tenant.id = :tenantId
+              AND d.status IN ('PENDING', 'CONFIRMED')
+              AND (:agentId IS NULL OR d.agent.id = :agentId)
+            """)
+    List<Object[]> activeReservationTotals(
+            @Param("tenantId") UUID tenantId,
+            @Param("agentId")  UUID agentId
+    );
+
+    /**
+     * Returns deposit dates of currently active reservations for average-age calculation.
+     * Only fetches one date column — no entity hydration.
+     */
+    @Query("""
+            SELECT d.depositDate
+            FROM Deposit d
+            WHERE d.tenant.id = :tenantId
+              AND d.status IN ('PENDING', 'CONFIRMED')
+              AND (:agentId IS NULL OR d.agent.id = :agentId)
+            """)
+    List<java.time.LocalDate> activeReservationDepositDates(
+            @Param("tenantId") UUID tenantId,
             @Param("agentId")  UUID agentId
     );
 }

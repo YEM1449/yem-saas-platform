@@ -70,8 +70,9 @@
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
-.kpi-card.accent-green { border-left: 4px solid #43a047; }
-.kpi-card.accent-blue  { border-left: 4px solid #1976d2; }
+.kpi-card.accent-green  { border-left: 4px solid #43a047; }
+.kpi-card.accent-blue   { border-left: 4px solid #1976d2; }
+.kpi-card.accent-orange { border-left: 4px solid #e65100; }
 .kpi-label {
   font-size: 0.75rem;
   color: #777;
@@ -179,6 +180,7 @@
   color: #333;
 }
 
+.as-of   { font-size: 0.75rem; color: #999; margin: -0.5rem 0 1rem; }
 .loading { color: #888; font-style: italic; }
 .error   { color: #c62828; }
 .no-data { color: #999; font-size: 0.88rem; }
