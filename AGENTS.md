@@ -136,7 +136,11 @@ npm start
   - Creation sets `PENDING` and moves property to `RESERVED`.
   - `confirm()` allows only `PENDING -> CONFIRMED`; acquires pessimistic write lock on property and rejects if property is `SOLD` → 409.
   - `cancel()`/expiry move deposit to `CANCELLED`/`EXPIRED` and release property back to `ACTIVE` when applicable.
-  - **Reservation PDF**: `GET /api/deposits/{id}/pdf` — generates a PDF attestation de réservation (Apache PDFBox 3.x, Type 1 fonts only). Tenant-scoped; cross-tenant → 404. RBAC: any authenticated role (mirrors `GET /{id}`). Response: `application/pdf`, `Content-Disposition: attachment; filename="reservation_<id>.pdf"`. Implemented in `ReservationPdfService`.
+  - **Reservation PDF**: `GET /api/deposits/{id}/documents/reservation.pdf` — generates an "Attestation de Réservation" PDF. Tenant-scoped; cross-tenant → 404. **RBAC**: ADMIN/MANAGER → any deposit in tenant; AGENT → own deposits only (cross-ownership → 404). Response: `application/pdf`, `Content-Disposition: attachment; filename="reservation_<id>.pdf"`.
+    - **Architecture**: `ReservationDocumentService` (orchestrator, RBAC check, model builder) → `DocumentGenerationService` (Thymeleaf HTML → OpenHTMLToPDF) → PDF bytes.
+    - **Template location**: `hlm-backend/src/main/resources/templates/documents/reservation.html` (Thymeleaf). Edit this file to change labels/layout/branding. Model fields defined in `ReservationDocumentModel` record.
+    - **Dependencies**: `com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10` + `spring-boot-starter-thymeleaf`. No PDFBox 3.x (removed to avoid API version clash with openhtmltopdf transitive PDFBox 2.x).
+    - **N+1 avoidance**: deposit loaded via `DepositRepository.findForPdf()` (JOIN FETCH tenant + contact + agent). Property loaded in a second query.
 - Sales Contract workflow (`SaleContractStatus`):
   - **Sale = Contract SIGNED** (deposit is pre-sale / reservation step).
   - Lifecycle: `DRAFT → SIGNED → CANCELED` (or `DRAFT → CANCELED`).
@@ -146,14 +150,14 @@ npm start
   - `ProjectActiveGuard.requireActive()` checked on both `create()` and `sign()`.
   - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
 - Commercial Dashboard (`dashboard` package):
-  - **Endpoints**: `GET /api/dashboard/commercial/summary` + `GET /api/dashboard/commercial/sales` (drill-down, paged).
-  - **Query params**: `from`, `to` (ISO datetime, default last 30 days), `projectId` (optional), `agentId` (optional).
+  - **Endpoints**: `GET /api/dashboard/commercial` (alias, accepts `YYYY-MM-DD` date params) + `GET /api/dashboard/commercial/summary` (canonical, accepts ISO datetime) + `GET /api/dashboard/commercial/sales` (drill-down, paged).
+  - **Query params**: `from`, `to` (ISO date or datetime, default last 30 days), `projectId` (optional), `agentId` (optional).
   - **RBAC**: all authenticated roles; AGENT callers have `agentId` forced to self (ignoring supplied value); ADMIN/MANAGER see full tenant data.
-  - **Summary DTO** (`CommercialDashboardSummaryDTO`): `salesCount`, `salesTotalAmount`, `avgSaleValue`, `depositsCount`, `depositsTotalAmount`, `salesByProject[]` (top 10), `salesByAgent[]` (top 10), `inventoryByStatus{}`, `inventoryByType{}`, `salesAmountByDay[]`, `depositsAmountByDay[]`, `conversionDepositToSaleRate`, `avgDaysDepositToSale`.
+  - **Summary DTO** (`CommercialDashboardSummaryDTO`): `asOf` (freshness timestamp), `salesCount`, `salesTotalAmount`, `avgSaleValue`, `depositsCount` (period-filtered CONFIRMED), `depositsTotalAmount`, `activeReservationsCount` (current PENDING+CONFIRMED, not date-filtered), `activeReservationsTotalAmount`, `avgReservationAgeDays`, `salesByProject[]` (top 10), `salesByAgent[]` (top 10), `inventoryByStatus{}`, `inventoryByType{}`, `salesAmountByDay[]`, `depositsAmountByDay[]`, `conversionDepositToSaleRate`, `avgDaysDepositToSale`.
   - **Caching**: Caffeine cache `commercialDashboardSummaryCache`, TTL 30 s, max 500 entries. Key = `tenantId:effectiveAgentId:from:to:projectId`.
-  - **Query budget**: 9 aggregate queries per summary request; no entity hydration.
+  - **Query budget**: up to 10 aggregate queries per summary request; no entity hydration.
   - **Validation**: `from > to` → 400 (`InvalidPeriodException`); unknown `projectId` in tenant → 404; unknown `agentId` in tenant → 404.
-  - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`.
+  - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`. Dashboard nav entry visible to all authenticated roles.
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

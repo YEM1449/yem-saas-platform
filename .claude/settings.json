@@ -9,7 +9,14 @@
       "Read(//tmp/**)",
       "Bash(./mvnw test-compile -q)",
       "Bash(DOCKER_HOST=unix:///var/run/docker.sock ./mvnw -Dtest=AuthMeIT -e test)",
-      "Bash(mvn -pl hlm-backend -Dtest=CommercialDashboardIT -DtrimStackTrace=false -e test)"
+      "Bash(mvn -pl hlm-backend -Dtest=CommercialDashboardIT -DtrimStackTrace=false -e test)",
+      "Bash(docker context inspect desktop-linux)",
+      "Bash(docker context ls)",
+      "Read(//run/**)",
+      "Read(//mnt/wsl/**)",
+      "Bash(echo \"tcp-exit:$?\")",
+      "Bash(docker context use default)",
+      "Bash(docker context use desktop-linux)"
     ]
   }
 }
