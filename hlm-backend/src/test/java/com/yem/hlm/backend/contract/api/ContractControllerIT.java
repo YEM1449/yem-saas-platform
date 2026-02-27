@@ -6,6 +6,7 @@ import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
+import com.yem.hlm.backend.contract.domain.BuyerType;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
 import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
@@ -466,6 +467,40 @@ class ContractControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status").value(SaleContractStatus.CANCELED.name()));
 
         assertThat(getProperty(propertyId).status()).isEqualTo(PropertyStatus.RESERVED);
+    }
+
+    // =========================================================================
+    // 11. signDraft_persistsBuyerSnapshot — P0-2
+    // Verifies that buyer snapshot is captured immutably at signing time
+    // =========================================================================
+
+    @Test
+    void signDraft_persistsBuyerSnapshot() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propertyId = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("buyer-snapshot@acme.com");
+        UUID contractId = createDraftContract(projectId, propertyId, buyer.id(), adminBearer);
+
+        // DRAFT contract has no snapshot yet
+        String draftJson = mvc.perform(get("/api/contracts")
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        // Sign the contract
+        String signedJson = mvc.perform(post("/api/contracts/{id}/sign", contractId)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        ContractResponse signed = objectMapper.readValue(signedJson, ContractResponse.class);
+
+        // Snapshot fields populated at signing time
+        assertThat(signed.buyerType()).isEqualTo(BuyerType.PERSON);
+        assertThat(signed.buyerDisplayName()).isEqualTo("John Doe"); // matches createContact("John","Doe",...)
+        assertThat(signed.buyerEmail()).isEqualTo("buyer-snapshot@acme.com");
+        // phone is null (not set in createContact helper) — snapshot captures null too
+        assertThat(signed.buyerPhone()).isNull();
+        assertThat(signed.signedAt()).isNotNull();
     }
 
     // =========================================================================

@@ -2,6 +2,7 @@ package com.yem.hlm.backend.contract.service;
 
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
+import com.yem.hlm.backend.contract.domain.BuyerType;
 import com.yem.hlm.backend.contact.service.ContactNotFoundException;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
@@ -173,6 +174,9 @@ public class SaleContractService {
         contract.setStatus(SaleContractStatus.SIGNED);
         contract.setSignedAt(signedAt);
 
+        // Capture buyer snapshot immutably — decouples legal/commercial record from future Contact edits
+        captureBuyerSnapshot(contract);
+
         try {
             contract = contractRepository.save(contract);
             contractRepository.flush();
@@ -276,6 +280,25 @@ public class SaleContractService {
     }
 
     // ===== Private helpers =====
+
+    /**
+     * Captures an immutable buyer snapshot on the contract from the linked Contact.
+     * Called once when the contract transitions to SIGNED.
+     * Snapshot is independent of future edits to the Contact record.
+     *
+     * <p>BuyerType defaults to {@link BuyerType#PERSON} — all current ContactType values
+     * (PROSPECT, TEMP_CLIENT, CLIENT) represent individuals.
+     * TODO: derive COMPANY from Contact when company-contact support is introduced.
+     */
+    private void captureBuyerSnapshot(SaleContract contract) {
+        Contact buyer = contract.getBuyerContact(); // lazy-loaded within @Transactional context
+        contract.setBuyerType(BuyerType.PERSON);
+        contract.setBuyerDisplayName(buyer.getFullName());
+        contract.setBuyerPhone(buyer.getPhone());
+        contract.setBuyerEmail(buyer.getEmail());
+        contract.setBuyerIce(buyer.getNationalId());
+        contract.setBuyerAddress(buyer.getAddress());
+    }
 
     private UUID resolveAgentId(UUID requestedAgentId, UUID callerId) {
         if (callerIsAgent()) {
