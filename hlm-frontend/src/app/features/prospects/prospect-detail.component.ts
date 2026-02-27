@@ -191,6 +191,22 @@ export class ProspectDetailComponent implements OnInit {
     });
   }
 
+  downloadReservationPdf(d: Deposit): void {
+    this.depositSvc.downloadReservationPdf(d.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reservation_${d.reference}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.depositError = 'Failed to download PDF.';
+      },
+    });
+  }
+
   createDeposit(): void {
     if (!this.prospect || !this.depositPropertyId || !this.depositAmount) return;
     this.creatingDeposit = true;

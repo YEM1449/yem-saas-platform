@@ -28,4 +28,11 @@ export class DepositService {
       )
       .pipe(map((r) => r.items));
   }
+
+  downloadReservationPdf(depositId: string): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiUrl}/api/deposits/${depositId}/documents/reservation.pdf`,
+      { responseType: 'blob' }
+    );
+  }
 }

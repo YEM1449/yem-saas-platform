@@ -19,6 +19,21 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
     Optional<SaleContract> findByTenant_IdAndId(UUID tenantId, UUID id);
 
     /**
+     * Loads a contract with all associations needed for PDF generation.
+     * JOIN FETCHes tenant, buyerContact, agent, project, and property to avoid N+1.
+     */
+    @Query("""
+            SELECT c FROM SaleContract c
+            JOIN FETCH c.tenant
+            JOIN FETCH c.buyerContact
+            JOIN FETCH c.agent
+            JOIN FETCH c.project
+            JOIN FETCH c.property
+            WHERE c.tenant.id = :tenantId AND c.id = :id
+            """)
+    Optional<SaleContract> findForPdf(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
+
+    /**
      * Checks whether an active SIGNED contract already exists for a property.
      * Used as a service-layer guard before attempting to sign; the DB partial unique
      * index {@code uk_sc_property_signed} is the race-condition safety net.

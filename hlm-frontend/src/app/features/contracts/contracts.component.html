@@ -1,0 +1,59 @@
+<h2>Contracts</h2>
+
+<div class="filters">
+  <select [(ngModel)]="filterStatus" (change)="load()">
+    <option value="">All statuses</option>
+    @for (s of statuses; track s) {
+      <option [value]="s">{{ s }}</option>
+    }
+  </select>
+</div>
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (loading) {
+  <p>Loading contracts...</p>
+}
+
+@if (!loading && contracts.length === 0) {
+  <p class="muted">No contracts found.</p>
+}
+
+@if (!loading && contracts.length > 0) {
+  <table>
+    <thead>
+      <tr>
+        <th>Ref</th>
+        <th>Project</th>
+        <th>Buyer</th>
+        <th>Agreed Price</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Signed</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of contracts; track c.id) {
+        <tr>
+          <td class="mono">{{ c.id.substring(0, 8).toUpperCase() }}</td>
+          <td>{{ c.projectName }}</td>
+          <td>{{ c.buyerDisplayName ?? '—' }}</td>
+          <td>{{ c.agreedPrice | number:'1.0-0' }}</td>
+          <td>
+            <span class="badge" [class]="'badge-' + c.status.toLowerCase()">
+              {{ c.status }}
+            </span>
+          </td>
+          <td>{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>
+            <button class="pdf-btn" (click)="downloadPdf(c)">PDF</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

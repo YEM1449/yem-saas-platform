@@ -4,9 +4,12 @@ import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
 import com.yem.hlm.backend.contract.service.SaleContractService;
+import com.yem.hlm.backend.contract.service.pdf.ContractDocumentService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,20 +23,24 @@ import java.util.UUID;
  * <p>
  * RBAC rules:
  * <ul>
- *   <li>POST   /api/contracts         — all authenticated roles (ADMIN, MANAGER, AGENT)</li>
- *   <li>POST   /api/contracts/{id}/sign   — ADMIN or MANAGER only (financial close)</li>
- *   <li>POST   /api/contracts/{id}/cancel — ADMIN or MANAGER only</li>
- *   <li>GET    /api/contracts         — all roles; AGENT sees only own contracts (service-enforced)</li>
+ *   <li>POST   /api/contracts                       — all authenticated roles</li>
+ *   <li>POST   /api/contracts/{id}/sign             — ADMIN or MANAGER only</li>
+ *   <li>POST   /api/contracts/{id}/cancel           — ADMIN or MANAGER only</li>
+ *   <li>GET    /api/contracts                       — all roles (AGENT sees own only)</li>
+ *   <li>GET    /api/contracts/{id}/documents/contract.pdf — all roles (AGENT sees own only)</li>
  * </ul>
  */
 @RestController
 @RequestMapping("/api/contracts")
 public class ContractController {
 
-    private final SaleContractService contractService;
+    private final SaleContractService    contractService;
+    private final ContractDocumentService contractDocumentService;
 
-    public ContractController(SaleContractService contractService) {
-        this.contractService = contractService;
+    public ContractController(SaleContractService contractService,
+                               ContractDocumentService contractDocumentService) {
+        this.contractService         = contractService;
+        this.contractDocumentService = contractDocumentService;
     }
 
     /**
@@ -84,5 +91,20 @@ public class ContractController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return contractService.list(status, projectId, agentId, from, to);
+    }
+
+    /**
+     * Download a contract PDF.
+     * RBAC: all authenticated roles; AGENT callers may only download their own contracts
+     * (cross-ownership → 404 to avoid information leakage).
+     */
+    @GetMapping("/{id}/documents/contract.pdf")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) {
+        byte[] pdf = contractDocumentService.generate(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"contract_" + id + ".pdf\"")
+                .body(pdf);
     }
 }

@@ -1,0 +1,60 @@
+.filters {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+  background: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-draft    { background: #edf2f7; color: #4a5568; }
+.badge-signed   { background: #c6f6d5; color: #276749; }
+.badge-canceled { background: #fed7d7; color: #9b2c2c; }
+
+.pdf-btn {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid #3182ce;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  border-radius: 4px;
+}
+
+.pdf-btn:hover {
+  background: #bee3f8;
+}
+
+.error { color: #e53e3e; }
+.muted { color: #718096; font-style: italic; }

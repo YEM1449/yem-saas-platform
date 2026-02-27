@@ -156,6 +156,12 @@ npm start
     - Discount analytics = `listPrice - agreedPrice` (when `listPrice` set).
     - Reservation cancellation = deposit CANCELLED/EXPIRED → property `ACTIVE`.
     - Sale cancellation = signed contract CANCELED → property `RESERVED` or `ACTIVE`.
+  - **Contract PDF**: `GET /api/contracts/{id}/documents/contract.pdf` — generates a bilingual contract PDF. Tenant-scoped; cross-tenant → 404. **RBAC**: ADMIN/MANAGER → any contract in tenant; AGENT → own contracts only (cross-ownership → 404, avoids info leak). Response: `application/pdf`, `Content-Disposition: attachment; filename="contract_<id>.pdf"`.
+    - **Architecture**: `ContractDocumentService` (orchestrator, RBAC check, model builder) → `DocumentGenerationService` (Thymeleaf HTML → OpenHTMLToPDF) → PDF bytes.
+    - **Template location**: `hlm-backend/src/main/resources/templates/documents/contract.html` (Thymeleaf). 5 sections: property, prices, buyer, agent, signatures. Edit to change labels/branding.
+    - **Buyer data precedence**: snapshot fields (`buyerDisplayName`, `buyerPhone`, etc.) preferred when set (SIGNED contracts); falls back to live Contact fields for DRAFT contracts.
+    - **N+1 avoidance**: `SaleContractRepository.findForPdf()` JOIN FETCH on tenant + buyerContact + agent + project + property in a single query.
+    - **Frontend**: `GET /api/contracts` returns `List<ContractResponse>` (filter params: `status`, `projectId`, `agentId`, `from`, `to`). Angular route `/app/contracts` (`ContractsComponent` in `features/contracts/`). PDF download via `ContractService.downloadPdf()` (blob response).
 - Commercial Dashboard (`dashboard` package):
   - **Endpoints**: `GET /api/dashboard/commercial` (alias, accepts `YYYY-MM-DD` date params) + `GET /api/dashboard/commercial/summary` (canonical, accepts ISO datetime) + `GET /api/dashboard/commercial/sales` (drill-down, paged).
   - **Query params**: `from`, `to` (ISO date or datetime, default last 30 days), `projectId` (optional), `agentId` (optional).

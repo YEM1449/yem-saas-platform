@@ -161,6 +161,7 @@
           <th>Reference</th>
           <th>Due Date</th>
           <th>Created</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -176,6 +177,9 @@
             <td>{{ d.reference }}</td>
             <td>{{ d.dueDate ?? '—' }}</td>
             <td>{{ d.createdAt }}</td>
+            <td>
+              <button class="pdf-btn" (click)="downloadReservationPdf(d)">PDF</button>
+            </td>
           </tr>
         }
       </tbody>
