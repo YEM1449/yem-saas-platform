@@ -100,6 +100,20 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!-- PDF generation: HTML template → PDF (Apache 2.0 / LGPL) -->
+		<!-- OpenHTMLToPDF renders Thymeleaf-produced HTML to PDF via PDFBox 2.x. -->
+		<!-- PDFBox 3.x direct dep removed to avoid API clash with openhtmltopdf transitive. -->
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-pdfbox</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<!-- Thymeleaf: server-side HTML template engine used by DocumentGenerationService. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
 		<!-- OpenAPI / Swagger UI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

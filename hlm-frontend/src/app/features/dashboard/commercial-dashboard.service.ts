@@ -27,7 +27,7 @@ export class CommercialDashboardService {
     });
   }
 
-  private toHttpParams(obj: Record<string, unknown>): HttpParams {
+  private toHttpParams(obj: object): HttpParams {
     let p = new HttpParams();
     for (const [k, v] of Object.entries(obj)) {
       if (v != null && v !== '') p = p.set(k, String(v));

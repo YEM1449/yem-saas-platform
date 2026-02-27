@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!--
+  Reservation PDF template — rendered by ReservationDocumentService via Thymeleaf + OpenHTMLToPDF.
+
+  HOW TO CUSTOMISE:
+  - Branding colours  : change the CSS variables/values in <style> (search for "#1a4f7a").
+  - Company logo      : add an <img> tag inside .header-logo-cell, reference a classpath resource
+                        via "cid:" or embed as base64 data URI.
+  - Data fields       : add/remove rows in the field tables; expose new fields in ReservationDocumentModel.
+  - Page size/margins : change the @page CSS rule.
+
+  LIMITATIONS (OpenHTMLToPDF CSS 2.1 + partial 3):
+  - No flexbox or CSS grid — use <table> for multi-column layouts.
+  - No border-radius, box-shadow, or CSS animations.
+  - Standard PDF fonts (Helvetica/Arial) cover Latin Western European (ISO-8859-1).
+    For Arabic/CJK or other scripts, embed a matching .ttf via PdfRendererBuilder.useFont().
+-->
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Attestation de R&#233;servation</title>
+    <style>
+        /* ─── Page ─────────────────────────────────────────────────────────── */
+        @page {
+            size: A4;
+            margin: 18mm 15mm 18mm 15mm;
+        }
+
+        /* ─── Base ─────────────────────────────────────────────────────────── */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #2d2d2d;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ─── Header ────────────────────────────────────────────────────────── */
+        .doc-header {
+            border-bottom: 3px solid #1a4f7a;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .doc-title {
+            font-size: 17pt;
+            font-weight: bold;
+            color: #1a4f7a;
+        }
+        .doc-subtitle {
+            font-size: 11pt;
+            color: #555;
+            margin-top: 3px;
+        }
+
+        /* ─── Section ───────────────────────────────────────────────────────── */
+        .section {
+            margin-bottom: 14px;
+        }
+        .section-header {
+            background-color: #1a4f7a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 9pt;
+            padding: 3px 7px;
+            margin-bottom: 0;
+        }
+
+        /* ─── Field table ───────────────────────────────────────────────────── */
+        .field-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .field-table td {
+            padding: 3px 7px;
+            border: 1px solid #d0d0d0;
+            vertical-align: top;
+        }
+        .field-table .label {
+            font-weight: bold;
+            width: 38%;
+            background-color: #f4f6f9;
+            color: #3a3a3a;
+        }
+        .field-table .value {
+            color: #2d2d2d;
+        }
+
+        /* ─── Status badge ──────────────────────────────────────────────────── */
+        .badge {
+            font-weight: bold;
+            padding: 1px 6px;
+            font-size: 9pt;
+        }
+        .status-PENDING   { color: #856404; background-color: #fff3cd; }
+        .status-CONFIRMED { color: #155724; background-color: #d4edda; }
+        .status-CANCELLED { color: #721c24; background-color: #f8d7da; }
+        .status-EXPIRED   { color: #383d41; background-color: #e2e3e5; }
+
+        /* ─── Footer ────────────────────────────────────────────────────────── */
+        .doc-footer {
+            border-top: 1px solid #cccccc;
+            padding-top: 7px;
+            margin-top: 20px;
+            font-size: 8pt;
+            color: #888888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══ Header ══════════════════════════════════════════════════════════ -->
+    <div class="doc-header">
+        <div class="doc-title">ATTESTATION DE R&#201;SERVATION</div>
+        <div class="doc-subtitle" th:text="${model.tenantName}">Soci&#233;t&#233;</div>
+    </div>
+
+    <!-- ══ Section: Bien Immobilier ══════════════════════════════════════════ -->
+    <div class="section">
+        <div class="section-header">BIEN IMMOBILIER</div>
+        <table class="field-table">
+            <tr>
+                <td class="label">Projet</td>
+                <td class="value" th:text="${model.projectName}"></td>
+            </tr>
+            <tr>
+                <td class="label">R&#233;f&#233;rence bien</td>
+                <td class="value" th:text="${model.propertyRef}"></td>
+            </tr>
+            <tr>
+                <td class="label">D&#233;signation</td>
+                <td class="value" th:text="${model.propertyTitle}"></td>
+            </tr>
+            <tr>
+                <td class="label">Type</td>
+                <td class="value" th:text="${model.propertyType}"></td>
+            </tr>
+            <tr th:if="${model.propertyPrice != null}">
+                <td class="label">Prix de vente</td>
+                <td class="value" th:text="${model.propertyPrice}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ══ Section: Acquéreur ══════════════════════════════════════════════ -->
+    <div class="section">
+        <div class="section-header">ACQU&#201;REUR</div>
+        <table class="field-table">
+            <tr>
+                <td class="label">Nom complet</td>
+                <td class="value" th:text="${model.buyerFullName}"></td>
+            </tr>
+            <tr th:if="${model.buyerPhone != null}">
+                <td class="label">T&#233;l&#233;phone</td>
+                <td class="value" th:text="${model.buyerPhone}"></td>
+            </tr>
+            <tr th:if="${model.buyerEmail != null}">
+                <td class="label">E-mail</td>
+                <td class="value" th:text="${model.buyerEmail}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ══ Section: Réservation ════════════════════════════════════════════ -->
+    <div class="section">
+        <div class="section-header">R&#201;SERVATION</div>
+        <table class="field-table">
+            <tr>
+                <td class="label">R&#233;f&#233;rence r&#233;servation</td>
+                <td class="value" th:text="${model.depositReference}"></td>
+            </tr>
+            <tr>
+                <td class="label">Statut</td>
+                <td class="value">
+                    <span class="badge"
+                          th:classappend="${'status-' + model.depositStatus}"
+                          th:text="${model.depositStatus}"></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Acompte vers&#233;</td>
+                <td class="value" th:text="${model.depositAmount}"></td>
+            </tr>
+            <tr>
+                <td class="label">Date de r&#233;servation</td>
+                <td class="value" th:text="${model.depositDate}"></td>
+            </tr>
+            <tr th:if="${model.dueDate != null}">
+                <td class="label">&#201;ch&#233;ance</td>
+                <td class="value" th:text="${model.dueDate}"></td>
+            </tr>
+            <tr th:if="${model.confirmedAt != null}">
+                <td class="label">Confirm&#233;e le</td>
+                <td class="value" th:text="${model.confirmedAt}"></td>
+            </tr>
+            <tr th:if="${model.cancelledAt != null}">
+                <td class="label">Annul&#233;e le</td>
+                <td class="value" th:text="${model.cancelledAt}"></td>
+            </tr>
+            <tr th:if="${model.notes != null}">
+                <td class="label">Notes</td>
+                <td class="value" th:text="${model.notes}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ══ Section: Agent Commercial ═══════════════════════════════════════ -->
+    <div class="section">
+        <div class="section-header">AGENT COMMERCIAL</div>
+        <table class="field-table">
+            <tr>
+                <td class="label">Agent</td>
+                <td class="value" th:text="${model.agentEmail}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ══ Footer ═══════════════════════════════════════════════════════════ -->
+    <div class="doc-footer">
+        Document g&#233;n&#233;r&#233; le <span th:text="${model.generatedAt}"></span>
+        &#8212; Ce document est fourni &#224; titre informatif et ne constitue pas un contrat de vente d&#233;finitif.
+    </div>
+
+</body>
+</html>

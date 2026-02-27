@@ -33,6 +33,9 @@
   }
 
   @if (!loading && !error && summary) {
+    <!-- ── Freshness stamp ──────────────────────────────────────────── -->
+    <p class="as-of">Data as of {{ summary.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+
     <!-- ── KPI cards ───────────────────────────────────────────────── -->
     <section class="kpi-section">
       <div class="kpi-card accent-green">
@@ -54,6 +57,18 @@
       <div class="kpi-card accent-blue">
         <span class="kpi-label">Deposits Count</span>
         <span class="kpi-value">{{ summary.depositsCount }}</span>
+      </div>
+      <div class="kpi-card accent-orange">
+        <span class="kpi-label">Active Reservations</span>
+        <span class="kpi-value">{{ summary.activeReservationsCount }}</span>
+      </div>
+      <div class="kpi-card accent-orange">
+        <span class="kpi-label">Active Res. Amount</span>
+        <span class="kpi-value">{{ formatAmount(summary.activeReservationsTotalAmount) }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg Res. Age (days)</span>
+        <span class="kpi-value">{{ summary.avgReservationAgeDays != null ? (summary.avgReservationAgeDays + ' d') : '—' }}</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Conversion Rate</span>

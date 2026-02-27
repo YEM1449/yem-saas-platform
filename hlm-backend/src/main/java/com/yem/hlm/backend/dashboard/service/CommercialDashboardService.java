@@ -163,6 +163,19 @@ public class CommercialDashboardService {
         BigDecimal avgDaysDepositToSale = computeAvgCycleTime(
                 contractRepository.cycleTimePairs(tenantId, from, to, effectiveAgentId));
 
+        // 10 ─ Active reservations snapshot (not date-filtered) ────────────────
+        List<Object[]> activeRows = depositRepository.activeReservationTotals(tenantId, effectiveAgentId);
+        long activeReservationsCount = 0L;
+        BigDecimal activeReservationsTotalAmount = BigDecimal.ZERO;
+        if (!activeRows.isEmpty()) {
+            Object[] row = activeRows.get(0);
+            activeReservationsCount       = toLong(row[0]);
+            activeReservationsTotalAmount = toBD(row[1]);
+        }
+
+        BigDecimal avgReservationAgeDays = computeAvgReservationAge(
+                depositRepository.activeReservationDepositDates(tenantId, effectiveAgentId));
+
         // ─ Conversion rate ─────────────────────────────────────────────────────
         BigDecimal conversionRate = null;
         if (depositsCount > 0) {
@@ -172,8 +185,10 @@ public class CommercialDashboardService {
 
         return new CommercialDashboardSummaryDTO(
                 from, to,
+                LocalDateTime.now(),          // asOf
                 salesCount, salesTotalAmount, avgSaleValue,
                 depositsCount, depositsTotalAmount,
+                activeReservationsCount, activeReservationsTotalAmount, avgReservationAgeDays,
                 salesByProject, salesByAgent,
                 inventoryByStatus, inventoryByType,
                 salesAmountByDay, depositsAmountByDay,
@@ -281,6 +296,18 @@ public class CommercialDashboardService {
         return SecurityContextHolder.getContext().getAuthentication()
                 .getAuthorities().stream()
                 .anyMatch(a -> "ROLE_AGENT".equals(a.getAuthority()));
+    }
+
+    /** Average age in days from depositDate to today for each active reservation. */
+    private BigDecimal computeAvgReservationAge(List<LocalDate> depositDates) {
+        if (depositDates == null || depositDates.isEmpty()) return null;
+        LocalDate today = LocalDate.now();
+        List<LocalDate> nonNull = depositDates.stream().filter(d -> d != null).toList();
+        if (nonNull.isEmpty()) return null;
+        double totalDays = nonNull.stream()
+                .mapToLong(d -> ChronoUnit.DAYS.between(d, today))
+                .sum();
+        return BigDecimal.valueOf(totalDays / nonNull.size()).setScale(1, RoundingMode.HALF_UP);
     }
 
     private BigDecimal computeAvgCycleTime(List<Object[]> pairs) {

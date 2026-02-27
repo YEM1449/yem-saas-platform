@@ -3,9 +3,13 @@ package com.yem.hlm.backend.deposit.api;
 import com.yem.hlm.backend.deposit.api.dto.*;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.service.DepositService;
+import com.yem.hlm.backend.deposit.service.pdf.ReservationDocumentService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +21,12 @@ import java.util.UUID;
 public class DepositController {
 
     private final DepositService depositService;
+    private final ReservationDocumentService reservationDocumentService;
 
-    public DepositController(DepositService depositService) {
-        this.depositService = depositService;
+    public DepositController(DepositService depositService,
+                             ReservationDocumentService reservationDocumentService) {
+        this.depositService            = depositService;
+        this.reservationDocumentService = reservationDocumentService;
     }
 
     @PostMapping
@@ -32,6 +39,25 @@ public class DepositController {
     @GetMapping("/{id}")
     public DepositResponse get(@PathVariable UUID id) {
         return depositService.get(id);
+    }
+
+    /**
+     * Downloads the PDF reservation certificate for a deposit.
+     *
+     * <p>RBAC:
+     * <ul>
+     *   <li>ADMIN / MANAGER — any deposit in the tenant.</li>
+     *   <li>AGENT — own deposits only (enforced in {@link ReservationDocumentService}).</li>
+     * </ul>
+     */
+    @GetMapping("/{id}/documents/reservation.pdf")
+    public ResponseEntity<byte[]> downloadReservationPdf(@PathVariable UUID id) {
+        byte[] pdf = reservationDocumentService.generate(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"reservation_" + id + ".pdf\"")
+                .body(pdf);
     }
 
     @PostMapping("/{id}/confirm")
