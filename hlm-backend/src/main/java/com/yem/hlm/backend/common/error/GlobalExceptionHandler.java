@@ -9,6 +9,9 @@ import com.yem.hlm.backend.contract.service.PropertyAlreadySoldException;
 import com.yem.hlm.backend.deposit.service.*;
 
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
+import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
+import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
+import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
@@ -134,6 +137,7 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,
             DepositNotFoundException.class,
+            MessageNotFoundException.class,
             NotificationNotFoundException.class,
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
@@ -507,6 +511,38 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ErrorCode.CONTRACT_DEPOSIT_MISMATCH,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // ========== Outbox / Messaging Errors ==========
+
+    @ExceptionHandler(InvalidRecipientException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRecipient(
+            InvalidRecipientException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.INVALID_RECIPIENT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ContactChannelMissingException.class)
+    public ResponseEntity<ErrorResponse> handleContactChannelMissing(
+            ContactChannelMissingException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.CONTACT_CHANNEL_MISSING,
                 ex.getMessage(),
                 request.getRequestURI()
         );

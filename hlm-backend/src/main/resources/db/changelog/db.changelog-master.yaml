@@ -33,3 +33,5 @@ databaseChangeLog:
       file: db/changelog/changes/015-property-add-reserved-at.yaml
   - include:
       file: db/changelog/changes/016-create-sale-contract.yaml
+  - include:
+      file: db/changelog/changes/017-create-outbound-message.yaml

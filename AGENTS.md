@@ -95,9 +95,9 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, admin-users), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, outbox, admin-users), route config in `app.routes.ts`.
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
@@ -158,6 +158,31 @@ npm start
   - **Query budget**: up to 10 aggregate queries per summary request; no entity hydration.
   - **Validation**: `from > to` → 400 (`InvalidPeriodException`); unknown `projectId` in tenant → 404; unknown `agentId` in tenant → 404.
   - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`. Dashboard nav entry visible to all authenticated roles.
+
+- Outbound Messaging / Outbox (`outbox` package — PR-6, REQ-2-3-MODULE-COMMERC-021):
+  - **Purpose**: async dispatch of EMAIL and SMS messages to CRM contacts or arbitrary recipients, with full audit trail.
+  - **Endpoints**:
+    - `POST /api/messages` — compose and queue a message (returns `202 Accepted` + `{messageId}`). RBAC: all roles (AGENT, MANAGER, ADMIN).
+    - `GET /api/messages` — paged list, tenant-scoped. Query params: `channel`, `status`, `contactId`, `from`, `to`, `page`, `size`.
+  - **Request path (fast)**: only validates + inserts a `PENDING` outbox row — never calls a provider directly.
+  - **Dispatch (async)**: `OutboundDispatcherScheduler` polls every `${app.outbox.polling-interval-ms:5000}` ms and calls `OutboundDispatcherService.runDispatch()`.
+    - Uses `SELECT … FOR UPDATE SKIP LOCKED` (native query) so concurrent instances never double-dispatch.
+    - Backoff: attempt 1 → +1 min, attempt 2 → +5 min, attempt 3+ → +30 min. After `${app.outbox.max-retries:3}` attempts → `FAILED`.
+  - **Provider interfaces**: `EmailSender` / `SmsSender` in `outbox/service/provider/`. Default: `NoopEmailSender` / `NoopSmsSender` (log-only). Swap by providing a `@Primary` Spring bean.
+  - **Tenant isolation**: `MessageComposeService` reads `TenantContext` — all messages are scoped to the current tenant.
+  - **Config keys** (`application.yml`, overridable via env vars):
+    - `app.outbox.batch-size` (env `OUTBOX_BATCH_SIZE`, default 20)
+    - `app.outbox.max-retries` (env `OUTBOX_MAX_RETRIES`, default 3)
+    - `app.outbox.polling-interval-ms` (env `OUTBOX_POLL_INTERVAL_MS`, default 5000)
+  - **Test profile**: scheduler is disabled (`spring.task.scheduling.enabled=false`). Call `OutboundDispatcherService.runDispatch()` directly in ITs.
+  - **IT**: `OutboxIT` (9 tests — 202/PENDING for email+SMS, tenant isolation, contact derivation, validation errors, 401, dispatcher PENDING→SENT).
+  - **Frontend**: `features/outbox/` — list with status/channel filter + inline compose form; route `/app/messages`; nav item "Messages".
+  - **Local verification**:
+    ```bash
+    cd hlm-backend && ./mvnw test
+    cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=OutboxIT
+    cd hlm-frontend && npm run build
+    ```
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

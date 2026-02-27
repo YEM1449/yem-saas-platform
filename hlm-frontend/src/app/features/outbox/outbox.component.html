@@ -1,0 +1,116 @@
+<div class="outbox-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Messages</h1>
+    <button class="btn-primary" (click)="openCompose()">+ Compose</button>
+  </div>
+
+  <!-- ── Success banner ─────────────────────────────────────────────────── -->
+  @if (composeSuccess) {
+    <p class="banner-success">{{ composeSuccess }}</p>
+  }
+
+  <!-- ── Compose form (inline) ─────────────────────────────────────────── -->
+  @if (showCompose) {
+    <div class="compose-card">
+      <h2>New Message</h2>
+
+      @if (composeError) {
+        <p class="error">{{ composeError }}</p>
+      }
+
+      <div class="form-group">
+        <label for="channel">Channel</label>
+        <select id="channel" [(ngModel)]="form.channel">
+          <option value="EMAIL">Email</option>
+          <option value="SMS">SMS</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="recipient">Recipient {{ isEmail ? '(email)' : '(phone)' }}</label>
+        <input id="recipient" type="text" [(ngModel)]="form.recipient"
+               [placeholder]="isEmail ? 'user@example.com' : '+212600000000'" />
+      </div>
+
+      @if (isEmail) {
+        <div class="form-group">
+          <label for="subject">Subject</label>
+          <input id="subject" type="text" [(ngModel)]="form.subject" placeholder="Subject line" />
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="body">Body</label>
+        <textarea id="body" rows="5" [(ngModel)]="form.body" placeholder="Message body…"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" (click)="submitCompose()" [disabled]="composing">
+          {{ composing ? 'Sending…' : 'Send' }}
+        </button>
+        <button class="btn-secondary" (click)="cancelCompose()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Filter bar ─────────────────────────────────────────────────────── -->
+  <div class="filter-bar">
+    <select [(ngModel)]="filterChannel" (change)="applyFilters()">
+      <option value="">All channels</option>
+      <option value="EMAIL">Email</option>
+      <option value="SMS">SMS</option>
+    </select>
+
+    <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+      <option value="">All statuses</option>
+      <option value="PENDING">Pending</option>
+      <option value="SENT">Sent</option>
+      <option value="FAILED">Failed</option>
+    </select>
+  </div>
+
+  <!-- ── List ──────────────────────────────────────────────────────────── -->
+  @if (listLoading) {
+    <p class="loading">Loading…</p>
+  } @else if (listError) {
+    <p class="error">{{ listError }}</p>
+  } @else if (messages.length === 0) {
+    <p class="empty">No messages found.</p>
+  } @else {
+    <table class="message-table">
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th>Status</th>
+          <th>Recipient</th>
+          <th>Subject</th>
+          <th>Sent at</th>
+          <th>Retries</th>
+          <th>Created at</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (msg of messages; track msg.id) {
+          <tr>
+            <td><span class="channel-badge channel-{{ msg.channel }}">{{ msg.channel }}</span></td>
+            <td><span class="badge {{ statusClass(msg.status) }}">{{ msg.status }}</span></td>
+            <td class="cell-truncate">{{ msg.recipient }}</td>
+            <td class="cell-truncate">{{ msg.subject ?? '—' }}</td>
+            <td>{{ msg.sentAt ? (msg.sentAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+            <td>{{ msg.retriesCount }}</td>
+            <td>{{ msg.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="currentPage === 0">‹ Prev</button>
+      <span>Page {{ currentPage + 1 }} / {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="(currentPage + 1) >= totalPages">Next ›</button>
+    </div>
+  }
+</div>
