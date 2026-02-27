@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.contract.api.dto;
 
+import com.yem.hlm.backend.contract.domain.BuyerType;
 import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
 
@@ -10,6 +11,9 @@ import java.util.UUID;
 /**
  * API response DTO for a {@link SaleContract}.
  * All KPI-relevant fields are exposed for analytics consumers.
+ *
+ * <p>Buyer snapshot fields ({@code buyerType}, {@code buyerDisplayName}, etc.) are null
+ * for DRAFT contracts and populated immutably once the contract is SIGNED.
  */
 public record ContractResponse(
         UUID id,
@@ -25,7 +29,14 @@ public record ContractResponse(
         UUID sourceDepositId,
         LocalDateTime createdAt,
         LocalDateTime signedAt,
-        LocalDateTime canceledAt
+        LocalDateTime canceledAt,
+        // ── Buyer snapshot (populated at SIGNED time, immutable) ──
+        BuyerType buyerType,
+        String buyerDisplayName,
+        String buyerPhone,
+        String buyerEmail,
+        String buyerIce,
+        String buyerAddress
 ) {
     public static ContractResponse from(SaleContract c) {
         return new ContractResponse(
@@ -42,7 +53,13 @@ public record ContractResponse(
                 c.getSourceDepositId(),
                 c.getCreatedAt(),
                 c.getSignedAt(),
-                c.getCanceledAt()
+                c.getCanceledAt(),
+                c.getBuyerType(),
+                c.getBuyerDisplayName(),
+                c.getBuyerPhone(),
+                c.getBuyerEmail(),
+                c.getBuyerIce(),
+                c.getBuyerAddress()
         );
     }
 }

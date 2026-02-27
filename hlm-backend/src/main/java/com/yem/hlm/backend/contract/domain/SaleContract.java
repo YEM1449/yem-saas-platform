@@ -105,6 +105,42 @@ public class SaleContract {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
+    // ===== Buyer snapshot (immutable, captured at SIGNED time) =====
+
+    /**
+     * Buyer entity type at signing time.
+     * Defaults to {@link BuyerType#PERSON} until company-contact support is added.
+     */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "buyer_type", length = 20)
+    private BuyerType buyerType;
+
+    /** Full name snapshot — Contact.fullName at signing time. */
+    @Setter
+    @Column(name = "buyer_display_name", length = 200)
+    private String buyerDisplayName;
+
+    /** Phone snapshot — Contact.phone at signing time. */
+    @Setter
+    @Column(name = "buyer_phone", length = 50)
+    private String buyerPhone;
+
+    /** Email snapshot — Contact.email at signing time. */
+    @Setter
+    @Column(name = "buyer_email", length = 320)
+    private String buyerEmail;
+
+    /** ICE / national-ID snapshot — Contact.nationalId at signing time. Null for unknown. */
+    @Setter
+    @Column(name = "buyer_ice", length = 50)
+    private String buyerIce;
+
+    /** Address snapshot — Contact.address at signing time. */
+    @Setter
+    @Column(name = "buyer_address", length = 500)
+    private String buyerAddress;
+
     // ===== JPA lifecycle =====
 
     @PrePersist

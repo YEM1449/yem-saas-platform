@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-add-buyer-snapshot-to-sale-contract
+      author: yem
+      comment: >
+        P0-2 — Buyer snapshot captured immutably at contract signing time.
+        Provides an audit trail independent of future changes to the linked Contact row.
+        All columns nullable (snapshot is only populated when status transitions to SIGNED).
+      changes:
+        - addColumn:
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: buyer_type
+                  type: VARCHAR(20)
+                  remarks: "PERSON or COMPANY — derived from Contact at signing time"
+              - column:
+                  name: buyer_display_name
+                  type: VARCHAR(200)
+                  remarks: "Full name snapshot (Contact.fullName at signing time)"
+              - column:
+                  name: buyer_phone
+                  type: VARCHAR(50)
+                  remarks: "Phone snapshot (Contact.phone at signing time)"
+              - column:
+                  name: buyer_email
+                  type: VARCHAR(320)
+                  remarks: "Email snapshot (Contact.email at signing time)"
+              - column:
+                  name: buyer_ice
+                  type: VARCHAR(50)
+                  remarks: "ICE / national ID snapshot (Contact.nationalId). Used for company or individual ID."
+              - column:
+                  name: buyer_address
+                  type: VARCHAR(500)
+                  remarks: "Address snapshot (Contact.address at signing time)"

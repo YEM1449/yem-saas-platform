@@ -141,7 +141,7 @@ npm start
     - **Template location**: `hlm-backend/src/main/resources/templates/documents/reservation.html` (Thymeleaf). Edit this file to change labels/layout/branding. Model fields defined in `ReservationDocumentModel` record.
     - **Dependencies**: `com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10` + `spring-boot-starter-thymeleaf`. No PDFBox 3.x (removed to avoid API version clash with openhtmltopdf transitive PDFBox 2.x).
     - **N+1 avoidance**: deposit loaded via `DepositRepository.findForPdf()` (JOIN FETCH tenant + contact + agent). Property loaded in a second query.
-- Sales Contract workflow (`SaleContractStatus`):
+- Sales Contract workflow (`SaleContractStatus`) + Commercial KPI semantics:
   - **Sale = Contract SIGNED** (deposit is pre-sale / reservation step).
   - Lifecycle: `DRAFT → SIGNED → CANCELED` (or `DRAFT → CANCELED`).
   - RBAC: `POST /api/contracts` — all roles; `POST /{id}/sign`, `POST /{id}/cancel` — ADMIN/MANAGER only; `GET /api/contracts` — all roles (AGENT sees own only, enforced in service).
@@ -149,6 +149,13 @@ npm start
   - `cancel()` of SIGNED contract: property reverts to `RESERVED` (if a CONFIRMED deposit exists for the property, via `DepositRepository.existsActiveConfirmedDepositForProperty()`) or `ACTIVE` (= AVAILABLE). Lock ordering: Property lock acquired BEFORE contract save to prevent deadlocks with `sign()` and `DepositService.confirm()`.
   - `ProjectActiveGuard.requireActive()` checked on both `create()` and `sign()`.
   - `PropertyCommercialWorkflowService` is the SSOT for all property commercial status transitions.
+  - **Buyer snapshot** (P0-2, Liquibase 018): At `sign()`, `SaleContractService.captureBuyerSnapshot()` stores an immutable copy of buyer data on the contract row (`buyerType`, `buyerDisplayName`, `buyerPhone`, `buyerEmail`, `buyerIce`, `buyerAddress`). Decouples legal records from future Contact edits. `buyerType` defaults to `BuyerType.PERSON`.
+  - **KPI contract** (locked — see `docs/ai/PROJECT_CONTEXT.md` for full table):
+    - Reservation = deposit PENDING or CONFIRMED, property `RESERVED`.
+    - Sale = `SaleContract.status = SIGNED`, revenue = `agreedPrice`.
+    - Discount analytics = `listPrice - agreedPrice` (when `listPrice` set).
+    - Reservation cancellation = deposit CANCELLED/EXPIRED → property `ACTIVE`.
+    - Sale cancellation = signed contract CANCELED → property `RESERVED` or `ACTIVE`.
 - Commercial Dashboard (`dashboard` package):
   - **Endpoints**: `GET /api/dashboard/commercial` (alias, accepts `YYYY-MM-DD` date params) + `GET /api/dashboard/commercial/summary` (canonical, accepts ISO datetime) + `GET /api/dashboard/commercial/sales` (drill-down, paged).
   - **Query params**: `from`, `to` (ISO date or datetime, default last 30 days), `projectId` (optional), `agentId` (optional).
