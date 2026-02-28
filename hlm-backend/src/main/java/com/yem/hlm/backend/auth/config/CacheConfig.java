@@ -22,6 +22,12 @@ public class CacheConfig {
      */
     public static final String COMMERCIAL_DASHBOARD_CACHE = "commercialDashboardSummary";
 
+    /**
+     * Cash dashboard cache.
+     * TTL: 60 s. Key includes tenantId + from + to.
+     */
+    public static final String CASH_DASHBOARD_CACHE = "cashDashboard";
+
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager manager = new CaffeineCacheManager();
@@ -38,6 +44,13 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .maximumSize(500)
                         .expireAfterWrite(30, TimeUnit.SECONDS)
+                        .build());
+
+        // Cash dashboard — 60 s TTL, up to 200 filter combinations
+        manager.registerCustomCache(CASH_DASHBOARD_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(200)
+                        .expireAfterWrite(60, TimeUnit.SECONDS)
                         .build());
 
         return manager;

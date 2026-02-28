@@ -1,0 +1,39 @@
+.detail-page { padding: 24px; max-width: 960px; }
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.detail-header h2 { margin: 0; font-size: 1.2rem; }
+.mono { font-family: monospace; }
+
+.status-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+}
+.status-draft    { background: #e2e8f0; color: #4a5568; }
+.status-signed   { background: #c6f6d5; color: #276749; }
+.status-canceled { background: #fed7d7; color: #c53030; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+.tabs button {
+  background: none; border: none; cursor: pointer;
+  padding: 8px 16px; font-size: 0.9rem; color: #718096; border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.tabs button.active { color: #3182ce; border-bottom-color: #3182ce; font-weight: 600; }
+.tabs button:hover:not(.active) { color: #2d3748; background: #f7fafc; }
+
+.info-section { padding: 8px 0; }
+.info-table { border-collapse: collapse; font-size: 0.9rem; }
+.info-table td { padding: 6px 12px; vertical-align: top; }
+.info-table td.lbl { color: #718096; width: 140px; }
+
+.loading { color: #718096; font-style: italic; padding: 24px; }
+.error-msg { color: #c53030; padding: 24px; }

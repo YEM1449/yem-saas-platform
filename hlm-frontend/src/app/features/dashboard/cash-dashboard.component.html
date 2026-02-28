@@ -1,0 +1,76 @@
+<div class="cash-dashboard">
+  <div class="dash-header">
+    <h2>Tableau de bord – Encaissements</h2>
+    <div class="date-filter">
+      <label>Du <input type="date" [(ngModel)]="from" /></label>
+      <label>Au <input type="date" [(ngModel)]="to" /></label>
+      <button class="btn-apply" (click)="load()">Appliquer</button>
+    </div>
+  </div>
+
+  @if (loading) { <p class="loading">Chargement…</p> }
+  @if (error)   { <p class="error-msg">{{ error }}</p> }
+
+  @if (data) {
+    <!-- ── KPI Cards ── -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Prévu</div>
+        <div class="kpi-value">{{ data.expectedInPeriod | number:'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Émis</div>
+        <div class="kpi-value">{{ data.issuedInPeriod | number:'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-label">Encaissé</div>
+        <div class="kpi-value">{{ data.collectedInPeriod | number:'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-label">Impayés</div>
+        <div class="kpi-value">{{ data.overdueAmount | number:'1.0-0' }}</div>
+        <div class="kpi-sub">{{ data.overdueCount }} échéance(s)</div>
+      </div>
+    </div>
+
+    <!-- ── Aging buckets ── -->
+    <div class="section">
+      <h3>Vieillissement des impayés</h3>
+      <table class="aging-table">
+        <thead>
+          <tr><th>Tranche</th><th>Montant restant</th><th>Nb échéances</th></tr>
+        </thead>
+        <tbody>
+          @for (b of data.agingBuckets; track b.label) {
+            <tr>
+              <td>{{ b.label }}</td>
+              <td class="amount">{{ b.totalAmount | number:'1.0-0' }}</td>
+              <td class="center">{{ b.itemCount }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Next due ── -->
+    @if (data.nextDueItems.length > 0) {
+      <div class="section">
+        <h3>Prochaines échéances</h3>
+        <table class="next-due-table">
+          <thead>
+            <tr><th>Libellé</th><th>Date</th><th>Restant</th></tr>
+          </thead>
+          <tbody>
+            @for (item of data.nextDueItems; track item.itemId) {
+              <tr>
+                <td>{{ item.itemLabel }}</td>
+                <td>{{ item.dueDate }}</td>
+                <td class="amount">{{ item.amountRemaining | number:'1.0-0' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

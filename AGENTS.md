@@ -95,7 +95,7 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
 - Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, outbox, contracts, admin-users), route config in `app.routes.ts`.
 
@@ -207,6 +207,40 @@ npm start
     cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=OutboxIT
     cd hlm-frontend && npm run build
     ```
+
+- Payment Schedule / Appels de fonds (`payments` package — PR-8):
+  - **Purpose**: track staged payment milestones per signed contract (e.g. deposit %, foundation %, keys %). Each schedule item represents one "appel de fonds".
+  - **Liquibase**: changeset 020 — three tables: `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`.
+  - **Status state machine** (`PaymentScheduleStatus`): `DRAFT → ISSUED → SENT | OVERDUE → PAID` or any `→ CANCELED`.
+    - `issue()`: DRAFT → ISSUED (sets `issuedAt`).
+    - `send()`: must be `ISSUED|SENT|OVERDUE` — queues outbox row via `MessageComposeService`, transitions to SENT (sets `sentAt`).
+    - `cancel()`: any non-terminal state → CANCELED.
+    - `addPayment()`: sums payments; when `sumPaid >= amount` → auto-transitions to PAID.
+  - **Endpoints** (in `PaymentScheduleController`):
+    - `GET  /api/contracts/{id}/schedule` — list items for a contract (all roles).
+    - `POST /api/contracts/{id}/schedule` — create DRAFT item (ADMIN/MANAGER).
+    - `PUT  /api/schedule-items/{id}` — update DRAFT item (ADMIN/MANAGER).
+    - `DELETE /api/schedule-items/{id}` — delete DRAFT item (ADMIN/MANAGER).
+    - `POST /api/schedule-items/{id}/issue` — DRAFT → ISSUED (ADMIN/MANAGER).
+    - `POST /api/schedule-items/{id}/send` — ISSUED → SENT + outbox queued (ADMIN/MANAGER).
+    - `POST /api/schedule-items/{id}/cancel` — any → CANCELED (ADMIN/MANAGER).
+    - `GET  /api/schedule-items/{id}/pdf` — download call-for-funds PDF (all roles).
+    - `GET  /api/schedule-items/{id}/payments` — list payments on item (all roles).
+    - `POST /api/schedule-items/{id}/payments` — record a payment (ADMIN/MANAGER).
+    - `POST /api/schedule-items/reminders/run` — trigger reminder batch manually (ADMIN).
+  - **Cash KPI dashboard**: `GET /api/dashboard/commercial/cash?from=&to=` — returns `CashDashboardResponse` with `expectedInPeriod`, `issuedInPeriod`, `collectedInPeriod`, `overdueAmount`, `overdueCount`, aging buckets (0-30/31-60/61-90/91+ days), next 10 upcoming due items. Cacheable (`cashDashboard`, 60 s TTL, 200 entries). RBAC: all authenticated roles.
+  - **Call-for-funds PDF**: `GET /api/schedule-items/{id}/pdf` — "Appel de Fonds" PDF via Thymeleaf + OpenHTMLToPDF. Template: `hlm-backend/src/main/resources/templates/documents/call_for_funds.html`. Model: `CallForFundsPdfService` builds `CallForFundsDocumentModel` (tenant, project/property, buyer snapshot, schedule item fields, amountPaid/amountRemaining, agent).
+  - **Automatic reminders** (`ReminderService` + `ReminderScheduler`):
+    - Pre-due: D-7 and D-1 before `dueDate`.
+    - Overdue: D+1, D+7, D+30 after `dueDate`.
+    - Overdue items: `ISSUED|SENT` items past due date → auto-transitioned to `OVERDUE`.
+    - Idempotency: `ScheduleItemReminder` table with unique constraint `(schedule_item_id, reminder_type, channel, reminder_date)`.
+    - Scheduler runs via `ReminderScheduler` (cron `${app.payments.reminder-cron:0 0 7 * * *}`; env `PAYMENTS_REMINDER_CRON`). Disabled in test profile.
+    - Writes directly to `OutboundMessageRepository` (uses contract agent as `createdByUser`; bypasses `MessageComposeService` since no HTTP session in scheduler context).
+  - **Error codes**: `PAYMENT_SCHEDULE_ITEM_NOT_FOUND` (404), `INVALID_PAYMENT_SCHEDULE_STATE` (409), `PAYMENT_INVALID_AMOUNT` (400).
+  - **Config**: `app.payments.reminder-cron` (env `PAYMENTS_REMINDER_CRON`, default `0 0 7 * * *`).
+  - **IT**: `PaymentScheduleIT` (10 tests: create+list, DRAFT→ISSUED, partial payment, full payment→PAID, cancel→issue=409, agent forbidden on write, agent can read, PDF download, tenant isolation, send ISSUED→SENT).
+  - **Frontend**: `features/contracts/contract-detail.component` — tabbed detail view ("Informations" + "Échéancier" tab with `<app-payment-schedule>` child component). Route `/app/contracts/:id`. Payment schedule service at `features/contracts/payment-schedule.service.ts`. Cash dashboard at `features/dashboard/cash-dashboard.component` (route `/app/dashboard/commercial/cash`; nav link "Encaissements").
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

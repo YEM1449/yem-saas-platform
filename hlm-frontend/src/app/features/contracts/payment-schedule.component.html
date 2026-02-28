@@ -1,0 +1,171 @@
+<div class="schedule-container">
+  <div class="schedule-header">
+    <h3>Échéancier de paiement</h3>
+    @if (canWrite) {
+      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">+ Ajouter</button>
+    }
+  </div>
+
+  @if (actionError) { <p class="error-msg">{{ actionError }}</p> }
+  @if (actionSuccess) { <p class="success-msg">{{ actionSuccess }}</p> }
+  @if (sendSuccess) { <p class="success-msg">{{ sendSuccess }}</p> }
+
+  <!-- ── Create form ── -->
+  @if (showCreateForm && canWrite) {
+    <div class="create-form">
+      <h4>Nouvelle échéance</h4>
+      <div class="form-row">
+        <label>Libellé*</label>
+        <input [(ngModel)]="newLabel" maxlength="200" placeholder="ex: Acompte 1 – 10%" />
+      </div>
+      <div class="form-row">
+        <label>Montant*</label>
+        <input type="number" [(ngModel)]="newAmount" min="0.01" step="0.01" />
+      </div>
+      <div class="form-row">
+        <label>Date d'échéance*</label>
+        <input type="date" [(ngModel)]="newDueDate" />
+      </div>
+      <div class="form-row">
+        <label>Notes</label>
+        <textarea [(ngModel)]="newNotes" rows="2" maxlength="2000"></textarea>
+      </div>
+      @if (createError) { <p class="error-msg">{{ createError }}</p> }
+      <div class="form-actions">
+        <button class="btn-primary" (click)="submitCreate()">Créer</button>
+        <button class="btn-secondary" (click)="showCreateForm = false; resetCreateForm()">Annuler</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Loading / empty ── -->
+  @if (loading) { <p class="loading">Chargement…</p> }
+  @if (!loading && error) { <p class="error-msg">{{ error }}</p> }
+  @if (!loading && !error && items.length === 0) {
+    <p class="empty">Aucune échéance définie.</p>
+  }
+
+  <!-- ── Items table ── -->
+  @if (!loading && items.length > 0) {
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Libellé</th>
+          <th>Montant</th>
+          <th>Payé</th>
+          <th>Restant</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items; track item.id) {
+          <tr [class.overdue-row]="item.status === 'OVERDUE'">
+            <td>{{ item.sequence }}</td>
+            <td>{{ item.label }}</td>
+            <td class="amount">{{ item.amount | number:'1.2-2' }}</td>
+            <td class="amount paid">{{ item.amountPaid | number:'1.2-2' }}</td>
+            <td class="amount" [class.remaining-nonzero]="item.amountRemaining > 0">
+              {{ item.amountRemaining | number:'1.2-2' }}
+            </td>
+            <td>{{ item.dueDate }}</td>
+            <td><span class="badge" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td>
+            <td class="actions">
+              <!-- PDF -->
+              <button class="btn-icon" title="Télécharger PDF" (click)="downloadPdf(item)">📄</button>
+
+              @if (canWrite) {
+                <!-- Issue -->
+                @if (item.status === 'DRAFT') {
+                  <button class="btn-icon" title="Émettre" (click)="issue(item)">✅</button>
+                }
+                <!-- Send -->
+                @if (item.status === 'ISSUED' || item.status === 'SENT' || item.status === 'OVERDUE') {
+                  <button class="btn-icon" title="Envoyer" (click)="openSendModal(item)">📨</button>
+                }
+                <!-- Add payment -->
+                @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
+                  <button class="btn-icon" title="Encaisser" (click)="openPaymentModal(item)">💰</button>
+                }
+                <!-- Cancel -->
+                @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
+                  <button class="btn-icon btn-danger" title="Annuler" (click)="cancelItem(item)">✖</button>
+                }
+                <!-- Delete -->
+                @if (item.status === 'DRAFT') {
+                  <button class="btn-icon btn-danger" title="Supprimer" (click)="deleteItem(item)">🗑</button>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <!-- ── Send modal ── -->
+  @if (sendItemId) {
+    <div class="modal-overlay" (click)="sendItemId = null">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h4>Envoyer l'appel de fonds</h4>
+        <label><input type="checkbox" [(ngModel)]="sendEmail" /> Envoyer par Email</label><br/>
+        <label><input type="checkbox" [(ngModel)]="sendSms" /> Envoyer par SMS</label>
+        @if (sendError) { <p class="error-msg">{{ sendError }}</p> }
+        <div class="form-actions">
+          <button class="btn-primary" [disabled]="!sendEmail && !sendSms" (click)="submitSend()">Envoyer</button>
+          <button class="btn-secondary" (click)="sendItemId = null">Annuler</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Payment modal ── -->
+  @if (paymentItemId) {
+    <div class="modal-overlay" (click)="paymentItemId = null">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h4>Encaissements – {{ paymentItemLabel }}</h4>
+
+        @if (payments.length > 0) {
+          <table class="payment-table">
+            <thead><tr><th>Montant</th><th>Date</th><th>Canal</th><th>Réf.</th></tr></thead>
+            <tbody>
+              @for (p of payments; track p.id) {
+                <tr>
+                  <td>{{ p.amountPaid | number:'1.2-2' }}</td>
+                  <td>{{ p.paidAt | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ p.channel ?? '—' }}</td>
+                  <td>{{ p.paymentReference ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+
+        <h5>Ajouter un règlement</h5>
+        <div class="form-row">
+          <label>Montant*</label>
+          <input type="number" [(ngModel)]="paymentAmount" min="0.01" step="0.01" />
+        </div>
+        <div class="form-row">
+          <label>Date*</label>
+          <input type="date" [(ngModel)]="paymentDate" />
+        </div>
+        <div class="form-row">
+          <label>Canal</label>
+          <input [(ngModel)]="paymentChannel" placeholder="BANK_TRANSFER, CASH…" maxlength="50" />
+        </div>
+        <div class="form-row">
+          <label>Référence</label>
+          <input [(ngModel)]="paymentRef" maxlength="200" />
+        </div>
+        @if (paymentError) { <p class="error-msg">{{ paymentError }}</p> }
+        <div class="form-actions">
+          <button class="btn-primary" (click)="submitPayment()">Enregistrer</button>
+          <button class="btn-secondary" (click)="paymentItemId = null">Fermer</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

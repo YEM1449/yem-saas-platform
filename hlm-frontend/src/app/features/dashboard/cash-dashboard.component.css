@@ -1,0 +1,64 @@
+.cash-dashboard { padding: 24px; max-width: 960px; }
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.dash-header h2 { margin: 0; font-size: 1.2rem; }
+
+.date-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.date-filter label { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: #4a5568; }
+.date-filter input { padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.875rem; }
+.btn-apply {
+  background: #3182ce; color: white; border: none;
+  padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 0.875rem;
+}
+.btn-apply:hover { background: #2b6cb0; }
+
+/* KPI grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.kpi-card {
+  background: #ebf8ff;
+  border-radius: 8px;
+  padding: 16px 20px;
+  border-left: 4px solid #3182ce;
+}
+.kpi-card.kpi-green { background: #f0fff4; border-color: #38a169; }
+.kpi-card.kpi-red   { background: #fff5f5; border-color: #e53e3e; }
+.kpi-label { font-size: 0.8rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 1.5rem; font-weight: 700; color: #2d3748; margin-top: 4px; }
+.kpi-sub   { font-size: 0.8rem; color: #718096; margin-top: 2px; }
+
+.section { margin-bottom: 28px; }
+.section h3 { font-size: 1rem; color: #2d3748; margin-bottom: 12px; }
+
+.aging-table,
+.next-due-table {
+  width: 100%; border-collapse: collapse; font-size: 0.875rem;
+}
+.aging-table th,
+.next-due-table th {
+  background: #f7fafc; padding: 8px 12px; text-align: left;
+  border-bottom: 2px solid #e2e8f0; color: #4a5568;
+}
+.aging-table td,
+.next-due-table td { padding: 7px 12px; border-bottom: 1px solid #edf2f7; }
+
+.amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.center { text-align: center; }
+
+.loading { color: #718096; font-style: italic; }
+.error-msg { color: #c53030; }
+
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
