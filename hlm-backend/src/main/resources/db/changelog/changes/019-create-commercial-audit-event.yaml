@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-create-commercial-audit-event
+      author: yem
+      comment: >
+        Commercial audit trail for key deposit and contract transitions.
+        Provides an append-only record of business-critical events for each tenant.
+        ADMIN/MANAGER accessible via GET /api/audit/commercial.
+      changes:
+        - createTable:
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: correlation_type
+                  type: VARCHAR(50)
+              - column:
+                  name: correlation_id
+                  type: UUID
+              - column:
+                  name: occurred_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload_json
+                  type: TEXT
+
+        - addForeignKeyConstraint:
+            baseTableName: commercial_audit_event
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_cae_tenant
+            onDelete: CASCADE
+
+        - createIndex:
+            indexName: idx_cae_tenant_occurred
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: occurred_at
+
+        - createIndex:
+            indexName: idx_cae_tenant_correlation
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: correlation_type
+              - column:
+                  name: correlation_id

@@ -9,7 +9,7 @@ import java.util.Map;
  * Full commercial dashboard summary — returned by a single backend call.
  *
  * <h3>Query budget</h3>
- * Up to 10 aggregate queries per request (no entity hydration):
+ * Up to 11 aggregate queries per request (no entity hydration):
  * <ol>
  *   <li>Sales totals (count, sum, avg agreedPrice)</li>
  *   <li>Deposit totals in period (count, sum amount, filtered by confirmedAt)</li>
@@ -21,6 +21,7 @@ import java.util.Map;
  *   <li>Sales amount by day (trend)</li>
  *   <li>Deposits amount by day (trend)</li>
  *   <li>Contract cycle-time pairs (signedAt, confirmedAt) for avgDaysDepositToSale</li>
+ *   <li>Active prospects count (PROSPECT + QUALIFIED_PROSPECT contacts)</li>
  * </ol>
  *
  * <h3>Field notes</h3>
@@ -33,6 +34,9 @@ import java.util.Map;
  *   <li>{@code activeReservationsCount} / {@code activeReservationsTotalAmount} /
  *       {@code avgReservationAgeDays} — current snapshot of PENDING + CONFIRMED deposits
  *       (not date-filtered); optionally scoped by agentId.</li>
+ *   <li>{@code activeProspectsCount} — contacts with status PROSPECT or QUALIFIED_PROSPECT,
+ *       tenant-wide (not filtered by date/project/agent).
+ *       [OPEN POINT: agent/project scoping if contacts gain a direct agentId FK]</li>
  *   <li>{@code asOf} — server timestamp when this DTO was assembled; use to display data freshness.</li>
  * </ul>
  */
@@ -60,6 +64,14 @@ public record CommercialDashboardSummaryDTO(
         BigDecimal activeReservationsTotalAmount,
         /** Average age in days of open reservations; null when none. */
         BigDecimal avgReservationAgeDays,
+
+        // ── Active prospects (tenant-wide, not date-filtered) ────────────────
+        /**
+         * Contacts with status {@code PROSPECT} or {@code QUALIFIED_PROSPECT}.
+         * Tenant-wide; not filtered by date/project/agent.
+         * [OPEN POINT: agent/project scoping if contacts gain a direct agentId FK]
+         */
+        long activeProspectsCount,
 
         // ── Breakdowns (top 10) ─────────────────────────────────────────────
         List<SalesByProjectRow> salesByProject,

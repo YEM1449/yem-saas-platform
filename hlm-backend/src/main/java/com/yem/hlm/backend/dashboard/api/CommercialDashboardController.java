@@ -4,6 +4,8 @@ import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
 import com.yem.hlm.backend.dashboard.service.CommercialDashboardService;
 import com.yem.hlm.backend.tenant.context.TenantContext;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,9 +41,14 @@ import java.util.UUID;
 public class CommercialDashboardController {
 
     private final CommercialDashboardService dashboardService;
+    private final Counter                    summaryRequestCounter;
 
-    public CommercialDashboardController(CommercialDashboardService dashboardService) {
+    public CommercialDashboardController(CommercialDashboardService dashboardService,
+                                         MeterRegistry meterRegistry) {
         this.dashboardService = dashboardService;
+        this.summaryRequestCounter = Counter.builder("commercial_dashboard_summary_requests_total")
+                .description("Total number of commercial dashboard summary requests (cache hits + misses)")
+                .register(meterRegistry);
     }
 
     /**
@@ -114,6 +121,7 @@ public class CommercialDashboardController {
 
     private CommercialDashboardSummaryDTO doSummary(LocalDateTime from, LocalDateTime to,
                                                      UUID projectId, UUID agentId) {
+        summaryRequestCounter.increment();
         UUID tenantId = TenantContext.getTenantId();
         LocalDateTime[] range = dashboardService.resolveDateRange(from, to);
         dashboardService.validateProject(tenantId, projectId);

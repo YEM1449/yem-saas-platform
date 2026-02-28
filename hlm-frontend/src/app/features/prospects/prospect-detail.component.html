@@ -115,6 +115,12 @@
   @if (depositSuccess) {
     <p class="success">{{ depositSuccess }}</p>
   }
+  @if (messageSendSuccess) {
+    <p class="success">{{ messageSendSuccess }}</p>
+  }
+  @if (messageSendError) {
+    <p class="error">{{ messageSendError }}</p>
+  }
 
   <div class="deposit-form">
     <div class="form-row">
@@ -177,8 +183,22 @@
             <td>{{ d.reference }}</td>
             <td>{{ d.dueDate ?? '—' }}</td>
             <td>{{ d.createdAt }}</td>
-            <td>
+            <td class="dep-actions">
               <button class="pdf-btn" (click)="downloadReservationPdf(d)">PDF</button>
+              @if (prospect?.email) {
+                <button class="msg-btn msg-email"
+                        [disabled]="sendingDepositId === d.id"
+                        (click)="sendDepositMessage(d, 'EMAIL')">
+                  {{ sendingDepositId === d.id ? '...' : 'Email' }}
+                </button>
+              }
+              @if (prospect?.phone) {
+                <button class="msg-btn msg-sms"
+                        [disabled]="sendingDepositId === d.id"
+                        (click)="sendDepositMessage(d, 'SMS')">
+                  {{ sendingDepositId === d.id ? '...' : 'SMS' }}
+                </button>
+              }
             </td>
           </tr>
         }

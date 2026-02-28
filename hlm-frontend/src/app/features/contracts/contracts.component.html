@@ -13,6 +13,13 @@
   <p class="error">{{ error }}</p>
 }
 
+@if (sendSuccess) {
+  <p class="send-success">{{ sendSuccess }}</p>
+}
+@if (sendError) {
+  <p class="error">{{ sendError }}</p>
+}
+
 @if (loading) {
   <p>Loading contracts...</p>
 }
@@ -49,8 +56,22 @@
           </td>
           <td>{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
           <td>{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
-          <td>
+          <td class="actions">
             <button class="pdf-btn" (click)="downloadPdf(c)">PDF</button>
+            @if (c.buyerEmail) {
+              <button class="msg-btn msg-email"
+                      [disabled]="sendingId === c.id"
+                      (click)="sendMessage(c, 'EMAIL')">
+                {{ sendingId === c.id ? '...' : 'Email' }}
+              </button>
+            }
+            @if (c.buyerPhone) {
+              <button class="msg-btn msg-sms"
+                      [disabled]="sendingId === c.id"
+                      (click)="sendMessage(c, 'SMS')">
+                {{ sendingId === c.id ? '...' : 'SMS' }}
+              </button>
+            }
           </td>
         </tr>
       }
