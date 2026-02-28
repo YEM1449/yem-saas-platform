@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.dashboard.service;
 
 import com.yem.hlm.backend.auth.config.CacheConfig;
+import com.yem.hlm.backend.contact.domain.ContactStatus;
+import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
@@ -16,6 +18,10 @@ import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,31 +53,44 @@ import java.util.UUID;
  * Key = tenantId + effectiveAgentId + from + to + projectId.
  *
  * <h3>Query budget (summary)</h3>
- * Up to 9 aggregate queries; no entity hydration loops.
+ * Up to 11 aggregate queries; no entity hydration loops.
  */
 @Service
 @Transactional(readOnly = true)
 public class CommercialDashboardService {
 
+    private static final Logger log = LoggerFactory.getLogger(CommercialDashboardService.class);
     private static final int TOP_N = 10;
+    /** Log a warning when summary generation exceeds this threshold (ms). */
+    private static final long SLOW_QUERY_THRESHOLD_MS = 300;
 
     private final SaleContractRepository contractRepository;
     private final DepositRepository      depositRepository;
     private final PropertyRepository     propertyRepository;
     private final ProjectRepository      projectRepository;
     private final UserRepository         userRepository;
+    private final ContactRepository      contactRepository;
+    private final MeterRegistry          meterRegistry;
+    private final Timer                  summaryTimer;
 
     public CommercialDashboardService(
             SaleContractRepository contractRepository,
             DepositRepository depositRepository,
             PropertyRepository propertyRepository,
             ProjectRepository projectRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ContactRepository contactRepository,
+            MeterRegistry meterRegistry) {
         this.contractRepository = contractRepository;
         this.depositRepository  = depositRepository;
         this.propertyRepository = propertyRepository;
         this.projectRepository  = projectRepository;
         this.userRepository     = userRepository;
+        this.contactRepository  = contactRepository;
+        this.meterRegistry      = meterRegistry;
+        this.summaryTimer = Timer.builder("commercial_dashboard_summary_duration")
+                .description("Time to compute a fresh commercial dashboard summary (cache misses only)")
+                .register(meterRegistry);
     }
 
     // =========================================================================
@@ -80,6 +99,10 @@ public class CommercialDashboardService {
 
     /**
      * Builds the full commercial dashboard summary.
+     *
+     * <p>The method body only executes on cache misses; cached results are returned directly
+     * by the Spring proxy without entering this method. The Micrometer timer therefore measures
+     * only the actual DB computation cost (cache-miss latency).
      *
      * @param from       range start (inclusive); defaults to 30 days ago if null
      * @param to         range end (inclusive); defaults to now if null
@@ -99,6 +122,27 @@ public class CommercialDashboardService {
                                                     LocalDateTime to,
                                                     UUID projectId,
                                                     UUID effectiveAgentId) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        long startMs = System.currentTimeMillis();
+        meterRegistry.counter("commercial_dashboard_summary_cache_misses_total").increment();
+
+        try {
+            return computeSummary(tenantId, from, to, projectId, effectiveAgentId);
+        } finally {
+            sample.stop(summaryTimer);
+            long elapsedMs = System.currentTimeMillis() - startMs;
+            if (elapsedMs > SLOW_QUERY_THRESHOLD_MS) {
+                log.warn("[CommercialDashboard] Slow summary generation: {}ms (tenant={}, agent={})",
+                        elapsedMs, tenantId, effectiveAgentId);
+            }
+        }
+    }
+
+    private CommercialDashboardSummaryDTO computeSummary(UUID tenantId,
+                                                         LocalDateTime from,
+                                                         LocalDateTime to,
+                                                         UUID projectId,
+                                                         UUID effectiveAgentId) {
         // 1 ─ Sales totals ──────────────────────────────────────────────────────
         List<Object[]> salesRows = contractRepository.salesTotals(tenantId, from, to, projectId, effectiveAgentId);
         long salesCount = 0L;
@@ -176,6 +220,11 @@ public class CommercialDashboardService {
         BigDecimal avgReservationAgeDays = computeAvgReservationAge(
                 depositRepository.activeReservationDepositDates(tenantId, effectiveAgentId));
 
+        // 11 ─ Active prospects (tenant-wide, not date/agent-filtered) ──────────
+        long activeProspectsCount = contactRepository.countActiveProspects(
+                tenantId,
+                List.of(ContactStatus.PROSPECT, ContactStatus.QUALIFIED_PROSPECT));
+
         // ─ Conversion rate ─────────────────────────────────────────────────────
         BigDecimal conversionRate = null;
         if (depositsCount > 0) {
@@ -189,6 +238,7 @@ public class CommercialDashboardService {
                 salesCount, salesTotalAmount, avgSaleValue,
                 depositsCount, depositsTotalAmount,
                 activeReservationsCount, activeReservationsTotalAmount, avgReservationAgeDays,
+                activeProspectsCount,
                 salesByProject, salesByAgent,
                 inventoryByStatus, inventoryByType,
                 salesAmountByDay, depositsAmountByDay,
@@ -270,11 +320,7 @@ public class CommercialDashboardService {
     }
 
     /**
-     * Resolves the effective agentId applying RBAC:
-     * <ul>
-     *   <li>AGENT callers → forced to their own userId (ignores {@code requestedAgentId}).</li>
-     *   <li>ADMIN/MANAGER → {@code requestedAgentId} accepted (validated if not null).</li>
-     * </ul>
+     * Resolves the effective agentId applying RBAC.
      * @throws UserNotFoundException if requestedAgentId is provided but not found in tenant
      */
     public UUID resolveEffectiveAgentId(UUID tenantId, UUID requestedAgentId) {

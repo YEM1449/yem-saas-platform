@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +21,10 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
     boolean existsByTenant_IdAndEmail(UUID tenantId, String email);
 
     boolean existsByTenant_IdAndEmailAndIdNot(UUID tenantId, String email, UUID id);
+
+    @Query("SELECT COUNT(c) FROM Contact c WHERE c.tenant.id = :tenantId AND c.status IN :statuses AND c.deleted = false")
+    long countActiveProspects(@Param("tenantId") UUID tenantId,
+                              @Param("statuses") List<ContactStatus> statuses);
 
     @Query("""
             select c from Contact c

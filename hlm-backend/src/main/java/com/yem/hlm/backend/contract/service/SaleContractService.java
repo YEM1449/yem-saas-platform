@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.contract.service;
 
+import com.yem.hlm.backend.audit.domain.AuditEventType;
+import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contract.domain.BuyerType;
@@ -59,6 +61,7 @@ public class SaleContractService {
     private final TenantRepository tenantRepository;
     private final DepositRepository depositRepository;
     private final PropertyCommercialWorkflowService propertyWorkflow;
+    private final CommercialAuditService auditService;
 
     public SaleContractService(
             SaleContractRepository contractRepository,
@@ -68,7 +71,8 @@ public class SaleContractService {
             UserRepository userRepository,
             TenantRepository tenantRepository,
             DepositRepository depositRepository,
-            PropertyCommercialWorkflowService propertyWorkflow) {
+            PropertyCommercialWorkflowService propertyWorkflow,
+            CommercialAuditService auditService) {
         this.contractRepository = contractRepository;
         this.projectActiveGuard = projectActiveGuard;
         this.propertyRepository = propertyRepository;
@@ -77,6 +81,7 @@ public class SaleContractService {
         this.tenantRepository = tenantRepository;
         this.depositRepository = depositRepository;
         this.propertyWorkflow = propertyWorkflow;
+        this.auditService = auditService;
     }
 
     // ===== Create =====
@@ -132,6 +137,8 @@ public class SaleContractService {
         contract.setSourceDepositId(request.sourceDepositId());
 
         contract = contractRepository.save(contract);
+        auditService.record(tenantId, AuditEventType.CONTRACT_CREATED, callerId,
+                "CONTRACT", contract.getId(), null);
         return ContractResponse.from(contract);
     }
 
@@ -147,6 +154,7 @@ public class SaleContractService {
     @Transactional
     public ContractResponse sign(UUID contractId) {
         UUID tenantId = requireTenantId();
+        UUID callerId = requireUserId();
 
         SaleContract contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
@@ -189,6 +197,8 @@ public class SaleContractService {
             throw new PropertyAlreadySoldException(propertyId);
         }
 
+        auditService.record(tenantId, AuditEventType.CONTRACT_SIGNED, callerId,
+                "CONTRACT", contract.getId(), null);
         return ContractResponse.from(contract);
     }
 
@@ -207,6 +217,7 @@ public class SaleContractService {
     @Transactional
     public ContractResponse cancel(UUID contractId) {
         UUID tenantId = requireTenantId();
+        UUID callerId = requireUserId();
 
         SaleContract contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
@@ -243,6 +254,8 @@ public class SaleContractService {
             }
         }
 
+        auditService.record(tenantId, AuditEventType.CONTRACT_CANCELED, callerId,
+                "CONTRACT", contract.getId(), null);
         return ContractResponse.from(contract);
     }
 

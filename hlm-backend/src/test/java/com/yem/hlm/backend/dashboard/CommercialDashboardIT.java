@@ -187,6 +187,34 @@ class CommercialDashboardIT extends IntegrationTestBase {
     }
 
     // =========================================================================
+    // 5. summary_activeProspectsCount_reflectsContactStatuses
+    // Seeds 3 prospects; confirms a deposit for 1 → converts to CLIENT.
+    // Verifies dashboard reports activeProspectsCount = 2.
+    // =========================================================================
+
+    @Test
+    void summary_activeProspectsCount_reflectsContactStatuses() throws Exception {
+        UUID projectId = createProject(adminBearer);
+
+        // Create 3 contacts → all default to status=PROSPECT
+        createContact("dash-pros1@acme.com");
+        createContact("dash-pros2@acme.com");
+        ContactResponse p3 = createContact("dash-pros3@acme.com");
+
+        // Creating a deposit promotes p3 → QUALIFIED_PROSPECT (still a prospect)
+        UUID propId = createAndActivateProperty(projectId, adminBearer);
+        UUID depositId = createDeposit(propId, p3.id());
+
+        // Confirming the deposit converts p3 → CLIENT (no longer an active prospect)
+        confirmDeposit(depositId);
+
+        mvc.perform(get("/api/dashboard/commercial/summary")
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeProspectsCount").value(2));
+    }
+
+    // =========================================================================
     // Private helpers (mirrors ContractControllerIT pattern)
     // =========================================================================
 

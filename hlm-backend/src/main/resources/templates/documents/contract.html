@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Contrat de Vente</title>
+  <style>
+    /* ── Reset ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11pt;
+      color: #222;
+      padding: 20mm 18mm;
+    }
+
+    /* ── Header ── */
+    .doc-header {
+      border-bottom: 3px solid #1a4480;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .doc-header table { width: 100%; border-collapse: collapse; }
+    .doc-header .company-name {
+      font-size: 15pt;
+      font-weight: bold;
+      color: #1a4480;
+    }
+    .doc-header .doc-title {
+      font-size: 17pt;
+      font-weight: bold;
+      color: #1a4480;
+      text-align: right;
+    }
+    .doc-header .doc-ref {
+      font-size: 9pt;
+      color: #555;
+      text-align: right;
+    }
+
+    /* ── Status badge ── */
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 10pt;
+    }
+    .status-draft    { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+    .status-signed   { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+    .status-canceled { background: #f8d7da; color: #721c24; border: 1px solid #dc3545; }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #1a4480;
+      background: #edf2fb;
+      padding: 4px 8px;
+      border-left: 4px solid #1a4480;
+      margin-bottom: 8px;
+    }
+
+    /* ── Info table ── */
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table td {
+      padding: 4px 8px;
+      vertical-align: top;
+    }
+    .info-table td.label {
+      width: 38%;
+      color: #555;
+      font-size: 10pt;
+    }
+    .info-table td.value {
+      font-weight: bold;
+      font-size: 10pt;
+    }
+    .info-table tr:nth-child(even) td { background: #f9f9f9; }
+
+    /* ── Price highlight ── */
+    .price-main {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #1a4480;
+    }
+    .price-list {
+      font-size: 10pt;
+      color: #777;
+      text-decoration: line-through;
+    }
+
+    /* ── Signature block ── */
+    .signatures {
+      margin-top: 30px;
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+    .signatures table { width: 100%; border-collapse: collapse; }
+    .signatures td {
+      width: 50%;
+      vertical-align: top;
+      padding: 0 10px;
+    }
+    .sig-box {
+      border: 1px solid #bbb;
+      min-height: 60px;
+      padding: 8px;
+      margin-top: 8px;
+      background: #fafafa;
+      font-size: 9pt;
+      color: #aaa;
+    }
+    .sig-label { font-weight: bold; font-size: 10pt; color: #333; }
+
+    /* ── Cancellation notice ── */
+    .canceled-notice {
+      background: #f8d7da;
+      border: 2px solid #dc3545;
+      color: #721c24;
+      padding: 8px 12px;
+      margin: 10px 0;
+      font-weight: bold;
+      font-size: 11pt;
+    }
+
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 30px;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+      font-size: 8pt;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Document header ── -->
+  <div class="doc-header">
+    <table>
+      <tr>
+        <td class="company-name" th:text="${model.tenantName}">Société</td>
+        <td>
+          <div class="doc-title">CONTRAT DE VENTE</div>
+          <div class="doc-ref">Réf : <strong th:text="${model.contractReference}">REF</strong></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Statut ── -->
+  <div class="section">
+    <div style="margin-bottom:8px;">
+      Statut :
+      <span class="status-badge"
+            th:classappend="${model.contractStatus == 'SIGNED'} ? 'status-signed' : (${model.contractStatus == 'CANCELED'} ? 'status-canceled' : 'status-draft')"
+            th:text="${model.contractStatus == 'SIGNED'} ? 'SIGNÉ' : (${model.contractStatus == 'CANCELED'} ? 'ANNULÉ' : 'BROUILLON')">
+        BROUILLON
+      </span>
+    </div>
+
+    <div th:if="${model.contractStatus == 'CANCELED'}" class="canceled-notice">
+      ⚠ Ce contrat a été annulé
+      <span th:if="${model.canceledAt}">le <strong th:text="${model.canceledAt}">—</strong></span>.
+    </div>
+  </div>
+
+  <!-- ── Bien immobilier ── -->
+  <div class="section">
+    <div class="section-title">1. Bien immobilier</div>
+    <table class="info-table">
+      <tr>
+        <td class="label">Projet</td>
+        <td class="value" th:text="${model.projectName}">—</td>
+      </tr>
+      <tr>
+        <td class="label">Référence</td>
+        <td class="value" th:text="${model.propertyRef}">—</td>
+      </tr>
+      <tr>
+        <td class="label">Désignation</td>
+        <td class="value" th:text="${model.propertyTitle}">—</td>
+      </tr>
+      <tr>
+        <td class="label">Type</td>
+        <td class="value" th:text="${model.propertyType}">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Conditions financières ── -->
+  <div class="section">
+    <div class="section-title">2. Conditions financières</div>
+    <table class="info-table">
+      <tr>
+        <td class="label">Prix de vente convenu</td>
+        <td class="value">
+          <span class="price-main" th:text="${model.agreedPrice} + ' MAD'">0 MAD</span>
+          <span th:if="${model.listPrice}"
+                class="price-list"
+                th:text="'  (prix catalogue : ' + ${model.listPrice} + ' MAD)'">  (prix catalogue : 0 MAD)</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Acheteur ── -->
+  <div class="section">
+    <div class="section-title">3. Acheteur</div>
+    <table class="info-table">
+      <tr>
+        <td class="label">Type</td>
+        <td class="value" th:text="${model.buyerType}">Personne physique</td>
+      </tr>
+      <tr>
+        <td class="label">Nom complet</td>
+        <td class="value" th:text="${model.buyerDisplayName}">—</td>
+      </tr>
+      <tr th:if="${model.buyerEmail}">
+        <td class="label">Email</td>
+        <td class="value" th:text="${model.buyerEmail}">—</td>
+      </tr>
+      <tr th:if="${model.buyerPhone}">
+        <td class="label">Téléphone</td>
+        <td class="value" th:text="${model.buyerPhone}">—</td>
+      </tr>
+      <tr th:if="${model.buyerAddress}">
+        <td class="label">Adresse</td>
+        <td class="value" th:text="${model.buyerAddress}">—</td>
+      </tr>
+      <tr th:if="${model.buyerIce}">
+        <td class="label">CIN / ICE</td>
+        <td class="value" th:text="${model.buyerIce}">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Agent commercial ── -->
+  <div class="section">
+    <div class="section-title">4. Agent commercial</div>
+    <table class="info-table">
+      <tr>
+        <td class="label">Email agent</td>
+        <td class="value" th:text="${model.agentEmail}">—</td>
+      </tr>
+      <tr>
+        <td class="label">Date de création</td>
+        <td class="value" th:text="${model.createdAt}">—</td>
+      </tr>
+      <tr th:if="${model.signedAt}">
+        <td class="label">Date de signature</td>
+        <td class="value" th:text="${model.signedAt}">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Signatures (only for non-canceled contracts) ── -->
+  <div th:if="${model.contractStatus != 'CANCELED'}" class="signatures">
+    <div class="section-title">5. Signatures</div>
+    <table>
+      <tr>
+        <td>
+          <div class="sig-label">Signature de l'acheteur</div>
+          <div class="sig-box">
+            <span th:if="${model.contractStatus == 'SIGNED'}">Signé le <strong th:text="${model.signedAt}">—</strong></span>
+            <span th:unless="${model.contractStatus == 'SIGNED'}">À signer</span>
+          </div>
+        </td>
+        <td>
+          <div class="sig-label">Signature du vendeur / représentant</div>
+          <div class="sig-box">
+            <span th:if="${model.contractStatus == 'SIGNED'}">Signé le <strong th:text="${model.signedAt}">—</strong></span>
+            <span th:unless="${model.contractStatus == 'SIGNED'}">À signer</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="doc-footer">
+    Document généré le <span th:text="${model.generatedAt}">—</span>
+    par le système CRM — <span th:text="${model.tenantName}">Société</span>
+  </div>
+
+</body>
+</html>

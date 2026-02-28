@@ -7,11 +7,13 @@ import { ProspectService } from './prospect.service';
 import { ContactInterestService } from './contact-interest.service';
 import { DepositService, CreateDepositRequest } from './deposit.service';
 import { PropertyService } from '../properties/property.service';
+import { OutboxService } from '../outbox/outbox.service';
 import { Prospect, PROSPECT_STATUSES } from '../../core/models/prospect.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
 import { Deposit } from '../../core/models/deposit.model';
 import { Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
+import { MessageChannel } from '../../core/models/outbox.model';
 
 @Component({
   selector: 'app-prospect-detail',
@@ -25,6 +27,7 @@ export class ProspectDetailComponent implements OnInit {
   private interestSvc = inject(ContactInterestService);
   private depositSvc = inject(DepositService);
   private propertySvc = inject(PropertyService);
+  private outboxSvc  = inject(OutboxService);
   private route = inject(ActivatedRoute);
 
   prospect: Prospect | null = null;
@@ -51,6 +54,10 @@ export class ProspectDetailComponent implements OnInit {
   depositAmount: number | null = null;
   depositNotes = '';
   creatingDeposit = false;
+
+  sendingDepositId: string | null = null;
+  messageSendSuccess = '';
+  messageSendError   = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -187,6 +194,47 @@ export class ProspectDetailComponent implements OnInit {
         this.depositsLoading = false;
         const body = err.error as ErrorResponse | null;
         this.depositError = body?.message ?? `Failed to load deposits (${err.status})`;
+      },
+    });
+  }
+
+  downloadReservationPdf(d: Deposit): void {
+    this.depositSvc.downloadReservationPdf(d.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reservation_${d.reference}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.depositError = 'Failed to download PDF.';
+      },
+    });
+  }
+
+  sendDepositMessage(d: Deposit, channel: MessageChannel): void {
+    if (!this.prospect) return;
+    this.sendingDepositId = d.id;
+    this.messageSendSuccess = '';
+    this.messageSendError   = '';
+    this.outboxSvc.send({
+      channel,
+      contactId: this.prospect.id,
+      subject: channel === 'EMAIL' ? `Réservation ${d.reference}` : null,
+      body: `Bonjour, concernant votre réservation ${d.reference} (statut : ${d.status}).`,
+      correlationType: 'DEPOSIT',
+      correlationId: d.id,
+    }).subscribe({
+      next: () => {
+        this.sendingDepositId = null;
+        this.messageSendSuccess = `Message envoyé (${channel}) pour ${d.reference}.`;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.sendingDepositId = null;
+        const body = err.error as ErrorResponse | null;
+        this.messageSendError = body?.message ?? `Échec d'envoi (${err.status})`;
       },
     });
   }

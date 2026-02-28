@@ -37,3 +37,5 @@ databaseChangeLog:
       file: db/changelog/changes/017-create-outbound-message.yaml
   - include:
       file: db/changelog/changes/018-add-buyer-snapshot-to-sale-contract.yaml
+  - include:
+      file: db/changelog/changes/019-create-commercial-audit-event.yaml

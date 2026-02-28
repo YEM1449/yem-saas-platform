@@ -2,6 +2,8 @@ package com.yem.hlm.backend.deposit.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yem.hlm.backend.audit.domain.AuditEventType;
+import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.contact.api.dto.ConvertToClientRequest;
 import com.yem.hlm.backend.contact.domain.*;
 import com.yem.hlm.backend.contact.repo.ClientDetailRepository;
@@ -50,6 +52,7 @@ public class DepositService {
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
     private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
+    private final CommercialAuditService auditService;
 
     public DepositService(
             DepositRepository depositRepository,
@@ -61,7 +64,8 @@ public class DepositService {
             UserRepository userRepository,
             NotificationService notificationService,
             ObjectMapper objectMapper,
-            PropertyCommercialWorkflowService propertyCommercialWorkflowService
+            PropertyCommercialWorkflowService propertyCommercialWorkflowService,
+            CommercialAuditService auditService
     ) {
         this.depositRepository = depositRepository;
         this.contactRepository = contactRepository;
@@ -73,6 +77,7 @@ public class DepositService {
         this.notificationService = notificationService;
         this.objectMapper = objectMapper;
         this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
+        this.auditService = auditService;
     }
 
     /**
@@ -174,6 +179,9 @@ public class DepositService {
                     ))
             );
 
+            auditService.record(tenantId, AuditEventType.DEPOSIT_CREATED, actorUserId,
+                    "DEPOSIT", saved.getId(), null);
+
             return toResponse(saved);
         } catch (DataIntegrityViolationException e) {
             // Handle race conditions in a deterministic way.
@@ -243,6 +251,9 @@ public class DepositService {
                 toPayload(Map.of("depositId", saved.getId(), "status", saved.getStatus(), "confirmedAt", saved.getConfirmedAt()))
         );
 
+        auditService.record(tenantId, AuditEventType.DEPOSIT_CONFIRMED, actorUserId,
+                "DEPOSIT", saved.getId(), null);
+
         return toResponse(saved);
     }
 
@@ -287,6 +298,9 @@ public class DepositService {
                 saved.getId(),
                 toPayload(Map.of("depositId", saved.getId(), "status", saved.getStatus(), "cancelledAt", saved.getCancelledAt()))
         );
+
+        auditService.record(tenantId, AuditEventType.DEPOSIT_CANCELED, actorUserId,
+                "DEPOSIT", saved.getId(), null);
 
         return toResponse(saved);
     }
@@ -383,6 +397,9 @@ public class DepositService {
                 d.getId(),
                 toPayload(Map.of("depositId", d.getId(), "status", d.getStatus(), "expiredAt", d.getCancelledAt()))
         );
+
+        auditService.record(d.getTenant().getId(), AuditEventType.DEPOSIT_EXPIRED,
+                d.getAgent().getId(), "DEPOSIT", d.getId(), null);
     }
 
     private void releasePropertyReservation(Deposit deposit) {
