@@ -81,5 +81,24 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 - Frontend build check:
   - `cd hlm-frontend && npm run build`
 
+## Payment / Finance Module (PR-8 — Revenue Foundation, 2026-03-01)
+
+### Domain model
+- `PaymentSchedule` — linked 1:1 to `SaleContract`; container for ordered `PaymentTranche` rows.
+- `PaymentTranche` — a milestone slice of the total agreed price (percentage + absolute amount). Status lifecycle: `PLANNED → ISSUED → PARTIALLY_PAID | PAID | OVERDUE`.
+- `PaymentCall` (Appel de Fonds) — payment request issued for a specific tranche. Status lifecycle: `DRAFT → ISSUED → OVERDUE (scheduler) | CLOSED (on full payment)`.
+- `Payment` — cash-in record against a `PaymentCall`. Recording a payment triggers tranche + call status updates.
+
+### Finance KPI definitions (locked)
+| KPI | Definition |
+|-----|-----------|
+| **Receivables** | `SUM(tranche.amount)` WHERE `tranche.status IN (PLANNED, ISSUED, PARTIALLY_PAID, OVERDUE)` |
+| **Overdue receivables** | `SUM(call.amountDue − totalPaymentsReceived)` WHERE `call.status = OVERDUE` |
+| **Collection rate** | `SUM(payments.amountReceived) / SUM(tranche.amount) × 100` |
+| **Avg days to collect** | `AVG(lastPayment.receivedAt − call.issuedAt)` for CLOSED calls |
+
+### Payment methods
+`BANK_TRANSFER`, `CHECK`, `CASH`, `OTHER`
+
 ## Living-spec helpers
 - Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.

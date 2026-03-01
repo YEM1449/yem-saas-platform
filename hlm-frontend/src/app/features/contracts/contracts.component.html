@@ -57,7 +57,11 @@
           <td>{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
           <td>{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="actions">
+<<<<<<< HEAD
             <a class="detail-link" [routerLink]="['/app/contracts', c.id]">Détail</a>
+=======
+            <a class="schedule-link" [routerLink]="['/app/contracts', c.id, 'payments']">Échéancier</a>
+>>>>>>> 9e440eb (Revenue-Foundation)
             <button class="pdf-btn" (click)="downloadPdf(c)">PDF</button>
             @if (c.buyerEmail) {
               <button class="msg-btn msg-email"

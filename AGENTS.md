@@ -173,6 +173,27 @@ npm start
   - **Observability**: `Timer("commercial_dashboard_summary_duration")` measures cache-miss computation time; `Counter("commercial_dashboard_summary_cache_misses_total")` counts cache misses; `Counter("commercial_dashboard_summary_requests_total")` in controller counts all requests. Slow-query warning logged at WARN level when computation exceeds 300 ms. No new Maven dependencies — Micrometer Core is included transitively via `spring-boot-starter-actuator`.
   - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`. Dashboard nav entry visible to all authenticated roles.
 
+- Payment lifecycle (`payment` package — PR-8):
+  - `PaymentSchedule` linked 1:1 to `SaleContract`. Contains ordered `PaymentTranche` rows (one per milestone).
+  - `TrancheStatus`: `PLANNED → ISSUED → PARTIALLY_PAID | PAID | OVERDUE`.
+  - `PaymentCall` (Appel de Fonds): issued per tranche. Status: `DRAFT → ISSUED → OVERDUE | CLOSED`.
+    - `issueCall(trancheId)`: moves tranche `PLANNED → ISSUED`, creates ISSUED call; audit event `PAYMENT_CALL_ISSUED`.
+    - Overdue scheduler: cron marks ISSUED calls whose `due_date < today` as `OVERDUE`; disabled in test profile via `@ConditionalOnProperty("spring.task.scheduling.enabled")`.
+  - `Payment` (cash-in): recorded against a call. Updates tranche to `PARTIALLY_PAID` or `PAID`; closes call when fully paid. Audit event `PAYMENT_RECEIVED`.
+  - **RBAC**: create/update/issue/record → ADMIN/MANAGER; read → all roles (AGENT: own contracts only, enforced in service via `contract.getAgent().getId()` check).
+  - **Appel de Fonds PDF**: `GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf`. Architecture: `PaymentCallDocumentService` → `DocumentGenerationService` → OpenHTMLToPDF. Template: `templates/documents/appel-de-fonds.html`. N+1 avoidance: `PaymentCallRepository.findForPdf()` JOIN FETCH.
+  - **Error codes**: `PAYMENT_SCHEDULE_EXISTS` (409), `INVALID_TRANCHE_SUM` (400), `TRANCHE_NOT_FOUND` (404), `PAYMENT_CALL_NOT_FOUND` (404), `INVALID_CALL_STATE` (409), `PAYMENT_EXCEEDS_DUE` (400).
+  - **Endpoints**:
+    - `GET  /api/contracts/{contractId}/payment-schedule` — all roles
+    - `POST /api/contracts/{contractId}/payment-schedule` — ADMIN/MANAGER
+    - `PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}` — ADMIN/MANAGER
+    - `POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call` — ADMIN/MANAGER
+    - `GET  /api/payment-calls` — all roles (paged)
+    - `GET  /api/payment-calls/{id}` — all roles
+    - `GET  /api/payment-calls/{id}/documents/appel-de-fonds.pdf` — all roles (AGENT own only)
+    - `GET  /api/payment-calls/{id}/payments` — all roles
+    - `POST /api/payment-calls/{id}/payments` — ADMIN/MANAGER
+
 - Commercial Audit Trail (`audit` package — PR-7):
   - **Purpose**: immutable per-tenant event log for commercial workflow events (deposit lifecycle + contract lifecycle).
   - **DB table**: `commercial_audit_event` — Liquibase changeset 019. Columns: `id` (UUID PK), `tenant_id` (FK), `event_type` (VARCHAR 50), `actor_user_id` (UUID), `correlation_type` (VARCHAR 50), `correlation_id` (UUID), `occurred_at` (TIMESTAMP), `payload_json` (TEXT).
