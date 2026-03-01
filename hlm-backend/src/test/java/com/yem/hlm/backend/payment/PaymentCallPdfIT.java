@@ -135,9 +135,9 @@ class PaymentCallPdfIT extends IntegrationTestBase {
 
     @Test
     void downloadPdf_asAgent_ownContract_returns200() throws Exception {
-        User agent = userRepo.save(new User(
-                tenantRepo.getReferenceById(TENANT_ID),
-                "agent-pdf-own@acme.com", "{noop}pass", UserRole.ROLE_AGENT));
+        User agent = new User(tenantRepo.getReferenceById(TENANT_ID), "agent-pdf-own@acme.com", "{noop}pass");
+        agent.setRole(UserRole.ROLE_AGENT);
+        agent = userRepo.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
         UUID callId = createIssuedCall(agent.getId());
@@ -154,9 +154,9 @@ class PaymentCallPdfIT extends IntegrationTestBase {
         UUID callId = createIssuedCall(ADMIN_ID);
 
         // A different agent who is NOT the contract agent
-        User agent = userRepo.save(new User(
-                tenantRepo.getReferenceById(TENANT_ID),
-                "agent-pdf-other@acme.com", "{noop}pass", UserRole.ROLE_AGENT));
+        User agent = new User(tenantRepo.getReferenceById(TENANT_ID), "agent-pdf-other@acme.com", "{noop}pass");
+        agent.setRole(UserRole.ROLE_AGENT);
+        agent = userRepo.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
         mvc.perform(get(PDF_ENDPOINT, callId)
@@ -207,8 +207,9 @@ class PaymentCallPdfIT extends IntegrationTestBase {
         Tenant tenantB = tenantRepo.save(
                 new Tenant(keyPrefix + "-" + UUID.randomUUID().toString().substring(0, 8),
                            "PDF Isolation Tenant"));
-        User userB = userRepo.save(
-                new User(tenantB, "admin@" + keyPrefix + ".com", "{noop}pass", UserRole.ROLE_ADMIN));
+        User userB = new User(tenantB, "admin@" + keyPrefix + ".com", "{noop}pass");
+        userB.setRole(UserRole.ROLE_ADMIN);
+        userB = userRepo.save(userB);
         return "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
     }
 }

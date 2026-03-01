@@ -93,7 +93,8 @@ class PaymentIT extends IntegrationTestBase {
         User   admin  = userRepo.getReferenceById(ADMIN_ID);
 
         // Create agent user
-        User agent = new User(tenant, "agent-pay@test.com", "{noop}pass", UserRole.ROLE_AGENT);
+        User agent = new User(tenant, "agent-pay@test.com", "{noop}pass");
+        agent.setRole(UserRole.ROLE_AGENT);
         agent = userRepo.save(agent);
         // Override the agent ID to match what we put in the JWT
         agentId = agent.getId();
@@ -295,7 +296,9 @@ class PaymentIT extends IntegrationTestBase {
 
         UUID otherTenantId = UUID.randomUUID();
         Tenant otherTenant = tenantRepo.save(new Tenant("other-pay-" + otherTenantId, "Other"));
-        User otherAdmin = userRepo.save(new User(otherTenant, "other@pay.com", "{noop}pass", UserRole.ROLE_ADMIN));
+        User otherAdmin = new User(otherTenant, "other@pay.com", "{noop}pass");
+        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        otherAdmin = userRepo.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(
                 otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
@@ -335,10 +338,10 @@ class PaymentIT extends IntegrationTestBase {
                 List.of(
                         new TrancheRequest("Fondations", new BigDecimal("30.00"),
                                 new BigDecimal("300000.00"),
-                                LocalDate.now().plusMonths(3).toString(), null),
+                                LocalDate.now().plusMonths(3), null),
                         new TrancheRequest("Livraison", new BigDecimal("70.00"),
                                 new BigDecimal("700000.00"),
-                                LocalDate.now().plusMonths(12).toString(), null)
+                                LocalDate.now().plusMonths(12), null)
                 ),
                 "Test schedule notes"
         );
