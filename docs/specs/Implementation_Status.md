@@ -1,6 +1,6 @@
 # Implementation Status (What is done so far)
 
-_Last updated: 2026-02-27 (PR-7 Commercial Operational Excellence Pack)_
+_Last updated: 2026-02-28 (PR-8 Appels de fonds — Payment Schedule v1)_
 
 This is a living snapshot of what is implemented in the repo, based on current test suite structure, recent changes, and project decisions.
 
@@ -50,6 +50,15 @@ This is a living snapshot of what is implemented in the repo, based on current t
 
 - **Double-booking protection hardening** (PR-2 — 2026-02-26): `DepositService.confirm()` now acquires a pessimistic write lock on the property row and rejects confirmation if the property is already SOLD (`InvalidDepositStateException` → 409). Closes race window: concurrent contract sign + deposit confirm. Tests: `ContractControllerIT` extended to 10 IT cases (added `cancelSignedContract_revertsPropertyToAvailable`, `confirmDepositOnSoldProperty_returns409`, `cancelSignedContract_withConfirmedDeposit_revertsPropertyToReserved`, `agentCannotSignContract_returns403`). Lock ordering enforced across all 4 flows (Property lock always acquired before Deposit/Contract rows). `DepositRepository.existsActiveConfirmedDepositForProperty()` added as canonical method for cancel-rule check. `SaleContractService.cancel()` restructured: property lock and deposit check occur before contract save.
 
+
+- **Payment Schedule / Appels de fonds v1** (PR-8 — 2026-02-28):
+  - **Scope 1 — Schedule CRUD + Lifecycle**: `PaymentScheduleItem` entity (per-contract staged milestones). Status machine: `DRAFT → ISSUED → SENT|OVERDUE → PAID`, any `→ CANCELED`. Liquibase changeset 020: three tables (`payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`). REST API: `GET/POST /api/contracts/{id}/schedule`, `PUT/DELETE /api/schedule-items/{id}`, `POST /{id}/issue`, `POST /{id}/send`, `POST /{id}/cancel`. RBAC: reads = all roles; writes = ADMIN/MANAGER. Tenant-scoped; cross-tenant → 404. Error codes: `PAYMENT_SCHEDULE_ITEM_NOT_FOUND` (404), `INVALID_PAYMENT_SCHEDULE_STATE` (409), `PAYMENT_INVALID_AMOUNT` (400).
+  - **Scope 2 — Payment tracking**: `POST /api/schedule-items/{id}/payments` records partial/full payments (`SchedulePayment`). `amountPaid` computed as sum of all payments; `amountRemaining = amount - amountPaid`. Full payment (sum ≥ amount) auto-transitions item to PAID.
+  - **Scope 3 — Call-for-funds PDF**: `GET /api/schedule-items/{id}/pdf` returns "Appel de Fonds" PDF (`application/pdf`). Architecture: `CallForFundsPdfService` (model builder) → `DocumentGenerationService` (Thymeleaf → OpenHTMLToPDF). Template: `templates/documents/call_for_funds.html` (CSS 2.1 only; sections: header, property, buyer, échéance with amount box, agent, footer; status badge). Model record `CallForFundsPdfService.CallForFundsDocumentModel`.
+  - **Scope 4 — Automatic reminders**: `ReminderService` + `ReminderScheduler` (cron `${app.payments.reminder-cron:0 0 7 * * *}`). Pre-due: D-7 and D-1 EMAIL reminders. Overdue: D+1, D+7, D+30. Overdue auto-mark: `ISSUED|SENT` items past `dueDate` → `OVERDUE`. Idempotency: `ScheduleItemReminder` table with unique constraint prevents duplicate sends. Writes directly to `OutboundMessageRepository` using contract agent as `createdByUser` (no HTTP session in scheduler). Manual trigger: `POST /api/schedule-items/reminders/run` (ADMIN only).
+  - **Scope 5 — Cash KPI dashboard**: `GET /api/dashboard/commercial/cash?from=&to=` (ADMIN/MANAGER/AGENT). Returns `CashDashboardResponse`: `expectedInPeriod`, `issuedInPeriod`, `collectedInPeriod`, `overdueAmount`, `overdueCount`, `agingBuckets` (0-30/31-60/61-90/91+ days), `nextDueItems` (next 10 upcoming by date). Cacheable 60 s TTL (`cashDashboard` Caffeine cache, 200 entries).
+  - **Scope 6 — Frontend**: `ContractDetailComponent` (tabs: Informations + Échéancier) at `/app/contracts/:id`; `<app-payment-schedule>` child component; link in contracts list. `CashDashboardComponent` at `/app/dashboard/commercial/cash`; nav entry "Encaissements". Model: `payment-schedule.model.ts`. Service: `payment-schedule.service.ts`.
+  - **IT**: `PaymentScheduleIT` — 10 tests: create+list, DRAFT→ISSUED, partial payment/remaining, full payment→PAID, cancel→issue=409, agent forbidden write, agent can read, PDF %PDF header, tenant isolation, send ISSUED→SENT.
 
 ## In progress / to verify
 

@@ -23,6 +23,10 @@ export class ContractService {
     return this.http.get<ContractResponse[]>(this.base, { params: p });
   }
 
+  getById(contractId: string): Observable<ContractResponse> {
+    return this.http.get<ContractResponse>(`${this.base}/${contractId}`);
+  }
+
   downloadPdf(contractId: string): Observable<Blob> {
     return this.http.get(
       `${this.base}/${contractId}/documents/contract.pdf`,

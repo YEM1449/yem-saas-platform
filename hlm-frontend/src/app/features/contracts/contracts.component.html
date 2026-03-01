@@ -57,6 +57,7 @@
           <td>{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
           <td>{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="actions">
+            <a class="detail-link" [routerLink]="['/app/contracts', c.id]">Détail</a>
             <button class="pdf-btn" (click)="downloadPdf(c)">PDF</button>
             @if (c.buyerEmail) {
               <button class="msg-btn msg-email"

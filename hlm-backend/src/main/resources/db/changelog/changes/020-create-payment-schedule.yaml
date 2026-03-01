@@ -1,0 +1,294 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-create-payment-schedule
+      author: system
+      changes:
+
+        # ── A) payment_schedule_item ────────────────────────────────────────
+        - createTable:
+            tableName: payment_schedule_item
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contract_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: property_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sequence
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: label
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: due_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issued_at
+                  type: TIMESTAMP
+              - column:
+                  name: sent_at
+                  type: TIMESTAMP
+              - column:
+                  name: canceled_at
+                  type: TIMESTAMP
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: payment_schedule_item
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_psi_tenant
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: payment_schedule_item
+            baseColumnNames: contract_id
+            referencedTableName: sale_contract
+            referencedColumnNames: id
+            constraintName: fk_psi_contract
+            onDelete: CASCADE
+
+        - createIndex:
+            indexName: idx_psi_tenant_contract
+            tableName: payment_schedule_item
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contract_id
+
+        - createIndex:
+            indexName: idx_psi_tenant_project_due
+            tableName: payment_schedule_item
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: project_id
+              - column:
+                  name: due_date
+
+        - createIndex:
+            indexName: idx_psi_tenant_due_status
+            tableName: payment_schedule_item
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: due_date
+              - column:
+                  name: status
+
+        # ── B) payment (cash-in records, supports partial payments) ─────────
+        - createTable:
+            tableName: schedule_payment
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: schedule_item_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount_paid
+                  type: DECIMAL(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: paid_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: channel
+                  type: VARCHAR(30)
+              - column:
+                  name: payment_reference
+                  type: VARCHAR(100)
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: schedule_payment
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_spay_tenant
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: schedule_payment
+            baseColumnNames: schedule_item_id
+            referencedTableName: payment_schedule_item
+            referencedColumnNames: id
+            constraintName: fk_spay_schedule_item
+            onDelete: CASCADE
+
+        - createIndex:
+            indexName: idx_spay_tenant_paid_at
+            tableName: schedule_payment
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: paid_at
+
+        - createIndex:
+            indexName: idx_spay_tenant_item
+            tableName: schedule_payment
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: schedule_item_id
+
+        # ── C) schedule_item_reminder (idempotency guard) ──────────────────
+        - createTable:
+            tableName: schedule_item_reminder
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: schedule_item_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reminder_type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: triggered_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: channel
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reminder_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: schedule_item_reminder
+            baseColumnNames: tenant_id
+            referencedTableName: tenant
+            referencedColumnNames: id
+            constraintName: fk_sir_tenant
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: schedule_item_reminder
+            baseColumnNames: schedule_item_id
+            referencedTableName: payment_schedule_item
+            referencedColumnNames: id
+            constraintName: fk_sir_schedule_item
+            onDelete: CASCADE
+
+        - addUniqueConstraint:
+            tableName: schedule_item_reminder
+            columnNames: schedule_item_id, reminder_type, channel, reminder_date
+            constraintName: uk_sir_idempotency
+
+        - createIndex:
+            indexName: idx_sir_tenant_date
+            tableName: schedule_item_reminder
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: reminder_date

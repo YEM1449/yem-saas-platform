@@ -94,6 +94,15 @@ public class ContractController {
     }
 
     /**
+     * Get a single contract by ID (tenant-scoped).
+     * AGENT callers may only access their own contracts.
+     */
+    @GetMapping("/{id}")
+    public ContractResponse getById(@PathVariable UUID id) {
+        return contractService.getById(id);
+    }
+
+    /**
      * Download a contract PDF.
      * RBAC: all authenticated roles; AGENT callers may only download their own contracts
      * (cross-ownership → 404 to avoid information leakage).

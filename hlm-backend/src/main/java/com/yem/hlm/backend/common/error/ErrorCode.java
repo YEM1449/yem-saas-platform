@@ -51,6 +51,11 @@ public enum ErrorCode {
     INVALID_RECIPIENT,          // missing or malformed recipient address / phone
     CONTACT_CHANNEL_MISSING,    // contact found but required channel field is blank
 
+    // Payment schedule errors
+    PAYMENT_SCHEDULE_ITEM_NOT_FOUND,   // 404
+    INVALID_PAYMENT_SCHEDULE_STATE,    // 409 — action not allowed in current item state
+    PAYMENT_INVALID_AMOUNT,            // 400 — amount <= 0
+
     // Server errors (500)
     INTERNAL_ERROR
 }

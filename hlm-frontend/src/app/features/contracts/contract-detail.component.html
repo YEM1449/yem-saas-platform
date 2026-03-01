@@ -1,0 +1,47 @@
+@if (loading) { <p class="loading">Chargement…</p> }
+@if (error)   { <p class="error-msg">{{ error }}</p> }
+
+@if (contract) {
+  <div class="detail-page">
+    <div class="detail-header">
+      <h2>Contrat <span class="mono">{{ contract.id.substring(0, 8).toUpperCase() }}</span></h2>
+      <span class="status-badge" [class]="'status-' + contract.status.toLowerCase()">
+        {{ contract.status }}
+      </span>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <nav class="tabs">
+      <button [class.active]="activeTab === 'info'"     (click)="switchTab('info')">Informations</button>
+      <button [class.active]="activeTab === 'payments'" (click)="switchTab('payments')">Échéancier</button>
+    </nav>
+
+    <!-- ── Info tab ── -->
+    @if (activeTab === 'info') {
+      <div class="info-section">
+        <table class="info-table">
+          <tr><td class="lbl">Projet</td>      <td>{{ contract.projectName }}</td></tr>
+          <tr><td class="lbl">Acquéreur</td>   <td>{{ contract.buyerDisplayName ?? '—' }}</td></tr>
+          <tr><td class="lbl">Email</td>        <td>{{ contract.buyerEmail ?? '—' }}</td></tr>
+          <tr><td class="lbl">Téléphone</td>   <td>{{ contract.buyerPhone ?? '—' }}</td></tr>
+          <tr><td class="lbl">Prix convenu</td><td>{{ contract.agreedPrice | number:'1.0-0' }} MAD</td></tr>
+          @if (contract.listPrice) {
+            <tr><td class="lbl">Prix liste</td><td>{{ contract.listPrice | number:'1.0-0' }} MAD</td></tr>
+          }
+          <tr><td class="lbl">Créé le</td>    <td>{{ contract.createdAt | date:'dd/MM/yyyy' }}</td></tr>
+          @if (contract.signedAt) {
+            <tr><td class="lbl">Signé le</td> <td>{{ contract.signedAt | date:'dd/MM/yyyy' }}</td></tr>
+          }
+        </table>
+      </div>
+    }
+
+    <!-- ── Payments tab ── -->
+    @if (activeTab === 'payments') {
+      <app-payment-schedule
+        [contractId]="contract.id"
+        [buyerContactId]="contract.buyerContactId">
+      </app-payment-schedule>
+    }
+  </div>
+}

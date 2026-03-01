@@ -271,6 +271,23 @@ public class SaleContractService {
      * @param from      optional signedAt lower bound
      * @param to        optional signedAt upper bound
      */
+    /**
+     * Returns a single contract by ID (tenant-scoped).
+     * AGENT callers may only access their own contracts (cross-ownership → 404).
+     */
+    public ContractResponse getById(UUID contractId) {
+        UUID tenantId = requireTenantId();
+        SaleContract contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
+                .orElseThrow(() -> new ContractNotFoundException(contractId));
+        if (callerIsAgent()) {
+            UUID callerId = requireUserId();
+            if (!callerId.equals(contract.getAgent().getId())) {
+                throw new ContractNotFoundException(contractId); // 404 to avoid info leak
+            }
+        }
+        return ContractResponse.from(contract);
+    }
+
     public List<ContractResponse> list(
             SaleContractStatus status,
             UUID projectId,

@@ -37,3 +37,6 @@ app:
     max-retries: ${OUTBOX_MAX_RETRIES:3}
     # Delay between scheduler ticks in milliseconds.
     polling-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
+  payments:
+    # Cron expression for daily reminder processing (default: 07:00 UTC every day).
+    reminder-cron: ${PAYMENTS_REMINDER_CRON:0 0 7 * * *}
