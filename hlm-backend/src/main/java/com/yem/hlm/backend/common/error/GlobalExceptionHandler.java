@@ -12,12 +12,8 @@ import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
 import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
 import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
 import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
-import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
-import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
-import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
-import com.yem.hlm.backend.payment.service.*;
 import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
 import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
@@ -143,14 +139,8 @@ public class GlobalExceptionHandler {
             DepositNotFoundException.class,
             MessageNotFoundException.class,
             NotificationNotFoundException.class,
-<<<<<<< HEAD
-            PaymentScheduleItemNotFoundException.class,
-=======
-            PaymentCallNotFoundException.class,
->>>>>>> 9e440eb (Revenue-Foundation)
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
-            TrancheNotFoundException.class,
             UserNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
@@ -298,70 +288,6 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    // ========== Payment module: 409 Conflict ==========
-
-    @ExceptionHandler(PaymentScheduleAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentScheduleExists(
-            PaymentScheduleAlreadyExistsException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
-                ErrorCode.PAYMENT_SCHEDULE_EXISTS,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(InvalidCallStateException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCallState(
-            InvalidCallStateException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
-                ErrorCode.INVALID_CALL_STATE,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    // ========== Payment module: 400 Bad Request ==========
-
-    @ExceptionHandler(InvalidTrancheSumException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidTrancheSum(
-            InvalidTrancheSumException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                ErrorCode.INVALID_TRANCHE_SUM,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(PaymentExceedsDueException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentExceedsDue(
-            PaymentExceedsDueException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                ErrorCode.PAYMENT_EXCEEDS_DUE,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     // ========== 400 Bad Request ==========
@@ -617,38 +543,6 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ErrorCode.CONTACT_CHANNEL_MISSING,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    // ========== Payment Schedule Errors ==========
-
-    @ExceptionHandler(InvalidPaymentScheduleStateException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidPaymentScheduleState(
-            InvalidPaymentScheduleStateException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
-                ErrorCode.INVALID_PAYMENT_SCHEDULE_STATE,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(PaymentInvalidAmountException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentInvalidAmount(
-            PaymentInvalidAmountException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                ErrorCode.PAYMENT_INVALID_AMOUNT,
                 ex.getMessage(),
                 request.getRequestURI()
         );
