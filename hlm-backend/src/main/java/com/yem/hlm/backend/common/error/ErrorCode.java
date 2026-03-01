@@ -51,6 +51,14 @@ public enum ErrorCode {
     INVALID_RECIPIENT,          // missing or malformed recipient address / phone
     CONTACT_CHANNEL_MISSING,    // contact found but required channel field is blank
 
+    // Media errors
+    MEDIA_TOO_LARGE,            // 400 — file exceeds max allowed size
+    MEDIA_TYPE_NOT_ALLOWED,     // 400 — content-type not in allowed list
+    MEDIA_NOT_FOUND,            // 404 — media record not found in tenant
+
+    // CSV import errors (400)
+    IMPORT_VALIDATION_ERROR,
+
     // Server errors (500)
     INTERNAL_ERROR
 }

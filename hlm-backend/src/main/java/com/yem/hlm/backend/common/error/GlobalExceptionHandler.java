@@ -9,6 +9,9 @@ import com.yem.hlm.backend.contract.service.PropertyAlreadySoldException;
 import com.yem.hlm.backend.deposit.service.*;
 
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
+import com.yem.hlm.backend.media.service.MediaNotFoundException;
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
 import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
 import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
@@ -137,6 +140,7 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,
             DepositNotFoundException.class,
+            MediaNotFoundException.class,
             MessageNotFoundException.class,
             NotificationNotFoundException.class,
             ProjectNotFoundException.class,
@@ -515,6 +519,24 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // ========== Media Errors ==========
+
+    @ExceptionHandler(MediaTooLargeException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTooLarge(
+            MediaTooLargeException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.MEDIA_TOO_LARGE, ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(MediaTypeNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotAllowed(
+            MediaTypeNotAllowedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.MEDIA_TYPE_NOT_ALLOWED, ex.getMessage(), request.getRequestURI()));
     }
 
     // ========== Outbox / Messaging Errors ==========

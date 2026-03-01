@@ -1,17 +1,21 @@
 package com.yem.hlm.backend.property.api;
 
+import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
+import com.yem.hlm.backend.property.service.PropertyImportService;
 import com.yem.hlm.backend.property.service.PropertyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,9 +32,11 @@ import java.util.UUID;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final PropertyImportService importService;
 
-    public PropertyController(PropertyService propertyService) {
+    public PropertyController(PropertyService propertyService, PropertyImportService importService) {
         this.propertyService = propertyService;
+        this.importService = importService;
     }
 
     /**
@@ -104,5 +110,14 @@ public class PropertyController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         propertyService.softDelete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ImportResultResponse> importCsv(@RequestParam("file") MultipartFile file)
+            throws IOException {
+        ImportResultResponse result = importService.importCsv(file);
+        HttpStatus status = result.errors().isEmpty() ? HttpStatus.OK : HttpStatus.UNPROCESSABLE_ENTITY;
+        return ResponseEntity.status(status).body(result);
     }
 }

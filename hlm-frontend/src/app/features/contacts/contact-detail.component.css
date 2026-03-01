@@ -1,6 +1,39 @@
 h2 {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
 }
+
+/* ── Tabs ──────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: -2px;
+  transition: color 0.15s;
+}
+
+.tab-btn:hover {
+  color: #1a73e8;
+}
+
+.tab-btn.active {
+  border-bottom-color: #1a73e8;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+/* ── Contact fields ─────────────────────────────────────── */
 
 dl {
   display: grid;
@@ -18,6 +51,50 @@ dd {
   margin: 0;
 }
 
+/* ── Timeline ────────────────────────────────────────────── */
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tl-badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: center;
+}
+
+.tl-audit        { background: #e3f2fd; color: #1565c0; }
+.tl-message      { background: #e8f5e9; color: #2e7d32; }
+.tl-notification { background: #fff8e1; color: #f57f17; }
+.tl-status_change { background: #f3e5f5; color: #6a1b9a; }
+
+.tl-summary {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.tl-time {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* ── Misc ─────────────────────────────────────────────── */
+
 a {
   color: #1a73e8;
   text-decoration: none;
@@ -30,4 +107,9 @@ a:hover {
 
 .error {
   color: #d32f2f;
+}
+
+.empty {
+  color: #888;
+  font-style: italic;
 }

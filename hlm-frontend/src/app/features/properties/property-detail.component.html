@@ -1,0 +1,103 @@
+<p><a routerLink="/app/properties">&larr; Back to Properties</a></p>
+
+@if (loading) {
+  <p>Loading property...</p>
+}
+
+@if (error) {
+  <p class="error">{{ error }}</p>
+}
+
+@if (!loading && property) {
+  <h2>{{ property.title }}</h2>
+
+  <dl>
+    <dt>Reference</dt>
+    <dd>{{ property.referenceCode }}</dd>
+
+    <dt>Type</dt>
+    <dd>{{ property.type }}</dd>
+
+    <dt>Status</dt>
+    <dd>
+      <span class="badge" [class]="'badge-' + property.status.toLowerCase()">
+        {{ property.status }}
+      </span>
+    </dd>
+
+    <dt>Price</dt>
+    <dd>{{ property.price | number:'1.0-0' }} {{ property.currency }}</dd>
+
+    @if (property.surfaceAreaSqm) {
+      <dt>Surface</dt>
+      <dd>{{ property.surfaceAreaSqm }} m²</dd>
+    }
+
+    @if (property.bedrooms) {
+      <dt>Chambres</dt>
+      <dd>{{ property.bedrooms }}</dd>
+    }
+
+    @if (property.city) {
+      <dt>Ville</dt>
+      <dd>{{ property.city }}</dd>
+    }
+
+    @if (property.projectName) {
+      <dt>Projet</dt>
+      <dd>{{ property.projectName }}</dd>
+    }
+  </dl>
+
+  <!-- Media gallery -->
+  <section class="media-section">
+    <div class="media-header">
+      <h3>Médias</h3>
+      @if (canManageMedia) {
+        <label class="btn-upload" [class.disabled]="uploadLoading">
+          @if (uploadLoading) { Envoi… } @else { + Ajouter }
+          <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
+                 (change)="onFileSelected($event)" [disabled]="uploadLoading" hidden />
+        </label>
+      }
+    </div>
+
+    @if (uploadError) {
+      <p class="error">{{ uploadError }}</p>
+    }
+    @if (deleteError) {
+      <p class="error">{{ deleteError }}</p>
+    }
+
+    @if (mediaLoading) {
+      <p>Loading media...</p>
+    }
+
+    @if (!mediaLoading && media.length === 0) {
+      <p class="empty">Aucun média attaché.</p>
+    }
+
+    @if (!mediaLoading && media.length > 0) {
+      <ul class="media-grid">
+        @for (m of media; track m.id) {
+          <li class="media-card">
+            @if (isImage(m.contentType)) {
+              <a [href]="downloadUrl(m.id)" target="_blank" class="media-thumb-link">
+                <img [src]="downloadUrl(m.id)" [alt]="m.originalFilename" class="media-thumb" />
+              </a>
+            } @else {
+              <a [href]="downloadUrl(m.id)" target="_blank" class="media-doc">
+                <span class="media-doc-icon">PDF</span>
+              </a>
+            }
+            <div class="media-name">{{ m.originalFilename }}</div>
+            <div class="media-meta">{{ m.sizeBytes | number }} octets</div>
+            @if (isAdmin) {
+              <button class="btn-delete" (click)="deleteMedia(m.id)">Supprimer</button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}

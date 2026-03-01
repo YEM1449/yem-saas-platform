@@ -11,35 +11,71 @@
 @if (!loading && contact) {
   <h2>{{ contact.fullName }}</h2>
 
-  <dl>
-    <dt>Type</dt>
-    <dd>{{ contact.contactType }}</dd>
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'details'" (click)="selectTab('details')">
+      Fiche
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="selectTab('timeline')">
+      Historique
+    </button>
+  </div>
 
-    <dt>Status</dt>
-    <dd>{{ contact.status }}</dd>
+  @if (activeTab === 'details') {
+    <dl>
+      <dt>Type</dt>
+      <dd>{{ contact.contactType }}</dd>
 
-    <dt>Qualified</dt>
-    <dd>{{ contact.qualified ? 'Yes' : 'No' }}</dd>
+      <dt>Status</dt>
+      <dd>{{ contact.status }}</dd>
 
-    <dt>Email</dt>
-    <dd>{{ contact.email ?? '—' }}</dd>
+      <dt>Qualified</dt>
+      <dd>{{ contact.qualified ? 'Yes' : 'No' }}</dd>
 
-    <dt>Phone</dt>
-    <dd>{{ contact.phone ?? '—' }}</dd>
+      <dt>Email</dt>
+      <dd>{{ contact.email ?? '—' }}</dd>
 
-    <dt>National ID</dt>
-    <dd>{{ contact.nationalId ?? '—' }}</dd>
+      <dt>Phone</dt>
+      <dd>{{ contact.phone ?? '—' }}</dd>
 
-    <dt>Address</dt>
-    <dd>{{ contact.address ?? '—' }}</dd>
+      <dt>National ID</dt>
+      <dd>{{ contact.nationalId ?? '—' }}</dd>
 
-    <dt>Notes</dt>
-    <dd>{{ contact.notes ?? '—' }}</dd>
+      <dt>Address</dt>
+      <dd>{{ contact.address ?? '—' }}</dd>
 
-    <dt>Created</dt>
-    <dd>{{ contact.createdAt }}</dd>
+      <dt>Notes</dt>
+      <dd>{{ contact.notes ?? '—' }}</dd>
 
-    <dt>Updated</dt>
-    <dd>{{ contact.updatedAt }}</dd>
-  </dl>
+      <dt>Created</dt>
+      <dd>{{ contact.createdAt }}</dd>
+
+      <dt>Updated</dt>
+      <dd>{{ contact.updatedAt }}</dd>
+    </dl>
+  }
+
+  @if (activeTab === 'timeline') {
+    @if (timelineLoading) {
+      <p>Loading timeline...</p>
+    }
+    @if (timelineError) {
+      <p class="error">{{ timelineError }}</p>
+    }
+    @if (!timelineLoading && timeline.length === 0 && timelineLoaded) {
+      <p class="empty">Aucun événement enregistré.</p>
+    }
+    @if (!timelineLoading && timeline.length > 0) {
+      <ul class="timeline">
+        @for (event of timeline; track event.correlationId + event.timestamp) {
+          <li class="timeline-item">
+            <span class="tl-badge" [class]="'tl-' + event.category.toLowerCase()">
+              {{ categoryLabel(event.category) }}
+            </span>
+            <span class="tl-summary">{{ event.summary }}</span>
+            <span class="tl-time">{{ event.timestamp | date:'dd/MM/yyyy HH:mm' }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
 }

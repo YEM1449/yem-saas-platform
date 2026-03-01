@@ -1,4 +1,34 @@
-<h2>Properties</h2>
+<div class="page-header">
+  <h2>Properties</h2>
+  @if (canImport) {
+    <label class="btn-import" [class.disabled]="importLoading">
+      @if (importLoading) { Importation… } @else { Importer CSV }
+      <input type="file" accept=".csv,text/csv" (change)="onImportFileSelected($event)"
+             [disabled]="importLoading" hidden />
+    </label>
+  }
+</div>
+
+@if (importResult) {
+  @if (importResult.errors.length === 0) {
+    <div class="import-success">
+      {{ importResult.imported }} propriété(s) importée(s) avec succès.
+    </div>
+  } @else {
+    <div class="import-errors">
+      <strong>Import rejeté — {{ importResult.errors.length }} erreur(s) :</strong>
+      <ul>
+        @for (e of importResult.errors; track e.row) {
+          <li>Ligne {{ e.row }} : {{ e.message }}</li>
+        }
+      </ul>
+    </div>
+  }
+}
+
+@if (importError) {
+  <p class="error">{{ importError }}</p>
+}
 
 @if (loading) {
   <p>Loading properties...</p>
@@ -26,7 +56,7 @@
     </thead>
     <tbody>
       @for (p of properties; track p.id) {
-        <tr>
+        <tr class="clickable" (click)="goToDetail(p.id)">
           <td>{{ p.referenceCode }}</td>
           <td>{{ p.title }}</td>
           <td>{{ p.type }}</td>
@@ -35,7 +65,7 @@
               {{ p.status }}
             </span>
           </td>
-          <td>{{ p.city }}</td>
+          <td>{{ p.city ?? '—' }}</td>
           <td>{{ p.price | number:'1.0-0' }}</td>
         </tr>
       }

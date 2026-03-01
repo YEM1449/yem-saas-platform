@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,4 +59,33 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<UUID> fetchPendingBatch(@Param("batchSize") int batchSize);
+
+    /** Returns messages for a contact timeline: correlationId in the provided set, tenant-scoped. */
+    @Query("""
+            SELECT m FROM OutboundMessage m
+            WHERE m.tenant.id = :tenantId
+              AND m.correlationId IN :ids
+            ORDER BY m.createdAt DESC
+            """)
+    List<OutboundMessage> findByTenantAndCorrelationIds(
+            @Param("tenantId") UUID tenantId,
+            @Param("ids") Collection<UUID> ids
+    );
+
+    /**
+     * Cross-tenant idempotency check for the reminder scheduler.
+     * Returns true if any PENDING or SENT message already exists with the given
+     * correlationId and correlationType (so the reminder is not sent twice).
+     */
+    @Query("""
+            SELECT COUNT(m) > 0 FROM OutboundMessage m
+            WHERE m.correlationId = :correlationId
+              AND m.correlationType = :correlationType
+              AND m.status IN (com.yem.hlm.backend.outbox.domain.MessageStatus.PENDING,
+                               com.yem.hlm.backend.outbox.domain.MessageStatus.SENT)
+            """)
+    boolean existsPendingOrSent(
+            @Param("correlationId") UUID correlationId,
+            @Param("correlationType") String correlationType
+    );
 }

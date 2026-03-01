@@ -100,5 +100,38 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 ### Payment methods
 `BANK_TRANSFER`, `CHECK`, `CASH`, `OTHER`
 
+## Operational Polish (PR-9 — 2026-03-01)
+
+### F2.1 — Contact Activity Timeline
+- Backend: `GET /api/contacts/{id}/timeline?limit=50` (all authenticated roles). `ContactTimelineService` aggregates three sources: `CommercialAuditRepository`, `OutboundMessageRepository`, `NotificationRepository`, correlated via contact/deposit/contract UUIDs.
+- Response DTO: `TimelineEventResponse` with `timestamp`, `eventType`, `category` (AUDIT/MESSAGE/NOTIFICATION), `summary`, `correlationId`.
+- Frontend: `contact-detail.component` gains "Fiche / Historique" tabs; timeline lazy-loaded on first tab click.
+- IT: `ContactTimelineIT` (4 tests: empty, after audit event, cross-tenant 404, 401).
+
+### F2.2 — Automated Reminders
+- Backend: `ReminderService` (3 idempotent workflows; idempotency via `OutboundMessageRepository.existsPendingOrSent(correlationId, correlationType)`).
+  - Deposit due-date: EMAIL to agent at J-7, J-3, J-1.
+  - Payment call overdue: EMAIL to contract agent + in-app `PAYMENT_CALL_OVERDUE` notification to all ADMINs.
+  - Prospect follow-up: in-app `PROSPECT_STALE` notification to ADMIN+MANAGER when PROSPECT/QUALIFIED_PROSPECT has no audit/message activity for ≥14 days.
+- `ReminderScheduler` fires daily at 08:00; `@ConditionalOnProperty("spring.task.scheduling.enabled")` — disabled in test profile.
+- Config: `app.reminder.{enabled, cron, deposit-warn-days, prospect-stale-days}`.
+- Unit tests: `ReminderServiceTest` (5 tests).
+
+### F2.3 — Property Media Uploads
+- Liquibase changeset 023 (`property_media` table). Package `media/`: `PropertyMedia` entity, `PropertyMediaRepository`, `MediaStorageService` interface + `LocalFileMediaStorage` default (path-traversal guarded; swap to S3 via `@Primary` bean).
+- `PropertyMediaService`: upload (size+type validation), list, download, delete.
+- Endpoints: `POST /api/properties/{id}/media` (ADMIN/MANAGER, 201), `GET /api/properties/{id}/media` (all), `GET /api/media/{mediaId}/download` (all), `DELETE /api/media/{mediaId}` (ADMIN).
+- New `ErrorCode`s: `MEDIA_TOO_LARGE` (400), `MEDIA_TYPE_NOT_ALLOWED` (400), `MEDIA_NOT_FOUND` (404).
+- Config: `app.media.{storage-dir, max-file-size, allowed-types}`. Test override: `${java.io.tmpdir}/hlm-test-media`.
+- Frontend: `property-detail.component` at `/app/properties/:id` — property fields + media gallery (image thumbnails + PDF cards), upload button (ADMIN/MANAGER), delete button (ADMIN).
+- IT: `PropertyMediaIT` (7 tests).
+
+### F2.4 — CSV Import for Properties
+- Backend: `POST /api/properties/import` (ADMIN/MANAGER, multipart). `PropertyImportService` parses CSV (Apache Commons CSV 1.12.0), validates all rows first (all-or-nothing). Returns `ImportResultResponse {imported, errors[]}`.
+  - On any row error: 422 with full error list, zero rows imported.
+  - On success: 200 with `imported` count.
+- Frontend: "Importer CSV" label button on properties list; on success reloads list; on error displays row-level error table.
+- IT: `PropertyImportIT` (6 tests).
+
 ## Living-spec helpers
 - Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.

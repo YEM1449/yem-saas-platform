@@ -4,6 +4,7 @@ import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.domain.ContactType;
 import com.yem.hlm.backend.contact.service.ContactService;
+import com.yem.hlm.backend.contact.service.ContactTimelineService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,9 +21,12 @@ import java.util.UUID;
 public class ContactController {
 
     private final ContactService contactService;
+    private final ContactTimelineService timelineService;
 
-    public ContactController(ContactService contactService) {
-        this.contactService = contactService;
+    public ContactController(ContactService contactService,
+                             ContactTimelineService timelineService) {
+        this.contactService  = contactService;
+        this.timelineService = timelineService;
     }
 
     @PostMapping("/contacts")
@@ -87,5 +91,17 @@ public class ContactController {
     @GetMapping("/properties/{propertyId}/contacts")
     public List<UUID> listContactsForProperty(@PathVariable UUID propertyId) {
         return contactService.listContactsForProperty(propertyId);
+    }
+
+    /**
+     * Unified activity timeline for a contact.
+     * Aggregates audit events, outbox messages, and in-app notifications.
+     * RBAC: all authenticated roles.
+     */
+    @GetMapping("/contacts/{id}/timeline")
+    public List<TimelineEventResponse> getTimeline(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "50") int limit) {
+        return timelineService.getTimeline(id, limit);
     }
 }
