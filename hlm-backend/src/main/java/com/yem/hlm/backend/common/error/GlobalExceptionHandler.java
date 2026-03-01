@@ -12,9 +12,6 @@ import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
 import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
 import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
 import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
-import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
-import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
-import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
@@ -142,7 +139,6 @@ public class GlobalExceptionHandler {
             DepositNotFoundException.class,
             MessageNotFoundException.class,
             NotificationNotFoundException.class,
-            PaymentScheduleItemNotFoundException.class,
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
             UserNotFoundException.class
@@ -547,38 +543,6 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ErrorCode.CONTACT_CHANNEL_MISSING,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    // ========== Payment Schedule Errors ==========
-
-    @ExceptionHandler(InvalidPaymentScheduleStateException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidPaymentScheduleState(
-            InvalidPaymentScheduleStateException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
-                ErrorCode.INVALID_PAYMENT_SCHEDULE_STATE,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(PaymentInvalidAmountException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentInvalidAmount(
-            PaymentInvalidAmountException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                ErrorCode.PAYMENT_INVALID_AMOUNT,
                 ex.getMessage(),
                 request.getRequestURI()
         );

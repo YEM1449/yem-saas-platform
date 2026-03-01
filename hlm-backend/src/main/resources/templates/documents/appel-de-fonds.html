@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Appel de Fonds</title>
+  <style>
+    /* OpenHTMLToPDF supports CSS 2.1 — no flex, no grid */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
+
+    .page { width: 100%; padding: 30pt 36pt; }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .header { border-bottom: 3pt solid #0a4c8b; padding-bottom: 12pt; margin-bottom: 18pt; }
+    .header-table { width: 100%; }
+    .header-table td { vertical-align: middle; }
+    .company-name { font-size: 16pt; font-weight: bold; color: #0a4c8b; }
+    .doc-title { font-size: 18pt; font-weight: bold; text-align: right; color: #0a4c8b; }
+    .doc-ref   { font-size: 9pt; color: #666; text-align: right; }
+
+    /* ── Status badge ────────────────────────────────────────────── */
+    .badge { display: inline-block; padding: 3pt 8pt; border-radius: 3pt;
+             font-size: 9pt; font-weight: bold; }
+    .badge-issued  { background-color: #e3f2fd; color: #0a4c8b; }
+    .badge-overdue { background-color: #fce4e4; color: #c62828; }
+    .badge-closed  { background-color: #e8f5e9; color: #2e7d32; }
+    .badge-draft   { background-color: #f5f5f5; color: #555; }
+
+    /* ── Sections ────────────────────────────────────────────────── */
+    .section { margin-bottom: 16pt; }
+    .section-title { font-size: 10pt; font-weight: bold; color: #0a4c8b;
+                     border-bottom: 1pt solid #c8d8eb; padding-bottom: 4pt; margin-bottom: 8pt;
+                     text-transform: uppercase; }
+
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table td { padding: 3pt 4pt; vertical-align: top; }
+    .info-table td.lbl { width: 38%; font-weight: bold; color: #555; font-size: 10pt; }
+    .info-table td.val { color: #1a1a1a; font-size: 10pt; }
+
+    /* ── Amount box ──────────────────────────────────────────────── */
+    .amount-box { border: 2pt solid #0a4c8b; padding: 14pt; margin: 12pt 0;
+                  text-align: center; background-color: #f0f6ff; }
+    .amount-label { font-size: 11pt; color: #0a4c8b; font-weight: bold; }
+    .amount-value { font-size: 22pt; font-weight: bold; color: #0a4c8b; margin-top: 6pt; }
+    .amount-currency { font-size: 13pt; color: #0a4c8b; }
+
+    /* ── Payment instructions ────────────────────────────────────── */
+    .instructions-box { border: 1pt solid #c8d8eb; padding: 10pt;
+                        background-color: #fafcff; margin-top: 6pt; }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .footer { border-top: 1pt solid #ccc; margin-top: 24pt; padding-top: 8pt;
+              font-size: 8pt; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <table class="header-table">
+      <tr>
+        <td>
+          <div class="company-name" th:text="${model.tenantName}">Société</div>
+        </td>
+        <td>
+          <div class="doc-title">APPEL DE FONDS</div>
+          <div class="doc-ref">
+            Contrat réf. <span th:text="${model.contractReference}">REF</span>
+            &nbsp;·&nbsp; Appel n°<span th:text="${model.callNumber}">1</span>
+          </div>
+          <div class="doc-ref" style="margin-top:3pt;">
+            <span th:classappend="${model.callStatus == 'ISSUED'  ? 'badge-issued'  :
+                                   (model.callStatus == 'OVERDUE' ? 'badge-overdue' :
+                                   (model.callStatus == 'CLOSED'  ? 'badge-closed'  : 'badge-draft'))}"
+                  class="badge"
+                  th:text="${model.callStatus}">ISSUED</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- BIEN IMMOBILIER -->
+  <div class="section">
+    <div class="section-title">Bien Immobilier</div>
+    <table class="info-table">
+      <tr>
+        <td class="lbl">Projet :</td>
+        <td class="val" th:text="${model.projectName}">Projet</td>
+      </tr>
+      <tr>
+        <td class="lbl">Référence :</td>
+        <td class="val" th:text="${model.propertyRef}">REF-001</td>
+      </tr>
+      <tr>
+        <td class="lbl">Désignation :</td>
+        <td class="val" th:text="${model.propertyTitle}">Appartement</td>
+      </tr>
+      <tr>
+        <td class="lbl">Prix convenu :</td>
+        <td class="val"><span th:text="${model.agreedPrice}">0</span> MAD</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ACQUÉREUR -->
+  <div class="section">
+    <div class="section-title">Acquéreur</div>
+    <table class="info-table">
+      <tr>
+        <td class="lbl">Nom / Raison sociale :</td>
+        <td class="val" th:text="${model.buyerDisplayName}">—</td>
+      </tr>
+      <tr th:if="${model.buyerPhone}">
+        <td class="lbl">Téléphone :</td>
+        <td class="val" th:text="${model.buyerPhone}">—</td>
+      </tr>
+      <tr th:if="${model.buyerEmail}">
+        <td class="lbl">Email :</td>
+        <td class="val" th:text="${model.buyerEmail}">—</td>
+      </tr>
+      <tr th:if="${model.buyerAddress}">
+        <td class="lbl">Adresse :</td>
+        <td class="val" th:text="${model.buyerAddress}">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- TRANCHE -->
+  <div class="section">
+    <div class="section-title">Tranche Appelée</div>
+    <table class="info-table">
+      <tr>
+        <td class="lbl">Libellé :</td>
+        <td class="val" th:text="${model.trancheLabel}">Fondations</td>
+      </tr>
+      <tr>
+        <td class="lbl">Pourcentage :</td>
+        <td class="val"><span th:text="${model.tranchePercentage}">10</span> %</td>
+      </tr>
+      <tr th:if="${model.triggerCondition}">
+        <td class="lbl">Condition de déclenchement :</td>
+        <td class="val" th:text="${model.triggerCondition}">—</td>
+      </tr>
+      <tr th:if="${model.trancheDueDate}">
+        <td class="lbl">Date d'échéance :</td>
+        <td class="val" th:text="${model.trancheDueDate}">—</td>
+      </tr>
+      <tr th:if="${model.issuedAt}">
+        <td class="lbl">Date d'émission :</td>
+        <td class="val" th:text="${model.issuedAt}">—</td>
+      </tr>
+    </table>
+
+    <!-- AMOUNT BOX -->
+    <div class="amount-box">
+      <div class="amount-label">Montant appelé</div>
+      <div class="amount-value">
+        <span th:text="${model.amountDue}">0</span>
+        <span class="amount-currency">MAD</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS DE PAIEMENT -->
+  <div class="section">
+    <div class="section-title">Instructions de Paiement</div>
+    <div class="instructions-box">
+      <p>Veuillez effectuer votre règlement par virement bancaire, chèque ou tout autre moyen
+         convenu avec votre conseiller, en mentionnant la référence du contrat
+         <strong th:text="${model.contractReference}">REF</strong>
+         et le numéro d'appel de fonds
+         <strong th:text="${model.callNumber}">1</strong>.</p>
+      <p style="margin-top:8pt;">Pour toute question, contactez votre conseiller :
+         <strong th:text="${model.agentEmail}">agent@exemple.com</strong>.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Document généré le <span th:text="${model.generatedAt}">01/01/2026 00:00</span>
+    &nbsp;·&nbsp; <span th:text="${model.tenantName}">Société</span>
+    &nbsp;·&nbsp; Document non contractuel à titre informatif.
+  </div>
+
+</div>
+</body>
+</html>

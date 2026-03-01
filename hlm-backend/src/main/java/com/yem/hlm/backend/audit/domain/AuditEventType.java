@@ -10,5 +10,9 @@ public enum AuditEventType {
     DEPOSIT_EXPIRED,
     CONTRACT_CREATED,
     CONTRACT_SIGNED,
-    CONTRACT_CANCELED
+    CONTRACT_CANCELED,
+
+    // Payment module events
+    PAYMENT_CALL_ISSUED,
+    PAYMENT_RECEIVED
 }

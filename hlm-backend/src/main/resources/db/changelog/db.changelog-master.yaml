@@ -41,3 +41,10 @@ databaseChangeLog:
       file: db/changelog/changes/019-create-commercial-audit-event.yaml
   - include:
       file: db/changelog/changes/020-create-payment-schedule.yaml
+<<<<<<< HEAD
+=======
+  - include:
+      file: db/changelog/changes/021-create-payment-call.yaml
+  - include:
+      file: db/changelog/changes/022-create-payment.yaml
+>>>>>>> 9e440eb (Revenue-Foundation)
