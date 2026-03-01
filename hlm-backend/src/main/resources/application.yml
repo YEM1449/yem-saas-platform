@@ -48,11 +48,6 @@ app:
     max-retries: ${OUTBOX_MAX_RETRIES:3}
     # Delay between scheduler ticks in milliseconds.
     polling-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
-<<<<<<< HEAD
-  payments:
-    # Cron expression for daily reminder processing (default: 07:00 UTC every day).
-    reminder-cron: ${PAYMENTS_REMINDER_CRON:0 0 7 * * *}
-=======
 
   # SMTP email provider (optional — NoopEmailSender used when EMAIL_HOST is not set)
   email:
@@ -65,4 +60,3 @@ app:
   payments:
     # Daily cron for marking overdue payment calls (default 06:00)
     overdue-cron: ${PAYMENTS_OVERDUE_CRON:0 0 6 * * *}
->>>>>>> 9e440eb (Revenue-Foundation)

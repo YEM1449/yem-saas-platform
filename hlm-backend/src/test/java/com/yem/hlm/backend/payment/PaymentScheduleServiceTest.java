@@ -66,8 +66,8 @@ class PaymentScheduleServiceTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         contract = mock(SaleContract.class);
-        when(contract.getId()).thenReturn(contractId);
-        when(contract.getAgreedPrice()).thenReturn(new BigDecimal("1000000.00"));
+        lenient().when(contract.getId()).thenReturn(contractId);
+        lenient().when(contract.getAgreedPrice()).thenReturn(new BigDecimal("1000000.00"));
     }
 
     @AfterEach
