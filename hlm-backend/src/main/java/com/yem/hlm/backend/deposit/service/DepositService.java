@@ -11,7 +11,7 @@ import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.service.ContactNotFoundException;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
-import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.deposit.api.dto.*;
 import com.yem.hlm.backend.deposit.domain.Deposit;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;

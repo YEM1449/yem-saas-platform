@@ -1,6 +1,6 @@
 package com.yem.hlm.backend.property.service;
 
-import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;

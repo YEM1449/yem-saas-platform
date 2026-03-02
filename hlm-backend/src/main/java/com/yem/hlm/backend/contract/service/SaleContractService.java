@@ -19,7 +19,7 @@ import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
-import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;

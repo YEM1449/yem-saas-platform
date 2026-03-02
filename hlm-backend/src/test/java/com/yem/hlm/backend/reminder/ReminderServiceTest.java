@@ -60,8 +60,6 @@ class ReminderServiceTest {
         agent.setRole(UserRole.ROLE_AGENT);
         setId(agent, UUID.randomUUID());
 
-        when(props.getDepositWarnDays()).thenReturn(List.of(7, 3, 1));
-        when(props.getProspectStaleDays()).thenReturn(14);
     }
 
     // =========================================================================
@@ -70,6 +68,7 @@ class ReminderServiceTest {
 
     @Test
     void runDepositDueReminders_withPendingDeposit_queuesEmailMessage() {
+        when(props.getDepositWarnDays()).thenReturn(List.of(7, 3, 1));
         Deposit deposit = mockDeposit(LocalDateTime.now().plusDays(7));
 
         when(depositRepository.findAllByStatusAndDueDateBetween(
@@ -94,6 +93,7 @@ class ReminderServiceTest {
 
     @Test
     void runDepositDueReminders_whenAlreadySent_skipsDeposit() {
+        when(props.getDepositWarnDays()).thenReturn(List.of(7, 3, 1));
         Deposit deposit = mockDeposit(LocalDateTime.now().plusDays(7));
 
         when(depositRepository.findAllByStatusAndDueDateBetween(
@@ -160,6 +160,7 @@ class ReminderServiceTest {
 
     @Test
     void runProspectFollowUp_withNoTenants_doesNothing() {
+        when(props.getProspectStaleDays()).thenReturn(14);
         when(contactRepository.findAll()).thenReturn(List.of());
 
         service.runProspectFollowUp();
@@ -175,28 +176,30 @@ class ReminderServiceTest {
         Deposit deposit = mock(Deposit.class);
         UUID id = UUID.randomUUID();
         when(deposit.getId()).thenReturn(id);
-        when(deposit.getAgent()).thenReturn(agent);
-        when(deposit.getTenant()).thenReturn(tenant);
-        when(deposit.getDueDate()).thenReturn(dueDate);
+        // lenient: not invoked when deposit is skipped (already-sent path)
+        lenient().when(deposit.getAgent()).thenReturn(agent);
+        lenient().when(deposit.getTenant()).thenReturn(tenant);
+        lenient().when(deposit.getDueDate()).thenReturn(dueDate);
         return deposit;
     }
 
     private PaymentCall mockOverdueCall(UUID tenantId) {
         var contract = mock(com.yem.hlm.backend.contract.domain.SaleContract.class);
-        when(contract.getAgent()).thenReturn(agent);
+        lenient().when(contract.getAgent()).thenReturn(agent);
 
         var schedule = mock(com.yem.hlm.backend.payment.domain.PaymentSchedule.class);
-        when(schedule.getSaleContract()).thenReturn(contract);
+        lenient().when(schedule.getSaleContract()).thenReturn(contract);
 
         var tranche = mock(com.yem.hlm.backend.payment.domain.PaymentTranche.class);
-        when(tranche.getSchedule()).thenReturn(schedule);
+        lenient().when(tranche.getSchedule()).thenReturn(schedule);
 
         PaymentCall call = mock(PaymentCall.class);
         UUID callId = UUID.randomUUID();
         when(call.getId()).thenReturn(callId);
-        when(call.getTenant()).thenReturn(tenant);
-        when(call.getTranche()).thenReturn(tranche);
-        when(call.getCallNumber()).thenReturn(1);
+        // lenient: not invoked when call is skipped (already-sent path)
+        lenient().when(call.getTenant()).thenReturn(tenant);
+        lenient().when(call.getTranche()).thenReturn(tranche);
+        lenient().when(call.getCallNumber()).thenReturn(1);
         return call;
     }
 

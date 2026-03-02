@@ -1,6 +1,6 @@
 package com.yem.hlm.backend.media.service;
 
-import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.media.api.dto.PropertyMediaResponse;
 import com.yem.hlm.backend.media.domain.PropertyMedia;
 import com.yem.hlm.backend.media.repo.PropertyMediaRepository;

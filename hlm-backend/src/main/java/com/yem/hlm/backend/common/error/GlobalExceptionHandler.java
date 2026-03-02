@@ -14,7 +14,6 @@ import com.yem.hlm.backend.media.service.MediaTooLargeException;
 import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
 import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
-import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
@@ -22,6 +21,7 @@ import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
 import com.yem.hlm.backend.tenant.service.TenantKeyAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -141,7 +141,6 @@ public class GlobalExceptionHandler {
             ContractNotFoundException.class,
             DepositNotFoundException.class,
             MediaNotFoundException.class,
-            MessageNotFoundException.class,
             NotificationNotFoundException.class,
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
@@ -602,6 +601,22 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 500 Internal Server Error ==========
+
+    @ExceptionHandler(ReservationPdfGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleReservationPdfGeneration(
+            ReservationPdfGenerationException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ErrorCode.INTERNAL_ERROR,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        log.error("PDF generation failed on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 
     /**
      * Catch-all handler for unexpected exceptions.
