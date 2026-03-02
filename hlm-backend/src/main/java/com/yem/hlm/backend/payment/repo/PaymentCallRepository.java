@@ -42,6 +42,24 @@ public interface PaymentCallRepository extends JpaRepository<PaymentCall, UUID> 
            "com.yem.hlm.backend.payment.domain.PaymentCallStatus.ISSUED")
     List<UUID> findTenantsWithIssuedCalls();
 
+    /** OVERDUE payment calls for a tenant — used by reminder service for notifications. */
+    @Query("""
+            SELECT pc FROM PaymentCall pc
+            JOIN FETCH pc.tenant
+            JOIN FETCH pc.tranche t
+            JOIN FETCH t.schedule s
+            JOIN FETCH s.saleContract sc
+            JOIN FETCH sc.agent
+            WHERE pc.tenant.id = :tenantId
+              AND pc.status = com.yem.hlm.backend.payment.domain.PaymentCallStatus.OVERDUE
+            """)
+    List<PaymentCall> findOverdueCallsWithAgent(@Param("tenantId") UUID tenantId);
+
+    /** Distinct tenant IDs with at least one OVERDUE call. */
+    @Query("SELECT DISTINCT pc.tenant.id FROM PaymentCall pc WHERE pc.status = " +
+           "com.yem.hlm.backend.payment.domain.PaymentCallStatus.OVERDUE")
+    List<UUID> findTenantsWithOverdueCalls();
+
     /**
      * Loads a call with its tranche, schedule, and contract (JOIN FETCH) for PDF generation.
      */

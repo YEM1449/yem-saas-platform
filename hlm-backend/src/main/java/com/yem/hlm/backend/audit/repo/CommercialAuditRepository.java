@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,5 +29,17 @@ public interface CommercialAuditRepository extends JpaRepository<CommercialAudit
             @Param("correlationType") String correlationType,
             @Param("correlationId") UUID correlationId,
             Pageable pageable
+    );
+
+    /** Returns all audit events whose correlationId is in the provided set (for timeline). */
+    @Query("""
+            SELECT e FROM CommercialAuditEvent e
+            WHERE e.tenant.id = :tenantId
+              AND e.correlationId IN :ids
+            ORDER BY e.occurredAt DESC
+            """)
+    List<CommercialAuditEvent> findByTenantAndCorrelationIds(
+            @Param("tenantId") UUID tenantId,
+            @Param("ids") Collection<UUID> ids
     );
 }

@@ -1,0 +1,38 @@
+package com.yem.hlm.backend.media.service;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * Abstraction over the underlying file storage backend.
+ *
+ * <p>Default implementation: {@link LocalFileMediaStorage} (stores files on local disk).
+ * Production swap: provide an {@code @Primary} S3-backed bean.
+ */
+public interface MediaStorageService {
+
+    /**
+     * Stores the given bytes under a generated key and returns that key.
+     *
+     * @param data            raw file bytes
+     * @param originalFilename original upload filename (used to derive extension)
+     * @param contentType     MIME type
+     * @return the storage key that can be passed to {@link #load} or {@link #delete}
+     */
+    String store(byte[] data, String originalFilename, String contentType) throws IOException;
+
+    /**
+     * Opens an {@link InputStream} for the given storage key.
+     *
+     * @param fileKey key returned by {@link #store}
+     * @return stream of the stored file bytes
+     */
+    InputStream load(String fileKey) throws IOException;
+
+    /**
+     * Permanently removes the file identified by {@code fileKey}.
+     *
+     * @param fileKey key returned by {@link #store}
+     */
+    void delete(String fileKey) throws IOException;
+}

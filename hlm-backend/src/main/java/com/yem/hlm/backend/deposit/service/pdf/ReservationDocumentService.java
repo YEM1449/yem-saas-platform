@@ -1,6 +1,6 @@
 package com.yem.hlm.backend.deposit.service.pdf;
 
-import com.yem.hlm.backend.contact.service.PropertyNotFoundException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.deposit.domain.Deposit;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.deposit.service.DepositNotFoundException;

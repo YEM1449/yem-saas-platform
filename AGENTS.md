@@ -95,9 +95,9 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, projects, contacts, prospects, notifications, outbox, contracts, admin-users), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard), route config in `app.routes.ts`.
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
@@ -262,6 +262,12 @@ npm start
   - **Config**: `app.payments.reminder-cron` (env `PAYMENTS_REMINDER_CRON`, default `0 0 7 * * *`).
   - **IT**: `PaymentScheduleIT` (10 tests: create+list, DRAFT→ISSUED, partial payment, full payment→PAID, cancel→issue=409, agent forbidden on write, agent can read, PDF download, tenant isolation, send ISSUED→SENT).
   - **Frontend**: `features/contracts/contract-detail.component` — tabbed detail view ("Informations" + "Échéancier" tab with `<app-payment-schedule>` child component). Route `/app/contracts/:id`. Payment schedule service at `features/contracts/payment-schedule.service.ts`. Cash dashboard at `features/dashboard/cash-dashboard.component` (route `/app/dashboard/commercial/cash`; nav link "Encaissements").
+
+- Operational Polish (`reminder` + `media` + contact timeline + CSV import — PR-9):
+  - **F2.1 Contact Activity Timeline**: `GET /api/contacts/{id}/timeline?limit=50` (all roles). `ContactTimelineService` aggregates `CommercialAuditRepository`, `OutboundMessageRepository`, `NotificationRepository` via shared correlation IDs. Frontend: `contact-detail.component` adds "Fiche / Historique" tabs; timeline lazy-loaded on first click. IT: `ContactTimelineIT`.
+  - **F2.2 Automated Reminders** (`reminder` package): `ReminderService` (3 idempotent workflows). Deposit due-date: EMAIL at J-7/J-3/J-1. Payment call overdue: EMAIL to agent + in-app `PAYMENT_CALL_OVERDUE` to ADMINs. Prospect follow-up: in-app `PROSPECT_STALE` after 14 days of inactivity. `ReminderScheduler` fires daily at 08:00; disabled in test profile via `@ConditionalOnProperty("spring.task.scheduling.enabled")`. Config: `app.reminder.{enabled,cron,deposit-warn-days,prospect-stale-days}`. Unit: `ReminderServiceTest` (5 tests).
+  - **F2.3 Property Media** (`media` package): Liquibase changeset 023 (`property_media` table). `MediaStorageService` interface + `LocalFileMediaStorage` default (UUID-keyed files at `app.media.storage-dir`; replace with S3 via `@Primary`). `PropertyMediaController` endpoints: `POST /api/properties/{id}/media` (ADMIN/MANAGER), `GET /api/properties/{id}/media`, `GET /api/media/{mediaId}/download`, `DELETE /api/media/{mediaId}` (ADMIN). Error codes: `MEDIA_TOO_LARGE` (400), `MEDIA_TYPE_NOT_ALLOWED` (400), `MEDIA_NOT_FOUND` (404). Config: `app.media.{storage-dir,max-file-size,allowed-types}`. Test override: `${java.io.tmpdir}/hlm-test-media`. Frontend: `property-detail.component` at `/app/properties/:id`. IT: `PropertyMediaIT` (7 tests).
+  - **F2.4 CSV Import** (`property` package — `PropertyImportService`): `POST /api/properties/import` (ADMIN/MANAGER, multipart CSV). All-or-nothing validation: validates all rows before inserting any. 200 + `{imported}` on success; 422 + `{errors[{row,message}]}` on validation failure. Apache Commons CSV 1.12.0. Frontend: "Importer CSV" button on properties list; row-level error table on 422. IT: `PropertyImportIT` (6 tests).
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

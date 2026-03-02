@@ -23,3 +23,11 @@ export interface ContactPage {
   number: number;
   size: number;
 }
+
+export interface TimelineEvent {
+  timestamp: string;
+  eventType: string;
+  category: 'AUDIT' | 'MESSAGE' | 'NOTIFICATION' | 'STATUS_CHANGE';
+  summary: string;
+  correlationId: string;
+}

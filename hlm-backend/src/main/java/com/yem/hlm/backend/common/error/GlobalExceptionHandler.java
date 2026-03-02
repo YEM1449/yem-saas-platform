@@ -9,9 +9,11 @@ import com.yem.hlm.backend.contract.service.PropertyAlreadySoldException;
 import com.yem.hlm.backend.deposit.service.*;
 
 import com.yem.hlm.backend.notification.service.NotificationNotFoundException;
+import com.yem.hlm.backend.media.service.MediaNotFoundException;
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.outbox.service.ContactChannelMissingException;
 import com.yem.hlm.backend.outbox.service.InvalidRecipientException;
-import com.yem.hlm.backend.outbox.service.MessageNotFoundException;
 import com.yem.hlm.backend.user.service.UserEmailAlreadyExistsException;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
@@ -19,7 +21,17 @@ import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
+import com.yem.hlm.backend.payment.service.InvalidCallStateException;
+import com.yem.hlm.backend.payment.service.InvalidTrancheSumException;
+import com.yem.hlm.backend.payment.service.PaymentCallNotFoundException;
+import com.yem.hlm.backend.payment.service.PaymentExceedsDueException;
+import com.yem.hlm.backend.payment.service.PaymentScheduleAlreadyExistsException;
+import com.yem.hlm.backend.payment.service.TrancheNotFoundException;
+import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
+import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
+import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException;
 import com.yem.hlm.backend.tenant.service.TenantKeyAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -137,10 +149,13 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,
             DepositNotFoundException.class,
-            MessageNotFoundException.class,
+            MediaNotFoundException.class,
             NotificationNotFoundException.class,
+            PaymentCallNotFoundException.class,
+            PaymentScheduleItemNotFoundException.class,
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
+            TrancheNotFoundException.class,
             UserNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
@@ -291,22 +306,6 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 400 Bad Request ==========
-
-    @ExceptionHandler(InvalidClientConversionException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidClientConversion(
-            InvalidClientConversionException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                ErrorCode.INVALID_CLIENT_CONVERSION,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
 
     @ExceptionHandler(InvalidDepositRequestException.class)
     public ResponseEntity<ErrorResponse> handleInvalidDepositRequest(
@@ -517,6 +516,52 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // ========== Media Errors ==========
+
+    @ExceptionHandler(MediaTooLargeException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTooLarge(
+            MediaTooLargeException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.MEDIA_TOO_LARGE, ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(MediaTypeNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotAllowed(
+            MediaTypeNotAllowedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.MEDIA_TYPE_NOT_ALLOWED, ex.getMessage(), request.getRequestURI()));
+    }
+
+    // ========== Payment Errors ==========
+
+    @ExceptionHandler({PaymentScheduleAlreadyExistsException.class, InvalidCallStateException.class, InvalidPaymentScheduleStateException.class})
+    public ResponseEntity<ErrorResponse> handlePaymentConflict(
+            RuntimeException ex, HttpServletRequest request) {
+        ErrorCode code = ex instanceof PaymentScheduleAlreadyExistsException
+                ? ErrorCode.PAYMENT_SCHEDULE_EXISTS
+                : ex instanceof InvalidCallStateException
+                        ? ErrorCode.INVALID_CALL_STATE
+                        : ErrorCode.INVALID_PAYMENT_SCHEDULE_STATE;
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                code, ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler({InvalidTrancheSumException.class, PaymentExceedsDueException.class, PaymentInvalidAmountException.class})
+    public ResponseEntity<ErrorResponse> handlePaymentBadRequest(
+            RuntimeException ex, HttpServletRequest request) {
+        ErrorCode code = ex instanceof InvalidTrancheSumException
+                ? ErrorCode.INVALID_TRANCHE_SUM
+                : ex instanceof PaymentExceedsDueException
+                        ? ErrorCode.PAYMENT_EXCEEDS_DUE
+                        : ErrorCode.PAYMENT_INVALID_AMOUNT;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                code, ex.getMessage(), request.getRequestURI()));
+    }
+
     // ========== Outbox / Messaging Errors ==========
 
     @ExceptionHandler(InvalidRecipientException.class)
@@ -580,6 +625,22 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 500 Internal Server Error ==========
+
+    @ExceptionHandler(ReservationPdfGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleReservationPdfGeneration(
+            ReservationPdfGenerationException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ErrorCode.INTERNAL_ERROR,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        log.error("PDF generation failed on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 
     /**
      * Catch-all handler for unexpected exceptions.

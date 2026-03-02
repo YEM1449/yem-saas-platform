@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-create-property-media
+      author: yem
+      changes:
+        - createTable:
+            tableName: property_media
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_property_media_tenant
+                    references: tenant(id)
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_property_media_property
+                    references: property(id)
+              - column:
+                  name: file_key
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_filename
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: size_bytes
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sort_order
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: uploaded_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_property_media_tenant_property
+            tableName: property_media
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: property_id

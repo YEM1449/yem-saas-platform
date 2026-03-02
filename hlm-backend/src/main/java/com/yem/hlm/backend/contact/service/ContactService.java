@@ -7,6 +7,7 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
+import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.tenant.repo.TenantRepository;

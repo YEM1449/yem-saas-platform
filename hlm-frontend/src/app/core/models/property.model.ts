@@ -20,3 +20,22 @@ export interface Property {
   buildingName: string | null;
   createdAt: string;
 }
+
+export interface PropertyMedia {
+  id: string;
+  originalFilename: string;
+  contentType: string;
+  sizeBytes: number;
+  sortOrder: number;
+  uploadedAt: string;
+}
+
+export interface ImportRowError {
+  row: number;
+  message: string;
+}
+
+export interface ImportResult {
+  imported: number;
+  errors: ImportRowError[];
+}

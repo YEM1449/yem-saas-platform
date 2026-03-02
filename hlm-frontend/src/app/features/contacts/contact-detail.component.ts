@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from './contact.service';
-import { Contact } from '../../core/models/contact.model';
+import { Contact, TimelineEvent } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 
 @Component({
@@ -21,9 +21,17 @@ export class ContactDetailComponent implements OnInit {
   loading = true;
   error = '';
 
+  activeTab: 'details' | 'timeline' = 'details';
+  timeline: TimelineEvent[] = [];
+  timelineLoading = false;
+  timelineError = '';
+  timelineLoaded = false;
+
+  private contactId = '';
+
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    this.svc.getById(id).subscribe({
+    this.contactId = this.route.snapshot.paramMap.get('id')!;
+    this.svc.getById(this.contactId).subscribe({
       next: (data) => {
         this.contact = data;
         this.loading = false;
@@ -40,6 +48,36 @@ export class ContactDetailComponent implements OnInit {
         } else {
           this.error = `Failed to load contact (${err.status})`;
         }
+      },
+    });
+  }
+
+  selectTab(tab: 'details' | 'timeline'): void {
+    this.activeTab = tab;
+    if (tab === 'timeline' && !this.timelineLoaded) {
+      this.loadTimeline();
+    }
+  }
+
+  categoryLabel(category: string): string {
+    return category === 'AUDIT' ? 'Audit'
+      : category === 'MESSAGE' ? 'Message'
+      : category === 'NOTIFICATION' ? 'Notification'
+      : 'Événement';
+  }
+
+  private loadTimeline(): void {
+    this.timelineLoading = true;
+    this.timelineError = '';
+    this.svc.getTimeline(this.contactId).subscribe({
+      next: (events) => {
+        this.timeline = events;
+        this.timelineLoading = false;
+        this.timelineLoaded = true;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.timelineLoading = false;
+        this.timelineError = `Failed to load timeline (${err.status})`;
       },
     });
   }
