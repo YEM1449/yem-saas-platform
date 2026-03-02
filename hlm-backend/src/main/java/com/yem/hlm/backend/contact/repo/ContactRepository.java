@@ -26,6 +26,29 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
     long countActiveProspects(@Param("tenantId") UUID tenantId,
                               @Param("statuses") List<ContactStatus> statuses);
 
+    /**
+     * Prospect source funnel: count all prospects by source and count converted ones.
+     * "Converted" = status CLIENT or beyond (CLIENT, ACTIVE_CLIENT, COMPLETED_CLIENT, REFERRAL).
+     * Returns rows: [source(String), totalCount(Long), convertedCount(Long)].
+     * Only includes prospects that have a non-null source in ProspectDetail.
+     */
+    @Query("""
+            SELECT pd.source,
+                   COUNT(pd.contactId),
+                   SUM(CASE WHEN c.status IN :convertedStatuses THEN 1L ELSE 0L END)
+            FROM com.yem.hlm.backend.contact.domain.ProspectDetail pd
+            JOIN pd.contact c
+            WHERE c.tenant.id = :tenantId
+              AND c.deleted   = false
+              AND pd.source   IS NOT NULL
+            GROUP BY pd.source
+            ORDER BY COUNT(pd.contactId) DESC
+            """)
+    List<Object[]> prospectSourceFunnel(
+            @Param("tenantId")          UUID tenantId,
+            @Param("convertedStatuses") List<ContactStatus> convertedStatuses
+    );
+
     @Query("""
             select c from Contact c
             where c.tenant.id = :tenantId

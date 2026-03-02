@@ -66,6 +66,9 @@ public enum ErrorCode {
     INVALID_PAYMENT_SCHEDULE_STATE, // 409 — schedule item action not permitted in current state
     PAYMENT_INVALID_AMOUNT,         // 400 — payment amount is zero or negative
 
+    // Commission errors (404)
+    COMMISSION_RULE_NOT_FOUND,  // 404 — commission rule not found in tenant
+
     // Server errors (500)
     INTERNAL_ERROR
 }

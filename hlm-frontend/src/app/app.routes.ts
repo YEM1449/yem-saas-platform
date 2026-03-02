@@ -26,6 +26,8 @@ export const routes: Routes = [
       { path: 'dashboard/commercial', loadComponent: () => import('./features/dashboard/commercial-dashboard.component').then(m => m.CommercialDashboardComponent) },
       { path: 'dashboard/commercial/sales', loadComponent: () => import('./features/dashboard/commercial-dashboard-sales.component').then(m => m.CommercialDashboardSalesComponent) },
       { path: 'dashboard/commercial/cash', loadComponent: () => import('./features/dashboard/cash-dashboard.component').then(m => m.CashDashboardComponent) },
+      { path: 'dashboard/receivables', loadComponent: () => import('./features/dashboard/receivables-dashboard.component').then(m => m.ReceivablesDashboardComponent) },
+      { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: '', redirectTo: 'properties', pathMatch: 'full' },
     ],
   },

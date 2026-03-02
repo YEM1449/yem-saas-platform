@@ -7,6 +7,8 @@ import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
 import com.yem.hlm.backend.dashboard.api.dto.DailySalesPoint;
+import com.yem.hlm.backend.dashboard.api.dto.DiscountByAgentRow;
+import com.yem.hlm.backend.dashboard.api.dto.ProspectSourceRow;
 import com.yem.hlm.backend.dashboard.api.dto.SalesByAgentRow;
 import com.yem.hlm.backend.dashboard.api.dto.SalesByProjectRow;
 import com.yem.hlm.backend.dashboard.api.dto.SalesTableRow;
@@ -53,7 +55,8 @@ import java.util.UUID;
  * Key = tenantId + effectiveAgentId + from + to + projectId.
  *
  * <h3>Query budget (summary)</h3>
- * Up to 11 aggregate queries; no entity hydration loops.
+ * Up to 14 aggregate queries; no entity hydration loops.
+ * Queries 12–13: discount analytics (F3.2); query 14: prospect source funnel (F3.4).
  */
 @Service
 @Transactional(readOnly = true)
@@ -232,6 +235,44 @@ public class CommercialDashboardService {
                     .divide(BigDecimal.valueOf(depositsCount), 4, RoundingMode.HALF_UP);
         }
 
+        // 12 ─ Discount totals (avg + max percent) ──────────────────────────────
+        List<Object[]> discountRows = contractRepository.discountTotals(
+                tenantId, effectiveAgentId, projectId);
+        BigDecimal avgDiscountPercent = null;
+        BigDecimal maxDiscountPercent = null;
+        if (!discountRows.isEmpty()) {
+            Object[] dr = discountRows.get(0);
+            avgDiscountPercent = dr[0] != null ? toBD(dr[0]).setScale(2, RoundingMode.HALF_UP) : null;
+            maxDiscountPercent = dr[1] != null ? toBD(dr[1]).setScale(2, RoundingMode.HALF_UP) : null;
+        }
+
+        // 13 ─ Discount by agent (top 10) ───────────────────────────────────────
+        List<DiscountByAgentRow> discountByAgent = contractRepository
+                .discountByAgent(tenantId, PageRequest.of(0, TOP_N))
+                .stream()
+                .map(r -> new DiscountByAgentRow(
+                        (UUID)   r[0],
+                        (String) r[1],
+                        toBD(    r[2]).setScale(2, RoundingMode.HALF_UP),
+                        toLong(  r[3])
+                ))
+                .toList();
+
+        // 14 ─ Prospect source funnel ────────────────────────────────────────────
+        List<ContactStatus> convertedStatuses = List.of(
+                ContactStatus.CLIENT, ContactStatus.ACTIVE_CLIENT,
+                ContactStatus.COMPLETED_CLIENT, ContactStatus.REFERRAL);
+        List<ProspectSourceRow> prospectsBySource = contactRepository
+                .prospectSourceFunnel(tenantId, convertedStatuses)
+                .stream()
+                .map(r -> {
+                    long total     = toLong(r[1]);
+                    long converted = toLong(r[2]);
+                    Double rate    = total > 0 ? (double) converted / total : null;
+                    return new ProspectSourceRow((String) r[0], total, converted, rate);
+                })
+                .toList();
+
         return new CommercialDashboardSummaryDTO(
                 from, to,
                 LocalDateTime.now(),          // asOf
@@ -242,7 +283,9 @@ public class CommercialDashboardService {
                 salesByProject, salesByAgent,
                 inventoryByStatus, inventoryByType,
                 salesAmountByDay, depositsAmountByDay,
-                conversionRate, avgDaysDepositToSale
+                conversionRate, avgDaysDepositToSale,
+                avgDiscountPercent, maxDiscountPercent, discountByAgent,
+                prospectsBySource
         );
     }
 

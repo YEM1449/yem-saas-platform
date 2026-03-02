@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -76,4 +77,74 @@ public interface PaymentCallRepository extends JpaRepository<PaymentCall, UUID> 
             WHERE pc.tenant.id = :tenantId AND pc.id = :id
             """)
     Optional<PaymentCall> findForPdf(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
+
+    // =========================================================================
+    // Receivables dashboard aggregate queries (no entity hydration)
+    // =========================================================================
+
+    /**
+     * Outstanding and overdue totals for the receivables dashboard.
+     * Returns one Object[] row: [outstanding(BigDecimal), overdue(BigDecimal)].
+     * outstanding = SUM(amountDue) for ISSUED + OVERDUE calls.
+     * overdue     = SUM(amountDue) for OVERDUE calls only.
+     */
+    @Query("""
+            SELECT COALESCE(SUM(pc.amountDue), 0),
+                   COALESCE(SUM(CASE WHEN pc.status = 'OVERDUE' THEN pc.amountDue ELSE 0 END), 0)
+            FROM PaymentCall pc
+            JOIN pc.tranche pt
+            JOIN pt.schedule ps
+            JOIN ps.saleContract sc
+            WHERE pc.tenant.id = :tenantId
+              AND pc.status IN ('ISSUED', 'OVERDUE')
+              AND (:agentId IS NULL OR sc.agent.id = :agentId)
+            """)
+    List<Object[]> receivablesTotals(@Param("tenantId") UUID tenantId,
+                                     @Param("agentId") UUID agentId);
+
+    /**
+     * Total amountDue for all ISSUED+OVERDUE+CLOSED calls (denominator for collection rate).
+     */
+    @Query("""
+            SELECT COALESCE(SUM(pc.amountDue), 0)
+            FROM PaymentCall pc
+            WHERE pc.tenant.id = :tenantId
+              AND pc.status IN ('ISSUED', 'OVERDUE', 'CLOSED')
+            """)
+    BigDecimal totalIssuedAmount(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Top-N projects by OVERDUE call amounts for the receivables dashboard.
+     * Returns rows: [projectId(UUID), projectName(String), overdueAmount(BigDecimal)].
+     */
+    @Query("""
+            SELECT sc.project.id, sc.project.name, COALESCE(SUM(pc.amountDue), 0)
+            FROM PaymentCall pc
+            JOIN pc.tranche pt
+            JOIN pt.schedule ps
+            JOIN ps.saleContract sc
+            WHERE pc.tenant.id = :tenantId
+              AND pc.status = 'OVERDUE'
+            GROUP BY sc.project.id, sc.project.name
+            ORDER BY COALESCE(SUM(pc.amountDue), 0) DESC
+            """)
+    List<Object[]> overdueByProject(@Param("tenantId") UUID tenantId, Pageable pageable);
+
+    /**
+     * ISSUED + OVERDUE calls with amountDue and dueDate — used for aging bucket computation in Java.
+     * Returns rows: [amountDue(BigDecimal), dueDate(LocalDate)].
+     */
+    @Query("""
+            SELECT pc.amountDue, pc.dueDate
+            FROM PaymentCall pc
+            JOIN pc.tranche pt
+            JOIN pt.schedule ps
+            JOIN ps.saleContract sc
+            WHERE pc.tenant.id = :tenantId
+              AND pc.status IN ('ISSUED', 'OVERDUE')
+              AND pc.dueDate IS NOT NULL
+              AND (:agentId IS NULL OR sc.agent.id = :agentId)
+            """)
+    List<Object[]> outstandingCallsForAging(@Param("tenantId") UUID tenantId,
+                                            @Param("agentId") UUID agentId);
 }

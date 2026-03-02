@@ -133,5 +133,55 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 - Frontend: "Importer CSV" label button on properties list; on success reloads list; on error displays row-level error table.
 - IT: `PropertyImportIT` (6 tests).
 
+## Commercial Intelligence (Phase 3 — 2026-03-02)
+
+### F3.1 — Receivables Dashboard
+- Backend: `GET /api/dashboard/receivables` (all authenticated roles; AGENT auto-scoped to own contracts).
+- `ReceivablesDashboardService` computes outstanding/overdue totals, collection rate, avg days to payment, and aging buckets (current / ≤30d / ≤60d / ≤90d / >90d) from `PaymentCall` and `Payment` data.
+- Cache: `receivablesDashboard`, 30 s TTL, 200 entries.
+- Frontend: `ReceivablesDashboardComponent` at `/app/dashboard/receivables`; nav link "Receivables" (ADMIN/MANAGER).
+- IT: `ReceivablesDashboardIT` (3 tests).
+
+### Receivables KPI definitions (locked)
+| KPI | Definition |
+|-----|-----------|
+| **totalOutstanding** | `SUM(call.amountDue)` WHERE `call.status IN (ISSUED, OVERDUE)` |
+| **totalOverdue** | `SUM(call.amountDue)` WHERE `call.status = OVERDUE` |
+| **collectionRate** | `SUM(payments.amountReceived) / SUM(call.amountDue WHERE status IN (ISSUED,OVERDUE,CLOSED)) × 100` |
+| **avgDaysToPayment** | `AVG(payment.receivedAt − call.issuedAt)` for CLOSED calls |
+| **agingBucket.current** | calls due in the future (dueDate > today) |
+| **agingBucket.days30** | calls 1–30 days overdue |
+| **agingBucket.days60** | calls 31–60 days overdue |
+| **agingBucket.days90** | calls 61–90 days overdue |
+| **agingBucket.days90plus** | calls >90 days overdue |
+
+### F3.2 — Discount Analytics
+- `CommercialDashboardSummaryDTO` extended with: `avgDiscountPercent`, `maxDiscountPercent`, `discountByAgent[]` (top-10 agents by avg discount).
+- Discount % formula: `(listPrice - agreedPrice) / listPrice × 100`. Requires `SaleContract.listPrice` to be populated.
+- New queries in `SaleContractRepository`: `discountTotals(tenantId, agentId, projectId)` and `discountByAgent(tenantId, Pageable)`.
+- New DTO: `DiscountByAgentRow(agentId, agentEmail, avgDiscountPercent, salesCount)`.
+
+### F3.3 — Commission Tracking
+- New package: `commission/` (domain, repo, service, api/dto).
+- **Liquibase changeset 024**: `commission_rule` table — `id` (UUID), `tenant_id` (FK), `project_id` (nullable FK), `rate_percent` (DECIMAL 5,2), `fixed_amount` (nullable DECIMAL 15,2), `effective_from` (DATE), `effective_to` (nullable DATE).
+- **Rule priority**: project-specific rule takes precedence over tenant-wide default; date-effective (checked via `effective_from ≤ today ≤ effective_to`).
+- **Commission formula**: `agreedPrice × ratePercent / 100 + fixedAmount` (fixedAmount defaults to 0 if null).
+- **Endpoints**:
+  - `GET /api/commissions/my` — own commissions for the calling agent (all roles)
+  - `GET /api/commissions?agentId=&from=&to=` — all commissions (ADMIN/MANAGER)
+  - `GET /api/commission-rules` — list rules (ADMIN)
+  - `POST /api/commission-rules` — create rule (ADMIN, 201)
+  - `PUT /api/commission-rules/{id}` — update rule (ADMIN)
+  - `DELETE /api/commission-rules/{id}` — delete rule (ADMIN, 204)
+- **ErrorCode**: `COMMISSION_RULE_NOT_FOUND` (404).
+- **Frontend**: `CommissionsComponent` at `/app/commissions`; nav link "Commissions" (all roles); ADMIN sees rule CRUD form.
+- **IT**: `CommissionIT` (4 tests: tenant default rule calculation, project-specific priority over default, AGENT scope via `/my`, ADMIN sees all).
+
+### F3.4 — Prospect Source Funnel
+- `CommercialDashboardSummaryDTO` extended with: `prospectsBySource[]` (ProspectSourceRow: source, count, convertedCount, conversionRate).
+- Source is stored in `ProspectDetail.source` (String, max 80 chars; set via repository or future contact update endpoint).
+- New JPQL query `ContactRepository.prospectSourceFunnel(tenantId, convertedStatuses)`: groups by `pd.source`, counts total and converted (status CLIENT/ACTIVE_CLIENT/COMPLETED_CLIENT/REFERRAL).
+- New DTO: `ProspectSourceRow(source, count, convertedCount, conversionRate)` (conversionRate = convertedCount/count × 100, computed in service).
+
 ## Living-spec helpers
 - Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.

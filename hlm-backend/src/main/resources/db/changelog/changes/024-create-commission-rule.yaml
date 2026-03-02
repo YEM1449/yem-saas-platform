@@ -1,0 +1,74 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-create-commission-rule
+      author: claude
+      changes:
+        - createTable:
+            tableName: commission_rule
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_cr_tenant
+                    references: tenant(id)
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_cr_project
+                    references: project(id)
+              - column:
+                  name: rate_percent
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fixed_amount
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: effective_from
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: effective_to
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_cr_tenant_project
+            tableName: commission_rule
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_cr_tenant_effective
+            tableName: commission_rule
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: effective_from

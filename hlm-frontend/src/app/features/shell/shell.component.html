@@ -9,6 +9,10 @@
   <a routerLink="/app/projects">Projects</a>
   <a routerLink="/app/dashboard/commercial">Dashboard</a>
   <a routerLink="/app/dashboard/commercial/cash">Encaissements</a>
+  @if (isAdminOrManager) {
+    <a routerLink="/app/dashboard/receivables">Receivables</a>
+  }
+  <a routerLink="/app/commissions">Commissions</a>
   @if (isAdmin) {
     <a routerLink="/app/admin/users">Users</a>
   }

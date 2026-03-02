@@ -16,6 +16,11 @@ export class ShellComponent {
     return this.auth.user?.role === 'ROLE_ADMIN';
   }
 
+  get isAdminOrManager(): boolean {
+    const r = this.auth.user?.role;
+    return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
+  }
+
   logout(): void {
     this.auth.logout();
   }

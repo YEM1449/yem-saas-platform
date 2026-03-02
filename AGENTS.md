@@ -95,9 +95,9 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `commission`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard, commissions), route config in `app.routes.ts`.
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
@@ -166,9 +166,9 @@ npm start
   - **Endpoints**: `GET /api/dashboard/commercial` (alias, accepts `YYYY-MM-DD` date params) + `GET /api/dashboard/commercial/summary` (canonical, accepts ISO datetime) + `GET /api/dashboard/commercial/sales` (drill-down, paged).
   - **Query params**: `from`, `to` (ISO date or datetime, default last 30 days), `projectId` (optional), `agentId` (optional).
   - **RBAC**: all authenticated roles; AGENT callers have `agentId` forced to self (ignoring supplied value); ADMIN/MANAGER see full tenant data.
-  - **Summary DTO** (`CommercialDashboardSummaryDTO`): `asOf` (freshness timestamp), `salesCount`, `salesTotalAmount`, `avgSaleValue`, `depositsCount` (period-filtered CONFIRMED), `depositsTotalAmount`, `activeReservationsCount` (current PENDING+CONFIRMED, not date-filtered), `activeReservationsTotalAmount`, `avgReservationAgeDays`, `activeProspectsCount` (contacts with status PROSPECT or QUALIFIED_PROSPECT, tenant-wide, not date-filtered), `salesByProject[]` (top 10), `salesByAgent[]` (top 10), `inventoryByStatus{}`, `inventoryByType{}`, `salesAmountByDay[]`, `depositsAmountByDay[]`, `conversionDepositToSaleRate`, `avgDaysDepositToSale`.
+  - **Summary DTO** (`CommercialDashboardSummaryDTO`): `asOf` (freshness timestamp), `salesCount`, `salesTotalAmount`, `avgSaleValue`, `depositsCount` (period-filtered CONFIRMED), `depositsTotalAmount`, `activeReservationsCount` (current PENDING+CONFIRMED, not date-filtered), `activeReservationsTotalAmount`, `avgReservationAgeDays`, `activeProspectsCount` (contacts with status PROSPECT or QUALIFIED_PROSPECT, tenant-wide, not date-filtered), `salesByProject[]` (top 10), `salesByAgent[]` (top 10), `inventoryByStatus{}`, `inventoryByType{}`, `salesAmountByDay[]`, `depositsAmountByDay[]`, `conversionDepositToSaleRate`, `avgDaysDepositToSale`, `avgDiscountPercent`, `maxDiscountPercent`, `discountByAgent[]` (top-10 by avg discount; requires `listPrice` set on contracts), `prospectsBySource[]` (source funnel from `ProspectDetail.source`).
   - **Caching**: Caffeine cache `commercialDashboardSummaryCache`, TTL 30 s, max 500 entries. Key = `tenantId:effectiveAgentId:from:to:projectId`.
-  - **Query budget**: up to 11 aggregate queries per summary request; no entity hydration.
+  - **Query budget**: up to 14 aggregate queries per summary request; no entity hydration.
   - **Validation**: `from > to` → 400 (`InvalidPeriodException`); unknown `projectId` in tenant → 404; unknown `agentId` in tenant → 404.
   - **Observability**: `Timer("commercial_dashboard_summary_duration")` measures cache-miss computation time; `Counter("commercial_dashboard_summary_cache_misses_total")` counts cache misses; `Counter("commercial_dashboard_summary_requests_total")` in controller counts all requests. Slow-query warning logged at WARN level when computation exceeds 300 ms. No new Maven dependencies — Micrometer Core is included transitively via `spring-boot-starter-actuator`.
   - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`. Dashboard nav entry visible to all authenticated roles.
@@ -268,6 +268,25 @@ npm start
   - **F2.2 Automated Reminders** (`reminder` package): `ReminderService` (3 idempotent workflows). Deposit due-date: EMAIL at J-7/J-3/J-1. Payment call overdue: EMAIL to agent + in-app `PAYMENT_CALL_OVERDUE` to ADMINs. Prospect follow-up: in-app `PROSPECT_STALE` after 14 days of inactivity. `ReminderScheduler` fires daily at 08:00; disabled in test profile via `@ConditionalOnProperty("spring.task.scheduling.enabled")`. Config: `app.reminder.{enabled,cron,deposit-warn-days,prospect-stale-days}`. Unit: `ReminderServiceTest` (5 tests).
   - **F2.3 Property Media** (`media` package): Liquibase changeset 023 (`property_media` table). `MediaStorageService` interface + `LocalFileMediaStorage` default (UUID-keyed files at `app.media.storage-dir`; replace with S3 via `@Primary`). `PropertyMediaController` endpoints: `POST /api/properties/{id}/media` (ADMIN/MANAGER), `GET /api/properties/{id}/media`, `GET /api/media/{mediaId}/download`, `DELETE /api/media/{mediaId}` (ADMIN). Error codes: `MEDIA_TOO_LARGE` (400), `MEDIA_TYPE_NOT_ALLOWED` (400), `MEDIA_NOT_FOUND` (404). Config: `app.media.{storage-dir,max-file-size,allowed-types}`. Test override: `${java.io.tmpdir}/hlm-test-media`. Frontend: `property-detail.component` at `/app/properties/:id`. IT: `PropertyMediaIT` (7 tests).
   - **F2.4 CSV Import** (`property` package — `PropertyImportService`): `POST /api/properties/import` (ADMIN/MANAGER, multipart CSV). All-or-nothing validation: validates all rows before inserting any. 200 + `{imported}` on success; 422 + `{errors[{row,message}]}` on validation failure. Apache Commons CSV 1.12.0. Frontend: "Importer CSV" button on properties list; row-level error table on 422. IT: `PropertyImportIT` (6 tests).
+
+- Commission Tracking (`commission` package — Phase 3):
+  - **Liquibase changeset 024**: `commission_rule` table — tenant-scoped, optional project scope, rate_percent (DECIMAL 5,2), fixed_amount (nullable), effective_from / effective_to date range.
+  - **Rule lookup priority**: project-specific rule (matching tenantId + projectId + date range) first; fallback to tenant-wide default (projectId IS NULL + date range). If no rule found, commission = 0.
+  - **Commission formula**: `agreedPrice × ratePercent / 100 + fixedAmount` (fixedAmount defaults to 0).
+  - **RBAC**:
+    - `GET /api/commissions/my` — own commissions (all roles)
+    - `GET /api/commissions?agentId=&from=&to=` — all commissions (ADMIN/MANAGER)
+    - `GET|POST|PUT|DELETE /api/commission-rules` — ADMIN only
+  - **ErrorCode**: `COMMISSION_RULE_NOT_FOUND` (404).
+  - **IT**: `CommissionIT` (4 tests: default rule, project-specific override, AGENT scope, ADMIN sees all).
+  - **Frontend**: `CommissionsComponent` at `/app/commissions` (nav link "Commissions", all roles). ADMIN rule CRUD embedded in same view.
+
+- Receivables Dashboard (`dashboard` package, `ReceivablesDashboardService` — Phase 3):
+  - **Endpoint**: `GET /api/dashboard/receivables` — all authenticated roles; AGENT auto-scoped to own contracts.
+  - **Response** (`ReceivablesDashboardDTO`): `asOf`, `totalOutstanding`, `totalOverdue`, `collectionRate`, `avgDaysToPayment`, aging buckets (`current`/`days30`/`days60`/`days90`/`days90plus`), `overdueByProject[]` (top 10), `recentPayments[]` (last 10).
+  - **Caching**: Caffeine `receivablesDashboard`, 30 s TTL, 200 entries.
+  - **IT**: `ReceivablesDashboardIT` (3 tests).
+  - **Frontend**: `ReceivablesDashboardComponent` at `/app/dashboard/receivables`; nav link "Receivables" (ADMIN/MANAGER only).
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

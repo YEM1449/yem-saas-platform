@@ -1,0 +1,97 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h2>Receivables Dashboard</h2>
+  </div>
+
+  @if (loading) { <p class="loading">Loading…</p> }
+  @if (error)   { <p class="error">{{ error }}</p> }
+
+  @if (!loading && !error && data) {
+    <p class="as-of">Data as of {{ data.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+
+    <!-- KPI cards -->
+    <section class="kpi-section">
+      <div class="kpi-card accent-orange">
+        <span class="kpi-label">Total Outstanding</span>
+        <span class="kpi-value">{{ formatAmount(data.totalOutstanding) }}</span>
+      </div>
+      <div class="kpi-card accent-red">
+        <span class="kpi-label">Total Overdue</span>
+        <span class="kpi-value">{{ formatAmount(data.totalOverdue) }}</span>
+      </div>
+      <div class="kpi-card accent-green">
+        <span class="kpi-label">Collection Rate</span>
+        <span class="kpi-value">{{ formatPct(data.collectionRate) }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg Days to Payment</span>
+        <span class="kpi-value">{{ data.avgDaysToPayment != null ? (data.avgDaysToPayment + ' d') : '—' }}</span>
+      </div>
+    </section>
+
+    <!-- Aging buckets -->
+    <section class="tables-row">
+      <div class="breakdown-table">
+        <h4>Aging Analysis</h4>
+        <table>
+          <thead><tr><th>Bucket</th><th>Count</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td>Not yet due</td><td class="num">{{ data.current.count }}</td><td class="num">{{ formatAmount(data.current.amount) }}</td></tr>
+            <tr><td>1–30 days overdue</td><td class="num">{{ data.days30.count }}</td><td class="num">{{ formatAmount(data.days30.amount) }}</td></tr>
+            <tr><td>31–60 days overdue</td><td class="num">{{ data.days60.count }}</td><td class="num">{{ formatAmount(data.days60.amount) }}</td></tr>
+            <tr><td>61–90 days overdue</td><td class="num">{{ data.days90.count }}</td><td class="num">{{ formatAmount(data.days90.amount) }}</td></tr>
+            <tr><td>&gt; 90 days overdue</td><td class="num">{{ data.days90plus.count }}</td><td class="num">{{ formatAmount(data.days90plus.amount) }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="breakdown-table">
+        <h4>Overdue by Project (top 10)</h4>
+        @if (data.overdueByProject.length === 0) {
+          <p class="no-data">No overdue calls.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Project</th><th>Overdue Amount</th></tr></thead>
+            <tbody>
+              @for (r of data.overdueByProject; track r.projectId) {
+                <tr>
+                  <td>{{ r.projectName }}</td>
+                  <td class="num">{{ formatAmount(r.overdueAmount) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </section>
+
+    <!-- Recent payments -->
+    <section class="breakdown-table" style="max-width:900px">
+      <h4>Recent Payments (last 10)</h4>
+      @if (data.recentPayments.length === 0) {
+        <p class="no-data">No payments recorded yet.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Amount</th><th>Method</th>
+              <th>Project</th><th>Ref</th><th>Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of data.recentPayments; track p.paymentId) {
+              <tr>
+                <td>{{ p.receivedAt | date:'dd/MM/yyyy' }}</td>
+                <td class="num">{{ formatAmount(p.amountReceived) }}</td>
+                <td>{{ p.method }}</td>
+                <td>{{ p.projectName }}</td>
+                <td>{{ p.propertyRef }}</td>
+                <td>{{ p.agentEmail }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</div>
