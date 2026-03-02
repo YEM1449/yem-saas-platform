@@ -47,3 +47,5 @@ databaseChangeLog:
       file: db/changelog/changes/022-create-payment.yaml
   - include:
       file: db/changelog/changes/023-create-property-media.yaml
+  - include:
+      file: db/changelog/changes/024-create-commission-rule.yaml

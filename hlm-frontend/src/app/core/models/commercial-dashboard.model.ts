@@ -12,6 +12,20 @@ export interface SalesByAgentRow {
   salesAmount: number;
 }
 
+export interface DiscountByAgentRow {
+  agentId: string;
+  agentEmail: string;
+  avgDiscountPercent: number;
+  salesCount: number;
+}
+
+export interface ProspectSourceRow {
+  source: string;
+  count: number;
+  convertedCount: number;
+  conversionRate: number | null;
+}
+
 export interface DailyPoint {
   date: string;   // ISO local date e.g. "2026-02-15"
   amount: number;
@@ -40,6 +54,12 @@ export interface CommercialDashboardSummary {
   depositsAmountByDay: DailyPoint[];
   conversionDepositToSaleRate: number | null;
   avgDaysDepositToSale: number | null;
+  /** F3.2 — null when no contracts have listPrice set */
+  avgDiscountPercent: number | null;
+  maxDiscountPercent: number | null;
+  discountByAgent: DiscountByAgentRow[];
+  /** F3.4 — prospects grouped by source */
+  prospectsBySource: ProspectSourceRow[];
 }
 
 export interface SalesTableRow {

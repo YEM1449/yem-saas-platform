@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
@@ -58,6 +59,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Autowired JwtProvider jwtProvider;
     @Autowired TenantRepository tenantRepository;
     @Autowired UserRepository userRepository;
+    @Autowired ProspectDetailRepository prospectDetailRepository;
 
     private String adminBearer;
     private int refCounter = 0;
@@ -215,6 +217,76 @@ class CommercialDashboardIT extends IntegrationTestBase {
     }
 
     // =========================================================================
+    // 6. summary_discountFields_presentWhenContractHasListPrice (F3.2)
+    // Signs a contract with listPrice set → avgDiscountPercent + maxDiscountPercent
+    // must be non-null numbers in the response.
+    // =========================================================================
+
+    @Test
+    void summary_discountFields_presentWhenContractHasListPrice() throws Exception {
+        UUID projectId = createProject(adminBearer);
+        UUID propId    = createAndActivateProperty(projectId, adminBearer);
+        ContactResponse buyer = createContact("dash-disc@acme.com");
+
+        // agreedPrice=450000, listPrice=500000 → discount = 10%
+        UUID contractId = createDraftContractWithListPrice(
+                projectId, propId, buyer.id(),
+                new BigDecimal("450000.00"), new BigDecimal("500000.00"));
+        signContract(contractId);
+
+        String json = mvc.perform(get("/api/dashboard/commercial/summary")
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avgDiscountPercent").isNumber())
+                .andExpect(jsonPath("$.maxDiscountPercent").isNumber())
+                .andExpect(jsonPath("$.discountByAgent").isArray())
+                .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(json);
+        // (500000 - 450000) / 500000 * 100 = 10.0
+        assertThat(root.get("avgDiscountPercent").decimalValue())
+                .isEqualByComparingTo("10.00");
+    }
+
+    // =========================================================================
+    // 7. summary_prospectSourceFunnel_returnsSourceGroups (F3.4)
+    // Seeds contacts with two different sources → prospectsBySource must contain
+    // at least those two groups.
+    // =========================================================================
+
+    @Test
+    void summary_prospectSourceFunnel_returnsSourceGroups() throws Exception {
+        // Create 3 contacts and assign sources directly via ProspectDetailRepository
+        ContactResponse c1 = createContact("dash-src1@acme.com");
+        ContactResponse c2 = createContact("dash-src2@acme.com");
+        ContactResponse c3 = createContact("dash-src3@acme.com");
+
+        setProspectSource(c1.id(), "WEBSITE");
+        setProspectSource(c2.id(), "WEBSITE");
+        setProspectSource(c3.id(), "REFERRAL");
+
+        String json = mvc.perform(get("/api/dashboard/commercial/summary")
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prospectsBySource").isArray())
+                .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(json);
+        com.fasterxml.jackson.databind.JsonNode sources = root.get("prospectsBySource");
+
+        // Verify WEBSITE and REFERRAL groups are both present
+        boolean hasWebsite  = false;
+        boolean hasReferral = false;
+        for (com.fasterxml.jackson.databind.JsonNode entry : sources) {
+            String src = entry.get("source").asText();
+            if ("WEBSITE".equals(src))  hasWebsite  = true;
+            if ("REFERRAL".equals(src)) hasReferral = true;
+        }
+        assertThat(hasWebsite).as("WEBSITE source group present").isTrue();
+        assertThat(hasReferral).as("REFERRAL source group present").isTrue();
+    }
+
+    // =========================================================================
     // Private helpers (mirrors ContractControllerIT pattern)
     // =========================================================================
 
@@ -322,5 +394,32 @@ class CommercialDashboardIT extends IntegrationTestBase {
         mvc.perform(post("/api/deposits/{id}/confirm", depositId)
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk());
+    }
+
+    /** Creates a DRAFT contract with an explicit listPrice (for discount analytics). */
+    private UUID createDraftContractWithListPrice(UUID projectId, UUID propertyId,
+                                                   UUID buyerId,
+                                                   BigDecimal agreedPrice,
+                                                   BigDecimal listPrice) throws Exception {
+        var req = new CreateContractRequest(
+                projectId, propertyId, buyerId,
+                USER_ID, agreedPrice, listPrice, null
+        );
+        String json = mvc.perform(post("/api/contracts")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readValue(json, ContractResponse.class).id();
+    }
+
+    /** Sets the prospect source on the ProspectDetail for a given contact. */
+    private void setProspectSource(UUID contactId, String source) {
+        prospectDetailRepository.findByContact_Tenant_IdAndContactId(TENANT_ID, contactId)
+                .ifPresent(pd -> {
+                    pd.setSource(source);
+                    prospectDetailRepository.save(pd);
+                });
     }
 }

@@ -1,0 +1,100 @@
+<div class="page">
+  <h2>Commissions</h2>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    @if (isAdminOrManager) {
+      <label>Agent ID <input type="text" [(ngModel)]="agentId" placeholder="UUID (optional)" /></label>
+    }
+    <label>From <input type="date" [(ngModel)]="fromDate" /></label>
+    <label>To   <input type="date" [(ngModel)]="toDate"   /></label>
+    <button (click)="load()">Apply</button>
+  </div>
+
+  @if (loading) { <p class="loading">Loading…</p> }
+  @if (error)   { <p class="error">{{ error }}</p> }
+
+  @if (!loading && !error) {
+    <p class="summary-line">
+      <strong>{{ commissions.length }}</strong> contracts — total commission:
+      <strong>{{ formatAmount(totalCommission) }}</strong>
+    </p>
+
+    @if (commissions.length === 0) {
+      <p class="no-data">No commissions found for the selected period.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Signed</th><th>Project</th><th>Ref</th>
+            <th>Agent</th><th>Price</th><th>Rate %</th><th>Commission</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of commissions; track c.contractId) {
+            <tr>
+              <td>{{ c.signedAt | date:'dd/MM/yyyy' }}</td>
+              <td>{{ c.projectName }}</td>
+              <td>{{ c.propertyRef }}</td>
+              <td>{{ c.agentEmail }}</td>
+              <td class="num">{{ formatAmount(c.agreedPrice) }}</td>
+              <td class="num">{{ c.ratePercent }}%</td>
+              <td class="num"><strong>{{ formatAmount(c.commissionAmount) }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <!-- Commission Rules (ADMIN only) -->
+    @if (isAdmin) {
+      <section style="margin-top:32px">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+          <h3 style="margin:0">Commission Rules</h3>
+          <button (click)="openNewRule()">+ New Rule</button>
+        </div>
+
+        @if (showRuleForm) {
+          <div class="rule-form">
+            <h4>{{ editingRuleId ? 'Edit Rule' : 'New Rule' }}</h4>
+            @if (ruleError) { <p class="error">{{ ruleError }}</p> }
+            <label>Project ID (leave blank for tenant default)<br>
+              <input type="text" [(ngModel)]="ruleForm.projectId" placeholder="UUID (optional)" style="width:300px" />
+            </label><br><br>
+            <label>Rate % <input type="number" [(ngModel)]="ruleForm.ratePercent" min="0" step="0.01" style="width:100px" /></label>
+            <label style="margin-left:16px">Fixed Amount <input type="number" [(ngModel)]="ruleForm.fixedAmount" min="0" style="width:120px" /></label><br><br>
+            <label>Effective From <input type="date" [(ngModel)]="ruleForm.effectiveFrom" /></label>
+            <label style="margin-left:16px">Effective To <input type="date" [(ngModel)]="ruleForm.effectiveTo" /></label><br><br>
+            <button (click)="saveRule()">Save</button>
+            <button (click)="showRuleForm=false" style="margin-left:8px">Cancel</button>
+          </div>
+        }
+
+        @if (rules.length === 0) {
+          <p class="no-data">No commission rules defined.</p>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr><th>Scope</th><th>Rate %</th><th>Fixed</th><th>From</th><th>To</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (r of rules; track r.id) {
+                <tr>
+                  <td>{{ r.projectName ?? 'Tenant default' }}</td>
+                  <td class="num">{{ r.ratePercent }}%</td>
+                  <td class="num">{{ r.fixedAmount != null ? formatAmount(r.fixedAmount) : '—' }}</td>
+                  <td>{{ r.effectiveFrom }}</td>
+                  <td>{{ r.effectiveTo ?? '∞' }}</td>
+                  <td>
+                    <button (click)="editRule(r)">Edit</button>
+                    <button (click)="deleteRule(r.id)" style="margin-left:4px">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+  }
+</div>

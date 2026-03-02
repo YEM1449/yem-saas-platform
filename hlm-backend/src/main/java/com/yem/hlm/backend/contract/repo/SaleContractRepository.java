@@ -226,4 +226,51 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
             @Param("agentId")   UUID agentId,
             Pageable pageable
     );
+
+    // =========================================================================
+    // Discount analytics queries (F3.2)
+    // =========================================================================
+
+    /**
+     * Avg and max discount percent for SIGNED contracts where listPrice IS NOT NULL.
+     * Discount % = (listPrice - agreedPrice) / listPrice * 100.
+     * Returns one Object[] row: [avgDiscountPct(BigDecimal), maxDiscountPct(BigDecimal)].
+     */
+    @Query("""
+            SELECT AVG((c.listPrice - c.agreedPrice) / c.listPrice * 100),
+                   MAX((c.listPrice - c.agreedPrice) / c.listPrice * 100)
+            FROM SaleContract c
+            WHERE c.tenant.id = :tenantId
+              AND c.status    = 'SIGNED'
+              AND c.listPrice IS NOT NULL
+              AND c.listPrice > 0
+              AND (:agentId   IS NULL OR c.agent.id   = :agentId)
+              AND (:projectId IS NULL OR c.project.id = :projectId)
+            """)
+    List<Object[]> discountTotals(
+            @Param("tenantId")  UUID tenantId,
+            @Param("agentId")   UUID agentId,
+            @Param("projectId") UUID projectId
+    );
+
+    /**
+     * Top-N agents by average discount percent, for SIGNED contracts with listPrice set.
+     * Returns rows: [agentId(UUID), agentEmail(String), avgDiscountPct(BigDecimal), salesCount(Long)].
+     */
+    @Query("""
+            SELECT c.agent.id, c.agent.email,
+                   AVG((c.listPrice - c.agreedPrice) / c.listPrice * 100),
+                   COUNT(c)
+            FROM SaleContract c
+            WHERE c.tenant.id = :tenantId
+              AND c.status    = 'SIGNED'
+              AND c.listPrice IS NOT NULL
+              AND c.listPrice > 0
+            GROUP BY c.agent.id, c.agent.email
+            ORDER BY AVG((c.listPrice - c.agreedPrice) / c.listPrice * 100) DESC
+            """)
+    List<Object[]> discountByAgent(
+            @Param("tenantId") UUID tenantId,
+            Pageable pageable
+    );
 }

@@ -1,6 +1,6 @@
 # Implementation Status (What is done so far)
 
-_Last updated: 2026-03-01 (PR-9 Operational Polish — F2.1–F2.4)_
+_Last updated: 2026-03-02 (Phase 3 Commercial Intelligence — F3.1–F3.4)_
 
 This is a living snapshot of what is implemented in the repo, based on current test suite structure, recent changes, and project decisions.
 
@@ -60,6 +60,15 @@ This is a living snapshot of what is implemented in the repo, based on current t
   - **F2.4 CSV Import for Properties**: `POST /api/properties/import` (ADMIN/MANAGER, multipart). `PropertyImportService` parses CSV (Apache Commons CSV 1.12.0), validates all rows first (all-or-nothing), returns `ImportResultResponse {imported, errors[]}`. On any row error: returns 422 with full error list, zero rows imported. On success: 200 with `imported` count. Frontend: "Importer CSV" button on properties list; after success reloads list; on error displays row-level error table. IT: `PropertyImportIT` (5 tests: valid 2 rows, manager 200, missing field 422, invalid type 422, agent 403, 401).
   - **app.routes.ts merge conflict resolved**: kept both `contracts/:id` (contract detail) and `contracts/:contractId/payments` (payment schedule) routes.
   - **New models/services in frontend**: `TimelineEvent` + `ContactService.getTimeline()`, `PropertyMedia`+`ImportResult`+`ImportRowError` + full `PropertyService` with media/import methods.
+
+- **Commercial Intelligence** (Phase 3 — 2026-03-02): Four features extending the commercial analytics surface.
+  - **F3.1 Receivables Dashboard**: New endpoint `GET /api/dashboard/receivables` (ADMIN/MANAGER/AGENT; AGENT auto-scoped). `ReceivablesDashboardService` computes: `totalOutstanding` (ISSUED+OVERDUE calls), `totalOverdue` (OVERDUE calls), `collectionRate` (payments received / total issued), `avgDaysToPayment` (avg ISSUED→CLOSED days for CLOSED calls), aging buckets (current / 30d / 60d / 90d / 90d+), top overdue projects list, recent payments list. Caffeine cache `receivablesDashboard` (30 s TTL, 200 entries). New DTOs: `ReceivablesDashboardDTO`, `AgingBucketDTO`, `OverdueByProjectRow`, `RecentPaymentRow`. Frontend: `ReceivablesDashboardComponent` at `/app/dashboard/receivables`; nav link "Receivables" (ADMIN/MANAGER). IT: `ReceivablesDashboardIT` (3 tests).
+  - **F3.2 Discount Analytics**: Extended `CommercialDashboardSummaryDTO` with `avgDiscountPercent`, `maxDiscountPercent`, `discountByAgent[]` (top-10 agents by avg discount). Formula: `(listPrice - agreedPrice) / listPrice × 100`. Requires `SaleContract.listPrice` to be set. New queries in `SaleContractRepository`: `discountTotals`, `discountByAgent`. New DTO: `DiscountByAgentRow`. CommercialDashboardIT extended with test 6 (discount fields present when contract has listPrice).
+  - **F3.3 Commission Tracking**: New `commission/` package. Liquibase changeset 024 (`commission_rule` table: tenant-scoped, optional project scope, `rate_percent` DECIMAL 5,2, `fixed_amount`, `effective_from`/`to` date range). `CommissionRule` entity + `CommissionRuleRepository`. `CommissionService`: rule lookup (project-specific first, fallback to tenant default, date-effective); commission formula = `agreedPrice × ratePercent / 100 + fixedAmount`. API: `GET /api/commissions/my` (own commissions, all roles), `GET /api/commissions?agentId=` (ADMIN/MANAGER), `GET|POST|PUT|DELETE /api/commission-rules` (ADMIN). New `ErrorCode.COMMISSION_RULE_NOT_FOUND` (404). IT: `CommissionIT` (4 tests: default rule calculation, project-specific priority, AGENT scope, ADMIN sees all). Frontend: `CommissionsComponent` at `/app/commissions`; nav link "Commissions" (all roles); rule CRUD for ADMIN.
+  - **F3.4 Prospect Source Funnel**: Extended `CommercialDashboardSummaryDTO` with `prospectsBySource[]` (source, count, convertedCount, conversionRate). Sources defined by `ProspectDetail.source` string field. New JPQL query `ContactRepository.prospectSourceFunnel(tenantId, convertedStatuses)` groups by `pd.source` with conditional count for converted statuses. New DTO: `ProspectSourceRow`. CommercialDashboardIT extended with test 7 (WEBSITE + REFERRAL source groups present).
+  - **Query budget**: Commercial dashboard now uses up to 14 aggregate queries per summary request (was 11).
+  - **Frontend nav additions**: Shell adds "Receivables" link (ADMIN/MANAGER) and "Commissions" link (all roles); `isAdminOrManager` getter added to `ShellComponent`.
+
 
 ## In progress / to verify
 

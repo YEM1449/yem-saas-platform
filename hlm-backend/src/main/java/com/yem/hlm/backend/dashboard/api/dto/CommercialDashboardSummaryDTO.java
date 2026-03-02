@@ -22,6 +22,9 @@ import java.util.Map;
  *   <li>Deposits amount by day (trend)</li>
  *   <li>Contract cycle-time pairs (signedAt, confirmedAt) for avgDaysDepositToSale</li>
  *   <li>Active prospects count (PROSPECT + QUALIFIED_PROSPECT contacts)</li>
+ *   <li>Discount totals (avgDiscountPercent, maxDiscountPercent) — F3.2</li>
+ *   <li>Discount by agent — top 10 — F3.2</li>
+ *   <li>Prospect source funnel (prospectsBySource) — F3.4</li>
  * </ol>
  *
  * <h3>Field notes</h3>
@@ -87,5 +90,17 @@ public record CommercialDashboardSummaryDTO(
 
         // ── Conversion (null when no data) ──────────────────────────────────
         BigDecimal conversionDepositToSaleRate,
-        BigDecimal avgDaysDepositToSale
+        BigDecimal avgDaysDepositToSale,
+
+        // ── Discount analytics (F3.2) — null when no contracts with listPrice ──
+        /** AVG((listPrice - agreedPrice) / listPrice * 100) for SIGNED contracts with listPrice. */
+        BigDecimal avgDiscountPercent,
+        /** MAX of same formula. */
+        BigDecimal maxDiscountPercent,
+        /** Top 10 agents by average discount %. */
+        List<DiscountByAgentRow> discountByAgent,
+
+        // ── Prospect source funnel (F3.4) ───────────────────────────────────
+        /** Prospects grouped by source with total + converted counts. */
+        List<ProspectSourceRow> prospectsBySource
 ) {}

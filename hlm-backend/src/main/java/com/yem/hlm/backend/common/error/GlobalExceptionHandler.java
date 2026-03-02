@@ -28,6 +28,7 @@ import com.yem.hlm.backend.payment.service.InvalidTrancheSumException;
 import com.yem.hlm.backend.payment.service.PaymentCallNotFoundException;
 import com.yem.hlm.backend.payment.service.PaymentExceedsDueException;
 import com.yem.hlm.backend.payment.service.PaymentScheduleAlreadyExistsException;
+import com.yem.hlm.backend.commission.service.CommissionRuleNotFoundException;
 import com.yem.hlm.backend.payment.service.TrancheNotFoundException;
 import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
 import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
@@ -145,6 +146,7 @@ public class GlobalExceptionHandler {
     // ========== 404 Not Found ==========
 
     @ExceptionHandler({
+            CommissionRuleNotFoundException.class,
             ContactNotFoundException.class,
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,

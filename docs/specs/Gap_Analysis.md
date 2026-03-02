@@ -1,6 +1,6 @@
 # Gap Analysis (CDC vs Current Implementation)
 
-_Last updated: 2026-02-26 (PR-3)_
+_Last updated: 2026-03-02 (Phase 3 Commercial Intelligence)_
 
 This file lists the main gaps to close between the CDC expectations and the current implementation state.
 
@@ -17,7 +17,11 @@ This file lists the main gaps to close between the CDC expectations and the curr
 
 5) **Commercial MVP completeness** — SaleContract entity, lifecycle (DRAFT→SIGNED→CANCELED), property status on sign/cancel, double-booking guard. ✅ CLOSED (PR-1 + PR-2 + tightenings): `SaleContract` + `SaleContractService` + `ContractController`; Liquibase changeset 016; double-booking guard (service + partial unique index `uk_sc_property_signed`); `DepositService.confirm()` pessimistic lock + SOLD guard; consistent lock ordering across all 4 concurrent flows; `DepositRepository.existsActiveConfirmedDepositForProperty()` for cancel-rule; `ContractControllerIT` (10 tests).
 
-6) **Commercial Dashboard KPIs** — Single-call summary endpoint, RBAC scoping, caching, Angular UI. ✅ CLOSED (PR-3): `CommercialDashboardController` + `CommercialDashboardService`; `CommercialDashboardIT` (4 tests); Angular `CommercialDashboardComponent` at `/app/dashboard/commercial` with KPI cards, trend charts, top-10 tables, drill-down (`/sales`). Remaining open point: Phase-2 KPIs (cash-in, receivables) require payment schedule implementation.
+6) **Commercial Dashboard KPIs** — Single-call summary endpoint, RBAC scoping, caching, Angular UI. ✅ CLOSED (PR-3 + Phase 3): `CommercialDashboardController` + `CommercialDashboardService`; `CommercialDashboardIT` (7 tests including discount + prospect funnel); Angular `CommercialDashboardComponent` with full KPI suite. Phase-3 additions: `avgDiscountPercent`, `maxDiscountPercent`, `discountByAgent[]`, `prospectsBySource[]` (14-query budget). Cash/receivables gap closed: `GET /api/dashboard/receivables` (`ReceivablesDashboardService`: outstanding, overdue, collection rate, aging buckets — IT: `ReceivablesDashboardIT` 3 tests). Commission tracking gap closed: `GET /api/commissions` + `/my` + commission rule CRUD (`CommissionIT` 4 tests; Liquibase 024).
+
+7) **Commission / Revenue tracking** — Agents need to know their commission per contract. ✅ CLOSED (Phase 3): `commission/` package with `CommissionRule` entity (project-specific + tenant-default, date-effective), `CommissionService` (rule lookup with priority + formula), and `CommissionController`. ADMIN manages rules; AGENT/MANAGER view commissions.
+
+8) **Receivables / Cash-in analytics** — Outstanding and overdue receivables dashboard needed. ✅ CLOSED (Phase 3): `ReceivablesDashboardController` + `ReceivablesDashboardService`. Aging buckets computed in Java from raw call data. Collection rate = payments received / total issued. Caffeine cache 30 s.
 
 
 ## By CDC P1 backlog item
