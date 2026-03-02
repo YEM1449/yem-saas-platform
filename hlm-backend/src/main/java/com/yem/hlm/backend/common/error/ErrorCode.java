@@ -28,7 +28,6 @@ public enum ErrorCode {
     INVALID_STATUS_TRANSITION,
 
     // Bad request errors (400)
-    INVALID_CLIENT_CONVERSION,
     INVALID_DEPOSIT_REQUEST,
 
     // Property errors
@@ -58,6 +57,14 @@ public enum ErrorCode {
 
     // CSV import errors (400)
     IMPORT_VALIDATION_ERROR,
+
+    // Payment schedule / tranche / call errors
+    PAYMENT_SCHEDULE_EXISTS,        // 409 — schedule already exists for this contract
+    INVALID_CALL_STATE,             // 409 — action not permitted in current call state
+    INVALID_TRANCHE_SUM,            // 400 — tranche percentages/amounts do not sum correctly
+    PAYMENT_EXCEEDS_DUE,            // 400 — payment amount exceeds the amount due for the call
+    INVALID_PAYMENT_SCHEDULE_STATE, // 409 — schedule item action not permitted in current state
+    PAYMENT_INVALID_AMOUNT,         // 400 — payment amount is zero or negative
 
     // Server errors (500)
     INTERNAL_ERROR
