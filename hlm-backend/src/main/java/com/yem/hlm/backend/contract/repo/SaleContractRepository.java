@@ -19,6 +19,26 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
     Optional<SaleContract> findByTenant_IdAndId(UUID tenantId, UUID id);
 
     /**
+     * Loads all contracts for a given buyer contact (portal use-case).
+     * JOIN FETCHes project and property to avoid N+1 in portal list view.
+     */
+    @Query("""
+            SELECT c FROM SaleContract c
+            JOIN FETCH c.project
+            JOIN FETCH c.property
+            WHERE c.tenant.id = :tenantId AND c.buyerContact.id = :contactId
+            ORDER BY c.createdAt DESC
+            """)
+    List<SaleContract> findPortalContracts(@Param("tenantId") UUID tenantId,
+                                           @Param("contactId") UUID contactId);
+
+    /**
+     * Checks if a contact has any contract for the given property (portal ownership guard).
+     */
+    boolean existsByTenant_IdAndProperty_IdAndBuyerContact_Id(
+            UUID tenantId, UUID propertyId, UUID buyerContactId);
+
+    /**
      * Loads a contract with all associations needed for PDF generation.
      * JOIN FETCHes tenant, buyerContact, agent, project, and property to avoid N+1.
      */

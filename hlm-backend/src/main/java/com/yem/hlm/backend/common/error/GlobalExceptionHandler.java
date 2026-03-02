@@ -30,6 +30,7 @@ import com.yem.hlm.backend.payment.service.PaymentExceedsDueException;
 import com.yem.hlm.backend.payment.service.PaymentScheduleAlreadyExistsException;
 import com.yem.hlm.backend.commission.service.CommissionRuleNotFoundException;
 import com.yem.hlm.backend.payment.service.TrancheNotFoundException;
+import com.yem.hlm.backend.portal.service.PortalTokenInvalidException;
 import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
 import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
 import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException;
@@ -326,6 +327,22 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 401 Unauthorized ==========
+
+    @ExceptionHandler(PortalTokenInvalidException.class)
+    public ResponseEntity<ErrorResponse> handlePortalTokenInvalid(
+            PortalTokenInvalidException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ErrorCode.PORTAL_TOKEN_INVALID,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        log.warn("Portal token invalid on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(

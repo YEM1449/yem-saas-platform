@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { adminGuard } from './core/auth/admin.guard';
+import { portalGuard } from './portal/core/portal-auth.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent) },
@@ -29,6 +30,23 @@ export const routes: Routes = [
       { path: 'dashboard/receivables', loadComponent: () => import('./features/dashboard/receivables-dashboard.component').then(m => m.ReceivablesDashboardComponent) },
       { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: '', redirectTo: 'properties', pathMatch: 'full' },
+    ],
+  },
+  {
+    path: 'portal',
+    children: [
+      { path: 'login', loadComponent: () => import('./portal/features/portal-login/portal-login.component').then(m => m.PortalLoginComponent) },
+      {
+        path: '',
+        loadComponent: () => import('./portal/features/portal-shell/portal-shell.component').then(m => m.PortalShellComponent),
+        canActivate: [portalGuard],
+        children: [
+          { path: 'contracts', loadComponent: () => import('./portal/features/portal-contracts/portal-contracts.component').then(m => m.PortalContractsComponent) },
+          { path: 'contracts/:contractId/payments', loadComponent: () => import('./portal/features/portal-payments/portal-payments.component').then(m => m.PortalPaymentsComponent) },
+          { path: 'properties/:id', loadComponent: () => import('./portal/features/portal-property/portal-property.component').then(m => m.PortalPropertyComponent) },
+          { path: '', redirectTo: 'contracts', pathMatch: 'full' },
+        ],
+      },
     ],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },

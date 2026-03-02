@@ -1,0 +1,55 @@
+<div class="portal-section">
+  <div class="portal-section-nav">
+    <a routerLink="/portal/contracts" class="portal-back-link">← Back to contracts</a>
+  </div>
+
+  <h2 class="portal-section-title">Payment Schedule</h2>
+
+  @if (loading()) {
+    <p class="portal-loading">Loading…</p>
+  } @else if (error()) {
+    <p class="portal-error">{{ error() }}</p>
+  } @else if (schedule()) {
+    @let s = schedule()!;
+
+    <div class="portal-summary-row">
+      <div class="portal-summary-item">
+        <span class="portal-label">Total amount</span>
+        <strong>{{ totalAmount(s.tranches) | number:'1.0-0' }} MAD</strong>
+      </div>
+      <div class="portal-summary-item">
+        <span class="portal-label">Paid</span>
+        <strong class="portal-text-success">{{ totalPaid(s.tranches) | number:'1.0-0' }} MAD</strong>
+      </div>
+    </div>
+
+    <div class="portal-table-wrapper">
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Milestone</th>
+            <th>Amount (MAD)</th>
+            <th>Due date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of s.tranches; track t.id) {
+            <tr class="tranche-row tranche-{{ t.status | lowercase }}">
+              <td>{{ t.trancheOrder }}</td>
+              <td>{{ t.label }}</td>
+              <td>{{ t.amount | number:'1.0-0' }}</td>
+              <td>{{ t.dueDate ? (t.dueDate | date:'dd/MM/yyyy') : '—' }}</td>
+              <td>
+                <span class="portal-badge" [ngClass]="trancheStatusClass(t.status)">
+                  {{ trancheStatusLabel(t.status) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

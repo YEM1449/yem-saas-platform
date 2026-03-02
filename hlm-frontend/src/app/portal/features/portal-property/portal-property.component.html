@@ -1,0 +1,57 @@
+<div class="portal-section">
+  <div class="portal-section-nav">
+    <a routerLink="/portal/contracts" class="portal-back-link">← Back to contracts</a>
+  </div>
+
+  <h2 class="portal-section-title">My Property</h2>
+
+  @if (loading()) {
+    <p class="portal-loading">Loading…</p>
+  } @else if (error()) {
+    <p class="portal-error">{{ error() }}</p>
+  } @else if (property()) {
+    @let p = property()!;
+    <div class="portal-card portal-card-property">
+      <div class="portal-card-header">
+        <span class="portal-card-ref">{{ p.reference }}</span>
+        <span class="portal-badge badge-type">{{ p.type }}</span>
+      </div>
+      <div class="portal-card-body">
+        <h3 class="portal-property-title">{{ p.title }}</h3>
+
+        @if (p.projectName) {
+          <div class="portal-card-row">
+            <span class="portal-label">Project</span>
+            <span>{{ p.projectName }}</span>
+          </div>
+        }
+        @if (p.city) {
+          <div class="portal-card-row">
+            <span class="portal-label">City</span>
+            <span>{{ p.city }}</span>
+          </div>
+        }
+        @if (p.address) {
+          <div class="portal-card-row">
+            <span class="portal-label">Address</span>
+            <span>{{ p.address }}</span>
+          </div>
+        }
+        @if (p.surfaceAreaSqm) {
+          <div class="portal-card-row">
+            <span class="portal-label">Surface area</span>
+            <span>{{ p.surfaceAreaSqm }} m²</span>
+          </div>
+        }
+        @if (p.description) {
+          <div class="portal-card-description">{{ p.description }}</div>
+        }
+      </div>
+    </div>
+
+    <!-- Construction progress placeholder -->
+    <div class="portal-card portal-card-coming-soon">
+      <p>🏗️ Construction progress — <em>Coming soon</em></p>
+    </div>
+  }
+</div>

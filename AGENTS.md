@@ -95,13 +95,14 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `commission`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `commission`, `portal`, `common`.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard, commissions), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard, commissions), `portal/` (client-facing portal — separate route tree at `/portal/*`), route config in `app.routes.ts`.
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
-- JWT claims: `sub` (user), `tid` (tenant), `roles`, `tv` (tokenVersion — see revocation below).
+- CRM JWT claims: `sub` (userId), `tid` (tenantId), `roles`, `tv` (tokenVersion — see revocation below).
+- Portal JWT claims: `sub` (contactId), `tid` (tenantId), `roles=["ROLE_PORTAL"]`. No `tv` claim — stateless; TTL 2 h.
 - Error contract is standardized via `common/error/ErrorResponse` + `ErrorCode`.
 - Validation and malformed JSON errors map to HTTP 400 with stable error code fields.
 
@@ -287,6 +288,49 @@ npm start
   - **Caching**: Caffeine `receivablesDashboard`, 30 s TTL, 200 entries.
   - **IT**: `ReceivablesDashboardIT` (3 tests).
   - **Frontend**: `ReceivablesDashboardComponent` at `/app/dashboard/receivables`; nav link "Receivables" (ADMIN/MANAGER only).
+
+- Client-Facing Portal (`portal` package — Phase 4):
+  - **Purpose**: read-only buyer portal accessible via magic link (no password). Buyers see their own contracts, payment schedule, and property details. Fully isolated from CRM using `ROLE_PORTAL`.
+  - **Auth flow (magic link)**:
+    1. Buyer POSTs `{email, tenantKey}` to `POST /api/portal/auth/request-link` (public).
+       Service looks up tenant + contact (case-insensitive email), generates a 32-byte random token, stores SHA-256 hex hash in `portal_token` table (48 h TTL, one-time use), sends magic link via `EmailSender.send()` directly (not outbox — no authenticated user). Raw token URL also returned in response body for dev/test.
+    2. Frontend calls `GET /api/portal/auth/verify?token=<rawToken>` (public).
+       Service hashes raw token, validates (exists + not expired + not used), marks used, returns a 2-h portal JWT.
+  - **JWT**: `PortalJwtProvider` uses same `JwtEncoder`/`JwtDecoder` beans as `JwtProvider` (shared HMAC-SHA256 key). Claims: `sub`=contactId, `tid`=tenantId, `roles`=["ROLE_PORTAL"]. No `tv` claim.
+  - **`JwtAuthenticationFilter` behaviour for ROLE_PORTAL**: detects `ROLE_PORTAL` in roles claim → skips `UserSecurityCacheService` check (principal is a contactId, not a userId) → sets `TenantContext` directly. Sets contactId as Spring Security principal.
+  - **SecurityConfig rule order** (matters!):
+    1. `POST /api/portal/auth/request-link` → `permitAll()`
+    2. `GET  /api/portal/auth/verify` → `permitAll()`
+    3. `/api/portal/**` → `hasRole("PORTAL")`
+    4. `/api/**` → `hasAnyRole("ADMIN","MANAGER","AGENT")` — ROLE_PORTAL is blocked here (→ 403).
+  - **Liquibase**: changeset 025 — `portal_token` table: `id UUID PK`, `tenant_id FK`, `contact_id FK`, `token_hash VARCHAR(64) UNIQUE NOT NULL`, `expires_at TIMESTAMP`, `used_at TIMESTAMP NULL`, `created_at TIMESTAMP`. Indexes: `(tenant_id, contact_id)`, `expires_at`.
+  - **PortalContractService**: all data-access methods extract contactId from `SecurityContextHolder.getAuthentication().getPrincipal()`. All queries scope to `(tenantId, contactId)`.
+    - `listContracts()` → `SaleContractRepository.findPortalContracts(tenantId, contactId)`.
+    - `getContractPdf(contractId)` → verifies buyer ownership → delegates to `ContractDocumentService.generate()` (`enforceAgentOwnership` in that service only restricts ROLE_AGENT, not ROLE_PORTAL — passes cleanly).
+    - `getPaymentSchedule(contractId)` → verifies buyer ownership.
+    - `getProperty(propertyId)` → checks `existsByTenant_IdAndProperty_IdAndBuyerContact_Id`.
+    - `getTenantInfo()` → tenant name for portal shell header.
+  - **Endpoints** (all `/api/portal/` require `ROLE_PORTAL`; auth endpoints are public):
+    - `POST /api/portal/auth/request-link` — public; body `{email, tenantKey}`.
+    - `GET  /api/portal/auth/verify?token=` — public; returns `{accessToken}`.
+    - `GET  /api/portal/contracts` — buyer's own contracts.
+    - `GET  /api/portal/contracts/{id}/documents/contract.pdf` — buyer's own contract PDF.
+    - `GET  /api/portal/contracts/{id}/payment-schedule` — buyer's own payment schedule.
+    - `GET  /api/portal/properties/{id}` — buyer's own property (must have a contract for it).
+    - `GET  /api/portal/tenant-info` — tenant name + logo URL.
+  - **ErrorCode**: `PORTAL_TOKEN_INVALID` (401).
+  - **IT**: `PortalAuthIT` (5 tests: request link, verify valid token, verify used token, verify unknown token, portal JWT forbidden on CRM endpoint). `PortalContractsIT` (4 tests: buyer sees own contracts, buyer cannot see other buyer, CRM ADMIN → 403, tenant info). `PortalPaymentsIT` (4 tests: buyer sees own schedule, cross-buyer → 404, buyer sees own property, cross-buyer property → 404).
+  - **Frontend routes** (`/portal/*` lazy-loaded):
+    - `/portal/login` → `PortalLoginComponent` (public — accepts `?token=` param, calls verify, stores JWT).
+    - `/portal` → `PortalShellComponent` (guarded by `portalGuard`):
+      - `/portal/contracts` → `PortalContractsComponent` (default).
+      - `/portal/contracts/:contractId/payments` → `PortalPaymentsComponent`.
+      - `/portal/properties/:id` → `PortalPropertyComponent`.
+  - **Frontend services/guard/interceptor** (all in `portal/core/`):
+    - `PortalAuthService`: localStorage key `hlm_portal_token`; `requestLink()`, `verifyToken()`, `getTenantInfo()`, `logout()`.
+    - `portalGuard`: redirects to `/portal/login` if no portal JWT.
+    - `portalInterceptor`: attaches portal JWT to `/api/portal/` requests (excluding auth endpoints); auto-logout on 401. Registered in `app.config.ts` alongside `authInterceptor`.
+  - **Config**: `app.portal.base-url` (default `http://localhost:4200`) — base URL used to build magic link. Override in production.
 
 ## Coding Standards
 - Follow existing layered design; keep tenant checks in service/repository boundaries.

@@ -57,25 +57,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = safeExtractUserId(token);
 
                 if (tenantId != null && userId != null) {
-                    // 3) Server-side revocation check: verify user is still enabled
-                    //    and token version matches (role change / disable increments version)
-                    int tokenTv = safeExtractTokenVersion(token);
-                    UserSecurityInfo secInfo = userSecurityCacheService.getSecurityInfo(userId);
-                    if (secInfo == null || !secInfo.enabled() || secInfo.tokenVersion() != tokenTv) {
-                        // Token revoked: skip authentication, let Spring Security return 401
-                        filterChain.doFilter(request, response);
-                        return;
-                    }
-
-                    // 4) Store multi-tenant context in ThreadLocal (scoped to this request thread)
-                    TenantContext.setTenantId(tenantId);
-                    TenantContext.setUserId(userId);
-
-                    // 5) Extract roles from JWT for RBAC
                     List<GrantedAuthority> authorities = safeExtractAuthorities(token);
 
-                    // 6) Build an Authentication object with authorities.
-                    //    principal = userId, authorities = roles from JWT
+                    if (isPortalToken(authorities)) {
+                        // Portal token: sub = contactId (not a CRM User row).
+                        // Skip UserSecurityCacheService — portal sessions are
+                        // stateless (invalidated by TTL / single-use magic-link logic).
+                        TenantContext.setTenantId(tenantId);
+                        TenantContext.setUserId(userId); // userId == contactId for portal
+                    } else {
+                        // 3) Server-side revocation check: verify user is still enabled
+                        //    and token version matches (role change / disable increments version)
+                        int tokenTv = safeExtractTokenVersion(token);
+                        UserSecurityInfo secInfo = userSecurityCacheService.getSecurityInfo(userId);
+                        if (secInfo == null || !secInfo.enabled() || secInfo.tokenVersion() != tokenTv) {
+                            // Token revoked: skip authentication, let Spring Security return 401
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+                        // 4) Store multi-tenant context in ThreadLocal
+                        TenantContext.setTenantId(tenantId);
+                        TenantContext.setUserId(userId);
+                    }
+
+                    // 5) Build an Authentication object.
+                    //    principal = userId (or contactId for portal), authorities = roles from JWT
                     var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
@@ -143,6 +149,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (RuntimeException ex) {
             return 0;
         }
+    }
+
+    /**
+     * Returns true when the authority list contains ROLE_PORTAL.
+     * Portal tokens skip the UserSecurityCacheService check (no CRM User row exists).
+     */
+    private boolean isPortalToken(List<GrantedAuthority> authorities) {
+        return authorities.stream()
+                .anyMatch(a -> "ROLE_PORTAL".equals(a.getAuthority()));
     }
 
     /**

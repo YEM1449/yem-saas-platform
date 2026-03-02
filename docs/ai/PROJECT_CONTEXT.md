@@ -183,5 +183,28 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 - New JPQL query `ContactRepository.prospectSourceFunnel(tenantId, convertedStatuses)`: groups by `pd.source`, counts total and converted (status CLIENT/ACTIVE_CLIENT/COMPLETED_CLIENT/REFERRAL).
 - New DTO: `ProspectSourceRow(source, count, convertedCount, conversionRate)` (conversionRate = convertedCount/count × 100, computed in service).
 
+## Phase 4 — Client-Facing Portal (2026-03-02)
+
+### F4.1 — Portal Auth (Magic Link)
+- **No password, no registration**: buyers authenticate via a time-limited magic link sent to their registered Contact email.
+- **Flow**: `POST /api/portal/auth/request-link {email, tenantKey}` → service generates 32-byte SecureRandom token → SHA-256 hex stored in `portal_token` table → email sent → raw token URL returned in response body for dev convenience.  `GET /api/portal/auth/verify?token=<raw>` → hash → DB lookup + validity check → mark used → return 2 h portal JWT.
+- **Security**: only the SHA-256 hash is stored. Raw token is single-use (48 h expiry). Even if DB is compromised, raw token cannot be reconstructed.
+- **Email sending**: calls `EmailSender.send()` directly (not outbox) — outbox requires a `createdByUser` FK which doesn't exist for public auth. Email failure is caught and swallowed; token generation succeeds regardless.
+- **Liquibase changeset 025**: `portal_token` table — `id UUID PK`, `tenant_id FK`, `contact_id FK`, `token_hash VARCHAR(64) UNIQUE`, `expires_at TIMESTAMP`, `used_at TIMESTAMP NULL`, `created_at TIMESTAMP`.
+- **ErrorCode**: `PORTAL_TOKEN_INVALID` (401) for invalid/expired/used tokens, or unknown tenant/email.
+- **Anti-enumeration**: `requestLink` throws the same `PortalTokenInvalidException` for unknown tenant or unknown email (same error message, same HTTP status).
+
+### F4.2–F4.4 — Portal Data Access
+- All portal data endpoints require `ROLE_PORTAL` (via `@PreAuthorize("hasRole('PORTAL')")`).
+- `PortalContractService` extracts contactId from `SecurityContextHolder.getAuthentication().getPrincipal()` (portal JWT stores contactId as JWT subject → set as principal by filter).
+- Cross-contact access always returns 404 (no info leak).
+- Property access requires at least one SIGNED contract linking the buyer to that property.
+
+### F4.5 — ROLE_PORTAL Isolation
+- Portal JWTs carry `roles=["ROLE_PORTAL"]` — not present in any CRM user JWT.
+- `JwtAuthenticationFilter` detects ROLE_PORTAL and skips `UserSecurityCacheService` (portal JWT subject is a contactId, not a userId; no CRM User row exists for buyers).
+- `SecurityConfig` rule order ensures ROLE_PORTAL cannot access `/api/**` CRM endpoints (→ 403).
+- `portalInterceptor` in Angular attaches portal JWT only to `/api/portal/` calls; `authInterceptor` attaches CRM JWT only to non-portal calls. The two session types are fully independent (different localStorage keys: `hlm_token` vs `hlm_portal_token`).
+
 ## Living-spec helpers
 - Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.

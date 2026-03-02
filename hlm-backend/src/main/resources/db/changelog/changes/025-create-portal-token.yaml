@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-create-portal-token
+      author: claude
+      changes:
+        - createTable:
+            tableName: portal_token
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_portal_token_tenant
+                    references: tenant(id)
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_portal_token_contact
+                    references: contact(id)
+              - column:
+                  name: token_hash
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_portal_token_hash
+              - column:
+                  name: expires_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_pt_tenant_contact
+            tableName: portal_token
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contact_id
+        - createIndex:
+            indexName: idx_pt_expires_at
+            tableName: portal_token
+            columns:
+              - column:
+                  name: expires_at

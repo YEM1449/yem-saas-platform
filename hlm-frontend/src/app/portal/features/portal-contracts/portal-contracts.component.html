@@ -1,0 +1,55 @@
+<div class="portal-section">
+  <h2 class="portal-section-title">My Contracts</h2>
+
+  @if (loading()) {
+    <p class="portal-loading">Loading…</p>
+  } @else if (error()) {
+    <p class="portal-error">{{ error() }}</p>
+  } @else if (contracts().length === 0) {
+    <p class="portal-empty">No contracts found.</p>
+  } @else {
+    <div class="portal-card-list">
+      @for (c of contracts(); track c.id) {
+        <div class="portal-card">
+          <div class="portal-card-header">
+            <span class="portal-card-ref">{{ c.propertyRef }}</span>
+            <span class="portal-badge" [ngClass]="statusClass(c.status)">
+              {{ statusLabel(c.status) }}
+            </span>
+          </div>
+          <div class="portal-card-body">
+            <div class="portal-card-row">
+              <span class="portal-label">Project</span>
+              <span>{{ c.projectName }}</span>
+            </div>
+            <div class="portal-card-row">
+              <span class="portal-label">Type</span>
+              <span>{{ c.propertyType }}</span>
+            </div>
+            <div class="portal-card-row">
+              <span class="portal-label">Price</span>
+              <span>{{ c.agreedPrice | number:'1.0-0' }} MAD</span>
+            </div>
+            @if (c.signedAt) {
+              <div class="portal-card-row">
+                <span class="portal-label">Signed</span>
+                <span>{{ c.signedAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+            }
+          </div>
+          <div class="portal-card-actions">
+            <a [routerLink]="['/portal/contracts', c.id, 'payments']"
+               class="portal-btn-secondary">
+              Payment schedule
+            </a>
+            @if (c.status === 'SIGNED') {
+              <button class="portal-btn-primary" (click)="downloadPdf(c.id)">
+                Download PDF
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
