@@ -1,6 +1,6 @@
 # Gap Analysis (CDC vs Current Implementation)
 
-_Last updated: 2026-03-02 (Phase 3 Commercial Intelligence)_
+_Last updated: 2026-03-03 (Phase 4 Client-Facing Portal)_
 
 This file lists the main gaps to close between the CDC expectations and the current implementation state.
 
@@ -22,6 +22,8 @@ This file lists the main gaps to close between the CDC expectations and the curr
 7) **Commission / Revenue tracking** — Agents need to know their commission per contract. ✅ CLOSED (Phase 3): `commission/` package with `CommissionRule` entity (project-specific + tenant-default, date-effective), `CommissionService` (rule lookup with priority + formula), and `CommissionController`. ADMIN manages rules; AGENT/MANAGER view commissions.
 
 8) **Receivables / Cash-in analytics** — Outstanding and overdue receivables dashboard needed. ✅ CLOSED (Phase 3): `ReceivablesDashboardController` + `ReceivablesDashboardService`. Aging buckets computed in Java from raw call data. Collection rate = payments received / total issued. Caffeine cache 30 s.
+
+9) **Client-facing buyer portal** — Buyers need a self-service view of their contract, payment schedule, and property. ✅ CLOSED (Phase 4): `portal/` package. Magic-link authentication (`portal_token` entity + Liquibase 025, SHA-256 hash, 48 h TTL, one-time use). `ROLE_PORTAL` JWT (`PortalJwtProvider`, 2 h TTL, contactId as subject, no `tv` claim). SecurityConfig rule order isolates ROLE_PORTAL from all CRM endpoints. Endpoints: `POST /api/portal/auth/request-link`, `GET /api/portal/auth/verify`, `GET /api/portal/contracts`, `GET /api/portal/contracts/{id}/documents/contract.pdf`, `GET /api/portal/contracts/{id}/payment-schedule`, `GET /api/portal/properties/{id}`, `GET /api/portal/tenant-info`. Angular: lazy-loaded `/portal/*` route tree with `portalGuard` + `portalInterceptor` + separate `hlm_portal_token` localStorage key. IT: `PortalAuthIT` (5), `PortalContractsIT` (4), `PortalPaymentsIT` (4) — 13 tests.
 
 
 ## By CDC P1 backlog item
