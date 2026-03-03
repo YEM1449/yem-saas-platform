@@ -33,15 +33,25 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // PUBLIC endpoints
+                        // PUBLIC CRM endpoints
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
                         // OpenAPI / Swagger UI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                        // Tenant bootstrap (sinon tes IT prennent 403 avant validation)
+                        // Tenant bootstrap
                         .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
+
+                        // Portal auth — public (no JWT required)
+                        .requestMatchers(HttpMethod.POST, "/api/portal/auth/request-link").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/portal/auth/verify").permitAll()
+
+                        // Portal data endpoints — ROLE_PORTAL only
+                        .requestMatchers("/api/portal/**").hasRole("PORTAL")
+
+                        // All other /api/** — blocked to ROLE_PORTAL; CRM roles only
+                        .requestMatchers("/api/**").hasAnyRole("ADMIN", "MANAGER", "AGENT")
 
                         .anyRequest().authenticated()
                 )

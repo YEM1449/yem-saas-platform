@@ -69,6 +69,9 @@ public enum ErrorCode {
     // Commission errors (404)
     COMMISSION_RULE_NOT_FOUND,  // 404 — commission rule not found in tenant
 
+    // Portal errors (401)
+    PORTAL_TOKEN_INVALID,       // 401 — magic link token invalid, expired, or already used
+
     // Server errors (500)
     INTERNAL_ERROR
 }

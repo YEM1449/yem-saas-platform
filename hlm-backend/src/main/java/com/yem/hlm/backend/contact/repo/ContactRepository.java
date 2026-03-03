@@ -18,6 +18,9 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
 
     Optional<Contact> findByTenant_IdAndId(UUID tenantId, UUID id);
 
+    /** Case-insensitive email lookup within a tenant — used by portal magic-link auth. */
+    Optional<Contact> findByTenant_IdAndEmailIgnoreCase(UUID tenantId, String email);
+
     boolean existsByTenant_IdAndEmail(UUID tenantId, String email);
 
     boolean existsByTenant_IdAndEmailAndIdNot(UUID tenantId, String email, UUID id);

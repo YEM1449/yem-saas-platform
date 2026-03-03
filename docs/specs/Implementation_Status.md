@@ -1,6 +1,6 @@
 # Implementation Status (What is done so far)
 
-_Last updated: 2026-03-02 (Phase 3 Commercial Intelligence — F3.1–F3.4)_
+_Last updated: 2026-03-02 (Phase 4 Client-Facing Portal — F4.1–F4.7)_
 
 This is a living snapshot of what is implemented in the repo, based on current test suite structure, recent changes, and project decisions.
 
@@ -69,6 +69,15 @@ This is a living snapshot of what is implemented in the repo, based on current t
   - **Query budget**: Commercial dashboard now uses up to 14 aggregate queries per summary request (was 11).
   - **Frontend nav additions**: Shell adds "Receivables" link (ADMIN/MANAGER) and "Commissions" link (all roles); `isAdminOrManager` getter added to `ShellComponent`.
 
+
+- **Client-Facing Portal** (Phase 4 — 2026-03-02): Buyer self-service portal accessible via magic link, fully isolated from CRM via `ROLE_PORTAL`.
+  - **F4.1 Portal Auth (Magic Link)**: `POST /api/portal/auth/request-link` (public) + `GET /api/portal/auth/verify?token=` (public). SHA-256 hash stored; raw token sent by email; one-time use; 48 h TTL. `PortalToken` entity, Liquibase changeset 025. `PortalJwtProvider` generates 2 h JWT (`sub`=contactId, `roles`=["ROLE_PORTAL"]). `JwtAuthenticationFilter` detects ROLE_PORTAL and skips `UserSecurityCacheService`. `SecurityConfig` rule order: portal auth → permitAll; `/api/portal/**` → hasRole("PORTAL"); `/api/**` → hasAnyRole("ADMIN","MANAGER","AGENT") — ROLE_PORTAL blocked from CRM. `ErrorCode.PORTAL_TOKEN_INVALID` (401).
+  - **F4.2 Portal Contracts & Documents**: `GET /api/portal/contracts` (buyer's signed contracts), `GET /api/portal/contracts/{id}/documents/contract.pdf` (buyer's PDF). Ownership check in `PortalContractService`; cross-contract → 404.
+  - **F4.3 Portal Payment Schedule**: `GET /api/portal/contracts/{id}/payment-schedule`. Same ownership verification.
+  - **F4.4 Portal Property**: `GET /api/portal/properties/{id}`. Verifies `existsByTenant_IdAndProperty_IdAndBuyerContact_Id` before returning property details. `GET /api/portal/tenant-info` for portal shell header.
+  - **F4.5 Portal Layout & Branding**: Angular lazy-loaded route tree at `/portal/*` (`PortalShellComponent` + guard). `portalGuard` protects authenticated portal routes. `portalInterceptor` attaches portal JWT only to `/api/portal/` requests. `PortalAuthService` uses `hlm_portal_token` localStorage key (separate from CRM `hlm_token`). Config: `app.portal.base-url` (default `http://localhost:4200`).
+  - **F4.6 Tests**: `PortalAuthIT` (5 tests), `PortalContractsIT` (4 tests), `PortalPaymentsIT` (4 tests) — 13 IT tests total.
+  - **F4.7 Docs**: `AGENTS.md` (+portal package, auth flow, RBAC isolation, endpoints, frontend), `Implementation_Status.md` (this section), `.sprint-state.md` (Phase 4 COMPLETE).
 
 ## In progress / to verify
 

@@ -1,0 +1,18 @@
+<div class="portal-layout">
+  <header class="portal-header">
+    <div class="portal-header-brand">
+      <span class="portal-header-logo">🏢</span>
+      <span class="portal-header-name">
+        {{ tenantInfo()?.tenantName ?? 'Client Portal' }}
+      </span>
+    </div>
+    <nav class="portal-nav">
+      <a routerLink="/portal/contracts" routerLinkActive="active">My Contracts</a>
+      <button class="portal-nav-logout" (click)="logout()">Logout</button>
+    </nav>
+  </header>
+
+  <main class="portal-content">
+    <router-outlet />
+  </main>
+</div>

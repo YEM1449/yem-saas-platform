@@ -1,0 +1,45 @@
+<div class="portal-login-page">
+  <div class="portal-login-card">
+    <h1 class="portal-login-title">Client Portal</h1>
+
+    @if (step() === 'request') {
+      <p class="portal-login-subtitle">Enter your email to receive a secure access link.</p>
+      <form (ngSubmit)="requestLink()" #loginForm="ngForm">
+        <div class="portal-form-group">
+          <label for="tenantKey">Organisation</label>
+          <input id="tenantKey" type="text" [(ngModel)]="tenantKey" name="tenantKey"
+                 placeholder="e.g. acme" required />
+        </div>
+        <div class="portal-form-group">
+          <label for="email">Email address</label>
+          <input id="email" type="email" [(ngModel)]="email" name="email"
+                 placeholder="you@example.com" required />
+        </div>
+        <button type="submit" class="portal-btn-primary" [disabled]="loading()">
+          {{ loading() ? 'Sending…' : 'Send magic link' }}
+        </button>
+      </form>
+    }
+
+    @if (step() === 'sent') {
+      <div class="portal-alert portal-alert-success">
+        <strong>Check your inbox!</strong> A secure access link has been sent to
+        <strong>{{ email }}</strong>. The link expires in 48 hours.
+      </div>
+      <button class="portal-btn-secondary" (click)="step.set('request')">
+        Send another link
+      </button>
+    }
+
+    @if (step() === 'verifying') {
+      <p class="portal-login-subtitle">Verifying your access link…</p>
+    }
+
+    @if (step() === 'error') {
+      <div class="portal-alert portal-alert-error">{{ error() }}</div>
+      <button class="portal-btn-secondary" (click)="step.set('request')">
+        Try again
+      </button>
+    }
+  </div>
+</div>
