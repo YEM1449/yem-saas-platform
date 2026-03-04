@@ -9,18 +9,24 @@ on:
     paths:
       - "hlm-backend/**"
       - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: backend-ci-${{ github.ref }}
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
+  unit-and-package:
+    name: Unit Tests + Package
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: hlm-backend
 
     steps:
       - name: Checkout
@@ -33,26 +39,32 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Verify Docker (for Testcontainers)
-        run: docker info
+      - name: Ensure Maven Wrapper is executable
+        run: chmod +x mvnw
 
-      - name: Run tests (Maven Wrapper)
-        working-directory: hlm-backend
-        run: |
-          chmod +x mvnw
-          ./mvnw -B test
+      - name: Run unit tests
+        run: ./mvnw -B -ntp test
 
-      - name: Upload test reports (on failure)
-        if: failure()
+      - name: Build package
+        run: ./mvnw -B -ntp -DskipTests package
+
+      - name: Upload unit test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
           path: hlm-backend/target/surefire-reports/**
+          if-no-files-found: warn
 
   integration-test:
-    needs: test
+    name: Integration Tests (Failsafe)
+    needs: unit-and-package
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: hlm-backend
 
     steps:
       - name: Checkout
@@ -68,15 +80,16 @@ jobs:
       - name: Verify Docker (for Testcontainers)
         run: docker info
 
-      - name: Run integration tests (Maven Wrapper)
-        working-directory: hlm-backend
-        run: |
-          chmod +x mvnw
-          ./mvnw -B failsafe:integration-test
+      - name: Ensure Maven Wrapper is executable
+        run: chmod +x mvnw
 
-      - name: Upload IT reports (on failure)
-        if: failure()
+      - name: Run integration tests
+        run: ./mvnw -B -ntp failsafe:integration-test
+
+      - name: Upload integration test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: failsafe-reports
           path: hlm-backend/target/failsafe-reports/**
+          if-no-files-found: warn

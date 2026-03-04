@@ -9,18 +9,20 @@ on:
     paths:
       - "hlm-frontend/**"
       - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: frontend-ci-${{ github.ref }}
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  test-and-build:
+    name: Test + Build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     # Prevent failure if frontend folder doesn't exist yet
     if: ${{ hashFiles('hlm-frontend/package.json') != '' }}
@@ -42,5 +44,16 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Run unit tests (CI mode + coverage)
+        run: npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --progress=false
+
       - name: Build
         run: npm run build
+
+      - name: Upload coverage artifact
+        if: always() && hashFiles('hlm-frontend/coverage/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: hlm-frontend/coverage/**
+          if-no-files-found: warn

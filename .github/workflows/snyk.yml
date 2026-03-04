@@ -1,0 +1,139 @@
+name: Snyk Security
+
+on:
+  push:
+    paths:
+      - "hlm-backend/**"
+      - "hlm-frontend/**"
+      - ".snyk"
+      - ".github/workflows/snyk.yml"
+  pull_request:
+    paths:
+      - "hlm-backend/**"
+      - "hlm-frontend/**"
+      - ".snyk"
+      - ".github/workflows/snyk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snyk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  open-source:
+    name: Open Source Dependency Scan
+    if: ${{ secrets.SNYK_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_ORG: ${{ secrets.SNYK_ORG }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: hlm-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: hlm-frontend
+        run: npm ci
+
+      - name: Install Snyk CLI (major pinned)
+        run: npm install --global snyk@1
+
+      - name: Snyk test - Backend (Maven)
+        run: |
+          ORG_ARG=""
+          if [ -n "${SNYK_ORG}" ]; then
+            ORG_ARG="--org=${SNYK_ORG}"
+          fi
+          snyk test ${ORG_ARG} --file=hlm-backend/pom.xml --package-manager=maven --severity-threshold=high
+
+      - name: Snyk test - Frontend (npm)
+        run: |
+          ORG_ARG=""
+          if [ -n "${SNYK_ORG}" ]; then
+            ORG_ARG="--org=${SNYK_ORG}"
+          fi
+          snyk test ${ORG_ARG} --file=hlm-frontend/package.json --package-manager=npm --severity-threshold=high
+
+      - name: Monitor backend snapshot in Snyk
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          ORG_ARG=""
+          if [ -n "${SNYK_ORG}" ]; then
+            ORG_ARG="--org=${SNYK_ORG}"
+          fi
+          snyk monitor ${ORG_ARG} --file=hlm-backend/pom.xml --package-manager=maven
+
+      - name: Monitor frontend snapshot in Snyk
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          ORG_ARG=""
+          if [ -n "${SNYK_ORG}" ]; then
+            ORG_ARG="--org=${SNYK_ORG}"
+          fi
+          snyk monitor ${ORG_ARG} --file=hlm-frontend/package.json --package-manager=npm
+
+  code:
+    name: Snyk Code Scan
+    if: ${{ secrets.SNYK_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_ORG: ${{ secrets.SNYK_ORG }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install Snyk CLI (major pinned)
+        run: npm install --global snyk@1
+
+      - name: Run Snyk Code and export SARIF
+        run: |
+          ORG_ARG=""
+          if [ -n "${SNYK_ORG}" ]; then
+            ORG_ARG="--org=${SNYK_ORG}"
+          fi
+          snyk code test ${ORG_ARG} --sarif-file-output=snyk-code.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-code.sarif
+
+  missing-token:
+    name: Snyk Configuration Check
+    if: ${{ secrets.SNYK_TOKEN == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warn when Snyk token is missing
+        run: echo "::warning title=Snyk skipped::SNYK_TOKEN secret is not configured; skipping Snyk scans."

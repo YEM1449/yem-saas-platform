@@ -73,6 +73,21 @@ cd hlm-backend
 ./mvnw failsafe:integration-test
 ```
 
+## Snyk Security Scanning
+
+Snyk is configured via [`.github/workflows/snyk.yml`](.github/workflows/snyk.yml) for:
+- Open Source dependency scans (Maven + npm)
+- Snyk Code (SAST) scan with SARIF upload to GitHub Security
+
+Required GitHub repository secrets:
+- `SNYK_TOKEN` (required)
+- `SNYK_ORG` (optional; set it if you use multiple Snyk orgs)
+
+Workflow behavior:
+- Runs on `push` and `pull_request` when backend/frontend code changes
+- Fails when vulnerabilities at `high` severity or above are found
+- Sends `snyk monitor` snapshots on push to `main`
+
 ## Frontend Integration Quickstart
 
 ### Step 0 — Health check
