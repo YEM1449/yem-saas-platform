@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.portal.service;
 
+import com.yem.hlm.backend.common.ratelimit.RateLimiterService;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.outbox.service.provider.EmailSender;
@@ -45,6 +46,7 @@ public class PortalAuthService {
     private final PortalTokenRepository portalTokenRepository;
     private final PortalJwtProvider portalJwtProvider;
     private final EmailSender emailSender;
+    private final RateLimiterService rateLimiterService;
 
     /** Base URL used to build the magic-link. Override via {@code app.portal.base-url}. */
     @Value("${app.portal.base-url:http://localhost:4200}")
@@ -54,12 +56,14 @@ public class PortalAuthService {
                              ContactRepository contactRepository,
                              PortalTokenRepository portalTokenRepository,
                              PortalJwtProvider portalJwtProvider,
-                             EmailSender emailSender) {
-        this.tenantRepository   = tenantRepository;
-        this.contactRepository  = contactRepository;
+                             EmailSender emailSender,
+                             RateLimiterService rateLimiterService) {
+        this.tenantRepository      = tenantRepository;
+        this.contactRepository     = contactRepository;
         this.portalTokenRepository = portalTokenRepository;
-        this.portalJwtProvider  = portalJwtProvider;
-        this.emailSender        = emailSender;
+        this.portalJwtProvider     = portalJwtProvider;
+        this.emailSender           = emailSender;
+        this.rateLimiterService    = rateLimiterService;
     }
 
     // =========================================================================
@@ -79,6 +83,8 @@ public class PortalAuthService {
      * @return response with magic-link URL
      */
     public MagicLinkResponse requestLink(String email, String tenantKey) {
+        rateLimiterService.checkPortalLink(email.trim().toLowerCase());
+
         var tenant = tenantRepository.findByKey(tenantKey)
                 .orElseThrow(() -> new PortalTokenInvalidException("Unknown tenant or email"));
 

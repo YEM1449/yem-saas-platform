@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.tenant.api.dto;
 
+import com.yem.hlm.backend.common.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -18,7 +19,8 @@ public record TenantCreateRequest(
         @Size(max = 160)
         String ownerEmail,
         @NotBlank
-        @Size(min = 8, max = 72)
+        @StrongPassword
+        @Size(max = 72)
         String ownerPassword
 ) {
     public TenantCreateRequest {

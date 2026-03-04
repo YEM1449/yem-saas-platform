@@ -46,7 +46,37 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-failsafe-reports
-          path: |
-            hlm-backend/target/surefire-reports/**
-            hlm-backend/target/failsafe-reports/**
+          name: surefire-reports
+          path: hlm-backend/target/surefire-reports/**
+
+  integration-test:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify Docker (for Testcontainers)
+        run: docker info
+
+      - name: Run integration tests (Maven Wrapper)
+        working-directory: hlm-backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B failsafe:integration-test
+
+      - name: Upload IT reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failsafe-reports
+          path: hlm-backend/target/failsafe-reports/**

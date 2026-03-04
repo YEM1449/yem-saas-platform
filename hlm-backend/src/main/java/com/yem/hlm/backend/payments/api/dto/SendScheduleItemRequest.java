@@ -1,6 +1,6 @@
 package com.yem.hlm.backend.payments.api.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
 
@@ -15,10 +15,10 @@ public record SendScheduleItemRequest(
         UUID contactId,
 
         /** Override email address (used when contactId is null or contact has no email). */
-        String emailOverride,
+        @Size(max = 160) String emailOverride,
 
         /** Override phone number (used when contactId is null or contact has no phone). */
-        String smsOverride,
+        @Size(max = 30) String smsOverride,
 
         /** Whether to send by email. */
         boolean sendEmail,
