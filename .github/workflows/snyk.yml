@@ -13,6 +13,9 @@ on:
       - "hlm-frontend/**"
       - ".snyk"
       - ".github/workflows/snyk.yml"
+  schedule:
+    # Weekly scan every Monday at 07:00 UTC — catches new CVEs between code changes
+    - cron: "0 7 * * 1"
   workflow_dispatch:
 
 permissions:

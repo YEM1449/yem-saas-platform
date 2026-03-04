@@ -84,7 +84,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run integration tests
-        run: ./mvnw -B -ntp failsafe:integration-test
+        run: ./mvnw -B -ntp failsafe:integration-test failsafe:verify
 
       - name: Upload integration test reports
         if: always()

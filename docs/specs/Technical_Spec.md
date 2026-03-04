@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| **Version** | 1.0 |
-| **Date** | 2026-02-28 |
+| **Version** | 1.1 |
+| **Date** | 2026-03-04 |
 | **Audience** | CTO, Engineering Leads, DevOps |
-| **Status** | Draft |
+| **Status** | Updated — Phase 3 (commission, receivables, discount analytics) + Phase 4 (portal JWT, magic link) added |
 
 ---
 
@@ -626,6 +626,12 @@ Frontend proxy (`proxy.conf.json`) forwards `/auth`, `/api`, `/dashboard`, `/act
 | Outbox Messaging | `MessageController`, `OutboundDispatcherService`, `OutboxIT` | ✅ Complete |
 | Commercial Audit | `CommercialAuditController`, `CommercialAuditService`, `CommercialAuditIT` | ✅ Complete |
 | Notifications | `NotificationController`, `NotificationService` | ✅ Complete |
+| Commission Rules | `CommissionRuleController`, `CommissionRuleRepository`, changeset 024 | ✅ Complete (Phase 3) |
+| Receivables Dashboard | `ReceivablesDashboardController`, cache `receivablesDashboard` (30s) | ✅ Complete (Phase 3) |
+| Discount Analytics | `CommercialDashboardSummaryDTO` extensions, `CommercialDashboardService` | ✅ Complete (Phase 3) |
+| Prospect Source Funnel | `ContactRepository` JPQL cross-entity, `CommercialDashboardSummaryDTO` | ✅ Complete (Phase 3) |
+| Client Portal Auth | `PortalAuthController`, `PortalJwtProvider`, `PortalToken`, changeset 025 | ✅ Complete (Phase 4) |
+| Client Portal Contracts | `PortalContractController`, `PortalContractService` | ✅ Complete (Phase 4) |
 
 ### 11.2 Tech Debt & Gaps
 
@@ -640,3 +646,81 @@ Frontend proxy (`proxy.conf.json`) forwards `/auth`, `/api`, `/dashboard`, `/act
 | 7 | No lint/format tooling | Low | Add Checkstyle/Spotless (backend) + ESLint (frontend) |
 | 8 | Frontend test coverage | Medium | Add Karma/Jest unit tests for components |
 | 9 | Missing CDC modules | Varies | Prospection foncière, construction, stocks, purchases, finance, SAV |
+
+---
+
+## Appendix A — Phase 3: Technical Details (2026-03)
+
+### A.1 Commission Package
+
+- **Entity**: `CommissionRule` — fields: `id`, `tenant`, `project` (nullable; null = tenant default), `rate` (BigDecimal %), `fixedAmount` (BigDecimal), `description`.
+- **Logic**: `CommissionRuleRepository.findByTenantIdAndProjectId()` with fallback to `findByTenantIdAndProjectIsNull()`.
+- **Changeset**: 024.
+
+### A.2 Dashboard Query Budget (Phase 3)
+
+14 queries per `CommercialDashboardService.computeSummary()` call (was 11 in Phase 2):
+- 3 added: discount metrics (2 JPQL), source funnel (1 cross-entity JPQL).
+- Cache `commercialDashboard` TTL unchanged (configured in `CacheConfig`).
+
+### A.3 Receivables Dashboard
+
+- **Endpoint**: `GET /api/dashboard/receivables` — `ReceivablesDashboardController`.
+- **Computation**: Raw `[amountDue, dueDate]` rows fetched from DB; aging buckets computed in Java.
+- **Cache**: `receivablesDashboard`, 30s TTL, 200 entries — `CacheConfig.registerCustomCache()`.
+- **Data source**: Payment/contract payment tables.
+
+---
+
+## Appendix B — Phase 4: Portal Technical Details (2026-03)
+
+### B.1 Portal JWT vs CRM JWT
+
+| Aspect | CRM JWT (`JwtProvider`) | Portal JWT (`PortalJwtProvider`) |
+|--------|------------------------|----------------------------------|
+| `sub` claim | userId (UUID) | contactId (UUID) |
+| `roles` | `["ROLE_ADMIN"]` etc. | `["ROLE_PORTAL"]` |
+| `tid` | tenantId | tenantId |
+| `tv` | tokenVersion (revocation) | **Not present** |
+| TTL | `JWT_TTL_SECONDS` (default 3600) | 2 hours |
+| Beans used | `JwtEncoder` + `JwtDecoder` | Same beans |
+
+### B.2 JwtAuthenticationFilter — Portal Branch
+
+```java
+// Pseudocode — JwtAuthenticationFilter
+if (roles.contains("ROLE_PORTAL")) {
+    // sub = contactId; skip UserSecurityCacheService
+    principal = contactId;
+} else {
+    // sub = userId; validate tv against UserSecurityCacheService
+    principal = loadUserDetails(userId);
+}
+```
+
+### B.3 SecurityConfig Ordering
+
+```java
+// Order matters — more specific first
+.requestMatchers("/api/portal/auth/**").permitAll()
+.requestMatchers("/api/portal/**").hasRole("PORTAL")
+.requestMatchers("/api/**").hasAnyRole("ADMIN","MANAGER","AGENT")
+```
+
+### B.4 Magic Link Token Security
+
+- Token generation: `SecureRandom.nextBytes(32)` → `Base64.getUrlEncoder().withoutPadding().encode()`
+- Token storage: `SHA-256(rawToken)` as hex string → never the raw token
+- Column: `portal_token.token_hash` (VARCHAR, indexed)
+- Expiry: `expiresAt = now() + 48h`
+- Used flag: `usedAt` timestamp (set on verification; null = not used)
+
+### B.5 Integration Test Pattern (Portal)
+
+```java
+// In *IT tests — generate portal token directly, skip magic link flow
+String bearerToken = portalJwtProvider.generate(contactId, tenantId);
+mockMvc.perform(get("/api/portal/contracts")
+    .header("Authorization", "Bearer " + bearerToken))
+    .andExpect(status().isOk());
+```
