@@ -1,5 +1,10 @@
 name: Dependency Review
 
+# Requires GitHub Advanced Security (GHAS) + Dependency Graph enabled.
+# - Public repos: free — enable at Settings > Security > Code scanning.
+# - Private repos: requires GHAS license — contact GitHub sales.
+# Until GHAS is enabled, the job runs with continue-on-error: true so PRs are not blocked.
+
 on:
   pull_request:
     paths:
@@ -19,6 +24,9 @@ jobs:
   dependency-review:
     name: Review Dependency Changes
     runs-on: ubuntu-latest
+    # continue-on-error: GHAS + Dependency Graph must be enabled in repo settings.
+    # Remove this line once GitHub Advanced Security is active on this repository.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: read

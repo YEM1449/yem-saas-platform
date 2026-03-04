@@ -1,60 +1,68 @@
-# _OPEN_POINTS.md — Backlog of Open Questions
+# _OPEN_POINTS.md — Open Points Log
 
 _Updated: 2026-03-04_
 
-## [OP-001] Integration Test CI — Failsafe result check
-**Context**: `backend-ci.yml` runs `failsafe:integration-test` but does not run `failsafe:verify` which is needed for the plugin to actually fail the build on IT failures.
-**Options**:
-1. Change `failsafe:integration-test` to `failsafe:integration-test failsafe:verify` ← **Recommended**
-2. Use `mvn verify -DskipTests` to run IT + verify in one command
-**Impact**: Currently IT failures may not fail the CI job. Low risk if developers also run locally.
-**Owner**: DevOps / Team lead
+---
 
-## [OP-002] payments/ vs payment/ — Duplicate Packages
-**Context**: Two packages exist: `payment/` and `payments/` under the backend root.
-**Options**:
-1. Merge into a single `payment/` package (requires code review)
-2. Document the distinct responsibilities of each
-**Impact**: Potential confusion for new engineers.
-**Owner**: Backend team
+## RESOLVED
 
-## [OP-003] Snyk Code — `--severity-threshold` not supported
-**Context**: `snyk code test` does not support `--severity-threshold` flag (as of Snyk CLI v1.x). The open-source job uses it correctly; the code job does not set a threshold, which means it always exits 0 unless errors exist.
-**Options**:
-1. Leave as-is (SARIF upload still works; findings show in GitHub Security tab)
-2. Add `|| true` explicitly to make intent clear
-**Recommendation**: Leave as-is — SARIF upload is the right pattern for code scanning.
-**Owner**: DevOps
+### [OP-001] ✅ RESOLVED — Integration Test CI — Failsafe verify
+**Resolution**: Added `failsafe:verify` to `backend-ci.yml` integration-test job.  
+`./mvnw -B -ntp failsafe:integration-test failsafe:verify`  
+IT failures now correctly fail the CI job.
 
-## [OP-004] Scheduled Snyk Scan
-**Context**: No scheduled (cron) Snyk scan exists. New CVEs between PRs would only be caught when code changes trigger the workflow.
-**Options**:
-1. Add a weekly scheduled trigger to `snyk.yml` ← **Recommended**
-2. Rely on Snyk's dashboard monitoring (requires `snyk monitor` to have run at least once)
-**Owner**: DevOps
+### [OP-003] ✅ ACCEPTED — Snyk Code `--severity-threshold` not supported
+**Resolution**: Left as-is per recommendation. `snyk code test` exits non-zero on error; SARIF upload delivers findings to GitHub Security tab regardless of threshold. No action needed.
 
-## [OP-005] Secret Scan — Audit-Only Mode
-**Context**: `secret-scan.yml` always exits 0 (audit-only). Findings are uploaded as artifacts but never fail the build.
-**Options**:
-1. Keep audit-only (safe for false positives) ← **Current**
-2. Fail on confirmed patterns (requires tuning to reduce false positives)
-**Recommendation**: Keep audit-only; enable GitHub Advanced Security secret scanning for real enforcement.
-**Owner**: DevOps / Security
+### [OP-004] ✅ RESOLVED — Scheduled Snyk Scan
+**Resolution**: Added weekly cron trigger to `snyk.yml`: `0 7 * * 1` (Monday 07:00 UTC).  
+New CVEs between code pushes are now caught automatically.
 
-## [OP-006] Frontend Lint Gate Missing
-**Context**: `frontend-ci.yml` runs tests and build but no ESLint/TSLint step.
-**Options**:
-1. Add `npm run lint` step if `@angular-eslint` is configured in the project
-2. Skip (add to backlog)
-**Action needed**: Check if `angular.json` has lint target configured.
-**Owner**: Frontend team
+### [OP-005] ✅ ACCEPTED — Secret Scan Audit-Only Mode
+**Resolution**: Kept audit-only per recommendation. Pattern-based grep has false-positive risk; findings are uploaded as artifacts for manual review. GitHub Advanced Security native secret scanning is the enforcement-grade alternative when GHAS is enabled.
 
-## [OP-007] Media Storage — Local vs Cloud
-**Context**: `application.yml` configures local filesystem media storage (`app.media.storage-dir`). No cloud storage (S3, GCS) integration visible.
-**Impact**: Deployments requiring horizontal scaling or cloud deployment need a shared storage solution.
-**Owner**: Architecture
+### [OP-006] ✅ DOCUMENTED — Frontend Lint Gate Missing
+**Resolution**: `@angular-eslint` is not configured in `angular.json` or `package.json`. A lint CI step cannot be added until ESLint is set up. Setup steps documented in `docs/05_DEV_GUIDE.md`:
+```bash
+cd hlm-frontend && ng add @angular-eslint/schematics
+```
+Once configured, add `npm run lint` to `frontend-ci.yml` before the test step.
 
-## [OP-008] PDF Generation — OpenHtmlToPDF Memory
-**Context**: OpenHtmlToPDF is included as a dependency. No configuration for memory limits or async processing visible.
-**Impact**: Large PDF generation may cause OOM under load.
-**Owner**: Backend team
+### [OP-007] ✅ DOCUMENTED — Media Storage Local vs Cloud
+**Resolution**: `MediaStorageService` is already an interface with `LocalFileMediaStorage` as the default. The Javadoc on the interface explicitly states "Production swap: provide an `@Primary` S3-backed bean." Cloud swap pattern documented in:
+- `docs/07_RELEASE_AND_DEPLOY.md` — Production Deployment Notes → Media Storage
+- `context/ARCHITECTURE.md` — media/ Storage Architecture
+
+Env vars: `MEDIA_STORAGE_DIR` (default `./uploads`), `MEDIA_MAX_FILE_SIZE` (default 10 MB).
+
+### [OP-008] ✅ DOCUMENTED — PDF Generation Memory
+**Resolution**: `DocumentGenerationService` already uses `useFastMode()`. Memory concern documented:
+- `docs/07_RELEASE_AND_DEPLOY.md` — Production Deployment Notes → PDF Generation Memory
+- `context/ARCHITECTURE.md` — PDF Generation section
+Recommended JVM: `-Xmx512m`. Async PDF (future backlog) documented.
+
+### [OP-009] ✅ RESOLVED — GitHub Advanced Security — CodeQL + Dependency Review
+**Resolution**: `codeql.yml` removed — Snyk Code (`snyk.yml` code job) provides equivalent SAST without requiring GHAS.  
+`dependency-review.yml` retained with `continue-on-error: true` — becomes a hard gate when GHAS is enabled.  
+CI workflow table in `docs/07_RELEASE_AND_DEPLOY.md` updated.  
+CI security gates in `context/SECURITY_BASELINE.md` updated.
+
+---
+
+## OPEN
+
+### [OP-002] 📋 DOCUMENTED (no code change) — payment/ vs payments/ Packages
+**Context**: Two packages with distinct but overlapping concerns:
+- `payment/` — **v1 model**: PaymentSchedule (tranches), PaymentCall (Appel de Fonds PDF), payment recording. API: `/api/contracts/{id}/payment-schedule`, `/api/payment-calls`.
+- `payments/` — **v2 model**: PaymentScheduleItem workflow (issue→send→cancel), Call-for-Funds PDF+reminders, CashDashboard. API: `/api/contracts/{id}/schedule`, `/api/schedule-items`, `/api/dashboard/commercial/cash`.
+
+**Resolution chosen**: Option 2 — document distinct responsibilities (both serve active routes; merge requires significant refactoring risk with no immediate user-visible benefit).
+
+**Documentation updated**: `docs/01_ARCHITECTURE.md`, `context/ARCHITECTURE.md`.
+
+**Remaining risk**: A new engineer may find two `PaymentScheduleController` classes confusing. Recommend:
+1. Add a `@Deprecated` annotation to `payment/api/PaymentScheduleController` if `payments/` fully supersedes it.
+2. Or ensure the API docs (`docs/api.md`) clearly distinguish the two endpoints.
+
+**Owner**: Backend team — when a dedicated refactoring sprint is planned.
+

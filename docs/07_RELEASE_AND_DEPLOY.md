@@ -10,10 +10,13 @@ All workflows are in [`.github/workflows/`](../.github/workflows/). Each is path
 |----------|---------|------|------|
 | `backend-ci.yml` | push/PR on `hlm-backend/**` | Unit tests → Package → Integration tests | Blocks merge on failure |
 | `frontend-ci.yml` | push/PR on `hlm-frontend/**` | Tests (headless) → Build | Blocks merge on failure |
-| `snyk.yml` | push/PR (code changes) | OSS dep scan + Code SAST | Blocks on HIGH+ vulns (if SNYK_TOKEN set) |
-| `dependency-review.yml` | PR on pom.xml/package.json | GitHub dep review | Blocks on HIGH severity |
-| `codeql.yml` | push/PR on backend/frontend | CodeQL SAST (Java + TypeScript) | Posts to Security tab |
+| `snyk.yml` | push/PR + weekly Monday 07:00 UTC | OSS dep scan + Code SAST | Blocks on HIGH+ vulns (if SNYK_TOKEN set) |
+| `dependency-review.yml` | PR on pom.xml/package.json | GitHub dep review | `continue-on-error` (requires GHAS) |
 | `secret-scan.yml` | push/PR on backend/frontend | Pattern-based secret audit | Audit-only (never fails build) |
+
+> **Note — CodeQL removed**: `codeql.yml` was removed because GitHub Advanced Security (GHAS) is not enabled on this repository. Snyk Code (in `snyk.yml`) provides equivalent SAST coverage without requiring GHAS. To re-add CodeQL, enable GHAS in repository settings, then restore the workflow.
+>
+> **Dependency Review**: `dependency-review.yml` is kept with `continue-on-error: true`. It becomes a hard gate once GHAS + Dependency Graph are enabled.
 
 ### Backend CI (`backend-ci.yml`)
 
@@ -102,7 +105,6 @@ Required secrets: `SNYK_TOKEN` (required), `SNYK_ORG` (optional).
 | `actions/setup-node@v4` | ✅ Pinned major |
 | `actions/upload-artifact@v4` | ✅ Pinned major |
 | `actions/dependency-review-action@v4` | ✅ Pinned major |
-| `github/codeql-action/init@v3` | ✅ Pinned major |
 | Snyk CLI pinned to major (`snyk@1`) | ✅ Present |
 | `timeout-minutes` on all jobs | ✅ Present |
 
@@ -113,7 +115,6 @@ Required secrets: `SNYK_TOKEN` (required), `SNYK_ORG` (optional).
 | backend-ci (unit + IT) | Maven: `actions/setup-java cache: maven` |
 | frontend-ci | npm: `actions/setup-node cache: npm` |
 | snyk (open-source job) | Maven + npm (both cached) |
-| codeql (java-kotlin) | Maven |
 
 ## Required Secrets
 
@@ -134,6 +135,51 @@ Required secrets: `SNYK_TOKEN` (required), `SNYK_ORG` (optional).
 4. Build the Angular bundle: `cd hlm-frontend && npm run build`.
 5. Deploy JAR + static assets to your target environment.
 6. Liquibase runs migrations automatically on backend startup.
+
+## Production Deployment Notes
+
+### Media Storage (OP-007)
+
+The `media/` package uses `LocalFileMediaStorage` by default (files written to `MEDIA_STORAGE_DIR`, default `./uploads`). This is **not suitable for horizontal scaling or cloud deployments**.
+
+**Cloud swap**: `MediaStorageService` is an interface. Provide a `@Primary @Bean` implementing it:
+
+```java
+// Example: swap to S3 without touching existing code
+@Primary
+@Bean
+public MediaStorageService s3MediaStorageService(AmazonS3 s3, ...) {
+    return new S3MediaStorageService(s3, bucketName);
+}
+```
+
+| Deployment | `MEDIA_STORAGE_DIR` | Notes |
+|------------|---------------------|-------|
+| Single-node / dev | `./uploads` (default) | Files on local disk |
+| Docker | Mount a volume | `MEDIA_STORAGE_DIR=/data/uploads` |
+| Cloud (S3/GCS) | N/A — swap bean | Implement `MediaStorageService` for your provider |
+
+Required env vars for local storage:
+```bash
+MEDIA_STORAGE_DIR=/var/hlm/uploads   # writable directory for the JVM process
+MEDIA_MAX_FILE_SIZE=10485760         # bytes; default 10 MB
+```
+
+### PDF Generation Memory (OP-008)
+
+PDF generation (`DocumentGenerationService`) uses OpenHtmlToPDF with `PdfRendererBuilder.useFastMode()`. Rendering is **synchronous and in-memory** (`ByteArrayOutputStream`). Each PDF call holds the full document bytes in heap during rendering.
+
+**Recommended JVM settings for production** (add to startup script or Dockerfile):
+```bash
+JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
+# Increase Xmx if PDF generation causes OOM (e.g., large contracts with many pages)
+```
+
+**Observable symptoms of PDF OOM**:
+- `java.lang.OutOfMemoryError: Java heap space` in logs during `POST .../pdf`
+- Long GC pauses before PDF endpoint responses
+
+**Future consideration**: For high-traffic PDF generation, offload to an async worker (outbox pattern: queue a PDF job, return job ID, deliver via email when ready).
 
 ## .snyk Policy File
 

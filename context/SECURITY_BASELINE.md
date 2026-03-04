@@ -77,13 +77,14 @@ _Updated: 2026-03-04_
 - GitHub Actions: `SNYK_TOKEN`, `SNYK_ORG` as repository secrets.
 
 ## CI Security Gates
-| Gate | Tool | Threshold |
-|------|------|-----------|
-| SAST (Java + TS) | CodeQL | security-and-quality queries |
-| SAST (Code) | Snyk Code | SARIF → GitHub Security tab |
-| OSS Dependencies | Snyk OSS | Fail on HIGH+ |
-| Dependency Review | GitHub dep-review | Fail on HIGH+ (PRs) |
-| Secret Patterns | grep-based (audit-only) | Warning only |
+| Gate | Tool | Threshold | Status |
+|------|------|-----------|--------|
+| SAST (Java + TS) | Snyk Code (`snyk.yml` code job) | SARIF → GitHub Security tab | ✅ Active |
+| OSS Dependencies | Snyk OSS (`snyk.yml` open-source job) | Fail on HIGH+ | ✅ Active |
+| OSS Schedule | Snyk OSS (weekly cron) | Fail on HIGH+ | ✅ Active |
+| Dependency Review | GitHub dep-review (`dependency-review.yml`) | HIGH+ — `continue-on-error` until GHAS enabled | ⚠️ Non-blocking |
+| Secret Patterns | grep-based (`secret-scan.yml`) | Audit-only, warning only | ✅ Active |
+| CodeQL SAST | Removed — requires GHAS (use Snyk Code instead) | — | ❌ Removed |
 
 ## Structured Logging
 - Logstash Logback Encoder: JSON-formatted logs.

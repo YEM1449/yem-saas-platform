@@ -92,6 +92,29 @@ GET /api/portal/auth/verify?token=X
 - Range: 001–027+
 - Rule: never edit applied changesets; always add new numbered files
 
+## payment/ vs payments/ — Two Coexisting Packages
+
+| Package | Purpose | Key API Paths |
+|---------|---------|---------------|
+| `payment/` | **v1 model**: PaymentSchedule (tranches), PaymentCall (Appel de Fonds PDF), payment recording | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
+| `payments/` | **v2 model**: PaymentScheduleItem (richer workflow: issue→send→cancel), Call-for-Funds PDF+reminders, CashDashboard | `/api/contracts/{id}/schedule`, `/api/schedule-items/{id}`, `/api/dashboard/commercial/cash` |
+
+Both serve active routes. `payments/` is the newer, more complete implementation. No merge is planned — they serve different workflow models that currently coexist.
+
+## media/ — Storage Architecture
+
+- `MediaStorageService` interface + `LocalFileMediaStorage` default (writes to `MEDIA_STORAGE_DIR`, default `./uploads`)
+- Cloud swap: provide `@Primary @Bean` implementing `MediaStorageService` (no other code changes needed)
+- Env vars: `MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE` (default 10 MB)
+- **Not suitable for multi-node deployments** without shared storage or cloud swap
+
+## PDF Generation
+
+- `DocumentGenerationService`: Thymeleaf → HTML → `PdfRendererBuilder` (OpenHtmlToPDF, fast mode) → `ByteArrayOutputStream`
+- Synchronous, in-memory — holds full PDF bytes in heap during render
+- Recommended JVM: `-Xmx512m` minimum; increase if OOM observed on large documents
+- Async option (future): queue PDF jobs in outbox, email result when ready
+
 ## Package Dependency Directions
 ```
 Controller (api/) → depends on → Service

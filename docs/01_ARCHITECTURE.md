@@ -131,9 +131,29 @@ com.yem.hlm.backend/
 │   ├── repo/           PortalTokenRepository
 │   └── service/        PortalContractService
 │
-├── payment/            Payment tracking
-├── payments/           Payment services [OPEN POINT OP-002: may merge with payment/]
-├── media/              File upload/download
+├── payment/            Payment Schedule v1: tranches, PaymentCall (Appel de Fonds PDF), payment recording
+│   ├── api/            PaymentScheduleController (/api/contracts/{id}/payment-schedule)
+│   │                   PaymentCallController (/api/payment-calls, /api/payment-calls/{id}/payments)
+│   ├── domain/         PaymentSchedule, PaymentTranche, PaymentCall, Payment, TrancheStatus
+│   └── service/        PaymentScheduleService, PaymentCallService, PaymentCallDocumentService
+│                       PaymentOverdueScheduler (cron: marks overdue calls)
+│
+├── payments/           Payment Schedule v2: workflow items (issue/send/cancel), Call-for-Funds PDF
+│   │                   + reminders + Cash Dashboard. Richer than payment/ — newer implementation.
+│   ├── api/            PaymentScheduleController (/api/contracts/{id}/schedule, /api/schedule-items)
+│   │                   CashDashboardController (/api/dashboard/commercial/cash)
+│   ├── domain/         PaymentScheduleItem, SchedulePayment, ScheduleItemReminder, PaymentScheduleStatus
+│   └── service/        PaymentScheduleService, CallForFundsWorkflowService, CallForFundsPdfService
+│                       CashDashboardService, ReminderService, ReminderScheduler
+│   NOTE: Both payment/ and payments/ coexist. payment/ is the v1 tranche model; payments/ is the
+│         v2 item workflow model with reminders. Both serve active API routes.
+│
+├── media/              Property file upload/download (local filesystem; cloud-swap ready)
+│   ├── api/            PropertyMediaController
+│   ├── service/        MediaStorageService (interface) — LocalFileMediaStorage (default)
+│   │                   Cloud swap: provide @Primary bean implementing MediaStorageService
+│   └── config/         MEDIA_STORAGE_DIR (env var, default: ./uploads), max 10 MB per file
+│
 ├── reminder/           Scheduled reminders (overdue, deposit warnings)
 ├── audit/              AuditLog entity + JPA listener
 └── common/             ErrorResponse, ErrorCode, GlobalExceptionHandler, shared DTOs

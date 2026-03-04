@@ -97,6 +97,21 @@ cd hlm-frontend && npm test
 cd hlm-frontend && npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --progress=false
 ```
 
+### Frontend Lint (not yet configured)
+
+`@angular-eslint` is not currently configured. When it is added, the lint command will be:
+```bash
+cd hlm-frontend && npm run lint
+```
+
+**To add ESLint** (when ready):
+```bash
+cd hlm-frontend
+ng add @angular-eslint/schematics
+# This generates .eslintrc.json and adds a "lint" target to angular.json
+```
+After configuring ESLint, add `npm run lint` before the test step in `frontend-ci.yml`.
+
 ## Adding a New Backend Feature
 
 1. **New entity** → add Liquibase changeset (`NNN_description.yaml`) in `db/changelog/`. Never edit applied changesets.
