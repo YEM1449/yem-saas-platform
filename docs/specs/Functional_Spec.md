@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| **Version** | 1.0 |
-| **Date** | 2026-02-28 |
+| **Version** | 1.1 |
+| **Date** | 2026-03-04 |
 | **Scope** | Multi-tenant CRM for real-estate promotion & construction |
 | **Client** | HLM's Corp |
-| **Status** | Draft — Pending stakeholder review |
+| **Status** | Updated — Phase 3 (Commercial Intelligence) + Phase 4 (Client Portal) added |
 | **Classification** | Confidential |
 
 ---
@@ -34,6 +34,11 @@ CRM-HLM is a multi-tenant SaaS platform designed for real-estate promotion and c
 | 9 | Outbound Messaging (Email/SMS outbox, async dispatch) | ✅ Implemented |
 | 10 | Commercial Audit Trail (immutable event log) | ✅ Implemented |
 | 11 | In-App Notifications (deposit lifecycle) | ✅ Implemented |
+| 12 | Commission Rules (project-specific + tenant default, formula-based) | ✅ Implemented (Phase 3) |
+| 13 | Receivables Dashboard (aging buckets: current/30/60/90+ days) | ✅ Implemented (Phase 3) |
+| 14 | Discount Analytics (avg discount %, max discount %, by agent) | ✅ Implemented (Phase 3) |
+| 15 | Prospect Source Funnel (by source: organic, referral, ad, etc.) | ✅ Implemented (Phase 3) |
+| 16 | Client-Facing Portal (magic link auth, ROLE_PORTAL, contract view) | ✅ Implemented (Phase 4) |
 
 ### 2.2 Out-of-Scope (CDC Planned, Not Yet Implemented)
 
@@ -99,6 +104,13 @@ CRM-HLM is a multi-tenant SaaS platform designed for real-estate promotion and c
 | **Commercial Audit**: View | ✅ | ✅ | ❌ |
 | **Notifications**: View / Mark Read | ✅ | ✅ | ✅ |
 | **Property Dashboard (legacy)** | ✅ | ✅ | ❌ |
+| **Commission Rules**: Create / Update / Delete | ✅ | ✅ | ❌ |
+| **Commission Rules**: View / List | ✅ | ✅ | ✅ |
+| **Receivables Dashboard**: View | ✅ | ✅ | ❌ |
+| **Discount Analytics**: View | ✅ | ✅ | ❌ |
+| **Prospect Source Funnel**: View | ✅ | ✅ | ❌ |
+| **Portal**: Authenticate via magic link | ✅ (portal client) | ✅ (portal client) | ✅ (portal client) |
+| **Portal**: View own contracts | ✅ (portal client) | ✅ (portal client) | ✅ (portal client) |
 
 ---
 
@@ -644,3 +656,105 @@ Then the notification is marked as read
 5. **Administrative Workflow MVP** — Authorization tracking, document archiving, regulatory alerts.
 6. **CSV Import/Export** — Bulk data import for properties and contacts.
 7. **Internationalization (i18n)** — Consistent French UI with English API messages.
+
+---
+
+## Appendix A — Phase 3: Commercial Intelligence (2026-03)
+
+### A.1 Commission Rules
+
+**Purpose**: Define how commission is calculated per contract. Rules can be tenant-wide (default) or project-specific (project rule wins).
+
+**Formula**: `commission = agreedPrice × (rate / 100) + fixedAmount`
+
+**User Stories**:
+- US-COMM-01: As an Admin/Manager, I can create a commission rule for a project or as tenant default.
+- US-COMM-02: As any CRM user, I can view commission rules.
+- US-COMM-03: As an Admin/Manager, I can update or delete a commission rule.
+
+**Business Rules**:
+- Project-specific rule wins over tenant default.
+- If no rule is found, commission is 0.
+- Formula fields: `rate` (percentage, nullable), `fixedAmount` (currency, nullable).
+
+**Package**: `commission/`; Liquibase changeset 024.
+
+### A.2 Receivables Dashboard
+
+**Purpose**: Track outstanding payment receivables with aging buckets.
+
+**Endpoint**: `GET /api/dashboard/receivables`
+
+**Aging Buckets**:
+- Current (not yet due)
+- 1–30 days overdue
+- 31–60 days overdue
+- 61–90 days overdue
+- 90+ days overdue
+
+**RBAC**: ADMIN + MANAGER only.
+
+**Caching**: Cache name `receivablesDashboard`, 30-second TTL, 200 entries.
+
+### A.3 Discount Analytics
+
+**Purpose**: Understand pricing discounts across agents and contracts.
+
+**Fields added to CommercialDashboardSummaryDTO**:
+- `avgDiscountPercent`: average discount across all signed contracts.
+- `maxDiscountPercent`: maximum discount observed.
+- `discountByAgent[]`: per-agent breakdown.
+
+**Prerequisite**: `SaleContract.listPrice` must be set for discount to be computable.
+
+### A.4 Prospect Source Funnel
+
+**Purpose**: Analyze where prospects originate (organic, referral, advertisement, social, other).
+
+**Field**: `prospectsBySource[]` in `CommercialDashboardSummaryDTO`.
+
+**Data source**: `ProspectDetail.source` (set at prospect creation/update).
+
+---
+
+## Appendix B — Phase 4: Client-Facing Portal (2026-03)
+
+### B.1 Overview
+
+A separate authentication system allows property buyers (contacts) to log into a read-only portal to view their contracts. The portal uses a separate JWT (`ROLE_PORTAL`) and does not overlap with CRM user authentication.
+
+### B.2 Magic Link Authentication Flow
+
+1. Client requests a magic link: `POST /api/portal/auth/magic-link` with their email.
+2. System generates a 32-byte SecureRandom token (URL-safe base64), stores its SHA-256 hash in `portal_token` table (48h TTL, one-time use).
+3. System sends the magic link via `EmailSender.send()`.
+4. Client clicks the link: `GET /api/portal/auth/verify?token=<raw>`.
+5. System verifies SHA-256(raw) against stored hash; marks token used; returns Portal JWT.
+6. Portal JWT: `sub`=contactId, `roles`=["ROLE_PORTAL"], `tid`=tenantId, TTL=2h.
+
+**Security notes**:
+- Raw token never stored; only the SHA-256 hex hash is persisted.
+- Token is single-use; clicking twice → 401.
+- Token expires after 48h.
+- `EmailSender.send()` called directly (not via outbox — no `User` FK for the public endpoint).
+
+**Liquibase**: changeset 025 (`portal_token` table).
+
+### B.3 Portal Contract View
+
+**Endpoint**: `GET /api/portal/contracts`
+
+**RBAC**: `hasRole("PORTAL")` only. Returns only contracts where `contact.id = contactId` from portal JWT. Cross-contact access → 404.
+
+**Package**: `portal/`; `PortalContractService` reads contactId from `SecurityContextHolder.getAuthentication().getPrincipal()`.
+
+### B.4 Frontend Portal Routes
+
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/portal/login` | Public | Magic link request form |
+| `/portal/verify` | Public | Token verification, stores JWT |
+| `/portal/contracts` | `ROLE_PORTAL` | Contract list for the buyer |
+
+**Storage**: `hlm_portal_token` in `localStorage`.
+**Interceptor**: `portalInterceptor` attaches JWT only to `/api/portal/` requests. Both interceptors registered in `app.config.ts`.

@@ -2,6 +2,7 @@ package com.yem.hlm.backend.portal.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * Request body for POST /api/portal/auth/request-link.
@@ -10,6 +11,6 @@ import jakarta.validation.constraints.NotBlank;
  * @param tenantKey the tenant's key (e.g. "acme")
  */
 public record MagicLinkRequest(
-        @NotBlank @Email String email,
-        @NotBlank String tenantKey
+        @NotBlank @Email @Size(max = 160) String email,
+        @NotBlank @Size(max = 80) String tenantKey
 ) {}

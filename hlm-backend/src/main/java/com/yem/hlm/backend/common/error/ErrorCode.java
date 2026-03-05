@@ -72,6 +72,9 @@ public enum ErrorCode {
     // Portal errors (401)
     PORTAL_TOKEN_INVALID,       // 401 — magic link token invalid, expired, or already used
 
+    // Rate limiting (429)
+    RATE_LIMIT_EXCEEDED,        // 429 — too many requests for this operation
+
     // Server errors (500)
     INTERNAL_ERROR
 }

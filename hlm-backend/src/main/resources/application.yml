@@ -3,6 +3,13 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/hlm}
     username: ${DB_USER:hlm_user}
     password: ${DB_PASSWORD:hlm_pwd}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -78,3 +85,7 @@ app:
     max-file-size: ${MEDIA_MAX_FILE_SIZE:10485760}
     # Comma-separated list of allowed MIME types
     allowed-types: ${MEDIA_ALLOWED_TYPES:image/jpeg,image/png,image/webp,application/pdf}
+
+  # CORS: comma-separated list of allowed origins (empty = deny all, suitable for prod lock-down)
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}

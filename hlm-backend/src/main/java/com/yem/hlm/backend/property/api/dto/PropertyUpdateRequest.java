@@ -8,15 +8,15 @@ import java.util.UUID;
 
 public record PropertyUpdateRequest(
         @Size(max = 200) String title,
-        String description,
-        String notes,
+        @Size(max = 5000) String description,
+        @Size(max = 5000) String notes,
         BigDecimal price,
         PropertyStatus status,
-        String address,
-        String city,
-        String region,
-        String postalCode,
-        String legalStatus,
+        @Size(max = 255) String address,
+        @Size(max = 100) String city,
+        @Size(max = 100) String region,
+        @Size(max = 20) String postalCode,
+        @Size(max = 100) String legalStatus,
         // Type-specific fields (partial update — null = no change)
         BigDecimal surfaceAreaSqm,
         BigDecimal landAreaSqm,
@@ -28,7 +28,7 @@ public record PropertyUpdateRequest(
         Boolean hasPool,
         Integer buildingYear,
         Integer floorNumber,
-        String zoning,
+        @Size(max = 100) String zoning,
         Boolean isServiced,
         // Listing + project/building fields
         Boolean listedForSale,

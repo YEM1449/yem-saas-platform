@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.common.error;
 
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
+import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
@@ -611,6 +612,24 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // ========== 429 Too Many Requests ==========
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+            RateLimitExceededException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                429,
+                "Too Many Requests",
+                ErrorCode.RATE_LIMIT_EXCEEDED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        log.warn("Rate limit exceeded on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(429).body(error);
     }
 
     // ========== ResponseStatusException (pass-through) ==========
