@@ -1,6 +1,6 @@
 # SECURITY_BASELINE.md — Security Configuration Reference
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ## Authentication
 
@@ -82,7 +82,7 @@ _Updated: 2026-03-04_
 | SAST (Java + TS) | Snyk Code (`snyk.yml` code job) | SARIF → GitHub Security tab | ✅ Active |
 | OSS Dependencies | Snyk OSS (`snyk.yml` open-source job) | Fail on HIGH+ | ✅ Active |
 | OSS Schedule | Snyk OSS (weekly cron) | Fail on HIGH+ | ✅ Active |
-| Dependency Review | GitHub dep-review (`dependency-review.yml`) | HIGH+ — `continue-on-error` until GHAS enabled | ⚠️ Non-blocking |
+| Dependency Review | Removed — requires GHAS; replaced by Snyk OSS (`snyk.yml` open-source job) | Fail on HIGH+ via Snyk | ❌ Removed |
 | Secret Patterns | grep-based (`secret-scan.yml`) | Audit-only, warning only | ✅ Active |
 | CodeQL SAST | Removed — requires GHAS (use Snyk Code instead) | — | ❌ Removed |
 

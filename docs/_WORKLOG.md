@@ -50,9 +50,9 @@ _Updated: 2026-03-04_
 
 **OP-008** — Investigated: `DocumentGenerationService.convertToPdf()` is synchronous + in-memory with `useFastMode()`. JVM tuning recommendations documented in `docs/07_RELEASE_AND_DEPLOY.md` and `context/ARCHITECTURE.md`.
 
-**OP-009** — Removed `codeql.yml` (Snyk Code in `snyk.yml` covers SAST without GHAS). Kept `dependency-review.yml` with `continue-on-error: true`. Updated `docs/07_RELEASE_AND_DEPLOY.md` and `context/SECURITY_BASELINE.md`.
+**OP-009** — Removed `codeql.yml` and `dependency-review.yml` (GHAS not enabled). Snyk Code + Snyk OSS in `snyk.yml` cover SAST and dependency vulnerability scanning. Updated `docs/07_RELEASE_AND_DEPLOY.md` and `context/SECURITY_BASELINE.md`.
 
-**Test run**: 46 tests, 0 failures. All 5 remaining workflow YAMLs valid.
+**Test run**: 46 tests, 0 failures. All 4 remaining workflow YAMLs valid.
 
 **Files changed**:
 - `.github/workflows/codeql.yml` — REMOVED

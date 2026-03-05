@@ -1,6 +1,6 @@
 # _OPEN_POINTS.md — Open Points Log
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ---
 
@@ -43,7 +43,7 @@ Recommended JVM: `-Xmx512m`. Async PDF (future backlog) documented.
 
 ### [OP-009] ✅ RESOLVED — GitHub Advanced Security — CodeQL + Dependency Review
 **Resolution**: `codeql.yml` removed — Snyk Code (`snyk.yml` code job) provides equivalent SAST without requiring GHAS.  
-`dependency-review.yml` retained with `continue-on-error: true` — becomes a hard gate when GHAS is enabled.  
+`dependency-review.yml` removed — the action cannot run without GHAS on this private repository and only consumed CI minutes with `continue-on-error: true`. Snyk OSS (`snyk.yml` open-source job) covers dependency vulnerability scanning.  
 CI workflow table in `docs/07_RELEASE_AND_DEPLOY.md` updated.  
 CI security gates in `context/SECURITY_BASELINE.md` updated.
 
@@ -65,4 +65,3 @@ CI security gates in `context/SECURITY_BASELINE.md` updated.
 2. Or ensure the API docs (`docs/api.md`) clearly distinguish the two endpoints.
 
 **Owner**: Backend team — when a dedicated refactoring sprint is planned.
-

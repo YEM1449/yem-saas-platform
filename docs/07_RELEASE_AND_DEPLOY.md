@@ -11,12 +11,12 @@ All workflows are in [`.github/workflows/`](../.github/workflows/). Each is path
 | `backend-ci.yml` | push/PR on `hlm-backend/**` | Unit tests → Package → Integration tests | Blocks merge on failure |
 | `frontend-ci.yml` | push/PR on `hlm-frontend/**` | Tests (headless) → Build | Blocks merge on failure |
 | `snyk.yml` | push/PR + weekly Monday 07:00 UTC | OSS dep scan + Code SAST | Blocks on HIGH+ vulns (if SNYK_TOKEN set) |
-| `dependency-review.yml` | PR on pom.xml/package.json | GitHub dep review | `continue-on-error` (requires GHAS) |
 | `secret-scan.yml` | push/PR on backend/frontend | Pattern-based secret audit | Audit-only (never fails build) |
 
-> **Note — CodeQL removed**: `codeql.yml` was removed because GitHub Advanced Security (GHAS) is not enabled on this repository. Snyk Code (in `snyk.yml`) provides equivalent SAST coverage without requiring GHAS. To re-add CodeQL, enable GHAS in repository settings, then restore the workflow.
->
-> **Dependency Review**: `dependency-review.yml` is kept with `continue-on-error: true`. It becomes a hard gate once GHAS + Dependency Graph are enabled.
+> **Note — GHAS workflows removed**: Both `codeql.yml` and `dependency-review.yml` were removed because GitHub Advanced Security (GHAS) is not enabled on this private repository and cannot run without it.
+> - **SAST replacement**: Snyk Code (`snyk.yml` code job) provides equivalent SAST coverage.
+> - **Dependency review replacement**: Snyk OSS (`snyk.yml` open-source job) scans `pom.xml` and `package.json` for known vulnerabilities on every push/PR.
+> - **To restore**: Enable GHAS in repository Settings → Security → Code scanning, then restore the removed workflows from git history.
 
 ### Backend CI (`backend-ci.yml`)
 
@@ -70,19 +70,13 @@ Job: missing-token
 
 Required secrets: `SNYK_TOKEN` (required), `SNYK_ORG` (optional).
 
-> [OPEN POINT OP-004] No scheduled cron scan. New CVEs between code changes would not be caught automatically. Consider a weekly schedule trigger.
+Weekly Snyk cron scan is enabled: Monday 07:00 UTC.
 
-### Dependency Review (`dependency-review.yml`)
+### Removed GHAS Workflows
 
-- Runs on PRs that modify `pom.xml`, `package.json`, or `package-lock.json`.
-- Uses `actions/dependency-review-action@v4`.
-- Fails on HIGH severity dependency additions.
-
-### CodeQL (`codeql.yml`)
-
-- Matrix: `java-kotlin` + `javascript-typescript`
-- Runs `security-and-quality` query suite
-- Results posted to GitHub Security → Code scanning alerts
+- `dependency-review.yml` removed (requires GHAS + Dependency Graph on private repositories).
+- `codeql.yml` removed (requires GHAS on private repositories).
+- Current replacements: Snyk OSS + Snyk Code in `snyk.yml`.
 
 ### Secret Scan (`secret-scan.yml`)
 
@@ -95,16 +89,13 @@ Required secrets: `SNYK_TOKEN` (required), `SNYK_ORG` (optional).
 | Control | Status |
 |---------|--------|
 | Workflow-level `permissions: contents: read` | ✅ All workflows |
-| Job-level `security-events: write` (CodeQL, Snyk code) | ✅ Scoped per-job |
-| `actions: read` (CodeQL) | ✅ Scoped per-job |
-| `pull-requests: read` (dep review) | ✅ Scoped per-job |
+| Job-level `security-events: write` (Snyk Code SARIF upload) | ✅ Scoped per-job |
 | Snyk token guard (`if: secrets.SNYK_TOKEN != ''`) | ✅ Present |
 | `concurrency` with `cancel-in-progress: true` | ✅ All workflows |
 | `actions/checkout@v4` | ✅ Pinned major |
 | `actions/setup-java@v4` | ✅ Pinned major |
 | `actions/setup-node@v4` | ✅ Pinned major |
 | `actions/upload-artifact@v4` | ✅ Pinned major |
-| `actions/dependency-review-action@v4` | ✅ Pinned major |
 | Snyk CLI pinned to major (`snyk@1`) | ✅ Present |
 | `timeout-minutes` on all jobs | ✅ Present |
 

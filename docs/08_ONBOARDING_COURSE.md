@@ -273,13 +273,14 @@ npm test -- --watch=false --browsers=ChromeHeadless --progress=false
 
 Open each workflow in `.github/workflows/`:
 1. `backend-ci.yml` — what jobs run? In what order?
-2. `snyk.yml` — what happens if `SNYK_TOKEN` is not set?
-3. `dependency-review.yml` — when does this trigger?
-4. `codeql.yml` — what languages are analyzed?
+2. `frontend-ci.yml` — what test/build command is executed?
+3. `snyk.yml` — what happens if `SNYK_TOKEN` is not set?
+4. `secret-scan.yml` — why is this workflow audit-only?
 
 **Questions**:
 - Can integration tests run without unit tests passing first?
 - What severity threshold does Snyk use to fail a build?
+- Why were `dependency-review.yml` and `codeql.yml` removed?
 - What is the purpose of `concurrency: cancel-in-progress: true`?
 
 ### Lab 4.2 — Read Error Handling

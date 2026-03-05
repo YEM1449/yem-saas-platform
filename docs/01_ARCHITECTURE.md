@@ -262,7 +262,7 @@ Push/PR
   ├── backend-ci.yml    → Unit tests → Package → Integration tests (Docker)
   ├── frontend-ci.yml   → npm test (ChromeHeadless) → npm build
   ├── snyk.yml          → OSS dep scan + Code SAST (if SNYK_TOKEN set)
-  ├── dependency-review.yml → GitHub dep review (PR only)
-  ├── codeql.yml        → CodeQL SAST (Java + TypeScript)
   └── secret-scan.yml   → Pattern-based secret audit (audit-only)
+
+  (Removed: `dependency-review.yml` and `codeql.yml` because GHAS is not enabled)
 ```

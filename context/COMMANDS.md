@@ -1,6 +1,6 @@
 # COMMANDS.md — Canonical Command Reference
 
-_Source of truth for all build/test/run commands. Updated: 2026-03-04._
+_Source of truth for all build/test/run commands. Updated: 2026-03-05._
 
 ## Backend (hlm-backend/)
 
@@ -69,9 +69,9 @@ TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.s
 | Backend CI | backend-ci.yml | push/PR on hlm-backend/** |
 | Frontend CI | frontend-ci.yml | push/PR on hlm-frontend/** |
 | Snyk Security | snyk.yml | push/PR (requires SNYK_TOKEN) |
-| Dependency Review | dependency-review.yml | PR on pom.xml/package.json |
-| CodeQL | codeql.yml | push/PR on hlm-backend/** or hlm-frontend/** |
 | Secret Scan | secret-scan.yml | push/PR (audit-only, no fail) |
+
+> `dependency-review.yml` and `codeql.yml` were removed because GHAS is not enabled on this private repository.
 
 ## Required Secrets
 

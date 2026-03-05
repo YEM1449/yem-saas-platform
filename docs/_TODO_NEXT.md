@@ -1,6 +1,6 @@
 # _TODO_NEXT.md — Next Actions
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ## Completed This Session
 All OPs from _OPEN_POINTS.md resolved or documented:
@@ -12,14 +12,14 @@ All OPs from _OPEN_POINTS.md resolved or documented:
 - OP-006: documented (ESLint not configured; setup steps added to 05_DEV_GUIDE.md)
 - OP-007: documented (cloud swap pattern + env vars in 07_RELEASE_AND_DEPLOY.md, ARCHITECTURE.md)
 - OP-008: documented (PDF memory + JVM tuning in 07_RELEASE_AND_DEPLOY.md, ARCHITECTURE.md)
-- OP-009: resolved (codeql.yml removed; Snyk Code covers SAST; dep-review kept with continue-on-error)
+- OP-009: resolved (codeql.yml and dependency-review.yml removed; Snyk covers SAST + OSS dependencies)
 
 ## Backlog (Future Sessions)
 
 ### High Priority
 - **OP-002 follow-up**: Verify whether `payment/api/PaymentScheduleController` is still needed or is superseded by `payments/` — add `@Deprecated` if confirmed obsolete.
 - **OP-006 follow-up**: Add `@angular-eslint/schematics` to frontend; configure lint rules; add `npm run lint` to `frontend-ci.yml`.
-- **GHAS enablement**: Once GHAS is enabled, remove `continue-on-error: true` from `dependency-review.yml`.
+- **GHAS enablement**: If GHAS is enabled later, optionally restore `codeql.yml` and `dependency-review.yml` from git history.
 
 ### Medium Priority
 - **context/DATA_MODEL.md**: Create entity-to-Liquibase-changeset cross-reference map.
