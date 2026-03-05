@@ -132,7 +132,7 @@ com.yem.hlm.backend/
 │   └── service/        PortalContractService
 │
 ├── payment/            Payment Schedule v1: tranches, PaymentCall (Appel de Fonds PDF), payment recording
-│   ├── api/            PaymentScheduleController (/api/contracts/{id}/payment-schedule)
+│   ├── api/            PaymentScheduleController (/api/contracts/{id}/payment-schedule, deprecated)
 │   │                   PaymentCallController (/api/payment-calls, /api/payment-calls/{id}/payments)
 │   ├── domain/         PaymentSchedule, PaymentTranche, PaymentCall, Payment, TrancheStatus
 │   └── service/        PaymentScheduleService, PaymentCallService, PaymentCallDocumentService
@@ -191,7 +191,7 @@ Response
 ## Portal Authentication Flow (Phase 4)
 
 ```
-1. POST /api/portal/auth/magic-link  (email → tenant)
+1. POST /api/portal/auth/request-link  (email → tenant)
    └── Generate 32-byte SecureRandom token (URL-safe base64)
        Store SHA-256 hex in portal_token table (48h TTL)
        Send magic link email via EmailSender.send()

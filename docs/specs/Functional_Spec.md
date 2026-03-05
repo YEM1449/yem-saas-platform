@@ -725,7 +725,7 @@ A separate authentication system allows property buyers (contacts) to log into a
 
 ### B.2 Magic Link Authentication Flow
 
-1. Client requests a magic link: `POST /api/portal/auth/magic-link` with their email.
+1. Client requests a magic link: `POST /api/portal/auth/request-link` with their email.
 2. System generates a 32-byte SecureRandom token (URL-safe base64), stores its SHA-256 hash in `portal_token` table (48h TTL, one-time use).
 3. System sends the magic link via `EmailSender.send()`.
 4. Client clicks the link: `GET /api/portal/auth/verify?token=<raw>`.

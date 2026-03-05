@@ -17,15 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RateLimiterService {
 
-    /** Login: 5 attempts per 15 minutes per email. */
-    private static final int LOGIN_CAPACITY = 5;
-    private static final Duration LOGIN_REFILL_PERIOD = Duration.ofMinutes(15);
-
-    /** Portal magic-link request: 3 attempts per hour per email. */
-    private static final int PORTAL_CAPACITY = 3;
-    private static final Duration PORTAL_REFILL_PERIOD = Duration.ofHours(1);
-
+    private final RateLimitProperties properties;
     private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
+
+    public RateLimiterService(RateLimitProperties properties) {
+        this.properties = properties;
+    }
 
     /**
      * Checks and consumes one login token for the given email.
@@ -33,12 +30,12 @@ public class RateLimiterService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void checkLogin(String email) {
+        RateLimitProperties.Limit config = properties.getLogin();
         Bucket bucket = buckets.computeIfAbsent(
                 "login:" + email,
-                k -> buildBucket(LOGIN_CAPACITY, LOGIN_REFILL_PERIOD));
+                k -> buildBucket(config.getCapacity(), config.getRefillPeriod()));
         if (!bucket.tryConsume(1)) {
-            throw new RateLimitExceededException(
-                    "Too many login attempts. Please try again in 15 minutes.");
+            throw new RateLimitExceededException(config.getExceededMessage());
         }
     }
 
@@ -48,12 +45,12 @@ public class RateLimiterService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void checkPortalLink(String email) {
+        RateLimitProperties.Limit config = properties.getPortalLink();
         Bucket bucket = buckets.computeIfAbsent(
                 "portal:" + email,
-                k -> buildBucket(PORTAL_CAPACITY, PORTAL_REFILL_PERIOD));
+                k -> buildBucket(config.getCapacity(), config.getRefillPeriod()));
         if (!bucket.tryConsume(1)) {
-            throw new RateLimitExceededException(
-                    "Too many magic link requests. Please try again in 1 hour.");
+            throw new RateLimitExceededException(config.getExceededMessage());
         }
     }
 

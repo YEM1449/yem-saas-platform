@@ -28,7 +28,7 @@ yem-saas-platform/
 │   │   ├── notification/ # In-app CRM bell notifications
 │   │   ├── outbox/       # Transactional outbox (email/SMS)
 │   │   ├── payment/      # Payment tracking
-│   │   ├── payments/     # Payment-related services [OPEN POINT OP-002]
+│   │   ├── payments/     # Payment-related services (v2; preferred)
 │   │   ├── portal/       # Client-facing portal (Phase 4)
 │   │   ├── project/      # Real estate projects
 │   │   ├── property/     # Properties (units/lots)
@@ -47,7 +47,7 @@ yem-saas-platform/
 │   └── ai/               # LLM context (legacy)
 ├── context/              # LLM-optimized context files
 ├── scripts/              # Utility scripts (smoke-auth.sh)
-├── .github/workflows/    # 6 CI/CD workflows
+├── .github/workflows/    # 4 CI workflows
 ├── .env.example          # Environment variable template
 ├── AGENTS.md             # Canonical project guide (read this first)
 └── CLAUDE.md             # Lightweight quick-reference

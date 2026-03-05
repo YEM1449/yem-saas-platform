@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — Compact Architecture Reference
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ## Layer Stack
 ```
@@ -75,7 +75,7 @@ Retry delays: {1, 5, 30} minutes (capped at array length)
 
 ## Portal Magic Link Flow
 ```
-POST /api/portal/auth/magic-link (email)
+POST /api/portal/auth/request-link (email)
   → generate 32-byte SecureRandom token (URL-safe base64)
   → store SHA-256(token) in portal_token (not raw token)
   → send email directly via EmailSender.send()
@@ -99,7 +99,8 @@ GET /api/portal/auth/verify?token=X
 | `payment/` | **v1 model**: PaymentSchedule (tranches), PaymentCall (Appel de Fonds PDF), payment recording | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
 | `payments/` | **v2 model**: PaymentScheduleItem (richer workflow: issue→send→cancel), Call-for-Funds PDF+reminders, CashDashboard | `/api/contracts/{id}/schedule`, `/api/schedule-items/{id}`, `/api/dashboard/commercial/cash` |
 
-Both serve active routes. `payments/` is the newer, more complete implementation. No merge is planned — they serve different workflow models that currently coexist.
+Both serve active routes. `payments/` is the newer, more complete implementation.
+`payment/` endpoints are now marked deprecated and emit deprecation headers with a migration link to the v2 API.
 
 ## media/ — Storage Architecture
 

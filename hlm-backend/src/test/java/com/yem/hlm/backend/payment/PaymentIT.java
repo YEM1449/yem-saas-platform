@@ -163,6 +163,9 @@ class PaymentIT extends IntegrationTestBase {
         mvc.perform(get("/api/contracts/{id}/payment-schedule", contractId)
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Deprecation", "true"))
+                .andExpect(header().exists("Sunset"))
+                .andExpect(header().string("Link", "</api/contracts/{contractId}/schedule>; rel=\"successor-version\""))
                 .andExpect(jsonPath("$.contractId").value(contractId.toString()))
                 .andExpect(jsonPath("$.tranches.length()").value(2));
     }

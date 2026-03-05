@@ -17,7 +17,7 @@ Note: `codeql.yml` and `dependency-review.yml` removed — Snyk Code + Snyk OSS 
 | OP | Status | Action |
 |----|--------|--------|
 | OP-001 | ✅ RESOLVED | failsafe:verify added to backend-ci.yml |
-| OP-002 | 📋 DOCUMENTED | payment/ v1 + payments/ v2 documented; no merge (active routes) |
+| OP-002 | ✅ RESOLVED | payment/ v1 controller deprecated; migration path to payments/ v2 documented |
 | OP-003 | ✅ ACCEPTED | Snyk Code threshold — leave as-is; SARIF works |
 | OP-004 | ✅ RESOLVED | Weekly Snyk cron added to snyk.yml |
 | OP-005 | ✅ ACCEPTED | Secret scan audit-only — keep; GHAS for enforcement |

@@ -32,11 +32,9 @@ Job: integration-test  (timeout: 30m, needs: unit-and-package)
   1. Checkout
   2. Setup Java 21 + Maven cache
   3. Verify Docker (for Testcontainers)
-  4. Run ITs: ./mvnw -B -ntp failsafe:integration-test
+  4. Run ITs: ./mvnw -B -ntp failsafe:integration-test failsafe:verify
   5. Upload failsafe-reports artifact
 ```
-
-> [OPEN POINT OP-001] Consider adding `failsafe:verify` after `failsafe:integration-test` to ensure IT failures actually fail the job.
 
 ### Frontend CI (`frontend-ci.yml`)
 
@@ -82,6 +80,7 @@ Weekly Snyk cron scan is enabled: Monday 07:00 UTC.
 
 - Lightweight grep-based scan for common secret patterns (AWS keys, GH tokens, API keys, RSA keys)
 - **Audit-only**: always exits 0. Findings uploaded as artifact.
+- Optional enforcement mode: set repository variable `SECRET_SCAN_ENFORCE=true` to fail the workflow when findings exist.
 - For enforcement-grade secret scanning, enable GitHub Advanced Security.
 
 ## GitHub Actions Security

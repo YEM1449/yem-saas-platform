@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT.md — LLM Context Pack
 
-_Compact reference for LLMs. Updated: 2026-03-04._
+_Compact reference for LLMs. Updated: 2026-03-05._
 
 ## What This Is
 Multi-tenant SaaS CRM for real estate promotion companies. Tenants are isolated companies. Users within a tenant are Admin/Manager/Agent. Property buyers access a read-only portal.
@@ -10,7 +10,7 @@ Multi-tenant SaaS CRM for real estate promotion companies. Tenants are isolated 
 - Frontend: Angular 19.2, standalone components, TypeScript 5.7
 - Auth: JWT (HS256), Spring Security, OAuth2 Resource Server
 - Testing: JUnit 5, Testcontainers (PostgreSQL), Failsafe (IT tests = `*IT` suffix)
-- CI: 6 GitHub Actions workflows
+- CI: 4 GitHub Actions workflows
 
 ## Repo Layout
 ```
@@ -56,7 +56,7 @@ context/                                         ← LLM context files (here)
 
 ## Auth Flows
 - CRM login: `POST /auth/login` → JWT (`sub`=userId, `tid`=tenantId, `tv`=tokenVersion, `roles`)
-- Portal magic link: `POST /api/portal/auth/magic-link` → email → `GET /api/portal/auth/verify?token=X` → Portal JWT (`sub`=contactId, no `tv`)
+- Portal magic link: `POST /api/portal/auth/request-link` → email → `GET /api/portal/auth/verify?token=X` → Portal JWT (`sub`=contactId, no `tv`)
 
 ## Test Conventions
 - Unit tests: `*Test`, Maven Surefire, `mvn test`

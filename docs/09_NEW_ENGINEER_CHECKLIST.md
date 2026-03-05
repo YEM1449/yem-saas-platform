@@ -46,7 +46,7 @@
 - [ ] Frontend tests green: `npm test -- --watch=false --browsers=ChromeHeadless`
 
 ## Day 4 — Quality & Security
-- [ ] Read `docs/07_RELEASE_AND_DEPLOY.md` and explained all 6 CI workflows
+- [ ] Read `docs/07_RELEASE_AND_DEPLOY.md` and explained all 4 CI workflows
 - [ ] Explained what happens when SNYK_TOKEN is missing
 - [ ] Read `GlobalExceptionHandler.java` and triggered a validation error via curl
 - [ ] Traced outbox retry logic (exponential backoff array)
