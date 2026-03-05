@@ -80,7 +80,7 @@ TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.s
 | `SNYK_TOKEN` | For Snyk jobs | Snyk authentication |
 | `SNYK_ORG` | Optional | Snyk organization scoping |
 
-## Required Environment Variables (Runtime)
+## Runtime Environment Variables
 
 | Variable | Example | Notes |
 |----------|---------|-------|
@@ -89,10 +89,17 @@ TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.s
 | `DB_PASSWORD` | `changeme` | DB password |
 | `JWT_SECRET` | (64+ char random) | HMAC-SHA256 signing key |
 | `JWT_TTL_SECONDS` | `3600` | Default: 3600 |
-| `MAIL_HOST` | `smtp.example.com` | SMTP server |
-| `MAIL_PORT` | `587` | SMTP port |
-| `MAIL_USERNAME` | `no-reply@example.com` | SMTP user |
-| `MAIL_PASSWORD` | `changeme` | SMTP password |
+| `EMAIL_HOST` | `smtp.example.com` | SMTP server host |
+| `EMAIL_PORT` | `587` | SMTP port |
+| `EMAIL_USER` | `no-reply@example.com` | SMTP username |
+| `EMAIL_PASSWORD` | `changeme` | SMTP password |
+| `EMAIL_FROM` | `noreply@example.com` | Sender address for outbound emails |
 | `OUTBOX_BATCH_SIZE` | `50` | Outbox batch processor size |
 | `OUTBOX_MAX_RETRIES` | `3` | Outbox retry cap |
 | `OUTBOX_POLL_INTERVAL_MS` | `30000` | Outbox polling interval |
+| `PAYMENTS_OVERDUE_CRON` | `0 0 6 * * *` | Payment overdue scheduler cron |
+| `REMINDER_CRON` | `0 0 8 * * *` | Reminder scheduler cron |
+| `MEDIA_STORAGE_DIR` | `./uploads` | Local media storage root |
+| `MEDIA_MAX_FILE_SIZE` | `10485760` | Max media file size (bytes) |
+| `APP_PORTAL_BASE_URL` | `http://localhost:4200` | Base URL used in portal magic-link generation (`app.portal.base-url`) |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Allowed CORS origins (prod override strongly recommended) |

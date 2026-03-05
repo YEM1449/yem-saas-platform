@@ -1,56 +1,42 @@
-# CLAUDE_STATE.md — Single Source of Truth
+# CLAUDE_STATE.md — Working State Snapshot
 
 _Last updated: 2026-03-05_
 
-## Current Branch
+## Branch
 `Epic/sec-improvement`
 
-## Current Phase
-**ALL OPEN POINTS RESOLVED** (2026-03-05)
+## Program Status
+- Open points in `docs/_OPEN_POINTS.md`: resolved/accepted/documented as tracked.
+- CI security model: Snyk-based SAST/OSS scanning + audit-mode secret scan.
+- GHAS-dependent workflows (`codeql.yml`, `dependency-review.yml`) are removed.
 
-## Stack
-Spring Boot 3.5.8 / Java 21 / Angular 19.2 / PostgreSQL / Liquibase / Caffeine  
-CI: 4 workflows (backend-ci, frontend-ci, snyk, secret-scan)  
-Note: `codeql.yml` and `dependency-review.yml` removed — Snyk Code + Snyk OSS cover SAST and dependency vulnerability scanning without GHAS.
+## Platform Baseline
+- Backend: Spring Boot 3.5.8 / Java 21
+- Frontend: Angular 19.2
+- Data: PostgreSQL + Liquibase
+- Caching: Caffeine
+- CI: `backend-ci`, `frontend-ci`, `snyk`, `secret-scan`
 
-## Open Points Log
-| OP | Status | Action |
-|----|--------|--------|
-| OP-001 | ✅ RESOLVED | failsafe:verify added to backend-ci.yml |
-| OP-002 | ✅ RESOLVED | payment/ v1 controller deprecated; migration path to payments/ v2 documented |
-| OP-003 | ✅ ACCEPTED | Snyk Code threshold — leave as-is; SARIF works |
-| OP-004 | ✅ RESOLVED | Weekly Snyk cron added to snyk.yml |
-| OP-005 | ✅ ACCEPTED | Secret scan is audit-only by default; optional enforcement via SECRET_SCAN_ENFORCE |
-| OP-006 | ✅ DOCUMENTED | ESLint not configured; setup steps in 05_DEV_GUIDE.md |
-| OP-007 | ✅ DOCUMENTED | Cloud swap in 07_RELEASE_AND_DEPLOY.md + ARCHITECTURE.md |
-| OP-008 | ✅ DOCUMENTED | PDF JVM tuning in 07_RELEASE_AND_DEPLOY.md + ARCHITECTURE.md |
-| OP-009 | ✅ RESOLVED | codeql.yml and dependency-review.yml removed; Snyk covers both scopes |
+## Current Documentation State
+- Core onboarding/dev docs restructured for pedagogical clarity:
+  - `docs/00_OVERVIEW.md`
+  - `docs/05_DEV_GUIDE.md`
+  - `docs/08_ONBOARDING_COURSE.md`
+  - `docs/09_NEW_ENGINEER_CHECKLIST.md`
+  - `docs/api-quickstart.md`
+- Sales specs under `docs/specs/sales/` aligned to implemented behavior and terminology.
+- Context files cleaned for prompt efficiency and architectural accuracy.
 
-## Last Test Run
-- `./mvnw -B -ntp -Dtest=RateLimiterServiceTest test` → PASS (2 tests, 0 failures) on 2026-03-05.
-- Full `./mvnw -B -ntp test` currently fails in this environment due Mockito inline agent attachment limitations on WSL/JDK21.
+## Verification Notes
+- Documentation cross-reference scan: no missing local markdown links in `docs/` and `context/`.
+- Command consistency: integration-test references standardized to `failsafe:integration-test failsafe:verify`.
+- Formatting sanity: no whitespace issues in modified markdown files.
 
-## Files Changed This Session
-- `.github/workflows/codeql.yml` — REMOVED
-- `.github/workflows/backend-ci.yml` — failsafe:verify added (previous session)
-- `.github/workflows/snyk.yml` — weekly cron added (previous session)
-- `.github/workflows/dependency-review.yml` — REMOVED
-- `docs/01_ARCHITECTURE.md` — payment/payments distinction + media + PDF sections
-- `docs/05_DEV_GUIDE.md` — ESLint prerequisite section
-- `docs/07_RELEASE_AND_DEPLOY.md` — CodeQL removed from table; media + PDF prod notes
-- `context/ARCHITECTURE.md` — payment/payments, media, PDF sections added
-- `context/SECURITY_BASELINE.md` — CI gates table updated (CodeQL removed)
-- `docs/_OPEN_POINTS.md` — all OPs resolved/documented
-- `docs/_TODO_NEXT.md` — updated backlog
-- `context/CLAUDE_STATE.md` — this file
+## Known Environment Limitation
+- Full backend test suite may fail in this local environment due Mockito inline agent attachment limits on WSL/JDK21.
+- Use targeted test execution where required and verify full suite in CI/compatible runtime.
 
-## Next Commands to Run
-```bash
-# Verify backend still compiles + tests pass
-cd hlm-backend && ./mvnw -B -ntp test
-```
-
-## Next Files to Touch (backlog)
-- `context/DATA_MODEL.md` — entity list with Liquibase changeset refs
-- `docs/specs/User_Guide.md` — Phase 3+4 portal/commercial intelligence sections
-- `docs/api.md` — distinguish payment/ v1 vs payments/ v2 endpoints
+## Next Recommended Documentation Work
+1. Expand `docs/api.md` into a complete endpoint index including portal + payments v2 emphasis.
+2. Add sequence diagrams (Mermaid) for contract sign/cancel and portal auth flows.
+3. Add architecture decision records for payment v1 deprecation timeline and migration plan.
