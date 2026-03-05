@@ -69,7 +69,7 @@ cd hlm-backend
 ```bash
 cd hlm-backend
 ./mvnw test
-./mvnw failsafe:integration-test
+./mvnw failsafe:integration-test failsafe:verify
 ```
 
 Integration tests require Docker for Testcontainers.

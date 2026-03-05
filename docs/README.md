@@ -72,7 +72,7 @@ cd hlm-backend && ./mvnw spring-boot:run
 cd hlm-backend && ./mvnw test
 
 # Backend integration tests (Docker required)
-cd hlm-backend && ./mvnw failsafe:integration-test
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify
 
 # Frontend dev
 cd hlm-frontend && npm ci && npm start

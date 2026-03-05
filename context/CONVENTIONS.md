@@ -1,101 +1,103 @@
-# CONVENTIONS.md — Code Conventions
+# CONVENTIONS.md — Code and Delivery Conventions
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ## Backend Package Structure (per feature)
 
-```
+```text
 feature/
-  api/                 ← Controller + DTOs
-    dto/               ← Request/Response DTOs
-  domain/              ← JPA Entities
-  repo/                ← JpaRepository / JpaSpecificationExecutor
-  service/             ← Business logic
-  scheduler/           ← Scheduled tasks (if any)
-  config/              ← Feature-specific config beans (if any)
+  api/                 # controller + dto
+    dto/
+  domain/              # JPA entities / enums
+  repo/                # repositories and query projections
+  service/             # business rules
+  scheduler/           # scheduled jobs (optional)
+  config/              # feature config (optional)
 ```
 
 ## Controller Conventions
-- Return DTOs only — never expose JPA entities directly.
-- Use `@PreAuthorize` at method level (not class level for mixed auth).
-- Use `@Valid` on `@RequestBody` parameters.
-- Path: `/api/{feature-plural}` (e.g., `/api/contacts`, `/api/properties`).
-- Portal paths: `/api/portal/{feature-plural}`.
-- Error: let `GlobalExceptionHandler` handle exceptions — don't catch and re-wrap generically.
+- Return DTOs only, never JPA entities.
+- Use method-level `@PreAuthorize` for mixed-role endpoints.
+- Validate request DTOs with `@Valid`.
+- CRM routes under `/api/*`; portal routes under `/api/portal/*`.
+- Do not handcraft ad-hoc error responses; rely on global error handling.
 
-## RBAC Annotations (correct patterns)
+## RBAC Annotation Patterns
 ```java
 @PreAuthorize("hasRole('ADMIN')")
 @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
 @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
 @PreAuthorize("hasRole('PORTAL')")
-// NOTE: Spring Security adds ROLE_ prefix — never write hasRole('ROLE_ADMIN')
+// Spring adds ROLE_ prefix automatically
 ```
 
 ## Service Conventions
-- Always read tenant from `TenantContext.getTenantId()` — never from parameters (unless testing).
-- Throw domain exceptions (map to `ErrorCode` in `GlobalExceptionHandler`).
-- Name: `FeatureService.java` or `FeatureNameService.java`.
+- Tenant must come from `TenantContext.getTenantId()` (except explicit test-only helper paths).
+- Prefer domain exceptions mapped by `GlobalExceptionHandler` and `ErrorCode`.
+- Keep service APIs business-oriented; avoid controller DTO leakage into repository layer.
 
 ## Repository Conventions
-- Extend `JpaRepository<Entity, UUID>` (or `JpaSpecificationExecutor`).
-- JPQL: use `cast(date as LocalDate)` for Hibernate 6 date grouping.
-- For top-N: use `Pageable` param on `@Query`, pass `PageRequest.of(0, N)`.
-- `Page<Object[]>` requires `countQuery` attribute on `@Query`.
-- Native queries with FOR UPDATE SKIP LOCKED must run inside `@Transactional`.
+- Use `JpaRepository<..., UUID>` (and `JpaSpecificationExecutor` when needed).
+- All tenant-scoped queries must include tenant filters.
+- Native `FOR UPDATE SKIP LOCKED` queries must run inside transactions.
+- Paginated custom queries must provide valid count query when returning `Page`.
 
-## Error Handling
+## Error Handling Contract
 ```java
-// Throw in service:
 throw new EntityNotFoundException("Contact not found: " + id);
-// → GlobalExceptionHandler maps to ErrorCode.NOT_FOUND → 404
-
-// Don't:
-return ResponseEntity.status(404).body("not found");  // bypass envelope
+// mapped to ErrorResponse with stable ErrorCode + HTTP status
 ```
 
-## Liquibase Conventions
-- Changeset id: sequential number matching file name (e.g., `028`).
-- Author: your name or `team`.
-- Never set `runOnChange: true` on data changesets.
-- Never edit a changeset after it has been applied.
-- Add table comments for clarity.
+Do not bypass the envelope with raw string/error bodies.
 
-## Test Conventions
+## Liquibase Conventions
+- New schema changes are additive and sequentially numbered.
+- Never edit already-applied changesets.
+- Keep change intent explicit in file name (example: `028_add_xyz.yaml`).
+
+## Testing Conventions
+
 ```java
-// Unit test:
 @ExtendWith(MockitoExtension.class)
 class FeatureServiceTest { ... }
 
-// IT test:
-@IntegrationTest                    // = @SpringBootTest + @AutoConfigureMockMvc + @ActiveProfiles("test")
+@IntegrationTest
 class FeatureControllerIT extends IntegrationTestBase { ... }
-
-// JWT in IT:
-@Autowired JwtProvider jwtProvider;
-String token = jwtProvider.generate(userId, tenantId, UserRole.ROLE_ADMIN);
-mockMvc.perform(get("/api/feature").header("Authorization", "Bearer " + token))...
-
-// Portal JWT in IT:
-@Autowired PortalJwtProvider portalJwtProvider;
-String token = portalJwtProvider.generate(contactId, tenantId);
 ```
 
+- Unit tests: `*Test` via Surefire.
+- Integration tests: `*IT` via Failsafe + Testcontainers.
+- IT authentication helpers:
+  - CRM: `JwtProvider.generate(...)`
+  - Portal: `PortalJwtProvider.generate(...)`
+
 ## Frontend Conventions
-- Use relative API paths: `/api/...`, `/auth/...` (not `http://localhost:8080/...`).
-- Two interceptors: `authInterceptor` (CRM JWT → `/api/`, `/auth/`), `portalInterceptor` (portal JWT → `/api/portal/`).
-- Standalone components: no NgModules (Angular 19 style).
-- JWT storage: `localStorage` key `hlm_access_token` (CRM), `hlm_portal_token` (portal).
-- Route guards: `AuthGuard` (CRM), `PortalGuard` (portal).
+- Use relative backend paths only.
+- Keep CRM and portal auth concerns separated:
+  - CRM key: `hlm_access_token`, `authInterceptor`, CRM guard.
+  - Portal key: `hlm_portal_token`, `portalInterceptor`, portal guard.
+- Angular style is standalone components and lazy feature routes.
+
+## Documentation Conventions
+- Update docs/context whenever API, workflow semantics, commands, or CI behavior changes.
+- Use `context/*` as compact truth for coding agents; use `docs/*` for broader human guidance.
+- Avoid duplicated competing docs; prefer linking to a canonical source when possible.
+
+## Definition of Done (PR Quality)
+1. Tenant isolation and RBAC behavior verified for changed paths.
+2. Relevant unit and/or integration tests added or updated.
+3. Commands in docs remain runnable and consistent with `context/COMMANDS.md`.
+4. Documentation updated for any behavior/contract change.
+5. No secrets or sensitive tokens introduced in code or docs.
 
 ## Naming Conventions
 | Type | Convention | Example |
-|------|-----------|---------|
-| Entity | PascalCase noun | `SaleContract`, `CommissionRule` |
-| Repository | `*Repository` | `CommissionRuleRepository` |
+|------|------------|---------|
+| Entity | PascalCase noun | `SaleContract` |
+| Repository | `*Repository` | `SaleContractRepository` |
 | Service | `*Service` | `CommercialDashboardService` |
-| Controller | `*Controller` | `PortalContractController` |
-| DTO | `*Request` / `*Response` / `*DTO` | `CreateContactRequest`, `ContactDTO` |
-| IT test | `*IT` | `CommercialDashboardIT` |
+| Controller | `*Controller` | `PortalAuthController` |
+| DTO | `*Request` / `*Response` / `*DTO` | `CreateContactRequest` |
+| Integration test | `*IT` | `PortalAuthIT` |
 | Unit test | `*Test` | `JwtProviderTest` |
-| Error code | SCREAMING_SNAKE_CASE | `USER_EMAIL_EXISTS` |
+| Error code | SCREAMING_SNAKE_CASE | `PORTAL_TOKEN_INVALID` |

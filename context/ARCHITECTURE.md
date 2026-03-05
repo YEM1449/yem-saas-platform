@@ -3,124 +3,117 @@
 _Updated: 2026-03-05_
 
 ## Layer Stack
-```
-Browser → Angular 19 SPA (hlm-frontend:4200)
-              ↕ dev proxy (proxy.conf.json)
-        Spring Boot API (hlm-backend:8080)
-              ↕ JDBC
-        PostgreSQL (schema via Liquibase)
-              ↕ SMTP/SMS
-        External providers (EmailSender / SmsSender)
+```text
+Browser -> Angular SPA (hlm-frontend:4200)
+           -> dev proxy (/auth,/api,/dashboard,/actuator -> :8080)
+Spring Boot API (hlm-backend:8080)
+           -> PostgreSQL (Liquibase-managed schema)
+           -> Email/SMS provider interfaces (outbox + direct portal email use case)
 ```
 
 ## Request Pipeline
-```
+```text
 HTTP Request
-  → JwtAuthenticationFilter (OncePerRequestFilter)
-    → decode JWT → extract sub, tid, roles
-    → if ROLE_PORTAL: principal = contactId (skip user cache)
-    → else: validate tokenVersion via UserSecurityCacheService
-    → set TenantContext (ThreadLocal: tenantId, userId)
-    → set Spring Security Authentication
-  → SecurityConfig route authorization
-  → @PreAuthorize method security
-  → Controller (DTO only)
-  → Service (reads TenantContext for tenant scoping)
-  → Repository (tenant_id in every query)
-  → (finally) TenantContext.clear()
+  -> JwtAuthenticationFilter
+     -> decode JWT, extract sub/tid/roles
+     -> ROLE_PORTAL: principal=contactId, skip user security cache
+     -> CRM roles: validate tokenVersion via UserSecurityCacheService
+     -> set TenantContext (tenantId + userId/contactId)
+  -> SecurityConfig route authorization
+  -> @PreAuthorize checks (method-level)
+  -> Controller (DTO contract)
+  -> Service (tenant-scoped business rules)
+  -> Repository (tenant-filtered data access)
+  -> TenantContext.clear() in filter finally block
 ```
 
-## Security Config Route Order (important — first match wins)
-```
-/auth/**                   → permitAll
-/api/portal/auth/**        → permitAll
-/api/portal/**             → hasRole("PORTAL")
-/api/**                    → hasAnyRole("ADMIN","MANAGER","AGENT")
-/dashboard/**              → hasAnyRole("ADMIN","MANAGER","AGENT")
-/actuator/health           → permitAll
-/actuator/**               → hasRole("ADMIN")
+## Security Matcher Order (First Match Wins)
+Reflects `auth/security/SecurityConfig.java`:
+```text
+OPTIONS /**                                  -> permitAll
+/auth/login                                  -> permitAll
+/actuator/health, /actuator/info             -> permitAll
+/v3/api-docs/**, /swagger-ui/**              -> permitAll
+POST /tenants                                -> permitAll
+POST /api/portal/auth/request-link           -> permitAll
+GET  /api/portal/auth/verify                 -> permitAll
+/api/portal/**                               -> hasRole("PORTAL")
+/api/**                                      -> hasAnyRole("ADMIN","MANAGER","AGENT")
+anyRequest                                   -> authenticated
 ```
 
-## JWT Claims
+## JWT Model
 | Claim | CRM JWT | Portal JWT |
-|-------|---------|-----------|
-| `sub` | userId (UUID) | contactId (UUID) |
-| `tid` | tenantId (UUID) | tenantId (UUID) |
-| `roles` | ROLE_ADMIN etc. | ROLE_PORTAL |
-| `tv` | tokenVersion (int) | **absent** |
-| TTL | configurable (default 3600s) | 7200s (2h) |
+|------|---------|------------|
+| `sub` | userId | contactId |
+| `tid` | tenantId | tenantId |
+| `roles` | CRM roles | `ROLE_PORTAL` |
+| `tv` | required (token revocation) | absent |
+| TTL | configurable (default 3600s) | fixed 2h |
+
+## Module Boundaries (Backend)
+- `auth/`: security config, JWT providers, filter, user security cache.
+- `tenant/`: tenant entity/context + bootstrap.
+- `contact/`, `property/`, `project/`, `deposit/`, `contract/`: core CRM commercial workflow.
+- `dashboard/`: commercial, cash, receivables aggregate read models.
+- `outbox/` and `notification/`: async outbound + in-app notifications.
+- `payment/`: v1 payments API, deprecated but still served.
+- `payments/`: v2 schedule/workflow/reminders/cash dashboard (preferred).
+- `portal/`: magic-link auth and buyer read-only endpoints.
+- `media/`: storage abstraction + local implementation (cloud-swappable).
+- `common/`: error contracts/shared infra primitives.
 
 ## Multi-Tenancy Enforcement Points
-1. JWT `tid` claim — extracted in `JwtAuthenticationFilter`
-2. `TenantContext` ThreadLocal — set in filter, cleared in finally
-3. Service methods — read `TenantContext.getTenantId()`
-4. Repository queries — always include `AND tenant_id = :tenantId`
-5. Entity — `@ManyToOne Tenant tenant` on every scoped entity
+1. JWT `tid` claim is mandatory for authenticated access.
+2. `TenantContext` is populated in auth filter, cleared after request.
+3. Services use `TenantContext.getTenantId()` for all scoped operations.
+4. Repositories include tenant filtering in queries.
+5. Cross-tenant resources return 404/forbidden by design.
 
 ## Caching
-- Framework: Caffeine (in-process, per-node, NOT distributed)
-- Config: `CacheConfig` — `registerCustomCache(name, ttl, maxEntries)` per cache
-- Cache names: `commercialDashboard`, `receivablesDashboard`, `userSecurityCache`
-- Invalidation: TTL-based; `userSecurityCache` evicted on role change / disable
+- Provider: Caffeine (node-local, non-distributed).
+- Key caches: `userSecurityCache`, `commercialDashboard*`, `receivablesDashboard`, `cashDashboard`.
+- Strategy: short TTL + bounded size. `userSecurityCache` evicted on role/enablement changes.
 
 ## Outbox Pattern
-```
-API → OutboundMessage saved (status=PENDING) in same transaction
-     → OutboxScheduler polls batch (FOR UPDATE SKIP LOCKED)
-     → OutboundDispatcherService calls EmailSender/SmsSender
-     → Success → SENT; Failure → retry with exponential backoff
-     → After maxRetries → FAILED (permanent)
-Retry delays: {1, 5, 30} minutes (capped at array length)
-```
-
-## Portal Magic Link Flow
-```
-POST /api/portal/auth/request-link (email)
-  → generate 32-byte SecureRandom token (URL-safe base64)
-  → store SHA-256(token) in portal_token (not raw token)
-  → send email directly via EmailSender.send()
-
-GET /api/portal/auth/verify?token=X
-  → SHA-256(X) → lookup portal_token (not expired, not used)
-  → mark usedAt = now()
-  → return Portal JWT (sub=contactId, roles=[ROLE_PORTAL], tid=tenantId)
+```text
+API transaction writes OutboundMessage(PENDING)
+-> scheduler polls batch with FOR UPDATE SKIP LOCKED
+-> dispatcher invokes EmailSender/SmsSender
+-> success: SENT
+-> failure: retry backoff (1m, 5m, 30m) until max retries
+-> exhausted: FAILED
 ```
 
-## Liquibase Changelog
-- Master: `hlm-backend/src/main/resources/db/changelog/db.changelog-master.yaml`
-- Naming: `NNN_description.yaml` (e.g., `025_portal_token.yaml`)
-- Range: 001–027+
-- Rule: never edit applied changesets; always add new numbered files
+## Portal Magic-Link Flow
+```text
+POST /api/portal/auth/request-link
+  -> generate random raw token
+  -> persist SHA-256(rawToken) + expiry + tenant/contact mapping
+  -> send link by email
 
-## payment/ vs payments/ — Two Coexisting Packages
-
-| Package | Purpose | Key API Paths |
-|---------|---------|---------------|
-| `payment/` | **v1 model**: PaymentSchedule (tranches), PaymentCall (Appel de Fonds PDF), payment recording | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
-| `payments/` | **v2 model**: PaymentScheduleItem (richer workflow: issue→send→cancel), Call-for-Funds PDF+reminders, CashDashboard | `/api/contracts/{id}/schedule`, `/api/schedule-items/{id}`, `/api/dashboard/commercial/cash` |
-
-Both serve active routes. `payments/` is the newer, more complete implementation.
-`payment/` endpoints are now marked deprecated and emit deprecation headers with a migration link to the v2 API.
-
-## media/ — Storage Architecture
-
-- `MediaStorageService` interface + `LocalFileMediaStorage` default (writes to `MEDIA_STORAGE_DIR`, default `./uploads`)
-- Cloud swap: provide `@Primary @Bean` implementing `MediaStorageService` (no other code changes needed)
-- Env vars: `MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE` (default 10 MB)
-- **Not suitable for multi-node deployments** without shared storage or cloud swap
-
-## PDF Generation
-
-- `DocumentGenerationService`: Thymeleaf → HTML → `PdfRendererBuilder` (OpenHtmlToPDF, fast mode) → `ByteArrayOutputStream`
-- Synchronous, in-memory — holds full PDF bytes in heap during render
-- Recommended JVM: `-Xmx512m` minimum; increase if OOM observed on large documents
-- Async option (future): queue PDF jobs in outbox, email result when ready
-
-## Package Dependency Directions
+GET /api/portal/auth/verify?token=raw
+  -> hash raw token and validate usable token row
+  -> mark token used
+  -> issue ROLE_PORTAL JWT (sub=contactId, tid=tenantId, ttl=2h)
 ```
-Controller (api/) → depends on → Service
-Service          → depends on → Repository + Domain + (other Services)
-Repository       → depends on → Domain
-Domain           → no dependencies on other packages
-common/          → no dependencies (utility/error only)
+
+## Payments v1 vs v2
+| Package | Status | Key Paths |
+|---------|--------|-----------|
+| `payment/` | deprecated | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
+| `payments/` | preferred | `/api/contracts/{id}/schedule`, `/api/schedule-items/**`, `/api/dashboard/commercial/cash` |
+
+v1 endpoints now emit deprecation headers (`Deprecation`, `Sunset`, `Warning`, `Link`) to drive migration.
+
+## Storage + PDF Notes
+- `MediaStorageService` abstraction with `LocalFileMediaStorage` default (`MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE`).
+- PDF generation is synchronous in-memory (`DocumentGenerationService`, OpenHtmlToPDF fast mode); tune heap for production.
+
+## Dependency Direction
+```text
+Controller(api) -> Service -> Repository -> Domain
+Service may compose other services
+Domain should not depend on controller/repository layers
+common/ should remain low-coupling shared primitives
 ```

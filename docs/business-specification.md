@@ -329,7 +329,7 @@ Le système fournit plusieurs éléments de traçabilité :
 
 **Client temporaire (TEMP_CLIENT)** : prospect ayant versé un acompte mais dont le dépôt n'est pas encore confirmé. Période limitée (par défaut, jusqu'à la date d'échéance du dépôt, généralement 7 jours). [EVIDENCE] Le `ContactType.TEMP_CLIENT` est attribué lors de la création d'un acompte ; `tempClientUntil` est fixé à la `dueDate` du dépôt. (EV: hlm-backend/.../deposit/service/DepositService.java#applyContactReservationWorkflow)
 
-**Client** : contact dont l'acompte a été confirmé. La conversion est irréversible. [EVIDENCE] Lors de la confirmation, le contact passe à `ContactType.CLIENT` et un `ClientDetail` est créé. (EV: docs/ai/deep-context.md#Deposit-lifecycle)
+**Client** : contact dont l'acompte a été confirmé. La conversion est irréversible. [EVIDENCE] Lors de la confirmation, le contact passe à `ContactType.CLIENT` et un `ClientDetail` est créé. (EV: hlm-backend/.../deposit/service/DepositService.java#confirm)
 
 **Acompte (Deposit)** : engagement financier d'un prospect sur un bien, avec montant, date de dépôt, date d'échéance et référence. [EVIDENCE] L'entité `Deposit` contient les champs `amount`, `currency`, `depositDate`, `dueDate`, `reference`, `status`. (EV: hlm-backend/.../deposit/domain/Deposit.java)
 

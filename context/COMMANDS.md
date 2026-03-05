@@ -12,7 +12,7 @@ cd hlm-backend && ./mvnw -B -ntp -DskipTests compile
 cd hlm-backend && ./mvnw -B -ntp test
 
 # Run integration tests (Failsafe + Testcontainers — requires Docker)
-cd hlm-backend && ./mvnw -B -ntp failsafe:integration-test
+cd hlm-backend && ./mvnw -B -ntp failsafe:integration-test failsafe:verify
 
 # Full verify (unit + IT — use in CI)
 cd hlm-backend && ./mvnw -B -ntp verify

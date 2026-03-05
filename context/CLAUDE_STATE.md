@@ -20,14 +20,15 @@ Note: `codeql.yml` and `dependency-review.yml` removed — Snyk Code + Snyk OSS 
 | OP-002 | ✅ RESOLVED | payment/ v1 controller deprecated; migration path to payments/ v2 documented |
 | OP-003 | ✅ ACCEPTED | Snyk Code threshold — leave as-is; SARIF works |
 | OP-004 | ✅ RESOLVED | Weekly Snyk cron added to snyk.yml |
-| OP-005 | ✅ ACCEPTED | Secret scan audit-only — keep; GHAS for enforcement |
+| OP-005 | ✅ ACCEPTED | Secret scan is audit-only by default; optional enforcement via SECRET_SCAN_ENFORCE |
 | OP-006 | ✅ DOCUMENTED | ESLint not configured; setup steps in 05_DEV_GUIDE.md |
 | OP-007 | ✅ DOCUMENTED | Cloud swap in 07_RELEASE_AND_DEPLOY.md + ARCHITECTURE.md |
 | OP-008 | ✅ DOCUMENTED | PDF JVM tuning in 07_RELEASE_AND_DEPLOY.md + ARCHITECTURE.md |
 | OP-009 | ✅ RESOLVED | codeql.yml and dependency-review.yml removed; Snyk covers both scopes |
 
 ## Last Test Run
-`./mvnw -B -ntp test` → 46 tests, 0 failures (2026-03-04)
+- `./mvnw -B -ntp -Dtest=RateLimiterServiceTest test` → PASS (2 tests, 0 failures) on 2026-03-05.
+- Full `./mvnw -B -ntp test` currently fails in this environment due Mockito inline agent attachment limitations on WSL/JDK21.
 
 ## Files Changed This Session
 - `.github/workflows/codeql.yml` — REMOVED

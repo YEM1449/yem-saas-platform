@@ -164,7 +164,7 @@ cd hlm-backend
 # Expected: ~36 tests, all green
 
 # Integration tests (Docker required)
-./mvnw failsafe:integration-test
+./mvnw failsafe:integration-test failsafe:verify
 # Expected: all IT tests green (Testcontainers spins up PostgreSQL)
 ```
 
@@ -327,7 +327,7 @@ Steps:
 3. Add a `getContactCount()` method in `ContactService`.
 4. Add `GET /api/contacts/count` endpoint in `ContactController` (returns `{ "count": N }`).
 5. Add an IT test in `ContactControllerIT` for all three roles (admin, manager, agent).
-6. Run: `./mvnw test && ./mvnw failsafe:integration-test`
+6. Run: `./mvnw test && ./mvnw failsafe:integration-test failsafe:verify`
 7. Create a PR.
 
 **Checklist before opening PR:**

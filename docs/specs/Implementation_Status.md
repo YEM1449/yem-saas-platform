@@ -75,7 +75,7 @@ This is a living snapshot of what is implemented in the repo, based on current t
   - **F4.2 Portal Contracts & Documents**: `GET /api/portal/contracts` (buyer's signed contracts), `GET /api/portal/contracts/{id}/documents/contract.pdf` (buyer's PDF). Ownership check in `PortalContractService`; cross-contract → 404.
   - **F4.3 Portal Payment Schedule**: `GET /api/portal/contracts/{id}/payment-schedule`. Same ownership verification.
   - **F4.4 Portal Property**: `GET /api/portal/properties/{id}`. Verifies `existsByTenant_IdAndProperty_IdAndBuyerContact_Id` before returning property details. `GET /api/portal/tenant-info` for portal shell header.
-  - **F4.5 Portal Layout & Branding**: Angular lazy-loaded route tree at `/portal/*` (`PortalShellComponent` + guard). `portalGuard` protects authenticated portal routes. `portalInterceptor` attaches portal JWT only to `/api/portal/` requests. `PortalAuthService` uses `hlm_portal_token` localStorage key (separate from CRM `hlm_token`). Config: `app.portal.base-url` (default `http://localhost:4200`).
+  - **F4.5 Portal Layout & Branding**: Angular lazy-loaded route tree at `/portal/*` (`PortalShellComponent` + guard). `portalGuard` protects authenticated portal routes. `portalInterceptor` attaches portal JWT only to `/api/portal/` requests. `PortalAuthService` uses `hlm_portal_token` localStorage key (separate from CRM `hlm_access_token`). Config: `app.portal.base-url` (default `http://localhost:4200`).
   - **F4.6 Tests**: `PortalAuthIT` (5 tests), `PortalContractsIT` (4 tests), `PortalPaymentsIT` (4 tests) — 13 IT tests total.
   - **F4.7 Docs**: `AGENTS.md` (+portal package, auth flow, RBAC isolation, endpoints, frontend), `Implementation_Status.md` (this section), `.sprint-state.md` (Phase 4 COMPLETE).
 
@@ -91,4 +91,3 @@ This is a living snapshot of what is implemented in the repo, based on current t
 - ~~Spring test ApplicationContext currently fails to load (causing many ITs to be skipped).~~ **FIXED (2026-02-26)**: Root cause was a Liquibase table name collision — legacy CRM `project` table (changeset 003) clashed with new real-estate `project` table (changeset 013). Fixed by inserting changeset `012b-rename-legacy-project-table.yaml` which drops the conflicting FK, renames the PK constraint, and renames the table to `crm_project_legacy` before changeset 013 runs.
 
 - Update test fixtures to create `Tenant → Project → Property` consistently.
-

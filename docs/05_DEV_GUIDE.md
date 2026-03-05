@@ -81,7 +81,7 @@ Uses Surefire, runs `*Test` classes (~36 tests as of 2026-03).
 ### Backend Integration Tests (requires Docker)
 
 ```bash
-cd hlm-backend && ./mvnw failsafe:integration-test
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify
 ```
 
 Uses Failsafe, runs `*IT` classes. Testcontainers spins up a PostgreSQL container automatically.

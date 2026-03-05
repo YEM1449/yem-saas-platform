@@ -32,7 +32,7 @@
 
 ## Day 2 — Backend Proficiency
 - [ ] Unit tests green: `./mvnw test`
-- [ ] Integration tests green: `./mvnw failsafe:integration-test`
+- [ ] Integration tests green: `./mvnw failsafe:integration-test failsafe:verify`
 - [ ] Read full `contact/` feature (entity → repo → service → controller → test)
 - [ ] Identified where `TenantContext.getTenantId()` is called in a service
 - [ ] Explained Liquibase changeset immutability rule

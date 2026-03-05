@@ -29,9 +29,14 @@ _Updated: 2026-03-05_
 
 ## Public Endpoints
 - `POST /auth/login`
+- `GET /actuator/health`
+- `GET /actuator/info`
+- `GET /v3/api-docs/**`
+- `GET /swagger-ui/**`
+- `GET /swagger-ui.html`
+- `POST /tenants`
 - `POST /api/portal/auth/request-link`
 - `GET /api/portal/auth/verify`
-- `GET /actuator/health`
 
 ## RBAC Annotations
 ```java

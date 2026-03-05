@@ -216,7 +216,7 @@ cd hlm-backend
 ./mvnw test
 
 # Integration tests (Failsafe — requires Docker for Testcontainers)
-./mvnw failsafe:integration-test
+./mvnw failsafe:integration-test failsafe:verify
 ```
 
 ```bash

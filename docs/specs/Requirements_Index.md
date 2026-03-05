@@ -4,12 +4,12 @@ This is a *structured* list of requirements extracted from the CDC. No new requi
 
 ## How to use
 
-- Track progress in `docs/spec/Backlog_Status.md` and `docs/spec/Implementation_Status.md`.
-- Use `docs/spec/Gap_Analysis.md` to plan the next tasks.
+- Track progress in `docs/specs/Backlog_Status.md` and `docs/specs/Implementation_Status.md`.
+- Use `docs/specs/Gap_Analysis.md` to plan the next tasks.
 
 - Reference requirement IDs (e.g., `REQ-...`) in PRs, tickets, and ClaudeCode prompts.
 
-- Keep implementation aligned with the CDC; if you intentionally diverge, record it in `docs/spec/Spec_Deltas.md`.
+- Keep implementation aligned with the CDC; if you intentionally diverge, record it in `docs/specs/Spec_Deltas.md`.
 
 
 ## Requirements
