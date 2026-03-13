@@ -1,23 +1,186 @@
-<nav class="topbar">
-  <span class="brand">HLM CRM</span>
-  <a routerLink="/app/properties">Properties</a>
-  <a routerLink="/app/contacts">Contacts</a>
-  <a routerLink="/app/prospects">Prospects</a>
-  <a routerLink="/app/notifications">Notifications</a>
-  <a routerLink="/app/messages">Messages</a>
-  <a routerLink="/app/contracts">Contracts</a>
-  <a routerLink="/app/projects">Projects</a>
-  <a routerLink="/app/dashboard/commercial">Dashboard</a>
-  <a routerLink="/app/dashboard/commercial/cash">Encaissements</a>
-  @if (isAdminOrManager) {
-    <a routerLink="/app/dashboard/receivables">Receivables</a>
-  }
-  <a routerLink="/app/commissions">Commissions</a>
-  @if (isAdmin) {
-    <a routerLink="/app/admin/users">Users</a>
-  }
-  <button class="logout" (click)="logout()">Logout</button>
-</nav>
-<main class="content">
-  <router-outlet />
-</main>
+<!-- Modern sidebar layout for HLM CRM -->
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <span class="brand-icon">
+        <!-- Building icon -->
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="3" y="8" width="16" height="12" rx="1.5" stroke="#93c5fd" stroke-width="1.5"/>
+          <path d="M8 20v-5h6v5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand-name">HLM CRM</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+
+      <!-- CRM section -->
+      <span class="nav-section">CRM</span>
+
+      <a routerLink="/app/properties" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M3 10.5 10 3.5l7 7V17a1 1 0 01-1 1H5a1 1 0 01-1-1v-6.5z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 18V12h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        Properties
+      </a>
+
+      <a routerLink="/app/contacts" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M2 17c0-3.314 2.686-6 6-6h.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="15" cy="14" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M13.5 14h3M15 12.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Contacts
+      </a>
+
+      <a routerLink="/app/prospects" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10 3v1.5M10 15.5V17M17 10h-1.5M4.5 10H3"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Prospects
+      </a>
+
+      <a routerLink="/app/projects" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="5" width="14" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7 5V3.5a.5.5 0 011 0V5M13 5V3.5a.5.5 0 00-1 0V5"
+                stroke="currentColor" stroke-width="1.5"/>
+          <path d="M6 10h8M6 13h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Projects
+      </a>
+
+      <a routerLink="/app/contracts" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M5 3h10a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
+                stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Contracts
+      </a>
+
+      <a routerLink="/app/reservations" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M14 2H6a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z"
+                stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Reservations
+      </a>
+
+      <!-- Finance section -->
+      <span class="nav-section">Finance</span>
+
+      <a routerLink="/app/dashboard/commercial" routerLinkActive="nav-active" class="nav-item"
+         [routerLinkActiveOptions]="{ exact: true }">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="8" y="7" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="14" y="3" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a routerLink="/app/dashboard/commercial/cash" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="5" width="16" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="10" cy="13" r="2" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Cash Flow
+      </a>
+
+      @if (isAdminOrManager) {
+        <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <path d="M3 5h14M3 10h14M3 15h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Receivables
+        </a>
+      }
+
+      <a routerLink="/app/commissions" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7.5 12.5c0 1.1.9 2 2 2H11a1.5 1.5 0 000-3H9a1.5 1.5 0 010-3h1.5a2 2 0 012 2M10 5.5V7m0 9v1.5"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Commissions
+      </a>
+
+      <!-- Operations section -->
+      <span class="nav-section">Operations</span>
+
+      <a routerLink="/app/messages" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H5L2 17V5a1 1 0 011-1z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M7 8h6M7 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Messages
+      </a>
+
+      <a routerLink="/app/notifications" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2.5a6 6 0 016 6v3.5l1.5 2h-15L4 12V8.5a6 6 0 016-6z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 15.5a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Notifications
+      </a>
+
+      <!-- Admin section (admin only) -->
+      @if (isAdmin) {
+        <span class="nav-section">Admin</span>
+        <a routerLink="/app/admin/users" routerLinkActive="nav-active" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 17c0-3.314 2.686-6 6-6s6 2.686 6 6"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M14 11l1.5 1.5L18 10" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Users
+        </a>
+      }
+
+    </nav>
+
+    <!-- User footer -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-avatar">{{ userInitial }}</span>
+        <div class="user-details">
+          <span class="user-email" [title]="userLabel">{{ userLabel }}</span>
+          <span class="user-role">{{ userRoleLabel }}</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Sign out">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sign out
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── Main Content ──────────────────────────────────── -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+
+</div>

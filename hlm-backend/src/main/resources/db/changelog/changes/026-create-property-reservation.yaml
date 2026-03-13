@@ -1,0 +1,110 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-create-property-reservation
+      author: claude
+      changes:
+        - createTable:
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_preser_tenant
+                    references: tenant(id)
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_preser_contact
+                    references: contact(id)
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reserved_by_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_preser_user
+                    references: app_user(id)
+              - column:
+                  name: reservation_price
+                  type: decimal(12,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: reservation_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiry_date
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: converted_deposit_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_preser_tenant_status
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_preser_tenant_property
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: property_id
+        - createIndex:
+            indexName: idx_preser_tenant_contact
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: contact_id
+        - createIndex:
+            indexName: idx_preser_expiry_date
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: expiry_date

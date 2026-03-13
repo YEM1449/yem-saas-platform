@@ -54,11 +54,10 @@ anyRequest                                   -> authenticated
 ## Module Boundaries (Backend)
 - `auth/`: security config, JWT providers, filter, user security cache.
 - `tenant/`: tenant entity/context + bootstrap.
-- `contact/`, `property/`, `project/`, `deposit/`, `contract/`: core CRM commercial workflow.
+- `contact/`, `property/`, `project/`, `deposit/`, `reservation/`, `contract/`: core CRM commercial workflow.
 - `dashboard/`: commercial, cash, receivables aggregate read models.
 - `outbox/` and `notification/`: async outbound + in-app notifications.
-- `payment/`: v1 payments API, deprecated but still served.
-- `payments/`: v2 schedule/workflow/reminders/cash dashboard (preferred).
+- `payments/`: schedule/workflow/reminders/cash dashboard. Sole payment implementation — `payment/` (v1) was deleted in Epic/sec-improvement (2026-03-06).
 - `portal/`: magic-link auth and buyer read-only endpoints.
 - `media/`: storage abstraction + local implementation (cloud-swappable).
 - `common/`: error contracts/shared infra primitives.
@@ -98,14 +97,32 @@ GET /api/portal/auth/verify?token=raw
   -> issue ROLE_PORTAL JWT (sub=contactId, tid=tenantId, ttl=2h)
 ```
 
-## Payments v1 vs v2
-| Package | Status | Key Paths |
-|---------|--------|-----------|
-| `payment/` | deprecated (sunset `2026-12-31`) | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
-| `payments/` | preferred | `/api/contracts/{id}/schedule`, `/api/schedule-items/**`, `/api/dashboard/commercial/cash` |
+## Reservations
+```text
+POST /api/reservations                         → create (ADMIN/MANAGER)
+GET  /api/reservations/{id}                    → get
+GET  /api/reservations                         → list (all tenant, newest first)
+POST /api/reservations/{id}/cancel             → cancel ACTIVE → CANCELLED (ADMIN/MANAGER)
+POST /api/reservations/{id}/convert-to-deposit → ACTIVE → CONVERTED_TO_DEPOSIT + creates Deposit (ADMIN/MANAGER)
+```
+- Statuses: `ACTIVE`, `EXPIRED`, `CANCELLED`, `CONVERTED_TO_DEPOSIT`
+- Scheduler: `ReservationExpiryScheduler` (cron hourly, `app.reservation.expiry-cron`)
+- DB table: `property_reservation` (changeset 026)
 
-v1 endpoints emit deprecation headers (`Deprecation`, `Sunset`, `Warning`, `Link`) and migration telemetry (`payment_v1_requests_total`, log marker `payment_v1_endpoint_called`) to drive controlled retirement.
-Operational runbook: `docs/v2/payment-v1-retirement-plan.v2.md`.
+## Payments (v2 Only)
+`payment/` (v1) package was deleted in Epic/sec-improvement (2026-03-06). Only `payments/` (v2) exists.
+
+| Key Paths |
+|-----------|
+| `GET /api/contracts/{id}/schedule` |
+| `POST /api/contracts/{id}/schedule` |
+| `PUT/DELETE /api/schedule-items/{itemId}` |
+| `POST /api/schedule-items/{itemId}/issue|send|cancel` |
+| `GET /api/schedule-items/{itemId}/pdf` |
+| `GET|POST /api/schedule-items/{itemId}/payments` |
+| `GET /api/dashboard/commercial/cash` |
+
+Migration history: `docs/v2/payment-v1-retirement-plan.v2.md`.
 
 ## Storage + PDF Notes
 - `MediaStorageService` abstraction with `LocalFileMediaStorage` default (`MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE`).

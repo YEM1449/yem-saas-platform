@@ -46,6 +46,8 @@ export interface CommercialDashboardSummary {
   activeReservationsTotalAmount: number;
   /** Average age of open reservations in days; null when none. */
   avgReservationAgeDays: number | null;
+  /** Contacts with status PROSPECT or QUALIFIED_PROSPECT (tenant-wide). */
+  activeProspectsCount: number;
   salesByProject: SalesByProjectRow[];
   salesByAgent: SalesByAgentRow[];
   inventoryByStatus: Record<string, number>;
@@ -60,6 +62,10 @@ export interface CommercialDashboardSummary {
   discountByAgent: DiscountByAgentRow[];
   /** F3.4 — prospects grouped by source */
   prospectsBySource: ProspectSourceRow[];
+  /** Count of ACTIVE property_reservation records (lightweight holds). */
+  propertyHoldsCount: number;
+  /** ACTIVE property holds expiring within the next 48 h. */
+  propertyHoldsExpiringSoon: number;
 }
 
 export interface SalesTableRow {

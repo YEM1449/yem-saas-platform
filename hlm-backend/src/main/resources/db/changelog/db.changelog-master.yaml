@@ -51,3 +51,5 @@ databaseChangeLog:
       file: db/changelog/changes/024-create-commission-rule.yaml
   - include:
       file: db/changelog/changes/025-create-portal-token.yaml
+  - include:
+      file: db/changelog/changes/026-create-property-reservation.yaml

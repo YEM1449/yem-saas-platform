@@ -8,8 +8,8 @@ All endpoints return `ErrorResponse` with `ErrorCode` when failing. See `common/
 - **400**: `VALIDATION_ERROR`, `INVALID_CLIENT_CONVERSION`, `INVALID_DEPOSIT_REQUEST`, `INVALID_PROPERTY_TYPE`, `INVALID_PERIOD`
 - **401**: `UNAUTHORIZED`
 - **403**: `FORBIDDEN`
-- **404**: `NOT_FOUND`
-- **409**: `TENANT_KEY_EXISTS`, `CONTACT_EMAIL_EXISTS`, `CONTACT_INTEREST_EXISTS`, `DEPOSIT_ALREADY_EXISTS`, `PROPERTY_ALREADY_RESERVED`, `INVALID_DEPOSIT_STATE`, `PROPERTY_REFERENCE_CODE_EXISTS`
+- **404**: `NOT_FOUND`, `RESERVATION_NOT_FOUND`
+- **409**: `TENANT_KEY_EXISTS`, `CONTACT_EMAIL_EXISTS`, `CONTACT_INTEREST_EXISTS`, `DEPOSIT_ALREADY_EXISTS`, `PROPERTY_ALREADY_RESERVED`, `PROPERTY_NOT_AVAILABLE_FOR_RESERVATION`, `INVALID_DEPOSIT_STATE`, `INVALID_RESERVATION_STATE`, `PROPERTY_REFERENCE_CODE_EXISTS`
 
 ---
 
@@ -112,6 +112,13 @@ All endpoints return `ErrorResponse` with `ErrorCode` when failing. See `common/
 - **DTOs:** `UpdateContactRequest` → `ContactResponse`
 - **Common errors:** `VALIDATION_ERROR`, `CONTACT_EMAIL_EXISTS`, `NOT_FOUND`, `UNAUTHORIZED`
 
+### `POST /api/contacts/{id}/convert-to-prospect`
+- **Auth:** Required
+- **Roles:** `ADMIN`, `MANAGER`
+- **DTOs:** `ConvertToProspectRequest` (optional body) → `ContactResponse`
+- **Notes:** Transitions `LOST` → `PROSPECT` or `PROSPECT` → `QUALIFIED_PROSPECT`. Enriches `ProspectDetail` with optional budget/source. No-op if already `CLIENT`.
+- **Common errors:** `NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`
+
 ### `POST /api/contacts/{id}/convert-to-client`
 - **Auth:** Required
 - **DTOs:** `ConvertToClientRequest` → `ContactResponse`
@@ -169,26 +176,22 @@ All endpoints return `ErrorResponse` with `ErrorCode` when failing. See `common/
 
 ---
 
-## Payments (v1 Deprecated, v2 Preferred)
+## Payments (v2 — Current)
 
-### v1 compatibility endpoints (deprecated)
-- `GET /api/contracts/{contractId}/payment-schedule`
-- `POST /api/contracts/{contractId}/payment-schedule`
-- `PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}`
-- `POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call`
-- `GET /api/payment-calls`
-- `GET /api/payment-calls/{id}`
-- `GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf`
-- `GET /api/payment-calls/{id}/payments`
-- `POST /api/payment-calls/{id}/payments`
+> **v1 removed.** The `payment/` backend package (`PaymentScheduleController`, `PaymentCallController`) was deleted in Epic/sec-improvement (2026-03-06). The v1 endpoints below no longer exist. Use v2 exclusively.
 
-Every v1 response includes deprecation headers:
-- `Deprecation: true`
-- `Sunset: Wed, 31 Dec 2026 23:59:59 GMT`
-- `Warning: 299 ...`
-- `Link: </api/contracts/550e8400-e29b-41d4-a716-446655440000/schedule>; rel="successor-version"` _(the UUID is the actual contract ID from the request path)_
+### v1 endpoints (deleted — for migration reference only)
+- ~~`GET /api/contracts/{contractId}/payment-schedule`~~
+- ~~`POST /api/contracts/{contractId}/payment-schedule`~~
+- ~~`PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}`~~
+- ~~`POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call`~~
+- ~~`GET /api/payment-calls`~~
+- ~~`GET /api/payment-calls/{id}`~~
+- ~~`GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf`~~
+- ~~`GET /api/payment-calls/{id}/payments`~~
+- ~~`POST /api/payment-calls/{id}/payments`~~
 
-### v2 endpoints (target)
+### v2 endpoints (current)
 - `GET /api/contracts/{contractId}/schedule`
 - `POST /api/contracts/{contractId}/schedule`
 - `PUT /api/schedule-items/{itemId}`
@@ -217,3 +220,42 @@ Migration reference:
 - **Auth:** Required
 - **DTOs:** `NotificationResponse`
 - **Common errors:** `NOT_FOUND`, `UNAUTHORIZED`
+
+---
+
+## Reservations
+
+Lightweight property holds created before a formal deposit. Statuses: `ACTIVE`, `EXPIRED`, `CANCELLED`, `CONVERTED_TO_DEPOSIT`.
+
+### `POST /api/reservations`
+- **Auth:** Required
+- **Roles:** `ADMIN`, `MANAGER`
+- **DTOs:** `CreateReservationRequest` → `ReservationResponse`
+- **Notes:** Property must be `ACTIVE` with no existing `ACTIVE` reservation. Acquires pessimistic write lock. Transitions property to `RESERVED`. Default expiry is +7 days if not specified.
+- **Common errors:** `VALIDATION_ERROR`, `NOT_FOUND`, `PROPERTY_NOT_AVAILABLE_FOR_RESERVATION`, `UNAUTHORIZED`, `FORBIDDEN`
+
+### `GET /api/reservations/{id}`
+- **Auth:** Required
+- **Roles:** any authenticated
+- **DTOs:** `ReservationResponse`
+- **Common errors:** `NOT_FOUND`, `UNAUTHORIZED`
+
+### `GET /api/reservations`
+- **Auth:** Required
+- **Roles:** any authenticated
+- **DTOs:** `ReservationResponse[]` (all tenant reservations, newest first)
+- **Common errors:** `UNAUTHORIZED`
+
+### `POST /api/reservations/{id}/cancel`
+- **Auth:** Required
+- **Roles:** `ADMIN`, `MANAGER`
+- **DTOs:** `ReservationResponse`
+- **Notes:** Only `ACTIVE` reservations can be cancelled. Releases property back to `ACTIVE`.
+- **Common errors:** `NOT_FOUND`, `INVALID_RESERVATION_STATE`, `UNAUTHORIZED`, `FORBIDDEN`
+
+### `POST /api/reservations/{id}/convert-to-deposit`
+- **Auth:** Required
+- **Roles:** `ADMIN`, `MANAGER`
+- **DTOs:** `ConvertReservationToDepositRequest` → `DepositResponse`
+- **Notes:** Transitions reservation to `CONVERTED_TO_DEPOSIT`, briefly releases property, then creates a deposit via `DepositService` (which re-reserves). Stores `convertedDepositId` on the reservation.
+- **Common errors:** `NOT_FOUND`, `INVALID_RESERVATION_STATE`, `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`

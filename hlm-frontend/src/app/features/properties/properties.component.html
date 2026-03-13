@@ -1,74 +1,285 @@
+<!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
-  <h2>Properties</h2>
-  @if (canImport) {
-    <label class="btn-import" [class.disabled]="importLoading">
-      @if (importLoading) { Importation… } @else { Importer CSV }
-      <input type="file" accept=".csv,text/csv" (change)="onImportFileSelected($event)"
-             [disabled]="importLoading" hidden />
-    </label>
+  <div>
+    <h1 class="page-title">Properties</h1>
+    <p class="page-subtitle">Manage your real estate inventory</p>
+  </div>
+  @if (canCreate) {
+    <div class="page-header-actions">
+      <!-- Manual create -->
+      <button class="btn btn-primary" (click)="openModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Add Property
+      </button>
+      <!-- CSV import -->
+      <label class="btn btn-secondary" [class.disabled]="importLoading" title="Import from CSV">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 10.5V12h10v-1.5M7 1v7.5M4.5 6.5L7 9l2.5-2.5"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        @if (importLoading) { Importing… } @else { Import CSV }
+        <input type="file" accept=".csv,text/csv" (change)="onImportFileSelected($event)"
+               [disabled]="importLoading" hidden />
+      </label>
+    </div>
   }
 </div>
 
+<!-- ── CSV Format Reference (collapsible) ───────────────────── -->
+@if (canCreate) {
+  <details class="info-panel" style="margin-bottom: 16px;">
+    <summary>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M7 6.5v4M7 4.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      CSV Import — Required format &amp; column reference
+    </summary>
+
+    <div style="margin-top: 14px;">
+      <p class="text-sm" style="color: var(--c-text-secondary); margin: 0 0 10px;">
+        Upload a <strong>.csv</strong> file (UTF-8, comma-separated) with the following columns.
+        The first row must be the header row. Columns marked <strong>*</strong> are required.
+      </p>
+
+      <table class="csv-ref-table">
+        <thead>
+          <tr><th>Column</th><th>Required</th><th>Accepted values / format</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="font-mono">reference_code</td><td>✓</td><td>Unique text identifier, e.g. <code>PROJ-A-101</code></td></tr>
+          <tr><td class="font-mono">title</td><td>✓</td><td>Display name of the property</td></tr>
+          <tr><td class="font-mono">type</td><td>✓</td><td>APARTMENT · VILLA · HOUSE · STUDIO · DUPLEX · PENTHOUSE · LAND · OFFICE · COMMERCIAL</td></tr>
+          <tr><td class="font-mono">status</td><td></td><td>DRAFT (default) · ACTIVE · WITHDRAWN · ARCHIVED</td></tr>
+          <tr><td class="font-mono">city</td><td></td><td>Free text, e.g. <code>Casablanca</code></td></tr>
+          <tr><td class="font-mono">price</td><td></td><td>Numeric, no currency symbol, e.g. <code>1500000</code></td></tr>
+          <tr><td class="font-mono">surface_area_sqm</td><td></td><td>Numeric, square metres, e.g. <code>85</code></td></tr>
+          <tr><td class="font-mono">bedrooms</td><td></td><td>Integer, e.g. <code>3</code></td></tr>
+          <tr><td class="font-mono">description</td><td></td><td>Free text (avoid commas — use quotes if needed)</td></tr>
+          <tr><td class="font-mono">project_id</td><td></td><td>UUID of an existing project</td></tr>
+        </tbody>
+      </table>
+
+      <p class="text-sm text-muted" style="margin: 10px 0 6px;">Example rows:</p>
+      <pre class="code-block">reference_code,title,type,status,city,price,surface_area_sqm,bedrooms,description
+PARK-A-101,Appartement T3 Vue Mer,APARTMENT,ACTIVE,Casablanca,1250000,85,3,"Appartement lumineux face à la mer"
+PARK-V-001,Villa avec Piscine,VILLA,DRAFT,Marrakech,3800000,320,5,"Grande villa avec jardin privatif"
+LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
+    </div>
+  </details>
+}
+
+<!-- ── Import Feedback ───────────────────────────────────────── -->
 @if (importResult) {
   @if (importResult.errors.length === 0) {
-    <div class="import-success">
-      {{ importResult.imported }} propriété(s) importée(s) avec succès.
+    <div class="alert alert-success">
+      ✓ {{ importResult.imported }} propert{{ importResult.imported === 1 ? 'y' : 'ies' }} imported successfully.
     </div>
   } @else {
-    <div class="import-errors">
-      <strong>Import rejeté — {{ importResult.errors.length }} erreur(s) :</strong>
-      <ul>
-        @for (e of importResult.errors; track e.row) {
-          <li>Ligne {{ e.row }} : {{ e.message }}</li>
-        }
-      </ul>
+    <div class="alert alert-error">
+      <div>
+        <strong>Import rejected — {{ importResult.errors.length }} error(s):</strong>
+        <ul style="margin: 8px 0 0 16px; padding: 0; font-size: 0.8125rem;">
+          @for (e of importResult.errors; track e.row) {
+            <li>Row {{ e.row }}: {{ e.message }}</li>
+          }
+        </ul>
+      </div>
     </div>
   }
 }
-
 @if (importError) {
-  <p class="error">{{ importError }}</p>
+  <div class="alert alert-error">{{ importError }}</div>
 }
 
-@if (loading) {
-  <p>Loading properties...</p>
-}
+<!-- ── Toolbar: search + live count ─────────────────────────── -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <input class="search-input" type="search"
+           placeholder="Search by reference, title, city or type…"
+           [(ngModel)]="searchQuery" />
+  </div>
+  @if (!loading && properties.length > 0) {
+    <span class="stat-chip">{{ filtered.length }}&nbsp;/&nbsp;{{ properties.length }} properties</span>
+  }
+</div>
 
+<!-- ── Feedback ─────────────────────────────────────────────── -->
 @if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="alert alert-error">{{ error }}</div>
 }
 
+<!-- ── Loading ──────────────────────────────────────────────── -->
+@if (loading) {
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Loading properties…
+  </div>
+}
+
+<!-- ── Empty: no properties ─────────────────────────────────── -->
 @if (!loading && !error && properties.length === 0) {
-  <p>No properties found.</p>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🏠</div>
+      <p class="empty-state-title">No properties yet</p>
+      <p class="empty-state-desc">Add your first property manually or import a list via CSV.</p>
+      @if (canCreate) {
+        <button class="btn btn-primary" (click)="openModal()">Add Property</button>
+      }
+    </div>
+  </div>
 }
 
-@if (!loading && properties.length > 0) {
-  <table>
-    <thead>
-      <tr>
-        <th>Reference</th>
-        <th>Title</th>
-        <th>Type</th>
-        <th>Status</th>
-        <th>City</th>
-        <th>Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (p of properties; track p.id) {
-        <tr class="clickable" (click)="goToDetail(p.id)">
-          <td>{{ p.referenceCode }}</td>
-          <td>{{ p.title }}</td>
-          <td>{{ p.type }}</td>
-          <td>
-            <span class="badge" [class]="'badge-' + p.status.toLowerCase()">
-              {{ p.status }}
-            </span>
-          </td>
-          <td>{{ p.city ?? '—' }}</td>
-          <td>{{ p.price | number:'1.0-0' }}</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+<!-- ── Empty: search returned nothing ──────────────────────── -->
+@if (!loading && !error && properties.length > 0 && filtered.length === 0) {
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <p class="empty-state-title">No results</p>
+      <p class="empty-state-desc">No properties match "{{ searchQuery }}"</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Clear search</button>
+    </div>
+  </div>
+}
+
+<!-- ── Data Table ────────────────────────────────────────────── -->
+@if (!loading && filtered.length > 0) {
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>City</th>
+            <th class="text-right">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filtered; track p.id) {
+            <tr class="clickable" (click)="goToDetail(p.id)">
+              <td class="td-mono">{{ p.referenceCode }}</td>
+              <td class="fw-medium">{{ p.title }}</td>
+              <td class="td-muted">{{ p.type | titlecase }}</td>
+              <td>
+                <span [class]="badgeClass(p.status)">{{ p.status }}</span>
+              </td>
+              <td class="td-muted">{{ p.city ?? '—' }}</td>
+              <td class="text-right td-muted">{{ p.price !== null ? (p.price | number:'1.0-0') : '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- ══ Add Property Modal ═══════════════════════════════════════ -->
+@if (showModal) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" style="max-width: 580px;" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2 class="modal-title">Add Property</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (submitError) {
+          <div class="alert alert-error">{{ submitError }}</div>
+        }
+
+        <!-- Identification -->
+        <div class="modal-section-label">Identification</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label required">Type</label>
+            <select class="form-control" [(ngModel)]="form.type" [disabled]="submitting">
+              <option value="">Select a type…</option>
+              @for (t of propertyTypes; track t) {
+                <option [value]="t">{{ t | titlecase }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Reference Code</label>
+            <input class="form-control" type="text" placeholder="e.g. PARK-A-101"
+                   [(ngModel)]="form.referenceCode" [disabled]="submitting" />
+            <span class="form-hint">Must be unique within your account</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label required">Title</label>
+          <input class="form-control" type="text" placeholder="e.g. Appartement T3 Vue Mer"
+                 [(ngModel)]="form.title" [disabled]="submitting" />
+        </div>
+
+        <!-- Location & Size -->
+        <div class="modal-section-label">Location &amp; Size</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input class="form-control" type="text" placeholder="e.g. Casablanca"
+                   [(ngModel)]="form.city" [disabled]="submitting" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Surface (m²)</label>
+            <input class="form-control" type="number" min="0" placeholder="e.g. 85"
+                   [(ngModel)]="form.surfaceAreaSqm" [disabled]="submitting" />
+          </div>
+        </div>
+
+        <!-- Pricing & Status -->
+        <div class="modal-section-label">Pricing &amp; Status</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Price (MAD)</label>
+            <input class="form-control" type="number" min="0" placeholder="e.g. 1500000"
+                   [(ngModel)]="form.price" [disabled]="submitting" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Status</label>
+            <select class="form-control" [(ngModel)]="form.status" [disabled]="submitting">
+              @for (s of statusOptions; track s.value) {
+                <option [value]="s.value">{{ s.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3"
+                    placeholder="Key features, finishes, orientation, views…"
+                    [(ngModel)]="form.description" [disabled]="submitting"></textarea>
+        </div>
+
+        <p class="form-hint" style="margin:0">
+          Media (photos/plans) can be uploaded from the property detail page after creation.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
+          @if (submitting) { Creating… } @else { Create Property }
+        </button>
+      </div>
+
+    </div>
+  </div>
 }

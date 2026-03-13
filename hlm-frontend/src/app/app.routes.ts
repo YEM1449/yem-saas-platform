@@ -24,6 +24,7 @@ export const routes: Routes = [
       { path: 'contracts', loadComponent: () => import('./features/contracts/contracts.component').then(m => m.ContractsComponent) },
       { path: 'contracts/:id', loadComponent: () => import('./features/contracts/contract-detail.component').then(m => m.ContractDetailComponent) },
       { path: 'contracts/:contractId/payments', loadComponent: () => import('./features/contracts/payment-schedule.component').then(m => m.PaymentScheduleComponent) },
+      { path: 'reservations', loadComponent: () => import('./features/reservations/reservations.component').then(m => m.ReservationsComponent) },
       { path: 'dashboard/commercial', loadComponent: () => import('./features/dashboard/commercial-dashboard.component').then(m => m.CommercialDashboardComponent) },
       { path: 'dashboard/commercial/sales', loadComponent: () => import('./features/dashboard/commercial-dashboard-sales.component').then(m => m.CommercialDashboardSalesComponent) },
       { path: 'dashboard/commercial/cash', loadComponent: () => import('./features/dashboard/cash-dashboard.component').then(m => m.CashDashboardComponent) },

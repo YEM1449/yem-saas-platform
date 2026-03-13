@@ -4,6 +4,15 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Contact, ContactPage, TimelineEvent } from '../../core/models/contact.model';
 
+export interface CreateContactRequest {
+  contactType: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContactService {
   private http = inject(HttpClient);
@@ -21,5 +30,10 @@ export class ContactService {
     return this.http.get<TimelineEvent[]>(
       `${this.apiUrl}/api/contacts/${id}/timeline?limit=${limit}`
     );
+  }
+
+  /** Create a new contact (ADMIN / MANAGER only). */
+  create(req: CreateContactRequest): Observable<Contact> {
+    return this.http.post<Contact>(`${this.apiUrl}/api/contacts`, req);
   }
 }
