@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.contact.service;
 
 import com.yem.hlm.backend.contact.api.dto.*;
+import com.yem.hlm.backend.contact.api.dto.ConvertToProspectRequest;
 import com.yem.hlm.backend.contact.domain.*;
 import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
@@ -123,6 +124,45 @@ public class ContactService {
 
         Contact saved = contactRepository.save(contact);
         return toResponse(saved);
+    }
+
+    /**
+     * Qualifies a contact as a prospect: sets status to QUALIFIED_PROSPECT
+     * and upserts ProspectDetail with the supplied budget/source enrichment.
+     * Allowed from any non-terminal ContactStatus.
+     */
+    @Transactional
+    public ContactResponse convertToProspect(UUID contactId, ConvertToProspectRequest req) {
+        UUID tenantId = requireTenantId();
+        UUID actorUserId = requireUserId();
+
+        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+
+        ContactStatus current = contact.getStatus();
+        if (current == ContactStatus.LOST) {
+            // LOST → PROSPECT is allowed; use the state machine
+            contact.setStatus(ContactStatus.PROSPECT);
+        } else if (current == ContactStatus.PROSPECT) {
+            // Promote to qualified prospect
+            contact.setStatus(ContactStatus.QUALIFIED_PROSPECT);
+        } else if (current != ContactStatus.QUALIFIED_PROSPECT) {
+            // Already a client — silently enrich ProspectDetail but do not demote status
+        }
+        contact.setQualified(true);
+        contact.markUpdatedBy(actorUserId);
+        contactRepository.save(contact);
+
+        // Upsert ProspectDetail
+        ProspectDetail pd = prospectDetailRepository.findById(contactId)
+                .orElseGet(() -> new ProspectDetail(contact));
+        if (req.budgetMin() != null) pd.setBudgetMin(req.budgetMin());
+        if (req.budgetMax() != null) pd.setBudgetMax(req.budgetMax());
+        if (req.source() != null && !req.source().isBlank()) pd.setSource(req.source().trim());
+        if (req.notes() != null && !req.notes().isBlank()) pd.setNotes(req.notes().trim());
+        prospectDetailRepository.save(pd);
+
+        return get(contactId);
     }
 
     @Transactional

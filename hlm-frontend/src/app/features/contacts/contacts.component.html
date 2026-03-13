@@ -1,38 +1,180 @@
-<h2>Contacts</h2>
+<!-- ── Page Header ──────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Contacts</h1>
+    <p class="page-subtitle">Manage your CRM contacts, prospects and clients</p>
+  </div>
+  @if (canWrite) {
+    <div class="page-header-actions">
+      <button class="btn btn-primary" (click)="openModal()">
+        <!-- Plus icon -->
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        New Contact
+      </button>
+    </div>
+  }
+</div>
 
-@if (loading) {
-  <p>Loading contacts...</p>
-}
+<!-- ── Toolbar: search + live count ─────────────────────────── -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <input class="search-input" type="search" placeholder="Search by name, email or phone…"
+           [(ngModel)]="searchQuery" />
+  </div>
+  @if (!loading && contacts.length > 0) {
+    <span class="stat-chip">
+      {{ filtered.length }}&nbsp;/&nbsp;{{ contacts.length }} contacts
+    </span>
+  }
+</div>
 
+<!-- ── Feedback ─────────────────────────────────────────────── -->
 @if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="alert alert-error">{{ error }}</div>
 }
 
+<!-- ── Loading ──────────────────────────────────────────────── -->
+@if (loading) {
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Loading contacts…
+  </div>
+}
+
+<!-- ── Empty: no contacts at all ────────────────────────────── -->
 @if (!loading && !error && contacts.length === 0) {
-  <p>No contacts found.</p>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <p class="empty-state-title">No contacts yet</p>
+      <p class="empty-state-desc">Add your first contact to start building your CRM pipeline.</p>
+      @if (canWrite) {
+        <button class="btn btn-primary" (click)="openModal()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          New Contact
+        </button>
+      }
+    </div>
+  </div>
 }
 
-@if (!loading && contacts.length > 0) {
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Type</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (c of contacts; track c.id) {
-        <tr class="clickable" [routerLink]="['/app/contacts', c.id]">
-          <td>{{ c.fullName }}</td>
-          <td>{{ c.email ?? '—' }}</td>
-          <td>{{ c.phone ?? '—' }}</td>
-          <td>{{ c.contactType }}</td>
-          <td>{{ c.status }}</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+<!-- ── Empty: search returned nothing ──────────────────────── -->
+@if (!loading && !error && contacts.length > 0 && filtered.length === 0) {
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <p class="empty-state-title">No results</p>
+      <p class="empty-state-desc">No contacts match "{{ searchQuery }}"</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Clear search</button>
+    </div>
+  </div>
+}
+
+<!-- ── Data Table ────────────────────────────────────────────── -->
+@if (!loading && filtered.length > 0) {
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of filtered; track c.id) {
+            <tr class="clickable" [routerLink]="['/app/contacts', c.id]">
+              <td class="contact-name">{{ c.fullName }}</td>
+              <td class="td-muted">{{ c.email ?? '—' }}</td>
+              <td class="td-muted">{{ c.phone ?? '—' }}</td>
+              <td><span [class]="badgeClass(c.contactType)">{{ c.contactType | lowercase }}</span></td>
+              <td><span [class]="badgeClass(c.status)">{{ c.status | lowercase | titlecase }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- ══ Create Contact Modal ════════════════════════════════════ -->
+@if (showModal) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2 class="modal-title">New Contact</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (submitError) {
+          <div class="alert alert-error">{{ submitError }}</div>
+        }
+
+        <!-- Name row -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label required">First Name</label>
+            <input class="form-control" type="text" placeholder="e.g. Jean"
+                   [(ngModel)]="form.firstName" [disabled]="submitting" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Last Name</label>
+            <input class="form-control" type="text" placeholder="e.g. Dupont"
+                   [(ngModel)]="form.lastName" [disabled]="submitting" autocomplete="off" />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-control" type="email" placeholder="jean.dupont@example.com"
+                 [(ngModel)]="form.email" [disabled]="submitting" />
+          <span class="form-hint">Used for portal access and automated messaging</span>
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-control" type="tel" placeholder="+212 6 xx xx xx xx"
+                 [(ngModel)]="form.phone" [disabled]="submitting" />
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" rows="3"
+                    placeholder="Lead source, first contact context, interests…"
+                    [(ngModel)]="form.notes" [disabled]="submitting"></textarea>
+        </div>
+
+        <p class="form-hint" style="margin-top:0">
+          The contact is created as a <strong>Prospect</strong>. You can update the status
+          and add property interests from the contact's detail page.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
+          @if (submitting) { Creating… } @else { Create Contact }
+        </button>
+      </div>
+
+    </div>
+  </div>
 }

@@ -29,6 +29,9 @@ import com.yem.hlm.backend.portal.service.PortalTokenInvalidException;
 import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
 import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
 import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException;
+import com.yem.hlm.backend.reservation.service.InvalidReservationStateException;
+import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservationException;
+import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.tenant.service.TenantKeyAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -152,6 +155,7 @@ public class GlobalExceptionHandler {
             PaymentScheduleItemNotFoundException.class,
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
+            ReservationNotFoundException.class,
             UserNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
@@ -266,6 +270,36 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(PropertyNotAvailableForReservationException.class)
+    public ResponseEntity<ErrorResponse> handlePropertyNotAvailableForReservation(
+            PropertyNotAvailableForReservationException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.PROPERTY_NOT_AVAILABLE_FOR_RESERVATION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidReservationStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidReservationState(
+            InvalidReservationStateException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_RESERVATION_STATE,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 

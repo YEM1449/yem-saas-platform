@@ -71,7 +71,7 @@ npm start
 - Backend integration tests (Docker/Testcontainers required):
   ```bash
   cd hlm-backend
-  ./mvnw failsafe:integration-test
+  ./mvnw failsafe:integration-test failsafe:verify
   ```
 - Frontend tests:
   ```bash
@@ -95,9 +95,26 @@ npm start
 ## Architecture & Patterns
 ### Module boundaries
 - Backend follows feature packages: `*/api`, `*/service`, `*/repo`, `*/domain`.
-  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `commission`, `portal`, `common`.
+  - Feature packages: `auth`, `tenant`, `user`, `contact`, `property`, `project`, `deposit`, `reservation`, `contract`, `notification`, `outbox`, `audit`, `dashboard`, `payments`, `reminder`, `media`, `commission`, `portal`, `common`.
+  - **`payment/` (v1) was deleted** in Epic/sec-improvement (2026-03-06). Only `payments/` (v2) remains. Do not reference or recreate `payment/` classes.
 - Controllers expose DTOs under `api/dto`; services contain business rules and tenant checks.
-- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, payments, admin-users, dashboard, commissions), `portal/` (client-facing portal — separate route tree at `/portal/*`), route config in `app.routes.ts`.
+- Frontend structure: `core/` (auth + shared models), `features/` (pages — properties, property-detail, projects, contacts, prospects, notifications, outbox, contracts, contract-detail, payment-schedule, reservations, admin-users, dashboard, commissions, shell), `portal/` (client-facing portal — separate route tree at `/portal/*`), route config in `app.routes.ts`.
+  - **Design system**: global CSS custom properties and utility classes in `hlm-frontend/src/styles.css`. Do not introduce component-scoped styles for patterns already in the design system.
+    - Token variables: `--c-primary`, `--c-success`, `--c-danger`, `--c-bg`, `--c-surface`, `--c-border`, `--c-text`, `--font`, `--radius-*`, `--shadow-*`.
+    - Utility classes: `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`, `.btn-sm`, `.btn-xs`, `.form-group`, `.form-label`, `.form-control`, `.form-hint`, `.form-error`, `.form-grid`.
+    - Layout classes: `.page-header`, `.page-title`, `.page-subtitle`, `.toolbar`, `.stat-chip`, `.card`, `.card-header`, `.card-body-flush`.
+    - Table classes: `.data-table`, `.td-muted`, `.td-mono`, `.td-actions`.
+    - State classes: `.empty-state`, `.empty-state-icon`, `.empty-state-title`, `.empty-state-desc`, `.loading-wrap`, `.spinner`.
+    - Feedback classes: `.alert`, `.alert-success`, `.alert-error`, `.alert-warning`, `.alert-info`.
+    - Modal classes: `.modal-backdrop`, `.modal`, `.modal-header`, `.modal-title`, `.modal-close`, `.modal-body`, `.modal-footer`.
+    - Info panels: `.info-panel` (wraps `<details>` element), `.code-block`.
+    - Badges: `.badge-draft`, `.badge-active`, `.badge-signed`, `.badge-overdue`, `.badge-paid`, `.badge-canceled`, and 20+ status variants for all domain entities.
+    - Search: `.search-wrap`, `.search-icon`, `.search-input`.
+  - **Shell layout**: sidebar navigation (`shell.component`) — 232 px dark navy sidebar + `.main-content` scrollable area. Nav groups: CRM, Finance, Operations, Admin. Each nav item uses `routerLinkActive="nav-active"`. User footer shows role initial avatar, first 8 chars of userId, role badge, Sign Out. `ShellComponent` exposes: `isAdmin`, `isAdminOrManager`, `userInitial`, `userLabel`, `userRoleLabel` computed getters from `AuthService`.
+  - **`MeResponse` model** (`core/models/login.model.ts`): only `{ userId: string; tenantId: string; role?: string }` — no `email` field. Use `userId` for display; derive role label via `.replace('ROLE_', '')`.
+  - **Contacts feature**: `ContactsComponent` includes live search (filter on `fullName/email/phone`), "New Contact" modal (ADMIN/MANAGER only, `canWrite` getter). `ContactService.create(req: CreateContactRequest)` → `POST /api/contacts`.
+  - **Properties feature**: `PropertiesComponent` includes live search, "Add Property" modal (ADMIN/MANAGER), "Import CSV" button with collapsible `<details class="info-panel">` CSV column reference. `PropertyService.create(req: CreatePropertyRequest)` → `POST /api/properties`.
+  - **Payment schedule frontend route**: `contracts/:contractId/payments` → v2 `features/contracts/payment-schedule.component` (v1 `features/payments/` components deleted).
 
 ### API conventions
 - Auth header: `Authorization: Bearer <JWT>`.
@@ -133,6 +150,16 @@ npm start
   - Archive via `DELETE /api/projects/{id}` (sets status; does not physically delete).
   - KPI aggregation: `GET /api/projects/{id}/kpis` — requires `ROLE_ADMIN` or `ROLE_MANAGER`.
 - Property lifecycle enum (`PropertyStatus`): `DRAFT`, `ACTIVE`, `RESERVED`, `SOLD`, `WITHDRAWN`, `ARCHIVED`.
+- **Reservation workflow** (`ReservationStatus`): `ACTIVE`, `EXPIRED`, `CANCELLED`, `CONVERTED_TO_DEPOSIT`.
+  - Table: `property_reservation` (changeset 026). Package: `reservation/`.
+  - Create: property must be `ACTIVE` + no existing `ACTIVE` reservation. Pessimistic write lock (`findByTenantIdAndIdForUpdate`). Transitions property to `RESERVED`. Default expiry +7 days.
+  - Cancel: `ACTIVE → CANCELLED`, releases property to `ACTIVE`.
+  - Convert-to-deposit: sets `CONVERTED_TO_DEPOSIT`, releases property, calls `DepositService.create()` (which re-reserves). Stores `convertedDepositId` for traceability.
+  - Scheduler: `ReservationExpiryScheduler` — hourly cron (`app.reservation.expiry-cron`), `@ConditionalOnProperty("spring.task.scheduling.enabled", matchIfMissing=true)`.
+  - `DepositService.create()` blocks on existing `ACTIVE` reservation for the same property.
+  - New `ErrorCode` entries: `RESERVATION_NOT_FOUND` (404), `PROPERTY_NOT_AVAILABLE_FOR_RESERVATION` (409), `INVALID_RESERVATION_STATE` (409).
+  - Frontend: `features/reservations/reservations.component` — status filter, expiry-soon badge (within 48 h), Cancel button (ACTIVE only). Nav: CRM section, after Contracts. Route: `/app/reservations`.
+- Contact `convert-to-prospect`: `POST /api/contacts/{id}/convert-to-prospect` (ADMIN/MANAGER). Handles `LOST → PROSPECT` and `PROSPECT → QUALIFIED_PROSPECT`. Upserts `ProspectDetail` with optional budget/source/notes. No-op for CLIENT.
 - Deposit workflow (`DepositStatus` + service rules):
   - Creation sets `PENDING` and moves property to `RESERVED`.
   - `confirm()` allows only `PENDING -> CONFIRMED`; acquires pessimistic write lock on property and rejects if property is `SOLD` → 409.
@@ -174,26 +201,12 @@ npm start
   - **Observability**: `Timer("commercial_dashboard_summary_duration")` measures cache-miss computation time; `Counter("commercial_dashboard_summary_cache_misses_total")` counts cache misses; `Counter("commercial_dashboard_summary_requests_total")` in controller counts all requests. Slow-query warning logged at WARN level when computation exceeds 300 ms. No new Maven dependencies — Micrometer Core is included transitively via `spring-boot-starter-actuator`.
   - **Angular route**: `/app/dashboard/commercial` (`CommercialDashboardComponent`); drill-down at `/app/dashboard/commercial/sales`. Dashboard nav entry visible to all authenticated roles.
 
-- Payment lifecycle (`payment` package — PR-8):
-  - `PaymentSchedule` linked 1:1 to `SaleContract`. Contains ordered `PaymentTranche` rows (one per milestone).
-  - `TrancheStatus`: `PLANNED → ISSUED → PARTIALLY_PAID | PAID | OVERDUE`.
-  - `PaymentCall` (Appel de Fonds): issued per tranche. Status: `DRAFT → ISSUED → OVERDUE | CLOSED`.
-    - `issueCall(trancheId)`: moves tranche `PLANNED → ISSUED`, creates ISSUED call; audit event `PAYMENT_CALL_ISSUED`.
-    - Overdue scheduler: cron marks ISSUED calls whose `due_date < today` as `OVERDUE`; disabled in test profile via `@ConditionalOnProperty("spring.task.scheduling.enabled")`.
-  - `Payment` (cash-in): recorded against a call. Updates tranche to `PARTIALLY_PAID` or `PAID`; closes call when fully paid. Audit event `PAYMENT_RECEIVED`.
-  - **RBAC**: create/update/issue/record → ADMIN/MANAGER; read → all roles (AGENT: own contracts only, enforced in service via `contract.getAgent().getId()` check).
-  - **Appel de Fonds PDF**: `GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf`. Architecture: `PaymentCallDocumentService` → `DocumentGenerationService` → OpenHTMLToPDF. Template: `templates/documents/appel-de-fonds.html`. N+1 avoidance: `PaymentCallRepository.findForPdf()` JOIN FETCH.
-  - **Error codes**: `PAYMENT_SCHEDULE_EXISTS` (409), `INVALID_TRANCHE_SUM` (400), `TRANCHE_NOT_FOUND` (404), `PAYMENT_CALL_NOT_FOUND` (404), `INVALID_CALL_STATE` (409), `PAYMENT_EXCEEDS_DUE` (400).
-  - **Endpoints**:
-    - `GET  /api/contracts/{contractId}/payment-schedule` — all roles
-    - `POST /api/contracts/{contractId}/payment-schedule` — ADMIN/MANAGER
-    - `PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}` — ADMIN/MANAGER
-    - `POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call` — ADMIN/MANAGER
-    - `GET  /api/payment-calls` — all roles (paged)
-    - `GET  /api/payment-calls/{id}` — all roles
-    - `GET  /api/payment-calls/{id}/documents/appel-de-fonds.pdf` — all roles (AGENT own only)
-    - `GET  /api/payment-calls/{id}/payments` — all roles
-    - `POST /api/payment-calls/{id}/payments` — ADMIN/MANAGER
+- **Payment v1 (`payment/` package) — DELETED** (Epic/sec-improvement, 2026-03-06):
+  - The `payment/` backend package (v1 tranche model: `PaymentSchedule`, `PaymentTranche`, `PaymentCall`, `PaymentScheduleController`, `PaymentCallController`) has been **fully removed**.
+  - v1 endpoints (`/api/contracts/{id}/payment-schedule`, `/api/payment-calls/**`) **no longer exist**.
+  - DB tables (`payment_schedule`, `payment_tranche`, `payment_call`, `payment`) are retained per the Liquibase additive-only rule but are no longer populated.
+  - All payment functionality is now exclusively in `payments/` (v2) — see below.
+  - Migration history and rationale: `docs/v2/payment-v1-retirement-plan.v2.md`.
 
 - Commercial Audit Trail (`audit` package — PR-7):
   - **Purpose**: immutable per-tenant event log for commercial workflow events (deposit lifecycle + contract lifecycle).
@@ -230,7 +243,7 @@ npm start
     cd hlm-frontend && npm run build
     ```
 
-- Payment Schedule / Appels de fonds (`payments` package — PR-8):
+- Payment Schedule / Appels de fonds (`payments` package — v2, sole implementation since Epic/sec-improvement 2026-03-06):
   - **Purpose**: track staged payment milestones per signed contract (e.g. deposit %, foundation %, keys %). Each schedule item represents one "appel de fonds".
   - **Liquibase**: changeset 020 — three tables: `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`.
   - **Status state machine** (`PaymentScheduleStatus`): `DRAFT → ISSUED → SENT | OVERDUE → PAID` or any `→ CANCELED`.
@@ -354,7 +367,7 @@ npm start
 - End-to-end auth sanity check: run `scripts/smoke-auth.sh` against a running backend.
 
 ## Safe Agent Workflow
-- Read `README.md`, `docs/ai/quick-context.md`, and relevant feature package before editing.
+- Read `README.md`, `context/PROJECT_CONTEXT.md`, and relevant feature package before editing.
 - Prefer small, reviewable patches over broad refactors.
 - Validate with the smallest relevant command set, then expand if touching cross-cutting flows.
 - Update docs (`README.md`, `docs/*`, `AGENTS.md`, `CLAUDE.md`) when behavior or commands change.

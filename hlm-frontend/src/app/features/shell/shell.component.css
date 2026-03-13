@@ -1,33 +1,185 @@
-.topbar {
+/* ================================================================
+   Shell — Sidebar + Content layout
+   ================================================================ */
+
+/* Full-height flex container */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────── */
+.sidebar {
+  width: 232px;
+  flex-shrink: 0;
+  background: #0f172a;       /* dark navy */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+
+/* Brand */
+.sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  background: #1a73e8;
-  color: #fff;
+  gap: 10px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
 }
-
-.brand {
+.brand-icon { display: flex; align-items: center; }
+.brand-name {
   font-weight: 700;
-  margin-right: auto;
+  font-size: 0.9375rem;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
 }
 
-.topbar a {
-  color: #fff;
+/* Nav scroll area */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+/* Section labels */
+.nav-section {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.28);
+  padding: 14px 12px 4px;
+  display: block;
+  flex-shrink: 0;
+}
+/* First section label — less top padding */
+.nav-section:first-child { padding-top: 4px; }
+
+/* Nav links */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
   text-decoration: none;
-  font-size: 0.9rem;
+  transition: background 140ms ease, color 140ms ease;
+  margin-bottom: 1px;
+  flex-shrink: 0;
 }
-
-.logout {
-  background: transparent;
-  border: 1px solid #fff;
+.nav-item:hover {
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.9);
+  text-decoration: none;
+}
+.nav-item.nav-active {
+  background: rgba(37,99,235,.45);
   color: #fff;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
 }
 
-.content {
-  padding: 20px;
+.nav-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  opacity: .65;
+  transition: opacity 140ms ease;
 }
+.nav-item:hover .nav-icon,
+.nav-item.nav-active .nav-icon { opacity: 1; }
+
+/* ── Sidebar Footer ───────────────────────────────────────────── */
+.sidebar-footer {
+  padding: 10px 10px 14px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  background: rgba(37,99,235,.65);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.user-email {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-role {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,.32);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.5);
+  border-radius: 7px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  font-family: inherit;
+  text-align: left;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.85);
+  border-color: rgba(255,255,255,.18);
+}
+
+/* ── Main Content ─────────────────────────────────────────────── */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: var(--c-bg, #f8fafc);
+}
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: transparent; }
+.main-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.main-content::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

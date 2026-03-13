@@ -14,6 +14,8 @@ import com.yem.hlm.backend.dashboard.api.dto.SalesByProjectRow;
 import com.yem.hlm.backend.dashboard.api.dto.SalesTableRow;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.reservation.domain.ReservationStatus;
+import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
@@ -55,8 +57,9 @@ import java.util.UUID;
  * Key = tenantId + effectiveAgentId + from + to + projectId.
  *
  * <h3>Query budget (summary)</h3>
- * Up to 14 aggregate queries; no entity hydration loops.
+ * Up to 16 aggregate queries; no entity hydration loops.
  * Queries 12–13: discount analytics (F3.2); query 14: prospect source funnel (F3.4).
+ * Queries 15–16: property holds (property_reservation ACTIVE count + expiring-soon count).
  */
 @Service
 @Transactional(readOnly = true)
@@ -73,6 +76,7 @@ public class CommercialDashboardService {
     private final ProjectRepository      projectRepository;
     private final UserRepository         userRepository;
     private final ContactRepository      contactRepository;
+    private final ReservationRepository  reservationRepository;
     private final MeterRegistry          meterRegistry;
     private final Timer                  summaryTimer;
 
@@ -83,14 +87,16 @@ public class CommercialDashboardService {
             ProjectRepository projectRepository,
             UserRepository userRepository,
             ContactRepository contactRepository,
+            ReservationRepository reservationRepository,
             MeterRegistry meterRegistry) {
-        this.contractRepository = contractRepository;
-        this.depositRepository  = depositRepository;
-        this.propertyRepository = propertyRepository;
-        this.projectRepository  = projectRepository;
-        this.userRepository     = userRepository;
-        this.contactRepository  = contactRepository;
-        this.meterRegistry      = meterRegistry;
+        this.contractRepository  = contractRepository;
+        this.depositRepository   = depositRepository;
+        this.propertyRepository  = propertyRepository;
+        this.projectRepository   = projectRepository;
+        this.userRepository      = userRepository;
+        this.contactRepository   = contactRepository;
+        this.reservationRepository = reservationRepository;
+        this.meterRegistry       = meterRegistry;
         this.summaryTimer = Timer.builder("commercial_dashboard_summary_duration")
                 .description("Time to compute a fresh commercial dashboard summary (cache misses only)")
                 .register(meterRegistry);
@@ -273,6 +279,15 @@ public class CommercialDashboardService {
                 })
                 .toList();
 
+        // 15 ─ Property holds (ACTIVE property_reservation count) ─────────────
+        long propertyHoldsCount = reservationRepository
+                .countByTenant_IdAndStatus(tenantId, ReservationStatus.ACTIVE);
+
+        // 16 ─ Property holds expiring within 48 h ─────────────────────────────
+        LocalDateTime now48 = LocalDateTime.now();
+        long propertyHoldsExpiringSoon = reservationRepository
+                .countExpiringBefore(tenantId, now48, now48.plusHours(48));
+
         return new CommercialDashboardSummaryDTO(
                 from, to,
                 LocalDateTime.now(),          // asOf
@@ -285,7 +300,8 @@ public class CommercialDashboardService {
                 salesAmountByDay, depositsAmountByDay,
                 conversionRate, avgDaysDepositToSale,
                 avgDiscountPercent, maxDiscountPercent, discountByAgent,
-                prospectsBySource
+                prospectsBySource,
+                propertyHoldsCount, propertyHoldsExpiringSoon
         );
     }
 

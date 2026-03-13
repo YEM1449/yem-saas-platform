@@ -17,6 +17,8 @@ import com.yem.hlm.backend.deposit.domain.Deposit;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.notification.domain.NotificationType;
+import com.yem.hlm.backend.reservation.domain.ReservationStatus;
+import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.notification.service.NotificationService;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
@@ -53,6 +55,7 @@ public class DepositService {
     private final ObjectMapper objectMapper;
     private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
     private final CommercialAuditService auditService;
+    private final ReservationRepository reservationRepository;
 
     public DepositService(
             DepositRepository depositRepository,
@@ -65,7 +68,8 @@ public class DepositService {
             NotificationService notificationService,
             ObjectMapper objectMapper,
             PropertyCommercialWorkflowService propertyCommercialWorkflowService,
-            CommercialAuditService auditService
+            CommercialAuditService auditService,
+            ReservationRepository reservationRepository
     ) {
         this.depositRepository = depositRepository;
         this.contactRepository = contactRepository;
@@ -78,6 +82,7 @@ public class DepositService {
         this.objectMapper = objectMapper;
         this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
         this.auditService = auditService;
+        this.reservationRepository = reservationRepository;
     }
 
     /**
@@ -123,6 +128,14 @@ public class DepositService {
         }
 
         if (depositRepository.existsByTenant_IdAndPropertyIdAndStatusIn(tenantId, propertyId, ACTIVE_STATUSES)) {
+            throw new PropertyAlreadyReservedException(propertyId);
+        }
+
+        // Reject direct deposit creation if an unconverted ACTIVE reservation holds the property.
+        // Deposits from reservation conversion are exempt (reservation transitions to
+        // CONVERTED_TO_DEPOSIT before calling this method, so this check will pass).
+        if (reservationRepository.existsByTenant_IdAndPropertyIdAndStatus(
+                tenantId, propertyId, ReservationStatus.ACTIVE)) {
             throw new PropertyAlreadyReservedException(propertyId);
         }
 

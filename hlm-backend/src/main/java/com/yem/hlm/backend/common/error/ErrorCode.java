@@ -72,6 +72,11 @@ public enum ErrorCode {
     // Portal errors (401)
     PORTAL_TOKEN_INVALID,       // 401 — magic link token invalid, expired, or already used
 
+    // Reservation errors
+    RESERVATION_NOT_FOUND,              // 404 — reservation not found in tenant
+    PROPERTY_NOT_AVAILABLE_FOR_RESERVATION, // 409 — property already reserved, deposited or sold
+    INVALID_RESERVATION_STATE,          // 409 — action not permitted in current reservation state
+
     // Rate limiting (429)
     RATE_LIMIT_EXCEEDED,        // 429 — too many requests for this operation
 

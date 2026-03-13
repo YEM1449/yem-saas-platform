@@ -63,6 +63,20 @@ public class ContactController {
         return contactService.updateStatus(id, request.status());
     }
 
+    /**
+     * Qualifies a contact as a QUALIFIED_PROSPECT and enriches ProspectDetail
+     * with optional budget / source data. ADMIN/MANAGER only.
+     */
+    @PostMapping("/contacts/{id}/convert-to-prospect")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactResponse convertToProspect(
+            @PathVariable UUID id,
+            @RequestBody(required = false) ConvertToProspectRequest request
+    ) {
+        return contactService.convertToProspect(id,
+                request != null ? request : new ConvertToProspectRequest(null, null, null, null));
+    }
+
     @PostMapping("/contacts/{id}/convert-to-client")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse convert(@PathVariable("id") UUID id, @Valid @RequestBody ConvertToClientRequest request) {

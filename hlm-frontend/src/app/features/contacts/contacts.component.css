@@ -1,32 +1,7 @@
-h2 {
-  margin: 0 0 16px;
-}
+/* Contacts component — delta styles only.
+   All layout, buttons, badges, modal, table and form styles
+   come from the global design system (styles.css). */
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-th {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #555;
-}
-
-.clickable {
-  cursor: pointer;
-}
-
-.clickable:hover {
-  background: #f5f5f5;
-}
-
-.error {
-  color: #d32f2f;
+.contact-name {
+  font-weight: 500;
 }

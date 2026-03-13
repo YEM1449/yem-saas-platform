@@ -37,6 +37,18 @@ LOST -> PROSPECT
 REFERRAL -> (terminal in current model)
 ```
 
+## Reservation Workflow
+Enum: `ACTIVE`, `EXPIRED`, `CANCELLED`, `CONVERTED_TO_DEPOSIT`
+
+Rules:
+- Only `ACTIVE` properties with no existing `ACTIVE` reservation can be reserved.
+- Create acquires pessimistic write lock on property row to prevent concurrent reservations.
+- Create transitions property to `RESERVED`; default expiry is +7 days.
+- Cancel sets `CANCELLED` and releases property back to `ACTIVE`.
+- Convert-to-deposit: reservation transitions to `CONVERTED_TO_DEPOSIT`, property briefly released, then `DepositService.create()` re-reserves. Stores `convertedDepositId` for traceability.
+- Hourly scheduler (`ReservationExpiryScheduler`) expires `ACTIVE` reservations past `expiryDate` and releases property.
+- `DepositService.create()` also blocks if an `ACTIVE` reservation exists for the target property.
+
 ## Deposit Workflow
 Enum: `PENDING`, `CONFIRMED`, `CANCELLED`, `EXPIRED`
 
@@ -62,13 +74,8 @@ Commercial KPI semantics (locked):
 - Discount analytics = `listPrice - agreedPrice` when `listPrice` is set.
 
 ## Payment Workflows
-Two coexisting models:
+Single model: `payments/` (v2). `payment/` (v1) was deleted — Epic/sec-improvement, 2026-03-06.
 
-1. `payment/` (v1, deprecated API surface)
-- Tranche statuses: `PLANNED`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`.
-- Payment call statuses: `DRAFT`, `ISSUED`, `OVERDUE`, `CLOSED`.
-
-2. `payments/` (v2, preferred)
 - Schedule item statuses: `DRAFT`, `ISSUED`, `SENT`, `OVERDUE`, `PAID`, `CANCELED`.
 - Send action queues outbox message.
 - Reminder scheduler handles pre-due and overdue workflows with idempotency.

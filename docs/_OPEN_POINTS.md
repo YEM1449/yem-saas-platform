@@ -1,6 +1,6 @@
 # _OPEN_POINTS.md — Open Points Log
 
-_Updated: 2026-03-05_
+_Updated: 2026-03-13_
 
 ---
 
@@ -47,20 +47,17 @@ Recommended JVM: `-Xmx512m`. Async PDF (future backlog) documented.
 CI workflow table in `docs/07_RELEASE_AND_DEPLOY.md` updated.  
 CI security gates in `context/SECURITY_BASELINE.md` updated.
 
-### [OP-002] ✅ RESOLVED — payment/ vs payments/ Packages
+### [OP-002] ✅ DONE — payment/ vs payments/ Packages
 **Context**: Two packages with overlapping payment responsibilities:
 - `payment/` (v1): `/api/contracts/{id}/payment-schedule`, `/api/payment-calls`
 - `payments/` (v2): `/api/contracts/{id}/schedule`, `/api/schedule-items`, cash dashboard
 
-**Resolution**:
-- Kept both routes temporarily for backward compatibility.
-- Marked both `payment/api/PaymentScheduleController` and `payment/api/PaymentCallController` as `@Deprecated`.
-- Added deprecation response headers (`Deprecation`, `Sunset`, `Warning`, `Link`) on all v1 payment endpoints to push clients toward v2.
-- Added v1 usage telemetry for controlled migration:
-  - metric `payment_v1_requests_total` (endpoint/method tags),
-  - log marker `payment_v1_endpoint_called`.
-- Added migration tooling:
-  - `scripts/find-payment-v1-references.sh`
-  - `scripts/report-payment-v1-usage.sh`
-- Published complete runbook and communication templates in `docs/v2/payment-v1-retirement-plan.v2.md`.
-- Updated architecture/context/API docs to reflect retirement execution plan.
+**Final resolution (Epic/sec-improvement, 2026-03-06)**:
+- `payment/` backend package **deleted entirely** — controllers, services, repos, domain classes all removed.
+- Only `payments/` (v2) remains as the canonical payment implementation.
+- DB tables (`payment_schedule`, `payment_tranche`, `payment_call`, `payment`) retained (Liquibase additive-only rule).
+- Portal backend (`PortalContractService`) updated to use v2 `PaymentScheduleService.listByContract()`.
+- `ReceivablesDashboardService` rewritten to use v2 repositories (`PaymentScheduleItemRepository`, `SchedulePaymentRepository`).
+- Frontend route `contracts/:contractId/payments` updated to use the v2 `payment-schedule` component.
+- `docs/api.md` Payments section updated to mark v1 endpoints as deleted (not merely deprecated).
+- Migration runbook preserved at `docs/v2/payment-v1-retirement-plan.v2.md` for historical reference.

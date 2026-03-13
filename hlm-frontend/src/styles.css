@@ -1,1 +1,544 @@
-/* You can add global styles to this file, and also import other style files */
+/* ================================================================
+   HLM CRM — Global Design System
+   Design tokens, resets, and shared utility classes.
+   Individual components can rely on these without duplicating CSS.
+   ================================================================ */
+
+/* ── 1. Design Tokens (CSS Custom Properties) ─────────────────── */
+:root {
+  /* Primary */
+  --c-primary:        #2563eb;
+  --c-primary-hover:  #1d4ed8;
+  --c-primary-light:  #eff6ff;
+
+  /* Semantic */
+  --c-success:        #16a34a;
+  --c-success-light:  #f0fdf4;
+  --c-success-border: #bbf7d0;
+  --c-warning:        #d97706;
+  --c-warning-light:  #fffbeb;
+  --c-warning-border: #fde68a;
+  --c-danger:         #dc2626;
+  --c-danger-light:   #fef2f2;
+  --c-danger-border:  #fecaca;
+  --c-info:           #0284c7;
+  --c-info-light:     #f0f9ff;
+
+  /* Surface / Background */
+  --c-bg:             #f8fafc;
+  --c-surface:        #ffffff;
+  --c-border:         #e2e8f0;
+  --c-border-strong:  #cbd5e1;
+
+  /* Text */
+  --c-text:           #0f172a;
+  --c-text-secondary: #475569;
+  --c-text-muted:     #94a3b8;
+
+  /* Typography */
+  --font:             'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:        'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+
+  /* Radii */
+  --r-sm:   4px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-xl:   16px;
+  --r-pill: 9999px;
+
+  /* Shadows */
+  --sh-xs: 0 1px 2px rgba(0,0,0,.05);
+  --sh-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --sh-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+  --sh-lg: 0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.04);
+
+  /* Transitions */
+  --tr: 150ms ease;
+}
+
+/* ── 2. Base Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--c-text);
+  background: var(--c-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--c-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── 3. Page Layout Helpers ────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.page-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--c-text-secondary);
+  margin: 4px 0 0;
+}
+
+/* Toolbar row: search + filters + stats */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── 4. Card ───────────────────────────────────────────────────── */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-xs);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-header h3 { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+
+.card-body       { padding: 20px; }
+.card-body-flush { padding: 0; }
+
+/* ── 5. Buttons ────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 36px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font);
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--tr), border-color var(--tr), color var(--tr), box-shadow var(--tr);
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.btn:disabled      { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--c-primary);
+  color: #fff;
+  border-color: var(--c-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--c-primary-hover);
+  border-color: var(--c-primary-hover);
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--c-bg); text-decoration: none; }
+
+.btn-danger {
+  background: var(--c-danger-light);
+  color: var(--c-danger);
+  border-color: var(--c-danger-border);
+}
+.btn-danger:hover:not(:disabled) { background: var(--c-danger-border); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover:not(:disabled) { background: var(--c-bg); color: var(--c-text); }
+
+.btn-sm   { height: 28px; padding: 0 10px; font-size: 0.8125rem; border-radius: var(--r-sm); }
+.btn-xs   { height: 24px; padding: 0 8px;  font-size: 0.75rem;   border-radius: var(--r-sm); }
+.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; }
+
+/* ── 6. Form Controls ──────────────────────────────────────────── */
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+
+.form-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--c-text);
+}
+.form-label.required::after { content: ' *'; color: var(--c-danger); }
+
+.form-hint  { font-size: 0.75rem; color: var(--c-text-muted); margin-top: 2px; }
+.form-error { font-size: 0.75rem; color: var(--c-danger); margin-top: 2px; }
+
+.form-control {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 0.875rem;
+  font-family: var(--font);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  transition: border-color var(--tr), box-shadow var(--tr);
+  outline: none;
+}
+.form-control:focus {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+.form-control::placeholder { color: var(--c-text-muted); }
+
+textarea.form-control { height: auto; padding: 8px 12px; resize: vertical; min-height: 80px; }
+select.form-control   { cursor: pointer; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* ── 7. Search Input ───────────────────────────────────────────── */
+.search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 340px;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c-text-muted);
+  pointer-events: none;
+  display: flex;
+}
+.search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 32px;
+  font-size: 0.875rem;
+  font-family: var(--font);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  outline: none;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.search-input:focus {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+.search-input::placeholder { color: var(--c-text-muted); }
+
+/* ── 8. Data Table ─────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.data-table thead th {
+  padding: 10px 16px;
+  background: var(--c-bg);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  border-bottom: 1px solid var(--c-border);
+  text-align: left;
+  white-space: nowrap;
+}
+.data-table tbody tr {
+  border-bottom: 1px solid var(--c-border);
+  transition: background var(--tr);
+}
+.data-table tbody tr:last-child { border-bottom: none; }
+.data-table tbody tr:hover      { background: #fafbfc; }
+.data-table tbody tr.clickable  { cursor: pointer; }
+.data-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+.td-muted { color: var(--c-text-secondary); font-size: 0.8125rem; }
+.td-mono  { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--c-text-secondary); }
+.td-actions { white-space: nowrap; }
+
+/* ── 9. Badges ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Property status */
+.badge-draft      { background: #f1f5f9; color: #475569; }
+.badge-active     { background: #dcfce7; color: #15803d; }
+.badge-reserved   { background: #fef3c7; color: #92400e; }
+.badge-sold       { background: #dbeafe; color: #1e40af; }
+.badge-withdrawn  { background: #fee2e2; color: #991b1b; }
+.badge-archived   { background: #f1f5f9; color: #64748b; }
+
+/* Contract status */
+.badge-signed     { background: #dcfce7; color: #15803d; }
+.badge-canceled   { background: #fee2e2; color: #991b1b; }
+
+/* Payment schedule status */
+.badge-issued     { background: #e0f2fe; color: #075985; }
+.badge-sent       { background: #f3e8ff; color: #7e22ce; }
+.badge-overdue    { background: #fee2e2; color: #991b1b; }
+.badge-paid       { background: #dcfce7; color: #15803d; }
+
+/* Contact type */
+.badge-prospect        { background: #fef3c7; color: #92400e; }
+.badge-client          { background: #dcfce7; color: #15803d; }
+.badge-temp-client     { background: #e0f2fe; color: #075985; }
+.badge-temp_client     { background: #e0f2fe; color: #075985; }
+
+/* Contact status */
+.badge-new-prospect        { background: #f1f5f9; color: #475569; }
+.badge-new_prospect        { background: #f1f5f9; color: #475569; }
+.badge-qualified-prospect  { background: #fef3c7; color: #92400e; }
+.badge-qualified_prospect  { background: #fef3c7; color: #92400e; }
+.badge-active-client       { background: #dcfce7; color: #15803d; }
+.badge-active_client       { background: #dcfce7; color: #15803d; }
+.badge-completed-client    { background: #d1fae5; color: #064e3b; }
+.badge-completed_client    { background: #d1fae5; color: #064e3b; }
+.badge-lost                { background: #fee2e2; color: #991b1b; }
+.badge-referral            { background: #ede9fe; color: #5b21b6; }
+
+/* Deposit / outbox status */
+.badge-pending    { background: #fef3c7; color: #92400e; }
+.badge-confirmed  { background: #dcfce7; color: #15803d; }
+.badge-expired    { background: #f1f5f9; color: #475569; }
+.badge-cancelled  { background: #fee2e2; color: #991b1b; }
+.badge-failed     { background: #fee2e2; color: #991b1b; }
+
+/* ── 10. Alerts & Feedback ─────────────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  font-size: 0.875rem;
+  border: 1px solid;
+  margin-bottom: 16px;
+}
+.alert-success { background: var(--c-success-light); color: var(--c-success); border-color: var(--c-success-border); }
+.alert-error   { background: var(--c-danger-light);  color: var(--c-danger);  border-color: var(--c-danger-border); }
+.alert-warning { background: var(--c-warning-light); color: var(--c-warning); border-color: var(--c-warning-border); }
+.alert-info    { background: var(--c-info-light);    color: var(--c-info);    border-color: #bae6fd; }
+
+/* ── 11. Empty State ───────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.empty-state-icon  { font-size: 2.5rem; margin-bottom: 16px; opacity: .45; }
+.empty-state-title { font-size: 1rem; font-weight: 600; color: var(--c-text-secondary); margin: 0 0 8px; }
+.empty-state-desc  { font-size: 0.875rem; color: var(--c-text-muted); margin: 0 0 20px; max-width: 300px; }
+
+/* ── 12. Loading Spinner ───────────────────────────────────────── */
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 16px;
+  color: var(--c-text-muted);
+  font-size: 0.875rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--c-border);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── 13. Modal ─────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+.modal {
+  background: var(--c-surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+  width: 100%;
+  max-width: 540px;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: modal-in 160ms ease;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(.97) translateY(-10px); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  background: var(--c-surface);
+  z-index: 1;
+}
+.modal-title { font-size: 1rem; font-weight: 600; margin: 0; }
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: color var(--tr), background var(--tr);
+  font-family: var(--font);
+}
+.modal-close:hover { background: var(--c-bg); color: var(--c-text); }
+.modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--c-border);
+  position: sticky;
+  bottom: 0;
+  background: var(--c-surface);
+}
+
+/* ── 14. Info / Code Panels ────────────────────────────────────── */
+.info-panel {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+}
+.info-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--c-text-secondary);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-panel summary::-webkit-details-marker { display: none; }
+.info-panel summary::before {
+  content: '▶';
+  font-size: 0.6rem;
+  transition: transform var(--tr);
+}
+.info-panel[open] summary::before { transform: rotate(90deg); }
+
+.code-block {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+.code-comment { color: #64748b; }
+.code-key     { color: #93c5fd; }
+.code-val     { color: #86efac; }
+
+/* ── 15. Misc Utilities ────────────────────────────────────────── */
+.text-muted   { color: var(--c-text-muted) !important; }
+.text-sm      { font-size: 0.8125rem; }
+.text-xs      { font-size: 0.75rem; }
+.text-right   { text-align: right; }
+.font-mono    { font-family: var(--font-mono); }
+.fw-medium    { font-weight: 500; }
+.fw-semibold  { font-weight: 600; }
+.divider      { height: 1px; background: var(--c-border); border: none; margin: 20px 0; }
+.sr-only      { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* Inline stat in toolbar */
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  font-size: 0.8125rem;
+  color: var(--c-text-secondary);
+  white-space: nowrap;
+}

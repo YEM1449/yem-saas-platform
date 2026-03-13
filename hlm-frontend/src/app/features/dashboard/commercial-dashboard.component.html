@@ -78,6 +78,16 @@
         <span class="kpi-label">Avg Days to Sale</span>
         <span class="kpi-value">{{ summary.avgDaysDepositToSale != null ? (summary.avgDaysDepositToSale + ' d') : '—' }}</span>
       </div>
+      <div class="kpi-card accent-orange">
+        <span class="kpi-label">Property Holds</span>
+        <span class="kpi-value">{{ summary.propertyHoldsCount }}</span>
+      </div>
+      @if (summary.propertyHoldsExpiringSoon > 0) {
+        <div class="kpi-card accent-warning">
+          <span class="kpi-label">Holds Expiring Soon</span>
+          <span class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</span>
+        </div>
+      }
     </section>
 
     <!-- ── Inventory status strip ─────────────────────────────────── -->

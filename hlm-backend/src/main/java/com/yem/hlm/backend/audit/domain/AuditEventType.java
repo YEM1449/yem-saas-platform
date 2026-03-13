@@ -14,5 +14,11 @@ public enum AuditEventType {
 
     // Payment module events
     PAYMENT_CALL_ISSUED,
-    PAYMENT_RECEIVED
+    PAYMENT_RECEIVED,
+
+    // Reservation module events
+    RESERVATION_CREATED,
+    RESERVATION_CANCELLED,
+    RESERVATION_EXPIRED,
+    RESERVATION_CONVERTED_TO_DEPOSIT
 }

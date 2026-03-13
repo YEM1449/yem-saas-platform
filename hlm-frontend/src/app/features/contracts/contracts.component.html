@@ -1,85 +1,133 @@
-<h2>Contracts</h2>
+<!-- Page header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Contracts</h1>
+    <p class="page-subtitle">Manage sale agreements across all projects</p>
+  </div>
+</div>
 
-<div class="filters">
-  <select [(ngModel)]="filterStatus" (change)="load()">
+<!-- Status filter toolbar -->
+<div class="toolbar">
+  <label class="form-label" style="margin:0; white-space:nowrap;">Status</label>
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" (change)="load()">
     <option value="">All statuses</option>
     @for (s of statuses; track s) {
       <option [value]="s">{{ s }}</option>
     }
   </select>
+  @if (!loading) {
+    <span class="stat-chip">{{ contracts.length }} contract{{ contracts.length !== 1 ? 's' : '' }}</span>
+  }
 </div>
 
+<!-- Feedback -->
 @if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="alert alert-error">{{ error }}</div>
 }
-
 @if (sendSuccess) {
-  <p class="send-success">{{ sendSuccess }}</p>
+  <div class="alert alert-success">{{ sendSuccess }}</div>
 }
 @if (sendError) {
-  <p class="error">{{ sendError }}</p>
+  <div class="alert alert-error">{{ sendError }}</div>
 }
 
+<!-- Loading -->
 @if (loading) {
-  <p>Loading contracts...</p>
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Loading contracts…
+  </div>
 }
 
+<!-- Empty state -->
 @if (!loading && contracts.length === 0) {
-  <p class="muted">No contracts found.</p>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">📄</div>
+      <p class="empty-state-title">No contracts found</p>
+      <p class="empty-state-desc">
+        @if (filterStatus) {
+          No contracts with status <strong>{{ filterStatus }}</strong>. Try changing the filter.
+        } @else {
+          Contracts will appear here once created from a prospect's profile.
+        }
+      </p>
+      @if (filterStatus) {
+        <button class="btn btn-secondary btn-sm" (click)="filterStatus = ''; load()">Clear filter</button>
+      }
+    </div>
+  </div>
 }
 
+<!-- Data table -->
 @if (!loading && contracts.length > 0) {
-  <table>
-    <thead>
-      <tr>
-        <th>Ref</th>
-        <th>Project</th>
-        <th>Buyer</th>
-        <th>Agreed Price</th>
-        <th>Status</th>
-        <th>Created</th>
-        <th>Signed</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (c of contracts; track c.id) {
-        <tr>
-          <td class="mono">{{ c.id.substring(0, 8).toUpperCase() }}</td>
-          <td>{{ c.projectName }}</td>
-          <td>{{ c.buyerDisplayName ?? '—' }}</td>
-          <td>{{ c.agreedPrice | number:'1.0-0' }}</td>
-          <td>
-            <span class="badge" [class]="'badge-' + c.status.toLowerCase()">
-              {{ c.status }}
-            </span>
-          </td>
-          <td>{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
-          <td>{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
-          <td class="actions">
-<<<<<<< HEAD
-            <a class="detail-link" [routerLink]="['/app/contracts', c.id]">Détail</a>
-=======
-            <a class="schedule-link" [routerLink]="['/app/contracts', c.id, 'payments']">Échéancier</a>
->>>>>>> 9e440eb (Revenue-Foundation)
-            <button class="pdf-btn" (click)="downloadPdf(c)">PDF</button>
-            @if (c.buyerEmail) {
-              <button class="msg-btn msg-email"
-                      [disabled]="sendingId === c.id"
-                      (click)="sendMessage(c, 'EMAIL')">
-                {{ sendingId === c.id ? '...' : 'Email' }}
-              </button>
-            }
-            @if (c.buyerPhone) {
-              <button class="msg-btn msg-sms"
-                      [disabled]="sendingId === c.id"
-                      (click)="sendMessage(c, 'SMS')">
-                {{ sendingId === c.id ? '...' : 'SMS' }}
-              </button>
-            }
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Project</th>
+            <th>Buyer</th>
+            <th>Agreed Price</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Signed</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of contracts; track c.id) {
+            <tr>
+              <td class="td-mono">{{ c.id.substring(0, 8).toUpperCase() }}</td>
+              <td>{{ c.projectName }}</td>
+              <td>{{ c.buyerDisplayName ?? '—' }}</td>
+              <td class="text-right">{{ c.agreedPrice | number:'1.0-0' }}</td>
+              <td>
+                <span class="badge" [class]="'badge-' + c.status.toLowerCase()">{{ c.status }}</span>
+              </td>
+              <td class="td-muted">{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td class="td-muted">{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
+              <td class="td-actions">
+                <div class="row-actions">
+                  <!-- Detail link (resolved from merge conflict) -->
+                  <a class="btn btn-sm btn-secondary" [routerLink]="['/app/contracts', c.id]"
+                     title="View contract details">Detail</a>
+                  <!-- Schedule / Payments link -->
+                  <a class="btn btn-sm btn-ghost" [routerLink]="['/app/contracts', c.id, 'payments']"
+                     title="View payment schedule">Schedule</a>
+                  <!-- PDF download -->
+                  <button class="btn btn-sm btn-ghost" (click)="downloadPdf(c)" title="Download PDF">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                      <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    PDF
+                  </button>
+                  <!-- Email -->
+                  @if (c.buyerEmail) {
+                    <button class="btn btn-sm btn-ghost msg-email"
+                            [disabled]="sendingId === c.id"
+                            (click)="sendMessage(c, 'EMAIL')"
+                            title="Send email to buyer">
+                      {{ sendingId === c.id ? '…' : 'Email' }}
+                    </button>
+                  }
+                  <!-- SMS -->
+                  @if (c.buyerPhone) {
+                    <button class="btn btn-sm btn-ghost msg-sms"
+                            [disabled]="sendingId === c.id"
+                            (click)="sendMessage(c, 'SMS')"
+                            title="Send SMS to buyer">
+                      {{ sendingId === c.id ? '…' : 'SMS' }}
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
 }

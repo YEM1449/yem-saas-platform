@@ -9,7 +9,7 @@ import java.util.Map;
  * Full commercial dashboard summary — returned by a single backend call.
  *
  * <h3>Query budget</h3>
- * Up to 11 aggregate queries per request (no entity hydration):
+ * Up to 16 aggregate queries per request (no entity hydration):
  * <ol>
  *   <li>Sales totals (count, sum, avg agreedPrice)</li>
  *   <li>Deposit totals in period (count, sum amount, filtered by confirmedAt)</li>
@@ -25,6 +25,8 @@ import java.util.Map;
  *   <li>Discount totals (avgDiscountPercent, maxDiscountPercent) — F3.2</li>
  *   <li>Discount by agent — top 10 — F3.2</li>
  *   <li>Prospect source funnel (prospectsBySource) — F3.4</li>
+ *   <li>Active property holds count (property_reservation ACTIVE)</li>
+ *   <li>Property holds expiring within 48 h</li>
  * </ol>
  *
  * <h3>Field notes</h3>
@@ -102,5 +104,11 @@ public record CommercialDashboardSummaryDTO(
 
         // ── Prospect source funnel (F3.4) ───────────────────────────────────
         /** Prospects grouped by source with total + converted counts. */
-        List<ProspectSourceRow> prospectsBySource
+        List<ProspectSourceRow> prospectsBySource,
+
+        // ── Property holds (property_reservation entity, current snapshot) ───
+        /** Count of ACTIVE property_reservation records for this tenant. */
+        long propertyHoldsCount,
+        /** Count of ACTIVE property_reservation records expiring within 48 h. */
+        long propertyHoldsExpiringSoon
 ) {}
