@@ -1,77 +1,91 @@
 # PROJECT_CONTEXT.md — LLM Context Pack
 
-_Compact reference for LLMs. Updated: 2026-03-04._
+_Compact execution context. Updated: 2026-03-05._
 
-## What This Is
-Multi-tenant SaaS CRM for real estate promotion companies. Tenants are isolated companies. Users within a tenant are Admin/Manager/Agent. Property buyers access a read-only portal.
+## Product Snapshot
+Multi-tenant SaaS CRM for real-estate promotion teams.
+- CRM users: `ROLE_ADMIN`, `ROLE_MANAGER`, `ROLE_AGENT`
+- Buyer portal users: `ROLE_PORTAL` (read-only, magic-link auth)
+- Isolation model: tenant-scoped data (`tid` JWT claim -> `TenantContext` -> tenant-filtered queries)
 
-## Stack (quick)
+## Fast Read Order (Prompt Efficiency)
+Use this order to minimize context load and mistakes:
+1. `context/PROJECT_CONTEXT.md` (this file) for scope and invariants.
+2. `context/ARCHITECTURE.md` for request flow and module boundaries.
+3. `context/DOMAIN_RULES.md` for lifecycle/state-machine behavior.
+4. `context/SECURITY_BASELINE.md` for JWT/RBAC/endpoint exposure.
+5. `context/COMMANDS.md` for canonical run/test commands.
+6. `context/CONVENTIONS.md` for coding and testing conventions.
+
+## Task Routing Map
+Pick files/packages by intent:
+
+| Task | Primary Backend Area | Typical Frontend Area | Tests to Touch |
+|------|----------------------|-----------------------|----------------|
+| Auth/JWT/RBAC | `auth/`, `user/` | `core/auth/`, guards/interceptors | `*IT` + auth unit tests |
+| Tenant isolation issue | `tenant/`, feature `service/` + `repo/` | feature service using `/api` | cross-tenant IT |
+| CRM feature CRUD | feature `api/service/repo/domain` | `features/*` | service unit + controller IT |
+| Commercial workflow (deposit/contract) | `deposit/`, `contract/`, `property/` | `features/prospect-detail`, `features/contracts` | workflow IT |
+| Payments v2 | `payments/` | `features/contracts/payment-schedule*`, cash dashboard | `PaymentScheduleIT` |
+| Legacy payments v1 (deprecated) | `payment/` | existing v1 UI callers only | legacy IT only if unavoidable |
+| Portal behavior | `portal/` + `auth/security` | `portal/*` | portal IT suites |
+| KPI/dashboard | `dashboard/` + aggregate repos | `features/dashboard/*` | dashboard IT |
+| Messaging/reminders | `outbox/`, `reminder/`, `notification/` | `features/outbox` | outbox/reminder IT |
+
+## Stack (Quick)
 - Backend: Spring Boot 3.5.8, Java 21, Maven, PostgreSQL, Liquibase, Caffeine
 - Frontend: Angular 19.2, standalone components, TypeScript 5.7
-- Auth: JWT (HS256), Spring Security, OAuth2 Resource Server
-- Testing: JUnit 5, Testcontainers (PostgreSQL), Failsafe (IT tests = `*IT` suffix)
-- CI: 6 GitHub Actions workflows
+- Auth: JWT HS256, Spring Security, OAuth2 Resource Server
+- Testing: JUnit 5, Surefire (`*Test`), Failsafe + Testcontainers (`*IT`)
+- CI: 4 workflows (`backend-ci`, `frontend-ci`, `snyk`, `secret-scan`)
 
 ## Repo Layout
+```text
+hlm-backend/src/main/java/com/yem/hlm/backend/  # backend packages
+hlm-frontend/src/app/                            # Angular app
+docs/                                            # developer and product docs
+context/                                         # compact LLM/operator context
+.github/workflows/                               # CI workflows
 ```
-hlm-backend/src/main/java/com/yem/hlm/backend/  ← 19 packages
-hlm-frontend/src/app/                            ← Angular features
-docs/                                            ← Documentation
-context/                                         ← LLM context files (here)
-.github/workflows/                               ← CI workflows
-```
 
-## Key Packages
-| Package | Purpose |
-|---------|---------|
-| `auth/` | JWT, login, security config, filter |
-| `tenant/` | Tenant entity, TenantContext (ThreadLocal) |
-| `user/` | Users, UserRole enum |
-| `contact/` | Contacts, prospects, ProspectDetail |
-| `property/` | Properties (units), status machine |
-| `project/` | Real estate projects |
-| `deposit/` | Reservation deposits |
-| `contract/` | Sale contracts |
-| `commission/` | Commission rules (Phase 3) |
-| `dashboard/` | KPI dashboards (commercial + receivables) |
-| `outbox/` | Transactional outbox (email/SMS) |
-| `portal/` | Client portal (magic link, ROLE_PORTAL) |
-| `notification/` | In-app CRM notifications |
-| `common/` | ErrorResponse, ErrorCode, GlobalExceptionHandler |
+## Core Invariants (Never Break)
+1. Tenant identity is server-derived only (`TenantContext.getTenantId()`), never payload-derived.
+2. `@PreAuthorize("hasRole('ADMIN')")` style only (never `hasRole('ROLE_ADMIN')`).
+3. Liquibase is additive-only; never modify applied changesets.
+4. Controllers return DTOs only; entities stay internal.
+5. Errors must use `ErrorCode` + `ErrorResponse`.
+6. Frontend API calls must stay relative (`/api`, `/auth`), never hardcoded backend host.
+7. Portal JWT `sub` is `contactId`; CRM JWT `sub` is `userId`.
+8. `payment/` (v1) is deprecated; new work must target `payments/` (v2) unless fixing legacy breakage.
 
-## Critical Rules (apply to ALL changes)
-1. Multi-tenancy: `TenantContext.getTenantId()` in services; never trust client payload for tenant ID.
-2. RBAC: `@PreAuthorize("hasRole('ADMIN')")` — Spring adds `ROLE_` prefix, never write `ROLE_ADMIN` in annotations.
-3. Liquibase: additive changesets only. Never edit applied changesets.
-4. DTOs: controllers expose DTOs only; never return entities.
-5. Error: use `ErrorCode` + `ErrorResponse` envelope; no raw string errors.
-6. Frontend: use relative API paths (`/api/...`), never `http://localhost:8080`.
-7. Portal: `ROLE_PORTAL` JWT has `sub`=contactId (not userId). Skip `UserSecurityCacheService` for portal requests.
-
-## Roles
-- `ROLE_ADMIN`: full CRUD + user management + delete + KPIs
-- `ROLE_MANAGER`: create/update most resources + KPIs, no delete/user mgmt
-- `ROLE_AGENT`: read-only most, own data only for deposits/contracts
-- `ROLE_PORTAL`: portal clients only — read own contracts via portal JWT
+## Role Model (Operational)
+- `ROLE_ADMIN`: full tenant operations, admin-only endpoints, user/rule management.
+- `ROLE_MANAGER`: broad operational write access, no tenant admin/user management.
+- `ROLE_AGENT`: mostly read; ownership-scoped on sensitive workflows (deposits/contracts/payments depending endpoint).
+- `ROLE_PORTAL`: access only under `/api/portal/**` for own buyer data.
 
 ## Auth Flows
-- CRM login: `POST /auth/login` → JWT (`sub`=userId, `tid`=tenantId, `tv`=tokenVersion, `roles`)
-- Portal magic link: `POST /api/portal/auth/magic-link` → email → `GET /api/portal/auth/verify?token=X` → Portal JWT (`sub`=contactId, no `tv`)
+- CRM: `POST /auth/login` -> JWT (`sub=userId`, `tid`, `roles`, `tv` tokenVersion).
+- Portal: `POST /api/portal/auth/request-link` -> email link -> `GET /api/portal/auth/verify` -> portal JWT (`sub=contactId`, `tid`, `roles=[ROLE_PORTAL]`, no `tv`).
 
-## Test Conventions
-- Unit tests: `*Test`, Maven Surefire, `mvn test`
-- IT tests: `*IT`, Maven Failsafe + Testcontainers, `mvn failsafe:integration-test`
-- IT base: `@IntegrationTest` annotation (`@SpringBootTest + @AutoConfigureMockMvc + @ActiveProfiles("test")`)
-- JWT for IT: inject `JwtProvider` (CRM) or `PortalJwtProvider` (portal) and call `.generate()`
+## Execution Checklist (For Any Change)
+1. Identify impacted bounded context (backend package + frontend feature + docs).
+2. Preserve tenant and RBAC enforcement before changing business logic.
+3. Add/adjust tests:
+   - Unit tests for deterministic service logic.
+   - Integration tests for endpoint contract, RBAC, and tenant isolation.
+4. Run canonical commands from `context/COMMANDS.md`.
+5. Update docs/context when behavior, commands, API surface, or workflow semantics changed.
 
-## Seed Data
-- Tenant: `acme` (ID: 11111111-...)
-- Admin user: `admin@acme.com` / `Admin123!`
-- Auto-applied via Liquibase on startup
+## Seed Data (Local)
+- Tenant key: `acme`
+- Admin: `admin@acme.com` / `Admin123!`
+- Loaded by Liquibase on startup
 
-## Links
-- Full architecture: `docs/01_ARCHITECTURE.md`
-- Commands: `context/COMMANDS.md`
+## Canonical References
+- Architecture: `context/ARCHITECTURE.md`
 - Domain rules: `context/DOMAIN_RULES.md`
 - Security: `context/SECURITY_BASELINE.md`
+- Commands: `context/COMMANDS.md`
 - Conventions: `context/CONVENTIONS.md`
+- Full docs hub: `docs/README.md`

@@ -41,4 +41,60 @@ public interface SchedulePaymentRepository extends JpaRepository<SchedulePayment
         """)
     List<Object[]> sumPaidByItemIds(@Param("tenantId") UUID tenantId,
                                     @Param("itemIds") List<UUID> itemIds);
+
+    // ── Receivables dashboard aggregate queries ────────────────────────────────
+
+    /** Total received all-time for the tenant (numerator of collection rate). */
+    @Query("SELECT COALESCE(SUM(p.amountPaid), 0) FROM SchedulePayment p WHERE p.tenant.id = :tenantId")
+    BigDecimal totalReceived(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Pairs of {@code [issued_date, paid_date]} for computing average days-to-payment.
+     * Returns {@code [DATE(psi.issued_at), DATE(sp.paid_at)]}.
+     */
+    @Query(value = """
+        SELECT DATE(psi.issued_at), DATE(sp.paid_at)
+        FROM schedule_payment sp
+        JOIN payment_schedule_item psi ON psi.id = sp.schedule_item_id
+        WHERE sp.tenant_id = :tenantId
+          AND psi.issued_at IS NOT NULL
+        """, nativeQuery = true)
+    List<Object[]> issuedAndReceivedPairs(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Recent payments for the tenant as
+     * {@code [id, amount_paid, DATE(paid_at), channel, project_name, property_ref, agent_email]}.
+     */
+    @Query(value = """
+        SELECT sp.id, sp.amount_paid, DATE(sp.paid_at), sp.channel,
+               p.name, prop.reference_code, u.email
+        FROM schedule_payment sp
+        JOIN payment_schedule_item psi ON psi.id = sp.schedule_item_id
+        JOIN sale_contract sc ON sc.id = psi.contract_id
+        JOIN project p ON p.id = sc.project_id
+        JOIN property prop ON prop.id = sc.property_id
+        JOIN app_user u ON u.id = sc.agent_id
+        WHERE sp.tenant_id = :tenantId
+        ORDER BY sp.paid_at DESC
+        """, nativeQuery = true)
+    List<Object[]> recentPayments(@Param("tenantId") UUID tenantId,
+                                  org.springframework.data.domain.Pageable pageable);
+
+    /** Agent-scoped variant of {@link #recentPayments(UUID, org.springframework.data.domain.Pageable)}. */
+    @Query(value = """
+        SELECT sp.id, sp.amount_paid, DATE(sp.paid_at), sp.channel,
+               p.name, prop.reference_code, u.email
+        FROM schedule_payment sp
+        JOIN payment_schedule_item psi ON psi.id = sp.schedule_item_id
+        JOIN sale_contract sc ON sc.id = psi.contract_id
+        JOIN project p ON p.id = sc.project_id
+        JOIN property prop ON prop.id = sc.property_id
+        JOIN app_user u ON u.id = sc.agent_id
+        WHERE sp.tenant_id = :tenantId
+          AND sc.agent_id = :agentId
+        ORDER BY sp.paid_at DESC
+        """, nativeQuery = true)
+    List<Object[]> recentPaymentsByAgent(@Param("tenantId") UUID tenantId,
+                                         @Param("agentId") UUID agentId,
+                                         org.springframework.data.domain.Pageable pageable);
 }

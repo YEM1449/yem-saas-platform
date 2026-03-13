@@ -3,8 +3,8 @@ package com.yem.hlm.backend.portal.service;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
 import com.yem.hlm.backend.contract.service.pdf.ContractDocumentService;
-import com.yem.hlm.backend.payment.api.dto.PaymentScheduleResponse;
-import com.yem.hlm.backend.payment.repo.PaymentScheduleRepository;
+import com.yem.hlm.backend.payments.api.dto.PaymentScheduleItemResponse;
+import com.yem.hlm.backend.payments.service.PaymentScheduleService;
 import com.yem.hlm.backend.portal.api.dto.PortalContractResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalPropertyResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTenantInfoResponse;
@@ -30,20 +30,20 @@ import java.util.UUID;
 public class PortalContractService {
 
     private final SaleContractRepository contractRepository;
-    private final PaymentScheduleRepository scheduleRepository;
+    private final PaymentScheduleService paymentScheduleService;
     private final PropertyRepository propertyRepository;
     private final TenantRepository tenantRepository;
     private final ContractDocumentService contractDocumentService;
 
     public PortalContractService(SaleContractRepository contractRepository,
-                                 PaymentScheduleRepository scheduleRepository,
+                                 PaymentScheduleService paymentScheduleService,
                                  PropertyRepository propertyRepository,
                                  TenantRepository tenantRepository,
                                  ContractDocumentService contractDocumentService) {
-        this.contractRepository  = contractRepository;
-        this.scheduleRepository  = scheduleRepository;
-        this.propertyRepository  = propertyRepository;
-        this.tenantRepository    = tenantRepository;
+        this.contractRepository      = contractRepository;
+        this.paymentScheduleService  = paymentScheduleService;
+        this.propertyRepository      = propertyRepository;
+        this.tenantRepository        = tenantRepository;
         this.contractDocumentService = contractDocumentService;
     }
 
@@ -82,14 +82,16 @@ public class PortalContractService {
     }
 
     // =========================================================================
-    // Payment schedule
+    // Payment schedule (v2 — PaymentScheduleItem)
     // =========================================================================
 
     /**
-     * Returns the payment schedule for a contract owned by the authenticated buyer.
-     * Throws 404 if the contract does not belong to this contact.
+     * Returns the v2 payment schedule items for a contract owned by the authenticated buyer.
+     * Enforces buyer ownership (→ 404 if this contact is not the buyer).
+     * Delegates to {@link PaymentScheduleService#listByContract(UUID)} which uses TenantContext
+     * (already set by the portal JWT filter) for tenant isolation.
      */
-    public PaymentScheduleResponse getPaymentSchedule(UUID contractId) {
+    public List<PaymentScheduleItemResponse> getPaymentSchedule(UUID contractId) {
         UUID tenantId  = requireTenantId();
         UUID contactId = getContactId();
 
@@ -100,9 +102,7 @@ public class PortalContractService {
             throw new ContractNotFoundException(contractId);
         }
 
-        return scheduleRepository.findWithTranches(tenantId, contractId)
-                .map(PaymentScheduleResponse::from)
-                .orElseThrow(() -> new ContractNotFoundException(contractId));
+        return paymentScheduleService.listByContract(contractId);
     }
 
     // =========================================================================

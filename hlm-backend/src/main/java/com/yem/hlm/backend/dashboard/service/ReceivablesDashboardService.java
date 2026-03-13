@@ -5,9 +5,8 @@ import com.yem.hlm.backend.dashboard.api.dto.AgingBucketDTO;
 import com.yem.hlm.backend.dashboard.api.dto.OverdueByProjectRow;
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.api.dto.RecentPaymentRow;
-import com.yem.hlm.backend.payment.domain.PaymentMethod;
-import com.yem.hlm.backend.payment.repo.PaymentCallRepository;
-import com.yem.hlm.backend.payment.repo.PaymentRepository;
+import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
+import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
 import com.yem.hlm.backend.tenant.context.TenantContext;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +34,8 @@ import java.util.UUID;
  * Key = tenantId + effectiveAgentId.
  *
  * <h3>Query budget</h3>
- * 5 aggregate queries; no entity hydration loops.
+ * 5 aggregate queries against v2 payment_schedule_item / schedule_payment tables;
+ * no entity hydration loops.
  */
 @Service
 @Transactional(readOnly = true)
@@ -44,12 +44,12 @@ public class ReceivablesDashboardService {
     private static final int TOP_N    = 10;
     private static final int RECENT_N = 10;
 
-    private final PaymentCallRepository callRepository;
-    private final PaymentRepository     paymentRepository;
+    private final PaymentScheduleItemRepository itemRepository;
+    private final SchedulePaymentRepository     paymentRepository;
 
-    public ReceivablesDashboardService(PaymentCallRepository callRepository,
-                                       PaymentRepository paymentRepository) {
-        this.callRepository    = callRepository;
+    public ReceivablesDashboardService(PaymentScheduleItemRepository itemRepository,
+                                       SchedulePaymentRepository paymentRepository) {
+        this.itemRepository    = itemRepository;
         this.paymentRepository = paymentRepository;
     }
 
@@ -75,7 +75,9 @@ public class ReceivablesDashboardService {
     private ReceivablesDashboardDTO computeSummary(UUID tenantId, UUID effectiveAgentId) {
 
         // 1 — Outstanding + overdue totals
-        List<Object[]> totals = callRepository.receivablesTotals(tenantId, effectiveAgentId);
+        List<Object[]> totals = effectiveAgentId == null
+                ? itemRepository.receivablesTotals(tenantId)
+                : itemRepository.receivablesTotalsForAgent(tenantId, effectiveAgentId);
         BigDecimal totalOutstanding = BigDecimal.ZERO;
         BigDecimal totalOverdue     = BigDecimal.ZERO;
         if (!totals.isEmpty()) {
@@ -85,7 +87,7 @@ public class ReceivablesDashboardService {
         }
 
         // 2 — Collection rate: totalReceived / totalIssued * 100
-        BigDecimal totalIssued   = callRepository.totalIssuedAmount(tenantId);
+        BigDecimal totalIssued   = itemRepository.totalIssuedAmount(tenantId);
         BigDecimal totalReceived = paymentRepository.totalReceived(tenantId);
         BigDecimal collectionRate = null;
         if (totalIssued != null && totalIssued.compareTo(BigDecimal.ZERO) > 0) {
@@ -94,33 +96,36 @@ public class ReceivablesDashboardService {
                     .setScale(2, RoundingMode.HALF_UP);
         }
 
-        // 3 — Average days to payment
+        // 3 — Average days to payment (DATE(issued_at) → DATE(paid_at) pairs)
         BigDecimal avgDaysToPayment = computeAvgDaysToPayment(
                 paymentRepository.issuedAndReceivedPairs(tenantId));
 
         // 4 — Aging buckets
-        List<Object[]> agingRows = callRepository.outstandingCallsForAging(tenantId, effectiveAgentId);
+        List<Object[]> agingRows = effectiveAgentId == null
+                ? itemRepository.outstandingForAging(tenantId)
+                : itemRepository.outstandingForAgingByAgent(tenantId, effectiveAgentId);
         AgingBuckets buckets = buildAgingBuckets(agingRows, LocalDate.now());
 
         // 5 — Overdue by project (top 10)
-        List<OverdueByProjectRow> overdueByProject = callRepository
+        List<OverdueByProjectRow> overdueByProject = itemRepository
                 .overdueByProject(tenantId, PageRequest.of(0, TOP_N))
                 .stream()
                 .map(r -> new OverdueByProjectRow((UUID) r[0], (String) r[1], toBD(r[2])))
                 .toList();
 
         // 6 — Recent payments (last 10)
-        List<RecentPaymentRow> recentPayments = paymentRepository
-                .recentPayments(tenantId, effectiveAgentId, PageRequest.of(0, RECENT_N))
+        List<RecentPaymentRow> recentPayments = (effectiveAgentId == null
+                ? paymentRepository.recentPayments(tenantId, PageRequest.of(0, RECENT_N))
+                : paymentRepository.recentPaymentsByAgent(tenantId, effectiveAgentId, PageRequest.of(0, RECENT_N)))
                 .stream()
                 .map(r -> new RecentPaymentRow(
-                        (UUID)       r[0],
-                        toBD(        r[1]),
-                        toLocalDate( r[2]),
-                        r[3] instanceof PaymentMethod pm ? pm.name() : String.valueOf(r[3]),
-                        (String)     r[4],
-                        (String)     r[5],
-                        (String)     r[6]
+                        (UUID)      r[0],
+                        toBD(       r[1]),
+                        toLocalDate(r[2]),
+                        String.valueOf(r[3]),   // channel (String in v2)
+                        (String)    r[4],
+                        (String)    r[5],
+                        (String)    r[6]
                 ))
                 .toList();
 
@@ -148,11 +153,10 @@ public class ReceivablesDashboardService {
         double total = 0;
         int count = 0;
         for (Object[] row : pairs) {
-            LocalDateTime issuedAt  = (LocalDateTime) row[0];
-            Object receivedAtRaw    = row[1];
-            LocalDate receivedAt    = toLocalDate(receivedAtRaw);
-            if (issuedAt != null && receivedAt != null) {
-                total += ChronoUnit.DAYS.between(issuedAt.toLocalDate(), receivedAt);
+            LocalDate issuedDate = toLocalDate(row[0]);
+            LocalDate receivedAt = toLocalDate(row[1]);
+            if (issuedDate != null && receivedAt != null) {
+                total += ChronoUnit.DAYS.between(issuedDate, receivedAt);
                 count++;
             }
         }

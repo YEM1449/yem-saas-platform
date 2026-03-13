@@ -1,40 +1,48 @@
 # 05 — Developer Guide
 
-> For a full walkthrough with demo flows, see [local-dev.md](local-dev.md).
-> For all commands, see [../context/COMMANDS.md](../context/COMMANDS.md).
+> Audience: engineers contributing backend, frontend, or full-stack changes.
+>
+> Goal: provide a precise, repeatable path from local setup to production-quality PR.
 
-## Prerequisites
+Canonical command source: [`../context/COMMANDS.md`](../context/COMMANDS.md)
 
-| Tool | Version | Check |
-|------|---------|-------|
-| Java | 21 (Temurin recommended) | `java -version` |
-| Docker | any | `docker info` |
-| PostgreSQL | 14+ | `psql --version` |
-| Node | 18+ | `node -v` |
+## 1. Outcomes
+After following this guide, you should be able to:
+- run backend and frontend locally,
+- execute unit and integration tests with confidence,
+- implement features while preserving tenant isolation + RBAC,
+- ship PRs that pass CI and documentation quality gates.
+
+## 2. Prerequisites
+| Tool | Required Version | Verify |
+|------|------------------|--------|
+| Java | 21 | `java -version` |
+| Docker | running daemon | `docker info` |
+| Node.js | 18+ | `node -v` |
 | npm | 9+ | `npm -v` |
+| PostgreSQL client | optional but recommended | `psql --version` |
 
-Docker is required for integration tests (Testcontainers). A local or Dockerized PostgreSQL is required for the backend.
+Notes:
+- Docker is required for backend integration tests (Testcontainers).
+- Backend expects a reachable PostgreSQL instance for local runtime.
 
-## Environment Setup
-
+## 3. One-Time Local Setup
+### 3.1 Configure environment variables
 ```bash
 cp .env.example .env
-# Edit .env with your values
 export $(grep -v '^#' .env | xargs)
 ```
 
-Required variables:
+Required runtime variables:
+- `DB_URL`
+- `DB_USER`
+- `DB_PASSWORD`
+- `JWT_SECRET` (minimum 32 chars)
 
-| Variable | Purpose |
-|----------|---------|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/hlm` |
-| `DB_USER` | PostgreSQL username |
-| `DB_PASSWORD` | PostgreSQL password |
-| `JWT_SECRET` | 32+ char HMAC key (app refuses to start if blank/short) |
-| `JWT_TTL_SECONDS` | Token TTL (default 3600) |
+Optional:
+- `JWT_TTL_SECONDS` (default 3600)
 
-## Database Setup (Docker — recommended)
-
+### 3.2 Start local PostgreSQL (recommended)
 ```bash
 docker run -d --name hlm-postgres \
   -e POSTGRES_DB=hlm \
@@ -44,123 +52,163 @@ docker run -d --name hlm-postgres \
   postgres:16-alpine
 ```
 
-Liquibase runs automatically on backend startup and applies all migrations.
-
-## Running the Backend
-
+### 3.3 Start backend
 ```bash
 cd hlm-backend
-chmod +x mvnw        # first time only
+chmod +x mvnw
 ./mvnw spring-boot:run
 ```
 
-Verify: `curl http://localhost:8080/actuator/health` → `{"status":"UP"}`
+Health check:
+```bash
+curl -i http://localhost:8080/actuator/health
+```
+Expected: HTTP `200` with `{"status":"UP"}`.
 
-Seed credentials: tenant `acme`, email `admin@acme.com`, password `Admin123!`
-
-## Running the Frontend
-
+### 3.4 Start frontend
 ```bash
 cd hlm-frontend
 npm ci
 npm start
 ```
+Open `http://localhost:4200`.
 
-Opens at http://localhost:4200. The dev proxy routes `/auth`, `/api`, `/dashboard`, `/actuator` to `:8080` — **use relative paths in frontend code, never hardcode `:8080`.**
+Seed login:
+- tenant: `acme`
+- email: `admin@acme.com`
+- password: `Admin123!`
 
-## Testing
-
-### Backend Unit Tests (fast, no Docker)
-
+## 4. Daily Development Loops
+### 4.1 Backend-only loop
 ```bash
-cd hlm-backend && ./mvnw test
+cd hlm-backend
+./mvnw -B -ntp test
+./mvnw -B -ntp -DskipTests compile
+```
+Use targeted test runs while iterating:
+```bash
+./mvnw -B -ntp -Dtest=ClassNameTest test
+./mvnw -B -ntp failsafe:integration-test failsafe:verify -Dit.test=ClassNameIT
 ```
 
-Uses Surefire, runs `*Test` classes (~36 tests as of 2026-03).
-
-### Backend Integration Tests (requires Docker)
-
-```bash
-cd hlm-backend && ./mvnw failsafe:integration-test
-```
-
-Uses Failsafe, runs `*IT` classes. Testcontainers spins up a PostgreSQL container automatically.
-
-Base class: `IntegrationTestBase` — extends `@SpringBootTest` with `@ActiveProfiles("test")`.
-Annotation shortcut: `@IntegrationTest` = `@SpringBootTest + @AutoConfigureMockMvc + @ActiveProfiles("test")`.
-
-### Frontend Tests
-
-```bash
-cd hlm-frontend && npm test
-# CI mode (no watch, headless, coverage):
-cd hlm-frontend && npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --progress=false
-```
-
-### Frontend Lint (not yet configured)
-
-`@angular-eslint` is not currently configured. When it is added, the lint command will be:
-```bash
-cd hlm-frontend && npm run lint
-```
-
-**To add ESLint** (when ready):
+### 4.2 Frontend-only loop
 ```bash
 cd hlm-frontend
-ng add @angular-eslint/schematics
-# This generates .eslintrc.json and adds a "lint" target to angular.json
+npm start
+npm test -- --watch=false --browsers=ChromeHeadless --progress=false
+npm run build
 ```
-After configuring ESLint, add `npm run lint` before the test step in `frontend-ci.yml`.
 
-## Adding a New Backend Feature
+### 4.3 Full-stack loop
+1. Backend running on `:8080`.
+2. Frontend running on `:4200` with proxy enabled.
+3. Verify auth flow with smoke script:
+```bash
+TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+```
 
-1. **New entity** → add Liquibase changeset (`NNN_description.yaml`) in `db/changelog/`. Never edit applied changesets.
-2. **Domain class** → add to the appropriate package (e.g., `contract/domain/`).
-3. **Repository** → extend `JpaRepository` or `JpaSpecificationExecutor`.
-4. **Service** → read `TenantContext.getTenantId()` for all queries. Never trust tenant from client payload.
-5. **Controller** → use DTO contract. Use `@PreAuthorize("hasRole('ADMIN')")` (not `ROLE_ADMIN` — Spring adds prefix).
-6. **Test** → unit test for service logic; `*IT` integration test for controller RBAC + CRUD.
+## 5. Testing Strategy (When to Run What)
+| Change Type | Minimum Local Validation |
+|-------------|--------------------------|
+| Backend service logic | targeted `*Test` + relevant module tests |
+| Backend API / RBAC / tenant behavior | relevant `*IT` via Failsafe |
+| Liquibase migration | app startup + relevant IT path |
+| Frontend component/service | unit tests + production build |
+| Cross-layer feature | backend tests + frontend tests + end-to-end manual smoke |
 
-## RBAC Quick Reference
+### Canonical backend test commands
+```bash
+cd hlm-backend
+./mvnw -B -ntp test
+./mvnw -B -ntp failsafe:integration-test failsafe:verify
+./mvnw -B -ntp verify
+```
 
-| Annotation | Who can call |
-|-----------|-------------|
-| `@PreAuthorize("hasRole('ADMIN')")` | ROLE_ADMIN only |
-| `@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")` | ROLE_ADMIN + ROLE_MANAGER |
-| `@PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")` | All CRM users |
-| No annotation + `/api/**` in SecurityConfig | All authenticated CRM users |
-| `@PreAuthorize("hasRole('PORTAL')")` | Portal clients only |
+## 6. Backend Feature Implementation Playbook
+Use this sequence to avoid regressions.
 
-## Adding a Liquibase Changeset
+1. Model change
+- Add new Liquibase changeset (`NNN_description.yaml`).
+- Include it in `db.changelog-master.yaml`.
+- Never modify applied changesets.
 
-1. Find the next number: check `db.changelog-master.yaml` for the last included file.
-2. Create `hlm-backend/src/main/resources/db/changelog/NNN_description.yaml`.
-3. Add the include to `db.changelog-master.yaml`.
-4. Write the changeset with a unique `id` and your `author`.
-5. **Do not edit previously applied changesets.**
+2. Domain + repository
+- Add/adjust entity fields.
+- Add tenant-scoped repository methods.
 
-## Troubleshooting
+3. Service layer
+- Read tenant from `TenantContext.getTenantId()`.
+- Enforce RBAC assumptions and business guards.
+- Throw domain exceptions mapped to `ErrorCode`.
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `Connection refused :8080` | Backend not running | Check startup logs |
-| JWT startup failure | `JWT_SECRET` missing/blank | Set `JWT_SECRET` ≥ 32 chars |
-| 401 on valid request | Token expired or wrong credentials | Re-login with seeded creds |
-| 403 on API call | Insufficient role | Check JWT `roles` claim |
-| CORS error in browser | Not using proxy | Use port 4200, not 8080 |
-| Testcontainers fails | Docker not running | `docker info` |
-| Liquibase checksum error | Edited applied changeset | Revert changeset to original |
+4. API layer
+- Expose DTO-based request/response contracts.
+- Use `@PreAuthorize` where endpoint-level role constraints are required.
 
-See [runbook.md](runbook.md) for extended troubleshooting.
+5. Tests
+- Unit tests for business logic.
+- Integration tests for RBAC, tenant isolation, and API contract behavior.
 
-## Code Style Conventions
+6. Documentation
+- Update docs/context if behavior, command, or endpoint contracts changed.
 
-→ See [../context/CONVENTIONS.md](../context/CONVENTIONS.md) for full conventions.
+## 7. Frontend Feature Implementation Playbook
+1. Add/adjust typed models and service API calls (relative paths only).
+2. Update component and route behavior.
+3. Keep CRM and portal auth concerns separate:
+- CRM token: `hlm_access_token`
+- Portal token: `hlm_portal_token`
+4. Validate:
+```bash
+cd hlm-frontend
+npm test -- --watch=false --browsers=ChromeHeadless --progress=false
+npm run build
+```
 
-**Key rules:**
-- Controller → DTO only (no entity exposure)
-- Error: use `ErrorCode` enum + `ErrorResponse` envelope (never raw strings)
-- Multi-tenancy: `TenantContext.getTenantId()` in services, never from request body
-- `@PreAuthorize`: `hasRole('ADMIN')` not `hasRole('ROLE_ADMIN')`
-- Package structure: `api/`, `service/`, `repo/`, `domain/` per feature
-- Frontend: relative API paths only (no hardcoded `localhost:8080`)
+## 8. Security and Multi-Tenancy Guardrails
+Before merging backend changes, verify:
+- No code trusts tenant ID from request payload/path when tenant can be derived from JWT context.
+- `hasRole('ADMIN')` style expressions are used (no `ROLE_` prefix in expression).
+- Cross-tenant access attempts return protected outcomes (404/403 depending pattern).
+- Sensitive endpoints have role restrictions and ownership checks where required.
+
+Reference:
+- [`../context/SECURITY_BASELINE.md`](../context/SECURITY_BASELINE.md)
+- [`../context/DOMAIN_RULES.md`](../context/DOMAIN_RULES.md)
+
+## 9. Liquibase Rules (Strict)
+Do:
+- add new numbered changesets,
+- keep backward-compatible additive migrations,
+- ensure change is idempotent in the migration lifecycle.
+
+Do not:
+- edit previously applied changesets,
+- rely on Hibernate auto-DDL for schema evolution.
+
+## 10. PR Readiness Checklist
+Before opening a PR:
+- [ ] relevant tests pass locally,
+- [ ] tenant isolation and RBAC preserved,
+- [ ] no hardcoded backend URLs in frontend code,
+- [ ] migrations are additive-only,
+- [ ] docs/context updated for changed behavior,
+- [ ] no secrets added.
+
+## 11. Troubleshooting Matrix
+| Symptom | Likely Cause | Action |
+|---------|--------------|--------|
+| `Connection refused` on `:8080` | backend not running | check backend logs and health endpoint |
+| startup fails with JWT error | missing/short `JWT_SECRET` | set `JWT_SECRET` >= 32 chars |
+| 401 after login | bad token, expiry, or revocation | re-login and re-check token use |
+| 403 on API | insufficient role | verify endpoint RBAC + caller role |
+| integration tests fail early | Docker unavailable | run `docker info`, then retry |
+| Liquibase checksum error | edited applied changeset | revert edit, create new changeset |
+| frontend API 404/CORS | proxy bypass or wrong URL | use relative `/api/*` on `:4200` app |
+
+## 12. Useful References
+- Local walkthrough: [local-dev.md](local-dev.md)
+- Architecture: [01_ARCHITECTURE.md](01_ARCHITECTURE.md)
+- API first calls: [api-quickstart.md](api-quickstart.md)
+- Coding conventions: [../context/CONVENTIONS.md](../context/CONVENTIONS.md)
+- New engineer path: [08_ONBOARDING_COURSE.md](08_ONBOARDING_COURSE.md)

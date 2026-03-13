@@ -1,8 +1,8 @@
 # Project Context (for ClaudeCode / GPT)
 
 ## Source of truth
-- Primary: `docs/spec/CDC_Source.md`
-- Structured: `docs/spec/Requirements_Index.md`, `docs/spec/Backlog_Priorities.md`
+- Primary: `docs/specs/CDC_Source.md`
+- Structured: `docs/specs/Requirements_Index.md`, `docs/specs/Backlog_Priorities.md`
 
 ## Product scope (high level)
 - CRM SaaS for real-estate promotion/construction lifecycle: land prospecting → studies/authorizations → sales → construction → procurement/logistics → finance → after-sales.
@@ -73,11 +73,11 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 
 ## Local verification commands (suggested)
 - Run a single failing IT:
-  - `cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=ContractControllerIT`
+  - `cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify -Dit.test=ContractControllerIT`
 - Run full backend unit tests:
   - `cd hlm-backend && ./mvnw test`
 - Run all backend ITs (Docker required):
-  - `cd hlm-backend && ./mvnw failsafe:integration-test`
+  - `cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify`
 - Frontend build check:
   - `cd hlm-frontend && npm run build`
 
@@ -204,7 +204,7 @@ The FK `buyer_contact_id` is retained for cross-reference (drill-down, re-contac
 - Portal JWTs carry `roles=["ROLE_PORTAL"]` — not present in any CRM user JWT.
 - `JwtAuthenticationFilter` detects ROLE_PORTAL and skips `UserSecurityCacheService` (portal JWT subject is a contactId, not a userId; no CRM User row exists for buyers).
 - `SecurityConfig` rule order ensures ROLE_PORTAL cannot access `/api/**` CRM endpoints (→ 403).
-- `portalInterceptor` in Angular attaches portal JWT only to `/api/portal/` calls; `authInterceptor` attaches CRM JWT only to non-portal calls. The two session types are fully independent (different localStorage keys: `hlm_token` vs `hlm_portal_token`).
+- `portalInterceptor` in Angular attaches portal JWT only to `/api/portal/` calls; `authInterceptor` attaches CRM JWT only to non-portal calls. The two session types are fully independent (different localStorage keys: `hlm_access_token` vs `hlm_portal_token`).
 
 ## Living-spec helpers
-- Progress tracking: `docs/spec/Backlog_Status.md`, `docs/spec/Implementation_Status.md`, `docs/spec/Gap_Analysis.md`.
+- Progress tracking: `docs/specs/Backlog_Status.md`, `docs/specs/Implementation_Status.md`, `docs/specs/Gap_Analysis.md`.

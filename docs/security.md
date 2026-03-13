@@ -1,35 +1,65 @@
 # Security
 
-## JWT configuration
-- **Algorithm:** HS256 (HMAC) via Spring Security JWT encoder/decoder.
-- **Required claims:**
-  - `sub` = userId (UUID string)
-  - `tid` = tenantId (UUID string)
-  - `roles` = list of role strings (e.g., `ROLE_ADMIN`)
-- **TTL:** configured via `security.jwt.ttl-seconds`.
-- **Fail-fast secret:** app startup fails if `security.jwt.secret` is missing/blank.
+## Authentication Model
 
-Key classes:
-- `auth/config/JwtBeansConfig` (encoder/decoder, HS256)
-- `auth/config/JwtProperties` (validated secret + TTL)
-- `auth/service/JwtProvider` (generate/validate/extract claims)
-- `auth/security/JwtAuthenticationFilter` (reads token, sets `TenantContext`)
+### CRM JWT
+- Algorithm: HS256 (`JwtEncoder`/`JwtDecoder`).
+- Claims:
+  - `sub`: CRM user ID
+  - `tid`: tenant ID
+  - `roles`: CRM roles (`ROLE_ADMIN`, `ROLE_MANAGER`, `ROLE_AGENT`)
+  - `tv`: token version (revocation control)
+  - `iat`, `exp`
+- TTL is configurable (`JWT_TTL_SECONDS`, default 3600).
 
-## RBAC conventions
-- Roles are stored as `ROLE_ADMIN`, `ROLE_MANAGER`, `ROLE_AGENT`.
-- `@PreAuthorize("hasRole('ADMIN')")` expects `ROLE_ADMIN` in authorities (Spring auto-prefixes).
-- `roles` claim is a **list** of strings; default role is `ROLE_AGENT` when missing.
+### Portal JWT
+- Issued after magic-link verification (`/api/portal/auth/verify`).
+- Claims:
+  - `sub`: contact ID (not user ID)
+  - `tid`: tenant ID
+  - `roles`: `["ROLE_PORTAL"]`
+  - `iat`, `exp`
+- No `tv` claim; short-lived (2h), stateless.
 
-## Tenant context rules
-- `JwtAuthenticationFilter` extracts `tid` and stores it in `TenantContext`.
-- `TenantContext` is ThreadLocal and **must be cleared** after each request (handled by filter).
-- Services and repositories must scope queries by `tenant_id`.
+## Token Revocation (CRM)
+- `User.tokenVersion` increments on role changes and account disable.
+- Each request compares JWT `tv` with cached user security info.
+- Mismatch, missing user, or disabled user leads to 401.
+- Cache (`userSecurityCache`) is evicted on role/enablement updates.
 
-## 401 vs 403 behavior
-- **401** (`UNAUTHORIZED`): no/invalid token, handled by `CustomAuthenticationEntryPoint`.
-- **403** (`FORBIDDEN`): valid token without role/tenant access, handled by `CustomAccessDeniedHandler` or `GlobalExceptionHandler`.
+## Security Route Boundaries
+Public routes include:
+- `POST /auth/login`
+- `POST /api/portal/auth/request-link`
+- `GET /api/portal/auth/verify`
+- `GET /actuator/health`, `GET /actuator/info`
+- Swagger/OpenAPI endpoints
+- `POST /tenants` bootstrap endpoint
 
-## Common pitfalls
-- **ROLE_ROLE_ mismatch:** don’t add `ROLE_` twice in `hasRole()` expressions.
-- **TenantContext leakage:** always clear ThreadLocal (already done in `JwtAuthenticationFilter`).
-- **Missing tid claim:** token is treated as invalid; access is denied.
+Protected route groups:
+- `/api/portal/**` -> `ROLE_PORTAL` only
+- `/api/**` -> CRM roles only (`ADMIN`, `MANAGER`, `AGENT`)
+
+## RBAC Conventions
+- Use `@PreAuthorize("hasRole('ADMIN')")` style. Never include `ROLE_` in `hasRole(...)`.
+- Apply method-level authorization for fine-grained control and mixed access paths.
+- AGENT visibility is ownership-scoped in service layer for sensitive domains.
+
+## Tenant Isolation
+- Tenant comes from JWT `tid` and is stored in `TenantContext`.
+- `TenantContext` must be cleared at request end (filter responsibility).
+- Repository/service operations must remain tenant-scoped; never trust tenant IDs from payload/path.
+
+## Error Semantics
+- 401: invalid/expired token, missing auth, tokenVersion mismatch, disabled/deleted user.
+- 403: authenticated but lacks required role/permission.
+- API errors use standardized `ErrorResponse` + `ErrorCode`.
+
+## Operational Security Notes
+- `JWT_SECRET` is mandatory and must be at least 32 characters.
+- Do not log raw Authorization headers or magic-link raw tokens.
+- Secret scanning in CI is audit-only by default; Snyk handles SAST + OSS dependency vulnerability gates.
+
+## Related References
+- Compact security baseline: [../context/SECURITY_BASELINE.md](../context/SECURITY_BASELINE.md)
+- Architecture and request flow: [01_ARCHITECTURE.md](01_ARCHITECTURE.md)

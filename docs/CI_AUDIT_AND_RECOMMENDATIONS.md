@@ -119,7 +119,7 @@ cd hlm-backend
 chmod +x mvnw
 ./mvnw -B -ntp test
 ./mvnw -B -ntp -DskipTests package
-./mvnw -B -ntp failsafe:integration-test
+./mvnw -B -ntp failsafe:integration-test failsafe:verify
 ```
 
 ### Frontend

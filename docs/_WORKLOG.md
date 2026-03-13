@@ -1,10 +1,10 @@
 # _WORKLOG.md — Chronological Progress
 
-_Updated: 2026-03-04_
+_Updated: 2026-03-05_
 
 ## Phase 0 — Recon (2026-03-04) — Complete
 - Stack: Spring Boot 3.5.8 / Java 21 / Angular 19.2 / PostgreSQL / Liquibase / Caffeine
-- 6 GitHub Actions workflows; Snyk OSS+Code+SARIF; no context/ dir existed
+- Historical snapshot at the time: 6 GitHub Actions workflows (before GHAS workflow removal); Snyk OSS+Code+SARIF; no `context/` dir existed
 - Files created: context/CLAUDE_STATE.md, context/COMMANDS.md, docs/_WORKLOG.md, docs/_OPEN_POINTS.md, docs/_TODO_NEXT.md
 
 ## Phase 1 — Code Cleanup (2026-03-04) — Scoped/Deferred
@@ -27,7 +27,7 @@ _Updated: 2026-03-04_
 ## Phase 6 — CI + Snyk Hardening (2026-03-04) — Complete
 - backend-ci.yml: added failsafe:verify (OP-001 resolved)
 - snyk.yml: added weekly schedule cron (OP-004 resolved)
-- All 6 YAML files validated OK
+- All workflow YAMLs validated (later reduced to 4 after removing GHAS-only workflows)
 
 ## Phase 7 — Final Verification (2026-03-04) — Complete
 - mvnw compile → BUILD SUCCESS
@@ -42,7 +42,7 @@ _Updated: 2026-03-04_
 **OP-004** — Already resolved in previous session (weekly cron).
 **OP-005** — Accepted as-is (audit-only; GHAS native secret scanning for enforcement).
 
-**OP-002** — Investigated: `payment/` = v1 tranche model; `payments/` = v2 item workflow. Both serve active routes. Documented distinct responsibilities. No code change (merge is high-risk, low-value without dedicated refactoring sprint).
+**OP-002** — Initially documented as coexistence (`payment/` v1 + `payments/` v2). Subsequently resolved (2026-03-05): v1 controller deprecated and now emits migration headers toward v2 routes.
 
 **OP-006** — Investigated: no `@angular-eslint` configured in `angular.json` or `package.json`. No CI lint step possible yet. Added setup instructions to `docs/05_DEV_GUIDE.md`.
 
@@ -64,3 +64,12 @@ _Updated: 2026-03-04_
 - `docs/_OPEN_POINTS.md` — all OPs closed
 - `docs/_TODO_NEXT.md` — backlog updated
 - `context/CLAUDE_STATE.md` — state updated
+
+## Phase 8 — Audit Findings Closure (2026-03-05) — Complete
+- Added configurable rate limiting via `app.rate-limit.*` (capacity, refill period, message) with validated typed properties.
+- Deprecated v1 payment schedule API controller (`payment/`) and added `Deprecation`/`Sunset`/`Warning`/`Link` headers for migration to `payments/` v2.
+- Added optional secret-scan enforcement switch (`SECRET_SCAN_ENFORCE=true`) in CI.
+- Cleaned and aligned core `docs/` + `context/` files:
+  - workflow counts (4)
+  - portal auth endpoint (`/api/portal/auth/request-link`)
+  - OP status consistency (OP-002 resolved)

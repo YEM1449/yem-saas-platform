@@ -504,7 +504,7 @@ DocumentService (e.g. ReservationDocumentService)
 | Type | Runner | Location | Purpose |
 |---|---|---|---|
 | Unit Tests | `./mvnw test` | `src/test/**/*Test.java` | Service logic, domain rules, JWT validation |
-| Integration Tests | `./mvnw failsafe:integration-test` | `src/test/**/*IT.java` | Full HTTP round-trip with real PostgreSQL (Testcontainers) |
+| Integration Tests | `./mvnw failsafe:integration-test failsafe:verify` | `src/test/**/*IT.java` | Full HTTP round-trip with real PostgreSQL (Testcontainers) |
 | Frontend Build | `npm run build` | `hlm-frontend/` | Compile-time check for Angular |
 | Smoke Test | `scripts/smoke-auth.sh` | — | Auth + protected endpoint verification |
 
@@ -537,10 +537,10 @@ DocumentService (e.g. ReservationDocumentService)
 cd hlm-backend && ./mvnw test
 
 # Backend integration tests (requires Docker)
-cd hlm-backend && ./mvnw failsafe:integration-test
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify
 
 # Single IT class
-cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=ContractControllerIT
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify -Dit.test=ContractControllerIT
 
 # Frontend build check
 cd hlm-frontend && npm run build

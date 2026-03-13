@@ -1,83 +1,153 @@
 # 09 — New Engineer Checklist
 
-## Pre-Arrival (access requests)
-- [ ] GitHub repo access granted
-- [ ] Docker Hub account (for pulling postgres:16-alpine)
-- [ ] Snyk org access (if participating in security reviews)
+Use this checklist as a formal readiness gate, not just a todo list.
 
-## Day 0 — Setup
-- [ ] Java 21 (Temurin) installed — `java -version`
-- [ ] Docker installed and running — `docker info`
-- [ ] Node 18+ installed — `node -v`
-- [ ] npm 9+ installed — `npm -v`
-- [ ] PostgreSQL client available (psql or DBeaver/pgAdmin)
-- [ ] Repo cloned
-- [ ] `.env` file created from `.env.example`
-- [ ] PostgreSQL Docker container running
-- [ ] Backend starts: `http://localhost:8080/actuator/health` returns `{"status":"UP"}`
-- [ ] Frontend starts: `http://localhost:4200` redirects to `/login`
-- [ ] First login successful: `acme` / `admin@acme.com` / `Admin123!`
-- [ ] Smoke test passes: `./scripts/smoke-auth.sh`
+How to use:
+- check items only after objective verification,
+- attach command outputs/screenshots when relevant,
+- keep this file aligned with onboarding deliverables.
 
-## Day 1 — Architecture Reading
-- [ ] Read `AGENTS.md` (canonical instructions)
-- [ ] Read `context/PROJECT_CONTEXT.md`
-- [ ] Read `docs/00_OVERVIEW.md`
-- [ ] Read `docs/01_ARCHITECTURE.md`
-- [ ] Read `context/DOMAIN_RULES.md`
-- [ ] Read `context/SECURITY_BASELINE.md`
-- [ ] Decoded a JWT token manually (Lab 1.1)
-- [ ] Traced request through `JwtAuthenticationFilter` (Lab 1.2)
-- [ ] Verified RBAC with agent vs admin token (Lab 1.3)
+## Engineer Metadata
+- Engineer:
+- Role (Backend / Frontend / Fullstack):
+- Start date:
+- Reviewer / Mentor:
+- Date checklist completed:
 
-## Day 2 — Backend Proficiency
-- [ ] Unit tests green: `./mvnw test`
-- [ ] Integration tests green: `./mvnw failsafe:integration-test`
-- [ ] Read full `contact/` feature (entity → repo → service → controller → test)
-- [ ] Identified where `TenantContext.getTenantId()` is called in a service
-- [ ] Explained Liquibase changeset immutability rule
-- [ ] Read an IT test and understood JWT generation pattern
+---
 
-## Day 3 — Frontend Proficiency
-- [ ] Explored Angular route structure
-- [ ] Read `auth.interceptor.ts` and explained the 401 logout flow
-- [ ] Read `portal.interceptor.ts` and explained the difference from auth interceptor
-- [ ] Located relative API path in a service (e.g., `property.service.ts`)
-- [ ] Frontend tests green: `npm test -- --watch=false --browsers=ChromeHeadless`
+## Gate 1 — Access and Environment (Blocker Gate)
+### Access prerequisites
+- [ ] GitHub repository access granted.
+- [ ] Access to required secrets/processes (Snyk visibility if security-related work expected).
+- [ ] Local machine has Docker permissions.
 
-## Day 4 — Quality & Security
-- [ ] Read `docs/07_RELEASE_AND_DEPLOY.md` and explained all 6 CI workflows
-- [ ] Explained what happens when SNYK_TOKEN is missing
-- [ ] Read `GlobalExceptionHandler.java` and triggered a validation error via curl
-- [ ] Traced outbox retry logic (exponential backoff array)
-- [ ] Read at least one IT test for the outbox
+### Tooling verification
+- [ ] Java 21 installed (`java -version`).
+- [ ] Docker available (`docker info`).
+- [ ] Node 18+ installed (`node -v`).
+- [ ] npm 9+ installed (`npm -v`).
 
-## Day 5 — First Contribution
-- [ ] Created a feature branch
-- [ ] Implemented the contact count endpoint (Lab 5.1)
-- [ ] All tests pass (unit + IT)
-- [ ] IT test covers all three CRM roles
-- [ ] PR opened with clear description
-- [ ] PR reviewed by a senior engineer
+### Runtime verification
+- [ ] `.env` created from `.env.example`.
+- [ ] Backend starts and `/actuator/health` returns `200`.
+- [ ] Frontend starts on `http://localhost:4200`.
+- [ ] Seed login works (`acme` / `admin@acme.com` / `Admin123!`).
+- [ ] Auth smoke test passes (`scripts/smoke-auth.sh`).
 
-## Ongoing Knowledge Checks
+Gate result:
+- [ ] PASS Gate 1
 
-After 2 weeks, you should be able to:
-- [ ] Add a new Liquibase changeset without help
-- [ ] Write a new IT test with RBAC coverage
-- [ ] Explain the portal vs CRM JWT difference from memory
-- [ ] Debug a failing IT test (wrong profile, missing annotation, etc.)
-- [ ] Locate any feature code by navigating the package structure
+---
 
-## Key Files to Bookmark
+## Gate 2 — Architecture and Security Understanding
+### Required reading completed
+- [ ] `docs/00_OVERVIEW.md`
+- [ ] `docs/01_ARCHITECTURE.md`
+- [ ] `context/PROJECT_CONTEXT.md`
+- [ ] `context/SECURITY_BASELINE.md`
+- [ ] `context/DOMAIN_RULES.md`
 
-| File | Why |
-|------|-----|
-| `AGENTS.md` | Canonical instructions — read first when blocked |
-| `context/COMMANDS.md` | All commands — never guess |
-| `context/CONVENTIONS.md` | Code patterns — match existing style |
-| `context/DOMAIN_RULES.md` | Business rules — check before implementing |
-| `docs/01_ARCHITECTURE.md` | Architecture diagrams |
-| `docs/07_RELEASE_AND_DEPLOY.md` | CI pipeline reference |
-| `.env.example` | Required environment variables |
-| `db/changelog/db.changelog-master.yaml` | Liquibase master (find next changeset number here) |
+### Knowledge checks (must be explainable verbally)
+- [ ] Can explain CRM JWT vs portal JWT claims (`sub`, `tid`, `roles`, `tv`).
+- [ ] Can explain tenant isolation chain (JWT `tid` -> `TenantContext` -> repository filtering).
+- [ ] Can explain why `hasRole('ADMIN')` is correct and `hasRole('ROLE_ADMIN')` is incorrect.
+- [ ] Can explain separation between `/api/**` and `/api/portal/**`.
+
+Practical checks:
+- [ ] Decoded a JWT payload and identified `tid` + `tv`.
+- [ ] Demonstrated an RBAC 403 with insufficient privileges.
+
+Gate result:
+- [ ] PASS Gate 2
+
+---
+
+## Gate 3 — Backend Contribution Readiness
+### Technical checks
+- [ ] Ran backend unit tests (`./mvnw -B -ntp test`).
+- [ ] Ran backend integration tests (`./mvnw -B -ntp failsafe:integration-test failsafe:verify`).
+- [ ] Traced one feature end-to-end (entity -> repo -> service -> controller -> IT).
+- [ ] Identified at least one tenant-scoped query in real code.
+- [ ] Reviewed Liquibase master and latest changesets.
+
+### Rules mastery
+- [ ] Understands additive-only migration rule.
+- [ ] Understands DTO-only controller contract rule.
+- [ ] Understands service-level ownership checks for AGENT constraints.
+
+Gate result:
+- [ ] PASS Gate 3
+
+---
+
+## Gate 4 — Frontend Contribution Readiness
+### Technical checks
+- [ ] Ran frontend tests in CI mode.
+- [ ] Ran frontend production build.
+- [ ] Located and explained auth interceptor behavior.
+- [ ] Located and explained portal interceptor behavior.
+- [ ] Confirmed API service paths are relative (no hardcoded backend host).
+
+### Route and session model checks
+- [ ] Can identify guarded CRM routes.
+- [ ] Can identify guarded portal routes.
+- [ ] Can explain `hlm_access_token` vs `hlm_portal_token` separation.
+
+Gate result:
+- [ ] PASS Gate 4
+
+---
+
+## Gate 5 — CI, Quality, and Operations
+### CI understanding
+- [ ] Can explain backend CI stages and failure implications.
+- [ ] Can explain frontend CI stages and failure implications.
+- [ ] Can explain Snyk workflow behavior and token dependency.
+- [ ] Can explain secret-scan audit behavior.
+
+### Error and troubleshooting literacy
+- [ ] Triggered and inspected a `VALIDATION_ERROR` response envelope.
+- [ ] Used runbook to diagnose one local issue.
+- [ ] Can explain outbox retry pattern at high level.
+
+Gate result:
+- [ ] PASS Gate 5
+
+---
+
+## Gate 6 — First Contribution Delivered
+### Contribution quality checks
+- [ ] Feature branch created and scoped to one concern.
+- [ ] Change includes tests aligned with modified behavior.
+- [ ] Tenant/RBAC constraints preserved in changed paths.
+- [ ] Docs/context updated where behavior/contracts changed.
+- [ ] PR description includes verification commands and risk notes.
+
+### Final sign-off
+- [ ] Reviewer confirms contribution quality and autonomy level.
+
+Gate result:
+- [ ] PASS Gate 6
+
+---
+
+## Commands Quick Reference
+```bash
+# Backend
+cd hlm-backend && ./mvnw -B -ntp test
+cd hlm-backend && ./mvnw -B -ntp failsafe:integration-test failsafe:verify
+
+# Frontend
+cd hlm-frontend && npm test -- --watch=false --browsers=ChromeHeadless --progress=false
+cd hlm-frontend && npm run build
+
+# Smoke auth
+TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+```
+
+## Core References
+- [05_DEV_GUIDE.md](05_DEV_GUIDE.md)
+- [08_ONBOARDING_COURSE.md](08_ONBOARDING_COURSE.md)
+- [../context/COMMANDS.md](../context/COMMANDS.md)
+- [../context/CONVENTIONS.md](../context/CONVENTIONS.md)

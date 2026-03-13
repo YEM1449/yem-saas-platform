@@ -45,7 +45,7 @@ import java.util.UUID;
  * outbox {@code createdByUser} reference, and the buyer-email snapshot on the
  * contract is used as the recipient.
  */
-@Service
+@Service("paymentsScheduleReminderService")
 public class ReminderService {
 
     private static final Logger log = LoggerFactory.getLogger(ReminderService.class);

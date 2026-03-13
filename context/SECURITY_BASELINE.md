@@ -29,9 +29,14 @@ _Updated: 2026-03-05_
 
 ## Public Endpoints
 - `POST /auth/login`
-- `POST /api/portal/auth/magic-link`
-- `GET /api/portal/auth/verify`
 - `GET /actuator/health`
+- `GET /actuator/info`
+- `GET /v3/api-docs/**`
+- `GET /swagger-ui/**`
+- `GET /swagger-ui.html`
+- `POST /tenants`
+- `POST /api/portal/auth/request-link`
+- `GET /api/portal/auth/verify`
 
 ## RBAC Annotations
 ```java
@@ -58,7 +63,9 @@ _Updated: 2026-03-05_
 
 ## Rate Limiting
 - Bucket4j (v8.10.1) present as dependency.
-- [OPEN POINT] Rate limiting configuration not visible in main application.yml. Verify `RateLimitConfig` or equivalent.
+- Configured via `app.rate-limit.*` in `application.yml`:
+  - `app.rate-limit.login.{capacity,refill-period,exceeded-message}`
+  - `app.rate-limit.portal-link.{capacity,refill-period,exceeded-message}`
 
 ## CORS
 - `CorsConfig` bean — allowed origins configurable via `app.cors.allowed-origins` property.
@@ -83,7 +90,7 @@ _Updated: 2026-03-05_
 | OSS Dependencies | Snyk OSS (`snyk.yml` open-source job) | Fail on HIGH+ | ✅ Active |
 | OSS Schedule | Snyk OSS (weekly cron) | Fail on HIGH+ | ✅ Active |
 | Dependency Review | Removed — requires GHAS; replaced by Snyk OSS (`snyk.yml` open-source job) | Fail on HIGH+ via Snyk | ❌ Removed |
-| Secret Patterns | grep-based (`secret-scan.yml`) | Audit-only, warning only | ✅ Active |
+| Secret Patterns | grep-based (`secret-scan.yml`) | Audit-only by default; optional fail mode via `SECRET_SCAN_ENFORCE=true` | ✅ Active |
 | CodeQL SAST | Removed — requires GHAS (use Snyk Code instead) | — | ❌ Removed |
 
 ## Structured Logging

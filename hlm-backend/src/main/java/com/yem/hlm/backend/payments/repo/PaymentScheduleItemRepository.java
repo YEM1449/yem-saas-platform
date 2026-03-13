@@ -122,4 +122,78 @@ public interface PaymentScheduleItemRepository extends JpaRepository<PaymentSche
     List<PaymentScheduleItem> findUpcomingDue(@Param("tenantId") UUID tenantId,
                                                @Param("from") LocalDate from,
                                                org.springframework.data.domain.Pageable pageable);
+
+    // ── Receivables dashboard aggregate queries ────────────────────────────────
+
+    /**
+     * Returns {@code [totalOutstanding, totalOverdue]} for the tenant.
+     * Outstanding = sum(amount) for ISSUED/SENT/OVERDUE items.
+     * Overdue    = sum(amount) for OVERDUE items only.
+     */
+    @Query(value = """
+        SELECT
+            COALESCE(SUM(CASE WHEN status IN ('ISSUED','SENT','OVERDUE') THEN amount ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN status = 'OVERDUE' THEN amount ELSE 0 END), 0)
+        FROM payment_schedule_item
+        WHERE tenant_id = :tenantId
+        """, nativeQuery = true)
+    List<Object[]> receivablesTotals(@Param("tenantId") UUID tenantId);
+
+    /** Agent-scoped variant of {@link #receivablesTotals(UUID)}. */
+    @Query(value = """
+        SELECT
+            COALESCE(SUM(CASE WHEN psi.status IN ('ISSUED','SENT','OVERDUE') THEN psi.amount ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN psi.status = 'OVERDUE' THEN psi.amount ELSE 0 END), 0)
+        FROM payment_schedule_item psi
+        JOIN sale_contract sc ON sc.id = psi.contract_id
+        WHERE psi.tenant_id = :tenantId
+          AND sc.agent_id = :agentId
+        """, nativeQuery = true)
+    List<Object[]> receivablesTotalsForAgent(@Param("tenantId") UUID tenantId,
+                                             @Param("agentId") UUID agentId);
+
+    /** Sum of planned amount for all non-DRAFT, non-CANCELED items (denominator for collection rate). */
+    @Query("SELECT COALESCE(SUM(i.amount), 0) FROM PaymentScheduleItem i " +
+           "WHERE i.tenant.id = :tenantId AND i.status NOT IN ('DRAFT', 'CANCELED')")
+    BigDecimal totalIssuedAmount(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Outstanding ISSUED/SENT/OVERDUE items as {@code [amount, due_date]} rows.
+     * Used to build aging buckets in the receivables dashboard.
+     */
+    @Query(value = """
+        SELECT amount, due_date
+        FROM payment_schedule_item
+        WHERE tenant_id = :tenantId
+          AND status IN ('ISSUED','SENT','OVERDUE')
+        """, nativeQuery = true)
+    List<Object[]> outstandingForAging(@Param("tenantId") UUID tenantId);
+
+    /** Agent-scoped variant of {@link #outstandingForAging(UUID)}. */
+    @Query(value = """
+        SELECT psi.amount, psi.due_date
+        FROM payment_schedule_item psi
+        JOIN sale_contract sc ON sc.id = psi.contract_id
+        WHERE psi.tenant_id = :tenantId
+          AND psi.status IN ('ISSUED','SENT','OVERDUE')
+          AND sc.agent_id = :agentId
+        """, nativeQuery = true)
+    List<Object[]> outstandingForAgingByAgent(@Param("tenantId") UUID tenantId,
+                                              @Param("agentId") UUID agentId);
+
+    /**
+     * Top overdue projects as {@code [project_id, project_name, overdue_amount]} rows,
+     * sorted by overdue amount descending.
+     */
+    @Query(value = """
+        SELECT psi.project_id, p.name, COALESCE(SUM(psi.amount), 0)
+        FROM payment_schedule_item psi
+        JOIN project p ON p.id = psi.project_id
+        WHERE psi.tenant_id = :tenantId
+          AND psi.status = 'OVERDUE'
+        GROUP BY psi.project_id, p.name
+        ORDER BY SUM(psi.amount) DESC
+        """, nativeQuery = true)
+    List<Object[]> overdueByProject(@Param("tenantId") UUID tenantId,
+                                    org.springframework.data.domain.Pageable pageable);
 }

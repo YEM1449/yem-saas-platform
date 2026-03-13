@@ -19,7 +19,7 @@ IT failures now correctly fail the CI job.
 New CVEs between code pushes are now caught automatically.
 
 ### [OP-005] ✅ ACCEPTED — Secret Scan Audit-Only Mode
-**Resolution**: Kept audit-only per recommendation. Pattern-based grep has false-positive risk; findings are uploaded as artifacts for manual review. GitHub Advanced Security native secret scanning is the enforcement-grade alternative when GHAS is enabled.
+**Resolution**: Kept audit-only by default per recommendation (pattern-based grep has false-positive risk). Added an optional enforcement switch (`SECRET_SCAN_ENFORCE=true`) to fail CI when findings exist. GitHub Advanced Security native secret scanning remains the enforcement-grade target when GHAS is enabled.
 
 ### [OP-006] ✅ DOCUMENTED — Frontend Lint Gate Missing
 **Resolution**: `@angular-eslint` is not configured in `angular.json` or `package.json`. A lint CI step cannot be added until ESLint is set up. Setup steps documented in `docs/05_DEV_GUIDE.md`:
@@ -47,21 +47,13 @@ Recommended JVM: `-Xmx512m`. Async PDF (future backlog) documented.
 CI workflow table in `docs/07_RELEASE_AND_DEPLOY.md` updated.  
 CI security gates in `context/SECURITY_BASELINE.md` updated.
 
----
+### [OP-002] ✅ RESOLVED — payment/ vs payments/ Packages
+**Context**: Two packages with overlapping payment responsibilities:
+- `payment/` (v1): `/api/contracts/{id}/payment-schedule`, `/api/payment-calls`
+- `payments/` (v2): `/api/contracts/{id}/schedule`, `/api/schedule-items`, cash dashboard
 
-## OPEN
-
-### [OP-002] 📋 DOCUMENTED (no code change) — payment/ vs payments/ Packages
-**Context**: Two packages with distinct but overlapping concerns:
-- `payment/` — **v1 model**: PaymentSchedule (tranches), PaymentCall (Appel de Fonds PDF), payment recording. API: `/api/contracts/{id}/payment-schedule`, `/api/payment-calls`.
-- `payments/` — **v2 model**: PaymentScheduleItem workflow (issue→send→cancel), Call-for-Funds PDF+reminders, CashDashboard. API: `/api/contracts/{id}/schedule`, `/api/schedule-items`, `/api/dashboard/commercial/cash`.
-
-**Resolution chosen**: Option 2 — document distinct responsibilities (both serve active routes; merge requires significant refactoring risk with no immediate user-visible benefit).
-
-**Documentation updated**: `docs/01_ARCHITECTURE.md`, `context/ARCHITECTURE.md`.
-
-**Remaining risk**: A new engineer may find two `PaymentScheduleController` classes confusing. Recommend:
-1. Add a `@Deprecated` annotation to `payment/api/PaymentScheduleController` if `payments/` fully supersedes it.
-2. Or ensure the API docs (`docs/api.md`) clearly distinguish the two endpoints.
-
-**Owner**: Backend team — when a dedicated refactoring sprint is planned.
+**Resolution**:
+- Kept both routes temporarily for backward compatibility.
+- Marked `payment/api/PaymentScheduleController` as `@Deprecated`.
+- Added deprecation response headers (`Deprecation`, `Sunset`, `Warning`, `Link`) on v1 endpoints to push clients toward v2.
+- Updated architecture/context docs to reflect v1 deprecation and v2 successor routes.

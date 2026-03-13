@@ -9,7 +9,7 @@ This file lists the main gaps to close between the CDC expectations and the curr
 
 1) **Security P1** — Role change / disable must invalidate active JWTs immediately. ✅ CLOSED: `tv` claim + `UserSecurityCacheService` + `JwtAuthenticationFilter` + `TokenRevocationIT` tests.
 
-2) **Context load / IT stability** — Fix the failing Spring test ApplicationContext (root-cause), then make all ITs green. Status: ONGOING — verify with `./mvnw failsafe:integration-test`.
+2) **Context load / IT stability** — Fix the failing Spring test ApplicationContext (root-cause), then make all ITs green. Status: ONGOING — verify with `./mvnw failsafe:integration-test failsafe:verify`.
 
 3) **Project KPIs** — Confirm exact KPI list required by CDC + ensure backend endpoint(s) + UI coverage + tests. ✅ CLOSED: `GET /api/projects/{id}/kpis` (ADMIN/MANAGER), `ProjectControllerIT` coverage, Angular `project-detail` KPI view.
 
@@ -28,7 +28,7 @@ This file lists the main gaps to close between the CDC expectations and the curr
 
 ## By CDC P1 backlog item
 
-See `docs/spec/Backlog_Status.md` for a compact status table.
+See `docs/specs/Backlog_Status.md` for a compact status table.
 
 
 ## Traceability rules

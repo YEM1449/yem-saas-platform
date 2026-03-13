@@ -263,7 +263,7 @@ self-service capabilities.
 ### Known open issues
 
 1. **IT stability** — ApplicationContext loads cleanly but verify all 291 IT tests pass end-to-end:
-   `cd hlm-backend && ./mvnw failsafe:integration-test`
+   `cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify`
 
 2. **Consolidated reporting** — Multi-société consolidated dashboard not yet addressed (CDC requirement for multi-project roll-ups across companies).
 
@@ -281,7 +281,7 @@ self-service capabilities.
 
 1. **Rate limit portal magic-link requests** — Max 5 requests per email per hour (Redis rate limiter or Bucket4j).
 2. **Portal token cleanup scheduler** — Cron job to purge expired tokens (keep DB lean).
-3. **Run full IT suite** — Confirm all 291 IT tests pass: `./mvnw failsafe:integration-test`.
+3. **Run full IT suite** — Confirm all 291 IT tests pass: `./mvnw failsafe:integration-test failsafe:verify`.
 4. **`SaleContract.listPrice` enforcement** — Add validation or at minimum surfacing in contract create UI.
 
 ### High (P1 — next sprint)
@@ -307,10 +307,10 @@ self-service capabilities.
 cd hlm-backend && ./mvnw test
 
 # 2 — Backend integration tests (Docker required for Testcontainers Postgres)
-cd hlm-backend && ./mvnw failsafe:integration-test
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify
 
 # 3 — Specific portal IT tests
-cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test="PortalAuthIT,PortalContractsIT,PortalPaymentsIT"
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify -Dit.test="PortalAuthIT,PortalContractsIT,PortalPaymentsIT"
 
 # 4 — Frontend production build (catches type errors)
 cd hlm-frontend && npm run build

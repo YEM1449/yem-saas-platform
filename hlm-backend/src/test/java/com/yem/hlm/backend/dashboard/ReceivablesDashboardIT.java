@@ -7,8 +7,7 @@ import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
-import com.yem.hlm.backend.payment.api.dto.CreatePaymentScheduleRequest;
-import com.yem.hlm.backend.payment.api.dto.TrancheRequest;
+import com.yem.hlm.backend.payments.api.dto.CreateScheduleItemRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
@@ -31,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -218,14 +216,11 @@ class ReceivablesDashboardIT extends IntegrationTestBase {
     }
 
     private void createScheduleWithTranche(UUID contractId, BigDecimal amount) throws Exception {
-        // TrancheRequest(label, percentage, amount, dueDate, triggerCondition)
-        var tranche = new TrancheRequest("Tranche 1", new BigDecimal("100.00"),
-                amount, LocalDate.now().plusDays(30), null);
-        var scheduleReq = new CreatePaymentScheduleRequest(List.of(tranche), "IT schedule");
-        mvc.perform(post("/api/contracts/{id}/payment-schedule", contractId)
+        var req = new CreateScheduleItemRequest("Tranche 1", amount, LocalDate.now().plusDays(30), null);
+        mvc.perform(post("/api/contracts/{id}/schedule", contractId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(scheduleReq)))
+                        .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
     }
 }
