@@ -9,17 +9,17 @@
     <p class="portal-loading">Loading…</p>
   } @else if (error()) {
     <p class="portal-error">{{ error() }}</p>
-  } @else if (schedule()) {
-    @let s = schedule()!;
-
+  } @else if (items().length === 0) {
+    <p class="portal-empty">No payment schedule available for this contract.</p>
+  } @else {
     <div class="portal-summary-row">
       <div class="portal-summary-item">
         <span class="portal-label">Total amount</span>
-        <strong>{{ totalAmount(s.tranches) | number:'1.0-0' }} MAD</strong>
+        <strong>{{ totalAmount(items()) | number:'1.0-0' }} MAD</strong>
       </div>
       <div class="portal-summary-item">
         <span class="portal-label">Paid</span>
-        <strong class="portal-text-success">{{ totalPaid(s.tranches) | number:'1.0-0' }} MAD</strong>
+        <strong class="portal-text-success">{{ totalPaid(items()) | number:'1.0-0' }} MAD</strong>
       </div>
     </div>
 
@@ -30,20 +30,22 @@
             <th>#</th>
             <th>Milestone</th>
             <th>Amount (MAD)</th>
+            <th>Paid (MAD)</th>
             <th>Due date</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          @for (t of s.tranches; track t.id) {
-            <tr class="tranche-row tranche-{{ t.status | lowercase }}">
-              <td>{{ t.trancheOrder }}</td>
-              <td>{{ t.label }}</td>
-              <td>{{ t.amount | number:'1.0-0' }}</td>
-              <td>{{ t.dueDate ? (t.dueDate | date:'dd/MM/yyyy') : '—' }}</td>
+          @for (item of items(); track item.id) {
+            <tr class="tranche-row tranche-{{ item.status | lowercase }}">
+              <td>{{ item.sequence }}</td>
+              <td>{{ item.label }}</td>
+              <td>{{ item.amount | number:'1.0-0' }}</td>
+              <td>{{ item.amountPaid | number:'1.0-0' }}</td>
+              <td>{{ item.dueDate ? (item.dueDate | date:'dd/MM/yyyy') : '—' }}</td>
               <td>
-                <span class="portal-badge" [ngClass]="trancheStatusClass(t.status)">
-                  {{ trancheStatusLabel(t.status) }}
+                <span class="portal-badge" [ngClass]="itemStatusClass(item.status)">
+                  {{ itemStatusLabel(item.status) }}
                 </span>
               </td>
             </tr>

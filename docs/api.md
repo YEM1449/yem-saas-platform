@@ -169,6 +169,42 @@ All endpoints return `ErrorResponse` with `ErrorCode` when failing. See `common/
 
 ---
 
+## Payments (v1 Deprecated, v2 Preferred)
+
+### v1 compatibility endpoints (deprecated)
+- `GET /api/contracts/{contractId}/payment-schedule`
+- `POST /api/contracts/{contractId}/payment-schedule`
+- `PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}`
+- `POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call`
+- `GET /api/payment-calls`
+- `GET /api/payment-calls/{id}`
+- `GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf`
+- `GET /api/payment-calls/{id}/payments`
+- `POST /api/payment-calls/{id}/payments`
+
+Every v1 response includes deprecation headers:
+- `Deprecation: true`
+- `Sunset: Wed, 31 Dec 2026 23:59:59 GMT`
+- `Warning: 299 ...`
+- `Link: </api/contracts/550e8400-e29b-41d4-a716-446655440000/schedule>; rel="successor-version"` _(the UUID is the actual contract ID from the request path)_
+
+### v2 endpoints (target)
+- `GET /api/contracts/{contractId}/schedule`
+- `POST /api/contracts/{contractId}/schedule`
+- `PUT /api/schedule-items/{itemId}`
+- `DELETE /api/schedule-items/{itemId}`
+- `POST /api/schedule-items/{itemId}/issue`
+- `POST /api/schedule-items/{itemId}/send`
+- `POST /api/schedule-items/{itemId}/cancel`
+- `GET /api/schedule-items/{itemId}/pdf`
+- `GET /api/schedule-items/{itemId}/payments`
+- `POST /api/schedule-items/{itemId}/payments`
+
+Migration reference:
+- [docs/v2/payment-v1-retirement-plan.v2.md](v2/payment-v1-retirement-plan.v2.md)
+
+---
+
 ## Notifications
 
 ### `GET /api/notifications`

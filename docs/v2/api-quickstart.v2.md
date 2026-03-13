@@ -105,7 +105,28 @@ curl -s -X POST "$BASE_URL/api/contracts/$CONTRACT_ID/sign" \
   -H "Authorization: Bearer $TOKEN" | jq '{id,status,signedAt}'
 ```
 
-## 8. Download contract and reservation PDFs
+## 8. Create payment schedule item (v2)
+```bash
+ITEM_ID=$(curl -s -X POST "$BASE_URL/api/contracts/$CONTRACT_ID/schedule" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label":"Fondations",
+    "amount":300000,
+    "dueDate":"2026-12-31",
+    "notes":"Quickstart v2 item"
+  }' | jq -r '.id')
+
+curl -s -X POST "$BASE_URL/api/schedule-items/$ITEM_ID/issue" \
+  -H "Authorization: Bearer $TOKEN" | jq '{id,status,issuedAt}'
+
+curl -s "$BASE_URL/api/contracts/$CONTRACT_ID/schedule" \
+  -H "Authorization: Bearer $TOKEN" | jq '.[0] | {id,label,status,amount,amountPaid,amountRemaining}'
+```
+
+Note: payment v1 endpoints (`/payment-schedule`, `/payment-calls`) are deprecated and must not be used for new integrations.
+
+## 9. Download contract and reservation PDFs
 ```bash
 curl -s -o reservation_$RUN_ID.pdf \
   -H "Authorization: Bearer $TOKEN" \
@@ -116,13 +137,13 @@ curl -s -o contract_$RUN_ID.pdf \
   "$BASE_URL/api/contracts/$CONTRACT_ID/documents/contract.pdf"
 ```
 
-## 9. Verify dashboard data
+## 10. Verify dashboard data
 ```bash
 curl -s "$BASE_URL/api/dashboard/commercial/summary" \
   -H "Authorization: Bearer $TOKEN" | jq '{salesCount,salesTotalAmount,depositsCount}'
 ```
 
-## 10. Portal scenario
+## 11. Portal scenario
 ### Request magic link
 ```bash
 MAGIC_LINK=$(curl -s -X POST "$BASE_URL/api/portal/auth/request-link" \
@@ -139,7 +160,7 @@ curl -s "$BASE_URL/api/portal/contracts" \
   -H "Authorization: Bearer $PORTAL_TOKEN" | jq .
 ```
 
-## 11. Typical failure diagnostics
+## 12. Typical failure diagnostics
 | Symptom | Root cause | Fix |
 |---------|------------|-----|
 | `401` after login | token missing/expired/revoked | re-login and refresh token |

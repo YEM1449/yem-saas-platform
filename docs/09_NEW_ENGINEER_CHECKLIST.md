@@ -47,12 +47,14 @@ Gate result:
 - [ ] `context/PROJECT_CONTEXT.md`
 - [ ] `context/SECURITY_BASELINE.md`
 - [ ] `context/DOMAIN_RULES.md`
+- [ ] `docs/v2/payment-v1-retirement-plan.v2.md`
 
 ### Knowledge checks (must be explainable verbally)
 - [ ] Can explain CRM JWT vs portal JWT claims (`sub`, `tid`, `roles`, `tv`).
 - [ ] Can explain tenant isolation chain (JWT `tid` -> `TenantContext` -> repository filtering).
 - [ ] Can explain why `hasRole('ADMIN')` is correct and `hasRole('ROLE_ADMIN')` is incorrect.
 - [ ] Can explain separation between `/api/**` and `/api/portal/**`.
+- [ ] Can explain payment v1 deprecation timeline and why new work targets v2 endpoints.
 
 Practical checks:
 - [ ] Decoded a JWT payload and identified `tid` + `tv`.
@@ -105,6 +107,7 @@ Gate result:
 - [ ] Can explain frontend CI stages and failure implications.
 - [ ] Can explain Snyk workflow behavior and token dependency.
 - [ ] Can explain secret-scan audit behavior.
+- [ ] Can run `scripts/find-payment-v1-references.sh` and interpret the result.
 
 ### Error and troubleshooting literacy
 - [ ] Triggered and inspected a `VALIDATION_ERROR` response envelope.

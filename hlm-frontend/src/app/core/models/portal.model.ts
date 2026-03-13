@@ -22,24 +22,6 @@ export interface PortalContract {
   signedAt: string | null;
 }
 
-export interface PortalPaymentSchedule {
-  id: string;
-  contractId: string;
-  notes: string | null;
-  createdAt: string;
-  tranches: PortalTranche[];
-}
-
-export interface PortalTranche {
-  id: string;
-  trancheOrder: number;
-  label: string;
-  percentage: number;
-  amount: number;
-  dueDate: string | null;
-  triggerCondition: string | null;
-  status: 'PLANNED' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
-}
 
 export interface PortalProperty {
   id: string;

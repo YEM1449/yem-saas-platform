@@ -1,6 +1,6 @@
 # COMMANDS.md — Canonical Command Reference
 
-_Source of truth for all build/test/run commands. Updated: 2026-03-05._
+_Source of truth for all build/test/run commands. Updated: 2026-03-11._
 
 ## Backend (hlm-backend/)
 
@@ -8,7 +8,7 @@ _Source of truth for all build/test/run commands. Updated: 2026-03-05._
 # Compile only (fast check)
 cd hlm-backend && ./mvnw -B -ntp -DskipTests compile
 
-# Run unit tests (Surefire, ~36 tests, no Docker needed)
+# Run unit tests (Surefire, 41 tests, no Docker needed)
 cd hlm-backend && ./mvnw -B -ntp test
 
 # Run integration tests (Failsafe + Testcontainers — requires Docker)
@@ -20,11 +20,10 @@ cd hlm-backend && ./mvnw -B -ntp verify
 # Package (skip tests)
 cd hlm-backend && ./mvnw -B -ntp -DskipTests package
 
-# Run locally (requires .env or env vars: DB_URL, DB_USER, DB_PASSWORD, JWT_SECRET)
-cd hlm-backend && ./mvnw spring-boot:run
-
-# Run with local profile
+# Run locally (local profile provides all defaults — no env vars needed)
 cd hlm-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# To override defaults: set -a && source .env && set +a  (before the command above)
+# If port 8080 is in use: fuser -k 8080/tcp
 ```
 
 ## Frontend (hlm-frontend/)

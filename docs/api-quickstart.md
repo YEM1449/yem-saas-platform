@@ -173,7 +173,44 @@ curl -s "$BASE_URL/api/properties/$PROPERTY_ID" \
   -H "Authorization: Bearer $TOKEN" | jq '{id, status, soldAt}'
 ```
 
-## 14. Download generated PDFs
+## 14. Create and use payment schedule item (v2 preferred)
+```bash
+SCHEDULE_ITEM_ID=$(curl -s -X POST "$BASE_URL/api/contracts/$CONTRACT_ID/schedule" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label":"Fondations",
+    "amount":300000,
+    "dueDate":"2026-12-31",
+    "notes":"Quickstart item"
+  }' | jq -r '.id')
+
+echo "$SCHEDULE_ITEM_ID"
+```
+
+Issue and partially pay:
+```bash
+curl -s -X POST "$BASE_URL/api/schedule-items/$SCHEDULE_ITEM_ID/issue" \
+  -H "Authorization: Bearer $TOKEN" | jq '{id,status,issuedAt}'
+
+curl -s -X POST "$BASE_URL/api/schedule-items/$SCHEDULE_ITEM_ID/payments" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount":120000,
+    "paidAt":"2026-12-15",
+    "channel":"BANK_TRANSFER",
+    "paymentReference":"QS-001"
+  }' | jq '{id,amount,paidAt}'
+```
+
+List contract schedule and verify status:
+```bash
+curl -s "$BASE_URL/api/contracts/$CONTRACT_ID/schedule" \
+  -H "Authorization: Bearer $TOKEN" | jq '.[0] | {id,label,status,amount,amountPaid,amountRemaining}'
+```
+
+## 15. Download generated PDFs
 ### Reservation PDF
 ```bash
 curl -s -o reservation.pdf \
@@ -190,7 +227,7 @@ curl -s -o contract.pdf \
 file contract.pdf
 ```
 
-## 15. Outbox messaging quick check
+## 16. Outbox messaging quick check
 ```bash
 curl -s -X POST "$BASE_URL/api/messages" \
   -H "Authorization: Bearer $TOKEN" \
@@ -206,13 +243,13 @@ curl -s -X POST "$BASE_URL/api/messages" \
 ```
 Expected: HTTP `202` and a `messageId`.
 
-## 16. Commercial dashboard quick check
+## 17. Commercial dashboard quick check
 ```bash
 curl -s "$BASE_URL/api/dashboard/commercial/summary" \
   -H "Authorization: Bearer $TOKEN" | jq '{salesCount, salesTotalAmount, depositsCount, activeReservationsCount}'
 ```
 
-## 17. Portal flow quick check
+## 18. Portal flow quick check
 ### Step A — request magic link
 ```bash
 MAGIC_LINK=$(curl -s -X POST "$BASE_URL/api/portal/auth/request-link" \
@@ -241,16 +278,18 @@ curl -s "$BASE_URL/api/portal/contracts" \
   -H "Authorization: Bearer $PORTAL_TOKEN" | jq .
 ```
 
-## 18. Frequent Failure Cases and Fast Fixes
+## 19. Frequent Failure Cases and Fast Fixes
 | Symptom | Likely Cause | Fix |
 |---------|--------------|-----|
 | `401 UNAUTHORIZED` immediately | invalid/expired token | re-login and refresh token |
 | `403 FORBIDDEN` on write endpoint | role mismatch | use ADMIN/MANAGER token |
 | deposit creation fails with property error | property not `ACTIVE` | update property status first |
 | contract creation fails for ADMIN/MANAGER | missing `agentId` | pass `agentId` in payload |
+| payment schedule call fails on v1 | endpoint deprecated or migrated | use `/api/contracts/{id}/schedule` + `/api/schedule-items/*` |
 | portal verify fails | token reused/expired | request new magic link |
 
-## 19. Useful next references
+## 20. Useful next references
 - Full API catalog: [api.md](api.md)
+- v1 retirement and migration plan: [v2/payment-v1-retirement-plan.v2.md](v2/payment-v1-retirement-plan.v2.md)
 - Developer workflows: [05_DEV_GUIDE.md](05_DEV_GUIDE.md)
 - Local dev walkthrough: [local-dev.md](local-dev.md)

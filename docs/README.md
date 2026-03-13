@@ -12,7 +12,6 @@
 | [00_OVERVIEW.md](00_OVERVIEW.md) | Mission, repo layout, component map |
 | [01_ARCHITECTURE.md](01_ARCHITECTURE.md) | C4 architecture, packages, request flows |
 | [05_DEV_GUIDE.md](05_DEV_GUIDE.md) | Local setup, commands, dev workflows |
-| [local-dev.md](local-dev.md) | Detailed walkthrough with demo flows |
 
 ### Reference
 | Doc | Purpose |
@@ -28,8 +27,15 @@
 | Doc | Purpose |
 |-----|---------|
 | [07_RELEASE_AND_DEPLOY.md](07_RELEASE_AND_DEPLOY.md) | CI/CD workflows, release process |
-| [runbook.md](runbook.md) | Troubleshooting playbook |
+| [runbooks/runbook_v2.md](runbooks/runbook_v2.md) | Production operational runbook |
 | [contributing.md](contributing.md) | Contribution guidelines |
+
+### Payments v2 (Current)
+| Doc | Purpose |
+|-----|---------|
+| [v2/api.v2.md](v2/api.v2.md) | v2 API reference (preferred over api.md for payments) |
+| [v2/api-quickstart.v2.md](v2/api-quickstart.v2.md) | v2 quick start |
+| [v2/payment-v1-retirement-plan.v2.md](v2/payment-v1-retirement-plan.v2.md) | v1 deprecation runbook, migration plan |
 
 ### Specifications
 | Doc | Purpose |
@@ -43,22 +49,27 @@
 | Doc | Purpose |
 |-----|---------|
 | [08_ONBOARDING_COURSE.md](08_ONBOARDING_COURSE.md) | Day 0–5 learning course for new engineers |
-| [09_NEW_ENGINEER_CHECKLIST.md](09_NEW_ENGINEER_CHECKLIST.md) | Setup checklist |
+| [09_NEW_ENGINEER_CHECKLIST.md](09_NEW_ENGINEER_CHECKLIST.md) | Six-gate readiness checklist |
 
 ### AI / LLM Context
 | Doc | Purpose |
 |-----|---------|
-| [ai/PROJECT_CONTEXT.md](ai/PROJECT_CONTEXT.md) | LLM context pack (legacy) |
-| [../context/PROJECT_CONTEXT.md](../context/PROJECT_CONTEXT.md) | Current LLM context |
+| [../context/PROJECT_CONTEXT.md](../context/PROJECT_CONTEXT.md) | Current LLM context pack |
 | [../context/ARCHITECTURE.md](../context/ARCHITECTURE.md) | Architecture bullets for LLMs |
 | [../context/DOMAIN_RULES.md](../context/DOMAIN_RULES.md) | Domain rules for LLMs |
+| [../context/SECURITY_BASELINE.md](../context/SECURITY_BASELINE.md) | Security constraints for LLMs |
 
 ### Work Tracking
 | Doc | Purpose |
 |-----|---------|
 | [_WORKLOG.md](_WORKLOG.md) | Chronological progress log |
-| [_OPEN_POINTS.md](_OPEN_POINTS.md) | Open questions and decisions needed |
+| [_OPEN_POINTS.md](_OPEN_POINTS.md) | Open questions and decisions |
 | [_TODO_NEXT.md](_TODO_NEXT.md) | Next action backlog |
+
+### Archive
+| Doc | Purpose |
+|-----|---------|
+| [archive/](archive/) | Superseded docs kept for historical reference |
 
 ---
 

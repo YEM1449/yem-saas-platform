@@ -28,19 +28,27 @@ Notes:
 
 ## 3. One-Time Local Setup
 ### 3.1 Configure environment variables
+
+The `local` Spring profile provides safe defaults for all required variables, so **no env setup is required to start locally**.
+
+To override defaults (e.g. a real JWT secret, different DB), copy and source the env file:
 ```bash
 cp .env.example .env
-export $(grep -v '^#' .env | xargs)
+# Edit .env as needed, then source it:
+set -a && source .env && set +a
 ```
 
-Required runtime variables:
-- `DB_URL`
-- `DB_USER`
-- `DB_PASSWORD`
-- `JWT_SECRET` (minimum 32 chars)
+> **Note:** Do NOT use `export $(grep -v '^#' .env | xargs)` — cron expressions in `.env` contain spaces and will break that command. Use `set -a && source .env && set +a` instead.
 
-Optional:
-- `JWT_TTL_SECONDS` (default 3600)
+Local defaults provided by `application-local.yml`:
+| Variable | Default |
+|----------|---------|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/hlm` |
+| `DB_USER` | `hlm_user` |
+| `DB_PASSWORD` | `hlm_pwd` |
+| `JWT_SECRET` | `local-dev-secret-do-not-use-in-production-min32` |
+
+> **Production:** All four variables above **must** be set via env or secrets manager. Never deploy with the default JWT secret.
 
 ### 3.2 Start local PostgreSQL (recommended)
 ```bash
@@ -52,18 +60,27 @@ docker run -d --name hlm-postgres \
   postgres:16-alpine
 ```
 
+If a container named `hlm-postgres` already exists: `docker start hlm-postgres`
+
 ### 3.3 Start backend
 ```bash
 cd hlm-backend
 chmod +x mvnw
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+> **Important:** Always pass `-Dspring-boot.run.profiles=local`. Without it, datasource defaults are not loaded and the app will fail to connect to the DB.
+
+> **Port conflict:** If you see `Port 8080 was already in use`, stop the existing process first:
+> ```bash
+> fuser -k 8080/tcp
+> ```
 
 Health check:
 ```bash
-curl -i http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/health
 ```
-Expected: HTTP `200` with `{"status":"UP"}`.
+Expected: `{"status":"UP"}`.
 
 ### 3.4 Start frontend
 ```bash
@@ -195,18 +212,29 @@ Before opening a PR:
 - [ ] docs/context updated for changed behavior,
 - [ ] no secrets added.
 
-## 11. Troubleshooting Matrix
+## 11. Payment v2 Only
+The `payment/` v1 package has been fully deleted (Epic/sec-improvement). All payment work must target `payments/` (v2):
+- Backend: `payments/api`, `payments/service`, `payments/repo`, `payments/domain`
+- Frontend route: `/contracts/:contractId/payments` → `features/contracts/payment-schedule.component`
+- Portal: `/api/portal/contracts/{contractId}/payment-schedule` returns `List<PaymentScheduleItemResponse>` (v2)
+
+Reference:
+- [v2/payment-v1-retirement-plan.v2.md](v2/payment-v1-retirement-plan.v2.md)
+
+## 12. Troubleshooting Matrix
 | Symptom | Likely Cause | Action |
 |---------|--------------|--------|
 | `Connection refused` on `:8080` | backend not running | check backend logs and health endpoint |
-| startup fails with JWT error | missing/short `JWT_SECRET` | set `JWT_SECRET` >= 32 chars |
+| startup fails with JWT error | missing/short `JWT_SECRET` | `export $(grep -v '^#' .env \| xargs)` or set `JWT_SECRET` >= 32 chars |
+| Liquibase parse/YAML error | merge conflict markers in changelog file | resolve `<<<<<<<` markers in the affected `changes/*.yaml` and keep the HEAD version |
+| Liquibase `relation does not exist` | FK target table missing from dependent changeset | verify preceding changeset created the referenced table; use no-op placeholder if table is retired |
 | 401 after login | bad token, expiry, or revocation | re-login and re-check token use |
 | 403 on API | insufficient role | verify endpoint RBAC + caller role |
 | integration tests fail early | Docker unavailable | run `docker info`, then retry |
 | Liquibase checksum error | edited applied changeset | revert edit, create new changeset |
 | frontend API 404/CORS | proxy bypass or wrong URL | use relative `/api/*` on `:4200` app |
 
-## 12. Useful References
+## 13. Useful References
 - Local walkthrough: [local-dev.md](local-dev.md)
 - Architecture: [01_ARCHITECTURE.md](01_ARCHITECTURE.md)
 - API first calls: [api-quickstart.md](api-quickstart.md)

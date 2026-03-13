@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT.md — LLM Context Pack
 
-_Compact execution context. Updated: 2026-03-05._
+_Compact execution context. Updated: 2026-03-11._
 
 ## Product Snapshot
 Multi-tenant SaaS CRM for real-estate promotion teams.
@@ -27,7 +27,6 @@ Pick files/packages by intent:
 | CRM feature CRUD | feature `api/service/repo/domain` | `features/*` | service unit + controller IT |
 | Commercial workflow (deposit/contract) | `deposit/`, `contract/`, `property/` | `features/prospect-detail`, `features/contracts` | workflow IT |
 | Payments v2 | `payments/` | `features/contracts/payment-schedule*`, cash dashboard | `PaymentScheduleIT` |
-| Legacy payments v1 (deprecated) | `payment/` | existing v1 UI callers only | legacy IT only if unavoidable |
 | Portal behavior | `portal/` + `auth/security` | `portal/*` | portal IT suites |
 | KPI/dashboard | `dashboard/` + aggregate repos | `features/dashboard/*` | dashboard IT |
 | Messaging/reminders | `outbox/`, `reminder/`, `notification/` | `features/outbox` | outbox/reminder IT |
@@ -56,7 +55,7 @@ context/                                         # compact LLM/operator context
 5. Errors must use `ErrorCode` + `ErrorResponse`.
 6. Frontend API calls must stay relative (`/api`, `/auth`), never hardcoded backend host.
 7. Portal JWT `sub` is `contactId`; CRM JWT `sub` is `userId`.
-8. `payment/` (v1) is deprecated; new work must target `payments/` (v2) unless fixing legacy breakage.
+8. `payment/` (v1) package is **deleted**; all payment work targets `payments/` (v2) only.
 
 ## Role Model (Operational)
 - `ROLE_ADMIN`: full tenant operations, admin-only endpoints, user/rule management.
