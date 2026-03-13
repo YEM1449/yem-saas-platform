@@ -16,6 +16,7 @@ v2 is designed to be:
 | [MODULES_AND_FEATURES.v2.md](MODULES_AND_FEATURES.v2.md) | Architects, Developers, Clients | Deep module breakdown (purpose, inputs, outputs, dependencies) |
 | [api.v2.md](api.v2.md) | Frontend, Integrators, QA | Current API catalog with roles and behavior notes |
 | [api-quickstart.v2.md](api-quickstart.v2.md) | Developers, QA | End-to-end runnable API flows (CRM + portal) |
+| [payment-v1-retirement-plan.v2.md](payment-v1-retirement-plan.v2.md) | Product, Integrations, Support, Engineering | Execution plan, communication templates, and migration controls for payment v1 shutdown |
 | [SETUP_USAGE_TROUBLESHOOTING.v2.md](SETUP_USAGE_TROUBLESHOOTING.v2.md) | Developers, QA, Ops | Setup steps, usage loops, troubleshooting matrix |
 | [CONTEXT_AND_CONFIGURATION.v2.md](CONTEXT_AND_CONFIGURATION.v2.md) | Developers, Ops | Runtime variables and context standardization |
 | [08_ONBOARDING_COURSE.v2.md](08_ONBOARDING_COURSE.v2.md) | New engineers | 5-day onboarding curriculum with labs |
@@ -38,7 +39,8 @@ v2 is designed to be:
 ### Integrator
 1. `api.v2.md`
 2. `api-quickstart.v2.md`
-3. `SUMMARY_v1_to_v2.md`
+3. `payment-v1-retirement-plan.v2.md`
+4. `SUMMARY_v1_to_v2.md`
 
 ## Source-of-Truth Alignment
 This v2 set is aligned with:

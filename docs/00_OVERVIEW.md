@@ -80,7 +80,8 @@ yem-saas-platform/
 
 ### Payment lifecycle
 - Preferred model (`payments/`): schedule items with issue/send/payment/cancel workflow.
-- Legacy model (`payment/`): still available for compatibility but deprecated.
+- Legacy model (`payment/`): still available for compatibility but deprecated (sunset target: `2026-12-31`).
+- Retirement execution guide: [v2/payment-v1-retirement-plan.v2.md](v2/payment-v1-retirement-plan.v2.md).
 
 ### Portal lifecycle
 1. Buyer requests magic link (`POST /api/portal/auth/request-link`).

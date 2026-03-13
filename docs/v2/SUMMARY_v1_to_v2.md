@@ -22,6 +22,7 @@ This summary explains what was added or improved in the v2 documentation set.
 - Consolidated endpoint catalog with role expectations.
 - Reproducible quickstart scenario covering CRM and portal.
 - Structured onboarding course and readiness checklist.
+- Complete payment v1 retirement runbook (timeline, communication templates, telemetry, rollback controls).
 
 ## 2. Major Improvements Compared to v1
 1. Separate v2 set created under `docs/v2/` (no overwrite of existing docs).

@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PortalContract, PortalPaymentSchedule, PortalProperty } from '../../core/models/portal.model';
+import { PortalContract, PortalProperty } from '../../core/models/portal.model';
+import { PaymentScheduleItem } from '../../core/models/payment-schedule.model';
 
 @Injectable({ providedIn: 'root' })
 export class PortalContractsService {
@@ -19,8 +20,8 @@ export class PortalContractsService {
     return this.http.get(this.getContractPdfUrl(contractId), { responseType: 'blob' });
   }
 
-  getPaymentSchedule(contractId: string): Observable<PortalPaymentSchedule> {
-    return this.http.get<PortalPaymentSchedule>(`/api/portal/contracts/${contractId}/payment-schedule`);
+  getPaymentSchedule(contractId: string): Observable<PaymentScheduleItem[]> {
+    return this.http.get<PaymentScheduleItem[]>(`/api/portal/contracts/${contractId}/payment-schedule`);
   }
 
   getProperty(propertyId: string): Observable<PortalProperty> {

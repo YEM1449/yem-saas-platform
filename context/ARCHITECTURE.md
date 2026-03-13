@@ -101,10 +101,11 @@ GET /api/portal/auth/verify?token=raw
 ## Payments v1 vs v2
 | Package | Status | Key Paths |
 |---------|--------|-----------|
-| `payment/` | deprecated | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
+| `payment/` | deprecated (sunset `2026-12-31`) | `/api/contracts/{id}/payment-schedule`, `/api/payment-calls` |
 | `payments/` | preferred | `/api/contracts/{id}/schedule`, `/api/schedule-items/**`, `/api/dashboard/commercial/cash` |
 
-v1 endpoints now emit deprecation headers (`Deprecation`, `Sunset`, `Warning`, `Link`) to drive migration.
+v1 endpoints emit deprecation headers (`Deprecation`, `Sunset`, `Warning`, `Link`) and migration telemetry (`payment_v1_requests_total`, log marker `payment_v1_endpoint_called`) to drive controlled retirement.
+Operational runbook: `docs/v2/payment-v1-retirement-plan.v2.md`.
 
 ## Storage + PDF Notes
 - `MediaStorageService` abstraction with `LocalFileMediaStorage` default (`MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE`).

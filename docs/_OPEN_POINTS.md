@@ -54,6 +54,13 @@ CI security gates in `context/SECURITY_BASELINE.md` updated.
 
 **Resolution**:
 - Kept both routes temporarily for backward compatibility.
-- Marked `payment/api/PaymentScheduleController` as `@Deprecated`.
-- Added deprecation response headers (`Deprecation`, `Sunset`, `Warning`, `Link`) on v1 endpoints to push clients toward v2.
-- Updated architecture/context docs to reflect v1 deprecation and v2 successor routes.
+- Marked both `payment/api/PaymentScheduleController` and `payment/api/PaymentCallController` as `@Deprecated`.
+- Added deprecation response headers (`Deprecation`, `Sunset`, `Warning`, `Link`) on all v1 payment endpoints to push clients toward v2.
+- Added v1 usage telemetry for controlled migration:
+  - metric `payment_v1_requests_total` (endpoint/method tags),
+  - log marker `payment_v1_endpoint_called`.
+- Added migration tooling:
+  - `scripts/find-payment-v1-references.sh`
+  - `scripts/report-payment-v1-usage.sh`
+- Published complete runbook and communication templates in `docs/v2/payment-v1-retirement-plan.v2.md`.
+- Updated architecture/context/API docs to reflect retirement execution plan.

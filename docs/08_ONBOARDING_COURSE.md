@@ -105,10 +105,11 @@ Understand request authentication, role enforcement, and tenant scoping.
 - `context/DOMAIN_RULES.md`
 
 ### Lab 1.1 — Obtain and inspect CRM JWT
+> **Note:** Build the JSON body with `jq` to avoid bash history-expanding `!` in the password into `\!` (which breaks JSON parsing).
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"tenantKey":"acme","email":"admin@acme.com","password":"Admin123!"}' \
+TOKEN=$(jq -n '{tenantKey:"acme",email:"admin@acme.com",password:"Admin123!"}' \
+  | curl -s -X POST http://localhost:8080/auth/login \
+      -H "Content-Type: application/json" -d @- \
   | jq -r '.accessToken')
 export TOKEN
 
@@ -243,9 +244,24 @@ npm test -- --watch=false --browsers=ChromeHeadless --progress=false
 npm run build
 ```
 
+### Lab 3.4 — Payment API deprecation awareness
+Run static migration scan:
+```bash
+./scripts/find-payment-v1-references.sh
+```
+
+Then review:
+- `docs/v2/payment-v1-retirement-plan.v2.md`
+- `docs/v2/api.v2.md` (Payments section)
+
+Deliverable:
+- list one concrete v1 endpoint and its v2 replacement,
+- explain one migration gap (`GET /api/payment-calls` or `GET /api/payment-calls/{id}`).
+
 ### Validation criteria
 - Engineer can explain relative API path requirement.
 - Engineer can locate where 401-triggered logout happens.
+- Engineer can explain why new work must target payment v2 routes.
 - Frontend tests/build run successfully.
 
 ---

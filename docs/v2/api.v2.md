@@ -108,6 +108,12 @@ Base URL (local): `http://localhost:8080`
 
 ## 8. Payments
 ### v1 (deprecated, still served)
+Deprecation contract on all v1 payment responses:
+- `Deprecation: true`
+- `Sunset: Wed, 31 Dec 2026 23:59:59 GMT`
+- `Warning: 299 ... migrate to /api/contracts/{contractId}/schedule and /api/schedule-items/*`
+- `Link: </api/contracts/550e8400-e29b-41d4-a716-446655440000/schedule>; rel="successor-version"` _(the UUID is the actual contract ID from the request path)_
+
 | Method | Endpoint | Role |
 |--------|----------|------|
 | GET | `/api/contracts/{contractId}/payment-schedule` | Authenticated CRM |
@@ -134,6 +140,23 @@ Base URL (local): `http://localhost:8080`
 | GET | `/api/schedule-items/{itemId}/payments` | Authenticated CRM |
 | POST | `/api/schedule-items/{itemId}/payments` | ADMIN, MANAGER |
 | POST | `/api/schedule-items/reminders/run` | ADMIN |
+
+### Migration map (v1 -> v2)
+| v1 | v2 | Notes |
+|----|----|------|
+| `GET /api/contracts/{contractId}/payment-schedule` | `GET /api/contracts/{contractId}/schedule` | direct |
+| `POST /api/contracts/{contractId}/payment-schedule` | `POST /api/contracts/{contractId}/schedule` | direct |
+| `PATCH /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}` | `PUT /api/schedule-items/{itemId}` | method + route update |
+| `POST /api/contracts/{contractId}/payment-schedule/tranches/{trancheId}/issue-call` | `POST /api/schedule-items/{itemId}/issue` | direct |
+| `GET /api/payment-calls/{id}/documents/appel-de-fonds.pdf` | `GET /api/schedule-items/{itemId}/pdf` | direct |
+| `GET /api/payment-calls/{id}/payments` | `GET /api/schedule-items/{itemId}/payments` | direct |
+| `POST /api/payment-calls/{id}/payments` | `POST /api/schedule-items/{itemId}/payments` | direct |
+
+Known migration gap:
+- `GET /api/payment-calls` and `GET /api/payment-calls/{id}` have no strict 1:1 v2 endpoint today; use contract-scoped schedule queries and/or cash dashboard views.
+
+Execution plan and communication pack:
+- [`payment-v1-retirement-plan.v2.md`](payment-v1-retirement-plan.v2.md)
 
 ## 9. Dashboards and Audit
 ### Dashboards
@@ -178,5 +201,6 @@ Base URL (local): `http://localhost:8080`
 1. Always treat IDs as tenant-scoped; never assume global visibility.
 2. Handle `401/403/404` distinctly in frontend flows.
 3. Prefer payment v2 endpoints for new integrations.
-4. Use portal token only for `/api/portal/**` calls.
-5. Build for idempotency/retry around asynchronous messaging operations.
+4. Do not onboard new integrations on payment v1 after 2026-05-01.
+5. Use portal token only for `/api/portal/**` calls.
+6. Build for idempotency/retry around asynchronous messaging operations.

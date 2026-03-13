@@ -40,9 +40,11 @@ pass "health — backend is UP"
 
 # --- Step 1: Login ---
 info "POST /auth/login (tenant=$TENANT_KEY, email=$EMAIL)"
+LOGIN_BODY=$(jq -n --arg t "$TENANT_KEY" --arg e "$EMAIL" --arg p "$PASSWORD" \
+  '{tenantKey:$t,email:$e,password:$p}')
 LOGIN_RESPONSE=$(curl -sf -X POST "$BASE_URL/auth/login" \
   -H "Content-Type: application/json" \
-  -d "{\"tenantKey\":\"$TENANT_KEY\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" \
+  -d "$LOGIN_BODY" \
 ) || fail "Login request failed (HTTP error or connection refused)"
 
 TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.accessToken // empty')

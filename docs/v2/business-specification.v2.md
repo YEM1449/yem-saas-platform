@@ -156,7 +156,7 @@ Risk scale used:
 ### 9.1 Operational Risk Register
 | ID | Risk | Likelihood | Impact | Status | Mitigation and Control Plan | Owner | Monitoring Trigger | Contingency / Exit Criteria |
 |----|------|------------|--------|--------|------------------------------|-------|--------------------|------------------------------|
-| R-01 | Legacy v1 payment API consumers (`payment/`) create migration friction | Medium | High | In Progress | Keep v1 endpoints available with deprecation headers (`Deprecation`, `Sunset`, `Warning`, `Link`), publish migration mapping to v2 (`payments/`), track adoption by endpoint traffic | Architecture + API Product Owner | v1 endpoint usage trend not decreasing month-over-month | Remove v1 only after 30 consecutive days of near-zero usage and formal release notice |
+| R-01 | Legacy v1 payment API consumers (`payment/`) create migration friction | Medium | High | Controlled (Execution Active) | Retirement runbook published with milestones, communication templates, telemetry counters/logs, and script-based usage reporting (`docs/v2/payment-v1-retirement-plan.v2.md`) | Architecture + API Product Owner | v1 endpoint usage trend not decreasing month-over-month | Remove v1 only after 30 consecutive days of near-zero usage and formal release notice |
 | R-02 | KPI interpretation inconsistencies across teams | Medium | High | Controlled | Enforce locked KPI semantics (`Sale = SIGNED contract`, reservation separate), centralize KPI logic in dashboard services, use shared glossary in specs/docs | Product + Data Owner | conflicting KPI values between reports or stakeholder escalation | Block KPI changes unless semantics and docs are updated together in same release |
 | R-03 | PDF generation memory/latency pressure | Medium | High | Controlled | Keep JVM sizing baseline (`-Xmx512m` minimum), monitor render latency and error rates, optimize templates, prepare async offloading path for high-volume periods | Platform Operations | PDF p95 latency degradation or OOM event | Scale instance memory and enable async PDF generation roadmap if thresholds are exceeded |
 | R-04 | Email/SMS provider mismatch or misconfiguration | Medium | High | Controlled | Provider abstraction with retry/backoff via outbox, environment validation before production cutover, staging smoke tests against real provider credentials | Integration Operations | outbound failure-rate spike, queue backlog growth | Fail closed to queued state, alert operations, and switch provider config without changing core code paths |
@@ -177,7 +177,7 @@ Risk scale used:
 
 ## 10. Future Evolution Guidance
 1. Formalize event-driven analytics projections for higher volume.
-2. Complete v1 payment endpoint retirement plan and client migration communication.
+2. Execute the approved v1 payment retirement milestones and remove `payment/api/*` after sunset criteria are met.
 3. Add advanced compliance packs (retention/audit/legal templates) where required.
 4. Expand portal branding, localization, and customer communication playbooks.
 
@@ -185,4 +185,5 @@ Risk scale used:
 - [Overview v2](00_OVERVIEW.v2.md)
 - [API v2](api.v2.md)
 - [Quickstart v2](api-quickstart.v2.md)
+- [Payment v1 Retirement Plan](payment-v1-retirement-plan.v2.md)
 - [Summary v1→v2](SUMMARY_v1_to_v2.md)

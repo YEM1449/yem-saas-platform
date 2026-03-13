@@ -75,6 +75,7 @@ sequenceDiagram
 - Developer setup: `docs/05_DEV_GUIDE.md` (v1) and `docs/v2/api-quickstart.v2.md` (v2 quick execution)
 - Business context: `docs/v2/business-specification.v2.md`
 - API catalog: `docs/v2/api.v2.md`
+- v1 retirement execution: `docs/v2/payment-v1-retirement-plan.v2.md`
 
 ## 7. Constraints and Known Design Decisions
 - `payment/` (v1) endpoints are deprecated; `payments/` (v2) is the preferred path.
@@ -85,5 +86,6 @@ sequenceDiagram
 - [v2 Business Spec](business-specification.v2.md)
 - [v2 API Catalog](api.v2.md)
 - [v2 API Quickstart](api-quickstart.v2.md)
+- [Payment v1 Retirement Plan](payment-v1-retirement-plan.v2.md)
 - [v2 Onboarding](08_ONBOARDING_COURSE.v2.md)
 - [v2 Checklist](09_NEW_ENGINEER_CHECKLIST.v2.md)

@@ -27,12 +27,7 @@ export class LoginComponent {
     this.error = '';
 
     this.auth.login(this.form).subscribe({
-      next: () => {
-        this.auth.me().subscribe({
-          next: () => this.router.navigateByUrl('/app/properties'),
-          error: (err) => this.handleError(err),
-        });
-      },
+      next: () => this.router.navigateByUrl('/app/properties'),
       error: (err) => this.handleError(err),
     });
   }

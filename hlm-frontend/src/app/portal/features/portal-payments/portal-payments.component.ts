@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PortalContractsService } from '../../core/portal-contracts.service';
-import { PortalPaymentSchedule, PortalTranche } from '../../../core/models/portal.model';
+import { PaymentScheduleItem } from '../../../core/models/payment-schedule.model';
 
 @Component({
   selector: 'app-portal-payments',
@@ -14,7 +14,7 @@ export class PortalPaymentsComponent implements OnInit {
   private service = inject(PortalContractsService);
   private route   = inject(ActivatedRoute);
 
-  schedule    = signal<PortalPaymentSchedule | null>(null);
+  items       = signal<PaymentScheduleItem[]>([]);
   contractId  = signal('');
   loading     = signal(true);
   error       = signal('');
@@ -23,34 +23,32 @@ export class PortalPaymentsComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('contractId') ?? '';
     this.contractId.set(id);
     this.service.getPaymentSchedule(id).subscribe({
-      next:  (data) => { this.schedule.set(data); this.loading.set(false); },
+      next:  (data) => { this.items.set(data); this.loading.set(false); },
       error: ()     => { this.error.set('Payment schedule not available.'); this.loading.set(false); },
     });
   }
 
-  trancheStatusLabel(s: string): string {
+  totalAmount(items: PaymentScheduleItem[]): number {
+    return items.reduce((sum, i) => sum + i.amount, 0);
+  }
+
+  totalPaid(items: PaymentScheduleItem[]): number {
+    return items.reduce((sum, i) => sum + i.amountPaid, 0);
+  }
+
+  itemStatusLabel(s: string): string {
     const map: Record<string, string> = {
-      PLANNED: 'Planned', ISSUED: 'Issued',
-      PARTIALLY_PAID: 'Partial', PAID: 'Paid', OVERDUE: 'Overdue',
+      DRAFT: 'Draft', ISSUED: 'Issued', SENT: 'Sent',
+      OVERDUE: 'Overdue', PAID: 'Paid', CANCELED: 'Canceled',
     };
     return map[s] ?? s;
   }
 
-  trancheStatusClass(s: string): string {
+  itemStatusClass(s: string): string {
     const map: Record<string, string> = {
-      PLANNED: 'badge-planned', ISSUED: 'badge-issued',
-      PARTIALLY_PAID: 'badge-partial', PAID: 'badge-paid', OVERDUE: 'badge-overdue',
+      DRAFT: 'badge-planned', ISSUED: 'badge-issued', SENT: 'badge-issued',
+      OVERDUE: 'badge-overdue', PAID: 'badge-paid', CANCELED: 'badge-planned',
     };
     return map[s] ?? '';
-  }
-
-  totalPaid(tranches: PortalTranche[]): number {
-    return tranches
-      .filter(t => t.status === 'PAID')
-      .reduce((sum, t) => sum + t.amount, 0);
-  }
-
-  totalAmount(tranches: PortalTranche[]): number {
-    return tranches.reduce((sum, t) => sum + t.amount, 0);
   }
 }
