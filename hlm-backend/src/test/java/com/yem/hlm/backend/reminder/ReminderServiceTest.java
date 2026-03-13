@@ -8,8 +8,6 @@ import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.notification.repo.NotificationRepository;
 import com.yem.hlm.backend.outbox.domain.OutboundMessage;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
-import com.yem.hlm.backend.payment.domain.PaymentCall;
-import com.yem.hlm.backend.payment.repo.PaymentCallRepository;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
@@ -38,7 +36,6 @@ class ReminderServiceTest {
 
     @Mock private ReminderProperties props;
     @Mock private DepositRepository depositRepository;
-    @Mock private PaymentCallRepository paymentCallRepository;
     @Mock private ContactRepository contactRepository;
     @Mock private OutboundMessageRepository messageRepository;
     @Mock private NotificationRepository notificationRepository;
@@ -111,50 +108,6 @@ class ReminderServiceTest {
     }
 
     // =========================================================================
-    // F2.2-B: Payment call overdue notifications
-    // =========================================================================
-
-    @Test
-    void runPaymentCallOverdueNotifications_createsEmailAndNotification() {
-        UUID tenantId = tenant.getId();
-        PaymentCall call = mockOverdueCall(tenantId);
-
-        User admin = new User(tenant, "admin@test.com", "hash");
-        admin.setRole(UserRole.ROLE_ADMIN);
-        setId(admin, UUID.randomUUID());
-
-        when(paymentCallRepository.findTenantsWithOverdueCalls()).thenReturn(List.of(tenantId));
-        when(paymentCallRepository.findOverdueCallsWithAgent(tenantId)).thenReturn(List.of(call));
-        when(userRepository.findByTenant_IdAndRoleInAndEnabledTrue(eq(tenantId), any()))
-                .thenReturn(List.of(admin));
-        when(messageRepository.existsPendingOrSent(call.getId(), "PAYMENT_CALL_OVERDUE"))
-                .thenReturn(false);
-
-        service.runPaymentCallOverdueNotifications();
-
-        verify(messageRepository, times(1)).save(any(OutboundMessage.class));
-        verify(notificationRepository, times(1)).save(any());
-    }
-
-    @Test
-    void runPaymentCallOverdueNotifications_whenAlreadySent_skipsCall() {
-        UUID tenantId = tenant.getId();
-        PaymentCall call = mockOverdueCall(tenantId);
-
-        when(paymentCallRepository.findTenantsWithOverdueCalls()).thenReturn(List.of(tenantId));
-        when(paymentCallRepository.findOverdueCallsWithAgent(tenantId)).thenReturn(List.of(call));
-        when(userRepository.findByTenant_IdAndRoleInAndEnabledTrue(eq(tenantId), any()))
-                .thenReturn(List.of());
-        when(messageRepository.existsPendingOrSent(call.getId(), "PAYMENT_CALL_OVERDUE"))
-                .thenReturn(true);
-
-        service.runPaymentCallOverdueNotifications();
-
-        verify(messageRepository, never()).save(any());
-        verify(notificationRepository, never()).save(any());
-    }
-
-    // =========================================================================
     // F2.2-C: Prospect follow-up
     // =========================================================================
 
@@ -181,26 +134,6 @@ class ReminderServiceTest {
         lenient().when(deposit.getTenant()).thenReturn(tenant);
         lenient().when(deposit.getDueDate()).thenReturn(dueDate);
         return deposit;
-    }
-
-    private PaymentCall mockOverdueCall(UUID tenantId) {
-        var contract = mock(com.yem.hlm.backend.contract.domain.SaleContract.class);
-        lenient().when(contract.getAgent()).thenReturn(agent);
-
-        var schedule = mock(com.yem.hlm.backend.payment.domain.PaymentSchedule.class);
-        lenient().when(schedule.getSaleContract()).thenReturn(contract);
-
-        var tranche = mock(com.yem.hlm.backend.payment.domain.PaymentTranche.class);
-        lenient().when(tranche.getSchedule()).thenReturn(schedule);
-
-        PaymentCall call = mock(PaymentCall.class);
-        UUID callId = UUID.randomUUID();
-        when(call.getId()).thenReturn(callId);
-        // lenient: not invoked when call is skipped (already-sent path)
-        lenient().when(call.getTenant()).thenReturn(tenant);
-        lenient().when(call.getTranche()).thenReturn(tranche);
-        lenient().when(call.getCallNumber()).thenReturn(1);
-        return call;
     }
 
     /** Reflective helper to set an entity's UUID id field (no-arg constructor not available). */

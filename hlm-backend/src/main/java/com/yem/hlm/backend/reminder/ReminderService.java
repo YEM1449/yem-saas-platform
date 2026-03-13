@@ -12,8 +12,6 @@ import com.yem.hlm.backend.notification.repo.NotificationRepository;
 import com.yem.hlm.backend.outbox.domain.MessageChannel;
 import com.yem.hlm.backend.outbox.domain.OutboundMessage;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
-import com.yem.hlm.backend.payment.domain.PaymentCall;
-import com.yem.hlm.backend.payment.repo.PaymentCallRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -30,7 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Business logic for the three reminder workflows.
+ * Business logic for reminder workflows.
  *
  * <p>All methods are intentionally tenant-scoped and public for direct
  * invocation from unit tests or admin endpoints. The scheduler only orchestrates calls.
@@ -39,11 +37,12 @@ import java.util.UUID;
  * <ol>
  *   <li><b>Deposit due-date reminders</b> — EMAIL to agent, J-7, J-3, J-1 before {@code dueDate}
  *       when deposit is still PENDING.</li>
- *   <li><b>Payment call overdue notifications</b> — EMAIL to agent + in-app notification to
- *       ADMIN users when a call has status OVERDUE.</li>
  *   <li><b>Prospect follow-up</b> — in-app notification to MANAGER/ADMIN when a PROSPECT or
  *       QUALIFIED_PROSPECT contact has had no activity for {@code prospectStaleDays} days.</li>
  * </ol>
+ *
+ * <p>Payment schedule item overdue reminders are handled by
+ * {@link com.yem.hlm.backend.payments.service.ReminderService} (v2 payments module).
  */
 @Service
 public class ReminderService {
@@ -55,7 +54,6 @@ public class ReminderService {
 
     private final ReminderProperties props;
     private final DepositRepository depositRepository;
-    private final PaymentCallRepository paymentCallRepository;
     private final ContactRepository contactRepository;
     private final OutboundMessageRepository messageRepository;
     private final NotificationRepository notificationRepository;
@@ -64,7 +62,6 @@ public class ReminderService {
 
     public ReminderService(ReminderProperties props,
                            DepositRepository depositRepository,
-                           PaymentCallRepository paymentCallRepository,
                            ContactRepository contactRepository,
                            OutboundMessageRepository messageRepository,
                            NotificationRepository notificationRepository,
@@ -72,7 +69,6 @@ public class ReminderService {
                            CommercialAuditRepository auditRepository) {
         this.props              = props;
         this.depositRepository  = depositRepository;
-        this.paymentCallRepository = paymentCallRepository;
         this.contactRepository  = contactRepository;
         this.messageRepository  = messageRepository;
         this.notificationRepository = notificationRepository;
@@ -127,65 +123,6 @@ public class ReminderService {
                 log.info("[REMINDER] Deposit due in {} days — queued email for agent={} deposit={}",
                         daysAhead, agent.getEmail(), deposit.getId());
             }
-        }
-    }
-
-    // =========================================================================
-    // F2.2-B: Payment call overdue notifications
-    // =========================================================================
-
-    /**
-     * For each tenant with OVERDUE payment calls: sends EMAIL to the contract agent
-     * and an in-app notification to all ADMIN users in the tenant.
-     * Idempotent: skips calls that already have a PAYMENT_CALL_OVERDUE message today.
-     */
-    @Transactional
-    public void runPaymentCallOverdueNotifications() {
-        List<UUID> tenantIds = paymentCallRepository.findTenantsWithOverdueCalls();
-        log.info("[REMINDER] payment-call overdue check: {} tenants", tenantIds.size());
-
-        for (UUID tenantId : tenantIds) {
-            try {
-                processOverdueCallsForTenant(tenantId);
-            } catch (Exception e) {
-                log.error("[REMINDER] error processing overdue calls for tenant={}: {}",
-                        tenantId, e.getMessage(), e);
-            }
-        }
-    }
-
-    private void processOverdueCallsForTenant(UUID tenantId) {
-        List<PaymentCall> overdueCalls = paymentCallRepository.findOverdueCallsWithAgent(tenantId);
-
-        List<User> admins = userRepository.findByTenant_IdAndRoleInAndEnabledTrue(
-                tenantId, Set.of(UserRole.ROLE_ADMIN));
-
-        for (PaymentCall call : overdueCalls) {
-            if (alreadyHasOverdueNotification(call.getId())) {
-                continue;
-            }
-            User agent = call.getTranche().getSchedule().getSaleContract().getAgent();
-            if (agent != null && agent.getEmail() != null) {
-                String subject = "Appel de fonds en retard #" + call.getCallNumber();
-                String body = String.format(
-                        "L'appel de fonds #%d (échéance %s) est en retard de paiement.",
-                        call.getCallNumber(), call.getDueDate());
-                OutboundMessage msg = new OutboundMessage(
-                        call.getTenant(), agent,
-                        MessageChannel.EMAIL, agent.getEmail(),
-                        subject, body);
-                msg.setCorrelationType("PAYMENT_CALL_OVERDUE");
-                msg.setCorrelationId(call.getId());
-                messageRepository.save(msg);
-            }
-            // In-app notification to all ADMIN users
-            String payload = "{\"callId\":\"" + call.getId() + "\"}";
-            for (User admin : admins) {
-                notificationRepository.save(new Notification(
-                        call.getTenant(), admin,
-                        NotificationType.PAYMENT_CALL_OVERDUE, call.getId(), payload));
-            }
-            log.info("[REMINDER] Overdue call {} notified", call.getId());
         }
     }
 
@@ -262,10 +199,5 @@ public class ReminderService {
     /** True if a DEPOSIT_REMINDER message already exists (PENDING or SENT) for this deposit. */
     private boolean alreadyHasReminderMessage(UUID depositId) {
         return messageRepository.existsPendingOrSent(depositId, "DEPOSIT_REMINDER");
-    }
-
-    /** True if a PAYMENT_CALL_OVERDUE message already exists (PENDING or SENT) for this call. */
-    private boolean alreadyHasOverdueNotification(UUID callId) {
-        return messageRepository.existsPendingOrSent(callId, "PAYMENT_CALL_OVERDUE");
     }
 }

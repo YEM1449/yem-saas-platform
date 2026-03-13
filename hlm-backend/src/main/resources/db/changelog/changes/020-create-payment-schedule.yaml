@@ -1,23 +1,12 @@
 databaseChangeLog:
   - changeSet:
       id: 020-create-payment-schedule
-<<<<<<< HEAD
       author: system
       changes:
 
         # ── A) payment_schedule_item ────────────────────────────────────────
         - createTable:
             tableName: payment_schedule_item
-=======
-      author: yem
-      comment: >
-        Payment Schedule and Payment Tranche tables.
-        One schedule per sale contract; multiple tranches represent staged milestones
-        (e.g. 10% on fondations, 30% on livraison).
-      changes:
-        - createTable:
-            tableName: payment_schedule
->>>>>>> 9e440eb (Revenue-Foundation)
             columns:
               - column:
                   name: id
@@ -31,7 +20,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-<<<<<<< HEAD
                   name: contract_id
                   type: UUID
                   constraints:
@@ -81,13 +69,6 @@ databaseChangeLog:
               - column:
                   name: canceled_at
                   type: TIMESTAMP
-=======
-                  name: sale_contract_id
-                  type: UUID
-                  constraints:
-                    nullable: false
-                    unique: true
->>>>>>> 9e440eb (Revenue-Foundation)
               - column:
                   name: notes
                   type: TEXT
@@ -98,14 +79,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-<<<<<<< HEAD
                   name: created_by
                   type: UUID
                   constraints:
                     nullable: false
               - column:
-=======
->>>>>>> 9e440eb (Revenue-Foundation)
                   name: updated_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
@@ -113,7 +91,6 @@ databaseChangeLog:
                     nullable: false
 
         - addForeignKeyConstraint:
-<<<<<<< HEAD
             baseTableName: payment_schedule_item
             baseColumnNames: tenant_id
             referencedTableName: tenant
@@ -132,31 +109,10 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_psi_tenant_contract
             tableName: payment_schedule_item
-=======
-            baseTableName: payment_schedule
-            baseColumnNames: tenant_id
-            referencedTableName: tenant
-            referencedColumnNames: id
-            constraintName: fk_ps_tenant
-            onDelete: CASCADE
-
-        - addForeignKeyConstraint:
-            baseTableName: payment_schedule
-            baseColumnNames: sale_contract_id
-            referencedTableName: sale_contract
-            referencedColumnNames: id
-            constraintName: fk_ps_sale_contract
-            onDelete: CASCADE
-
-        - createIndex:
-            indexName: idx_ps_tenant_contract
-            tableName: payment_schedule
->>>>>>> 9e440eb (Revenue-Foundation)
             columns:
               - column:
                   name: tenant_id
               - column:
-<<<<<<< HEAD
                   name: contract_id
 
         - createIndex:
@@ -181,15 +137,9 @@ databaseChangeLog:
               - column:
                   name: status
 
-        # ── B) payment (cash-in records, supports partial payments) ─────────
+        # ── B) schedule_payment (cash-in records, supports partial payments) ─
         - createTable:
             tableName: schedule_payment
-=======
-                  name: sale_contract_id
-
-        - createTable:
-            tableName: payment_tranche
->>>>>>> 9e440eb (Revenue-Foundation)
             columns:
               - column:
                   name: id
@@ -203,16 +153,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-<<<<<<< HEAD
                   name: schedule_item_id
-=======
-                  name: payment_schedule_id
->>>>>>> 9e440eb (Revenue-Foundation)
                   type: UUID
                   constraints:
                     nullable: false
               - column:
-<<<<<<< HEAD
                   name: amount_paid
                   type: DECIMAL(19,2)
                   constraints:
@@ -231,39 +176,6 @@ databaseChangeLog:
               - column:
                   name: notes
                   type: TEXT
-=======
-                  name: tranche_order
-                  type: INT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: label
-                  type: VARCHAR(200)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: percentage
-                  type: DECIMAL(5,2)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: amount
-                  type: DECIMAL(15,2)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: due_date
-                  type: DATE
-              - column:
-                  name: trigger_condition
-                  type: VARCHAR(500)
-              - column:
-                  name: status
-                  type: VARCHAR(20)
-                  defaultValue: PLANNED
-                  constraints:
-                    nullable: false
->>>>>>> 9e440eb (Revenue-Foundation)
               - column:
                   name: created_at
                   type: TIMESTAMP
@@ -271,7 +183,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-<<<<<<< HEAD
                   name: created_by
                   type: UUID
                   constraints:
@@ -311,7 +222,7 @@ databaseChangeLog:
               - column:
                   name: schedule_item_id
 
-        # ── C) schedule_item_reminder (idempotency guard) ──────────────────
+        # ── C) schedule_item_reminder (idempotency guard) ───────────────────
         - createTable:
             tableName: schedule_item_reminder
             columns:
@@ -349,16 +260,10 @@ databaseChangeLog:
               - column:
                   name: reminder_date
                   type: DATE
-=======
-                  name: updated_at
-                  type: TIMESTAMP
-                  defaultValueComputed: CURRENT_TIMESTAMP
->>>>>>> 9e440eb (Revenue-Foundation)
                   constraints:
                     nullable: false
 
         - addForeignKeyConstraint:
-<<<<<<< HEAD
             baseTableName: schedule_item_reminder
             baseColumnNames: tenant_id
             referencedTableName: tenant
@@ -382,41 +287,8 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_sir_tenant_date
             tableName: schedule_item_reminder
-=======
-            baseTableName: payment_tranche
-            baseColumnNames: tenant_id
-            referencedTableName: tenant
-            referencedColumnNames: id
-            constraintName: fk_pt_tenant
-            onDelete: CASCADE
-
-        - addForeignKeyConstraint:
-            baseTableName: payment_tranche
-            baseColumnNames: payment_schedule_id
-            referencedTableName: payment_schedule
-            referencedColumnNames: id
-            constraintName: fk_pt_payment_schedule
-            onDelete: CASCADE
-
-        - createIndex:
-            indexName: idx_pt_tenant_schedule
-            tableName: payment_tranche
->>>>>>> 9e440eb (Revenue-Foundation)
             columns:
               - column:
                   name: tenant_id
               - column:
-<<<<<<< HEAD
                   name: reminder_date
-=======
-                  name: payment_schedule_id
-
-        - createIndex:
-            indexName: idx_pt_tenant_status
-            tableName: payment_tranche
-            columns:
-              - column:
-                  name: tenant_id
-              - column:
-                  name: status
->>>>>>> 9e440eb (Revenue-Foundation)

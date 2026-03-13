@@ -33,11 +33,6 @@ public class ReminderScheduler {
             log.error("[REMINDER-SCHEDULER] Deposit reminders failed: {}", e.getMessage(), e);
         }
         try {
-            reminderService.runPaymentCallOverdueNotifications();
-        } catch (Exception e) {
-            log.error("[REMINDER-SCHEDULER] Payment call overdue notifications failed: {}", e.getMessage(), e);
-        }
-        try {
             reminderService.runProspectFollowUp();
         } catch (Exception e) {
             log.error("[REMINDER-SCHEDULER] Prospect follow-up failed: {}", e.getMessage(), e);

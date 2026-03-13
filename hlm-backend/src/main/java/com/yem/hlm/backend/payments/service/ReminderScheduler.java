@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * <p>Disabled in test profile via {@code spring.task.scheduling.enabled=false}
  * (same pattern as {@code OutboundDispatcherScheduler}).
  */
-@Component
+@Component("paymentsScheduleReminderScheduler")
 @ConditionalOnProperty(value = "spring.task.scheduling.enabled", matchIfMissing = true)
 public class ReminderScheduler {
 

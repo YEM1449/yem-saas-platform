@@ -1,11 +1,12 @@
 package com.yem.hlm.backend.portal.api;
 
-import com.yem.hlm.backend.payment.api.dto.PaymentScheduleResponse;
+import com.yem.hlm.backend.payments.api.dto.PaymentScheduleItemResponse;
 import com.yem.hlm.backend.portal.service.PortalContractService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -24,10 +25,10 @@ public class PortalPaymentsController {
 
     /**
      * GET /api/portal/contracts/{contractId}/payment-schedule
-     * Returns the full payment schedule (tranches) for the buyer's contract.
+     * Returns the payment schedule items for the buyer's contract (v2 model).
      */
     @GetMapping("/{contractId}/payment-schedule")
-    public ResponseEntity<PaymentScheduleResponse> getPaymentSchedule(
+    public ResponseEntity<List<PaymentScheduleItemResponse>> getPaymentSchedule(
             @PathVariable UUID contractId) {
         return ResponseEntity.ok(portalContractService.getPaymentSchedule(contractId));
     }
