@@ -121,16 +121,15 @@ public class AuthService {
     }
 
     /**
-     * Extracts the client IP from X-Forwarded-For header (first value) or falls back to RemoteAddr.
+     * Returns the client IP as reported by the servlet container.
+     * When {@code server.forward-headers-strategy=native} is set, Tomcat's RemoteIpValve
+     * rewrites remoteAddr from X-Forwarded-For only for requests arriving from trusted
+     * private-network proxies, preventing attacker-controlled header spoofing.
      */
     private String extractClientIp() {
         try {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
             HttpServletRequest request = attrs.getRequest();
-            String forwarded = request.getHeader("X-Forwarded-For");
-            if (forwarded != null && !forwarded.isBlank()) {
-                return forwarded.split(",")[0].trim();
-            }
             return request.getRemoteAddr();
         } catch (Exception e) {
             return "unknown";

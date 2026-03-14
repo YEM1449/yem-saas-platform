@@ -77,7 +77,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         // First wrong attempt — normal 401
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.1.1")
                         .content(wrongPasswordBody(email)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
@@ -85,14 +84,12 @@ class AccountLockoutIT extends IntegrationTestBase {
         // Second wrong attempt — triggers lockout (max-attempts=2)
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.1.1")
                         .content(wrongPasswordBody(email)))
                 .andExpect(status().isUnauthorized());
 
         // Third attempt — account is now locked
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.1.1")
                         .content(wrongPasswordBody(email)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("ACCOUNT_LOCKED"));
@@ -108,7 +105,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         for (int i = 0; i < 2; i++) {
             mockMvc.perform(post("/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", "10.10.2." + i)
                             .content(wrongPasswordBody(email)))
                     .andExpect(status().isUnauthorized());
         }
@@ -116,7 +112,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         // Now try with correct password — should still be ACCOUNT_LOCKED
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.2.99")
                         .content(correctPasswordBody(email, password)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("ACCOUNT_LOCKED"));
@@ -132,7 +127,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         for (int i = 0; i < 2; i++) {
             mockMvc.perform(post("/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", "10.10.3." + i)
                             .content(wrongPasswordBody(email)))
                     .andExpect(status().isUnauthorized());
         }
@@ -144,7 +138,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         // Now login with correct password — should succeed since lock expired
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.3.99")
                         .content(correctPasswordBody(email, password)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
@@ -159,7 +152,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         // One wrong attempt (under threshold of 2)
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.4.1")
                         .content(wrongPasswordBody(email)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
@@ -167,7 +159,6 @@ class AccountLockoutIT extends IntegrationTestBase {
         // Then successful login — should reset counter
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.10.4.1")
                         .content(correctPasswordBody(email, password)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
@@ -176,5 +167,36 @@ class AccountLockoutIT extends IntegrationTestBase {
         User afterLogin = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(afterLogin.getFailedLoginAttempts()).isZero();
         org.assertj.core.api.Assertions.assertThat(afterLogin.getLockedUntil()).isNull();
+    }
+
+    @Test
+    void failedLoginAfterLockoutExpires_doesNotImmediatelyReLock() throws Exception {
+        String email = "lockout-relock-" + UUID.randomUUID().toString().substring(0, 8) + "@acme.com";
+        String password = "CorrectPass123!";
+        createUser(email, password);
+
+        // Lock the account via wrong attempts (max-attempts=2)
+        for (int i = 0; i < 2; i++) {
+            mockMvc.perform(post("/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(wrongPasswordBody(email)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // Simulate lockout expiry by back-dating lockedUntil
+        User lockedUser = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        userRepository.setLockedUntilForTest(lockedUser.getId(), Instant.now().minusSeconds(60));
+
+        // One wrong attempt after expiry — counter resets to 1 (< max-attempts=2), must NOT be ACCOUNT_LOCKED
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(wrongPasswordBody(email)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        // Verify the counter restarted from 1, not re-locked yet
+        User afterExpiredFail = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(afterExpiredFail.getFailedLoginAttempts()).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(afterExpiredFail.isLockedOut()).isFalse();
     }
 }

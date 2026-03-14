@@ -35,6 +35,9 @@ spring:
 
 server:
   port: 8080
+  # Trust X-Forwarded-For only when it arrives from a known private-network proxy (Tomcat RemoteIpValve).
+  # This prevents attackers from spoofing their IP by sending arbitrary X-Forwarded-For headers.
+  forward-headers-strategy: native
 
 management:
   endpoints:

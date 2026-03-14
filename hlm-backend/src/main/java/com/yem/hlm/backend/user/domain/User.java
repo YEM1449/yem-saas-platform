@@ -78,8 +78,14 @@ public class User {
     /**
      * Records a failed login attempt. If the number of consecutive failures
      * reaches maxAttempts, the account is locked for lockDurationMinutes.
+     * If a previous lockout has already expired, the counter is reset first
+     * so an expired lockout does not cause an immediate re-lock on the next failure.
      */
     public void recordFailedAttempt(int maxAttempts, int lockDurationMinutes) {
+        if (lockedUntil != null && !Instant.now().isBefore(lockedUntil)) {
+            this.failedLoginAttempts = 0;
+            this.lockedUntil = null;
+        }
         this.failedLoginAttempts++;
         if (this.failedLoginAttempts >= maxAttempts) {
             this.lockedUntil = Instant.now().plusSeconds((long) lockDurationMinutes * 60);

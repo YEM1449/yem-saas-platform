@@ -18,7 +18,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration test for login rate limiting.
  *
  * Uses ip-max=3 and key-max=2 for fast test execution.
- * Each test uses a distinct IP (via X-Forwarded-For) and/or email to avoid cross-test interference.
+ * Each test uses a distinct remote address (via setRemoteAddr) and/or email to avoid cross-test
+ * interference. We use setRemoteAddr rather than X-Forwarded-For because extractClientIp() now
+ * delegates entirely to request.getRemoteAddr() — X-Forwarded-For is only processed by Tomcat's
+ * RemoteIpValve in a real server context (server.forward-headers-strategy=native), not in MockMvc.
  */
 @IntegrationTest
 @TestPropertySource(properties = {
@@ -48,17 +51,18 @@ class LoginRateLimitIT extends IntegrationTestBase {
 
         // First 3 requests are allowed (ip-max=3)
         for (int i = 0; i < 3; i++) {
+            final int idx = i;
             mockMvc.perform(post("/auth/login")
+                            .with(req -> { req.setRemoteAddr(ip); return req; })
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", ip)
-                            .content(loginBody("acme", email + i)))
+                            .content(loginBody("acme", email + idx)))
                     .andExpect(status().isUnauthorized()); // wrong password but not rate limited
         }
 
         // 4th request from same IP should be rate limited
         mockMvc.perform(post("/auth/login")
+                        .with(req -> { req.setRemoteAddr(ip); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", ip)
                         .content(loginBody("acme", email + "extra")))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value("LOGIN_RATE_LIMITED"))
@@ -67,22 +71,22 @@ class LoginRateLimitIT extends IntegrationTestBase {
 
     @Test
     void identityLimitExceeded_returns429WithLoginRateLimited() throws Exception {
-        String ip = "10.0.2.1";
         String email = "ratelimit-key@acme.com";
 
-        // First 2 requests with same tenantKey+email are allowed (key-max=2)
+        // First 2 requests with same tenantKey+email are allowed (key-max=2), from different IPs
         for (int i = 0; i < 2; i++) {
+            final String ip = "10.0.2." + i;
             mockMvc.perform(post("/auth/login")
+                            .with(req -> { req.setRemoteAddr(ip); return req; })
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", ip + i) // different IPs to avoid IP limit
                             .content(loginBody("acme", email)))
                     .andExpect(status().isUnauthorized());
         }
 
-        // 3rd request with same identity should be rate limited
+        // 3rd request with same identity should be rate limited (key bucket exhausted)
         mockMvc.perform(post("/auth/login")
+                        .with(req -> { req.setRemoteAddr("10.0.2.99"); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", "10.0.2.99")
                         .content(loginBody("acme", email)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value("LOGIN_RATE_LIMITED"));
@@ -96,22 +100,22 @@ class LoginRateLimitIT extends IntegrationTestBase {
         // Exhaust the rate limit for limitedIp
         for (int i = 0; i < 3; i++) {
             mockMvc.perform(post("/auth/login")
+                            .with(req -> { req.setRemoteAddr(limitedIp); return req; })
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", limitedIp)
                             .content(loginBody("acme", "diff-ip-test-" + i + "@acme.com")))
                     .andExpect(status().isUnauthorized());
         }
         // Verify limitedIp is now blocked
         mockMvc.perform(post("/auth/login")
+                        .with(req -> { req.setRemoteAddr(limitedIp); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", limitedIp)
                         .content(loginBody("acme", "diff-ip-blocked@acme.com")))
                 .andExpect(status().isTooManyRequests());
 
         // A different IP should NOT be rate-limited
         mockMvc.perform(post("/auth/login")
+                        .with(req -> { req.setRemoteAddr(cleanIp); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", cleanIp)
                         .content(loginBody("acme", "admin@acme.com")))
                 .andExpect(status().isUnauthorized()); // 401 = not rate limited, just wrong password
     }
@@ -123,8 +127,8 @@ class LoginRateLimitIT extends IntegrationTestBase {
         // 3 requests (exactly ip-max) should all get normal 401
         for (int i = 0; i < 3; i++) {
             mockMvc.perform(post("/auth/login")
+                            .with(req -> { req.setRemoteAddr(ip); return req; })
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header("X-Forwarded-For", ip)
                             .content(loginBody("acme", "normal-" + i + "@acme.com")))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
