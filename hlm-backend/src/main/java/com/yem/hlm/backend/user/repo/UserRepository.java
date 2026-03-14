@@ -3,9 +3,11 @@ package com.yem.hlm.backend.user.repo;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +28,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             ORDER BY u.email ASC
             """)
     List<User> searchByTenant(@Param("tenantId") UUID tenantId, @Param("q") String q);
+
+    /** Test helper: override lockedUntil directly to simulate lock expiry in ITs. */
+    @Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE User u SET u.lockedUntil = :lockedUntil WHERE u.id = :id")
+    void setLockedUntilForTest(@Param("id") UUID id, @Param("lockedUntil") Instant lockedUntil);
 }

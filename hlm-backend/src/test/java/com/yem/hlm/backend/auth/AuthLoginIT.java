@@ -117,7 +117,7 @@ class AuthLoginIT extends IntegrationTestBase {
               "key": "%s",
               "name": "Repro Tenant",
               "ownerEmail": "owner@repro.com",
-              "ownerPassword": "Admin123!"
+              "ownerPassword": "Admin123!Secure"
             }
             """.formatted(key);
 
@@ -132,7 +132,7 @@ class AuthLoginIT extends IntegrationTestBase {
             {
               "tenantKey": "%s",
               "email": "owner@repro.com",
-              "password": "Admin123!"
+              "password": "Admin123!Secure"
             }
             """.formatted(key);
 
@@ -166,7 +166,7 @@ class AuthLoginIT extends IntegrationTestBase {
               "key": "%s",
               "name": "Repro Tenant 2",
               "ownerEmail": "owner@repro2.com",
-              "ownerPassword": "Admin123!"
+              "ownerPassword": "Admin123!Secure"
             }
             """.formatted(key);
 

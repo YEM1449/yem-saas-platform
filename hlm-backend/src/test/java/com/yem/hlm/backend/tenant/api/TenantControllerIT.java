@@ -46,7 +46,7 @@ class TenantControllerIT extends IntegrationTestBase {
                 "key", key,
                 "name", "Acme Corp",
                 "ownerEmail", "owner@acme.com",
-                "ownerPassword", "supersecret"
+                "ownerPassword", "Supersecret1!"
         );
 
         mockMvc.perform(post("/tenants")
@@ -84,7 +84,7 @@ class TenantControllerIT extends IntegrationTestBase {
                 "key", key,
                 "name", "Acme Corp",
                 "ownerEmail", "owner@acme.com",
-                "ownerPassword", "supersecret"
+                "ownerPassword", "Supersecret1!"
         );
 
         mockMvc.perform(post("/tenants")

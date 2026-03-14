@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import com.yem.hlm.backend.tenant.domain.Tenant;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -38,6 +39,12 @@ public class User {
     @Column(name = "token_version", nullable = false)
     private int tokenVersion = 0;
 
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
+
     protected User() {}
 
     public User(Tenant tenant, String email, String passwordHash) {
@@ -54,8 +61,42 @@ public class User {
     public boolean isEnabled() {return enabled;}
     public UserRole getRole() {return role;}
     public int getTokenVersion() {return tokenVersion;}
+    public int getFailedLoginAttempts() {return failedLoginAttempts;}
+    public Instant getLockedUntil() {return lockedUntil;}
 
     public void incrementTokenVersion() {
         this.tokenVersion++;
+    }
+
+    /**
+     * Returns true if the account is currently locked out.
+     */
+    public boolean isLockedOut() {
+        return lockedUntil != null && Instant.now().isBefore(lockedUntil);
+    }
+
+    /**
+     * Records a failed login attempt. If the number of consecutive failures
+     * reaches maxAttempts, the account is locked for lockDurationMinutes.
+     * If a previous lockout has already expired, the counter is reset first
+     * so an expired lockout does not cause an immediate re-lock on the next failure.
+     */
+    public void recordFailedAttempt(int maxAttempts, int lockDurationMinutes) {
+        if (lockedUntil != null && !Instant.now().isBefore(lockedUntil)) {
+            this.failedLoginAttempts = 0;
+            this.lockedUntil = null;
+        }
+        this.failedLoginAttempts++;
+        if (this.failedLoginAttempts >= maxAttempts) {
+            this.lockedUntil = Instant.now().plusSeconds((long) lockDurationMinutes * 60);
+        }
+    }
+
+    /**
+     * Resets the failed login counter and clears the lockout (called on successful login).
+     */
+    public void resetLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
     }
 }

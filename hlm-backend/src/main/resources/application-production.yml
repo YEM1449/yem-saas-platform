@@ -1,0 +1,14 @@
+server:
+  forward-headers-strategy: native
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    security.auth: WARN
+    security.tenant: WARN
+    security.ratelimit: WARN

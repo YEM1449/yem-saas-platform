@@ -78,8 +78,8 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
               AND (:status   IS NULL OR c.status       = :status)
               AND (:projectId IS NULL OR c.project.id  = :projectId)
               AND (:agentId   IS NULL OR c.agent.id    = :agentId)
-              AND (:from      IS NULL OR c.signedAt    >= :from)
-              AND (:to        IS NULL OR c.signedAt    <= :to)
+              AND (CAST(:from AS LocalDateTime) IS NULL OR c.signedAt >= :from)
+              AND (CAST(:to   AS LocalDateTime) IS NULL OR c.signedAt <= :to)
             ORDER BY c.createdAt DESC
             """)
     List<SaleContract> filter(

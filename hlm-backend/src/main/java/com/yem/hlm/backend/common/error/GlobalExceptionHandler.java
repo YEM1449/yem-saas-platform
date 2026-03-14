@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.common.error;
 
+import com.yem.hlm.backend.auth.service.AccountLockedException;
+import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
@@ -37,6 +39,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -371,6 +374,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLocked(
+            AccountLockedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ErrorCode.ACCOUNT_LOCKED,
+                "Account is locked until " + ex.getLockedUntil().toString(),
+                request.getRequestURI()
+        );
+        log.warn("Account locked attempt on {}: locked until {}", request.getRequestURI(), ex.getLockedUntil());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(
             UnauthorizedException ex,
@@ -631,6 +650,25 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 429 Too Many Requests ==========
+
+    @ExceptionHandler(LoginRateLimitedException.class)
+    public ResponseEntity<ErrorResponse> handleLoginRateLimited(
+            LoginRateLimitedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                429,
+                "Too Many Requests",
+                ErrorCode.LOGIN_RATE_LIMITED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        log.warn("Login rate limit exceeded on {}: retryAfter={}s", request.getRequestURI(), ex.getRetryAfterSeconds());
+        return ResponseEntity.status(429)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+                .header("X-RateLimit-Remaining", "0")
+                .body(error);
+    }
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimitExceeded(

@@ -114,7 +114,7 @@ class PortalAuthIT extends IntegrationTestBase {
         // Second use — 401
         mvc.perform(get("/api/portal/auth/verify").param("token", rawToken))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.errorCode").value("PORTAL_TOKEN_INVALID"));
+                .andExpect(jsonPath("$.code").value("PORTAL_TOKEN_INVALID"));
     }
 
     // =========================================================================
@@ -125,7 +125,7 @@ class PortalAuthIT extends IntegrationTestBase {
     void verifyToken_unknownToken_returns401() throws Exception {
         mvc.perform(get("/api/portal/auth/verify").param("token", "not-a-real-token-xyz"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.errorCode").value("PORTAL_TOKEN_INVALID"));
+                .andExpect(jsonPath("$.code").value("PORTAL_TOKEN_INVALID"));
     }
 
     // =========================================================================

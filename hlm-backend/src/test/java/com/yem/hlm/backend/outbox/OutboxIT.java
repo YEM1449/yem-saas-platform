@@ -237,8 +237,13 @@ class OutboxIT extends IntegrationTestBase {
         UUID msgId = om.readValue(json, SendMessageResponse.class).messageId();
 
         // Verify PENDING before dispatch
-        assertThat(messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow().getStatus())
-                .isEqualTo(MessageStatus.PENDING);
+        var pending = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        assertThat(pending.getStatus()).isEqualTo(MessageStatus.PENDING);
+
+        // Move nextRetryAt to a definite past value so the native clock comparison succeeds
+        // regardless of JVM/PostgreSQL timezone differences.
+        pending.setNextRetryAt(java.time.LocalDateTime.of(2000, 1, 1, 0, 0, 0));
+        messageRepo.flush();
 
         // Act: trigger dispatcher directly (scheduler is disabled in test profile)
         dispatcher.runDispatch();

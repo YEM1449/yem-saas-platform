@@ -78,8 +78,8 @@ class PropertyImportIT extends IntegrationTestBase {
     @Test
     void import_validCsv_returns200WithImportedCount() throws Exception {
         String csv = CSV_HEADER + "\n" +
-                "IMP-001," + projectId + ",VILLA,Villa Alpha,750000,,,4,2,,,\n" +
-                "IMP-002," + projectId + ",APARTMENT,Apt Beta,300000,80,,2,1,3,,\n";
+                "IMP-001," + projectId + ",VILLA,Villa Alpha,750000,200,400,4,2,,,\n" +
+                "IMP-002," + projectId + ",APPARTEMENT,Apt Beta,300000,80,,2,1,3,,\n";
 
         MockMultipartFile file = new MockMultipartFile(
                 "file", "import.csv", "text/csv", csv.getBytes());
@@ -103,7 +103,7 @@ class PropertyImportIT extends IntegrationTestBase {
         String mgrBearer = "Bearer " + jwtProvider.generate(manager.getId(), t2.getId(), UserRole.ROLE_MANAGER);
 
         String csv = CSV_HEADER + "\n" +
-                "MGR-001," + p2.getId() + ",APARTMENT,Mgr Apt,200000,,,,,,,\n";
+                "MGR-001," + p2.getId() + ",APPARTEMENT,Mgr Apt,200000,80,,2,1,3,,\n";
 
         MockMultipartFile file = new MockMultipartFile(
                 "file", "import.csv", "text/csv", csv.getBytes());

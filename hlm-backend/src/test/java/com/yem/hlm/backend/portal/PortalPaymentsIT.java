@@ -80,7 +80,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
         mvc.perform(get("/api/portal/contracts/{id}/payment-schedule", contractId)
                         .header("Authorization", "Bearer " + portalJwt))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contractId").value(contractId.toString()));
+                .andExpect(jsonPath("$[0].contractId").value(contractId.toString()));
     }
 
     // =========================================================================
@@ -221,18 +221,17 @@ class PortalPaymentsIT extends IntegrationTestBase {
     }
 
     /**
-     * Creates a minimal payment schedule (one tranche) for the given contract.
-     * Tranches must sum to 100% of agreed price — use a single 100% tranche.
+     * Creates a single payment schedule item for the given contract.
      */
     private void createPaymentSchedule(UUID contractId) throws Exception {
         String body = """
                 {
-                  "tranches": [
-                    { "label": "Full payment", "percent": 100, "dueDate": "2025-12-31" }
-                  ]
+                  "label": "Full payment",
+                  "amount": 500000.00,
+                  "dueDate": "2025-12-31"
                 }
                 """;
-        mvc.perform(post("/api/contracts/{id}/payment-schedule", contractId)
+        mvc.perform(post("/api/contracts/{id}/schedule", contractId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

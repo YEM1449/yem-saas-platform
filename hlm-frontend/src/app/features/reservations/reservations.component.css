@@ -1,0 +1,19 @@
+/* Reservations component — delta styles only.
+   Most styling comes from the global design system (styles.css). */
+
+/* Row action button group */
+.row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+/* Warning row highlight for expiring-soon reservations */
+.row-warning {
+  background: #fffbeb;
+}
+.row-warning:hover {
+  background: #fef3c7 !important;
+}

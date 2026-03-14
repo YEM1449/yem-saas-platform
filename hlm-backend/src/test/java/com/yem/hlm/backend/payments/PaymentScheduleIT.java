@@ -72,7 +72,7 @@ class PaymentScheduleIT extends IntegrationTestBase {
     void setup() {
         adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
         agentBearer = "Bearer " + jwtProvider.generate(
-                UUID.randomUUID(), TENANT_ID, UserRole.ROLE_AGENT);
+                USER_ID, TENANT_ID, UserRole.ROLE_AGENT);
     }
 
     // =========================================================================
@@ -269,10 +269,10 @@ class PaymentScheduleIT extends IntegrationTestBase {
         UUID contractId = newSignedContract();
         UUID itemId     = createItem(contractId, new BigDecimal("40000.00"), 30);
 
-        // Bearer from a different tenant
+        // Bearer from a different tenant — use a real userId so the security filter accepts the token
         UUID otherTenantId = UUID.randomUUID();
         String otherBearer = "Bearer " + jwtProvider.generate(
-                UUID.randomUUID(), otherTenantId, UserRole.ROLE_ADMIN);
+                USER_ID, otherTenantId, UserRole.ROLE_ADMIN);
 
         mvc.perform(post("/api/schedule-items/{id}/issue", itemId)
                         .header("Authorization", otherBearer))

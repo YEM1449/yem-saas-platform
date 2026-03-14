@@ -1,0 +1,112 @@
+<!-- Page header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Reservations</h1>
+    <p class="page-subtitle">Lightweight property holds before formal deposit</p>
+  </div>
+</div>
+
+<!-- Filter toolbar -->
+<div class="toolbar">
+  <label class="form-label" style="margin:0; white-space:nowrap;">Status</label>
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus">
+    <option value="">All statuses</option>
+    @for (s of statuses; track s) {
+      <option [value]="s">{{ s }}</option>
+    }
+  </select>
+  @if (!loading) {
+    <span class="stat-chip">{{ filtered.length }} reservation{{ filtered.length !== 1 ? 's' : '' }}</span>
+  }
+</div>
+
+<!-- Feedback -->
+@if (error) { <div class="alert alert-error">{{ error }}</div> }
+@if (actionSuccess) { <div class="alert alert-success">{{ actionSuccess }}</div> }
+@if (actionError) { <div class="alert alert-error">{{ actionError }}</div> }
+
+<!-- Loading -->
+@if (loading) {
+  <div class="loading-wrap"><div class="spinner"></div>Loading reservations…</div>
+}
+
+<!-- Empty state -->
+@if (!loading && filtered.length === 0) {
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🔖</div>
+      <p class="empty-state-title">No reservations found</p>
+      <p class="empty-state-desc">
+        @if (filterStatus) {
+          No reservations with status <strong>{{ filterStatus }}</strong>.
+          <button class="btn btn-secondary btn-sm" style="margin-left:8px" (click)="filterStatus=''">Clear filter</button>
+        } @else {
+          Reservations are created from a property page to hold a unit for a prospect before deposit.
+        }
+      </p>
+    </div>
+  </div>
+}
+
+<!-- Data table -->
+@if (!loading && filtered.length > 0) {
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Property</th>
+            <th>Contact</th>
+            <th class="text-right">Price</th>
+            <th>Status</th>
+            <th>Reserved</th>
+            <th>Expires</th>
+            @if (canWrite) { <th class="text-right">Actions</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of filtered; track r.id) {
+            <tr [class.row-warning]="isExpiringSoon(r)">
+              <td class="td-mono">{{ r.id.substring(0, 8).toUpperCase() }}</td>
+              <td class="td-mono">{{ r.propertyId.substring(0, 8).toUpperCase() }}</td>
+              <td class="td-mono">{{ r.contactId.substring(0, 8).toUpperCase() }}</td>
+              <td class="text-right">
+                @if (r.reservationPrice) {
+                  {{ r.reservationPrice | number:'1.0-0' }}
+                } @else {
+                  <span class="td-muted">—</span>
+                }
+              </td>
+              <td>
+                <span [class]="badgeClass(r.status)">{{ r.status }}</span>
+                @if (isExpiringSoon(r)) {
+                  <span class="badge badge-warning" style="margin-left:4px">Expiring soon</span>
+                }
+              </td>
+              <td class="td-muted">{{ r.reservationDate | date:'dd/MM/yyyy' }}</td>
+              <td class="td-muted">{{ r.expiryDate | date:'dd/MM/yyyy HH:mm' }}</td>
+              @if (canWrite) {
+                <td class="td-actions">
+                  <div class="row-actions">
+                    <a class="btn btn-sm btn-secondary"
+                       [routerLink]="['/app/contacts', r.contactId]"
+                       title="View contact">Contact</a>
+                    <a class="btn btn-sm btn-ghost"
+                       [routerLink]="['/app/properties', r.propertyId]"
+                       title="View property">Property</a>
+                    @if (r.status === 'ACTIVE') {
+                      <button class="btn btn-sm btn-danger"
+                              (click)="cancel(r)"
+                              title="Cancel reservation">Cancel</button>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

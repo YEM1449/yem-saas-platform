@@ -35,6 +35,9 @@ spring:
 
 server:
   port: 8080
+  # Trust X-Forwarded-For only when it arrives from a known private-network proxy (Tomcat RemoteIpValve).
+  # This prevents attackers from spoofing their IP by sending arbitrary X-Forwarded-For headers.
+  forward-headers-strategy: native
 
 management:
   endpoints:
@@ -99,3 +102,13 @@ app:
   # CORS: comma-separated list of allowed origins (empty = deny all, suitable for prod lock-down)
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+
+  security:
+    rate-limit:
+      login:
+        ip-max: ${RATE_LIMIT_LOGIN_IP_MAX:20}
+        key-max: ${RATE_LIMIT_LOGIN_KEY_MAX:10}
+        window-seconds: ${RATE_LIMIT_LOGIN_WINDOW_SECONDS:60}
+    lockout:
+      max-attempts: ${LOCKOUT_MAX_ATTEMPTS:5}
+      duration-minutes: ${LOCKOUT_DURATION_MINUTES:15}

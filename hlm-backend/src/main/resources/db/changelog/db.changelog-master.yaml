@@ -53,3 +53,5 @@ databaseChangeLog:
       file: db/changelog/changes/025-create-portal-token.yaml
   - include:
       file: db/changelog/changes/026-create-property-reservation.yaml
+  - include:
+      file: db/changelog/changes/027-add-login-lockout-fields.yaml

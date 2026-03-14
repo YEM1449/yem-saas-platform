@@ -7,8 +7,11 @@ import { PropertyService } from './property.service';
 import { ImportResult, Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
+import { ProjectService } from '../projects/project.service';
+import { Project } from '../../core/models/project.model';
 
 interface CreatePropertyForm {
+  projectId: string;
   type: string;
   referenceCode: string;
   title: string;
@@ -28,12 +31,15 @@ interface CreatePropertyForm {
   styleUrl: './properties.component.css',
 })
 export class PropertiesComponent implements OnInit {
-  private svc    = inject(PropertyService);
-  private router = inject(Router);
-  private auth   = inject(AuthService);
+  private svc        = inject(PropertyService);
+  private projectSvc = inject(ProjectService);
+  private router     = inject(Router);
+  private auth       = inject(AuthService);
 
   properties: Property[] = [];
+  projects: Project[] = [];
   loading = true;
+  projectsLoading = false;
   error   = '';
 
   /** Live search */
@@ -60,7 +66,7 @@ export class PropertiesComponent implements OnInit {
   ];
 
   form: CreatePropertyForm = {
-    type: '', referenceCode: '', title: '',
+    projectId: '', type: '', referenceCode: '', title: '',
     price: null, city: '', surfaceAreaSqm: null, bedrooms: null,
     description: '', status: 'DRAFT',
   };
@@ -86,6 +92,15 @@ export class PropertiesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadList();
+    this.loadProjects();
+  }
+
+  loadProjects(): void {
+    this.projectsLoading = true;
+    this.projectSvc.list().subscribe({
+      next: (data) => { this.projects = data; this.projectsLoading = false; },
+      error: () => { this.projectsLoading = false; },
+    });
   }
 
   loadList(): void {
@@ -142,7 +157,7 @@ export class PropertiesComponent implements OnInit {
   /* ── Manual Create ──────────────────────────────────────────── */
   openModal(): void {
     this.form = {
-      type: '', referenceCode: '', title: '',
+      projectId: '', type: '', referenceCode: '', title: '',
       price: null, city: '', surfaceAreaSqm: null, bedrooms: null,
       description: '', status: 'DRAFT',
     };
@@ -156,14 +171,23 @@ export class PropertiesComponent implements OnInit {
   }
 
   submitCreate(): void {
+    if (!this.form.projectId) {
+      this.submitError = 'Project is required.';
+      return;
+    }
     if (!this.form.type || !this.form.referenceCode.trim() || !this.form.title.trim()) {
       this.submitError = 'Type, reference code and title are required.';
+      return;
+    }
+    if (this.form.price === null || this.form.price === undefined) {
+      this.submitError = 'Price is required.';
       return;
     }
     this.submitting  = true;
     this.submitError = '';
 
     this.svc.create({
+      projectId:     this.form.projectId,
       type:          this.form.type,
       referenceCode: this.form.referenceCode.trim(),
       title:         this.form.title.trim(),

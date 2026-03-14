@@ -202,6 +202,16 @@ LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
 
         <!-- Identification -->
         <div class="modal-section-label">Identification</div>
+        <div class="form-group">
+          <label class="form-label required">Project</label>
+          <select class="form-control" [(ngModel)]="form.projectId" [disabled]="submitting || projectsLoading">
+            <option value="">{{ projectsLoading ? 'Loading projects…' : 'Select a project…' }}</option>
+            @for (p of projects; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+          <span class="form-hint">Every property must belong to a project</span>
+        </div>
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label required">Type</label>
@@ -246,7 +256,7 @@ LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
         <div class="modal-section-label">Pricing &amp; Status</div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Price (MAD)</label>
+            <label class="form-label required">Price (MAD)</label>
             <input class="form-control" type="number" min="0" placeholder="e.g. 1500000"
                    [(ngModel)]="form.price" [disabled]="submitting" />
           </div>

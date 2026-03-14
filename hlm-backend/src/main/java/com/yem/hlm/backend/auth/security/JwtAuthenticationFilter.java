@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.auth.service.SecurityAuditLogger;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.auth.service.UserSecurityInfo;
 import com.yem.hlm.backend.tenant.context.TenantContext;
@@ -33,10 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserSecurityCacheService userSecurityCacheService;
+    private final SecurityAuditLogger securityAuditLogger;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider, UserSecurityCacheService userSecurityCacheService) {
+    public JwtAuthenticationFilter(JwtProvider jwtProvider,
+                                   UserSecurityCacheService userSecurityCacheService,
+                                   SecurityAuditLogger securityAuditLogger) {
         this.jwtProvider = jwtProvider;
         this.userSecurityCacheService = userSecurityCacheService;
+        this.securityAuditLogger = securityAuditLogger;
     }
 
     @Override

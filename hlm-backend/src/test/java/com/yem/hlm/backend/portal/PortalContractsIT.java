@@ -141,7 +141,7 @@ class PortalContractsIT extends IntegrationTestBase {
         mvc.perform(get("/api/portal/tenant-info")
                         .header("Authorization", "Bearer " + portalJwt))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").isNotEmpty());
+                .andExpect(jsonPath("$.tenantName").isNotEmpty());
     }
 
     // =========================================================================

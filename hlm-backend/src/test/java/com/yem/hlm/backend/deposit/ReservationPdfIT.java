@@ -4,8 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
+import com.yem.hlm.backend.deposit.domain.Deposit;
+import com.yem.hlm.backend.deposit.domain.DepositStatus;
+import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
@@ -27,6 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +66,8 @@ class ReservationPdfIT extends IntegrationTestBase {
     @Autowired JwtProvider jwtProvider;
     @Autowired TenantRepository tenantRepository;
     @Autowired UserRepository userRepository;
+    @Autowired ContactRepository contactRepository;
+    @Autowired DepositRepository depositRepository;
 
     private String adminBearer;
     private int refCounter = 0;
@@ -148,10 +156,8 @@ class ReservationPdfIT extends IntegrationTestBase {
         agent = userRepository.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
-        // Create deposit whose agent is this user (admin creates it on behalf of agent via API)
-        // The deposit's agent is set to the authenticated user at creation time.
-        // So we create the deposit as the agent.
-        UUID depositId = createDepositWithPropertyForBearer(agentBearer, "agent-buyer-own@acme.com");
+        // Agents cannot create deposits via API (ADMIN/MANAGER only), so create directly via repository
+        UUID depositId = createDepositForAgent(agent, "agent-buyer-own@acme.com");
 
         mvc.perform(get(PDF_ENDPOINT, depositId)
                         .header("Authorization", agentBearer))
@@ -161,13 +167,12 @@ class ReservationPdfIT extends IntegrationTestBase {
 
     @Test
     void downloadPdf_asAgent_otherAgentsDeposit_returns404() throws Exception {
-        // Agent A creates a deposit
+        // Agent A owns a deposit
         User agentA = new User(
                 tenantRepository.findById(TENANT_ID).orElseThrow(),
                 "agent-a-pdf@acme.com", "hashedPass");
         agentA.setRole(UserRole.ROLE_AGENT);
         agentA = userRepository.save(agentA);
-        String bearerA = "Bearer " + jwtProvider.generate(agentA.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
         // Agent B tries to access Agent A's deposit
         User agentB = new User(
@@ -177,7 +182,7 @@ class ReservationPdfIT extends IntegrationTestBase {
         agentB = userRepository.save(agentB);
         String bearerB = "Bearer " + jwtProvider.generate(agentB.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
-        UUID depositIdA = createDepositWithPropertyForBearer(bearerA, "buyer-agent-a@acme.com");
+        UUID depositIdA = createDepositForAgent(agentA, "buyer-agent-a@acme.com");
 
         mvc.perform(get(PDF_ENDPOINT, depositIdA)
                         .header("Authorization", bearerB))
@@ -191,8 +196,8 @@ class ReservationPdfIT extends IntegrationTestBase {
     }
 
     private UUID createDepositWithPropertyForBearer(String bearer, String contactEmail) throws Exception {
-        ContactResponse contact = createContact(bearer, contactEmail);
-        UUID propertyId = createActiveProperty(bearer);
+        ContactResponse contact = createContact(adminBearer, contactEmail);
+        UUID propertyId = createActiveProperty(adminBearer);
 
         var req = new CreateDepositRequest(
                 contact.id(), propertyId, new BigDecimal("5000.00"),
@@ -259,6 +264,38 @@ class ReservationPdfIT extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         return created.id();
+    }
+
+    /**
+     * Creates a deposit directly via repository with the given agent as the owner.
+     * Used for agent-RBAC tests because POST /api/deposits requires ADMIN or MANAGER.
+     */
+    private UUID createDepositForAgent(User agent, String contactEmail) throws Exception {
+        // Create contact via admin API
+        var cReq = new CreateContactRequest("Jean", "Dupont", null, contactEmail, null, null, null);
+        String contactJson = mvc.perform(post("/api/contacts")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(cReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID contactId = objectMapper.readValue(contactJson, ContactResponse.class).id();
+
+        // Create property via admin API
+        UUID propertyId = createActiveProperty(adminBearer);
+
+        // Build and save the deposit directly with the specified agent
+        Tenant tenant = tenantRepository.findById(TENANT_ID).orElseThrow();
+        var contact = contactRepository.findById(contactId).orElseThrow();
+        Deposit deposit = new Deposit(tenant, contact, agent);
+        deposit.setPropertyId(propertyId);
+        deposit.setAmount(new BigDecimal("5000.00"));
+        deposit.setCurrency("MAD");
+        deposit.setDepositDate(LocalDate.now());
+        deposit.setReference("PDF-AGENT-" + System.nanoTime());
+        deposit.setStatus(DepositStatus.PENDING);
+        deposit.setDueDate(LocalDateTime.now().plusDays(7));
+        return depositRepository.save(deposit).getId();
     }
 
     private String createOtherTenantBearer(String keyPrefix) {
