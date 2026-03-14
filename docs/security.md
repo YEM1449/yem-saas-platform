@@ -21,6 +21,18 @@
   - `iat`, `exp`
 - No `tv` claim; short-lived (2h), stateless.
 
+## Transport Security (TLS/HTTPS)
+
+See [docs/https.md](https.md) for the complete setup guide.
+
+**Summary:**
+- All production traffic must use HTTPS. Plain HTTP returns 301 redirect.
+- HSTS header enforced with 1-year max-age and preload (only when `SSL_ENABLED=true`).
+- TLS 1.0 / 1.1 disabled. TLS 1.2 + 1.3 only.
+- Dev: embedded Tomcat self-signed cert (`scripts/generate-dev-cert.sh`).
+- Prod: Nginx terminates TLS; Spring Boot trusts `X-Forwarded-Proto` (`FORWARD_HEADERS_STRATEGY=FRAMEWORK`).
+- Portal magic-link URL must use `https://` (`PORTAL_BASE_URL` env var).
+
 ## Token Revocation (CRM)
 - `User.tokenVersion` increments on role changes and account disable.
 - Each request compares JWT `tv` with cached user security info.
@@ -88,6 +100,9 @@ In production (`application-production.yml`), log level is WARN for all three lo
 - `JWT_SECRET` is mandatory and must be at least 32 characters.
 - Do not log raw Authorization headers or magic-link raw tokens.
 - Secret scanning in CI is audit-only by default; Snyk handles SAST + OSS dependency vulnerability gates.
+- `EMAIL_HOST`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` must be set via environment variables; never hardcoded. Test profile uses GreenMail (no real credentials needed).
+- All TLS private keys and PKCS12 keystores are gitignored. Never commit `hlm-backend/src/main/resources/ssl/*.p12`.
+- `PortalTokenCleanupScheduler` purges expired/used tokens daily at 03:00. Monitor its log line `[PORTAL-CLEANUP] Deleted N expired/used portal tokens` in production.
 
 ## Production Security Checklist
 - Set `spring.profiles.active=production` to disable Swagger/OpenAPI endpoints.

@@ -81,6 +81,21 @@ context/                                         # compact LLM/operator context
 - Admin: `admin@acme.com` / `Admin123!`
 - Loaded by Liquibase on startup
 
+## Sprint 2 Changes (2026-03-14)
+
+- **SmtpEmailSender** fully wired (`spring.mail.*` bridge with SMTP timeouts); `TwilioSmsSender` added (Twilio SDK 10.4.1, conditional on `TWILIO_ACCOUNT_SID`)
+- **Portal magic-link email** now sends branded HTML template; URL fixed to `/portal/verify?token=`
+- **`PortalTokenCleanupScheduler`** added (daily 03:00, `deleteExpiredAndUsed` JPQL)
+- **DB migration 028**: orphaned v1 payment tables dropped (`payment`, `payment_call`, `payment_tranche`, `payment_schedule`) with `preConditions MARK_RAN`
+- **HTTPS implemented**: Mode A (embedded Tomcat, `SSL_ENABLED`, PKCS12, TLS 1.2/1.3, HSTS) + Mode B (Nginx, `nginx/nginx.conf`, `FORWARD_HEADERS_STRATEGY=FRAMEWORK`)
+- **`TlsRedirectConfig`**: HTTP→HTTPS redirect connector active when `server.ssl.enabled=true`
+- **HSTS** now conditional on `SSL_ENABLED=true`; disabled over plain HTTP
+- **TLS test**: `TlsConfigIT` (HTTPS health check + HSTS header assertion)
+- **New file**: `nginx/nginx.conf` — production TLS termination reference
+- **New file**: `docs/https.md` — complete HTTPS setup guide
+- **Angular Audit Trail** component at `/app/audit` (ADMIN/MANAGER only, `GET /api/audit/commercial`)
+- **ESLint** configured in `hlm-frontend/` (`@angular-eslint`, `npm run lint`)
+
 ## Canonical References
 - Architecture: `context/ARCHITECTURE.md`
 - Domain rules: `context/DOMAIN_RULES.md`

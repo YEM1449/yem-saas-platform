@@ -88,8 +88,12 @@ public class PortalAuthService {
         var tenant = tenantRepository.findByKey(tenantKey)
                 .orElseThrow(() -> new PortalTokenInvalidException("Unknown tenant or email"));
 
-        Contact contact = contactRepository.findByTenant_IdAndEmailIgnoreCase(tenant.getId(), email)
-                .orElseThrow(() -> new PortalTokenInvalidException("Unknown tenant or email"));
+        var contactOpt = contactRepository.findByTenant_IdAndEmailIgnoreCase(tenant.getId(), email);
+        if (contactOpt.isEmpty()) {
+            // Unknown email — return generic 200 to prevent user enumeration
+            return new MagicLinkResponse("Magic link sent to " + email, "");
+        }
+        Contact contact = contactOpt.get();
 
         // Generate raw token (32 bytes → URL-safe base64, ~43 chars, no padding)
         byte[] rawBytes = new byte[32];
@@ -104,16 +108,34 @@ public class PortalAuthService {
         portalTokenRepository.save(portalToken);
 
         // Build magic-link URL
-        String magicLinkUrl = portalBaseUrl + "/portal/login?token=" + rawToken;
+        String magicLinkUrl = portalBaseUrl + "/portal/verify?token=" + rawToken;
+
+        // Build HTML email body
+        String tenantName = tenant.getName();
+        String subject = "Votre lien d'accès au portail — " + tenantName;
+        String html = """
+                <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
+                <h2 style="color:#1F3864">Bienvenue sur votre espace personnel</h2>
+                <p>Bonjour,</p>
+                <p>Cliquez sur le bouton ci-dessous pour accéder à vos contrats et documents :</p>
+                <p style="text-align:center;margin:32px 0">
+                  <a href="%s" style="background:#2E75B6;color:#fff;padding:14px 28px;
+                     border-radius:4px;text-decoration:none;font-size:16px">
+                    Accéder à mon espace
+                  </a>
+                </p>
+                <p style="color:#666;font-size:13px">
+                  Ce lien est valable <strong>48 heures</strong> et ne peut être utilisé
+                  qu'une seule fois. Si vous n'avez pas demandé cet accès, ignorez cet email.
+                </p>
+                <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+                <p style="color:#999;font-size:11px">%s &#8212; Espace Client</p>
+                </body></html>
+                """.formatted(magicLinkUrl, tenantName);
 
         // Send email (fire-and-forget; NoopEmailSender used in dev/test)
-        String subject = "Your secure portal access link";
-        String body = "Hello " + contact.getFirstName() + ",\n\n"
-                + "Click the link below to access your client portal (valid 48 h):\n\n"
-                + magicLinkUrl + "\n\n"
-                + "If you did not request this link, please ignore this email.";
         try {
-            emailSender.send(contact.getEmail(), subject, body);
+            emailSender.send(contact.getEmail(), subject, html);
         } catch (RuntimeException ex) {
             // Email delivery failure must not break the token generation.
             // The raw URL is still returned in the response body for dev/test.

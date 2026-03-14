@@ -78,7 +78,7 @@ class PortalAuthIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         JsonNode node = objectMapper.readTree(json);
-        assertThat(node.get("magicLinkUrl").asText()).contains("/portal/login?token=");
+        assertThat(node.get("magicLinkUrl").asText()).contains("/portal/verify?token=");
     }
 
     // =========================================================================
@@ -156,7 +156,7 @@ class PortalAuthIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         String magicLinkUrl = objectMapper.readTree(json).get("magicLinkUrl").asText();
-        // Extract raw token from URL: .../portal/login?token=<rawToken>
+        // Extract raw token from URL: .../portal/verify?token=<rawToken>
         return magicLinkUrl.substring(magicLinkUrl.indexOf("?token=") + 7);
     }
 

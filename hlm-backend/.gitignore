@@ -33,3 +33,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### SSL keystores (dev certs — never commit) ###
+src/main/resources/ssl/

@@ -22,6 +22,7 @@
 | [frontend.md](frontend.md) | Frontend architecture and routing |
 | [database.md](database.md) | Database schema and migration strategy |
 | [security.md](security.md) | Security model (JWT, RBAC, multi-tenancy) |
+| [https.md](https.md) | HTTPS and TLS configuration guide |
 
 ### Operations
 | Doc | Purpose |

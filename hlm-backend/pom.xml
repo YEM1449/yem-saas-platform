@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<ssl.keystore.skip>false</ssl.keystore.skip>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -120,6 +121,21 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- SMS (Twilio) — optional; TwilioSmsSender activates when TWILIO_ACCOUNT_SID is set -->
+		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>10.4.1</version>
+		</dependency>
+
+		<!-- GreenMail for SMTP integration tests -->
+		<dependency>
+			<groupId>com.icegreen</groupId>
+			<artifactId>greenmail-spring</artifactId>
+			<version>2.0.1</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- CSV parsing for property import -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -169,6 +185,12 @@
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 		</dependency>
+		<!-- Apache HttpClient 5 — used by TlsConfigIT to make HTTPS requests with a trust-all SSL context -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -191,6 +213,52 @@
 				<configuration>
 					<argLine>-XX:+EnableDynamicAgentLoading</argLine>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<argLine>-XX:+EnableDynamicAgentLoading</argLine>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>generate-test-keystore</id>
+						<phase>generate-test-resources</phase>
+						<goals><goal>exec</goal></goals>
+						<configuration>
+							<executable>keytool</executable>
+							<workingDirectory>${project.basedir}</workingDirectory>
+							<arguments>
+								<argument>-genkeypair</argument>
+								<argument>-alias</argument><argument>hlm-dev</argument>
+								<argument>-keyalg</argument><argument>RSA</argument>
+								<argument>-keysize</argument><argument>2048</argument>
+								<argument>-validity</argument><argument>3650</argument>
+								<argument>-storetype</argument><argument>PKCS12</argument>
+								<argument>-keystore</argument>
+								<argument>${project.basedir}/src/test/resources/ssl/hlm-dev.p12</argument>
+								<argument>-storepass</argument><argument>changeit</argument>
+								<argument>-dname</argument>
+								<argument>CN=localhost,OU=Test,O=HLM,L=Casablanca,ST=MA,C=MA</argument>
+								<argument>-noprompt</argument>
+							</arguments>
+							<skip>${ssl.keystore.skip}</skip>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

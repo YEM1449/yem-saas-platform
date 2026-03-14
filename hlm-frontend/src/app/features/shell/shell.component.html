@@ -156,6 +156,19 @@
         </a>
       }
 
+      <!-- Audit section (admin and manager) -->
+      @if (isAdminOrManager) {
+        <span class="nav-section">Audit</span>
+        <a routerLink="/app/audit" routerLinkActive="nav-active" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+            <path d="M4 5h12M4 10h12M4 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="16" cy="15" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M18 17l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Audit
+        </a>
+      }
+
     </nav>
 
     <!-- User footer -->

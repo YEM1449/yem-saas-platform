@@ -1,0 +1,50 @@
+<div class="page-header">
+  <h1>Audit Trail</h1>
+</div>
+
+@if (!isAuthorized) {
+  <div class="error-state">Accès refusé</div>
+} @else {
+  <div class="filter-bar">
+    <label>
+      Du
+      <input type="date" [(ngModel)]="from" />
+    </label>
+    <label>
+      Au
+      <input type="date" [(ngModel)]="to" />
+    </label>
+    <button (click)="load()" [disabled]="loading">Actualiser</button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">Chargement...</div>
+  } @else if (error) {
+    <div class="error-state">{{ error }}</div>
+  } @else if (events.length === 0) {
+    <div class="empty-state">Aucun événement trouvé.</div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date/Heure</th>
+          <th>Événement</th>
+          <th>Acteur</th>
+          <th>Type</th>
+          <th>Corrélation</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (event of events; track event.id) {
+          <tr>
+            <td>{{ event.occurredAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ event.eventType }}</td>
+            <td><code>{{ actorShort(event.actorUserId) }}</code></td>
+            <td>{{ event.correlationType }}</td>
+            <td><code>{{ event.correlationId | slice:0:8 }}</code></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}

@@ -1,0 +1,45 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 028-drop-payment
+      author: sprint2
+      preConditions:
+        onFail: MARK_RAN
+        tableExists:
+          tableName: payment
+      changes:
+        - dropTable:
+            tableName: payment
+
+  - changeSet:
+      id: 028-drop-payment-call
+      author: sprint2
+      preConditions:
+        onFail: MARK_RAN
+        tableExists:
+          tableName: payment_call
+      changes:
+        - dropTable:
+            tableName: payment_call
+
+  - changeSet:
+      id: 028-drop-payment-tranche
+      author: sprint2
+      preConditions:
+        onFail: MARK_RAN
+        tableExists:
+          tableName: payment_tranche
+      changes:
+        - dropTable:
+            tableName: payment_tranche
+
+  - changeSet:
+      id: 028-drop-payment-schedule
+      author: sprint2
+      preConditions:
+        onFail: MARK_RAN
+        tableExists:
+          tableName: payment_schedule
+      changes:
+        - dropTable:
+            tableName: payment_schedule

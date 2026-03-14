@@ -48,7 +48,7 @@ Job: test-and-build  (timeout: 20m)
   6. Upload coverage artifact
 ```
 
-> [OPEN POINT OP-006] No ESLint/lint gate. Consider adding if `@angular-eslint` is configured.
+ESLint configured via `@angular-eslint`. Lint runs in `frontend-ci.yml` before build step (`npm run lint`).
 
 ### Snyk (`snyk.yml`)
 
@@ -170,6 +170,29 @@ JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
 - Long GC pauses before PDF endpoint responses
 
 **Future consideration**: For high-traffic PDF generation, offload to an async worker (outbox pattern: queue a PDF job, return job ID, deliver via email when ready).
+
+## Production Deployment Checklist
+
+### HTTPS / TLS
+- [ ] Nginx installed and `nginx/nginx.conf` deployed (replace `app.example.com` with real domain)
+- [ ] Let's Encrypt certificate obtained: `certbot certonly --standalone -d <DOMAIN>`
+- [ ] `PORTAL_BASE_URL` set to `https://<DOMAIN>`
+- [ ] `FORWARD_HEADERS_STRATEGY=FRAMEWORK` in production environment
+- [ ] Port 8080 bound to `127.0.0.1` only (not exposed to internet)
+- [ ] Port 443 open in firewall
+- [ ] HSTS preload verified: `curl -I https://<DOMAIN>/actuator/health | grep Strict`
+
+### Email (SMTP)
+- [ ] `EMAIL_HOST`, `EMAIL_USER`, `EMAIL_PASSWORD`, `EMAIL_FROM` set
+- [ ] Send a test portal magic link and verify receipt
+
+### SMS (Twilio)
+- [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` set
+- [ ] Send a test SMS via `POST /api/messages`
+
+### Scheduled tasks
+- [ ] Verify `PortalTokenCleanupScheduler` running: check log at 03:00 for `[PORTAL-CLEANUP]`
+- [ ] Verify overdue payment scheduler running: check log at 06:00
 
 ## .snyk Policy File
 

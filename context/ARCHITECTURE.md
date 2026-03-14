@@ -4,12 +4,23 @@ _Updated: 2026-03-05_
 
 ## Layer Stack
 ```text
-Browser -> Angular SPA (hlm-frontend:4200)
-           -> dev proxy (/auth,/api,/dashboard,/actuator -> :8080)
-Spring Boot API (hlm-backend:8080)
-           -> PostgreSQL (Liquibase-managed schema)
-           -> Email/SMS provider interfaces (outbox + direct portal email use case)
+Browser
+  → HTTPS (TLS 1.2/1.3)
+  → Nginx:443 [production] OR Tomcat:8443 [dev/staging]
+  → Angular SPA (hlm-frontend:4200 in dev)
+  → Spring Boot API (hlm-backend:8080 or :8443)
+  → PostgreSQL (Liquibase-managed schema)
+  → Email/SMS provider interfaces (outbox + direct portal email use case)
 ```
+
+In dev: Angular dev proxy forwards `/auth`, `/api`, `/dashboard`, `/actuator` to `:8080`.
+
+## TLS Architecture
+
+**Dev:**   Embedded Tomcat TLS — `SSL_ENABLED=true` — `scripts/generate-dev-cert.sh`
+**Prod:**  Nginx terminates TLS — Spring Boot listens plain HTTP behind proxy
+           `FORWARD_HEADERS_STRATEGY=FRAMEWORK` (trusts `X-Forwarded-Proto` from Nginx)
+**Nginx config:** `nginx/nginx.conf` (security headers, HTTP→HTTPS redirect, API proxy)
 
 ## Request Pipeline
 ```text
@@ -83,6 +94,8 @@ API transaction writes OutboundMessage(PENDING)
 -> failure: retry backoff (1m, 5m, 30m) until max retries
 -> exhausted: FAILED
 ```
+Email: SmtpEmailSender wired via spring.mail.* bridge (activates when app.email.host is set).
+SMS:   TwilioSmsSender (activates when app.sms.account-sid is set).
 
 ## Portal Magic-Link Flow
 ```text
@@ -127,6 +140,13 @@ Migration history: `docs/v2/payment-v1-retirement-plan.v2.md`.
 ## Storage + PDF Notes
 - `MediaStorageService` abstraction with `LocalFileMediaStorage` default (`MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE`).
 - PDF generation is synchronous in-memory (`DocumentGenerationService`, OpenHtmlToPDF fast mode); tune heap for production.
+
+## Scheduled Tasks
+- `ReservationExpiryScheduler` — hourly cron, marks ACTIVE reservations past expiry as EXPIRED
+- `OutboxDispatcherScheduler` — polls outbox every `OUTBOX_POLL_INTERVAL_MS` ms
+- `ReminderScheduler` — cron `REMINDER_CRON` (default 08:00), sends overdue payment reminders
+- Portal token cleanup: `PortalTokenCleanupScheduler` — daily 03:00
+  Deletes expired or used portal_token rows via `deleteExpiredAndUsed()`.
 
 ## Dependency Direction
 ```text
