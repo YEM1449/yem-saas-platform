@@ -172,9 +172,19 @@ public class ReservationService {
                     "Only ACTIVE reservations can be converted (current: " + reservation.getStatus() + ")");
         }
 
-        // Temporarily release property to ACTIVE so DepositService.create() can reserve it
-        Property property = propertyRepository.findByTenant_IdAndId(tenantId, reservation.getPropertyId())
+        // Acquire pessimistic write lock to guard against concurrent state changes
+        // (e.g. a contract signing that transitions the property to SOLD concurrently).
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, reservation.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(reservation.getPropertyId()));
+
+        // Guard: property must still be RESERVED before we release it.
+        // A concurrent contract sign could have moved it to SOLD; re-opening a SOLD
+        // property to ACTIVE would allow a new deposit on an already-sold asset.
+        if (property.getStatus() != PropertyStatus.RESERVED) {
+            throw new InvalidReservationStateException(
+                    "Property is no longer RESERVED (current: " + property.getStatus()
+                    + ") — cannot convert reservation to deposit");
+        }
 
         // Transition reservation first to avoid the active-reservation check in DepositService
         reservation.setStatus(ReservationStatus.CONVERTED_TO_DEPOSIT);
