@@ -29,8 +29,8 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
               AND (cast(:channel as string) IS NULL OR m.channel = :channel)
               AND (cast(:status as string) IS NULL OR m.status = :status)
               AND (:correlationId IS NULL OR m.correlationId = :correlationId)
-              AND (:from IS NULL OR m.createdAt >= :from)
-              AND (:to IS NULL OR m.createdAt <= :to)
+              AND (CAST(:from AS LocalDateTime) IS NULL OR m.createdAt >= :from)
+              AND (CAST(:to   AS LocalDateTime) IS NULL OR m.createdAt <= :to)
             ORDER BY m.createdAt DESC
             """)
     Page<OutboundMessage> findByTenant(
@@ -53,7 +53,7 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
     @Query(value = """
             SELECT id FROM outbound_message
             WHERE status = 'PENDING'
-              AND next_retry_at <= CURRENT_TIMESTAMP
+              AND next_retry_at <= CLOCK_TIMESTAMP()
             ORDER BY next_retry_at ASC
             LIMIT :batchSize
             FOR UPDATE SKIP LOCKED

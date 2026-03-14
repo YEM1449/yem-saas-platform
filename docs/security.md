@@ -50,8 +50,37 @@ Protected route groups:
 - `TenantContext` must be cleared at request end (filter responsibility).
 - Repository/service operations must remain tenant-scoped; never trust tenant IDs from payload/path.
 
+## Rate Limiting & Account Lockout
+
+### Login Rate Limiting (Bucket4j)
+- `LoginRateLimiter` maintains two in-memory token-bucket maps: per-IP and per-identity (`tenantKey:email`).
+- Limits are applied before any DB access (fail-fast).
+- Response on limit exceeded: HTTP 429 with `Retry-After: <seconds>` header and `X-RateLimit-Remaining: 0`.
+- `ErrorCode.LOGIN_RATE_LIMITED`.
+- Config (env vars): `RATE_LIMIT_LOGIN_IP_MAX` (default 20), `RATE_LIMIT_LOGIN_KEY_MAX` (default 10), `RATE_LIMIT_LOGIN_WINDOW_SECONDS` (default 60).
+- Cleanup: idle (full-capacity) buckets are removed every 5 minutes via `@Scheduled`.
+
+### Account Lockout
+- Tracked via `failed_login_attempts` (INT) and `locked_until` (TIMESTAMP) on `app_user` (changeset 027).
+- `User.recordFailedAttempt(maxAttempts, durationMinutes)` increments the counter and sets `lockedUntil` on threshold breach.
+- `User.isLockedOut()` returns true if `lockedUntil` is in the future.
+- Lockout check occurs after rate-limit but before password verification.
+- Response: HTTP 401 with `ErrorCode.ACCOUNT_LOCKED`; message includes ISO-8601 `lockedUntil`.
+- Config: `LOCKOUT_MAX_ATTEMPTS` (default 5), `LOCKOUT_DURATION_MINUTES` (default 15).
+- Successful login resets `failedLoginAttempts` to 0.
+
+## Structured Security Logging
+Three named SLF4J loggers in `SecurityAuditLogger` (package `auth.service`):
+- `security.auth` — `FAILED_LOGIN`, `LOGIN_SUCCESS`, `ACCOUNT_LOCKED`, `TOKEN_REVOCATION`
+- `security.tenant` — `CROSS_TENANT_ATTEMPT`
+- `security.ratelimit` — `RATE_LIMIT_TRIGGERED`
+
+All events use `[SECURITY] event=X key=val ...` format at WARN level. Emails are masked: `joh***@acme.com`.
+In production (`application-production.yml`), log level is WARN for all three loggers.
+
 ## Error Semantics
-- 401: invalid/expired token, missing auth, tokenVersion mismatch, disabled/deleted user.
+- 401: invalid/expired token, missing auth, tokenVersion mismatch, disabled/deleted user, account locked.
+- 429: rate limit exceeded (login endpoint only).
 - 403: authenticated but lacks required role/permission.
 - API errors use standardized `ErrorResponse` + `ErrorCode`.
 
@@ -59,6 +88,26 @@ Protected route groups:
 - `JWT_SECRET` is mandatory and must be at least 32 characters.
 - Do not log raw Authorization headers or magic-link raw tokens.
 - Secret scanning in CI is audit-only by default; Snyk handles SAST + OSS dependency vulnerability gates.
+
+## Production Security Checklist
+- Set `spring.profiles.active=production` to disable Swagger/OpenAPI endpoints.
+- Set `RATE_LIMIT_LOGIN_IP_MAX` and `RATE_LIMIT_LOGIN_KEY_MAX` appropriate to expected load.
+- Set `LOCKOUT_MAX_ATTEMPTS` and `LOCKOUT_DURATION_MINUTES` to meet compliance requirements.
+- Configure log aggregation to capture `security.auth`, `security.tenant`, `security.ratelimit` streams.
+- `JWT_SECRET` must be at least 32 characters and stored in a secrets manager (never in source).
+
+## Email Provider Activation
+
+`SmtpEmailSender` is activated only when `app.email.host` (env: `EMAIL_HOST`) is a **non-blank** string.
+
+```java
+@ConditionalOnExpression("!'${app.email.host:}'.isBlank()")
+```
+
+> **Pitfall**: `@ConditionalOnProperty` treats an empty-string property value as "present" (only `null` and the literal string `"false"` are treated as absent). Since `application.yml` defaults `app.email.host: ${EMAIL_HOST:}` (empty string when `EMAIL_HOST` is unset), using `@ConditionalOnProperty` alone would activate `SmtpEmailSender` in every environment where `EMAIL_HOST` is not set, causing authentication failures at send time. The `@ConditionalOnExpression` correctly rejects blank values.
+
+When `EMAIL_HOST` is not set → `NoopEmailSender` is active (logs, no actual send).
+When `EMAIL_HOST` is set → `SmtpEmailSender` is active (real SMTP delivery).
 
 ## Related References
 - Compact security baseline: [../context/SECURITY_BASELINE.md](../context/SECURITY_BASELINE.md)

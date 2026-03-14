@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.user.service;
 
+import com.yem.hlm.backend.auth.service.SecurityAuditLogger;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
 import com.yem.hlm.backend.tenant.domain.Tenant;
@@ -8,6 +9,8 @@ import com.yem.hlm.backend.tenant.context.TenantContext;
 import com.yem.hlm.backend.user.api.dto.*;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,16 +26,19 @@ public class AdminUserService {
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserSecurityCacheService userSecurityCacheService;
+    private final SecurityAuditLogger securityAuditLogger;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AdminUserService(UserRepository userRepository,
                             TenantRepository tenantRepository,
                             PasswordEncoder passwordEncoder,
-                            UserSecurityCacheService userSecurityCacheService) {
+                            UserSecurityCacheService userSecurityCacheService,
+                            SecurityAuditLogger securityAuditLogger) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
         this.userSecurityCacheService = userSecurityCacheService;
+        this.securityAuditLogger = securityAuditLogger;
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +74,12 @@ public class AdminUserService {
         user.incrementTokenVersion();
         User saved = userRepository.save(user);
         userSecurityCacheService.evict(userId);
+
+        // Audit: token revocation due to role change
+        UUID actorId = resolveActorId();
+        String tenantKey = resolveTenantKey(requireTenantId());
+        securityAuditLogger.logTokenRevocation(tenantKey, userId, actorId, "ROLE_CHANGE");
+
         return UserResponse.from(saved);
     }
 
@@ -78,6 +90,14 @@ public class AdminUserService {
         user.incrementTokenVersion();
         User saved = userRepository.save(user);
         userSecurityCacheService.evict(userId);
+
+        // Audit: token revocation when account is disabled
+        if (!request.enabled()) {
+            UUID actorId = resolveActorId();
+            String tenantKey = resolveTenantKey(requireTenantId());
+            securityAuditLogger.logTokenRevocation(tenantKey, userId, actorId, "ACCOUNT_DISABLED");
+        }
+
         return UserResponse.from(saved);
     }
 
@@ -104,6 +124,22 @@ public class AdminUserService {
             throw new CrossTenantAccessException("Missing tenant context");
         }
         return tenantId;
+    }
+
+    private UUID resolveActorId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof UUID uuid) {
+                return uuid;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private String resolveTenantKey(UUID tenantId) {
+        return tenantRepository.findById(tenantId)
+                .map(t -> t.getKey())
+                .orElse(tenantId.toString());
     }
 
     private String generateTempPassword() {

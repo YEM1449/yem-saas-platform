@@ -65,6 +65,44 @@ _Updated: 2026-03-05_
 - `docs/_TODO_NEXT.md` — backlog updated
 - `context/CLAUDE_STATE.md` — state updated
 
+## Pre-existing IT Bug Fixes (2026-03-14) — Complete
+
+**Goal**: Resolve all remaining integration test failures across the full 286-test suite.
+
+**Root causes and fixes:**
+
+1. **`@ConditionalOnProperty` treats empty string as "present"** — `SmtpEmailSender` was activated in tests because `app.email.host: ${EMAIL_HOST:}` resolves to `""` when `EMAIL_HOST` is unset, and Spring Boot's `@ConditionalOnProperty` considers `""` as "property exists". Fixed by switching to `@ConditionalOnExpression("!'${app.email.host:}'.isBlank()")`, which correctly treats empty/blank as "not configured".
+
+2. **JPQL null `LocalDateTime` params — PostgreSQL type inference** — `(:param IS NULL OR field >= :param)` pattern fails with a null `LocalDateTime` because PostgreSQL cannot infer the parameter type. Fixed with `CAST(:param AS LocalDateTime) IS NULL` in `OutboundMessageRepository.findByTenant()` and `CommercialAuditRepository.search()`.
+
+3. **openhtmltopdf rejects HTML4 named entities** — The PDF renderer uses a SAX XML parser; `&mdash;` and `&nbsp;` are HTML4 named entities, not valid XML character references. Fixed `call_for_funds.html` (`&mdash;` → `&#8212;`) and `appel-de-fonds.html` (`&nbsp;` → `&#160;`).
+
+4. **RBAC: agents cannot create projects, properties, or deposits via API** — `ContractPdfIT` and `ReservationPdfIT` helpers used the test bearer (which might be `agentBearer`) for `POST /api/projects`, `POST /api/properties`, `PUT /api/properties`, and `POST /api/deposits` — all of which require `ADMIN` or `MANAGER`. Fixed by always using `adminBearer` for setup and adding a `createDepositForAgent()` helper that saves the `Deposit` entity directly via `DepositRepository` with the correct agent owner.
+
+5. **StrongPassword validator** — Tests in `TenantControllerIT` and `AuthLoginIT` used passwords like `"supersecret"` (11 chars, no uppercase/digit/special) and `"Admin123!"` (9 chars). The `StrongPassword` validator requires `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{12,}$`. Updated to `"Supersecret1!"` and `"Admin123!Secure"`.
+
+6. **PropertyType validation** — `PropertyImportIT` used `APARTMENT` (not a valid enum value; correct is `APPARTEMENT`). `VILLA` rows in import CSV were missing required `surfaceAreaSqm` and `landAreaSqm` fields.
+
+7. **PropertyMediaIT VILLA setup** — `PropertyCreateRequest` for VILLA was missing all four required fields (`surfaceAreaSqm`, `landAreaSqm`, `bedrooms`, `bathrooms`), causing 400 on property creation.
+
+**Files changed (production):**
+- `SmtpEmailSender.java` — `@ConditionalOnProperty` → `@ConditionalOnExpression`
+- `OutboundMessageRepository.java` — CAST fix + `CLOCK_TIMESTAMP()` for native query
+- `CommercialAuditRepository.java` — CAST fix for null LocalDateTime params
+- `call_for_funds.html` — `&mdash;` → `&#8212;`
+- `appel-de-fonds.html` — `&nbsp;` → `&#160;` (3 occurrences)
+
+**Files changed (tests):**
+- `TenantControllerIT.java`, `AuthLoginIT.java` — passwords meeting StrongPassword requirements
+- `PropertyMediaIT.java` — VILLA required fields
+- `PropertyImportIT.java` — `APARTMENT` → `APPARTEMENT` + VILLA fields in CSVs
+- `ContractPdfIT.java` — adminBearer for all setup steps
+- `ReservationPdfIT.java` — adminBearer for setup + `createDepositForAgent()` helper
+
+**Final test count**: 286 integration tests, 0 failures, 0 errors.
+
+---
+
 ## Phase 8 — Audit Findings Closure (2026-03-05) — Complete
 - Added configurable rate limiting via `app.rate-limit.*` (capacity, refill period, message) with validated typed properties.
 - Deprecated v1 payment schedule API controller (`payment/`) and added `Deprecation`/`Sunset`/`Warning`/`Link` headers for migration to `payments/` v2.

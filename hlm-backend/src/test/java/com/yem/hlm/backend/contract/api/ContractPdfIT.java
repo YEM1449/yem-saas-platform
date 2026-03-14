@@ -161,16 +161,16 @@ class ContractPdfIT extends IntegrationTestBase {
     private UUID createDraftContract(String bearer, String buyerEmail) throws Exception {
         String ref = "CPDF-" + (++refCounter);
 
-        // Project
+        // Project — always use adminBearer; agents cannot create projects
         String projBody = mvc.perform(post("/api/projects")
-                        .header("Authorization", bearer)
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"CPdf Project " + ref + "\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         UUID projId = UUID.fromString(objectMapper.readTree(projBody).get("id").asText());
 
-        // Property (DRAFT → ACTIVE)
+        // Property (DRAFT → ACTIVE) — always use adminBearer
         var propReq = new PropertyCreateRequest(
                 PropertyType.VILLA, "CPdf Villa " + ref, ref,
                 new BigDecimal("1800000"), "MAD",
@@ -181,7 +181,7 @@ class ContractPdfIT extends IntegrationTestBase {
                 null, projId, null
         );
         String propBody = mvc.perform(post("/api/properties")
-                        .header("Authorization", bearer)
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(propReq)))
                 .andExpect(status().isCreated())
@@ -189,7 +189,7 @@ class ContractPdfIT extends IntegrationTestBase {
         PropertyResponse prop = objectMapper.readValue(propBody, PropertyResponse.class);
 
         mvc.perform(put("/api/properties/{id}", prop.id())
-                        .header("Authorization", bearer)
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
@@ -197,10 +197,10 @@ class ContractPdfIT extends IntegrationTestBase {
                                         null, null, null))))
                 .andExpect(status().isOk());
 
-        // Contact (buyer)
+        // Contact (buyer) — always use adminBearer
         var cReq = new CreateContactRequest("Marie", "Curie", null, buyerEmail, null, null, null);
         String cBody = mvc.perform(post("/api/contacts")
-                        .header("Authorization", bearer)
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cReq)))
                 .andExpect(status().isCreated())

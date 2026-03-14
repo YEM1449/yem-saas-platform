@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-add-login-lockout-fields
+      author: claude
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: failed_login_attempts
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_until
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: true

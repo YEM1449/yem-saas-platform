@@ -15,3 +15,16 @@ app:
     storage-dir: ${java.io.tmpdir}/hlm-test-media
     max-file-size: 10485760
     allowed-types: image/jpeg,image/png,image/webp,application/pdf
+  rate-limit:
+    portal-link:
+      capacity: 10000
+      refill-period: PT1H
+  security:
+    rate-limit:
+      login:
+        ip-max: 1000
+        key-max: 1000
+        window-seconds: 3600
+    lockout:
+      max-attempts: 10
+      duration-minutes: 1

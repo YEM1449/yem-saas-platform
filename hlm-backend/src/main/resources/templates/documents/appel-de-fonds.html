@@ -67,7 +67,7 @@
           <div class="doc-title">APPEL DE FONDS</div>
           <div class="doc-ref">
             Contrat réf. <span th:text="${model.contractReference}">REF</span>
-            &nbsp;·&nbsp; Appel n°<span th:text="${model.callNumber}">1</span>
+            &#160;·&#160; Appel n°<span th:text="${model.callNumber}">1</span>
           </div>
           <div class="doc-ref" style="margin-top:3pt;">
             <span th:classappend="${model.callStatus == 'ISSUED'  ? 'badge-issued'  :
@@ -180,8 +180,8 @@
   <!-- FOOTER -->
   <div class="footer">
     Document généré le <span th:text="${model.generatedAt}">01/01/2026 00:00</span>
-    &nbsp;·&nbsp; <span th:text="${model.tenantName}">Société</span>
-    &nbsp;·&nbsp; Document non contractuel à titre informatif.
+    &#160;·&#160; <span th:text="${model.tenantName}">Société</span>
+    &#160;·&#160; Document non contractuel à titre informatif.
   </div>
 
 </div>

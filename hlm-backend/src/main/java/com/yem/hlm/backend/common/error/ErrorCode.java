@@ -79,6 +79,10 @@ public enum ErrorCode {
 
     // Rate limiting (429)
     RATE_LIMIT_EXCEEDED,        // 429 — too many requests for this operation
+    LOGIN_RATE_LIMITED,         // 429 — too many login attempts from this IP or identity
+
+    // Account lockout (401)
+    ACCOUNT_LOCKED,             // 401 — account temporarily locked after too many failed attempts
 
     // Server errors (500)
     INTERNAL_ERROR

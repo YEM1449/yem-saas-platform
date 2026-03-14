@@ -16,8 +16,8 @@ public interface CommercialAuditRepository extends JpaRepository<CommercialAudit
     @Query("""
             SELECT e FROM CommercialAuditEvent e
             WHERE e.tenant.id = :tenantId
-              AND (:from IS NULL OR e.occurredAt >= :from)
-              AND (:to IS NULL OR e.occurredAt <= :to)
+              AND (CAST(:from AS LocalDateTime) IS NULL OR e.occurredAt >= :from)
+              AND (CAST(:to   AS LocalDateTime) IS NULL OR e.occurredAt <= :to)
               AND (cast(:correlationType as string) IS NULL OR e.correlationType = :correlationType)
               AND (:correlationId IS NULL OR e.correlationId = :correlationId)
             ORDER BY e.occurredAt DESC
