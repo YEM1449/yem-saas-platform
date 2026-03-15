@@ -10,7 +10,7 @@ RUN ./mvnw dependency:go-offline -q
 
 COPY src/ src/
 # Skip unit tests (run in CI separately); skip integration tests (require DB)
-RUN ./mvnw package -DskipTests -q
+RUN ./mvnw package -DskipTests -Dssl.keystore.skip=true -q
 
 # Explode the fat jar for faster layer-based startup
 RUN java -Djarmode=layertools -jar target/*.jar extract --destination /workspace/layers
