@@ -82,7 +82,7 @@ class PortalMagicLinkEmailIT extends IntegrationTestBase {
 
         // Create the contact that will request a magic link
         var req = new CreateContactRequest("Portal", "Tester", null, "portal-test@example.com",
-                null, null, null);
+                null, null, null, null, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -60,8 +60,6 @@ class DataRetentionSchedulerTest {
     void runRetention_candidatesPresent_callsAnonymize() {
         Contact c1 = mock(Contact.class);
         Contact c2 = mock(Contact.class);
-        when(c1.getId()).thenReturn(UUID.randomUUID());
-        when(c2.getId()).thenReturn(UUID.randomUUID());
 
         when(tenantRepo.findAll()).thenReturn(List.of(tenant));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any()))

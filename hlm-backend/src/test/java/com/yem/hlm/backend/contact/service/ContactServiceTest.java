@@ -66,7 +66,7 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ContactResponse res = service.create(new CreateContactRequest(
-                "John", "Doe", "0612", "john@example.com", null, null, null
+                "John", "Doe", "0612", "john@example.com", null, null, null, null, null, null
         ));
 
         assertThat(res.status()).isEqualTo(ContactStatus.PROSPECT);
@@ -102,6 +102,10 @@ class ContactServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                false,
                 null,
                 null,
                 null

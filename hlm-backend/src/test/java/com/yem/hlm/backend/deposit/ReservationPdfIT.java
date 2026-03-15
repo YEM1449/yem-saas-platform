@@ -215,7 +215,7 @@ class ReservationPdfIT extends IntegrationTestBase {
     }
 
     private ContactResponse createContact(String bearer, String email) throws Exception {
-        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null);
+        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -272,7 +272,7 @@ class ReservationPdfIT extends IntegrationTestBase {
      */
     private UUID createDepositForAgent(User agent, String contactEmail) throws Exception {
         // Create contact via admin API
-        var cReq = new CreateContactRequest("Jean", "Dupont", null, contactEmail, null, null, null);
+        var cReq = new CreateContactRequest("Jean", "Dupont", null, contactEmail, null, null, null, null, null, null);
         String contactJson = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

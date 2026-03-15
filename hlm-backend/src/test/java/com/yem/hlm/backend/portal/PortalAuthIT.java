@@ -55,7 +55,7 @@ class PortalAuthIT extends IntegrationTestBase {
 
         // Create a contact to use as buyer in magic-link requests
         var req = new CreateContactRequest("Portal", "Buyer", null, "portal-buyer@acme.com",
-                null, null, null);
+                null, null, null, null, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

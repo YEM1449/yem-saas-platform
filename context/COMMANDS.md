@@ -74,7 +74,7 @@ docker compose up -d
 ./scripts/smoke-stack.sh
 
 # Auth smoke test (requires running backend)
-TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!Secure' ./scripts/smoke-auth.sh
 
 # Production stack (pulls images from registry)
 IMAGE_TAG=v1.2.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -111,7 +111,7 @@ aws s3 sync ./uploads s3://hlm-media \
 
 ```bash
 # Auth smoke test (requires running backend)
-TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!Secure' ./scripts/smoke-auth.sh
 ```
 
 ## Database / Migrations

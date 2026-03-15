@@ -152,7 +152,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     // =========================================================================
 
     private UUID createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Portal", "Buyer", null, email, null, null, null);
+        var req = new CreateContactRequest("Portal", "Buyer", null, email, null, null, null, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

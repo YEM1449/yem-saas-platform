@@ -6,7 +6,7 @@ Base URL used below: `http://localhost:8080`
 
 ## 1. Prerequisites
 - Backend is running.
-- Seed tenant/user exists (`acme`, `admin@acme.com`, `Admin123!`).
+- Seed tenant/user exists (`acme`, `admin@acme.com`, `Admin123!Secure`).
 - `jq` is installed for response parsing.
 
 ## 2. Prepare environment variables
@@ -14,7 +14,7 @@ Base URL used below: `http://localhost:8080`
 BASE_URL="http://localhost:8080"
 TENANT_KEY="acme"
 EMAIL="admin@acme.com"
-PASSWORD="Admin123!"
+PASSWORD="Admin123!Secure"
 RUN_ID=$(date +%s)
 CONTACT_EMAIL="sara.bennani+$RUN_ID@example.com"
 PROPERTY_REF="LOT-DEMO-$RUN_ID"

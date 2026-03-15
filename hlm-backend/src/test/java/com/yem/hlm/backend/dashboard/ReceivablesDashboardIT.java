@@ -189,7 +189,7 @@ class ReceivablesDashboardIT extends IntegrationTestBase {
     }
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null);
+        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

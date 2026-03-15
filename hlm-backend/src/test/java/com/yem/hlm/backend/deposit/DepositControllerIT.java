@@ -362,7 +362,7 @@ class DepositControllerIT extends IntegrationTestBase {
     // ===== Helpers =====
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null);
+        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)

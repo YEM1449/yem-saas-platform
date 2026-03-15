@@ -178,7 +178,7 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
         UUID contactA = createContactAs(bearerA, "upd-cross@tenant-a.test");
 
         // Tenant B tries to update tenant A's contact → 404
-        var req = new UpdateContactRequest("Hacked", null, null, null, null, null, null);
+        var req = new UpdateContactRequest("Hacked", null, null, null, null, null, null, null, null, null);
         mvc.perform(patch("/api/contacts/{id}", contactA)
                         .header("Authorization", bearerB)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,7 +204,7 @@ class CrossTenantIsolationIT extends IntegrationTestBase {
     // ===== Helpers =====
 
     private UUID createContactAs(String bearer, String email) throws Exception {
-        var req = new CreateContactRequest("Cross", "Tenant", null, email, null, null, null);
+        var req = new CreateContactRequest("Cross", "Tenant", null, email, null, null, null, null, null, null);
         String body = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
