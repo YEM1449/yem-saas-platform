@@ -157,6 +157,37 @@
 			<version>8.10.1</version>
 		</dependency>
 
+		<!-- Redis — optional distributed cache (activated when app.redis.enabled=true) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!-- Testcontainers Redis module — for RedisCacheIT -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>redisstack</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- AWS SDK v2 S3 client — for ObjectStorageMediaStorage / MinIO -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.27.21</version>
+		</dependency>
+
+		<!-- OpenTelemetry — distributed tracing via OTLP exporter -->
+		<!-- Spring Boot 3.x Micrometer OTLP exporter (auto-configures from management.otlp.*) -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-tracing-bridge-otel</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-exporter-otlp</artifactId>
+		</dependency>
+
 		<!-- Structured JSON logging (logstash encoder) -->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>

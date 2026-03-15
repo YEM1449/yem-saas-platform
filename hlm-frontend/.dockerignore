@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+*.md
+Dockerfile
+.dockerignore
+.git
+.gitignore
+proxy.conf.json

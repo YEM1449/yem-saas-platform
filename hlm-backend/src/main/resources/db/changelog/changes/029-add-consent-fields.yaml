@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 029-add-consent-fields
+      author: yem
+      comment: "GDPR / Law 09-08 — consent capture fields and anonymization marker on contact"
+      changes:
+        - addColumn:
+            tableName: contact
+            columns:
+              - column:
+                  name: consent_given
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: consent_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+              - column:
+                  name: consent_method
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: processing_basis
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: data_retention_days
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: anonymized_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true

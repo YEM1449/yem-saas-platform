@@ -64,6 +64,49 @@ cd hlm-frontend && npm run build
 cd hlm-frontend && npm run lint
 ```
 
+## Docker / Container Stack
+
+```bash
+# Start full stack locally (uses docker-compose.override.yml automatically)
+docker compose up -d
+
+# Verify full stack health
+./scripts/smoke-stack.sh
+
+# Auth smoke test (requires running backend)
+TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+
+# Production stack (pulls images from registry)
+IMAGE_TAG=v1.2.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+## Object Storage (S3-compatible)
+
+```bash
+# Configure for MinIO (local docker-compose stack):
+export MEDIA_OBJECT_STORAGE_ENABLED=true
+export MEDIA_OBJECT_STORAGE_ENDPOINT=http://localhost:9000
+export MEDIA_OBJECT_STORAGE_REGION=us-east-1
+export MEDIA_OBJECT_STORAGE_BUCKET=hlm-media
+export MEDIA_OBJECT_STORAGE_ACCESS_KEY=minioadmin
+export MEDIA_OBJECT_STORAGE_SECRET_KEY=minioadmin
+
+# Configure for OVH Object Storage (Gravelines):
+export MEDIA_OBJECT_STORAGE_ENABLED=true
+export MEDIA_OBJECT_STORAGE_ENDPOINT=https://s3.gra.perf.cloud.ovh.net
+export MEDIA_OBJECT_STORAGE_REGION=gra
+export MEDIA_OBJECT_STORAGE_BUCKET=hlm-media
+export MEDIA_OBJECT_STORAGE_ACCESS_KEY=<ovh-s3-access-key>
+export MEDIA_OBJECT_STORAGE_SECRET_KEY=<ovh-s3-secret-key>
+# Then start the backend (no MinIO container needed):
+cd hlm-backend && ./mvnw spring-boot:run
+
+# Migrate existing local uploads to object storage (works with OVH, MinIO, AWS, etc.):
+aws s3 sync ./uploads s3://hlm-media \
+  --endpoint-url https://s3.gra.perf.cloud.ovh.net \
+  --region gra
+```
+
 ## Smoke Tests (scripts/)
 
 ```bash
@@ -102,6 +145,7 @@ openssl s_client -connect <DOMAIN>:443 -tls1_2 | head -20
 |----------|------|---------|
 | Backend CI | backend-ci.yml | push/PR on hlm-backend/** |
 | Frontend CI | frontend-ci.yml | push/PR on hlm-frontend/** |
+| Docker Build | docker-build.yml | push/PR on backend/frontend/compose |
 | Snyk Security | snyk.yml | push/PR (requires SNYK_TOKEN) |
 | Secret Scan | secret-scan.yml | push/PR (audit-only, no fail) |
 
@@ -133,8 +177,14 @@ openssl s_client -connect <DOMAIN>:443 -tls1_2 | head -20
 | `OUTBOX_POLL_INTERVAL_MS` | `30000` | Outbox polling interval |
 | `PAYMENTS_OVERDUE_CRON` | `0 0 6 * * *` | Payment overdue scheduler cron |
 | `REMINDER_CRON` | `0 0 8 * * *` | Reminder scheduler cron |
-| `MEDIA_STORAGE_DIR` | `./uploads` | Local media storage root |
+| `MEDIA_STORAGE_DIR` | `./uploads` | Local media storage root (used when object storage is disabled) |
 | `MEDIA_MAX_FILE_SIZE` | `10485760` | Max media file size (bytes) |
+| `MEDIA_OBJECT_STORAGE_ENABLED` | `false` | `true` activates ObjectStorageMediaStorage (S3-compatible) |
+| `MEDIA_OBJECT_STORAGE_ENDPOINT` | (blank) | Provider URL. Blank = AWS S3 auto-resolve. OVH ex: `https://s3.gra.perf.cloud.ovh.net` |
+| `MEDIA_OBJECT_STORAGE_REGION` | `eu-west-1` | Region code (e.g. `gra`, `fr-par`, `eu-west-1`) |
+| `MEDIA_OBJECT_STORAGE_BUCKET` | `hlm-media` | Bucket / container name |
+| `MEDIA_OBJECT_STORAGE_ACCESS_KEY` | (none) | Provider S3 access key |
+| `MEDIA_OBJECT_STORAGE_SECRET_KEY` | (none) | Provider S3 secret key |
 | `APP_PORTAL_BASE_URL` | `http://localhost:4200` | Base URL used in portal magic-link generation (`app.portal.base-url`) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Allowed CORS origins (prod override strongly recommended) |
 | `SSL_ENABLED` | `false` | Enable embedded Tomcat TLS (Mode A — dev/staging) |

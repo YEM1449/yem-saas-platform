@@ -4,6 +4,7 @@ import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -110,6 +111,43 @@ public class Contact {
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
+    // ===== GDPR / Law 09-08 consent fields =====
+
+    /** Whether the contact has given explicit consent to data processing. */
+    @Setter
+    @Column(name = "consent_given", nullable = false)
+    private boolean consentGiven;
+
+    /** Timestamp when consent was recorded. Set automatically when consentGiven transitions to true. */
+    @Setter
+    @Column(name = "consent_date")
+    private Instant consentDate;
+
+    /** How consent was collected (CRM_ENTRY, PORTAL, PAPER, EMAIL). */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "consent_method", length = 100)
+    private ConsentMethod consentMethod;
+
+    /** Legal basis for processing this contact's personal data. */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "processing_basis", length = 100)
+    private ProcessingBasis processingBasis;
+
+    /**
+     * Contact-level data retention override (in days).
+     * When NULL, the tenant default (app.gdpr.default-retention-days) applies.
+     */
+    @Setter
+    @Column(name = "data_retention_days")
+    private Integer dataRetentionDays;
+
+    /** Set when this contact has been fully anonymized (GDPR Art. 17 erasure). */
+    @Setter
+    @Column(name = "anonymized_at")
+    private Instant anonymizedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -139,6 +177,7 @@ public class Contact {
         this.status = ContactStatus.PROSPECT;
         this.qualified = false;
         this.deleted = false;
+        this.consentGiven = false;
         this.createdBy = actorUserId;
         this.updatedBy = actorUserId;
         syncFullName();

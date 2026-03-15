@@ -3,6 +3,7 @@ package com.yem.hlm.backend.media.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -16,10 +17,11 @@ import java.util.UUID;
 /**
  * Default {@link MediaStorageService} implementation that writes files to the local filesystem.
  *
- * <p>Storage root is configured via {@code app.media.storage-dir} (default {@code ./uploads}).
- * Swap for an S3-backed implementation by providing an {@code @Primary} bean.
+ * <p>Active by default (when {@code app.media.object-storage.enabled} is false or absent).
+ * Replaced by {@link ObjectStorageMediaStorage} when {@code app.media.object-storage.enabled=true}.
  */
 @Service
+@ConditionalOnProperty(name = "app.media.object-storage.enabled", havingValue = "false", matchIfMissing = true)
 public class LocalFileMediaStorage implements MediaStorageService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalFileMediaStorage.class);

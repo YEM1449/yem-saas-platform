@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.contact.api.dto;
 
+import com.yem.hlm.backend.contact.domain.ConsentMethod;
+import com.yem.hlm.backend.contact.domain.ProcessingBasis;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
@@ -18,7 +20,11 @@ public record UpdateContactRequest(
         @Size(max = 500)
         String address,
         @Size(max = 2000)
-        String notes
+        String notes,
+        // GDPR / Law 09-08 consent fields (all nullable — null = do not update)
+        Boolean consentGiven,
+        ConsentMethod consentMethod,
+        ProcessingBasis processingBasis
 ) {
     public UpdateContactRequest {
         firstName = normalizeTrim(firstName);

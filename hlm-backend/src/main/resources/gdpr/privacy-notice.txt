@@ -1,0 +1,43 @@
+NOTICE D'INFORMATION SUR LE TRAITEMENT DES DONNÉES PERSONNELLES
+
+Responsable du traitement : [NOM DE LA SOCIÉTÉ]
+
+Dans le cadre de la gestion de vos prospects et clients immobiliers, [NOM DE LA SOCIÉTÉ] collecte
+et traite les données personnelles suivantes : nom, prénom, adresse e-mail, numéro de téléphone,
+adresse postale et identifiant national.
+
+Finalités du traitement :
+- Gestion de la relation commerciale et suivi des prospects
+- Établissement et exécution des contrats de vente immobilière
+- Envoi de communications commerciales (avec votre consentement)
+
+Bases juridiques (RGPD Art. 6 / Loi 09-08 Art. 4) :
+- Exécution d'un contrat ou de mesures précontractuelles (Art. 6(1)(b) RGPD)
+- Intérêt légitime pour le suivi commercial (Art. 6(1)(f) RGPD)
+- Consentement explicite pour les communications marketing (Art. 6(1)(a) RGPD)
+
+Durée de conservation :
+Vos données sont conservées pendant une durée maximale de 5 ans à compter de votre dernière
+interaction avec notre équipe. Les données liées à un contrat signé sont conservées conformément
+aux obligations légales et comptables applicables (10 ans).
+
+Vos droits (RGPD Art. 15-22 / Loi 09-08 Art. 7) :
+Vous disposez des droits suivants concernant vos données personnelles :
+- Droit d'accès : obtenir une copie de vos données (Art. 15 RGPD)
+- Droit de rectification : corriger des données inexactes (Art. 16 RGPD)
+- Droit à l'effacement : demander la suppression de vos données (Art. 17 RGPD)
+- Droit à la portabilité : recevoir vos données dans un format structuré (Art. 20 RGPD)
+- Droit d'opposition : vous opposer au traitement (Art. 21 RGPD)
+- Droit à la limitation : suspendre le traitement de vos données (Art. 18 RGPD)
+
+Pour exercer vos droits, contactez notre délégué à la protection des données (DPD) :
+E-mail : [EMAIL DPO]
+
+Vous pouvez également introduire une réclamation auprès de :
+- La CNIL (France) : www.cnil.fr
+- La CNDP (Maroc) : www.cndp.ma
+
+Loi applicable : RGPD (UE 2016/679) et Loi 09-08 relative à la protection des personnes
+physiques à l'égard du traitement des données à caractère personnel (Maroc).
+
+Ce texte doit être revu et validé par un conseil juridique avant toute mise en production.

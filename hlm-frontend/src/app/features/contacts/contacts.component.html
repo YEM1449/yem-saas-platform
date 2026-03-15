@@ -17,6 +17,27 @@
   }
 </div>
 
+<!-- ── GDPR Privacy Notice Banner (Art. 13 / Law 09-08 Art. 5) ── -->
+@if (privacyBannerVisible && privacyNotice) {
+  <div class="privacy-banner">
+    <div class="privacy-banner-header">
+      <span class="privacy-banner-title">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin-right:6px">
+          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 5v4M8 10.5v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Notice d'information — Protection des données personnelles
+      </span>
+      <button class="privacy-banner-dismiss" (click)="dismissPrivacyBanner()" aria-label="Dismiss privacy notice">✕</button>
+    </div>
+    <details class="privacy-banner-details">
+      <summary>Afficher la notice complète (RGPD / Loi 09-08)</summary>
+      <pre class="privacy-banner-text">{{ privacyNotice.text }}</pre>
+    </details>
+    <p class="privacy-banner-version">Version {{ privacyNotice.version }} — {{ privacyNotice.lastUpdated }}</p>
+  </div>
+}
+
 <!-- ── Toolbar: search + live count ─────────────────────────── -->
 <div class="toolbar">
   <div class="search-wrap">

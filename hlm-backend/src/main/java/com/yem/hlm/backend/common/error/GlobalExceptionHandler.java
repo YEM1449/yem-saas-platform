@@ -35,6 +35,8 @@ import com.yem.hlm.backend.reservation.service.InvalidReservationStateException;
 import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservationException;
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.tenant.service.TenantKeyAlreadyExistsException;
+import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
+import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -615,6 +617,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(
                 HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ErrorCode.PAYMENT_INVALID_AMOUNT, ex.getMessage(), request.getRequestURI()));
+    }
+
+    // ========== GDPR Errors ==========
+
+    @ExceptionHandler(GdprExportNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleGdprExportNotFound(
+            GdprExportNotFoundException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ErrorCode.GDPR_EXPORT_NOT_FOUND, ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(GdprErasureBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleGdprErasureBlocked(
+            GdprErasureBlockedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.GDPR_ERASURE_BLOCKED, ex.getMessage(), request.getRequestURI()));
     }
 
     // ========== Outbox / Messaging Errors ==========

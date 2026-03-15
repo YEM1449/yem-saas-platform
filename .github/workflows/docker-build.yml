@@ -1,0 +1,191 @@
+name: Docker Build & Push
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'hlm-backend/**'
+      - 'hlm-frontend/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/docker-build.yml'
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push image to registry'
+        required: false
+        default: false
+        type: boolean
+
+# ── Concurrency ────────────────────────────────────────────────────────────────
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Permissions ────────────────────────────────────────────────────────────────
+permissions:
+  contents: read
+  packages: write   # ghcr.io push
+
+jobs:
+  # ── Backend Docker build ────────────────────────────────────────────────────
+  build-backend:
+    name: Build Backend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (backend)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hlm-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build (and push on main/tag)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-backend
+          file: ./hlm-backend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          # Build args can be passed here if needed:
+          # build-args: |
+          #   BUILD_VERSION=${{ github.sha }}
+
+  # ── Frontend Docker build ───────────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (frontend)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hlm-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build (and push on main/tag)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-frontend
+          file: ./hlm-frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+  # ── Compose smoke test (pull request only) ──────────────────────────────────
+  compose-smoke:
+    name: Compose Smoke Test
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create minimal .env for smoke test
+        run: |
+          cat > .env <<'EOF'
+          JWT_SECRET=ci-smoke-test-secret-32-chars-long
+          POSTGRES_DB=hlm
+          POSTGRES_USER=hlm_user
+          POSTGRES_PASSWORD=hlm_pwd
+          REDIS_ENABLED=true
+          MEDIA_OBJECT_STORAGE_ENABLED=false
+          CORS_ALLOWED_ORIGINS=http://localhost
+          IMAGE_TAG=latest
+          EOF
+
+      - name: Build images locally
+        run: |
+          docker compose build --parallel
+
+      - name: Start stack
+        run: |
+          docker compose up -d --wait --timeout 120
+
+      - name: Backend health check
+        run: |
+          for i in $(seq 1 12); do
+            STATUS=$(curl -sf http://localhost:8080/actuator/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','DOWN'))" 2>/dev/null || echo "DOWN")
+            if [ "$STATUS" = "UP" ]; then
+              echo "Backend is UP"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS — waiting..."
+            sleep 10
+          done
+          echo "Backend health check failed"
+          docker compose logs hlm-backend
+          exit 1
+
+      - name: Frontend health check
+        run: |
+          curl -sf http://localhost/ -o /dev/null && echo "Frontend OK"
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v

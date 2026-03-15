@@ -10,6 +10,7 @@ All workflows are in [`.github/workflows/`](../.github/workflows/). Each is path
 |----------|---------|------|------|
 | `backend-ci.yml` | push/PR on `hlm-backend/**` | Unit tests → Package → Integration tests | Blocks merge on failure |
 | `frontend-ci.yml` | push/PR on `hlm-frontend/**` | Tests (headless) → Build | Blocks merge on failure |
+| `docker-build.yml` | push/PR on backend/frontend/compose | Build images → Push to ghcr.io → Compose smoke test (PR) | Blocks on build or smoke failure |
 | `snyk.yml` | push/PR + weekly Monday 07:00 UTC | OSS dep scan + Code SAST | Blocks on HIGH+ vulns (if SNYK_TOKEN set) |
 | `secret-scan.yml` | push/PR on backend/frontend | Pattern-based secret audit | Audit-only (never fails build) |
 
@@ -116,44 +117,53 @@ Weekly Snyk cron scan is enabled: Monday 07:00 UTC.
 
 ## Release Process
 
-> No automated release pipeline is currently configured. PRs merge to `main` via GitHub. Deployment is manual.
+**Container-based release (recommended — Sprint 4 onwards):**
 
-**Recommended release steps:**
 1. Ensure all CI jobs are green on the PR.
-2. Merge to `main` — Snyk monitor snapshots are captured automatically.
+2. Merge to `main` — `docker-build.yml` automatically builds and pushes images to `ghcr.io`.
+3. Tag the release: `git tag v1.2.3 && git push origin v1.2.3` — versioned images published.
+4. On the target host:
+   ```bash
+   IMAGE_TAG=v1.2.3 docker compose \
+     -f docker-compose.yml \
+     -f docker-compose.prod.yml \
+     up -d
+   ```
+5. Liquibase runs migrations automatically on backend startup.
+6. Run smoke test: `./scripts/smoke-stack.sh --backend-url https://your-server`.
+
+**JAR-based release (legacy / non-Docker):**
+1. Ensure all CI jobs are green on the PR.
+2. Merge to `main`.
 3. Build the production JAR: `cd hlm-backend && ./mvnw -B -DskipTests package`.
 4. Build the Angular bundle: `cd hlm-frontend && npm run build`.
 5. Deploy JAR + static assets to your target environment.
-6. Liquibase runs migrations automatically on backend startup.
 
 ## Production Deployment Notes
 
 ### Media Storage (OP-007)
 
-The `media/` package uses `LocalFileMediaStorage` by default (files written to `MEDIA_STORAGE_DIR`, default `./uploads`). This is **not suitable for horizontal scaling or cloud deployments**.
+The `media/` package uses `LocalFileMediaStorage` by default. Enable S3-compatible object storage for production:
 
-**Cloud swap**: `MediaStorageService` is an interface. Provide a `@Primary @Bean` implementing it:
-
-```java
-// Example: swap to S3 without touching existing code
-@Primary
-@Bean
-public MediaStorageService s3MediaStorageService(AmazonS3 s3, ...) {
-    return new S3MediaStorageService(s3, bucketName);
-}
+```env
+MEDIA_OBJECT_STORAGE_ENABLED=true
+MEDIA_OBJECT_STORAGE_ENDPOINT=                   # blank = AWS S3; set for OVH/Scaleway/Hetzner/MinIO
+MEDIA_OBJECT_STORAGE_ACCESS_KEY=your-access-key
+MEDIA_OBJECT_STORAGE_SECRET_KEY=your-secret-key
+MEDIA_OBJECT_STORAGE_BUCKET=hlm-media
+MEDIA_OBJECT_STORAGE_REGION=eu-west-1
 ```
 
-| Deployment | `MEDIA_STORAGE_DIR` | Notes |
-|------------|---------------------|-------|
-| Single-node / dev | `./uploads` (default) | Files on local disk |
-| Docker | Mount a volume | `MEDIA_STORAGE_DIR=/data/uploads` |
-| Cloud (S3/GCS) | N/A — swap bean | Implement `MediaStorageService` for your provider |
+`ObjectStorageMediaStorage` creates the bucket automatically on startup if it does not exist.
+See [object-storage.md](object-storage.md) for provider-specific setup (OVH, Scaleway, Hetzner, Cloudflare R2, MinIO, AWS S3).
 
-Required env vars for local storage:
-```bash
-MEDIA_STORAGE_DIR=/var/hlm/uploads   # writable directory for the JVM process
-MEDIA_MAX_FILE_SIZE=10485760         # bytes; default 10 MB
-```
+| Deployment | Storage Mode | Notes |
+|------------|-------------|-------|
+| Single-node / dev | `MEDIA_OBJECT_STORAGE_ENABLED=false` (local disk) | `MEDIA_STORAGE_DIR=./uploads` |
+| Docker (single node) | Mount a volume | `MEDIA_STORAGE_DIR=/data/uploads` |
+| Docker (multi-instance) | `MEDIA_OBJECT_STORAGE_ENABLED=true` + MinIO container | MinIO in `docker-compose.yml` |
+| OVH / Scaleway / Hetzner | `MEDIA_OBJECT_STORAGE_ENABLED=true` + provider endpoint | See `object-storage.md` |
+| AWS S3 | `MEDIA_OBJECT_STORAGE_ENABLED=true`, leave `ENDPOINT` blank | SDK auto-resolves |
 
 ### PDF Generation Memory (OP-008)
 
@@ -190,9 +200,26 @@ JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
 - [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` set
 - [ ] Send a test SMS via `POST /api/messages`
 
+### Redis (distributed cache — multi-instance)
+- [ ] `REDIS_ENABLED=true` set in production `.env`
+- [ ] `REDIS_PASSWORD` set to a strong password
+- [ ] Redis container or managed Redis endpoint reachable from backend
+
+### Object Storage (S3-compatible — OVH / Scaleway / Hetzner / MinIO)
+- [ ] `MEDIA_OBJECT_STORAGE_ENABLED=true` set in production `.env`
+- [ ] `MEDIA_OBJECT_STORAGE_ACCESS_KEY`, `MEDIA_OBJECT_STORAGE_SECRET_KEY`, `MEDIA_OBJECT_STORAGE_BUCKET` set
+- [ ] Provider endpoint set (`MEDIA_OBJECT_STORAGE_ENDPOINT`) — leave blank only for AWS S3
+- [ ] Bucket created (or `ObjectStorageMediaStorage` will create it on startup for MinIO)
+
+### GDPR / Data Protection
+- [ ] `privacy-notice.txt` updated: `[NOM DE LA SOCIÉTÉ]` and `[EMAIL DPO]` replaced
+- [ ] `DataRetentionScheduler` running: check log at 02:00 for `[RETENTION]`
+- [ ] DPO contact reachable at configured email
+
 ### Scheduled tasks
 - [ ] Verify `PortalTokenCleanupScheduler` running: check log at 03:00 for `[PORTAL-CLEANUP]`
 - [ ] Verify overdue payment scheduler running: check log at 06:00
+- [ ] Verify GDPR retention sweep running: check log at 02:00 for `[RETENTION]`
 
 ## .snyk Policy File
 

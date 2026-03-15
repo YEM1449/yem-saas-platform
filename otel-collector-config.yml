@@ -1,0 +1,73 @@
+# ── OpenTelemetry Collector Configuration ─────────────────────────────────────
+# Used when running the full observability stack alongside docker-compose.yml.
+#
+# To add to docker-compose.yml, uncomment the otel-collector service block in
+# docker-compose.yml (or add it to docker-compose.override.yml for local dev).
+#
+# Quick start:
+#   docker run --rm -p 4317:4317 -p 4318:4318 \
+#     -v $(pwd)/otel-collector-config.yml:/etc/otelcol/config.yaml \
+#     otel/opentelemetry-collector-contrib:latest
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317   # gRPC (used by Java agent default)
+      http:
+        endpoint: 0.0.0.0:4318   # HTTP/Protobuf (used by Spring Boot Micrometer OTLP)
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  # Redact sensitive attributes before export
+  attributes:
+    actions:
+      - key: db.user
+        action: delete
+      - key: db.statement
+        pattern: "(?i)(password|secret|token)=[^&]*"
+        action: hash
+
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 15
+
+exporters:
+  # ── Debug (stdout) — useful for local development ──────────────────────────
+  debug:
+    verbosity: basic
+
+  # ── Jaeger (optional — for local UI) ───────────────────────────────────────
+  # Uncomment and set JAEGER_ENDPOINT if you run Jaeger locally.
+  # otlp/jaeger:
+  #   endpoint: http://jaeger:4317
+  #   tls:
+  #     insecure: true
+
+  # ── Production: forward to a managed OTLP-compatible backend ───────────────
+  # (e.g. Grafana Cloud, New Relic, Honeycomb, Datadog)
+  # otlp/prod:
+  #   endpoint: https://otlp.yourbackend.com:4317
+  #   headers:
+  #     Authorization: "Bearer ${OTEL_BACKEND_TOKEN}"
+
+service:
+  pipelines:
+    traces:
+      receivers:  [otlp]
+      processors: [memory_limiter, batch]
+      exporters:  [debug]
+
+    metrics:
+      receivers:  [otlp]
+      processors: [memory_limiter, batch]
+      exporters:  [debug]
+
+    logs:
+      receivers:  [otlp]
+      processors: [memory_limiter, batch]
+      exporters:  [debug]

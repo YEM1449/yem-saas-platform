@@ -77,6 +77,10 @@ public enum ErrorCode {
     PROPERTY_NOT_AVAILABLE_FOR_RESERVATION, // 409 — property already reserved, deposited or sold
     INVALID_RESERVATION_STATE,          // 409 — action not permitted in current reservation state
 
+    // GDPR / Law 09-08 errors
+    GDPR_ERASURE_BLOCKED,       // 409 — contact has SIGNED contracts; erasure not permitted
+    GDPR_EXPORT_NOT_FOUND,      // 404 — contact not found for data export
+
     // Rate limiting (429)
     RATE_LIMIT_EXCEEDED,        // 429 — too many requests for this operation
     LOGIN_RATE_LIMITED,         // 429 — too many login attempts from this IP or identity

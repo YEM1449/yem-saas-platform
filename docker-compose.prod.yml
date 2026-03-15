@@ -1,0 +1,78 @@
+# ── Production Hardening Overlay ─────────────────────────────────────────────
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This file:
+#   - Removes exposed dev ports (postgres, redis, minio API)
+#   - Enforces resource limits
+#   - Enables Redis distributed cache
+#   - Sets restart=always (survive host reboot)
+#   - Pulls images from a registry instead of building locally
+
+services:
+
+  postgres:
+    restart: always
+    ports: []          # Not exposed externally — accessed only within hlm-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  redis:
+    restart: always
+    ports: []           # Not exposed externally
+    command: >
+      redis-server
+      --save 60 1
+      --loglevel warning
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in production}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  minio:
+    restart: always
+    ports:
+      - "9001:9001"   # Console kept accessible (restrict via firewall in prod)
+    # API port 9000 only reachable from hlm-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  hlm-backend:
+    # Pull pre-built image from registry instead of building on server
+    build: !reset null
+    image: ${REGISTRY:-ghcr.io/yem1449}/hlm-backend:${IMAGE_TAG:?IMAGE_TAG must be set}
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      REDIS_ENABLED: "true"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      MEDIA_OBJECT_STORAGE_ENABLED: "true"
+      FORWARD_HEADERS_STRATEGY: FRAMEWORK
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  hlm-frontend:
+    build: !reset null
+    image: ${REGISTRY:-ghcr.io/yem1449}/hlm-frontend:${IMAGE_TAG:?IMAGE_TAG must be set}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M

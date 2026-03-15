@@ -52,6 +52,23 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
             @Param("convertedStatuses") List<ContactStatus> convertedStatuses
     );
 
+    /**
+     * Finds soft-deleted contacts that have not yet been anonymized and whose
+     * {@code updatedAt} is older than the given retention cutoff.
+     * Used by {@link com.yem.hlm.backend.gdpr.scheduler.DataRetentionScheduler}.
+     */
+    @Query("""
+            SELECT c FROM Contact c
+            WHERE c.tenant.id     = :tenantId
+              AND c.deleted       = true
+              AND c.anonymizedAt  IS NULL
+              AND c.updatedAt     < :cutoff
+            """)
+    List<Contact> findRetentionCandidates(
+            @Param("tenantId") UUID tenantId,
+            @Param("cutoff")   java.time.LocalDateTime cutoff
+    );
+
     @Query("""
             select c from Contact c
             where c.tenant.id = :tenantId

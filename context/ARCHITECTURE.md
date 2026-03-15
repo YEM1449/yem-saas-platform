@@ -138,7 +138,11 @@ POST /api/reservations/{id}/convert-to-deposit → ACTIVE → CONVERTED_TO_DEPOS
 Migration history: `docs/v2/payment-v1-retirement-plan.v2.md`.
 
 ## Storage + PDF Notes
-- `MediaStorageService` abstraction with `LocalFileMediaStorage` default (`MEDIA_STORAGE_DIR`, `MEDIA_MAX_FILE_SIZE`).
+- `MediaStorageService` abstraction: `LocalFileMediaStorage` default (`MEDIA_OBJECT_STORAGE_ENABLED=false`)
+  | `ObjectStorageMediaStorage` (`MEDIA_OBJECT_STORAGE_ENABLED=true`).
+- S3 protocol with mandatory path-style addressing (`pathStyleAccessEnabled=true`) — compatible with:
+  OVH Object Storage, Scaleway, Hetzner, Cloudflare R2, MinIO (self-hosted), and AWS S3.
+  Set `MEDIA_OBJECT_STORAGE_ENDPOINT` to the provider URL. Leave blank only for AWS S3 (SDK auto-resolves).
 - PDF generation is synchronous in-memory (`DocumentGenerationService`, OpenHtmlToPDF fast mode); tune heap for production.
 
 ## Scheduled Tasks

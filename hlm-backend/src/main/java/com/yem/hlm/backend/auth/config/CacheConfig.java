@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.auth.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -9,8 +10,15 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Cache configuration — Caffeine (in-process) variant.
+ *
+ * <p>Active by default. When {@code app.redis.enabled=true} this bean is suppressed
+ * and {@link RedisCacheConfig} provides a distributed {@code RedisCacheManager} instead.
+ */
 @Configuration
 @EnableCaching
+@ConditionalOnProperty(name = "app.redis.enabled", havingValue = "false", matchIfMissing = true)
 public class CacheConfig {
 
     public static final String USER_SECURITY_CACHE = "userSecurity";
