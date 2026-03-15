@@ -163,10 +163,10 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 
-		<!-- Testcontainers Redis module — for RedisCacheIT -->
+		<!-- Testcontainers MinIO module — for ObjectStorageIT -->
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>redisstack</artifactId>
+			<artifactId>minio</artifactId>
 			<scope>test</scope>
 		</dependency>
 
