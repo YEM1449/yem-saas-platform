@@ -30,9 +30,12 @@
 		<java.version>21</java.version>
 		<ssl.keystore.skip>false</ssl.keystore.skip>
 		<!-- Override BOM-managed Liquibase version to fix commons-lang3 CWE-674 (CVSS 8.8)
-		     Spring Boot 3.5.x BOM manages 4.31.x; 5.0.0 is the first version with the fix.
-		     Snyk: https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-... -->
+		     Spring Boot 3.5.x BOM manages 4.31.x; 5.0.0 is the first version with the fix. -->
 		<liquibase.version>5.0.0</liquibase.version>
+		<!-- Override BOM-managed Kotlin version to fix kotlin-stdlib vulnerability.
+		     Spring Boot imports kotlin-bom keyed on this property; setting it here
+		     pins every org.jetbrains.kotlin:* transitive to 2.1.0. -->
+		<kotlin.version>2.1.0</kotlin.version>
 	</properties>
 	<dependencies>
 		<dependency>
