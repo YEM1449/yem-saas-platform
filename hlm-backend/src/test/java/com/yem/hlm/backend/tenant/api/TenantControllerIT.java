@@ -105,7 +105,7 @@ class TenantControllerIT extends IntegrationTestBase {
         User owner = userRepository.save(new User(
                 tenant,
                 "owner@acme.com",
-                passwordEncoder.encode("supersecret")
+                passwordEncoder.encode("SuperSecret123!")
         ));
 
         // “senior check”: on valide explicitement que le token porte les bons claims
@@ -127,7 +127,7 @@ class TenantControllerIT extends IntegrationTestBase {
         User owner = userRepository.save(new User(
                 tenant,
                 "owner@acme.com",
-                passwordEncoder.encode("supersecret")
+                passwordEncoder.encode("SuperSecret123!")
         ));
 
         // Token valide mais tid != tenantId demandé => 403 attendu (contrôle multi-tenant)

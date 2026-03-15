@@ -43,7 +43,7 @@ class AuthLoginIT extends IntegrationTestBase {
             {
               "tenantKey": "acme",
               "email": "admin@acme.com",
-              "password": "Admin123!"
+              "password": "Admin123!Secure"
             }
             """;
 
@@ -76,7 +76,7 @@ class AuthLoginIT extends IntegrationTestBase {
             {
               "tenantKey": "acme",
               "email": "admin@acme.com",
-              "password": "WrongPassword!"
+              "password": "WrongPass123!"
             }
             """;
 
@@ -96,7 +96,7 @@ class AuthLoginIT extends IntegrationTestBase {
             {
               "tenantKey": "acme",
               "email": "nobody@acme.com",
-              "password": "Admin123!"
+              "password": "Admin123!Secure"
             }
             """;
 
@@ -196,7 +196,7 @@ class AuthLoginIT extends IntegrationTestBase {
             {
               "tenantKey": "wrongTenant",
               "email": "admin@acme.com",
-              "password": "Admin123!"
+              "password": "Admin123!Secure"
             }
             """;
 

@@ -51,7 +51,7 @@ class TokenRevocationIT extends IntegrationTestBase {
         tenant = tenantRepository.save(
                 new Tenant("rev-" + UUID.randomUUID().toString().substring(0, 8), "Revocation Tenant"));
 
-        admin = new User(tenant, "admin@rev.test", passwordEncoder.encode("Admin123!"));
+        admin = new User(tenant, "admin@rev.test", passwordEncoder.encode("Admin123!Secure"));
         admin.setRole(UserRole.ROLE_ADMIN);
         admin = userRepository.save(admin);
 
@@ -152,14 +152,14 @@ class TokenRevocationIT extends IntegrationTestBase {
     @Test
     void disableUser_preventsLogin() throws Exception {
         // Create user with real password
-        User target = new User(tenant, "login-test@rev.test", passwordEncoder.encode("Test123!"));
+        User target = new User(tenant, "login-test@rev.test", passwordEncoder.encode("TestPass123!"));
         target.setRole(UserRole.ROLE_AGENT);
         target = userRepository.save(target);
 
         // 1) User can log in
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"Test123!\"}"))
+                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
@@ -173,7 +173,7 @@ class TokenRevocationIT extends IntegrationTestBase {
         // 3) Login attempt fails → 401
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"Test123!\"}"))
+                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -217,7 +217,7 @@ class TokenRevocationIT extends IntegrationTestBase {
 
     @Test
     void resetPassword_incrementsTokenVersion_oldTokenRejected() throws Exception {
-        User target = new User(tenant, "reset-rev@rev.test", passwordEncoder.encode("OldPass1!"));
+        User target = new User(tenant, "reset-rev@rev.test", passwordEncoder.encode("OldPass123!Sec"));
         target.setRole(UserRole.ROLE_AGENT);
         target = userRepository.save(target);
 
