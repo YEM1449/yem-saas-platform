@@ -275,4 +275,18 @@
 		</plugins>
 	</build>
 
+	<profiles>
+		<profile>
+			<id>test-keystore-exists</id>
+			<activation>
+				<file>
+					<exists>src/test/resources/ssl/hlm-dev.p12</exists>
+				</file>
+			</activation>
+			<properties>
+				<ssl.keystore.skip>true</ssl.keystore.skip>
+			</properties>
+		</profile>
+	</profiles>
+
 </project>
