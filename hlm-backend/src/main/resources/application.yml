@@ -32,12 +32,33 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 server:
-  port: 8080
-  # Trust X-Forwarded-For only when it arrives from a known private-network proxy (Tomcat RemoteIpValve).
-  # This prevents attackers from spoofing their IP by sending arbitrary X-Forwarded-For headers.
-  forward-headers-strategy: native
+  port: ${SERVER_PORT:8080}
+  # Trust forwarded headers only when behind a known reverse proxy.
+  # NONE = don't process forwarded headers (default, safe for direct exposure).
+  # FRAMEWORK = trust X-Forwarded-Proto from Nginx/LB (set in production).
+  # NATIVE = use Tomcat RemoteIpValve (legacy default).
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:NONE}
+
+  # TLS — enabled when SSL_ENABLED=true
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEYSTORE_PATH:classpath:ssl/hlm-dev.p12}
+    key-store-type: PKCS12
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:changeit}
+    key-alias: ${SSL_KEY_ALIAS:hlm-dev}
+    protocol: TLS
+    enabled-protocols: TLSv1.2,TLSv1.3
+    ciphers: >
+      TLS_AES_256_GCM_SHA384,
+      TLS_AES_128_GCM_SHA256,
+      TLS_CHACHA20_POLY1305_SHA256,
+      TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+      TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 
 management:
   endpoints:
@@ -76,6 +97,17 @@ app:
     username: ${EMAIL_USER:}
     password: ${EMAIL_PASSWORD:}
     from: ${EMAIL_FROM:noreply@example.com}
+
+  # SMS provider (Twilio — optional; NoopSmsSender used when TWILIO_ACCOUNT_SID is not set)
+  sms:
+    account-sid:  ${TWILIO_ACCOUNT_SID:}
+    auth-token:   ${TWILIO_AUTH_TOKEN:}
+    from-number:  ${TWILIO_FROM:}
+
+  # Portal client-facing configuration
+  portal:
+    base-url: ${PORTAL_BASE_URL:http://localhost:4200}
+    cleanup-cron: ${PORTAL_CLEANUP_CRON:0 0 3 * * *}
 
   payments:
     # Daily cron for marking overdue payment calls (default 06:00)

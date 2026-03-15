@@ -3,6 +3,7 @@ package com.yem.hlm.backend.auth.security;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.auth.service.SecurityAuditLogger;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,6 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    @Value("${server.ssl.enabled:false}")
+    private boolean sslEnabled;
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -28,17 +32,25 @@ public class SecurityConfig {
     ) throws Exception {
         var jwtFilter = new JwtAuthenticationFilter(jwtProvider, userSecurityCacheService, securityAuditLogger);
 
-        return http
+        http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                .headers(h -> h
-                        .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"))
-                        .frameOptions(fo -> fo.deny())
-                        .httpStrictTransportSecurity(hsts -> hsts
+                .headers(h -> {
+                    h.contentSecurityPolicy(csp -> csp.policyDirectives(
+                            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"));
+                    h.frameOptions(fo -> fo.deny());
+                    // HSTS is only meaningful (and safe) when the connection is already over TLS.
+                    // Emitting it over plain HTTP would cause browsers to block future plain-HTTP
+                    // access, which is wrong if TLS is terminated externally.
+                    if (sslEnabled) {
+                        h.httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
-                                .maxAgeInSeconds(31536000))
-                )
+                                .maxAgeInSeconds(31536000)
+                                .preload(true));
+                    } else {
+                        h.httpStrictTransportSecurity(hsts -> hsts.disable());
+                    }
+                })
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -69,7 +81,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 }

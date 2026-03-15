@@ -68,7 +68,7 @@
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Avg Res. Age (days)</span>
-        <span class="kpi-value">{{ summary.avgReservationAgeDays != null ? (summary.avgReservationAgeDays + ' d') : '—' }}</span>
+        <span class="kpi-value">{{ summary.avgReservationAgeDays !== null ? (summary.avgReservationAgeDays + ' d') : '—' }}</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Conversion Rate</span>
@@ -76,7 +76,7 @@
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Avg Days to Sale</span>
-        <span class="kpi-value">{{ summary.avgDaysDepositToSale != null ? (summary.avgDaysDepositToSale + ' d') : '—' }}</span>
+        <span class="kpi-value">{{ summary.avgDaysDepositToSale !== null ? (summary.avgDaysDepositToSale + ' d') : '—' }}</span>
       </div>
       <div class="kpi-card accent-orange">
         <span class="kpi-label">Property Holds</span>
@@ -197,11 +197,11 @@
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
           <div class="kpi-card" style="min-width:120px">
             <span class="kpi-label">Avg Discount</span>
-            <span class="kpi-value">{{ summary.avgDiscountPercent != null ? (summary.avgDiscountPercent + ' %') : '—' }}</span>
+            <span class="kpi-value">{{ summary.avgDiscountPercent !== null ? (summary.avgDiscountPercent + ' %') : '—' }}</span>
           </div>
           <div class="kpi-card" style="min-width:120px">
             <span class="kpi-label">Max Discount</span>
-            <span class="kpi-value">{{ summary.maxDiscountPercent != null ? (summary.maxDiscountPercent + ' %') : '—' }}</span>
+            <span class="kpi-value">{{ summary.maxDiscountPercent !== null ? (summary.maxDiscountPercent + ' %') : '—' }}</span>
           </div>
         </div>
         @if (summary.discountByAgent.length === 0) {
@@ -235,7 +235,7 @@
                   <td>{{ r.source }}</td>
                   <td class="num">{{ r.count }}</td>
                   <td class="num">{{ r.convertedCount }}</td>
-                  <td class="num">{{ r.conversionRate != null ? ((r.conversionRate * 100).toFixed(1) + '%') : '—' }}</td>
+                  <td class="num">{{ r.conversionRate !== null ? ((r.conversionRate * 100).toFixed(1) + '%') : '—' }}</td>
                 </tr>
               }
             </tbody>

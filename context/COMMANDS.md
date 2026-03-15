@@ -26,6 +26,22 @@ cd hlm-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 # If port 8080 is in use: fuser -k 8080/tcp
 ```
 
+## TLS / HTTPS
+
+```bash
+# Generate dev TLS certificate
+bash scripts/generate-dev-cert.sh
+
+# Start backend with TLS (dev)
+SSL_ENABLED=true SERVER_PORT=8443 cd hlm-backend && ./mvnw spring-boot:run
+
+# Verify HTTPS is working
+curl -k https://localhost:8443/actuator/health
+
+# Run TLS integration test
+cd hlm-backend && ./mvnw failsafe:integration-test -Dit.test=TlsConfigIT
+```
+
 ## Frontend (hlm-frontend/)
 
 ```bash
@@ -43,6 +59,9 @@ cd hlm-frontend && npm test -- --watch=false --browsers=ChromeHeadless --code-co
 
 # Production build
 cd hlm-frontend && npm run build
+
+# Run ESLint
+cd hlm-frontend && npm run lint
 ```
 
 ## Smoke Tests (scripts/)
@@ -59,6 +78,22 @@ TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.s
 # Changelog master: hlm-backend/src/main/resources/db/changelog/db.changelog-master.yaml
 # New changesets: add files numbered sequentially (e.g., 028_*.yaml)
 # NEVER edit applied changesets — always ADD new ones
+```
+
+## Ops (Nginx / TLS)
+
+```bash
+# Check Nginx config syntax
+nginx -t
+
+# Reload Nginx (cert renewal / config change)
+nginx -s reload
+
+# Get Let's Encrypt cert
+certbot certonly --standalone -d <DOMAIN> --agree-tos -m admin@<DOMAIN>
+
+# Test TLS from command line
+openssl s_client -connect <DOMAIN>:443 -tls1_2 | head -20
 ```
 
 ## CI Workflows (GitHub Actions)
@@ -102,3 +137,14 @@ TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.s
 | `MEDIA_MAX_FILE_SIZE` | `10485760` | Max media file size (bytes) |
 | `APP_PORTAL_BASE_URL` | `http://localhost:4200` | Base URL used in portal magic-link generation (`app.portal.base-url`) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Allowed CORS origins (prod override strongly recommended) |
+| `SSL_ENABLED` | `false` | Enable embedded Tomcat TLS (Mode A — dev/staging) |
+| `SERVER_PORT` | `8080` | HTTP or HTTPS listener port |
+| `SSL_KEYSTORE_PATH` | `classpath:ssl/hlm-dev.p12` | PKCS12 keystore path (Mode A only) |
+| `SSL_KEYSTORE_PASSWORD` | `changeit` | Keystore password (Mode A only) |
+| `SSL_KEY_ALIAS` | `hlm-dev` | Key alias inside keystore (Mode A only) |
+| `HTTP_REDIRECT_PORT` | `8080` | HTTP port for HTTP→HTTPS redirect connector (Mode A only) |
+| `FORWARD_HEADERS_STRATEGY` | `NONE` | Set to `FRAMEWORK` behind Nginx or any reverse proxy |
+| `TWILIO_ACCOUNT_SID` | (none) | Twilio SID — blank activates NoopSmsSender |
+| `TWILIO_AUTH_TOKEN` | (none) | Twilio auth token |
+| `TWILIO_FROM` | (none) | Twilio sender phone number |
+| `PORTAL_CLEANUP_CRON` | `0 0 3 * * *` | Cron expression for PortalTokenCleanupScheduler |

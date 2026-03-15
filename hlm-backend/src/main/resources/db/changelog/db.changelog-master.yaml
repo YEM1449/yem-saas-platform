@@ -55,3 +55,5 @@ databaseChangeLog:
       file: db/changelog/changes/026-create-property-reservation.yaml
   - include:
       file: db/changelog/changes/027-add-login-lockout-fields.yaml
+  - include:
+      file: db/changelog/changes/028-drop-v1-payment-tables.yaml

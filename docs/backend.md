@@ -17,6 +17,21 @@
 | `DB_PASSWORD` | `hlm_pwd` | Database password |
 | `JWT_SECRET` | *(required)* | HMAC secret used to sign JWTs |
 | `JWT_TTL_SECONDS` | `3600` | Token TTL in seconds |
+| `SSL_ENABLED` | `false` | Enable embedded Tomcat TLS (dev/staging) |
+| `SERVER_PORT` | `8080` | HTTP or HTTPS port (use 8443 with TLS) |
+| `SSL_KEYSTORE_PATH` | (none) | Path to PKCS12 keystore |
+| `SSL_KEYSTORE_PASSWORD` | (none) | Keystore password |
+| `FORWARD_HEADERS_STRATEGY` | `NONE` | Set to `FRAMEWORK` behind Nginx/LB |
+| `EMAIL_HOST` | (none) | SMTP host — blank = Noop (log-only) |
+| `EMAIL_PORT` | `587` | SMTP port |
+| `EMAIL_USER` | (none) | SMTP username |
+| `EMAIL_PASSWORD` | (none) | SMTP password |
+| `EMAIL_FROM` | `noreply@hlm.local` | Sender address |
+| `TWILIO_ACCOUNT_SID` | (none) | Twilio SID — blank = Noop (log-only) |
+| `TWILIO_AUTH_TOKEN` | (none) | Twilio auth token |
+| `TWILIO_FROM` | (none) | Twilio sender phone number |
+| `PORTAL_BASE_URL` | `http://localhost:4200` | Must be `https://` in production |
+| `PORTAL_CLEANUP_CRON` | `0 0 3 * * *` | Cron for portal token cleanup |
 
 The backend reads these values from `application.yml` and fails fast if `JWT_SECRET` is blank.
 
@@ -73,6 +88,16 @@ cd hlm-backend
 ```
 
 Integration tests require Docker for Testcontainers.
+
+## Email / SMS Providers
+
+**Email:** `SmtpEmailSender` activates when `EMAIL_HOST` is set (via `spring.mail.*` bridge).
+Falls back to `NoopEmailSender` (logs only) when `EMAIL_HOST` is blank (dev default).
+
+**SMS:** `TwilioSmsSender` activates when `TWILIO_ACCOUNT_SID` is set.
+Falls back to `NoopSmsSender` (logs only) when not configured.
+
+Portal magic-link email uses `EmailSender` directly (not via outbox) from `PortalAuthService`.
 
 ## API references
 - Full endpoint catalog: [api.md](api.md)
