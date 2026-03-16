@@ -43,11 +43,8 @@ jobs:
 
       - name: Install Chrome
         run: |
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
-            | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] \
-            https://dl.google.com/linux/chrome/deb/ stable main" \
-            | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update -q
           sudo apt-get install -y google-chrome-stable
         working-directory: ${{ github.workspace }}
@@ -56,6 +53,8 @@ jobs:
         run: npm ci
 
       - name: Run unit tests (CI mode + coverage)
+        env:
+          CHROME_BIN: /usr/bin/google-chrome-stable
         run: npm test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage --progress=false
 
       - name: Build
