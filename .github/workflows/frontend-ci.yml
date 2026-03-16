@@ -41,11 +41,22 @@ jobs:
           cache: npm
           cache-dependency-path: hlm-frontend/package-lock.json
 
+      - name: Install Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
+            | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] \
+            https://dl.google.com/linux/chrome/deb/ stable main" \
+            | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -q
+          sudo apt-get install -y google-chrome-stable
+        working-directory: ${{ github.workspace }}
+
       - name: Install deps
         run: npm ci
 
       - name: Run unit tests (CI mode + coverage)
-        run: npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --progress=false
+        run: npm test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage --progress=false
 
       - name: Build
         run: npm run build
