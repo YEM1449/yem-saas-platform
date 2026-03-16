@@ -185,14 +185,14 @@
             <td>{{ d.createdAt }}</td>
             <td class="dep-actions">
               <button class="pdf-btn" (click)="downloadReservationPdf(d)">PDF</button>
-              @if (prospect?.email) {
+              @if (prospect.email) {
                 <button class="msg-btn msg-email"
                         [disabled]="sendingDepositId === d.id"
                         (click)="sendDepositMessage(d, 'EMAIL')">
                   {{ sendingDepositId === d.id ? '...' : 'Email' }}
                 </button>
               }
-              @if (prospect?.phone) {
+              @if (prospect.phone) {
                 <button class="msg-btn msg-sms"
                         [disabled]="sendingDepositId === d.id"
                         (click)="sendDepositMessage(d, 'SMS')">
