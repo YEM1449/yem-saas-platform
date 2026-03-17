@@ -157,15 +157,19 @@ jobs:
 
       - name: Build images locally
         run: |
-          docker compose build --parallel
+          docker compose -f docker-compose.yml build --parallel
 
       - name: Start stack
+        # Use only docker-compose.yml (not override) so the CI stack is clean:
+        # no mailhog, no JDWP agent, no local Spring profile.
+        # Timeout 300s: backend (start_period 60s + up to 90s for Liquibase + Spring Boot)
+        # + frontend (depends on backend healthy + its own start_period 30s).
         run: |
-          docker compose up -d --wait --timeout 120
+          docker compose -f docker-compose.yml up -d --wait --timeout 300
 
       - name: Backend health check
         run: |
-          for i in $(seq 1 12); do
+          for i in $(seq 1 18); do
             STATUS=$(curl -sf http://localhost:8080/actuator/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','DOWN'))" 2>/dev/null || echo "DOWN")
             if [ "$STATUS" = "UP" ]; then
               echo "Backend is UP"
@@ -175,7 +179,7 @@ jobs:
             sleep 10
           done
           echo "Backend health check failed"
-          docker compose logs hlm-backend
+          docker compose -f docker-compose.yml logs hlm-backend
           exit 1
 
       - name: Frontend health check
@@ -184,8 +188,8 @@ jobs:
 
       - name: Dump logs on failure
         if: failure()
-        run: docker compose logs
+        run: docker compose -f docker-compose.yml logs
 
       - name: Teardown
         if: always()
-        run: docker compose down -v
+        run: docker compose -f docker-compose.yml down -v
