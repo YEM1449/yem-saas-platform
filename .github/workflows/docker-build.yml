@@ -156,6 +156,7 @@ jobs:
           SPRING_TASK_SCHEDULING_ENABLED=true
           OTEL_ENABLED=false
           MEDIA_STORAGE_DIR=/tmp/hlm-uploads
+          MAIL_HEALTH_ENABLED=false
           EOF
 
       - name: Set up Docker Buildx
