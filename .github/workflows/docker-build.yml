@@ -145,7 +145,7 @@ jobs:
       - name: Create minimal .env for smoke test
         run: |
           cat > .env <<'EOF'
-          JWT_SECRET=ci-smoke-test-secret-32-chars-long
+          JWT_SECRET=ci-smoke-test-secret-minimum-32-chars
           POSTGRES_DB=hlm
           POSTGRES_USER=hlm_user
           POSTGRES_PASSWORD=hlm_pwd
@@ -153,38 +153,67 @@ jobs:
           MEDIA_OBJECT_STORAGE_ENABLED=false
           CORS_ALLOWED_ORIGINS=http://localhost
           IMAGE_TAG=latest
+          OTEL_TRACES_EXPORTER=none
+          OTEL_METRICS_EXPORTER=none
+          OTEL_LOGS_EXPORTER=none
+          SPRING_TASK_SCHEDULING_ENABLED=true
           EOF
 
       - name: Build images locally
         run: |
           docker compose -f docker-compose.yml build --parallel
 
-      - name: Start stack
-        # Use only docker-compose.yml (not override) so the CI stack is clean:
-        # no mailhog, no JDWP agent, no local Spring profile.
-        # Timeout 300s: backend (start_period 60s + up to 90s for Liquibase + Spring Boot)
-        # + frontend (depends on backend healthy + its own start_period 30s).
+      - name: Start infrastructure (postgres + redis)
         run: |
-          docker compose -f docker-compose.yml up -d --wait --timeout 300
+          docker compose -f docker-compose.yml up -d postgres redis
+          docker compose -f docker-compose.yml wait postgres redis || true
+          echo "Infrastructure services ready"
 
-      - name: Backend health check
+      - name: Start backend
         run: |
-          for i in $(seq 1 18); do
-            STATUS=$(curl -sf http://localhost:8080/actuator/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','DOWN'))" 2>/dev/null || echo "DOWN")
-            if [ "$STATUS" = "UP" ]; then
-              echo "Backend is UP"
+          docker compose -f docker-compose.yml up -d hlm-backend
+
+      - name: Wait for backend to be healthy (with live log tail on failure)
+        run: |
+          echo "Waiting for backend health check..."
+          for i in $(seq 1 20); do
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' hlm-backend 2>/dev/null || echo "missing")
+            STATE=$(docker inspect --format='{{.State.Status}}' hlm-backend 2>/dev/null || echo "missing")
+            echo "Attempt $i: container=$STATE health=$HEALTH"
+            if [ "$HEALTH" = "healthy" ]; then
+              echo "Backend is healthy"
               exit 0
             fi
-            echo "Attempt $i: status=$STATUS — waiting..."
-            sleep 10
+            if [ "$STATE" = "exited" ] || [ "$STATE" = "dead" ]; then
+              echo "=== BACKEND CRASHED — LAST 100 LOG LINES ==="
+              docker logs --tail=100 hlm-backend
+              echo "=== END OF LOGS ==="
+              exit 1
+            fi
+            sleep 15
           done
-          echo "Backend health check failed"
-          docker compose -f docker-compose.yml logs hlm-backend
+          echo "=== BACKEND TIMED OUT — LAST 100 LOG LINES ==="
+          docker logs --tail=100 hlm-backend
+          echo "=== END OF LOGS ==="
           exit 1
 
-      - name: Frontend health check
+      - name: Start frontend
         run: |
-          curl -sf http://localhost/ -o /dev/null && echo "Frontend OK"
+          docker compose -f docker-compose.yml up -d hlm-frontend
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 10); do
+            if curl -sf http://localhost/ -o /dev/null; then
+              echo "Frontend is UP"
+              exit 0
+            fi
+            echo "Attempt $i: frontend not ready yet..."
+            sleep 10
+          done
+          echo "Frontend health check failed"
+          docker logs --tail=50 hlm-frontend
+          exit 1
 
       - name: Dump logs on failure
         if: failure()

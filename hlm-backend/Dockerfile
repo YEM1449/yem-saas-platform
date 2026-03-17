@@ -18,6 +18,9 @@ RUN java -Djarmode=layertools -jar target/*.jar extract --destination /workspace
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-jammy AS runtime
 
+# Install curl for Docker health check (not present in the temurin jre-jammy image by default)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Security: non-root user
 RUN groupadd --gid 1001 hlm && useradd --uid 1001 --gid hlm --shell /sbin/nologin hlm
 
