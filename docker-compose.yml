@@ -95,6 +95,8 @@ services:
       REDIS_PORT:     6379
       REDIS_ENABLED:  ${REDIS_ENABLED:-true}
       # Object Storage (S3-compatible protocol — MinIO in this stack, swap endpoint for OVH/Scaleway/etc.)
+      # Local file storage path — /tmp is always writable by non-root users
+      MEDIA_STORAGE_DIR:               /tmp/hlm-uploads
       MEDIA_OBJECT_STORAGE_ENABLED:    ${MEDIA_OBJECT_STORAGE_ENABLED:-false}
       MEDIA_OBJECT_STORAGE_ENDPOINT:   http://minio:9000
       MEDIA_OBJECT_STORAGE_BUCKET:     ${MEDIA_OBJECT_STORAGE_BUCKET:-hlm-media}

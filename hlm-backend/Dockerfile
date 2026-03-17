@@ -32,6 +32,10 @@ COPY --from=build /workspace/layers/spring-boot-loader/    ./
 COPY --from=build /workspace/layers/snapshot-dependencies/ ./
 COPY --from=build /workspace/layers/application/           ./
 
+# Create writable upload directory and fix ownership AFTER all layer copies
+# (layers are extracted as root; this ensures hlm user can write to /app/uploads)
+RUN mkdir -p /app/uploads && chown -R hlm:hlm /app
+
 USER hlm
 
 EXPOSE 8080

@@ -155,6 +155,7 @@ jobs:
           IMAGE_TAG=latest
           SPRING_TASK_SCHEDULING_ENABLED=true
           OTEL_ENABLED=false
+          MEDIA_STORAGE_DIR=/tmp/hlm-uploads
           EOF
 
       - name: Set up Docker Buildx

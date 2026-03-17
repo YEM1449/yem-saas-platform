@@ -29,14 +29,21 @@ public class LocalFileMediaStorage implements MediaStorageService {
     private final Path storageRoot;
 
     public LocalFileMediaStorage(
-            @Value("${app.media.storage-dir:./uploads}") String storageDir) throws IOException {
+            @Value("${app.media.storage-dir:./uploads}") String storageDir) {
         this.storageRoot = Paths.get(storageDir).toAbsolutePath().normalize();
-        Files.createDirectories(this.storageRoot);
-        log.info("[MEDIA-STORAGE] Local storage root: {}", this.storageRoot);
+        try {
+            Files.createDirectories(this.storageRoot);
+            log.info("[MEDIA-STORAGE] Local storage root: {}", this.storageRoot);
+        } catch (IOException e) {
+            log.warn("[MEDIA-STORAGE] Cannot create storage directory {} at startup: {} — " +
+                     "will retry on first upload. Set MEDIA_STORAGE_DIR to a writable path.",
+                     this.storageRoot, e.getMessage());
+        }
     }
 
     @Override
     public String store(byte[] data, String originalFilename, String contentType) throws IOException {
+        Files.createDirectories(storageRoot);
         String ext = extractExtension(originalFilename);
         String fileKey = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
         Path target = storageRoot.resolve(fileKey);
