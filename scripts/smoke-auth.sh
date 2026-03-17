@@ -3,7 +3,7 @@
 # Requires: curl, jq
 #
 # Usage:
-#   TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!' ./scripts/smoke-auth.sh
+#   TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!Secure' ./scripts/smoke-auth.sh
 #
 # Environment variables:
 #   BASE_URL    — backend URL         (default: http://localhost:8080)

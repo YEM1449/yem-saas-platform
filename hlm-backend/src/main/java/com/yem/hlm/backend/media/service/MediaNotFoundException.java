@@ -6,4 +6,8 @@ public class MediaNotFoundException extends RuntimeException {
     public MediaNotFoundException(UUID id) {
         super("Media not found: " + id);
     }
+
+    public MediaNotFoundException(String key) {
+        super("Media not found: " + key);
+    }
 }

@@ -314,7 +314,7 @@ class ContractControllerIT extends IntegrationTestBase {
 
     /** Create a contact in the default tenant; returns the ContactResponse. */
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null);
+        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, null, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

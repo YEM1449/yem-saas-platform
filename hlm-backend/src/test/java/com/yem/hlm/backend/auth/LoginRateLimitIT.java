@@ -39,7 +39,7 @@ class LoginRateLimitIT extends IntegrationTestBase {
             {
               "tenantKey": "%s",
               "email": "%s",
-              "password": "WrongPassword!"
+              "password": "WrongPass123!"
             }
             """.formatted(tenant, email);
     }

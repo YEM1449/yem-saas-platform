@@ -66,6 +66,9 @@ class ContactServiceIT extends IntegrationTestBase {
                 "ana.youssouf@example.com",
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         ));
 
@@ -83,6 +86,9 @@ class ContactServiceIT extends IntegrationTestBase {
                 "patron",
                 null,
                 "hamza.patron@example.com",
+                null,
+                null,
+                null,
                 null,
                 null,
                 null
@@ -116,6 +122,9 @@ class ContactServiceIT extends IntegrationTestBase {
                 "aassila@example.com",
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         ));
 
@@ -145,6 +154,9 @@ class ContactServiceIT extends IntegrationTestBase {
                 "dounia@example.com",
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         ));
 
@@ -171,9 +183,9 @@ class ContactServiceIT extends IntegrationTestBase {
 
     @Test
     void listContacts_filtersByQueryAndStatus() {
-        contactService.create(new CreateContactRequest("Abou Hamza", "Louz", null, "john1@example.com", null, null, null));
-        contactService.create(new CreateContactRequest("Boubker", "Hamzaoui", null, "bob@example.com", null, null, null));
-        contactService.create(new CreateContactRequest("hamza", "Igaman", null, "john2@example.com", null, null, null));
+        contactService.create(new CreateContactRequest("Abou Hamza", "Louz", null, "john1@example.com", null, null, null, null, null, null));
+        contactService.create(new CreateContactRequest("Boubker", "Hamzaoui", null, "bob@example.com", null, null, null, null, null, null));
+        contactService.create(new CreateContactRequest("hamza", "Igaman", null, "john2@example.com", null, null, null, null, null, null));
 
         var page = contactService.list(null, ContactStatus.PROSPECT, "hamza", PageRequest.of(0, 10));  // null = no type filter
         assertThat(page.getTotalElements()).isEqualTo(3); // Abou Hamza Louz, Boubker Hamzaoui, hamza Igaman

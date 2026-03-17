@@ -57,3 +57,7 @@ databaseChangeLog:
       file: db/changelog/changes/027-add-login-lockout-fields.yaml
   - include:
       file: db/changelog/changes/028-drop-v1-payment-tables.yaml
+  - include:
+      file: db/changelog/changes/029-add-consent-fields.yaml
+  - include:
+      file: db/changelog/changes/030-update-seed-password.yaml

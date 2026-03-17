@@ -53,7 +53,7 @@ class AccountLockoutIT extends IntegrationTestBase {
             {
               "tenantKey": "acme",
               "email": "%s",
-              "password": "WrongPassword!"
+              "password": "WrongPass123!"
             }
             """.formatted(email);
     }

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PropertyService } from './property.service';
 import { ImportResult, Property } from '../../core/models/property.model';
@@ -26,7 +26,7 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })

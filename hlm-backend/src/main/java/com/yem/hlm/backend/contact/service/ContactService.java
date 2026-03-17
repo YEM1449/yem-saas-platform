@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,6 +63,15 @@ public class ContactService {
         contact.setAddress(req.address());
         contact.setNotes(req.notes());
 
+        // GDPR consent fields
+        boolean givenConsent = Boolean.TRUE.equals(req.consentGiven());
+        contact.setConsentGiven(givenConsent);
+        if (givenConsent) {
+            contact.setConsentDate(Instant.now());
+        }
+        if (req.consentMethod() != null) contact.setConsentMethod(req.consentMethod());
+        if (req.processingBasis() != null) contact.setProcessingBasis(req.processingBasis());
+
         Contact saved = contactRepository.save(contact);
         // Ensure 1-1 row exists for MVP (future-proofing)
         prospectDetailRepository.save(new ProspectDetail(saved));
@@ -100,6 +110,18 @@ public class ContactService {
         if (req.nationalId() != null) contact.setNationalId(req.nationalId());
         if (req.address() != null) contact.setAddress(req.address());
         if (req.notes() != null) contact.setNotes(req.notes());
+
+        // GDPR consent fields — only update when explicitly provided
+        if (req.consentGiven() != null) {
+            boolean nowConsenting = Boolean.TRUE.equals(req.consentGiven());
+            // Record consent date only when transitioning to true
+            if (nowConsenting && !contact.isConsentGiven()) {
+                contact.setConsentDate(Instant.now());
+            }
+            contact.setConsentGiven(nowConsenting);
+        }
+        if (req.consentMethod() != null) contact.setConsentMethod(req.consentMethod());
+        if (req.processingBasis() != null) contact.setProcessingBasis(req.processingBasis());
 
         // IMPORTANT: status/type/qualified/tempClientUntil are not editable here.
         contact.markUpdatedBy(actorUserId);
@@ -268,7 +290,11 @@ public class ContactService {
                 c.getAddress(),
                 c.getNotes(),
                 c.getCreatedAt(),
-                c.getUpdatedAt()
+                c.getUpdatedAt(),
+                c.isConsentGiven(),
+                c.getConsentDate(),
+                c.getConsentMethod(),
+                c.getProcessingBasis()
         );
     }
 }

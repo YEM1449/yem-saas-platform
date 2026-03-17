@@ -198,7 +198,7 @@ class ContractPdfIT extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         // Contact (buyer) — always use adminBearer
-        var cReq = new CreateContactRequest("Marie", "Curie", null, buyerEmail, null, null, null);
+        var cReq = new CreateContactRequest("Marie", "Curie", null, buyerEmail, null, null, null, null, null, null);
         String cBody = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

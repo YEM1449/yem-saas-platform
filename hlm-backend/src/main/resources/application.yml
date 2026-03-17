@@ -36,6 +36,19 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  # Redis connection (used when app.redis.enabled=true)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
 server:
   port: ${SERVER_PORT:8080}
   # Trust forwarded headers only when behind a known reverse proxy.
@@ -65,6 +78,18 @@ management:
     web:
       exposure:
         include: health,info
+  health:
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}
+    defaults:
+      enabled: true
+  tracing:
+    enabled: ${OTEL_ENABLED:false}
+    sampling:
+      probability: ${OTEL_SAMPLE_RATE:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
 
 security:
   jwt:
@@ -123,6 +148,10 @@ app:
     # Days of inactivity before a prospect is considered stale
     prospect-stale-days: ${REMINDER_PROSPECT_STALE_DAYS:14}
 
+  # Redis distributed cache — set true in production; Caffeine used otherwise
+  redis:
+    enabled: ${REDIS_ENABLED:false}
+
   media:
     # Local file storage directory for property media uploads
     storage-dir: ${MEDIA_STORAGE_DIR:./uploads}
@@ -130,6 +159,23 @@ app:
     max-file-size: ${MEDIA_MAX_FILE_SIZE:10485760}
     # Comma-separated list of allowed MIME types
     allowed-types: ${MEDIA_ALLOWED_TYPES:image/jpeg,image/png,image/webp,application/pdf}
+    # S3-compatible object storage — activated when enabled=true
+    # Works with OVH, Scaleway, Hetzner, Cloudflare R2, MinIO, and AWS S3.
+    # Leave endpoint blank for AWS S3 (SDK auto-resolves). Set for all other providers.
+    object-storage:
+      enabled:    ${MEDIA_OBJECT_STORAGE_ENABLED:false}
+      endpoint:   ${MEDIA_OBJECT_STORAGE_ENDPOINT:}
+      region:     ${MEDIA_OBJECT_STORAGE_REGION:eu-west-1}
+      bucket:     ${MEDIA_OBJECT_STORAGE_BUCKET:hlm-media}
+      access-key: ${MEDIA_OBJECT_STORAGE_ACCESS_KEY:}
+      secret-key: ${MEDIA_OBJECT_STORAGE_SECRET_KEY:}
+
+  # GDPR / Law 09-08 data retention
+  gdpr:
+    # Default contact data retention in days (5 years = 1825 days)
+    default-retention-days: ${GDPR_RETENTION_DAYS:1825}
+    # Cron for daily retention sweep (default 02:00)
+    retention-cron: ${DATA_RETENTION_CRON:0 0 2 * * *}
 
   # CORS: comma-separated list of allowed origins (empty = deny all, suitable for prod lock-down)
   cors:

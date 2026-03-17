@@ -7,7 +7,9 @@ import java.io.InputStream;
  * Abstraction over the underlying file storage backend.
  *
  * <p>Default implementation: {@link LocalFileMediaStorage} (stores files on local disk).
- * Production swap: provide an {@code @Primary} S3-backed bean.
+ * Production swap: provide an {@code @Primary} bean backed by
+ * {@link ObjectStorageMediaStorage} (S3-compatible protocol,
+ * works with OVH Object Storage, Scaleway, Hetzner, Cloudflare R2, MinIO, and AWS S3).
  */
 public interface MediaStorageService {
 

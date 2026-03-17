@@ -103,7 +103,7 @@ If this fails, the backend is not running. Check the server logs for `Tomcat sta
 ```bash
 curl -s -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"tenantKey":"acme","email":"admin@acme.com","password":"Admin123!"}'
+  -d '{"tenantKey":"acme","email":"admin@acme.com","password":"Admin123!Secure"}'
 ```
 
 Response (`LoginResponse`):

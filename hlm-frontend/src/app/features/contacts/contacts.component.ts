@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from './contact.service';
 import { Contact } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -16,6 +16,12 @@ interface CreateContactForm {
   notes: string;
 }
 
+interface PrivacyNotice {
+  version: string;
+  lastUpdated: string;
+  text: string;
+}
+
 @Component({
   selector: 'app-contacts',
   standalone: true,
@@ -26,6 +32,7 @@ interface CreateContactForm {
 export class ContactsComponent implements OnInit {
   private svc  = inject(ContactService);
   private auth = inject(AuthService);
+  private http = inject(HttpClient);
 
   contacts: Contact[] = [];
   loading = true;
@@ -42,6 +49,10 @@ export class ContactsComponent implements OnInit {
   form: CreateContactForm = {
     firstName: '', lastName: '', email: '', phone: '', notes: '',
   };
+
+  /** Privacy notice banner (GDPR Art. 13 / Law 09-08 Art. 5) */
+  privacyNotice: PrivacyNotice | null = null;
+  privacyBannerVisible = false;
 
   /** Managers and admins can create contacts */
   get canWrite(): boolean {
@@ -62,6 +73,7 @@ export class ContactsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadPrivacyNotice();
   }
 
   load(): void {
@@ -77,6 +89,30 @@ export class ContactsComponent implements OnInit {
         else                          this.error = body?.message ?? `Failed to load contacts (${err.status})`;
       },
     });
+  }
+
+  /**
+   * Load privacy notice from backend and show the banner if it has not been dismissed
+   * in the current session (sessionStorage key, per CNIL guidance).
+   */
+  private loadPrivacyNotice(): void {
+    const dismissed = sessionStorage.getItem('gdpr_notice_dismissed') === 'true';
+    if (dismissed) return;
+
+    this.http.get<PrivacyNotice>('/api/gdpr/privacy-notice').subscribe({
+      next: (notice) => {
+        this.privacyNotice = notice;
+        this.privacyBannerVisible = true;
+      },
+      error: () => {
+        // Non-blocking — privacy notice load failure does not disrupt the contacts page
+      },
+    });
+  }
+
+  dismissPrivacyBanner(): void {
+    sessionStorage.setItem('gdpr_notice_dismissed', 'true');
+    this.privacyBannerVisible = false;
   }
 
   openModal(): void {

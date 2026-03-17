@@ -1,0 +1,44 @@
+# ── Local Development Override ────────────────────────────────────────────────
+#
+# Applied automatically by `docker compose up` alongside docker-compose.yml.
+# Adds dev-friendly extras: live log streaming, local Mailhog for email testing,
+# exposed Redis port, and relaxed resource constraints.
+
+services:
+
+  hlm-backend:
+    # Development profile: enables local CORS origins, verbose logging
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200,http://localhost"
+      # Disable Redis in local dev if you prefer Caffeine
+      REDIS_ENABLED: ${REDIS_ENABLED:-false}
+      # Point to Mailhog for email capture
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: 1025
+      EMAIL_USER: ""
+      EMAIL_PASSWORD: ""
+      EMAIL_FROM: dev@hlm.local
+      JAVA_OPTS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -XX:+ExitOnOutOfMemoryError
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # JDWP remote debug
+
+  hlm-frontend:
+    # Frontend dev: use Angular CLI live-reload instead of the Docker image
+    # Comment this service out and run `npm start` in hlm-frontend/ for HMR.
+    environment:
+      NGINX_ENVSUBST_TEMPLATE_SUFFIX: .conf
+
+  # ── Mailhog (email capture) ──────────────────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: hlm-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"  # web UI
+      - "1025:1025"  # SMTP

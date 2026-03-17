@@ -1,0 +1,249 @@
+name: Docker Build & Push
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'hlm-backend/**'
+      - 'hlm-frontend/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/docker-build.yml'
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push image to registry'
+        required: false
+        default: false
+        type: boolean
+
+# ── Concurrency ────────────────────────────────────────────────────────────────
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Permissions ────────────────────────────────────────────────────────────────
+permissions:
+  contents: read
+  packages: write   # ghcr.io push
+
+jobs:
+  # ── Backend Docker build ────────────────────────────────────────────────────
+  build-backend:
+    name: Build Backend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (backend)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hlm-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build (and push on main/tag)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-backend
+          file: ./hlm-backend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          # Build args can be passed here if needed:
+          # build-args: |
+          #   BUILD_VERSION=${{ github.sha }}
+
+  # ── Frontend Docker build ───────────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (frontend)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hlm-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build (and push on main/tag)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-frontend
+          file: ./hlm-frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+  # ── Compose smoke test (pull request only) ──────────────────────────────────
+  compose-smoke:
+    name: Compose Smoke Test
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create minimal .env for smoke test
+        run: |
+          cat > .env <<'EOF'
+          JWT_SECRET=ci-smoke-test-secret-minimum-32chars
+          POSTGRES_DB=hlm
+          POSTGRES_USER=hlm_user
+          POSTGRES_PASSWORD=hlm_pwd
+          REDIS_ENABLED=true
+          MEDIA_OBJECT_STORAGE_ENABLED=false
+          CORS_ALLOWED_ORIGINS=http://localhost
+          IMAGE_TAG=latest
+          SPRING_TASK_SCHEDULING_ENABLED=true
+          OTEL_ENABLED=false
+          MEDIA_STORAGE_DIR=/tmp/hlm-uploads
+          MAIL_HEALTH_ENABLED=false
+          EOF
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-backend
+          file: ./hlm-backend/Dockerfile
+          load: true
+          tags: hlm-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hlm-frontend
+          file: ./hlm-frontend/Dockerfile
+          load: true
+          tags: hlm-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start infrastructure
+        run: |
+          docker compose -f docker-compose.yml up -d postgres redis minio
+          echo "Waiting for infrastructure to be healthy..."
+          for i in $(seq 1 12); do
+            PG=$(docker inspect --format='{{.State.Health.Status}}' hlm-postgres 2>/dev/null || echo "missing")
+            RD=$(docker inspect --format='{{.State.Health.Status}}' hlm-redis 2>/dev/null || echo "missing")
+            echo "Attempt $i: postgres=$PG redis=$RD"
+            if [ "$PG" = "healthy" ] && [ "$RD" = "healthy" ]; then
+              echo "Infrastructure ready"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Start backend
+        run: docker compose -f docker-compose.yml up -d hlm-backend
+
+      - name: Wait for backend — dump logs immediately on crash
+        run: |
+          echo "Polling backend health (max 3 minutes)..."
+          for i in $(seq 1 18); do
+            STATE=$(docker inspect --format='{{.State.Status}}' hlm-backend 2>/dev/null || echo "gone")
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' hlm-backend 2>/dev/null || echo "none")
+            echo "[$i/18] state=$STATE health=$HEALTH"
+            if [ "$HEALTH" = "healthy" ]; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            if [ "$STATE" = "exited" ] || [ "$STATE" = "dead" ]; then
+              echo "Backend crashed — full log output:"
+              docker logs hlm-backend 2>&1 || true
+              echo "--- End of backend logs ---"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Backend timed out — full log output:"
+          docker logs hlm-backend 2>&1 || true
+          exit 1
+
+      - name: Start frontend
+        run: docker compose -f docker-compose.yml up -d hlm-frontend
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 10); do
+            if curl -sf http://localhost/ -o /dev/null; then
+              echo "Frontend is UP"
+              exit 0
+            fi
+            echo "Attempt $i: frontend not ready yet..."
+            sleep 10
+          done
+          echo "Frontend health check failed"
+          docker logs --tail=50 hlm-frontend
+          exit 1
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.yml logs
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f docker-compose.yml down -v

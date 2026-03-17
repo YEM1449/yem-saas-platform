@@ -5,3 +5,65 @@
 .contact-name {
   font-weight: 500;
 }
+
+/* ── GDPR Privacy Notice Banner ─────────────────────────────── */
+.privacy-banner {
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.privacy-banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.privacy-banner-title {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.privacy-banner-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #92400e;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.privacy-banner-dismiss:hover {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.privacy-banner-details summary {
+  cursor: pointer;
+  color: #b45309;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.privacy-banner-text {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 12px;
+  color: #4b5563;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.privacy-banner-version {
+  color: #9ca3af;
+  font-size: 11px;
+  margin: 4px 0 0;
+}
