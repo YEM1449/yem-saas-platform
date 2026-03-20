@@ -5,12 +5,17 @@ import { environment } from '../../../environments/environment';
 import { Contact, ContactPage, TimelineEvent } from '../../core/models/contact.model';
 
 export interface CreateContactRequest {
-  contactType: string;
   firstName: string;
   lastName: string;
-  email: string | null;
-  phone: string | null;
-  notes: string | null;
+  phone?: string | null;
+  email?: string | null;
+  nationalId?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  // GDPR / Law 09-08 consent fields
+  consentGiven?: boolean | null;
+  consentMethod?: string | null;
+  processingBasis?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

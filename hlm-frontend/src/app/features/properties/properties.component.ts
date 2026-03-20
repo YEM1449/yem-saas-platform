@@ -16,11 +16,24 @@ interface CreatePropertyForm {
   referenceCode: string;
   title: string;
   price: number | null;
+  currency: string;
   city: string;
-  surfaceAreaSqm: number | null;
-  bedrooms: number | null;
+  region: string;
+  address: string;
   description: string;
   status: string;
+  // Type-specific fields
+  surfaceAreaSqm: number | null;
+  landAreaSqm: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  floorNumber: number | null;
+  floors: number | null;
+  parkingSpaces: number | null;
+  hasPool: boolean;
+  hasGarden: boolean;
+  buildingYear: number | null;
+  buildingName: string;
 }
 
 @Component({
@@ -56,8 +69,8 @@ export class PropertiesComponent implements OnInit {
   submitError = '';
 
   readonly propertyTypes = [
-    'APARTMENT', 'VILLA', 'HOUSE', 'STUDIO', 'DUPLEX',
-    'PENTHOUSE', 'LAND', 'OFFICE', 'COMMERCIAL', 'OTHER',
+    'VILLA', 'APPARTEMENT', 'STUDIO', 'T2', 'T3',
+    'DUPLEX', 'COMMERCE', 'LOCAL', 'TERRAIN',
   ];
 
   readonly statusOptions = [
@@ -67,9 +80,32 @@ export class PropertiesComponent implements OnInit {
 
   form: CreatePropertyForm = {
     projectId: '', type: '', referenceCode: '', title: '',
-    price: null, city: '', surfaceAreaSqm: null, bedrooms: null,
+    price: null, currency: 'MAD', city: '', region: '', address: '',
+    surfaceAreaSqm: null, landAreaSqm: null, bedrooms: null, bathrooms: null,
+    floorNumber: null, floors: null, parkingSpaces: null,
+    hasPool: false, hasGarden: false, buildingYear: null, buildingName: '',
     description: '', status: 'DRAFT',
   };
+
+  /** Returns whether the selected type requires surfaceAreaSqm */
+  get needsSurface(): boolean {
+    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX','COMMERCE','LOCAL'].includes(this.form.type);
+  }
+
+  /** Returns whether the selected type requires landAreaSqm */
+  get needsLand(): boolean {
+    return ['VILLA','TERRAIN'].includes(this.form.type);
+  }
+
+  /** Returns whether the selected type requires bedrooms / bathrooms */
+  get needsBedrooms(): boolean {
+    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX'].includes(this.form.type);
+  }
+
+  /** Returns whether the selected type requires floorNumber */
+  get needsFloorNumber(): boolean {
+    return ['APPARTEMENT'].includes(this.form.type);
+  }
 
   get canImport(): boolean {
     const r = this.auth.user?.role;
@@ -158,7 +194,10 @@ export class PropertiesComponent implements OnInit {
   openModal(): void {
     this.form = {
       projectId: '', type: '', referenceCode: '', title: '',
-      price: null, city: '', surfaceAreaSqm: null, bedrooms: null,
+      price: null, currency: 'MAD', city: '', region: '', address: '',
+      surfaceAreaSqm: null, landAreaSqm: null, bedrooms: null, bathrooms: null,
+      floorNumber: null, floors: null, parkingSpaces: null,
+      hasPool: false, hasGarden: false, buildingYear: null, buildingName: '',
       description: '', status: 'DRAFT',
     };
     this.submitError = '';
@@ -172,32 +211,60 @@ export class PropertiesComponent implements OnInit {
 
   submitCreate(): void {
     if (!this.form.projectId) {
-      this.submitError = 'Project is required.';
+      this.submitError = 'Le projet est obligatoire.';
       return;
     }
     if (!this.form.type || !this.form.referenceCode.trim() || !this.form.title.trim()) {
-      this.submitError = 'Type, reference code and title are required.';
+      this.submitError = 'Le type, le code de reference et le titre sont obligatoires.';
       return;
     }
     if (this.form.price === null || this.form.price === undefined) {
-      this.submitError = 'Price is required.';
+      this.submitError = 'Le prix est obligatoire.';
+      return;
+    }
+    // Type-specific required field validation
+    if (this.needsSurface && !this.form.surfaceAreaSqm) {
+      this.submitError = 'La surface (m²) est obligatoire pour ce type de bien.';
+      return;
+    }
+    if (this.needsLand && !this.form.landAreaSqm) {
+      this.submitError = 'La superficie du terrain est obligatoire pour ce type de bien.';
+      return;
+    }
+    if (this.needsBedrooms && (!this.form.bedrooms || !this.form.bathrooms)) {
+      this.submitError = 'Le nombre de chambres et de salles de bain est obligatoire pour ce type de bien.';
+      return;
+    }
+    if (this.needsFloorNumber && this.form.floorNumber === null) {
+      this.submitError = "Le numero d'etage est obligatoire pour un appartement.";
       return;
     }
     this.submitting  = true;
     this.submitError = '';
 
     this.svc.create({
-      projectId:     this.form.projectId,
-      type:          this.form.type,
-      referenceCode: this.form.referenceCode.trim(),
-      title:         this.form.title.trim(),
-      description:   this.form.description.trim() || null,
-      price:         this.form.price,
-      city:          this.form.city.trim() || null,
+      projectId:      this.form.projectId,
+      type:           this.form.type,
+      referenceCode:  this.form.referenceCode.trim(),
+      title:          this.form.title.trim(),
+      description:    this.form.description.trim() || null,
+      price:          this.form.price!,
+      currency:       this.form.currency || 'MAD',
+      city:           this.form.city.trim() || null,
+      region:         this.form.region.trim() || null,
+      address:        this.form.address.trim() || null,
       surfaceAreaSqm: this.form.surfaceAreaSqm,
-      bedrooms:      this.form.bedrooms,
-      status:        this.form.status,
-      listedForSale: this.form.status === 'ACTIVE',
+      landAreaSqm:    this.form.landAreaSqm,
+      bedrooms:       this.form.bedrooms,
+      bathrooms:      this.form.bathrooms,
+      floorNumber:    this.form.floorNumber,
+      floors:         this.form.floors,
+      parkingSpaces:  this.form.parkingSpaces,
+      hasPool:        this.form.hasPool || null,
+      hasGarden:      this.form.hasGarden || null,
+      buildingYear:   this.form.buildingYear,
+      buildingName:   this.form.buildingName.trim() || null,
+      listedForSale:  this.form.status === 'ACTIVE',
     }).subscribe({
       next: (created) => {
         this.submitting = false;

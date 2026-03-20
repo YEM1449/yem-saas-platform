@@ -14,6 +14,11 @@ export interface Contact {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // GDPR / Law 09-08 consent fields
+  consentGiven: boolean;
+  consentDate: string | null;
+  consentMethod: string | null;
+  processingBasis: string | null;
 }
 
 export interface ContactPage {

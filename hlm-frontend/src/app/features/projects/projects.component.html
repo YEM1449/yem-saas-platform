@@ -1,34 +1,115 @@
-<h2>Projects</h2>
+<!-- ── Page Header ──────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Projects</h1>
+    <p class="page-subtitle">Manage your real-estate development projects</p>
+  </div>
+  @if (canWrite) {
+    <div class="page-header-actions">
+      <button class="btn btn-primary" (click)="openModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        New Project
+      </button>
+    </div>
+  }
+</div>
 
-@if (loading) {
-  <p>Loading projects...</p>
-}
-
+<!-- ── Feedback ─────────────────────────────────────────────── -->
 @if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="alert alert-error">{{ error }}</div>
 }
 
+<!-- ── Loading ──────────────────────────────────────────────── -->
+@if (loading) {
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Loading projects…
+  </div>
+}
+
+<!-- ── Empty state ──────────────────────────────────────────── -->
 @if (!loading && !error && projects.length === 0) {
-  <p>No projects found.</p>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🏗️</div>
+      <p class="empty-state-title">No projects yet</p>
+      <p class="empty-state-desc">Create your first project to start grouping properties.</p>
+      @if (canWrite) {
+        <button class="btn btn-primary" (click)="openModal()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          New Project
+        </button>
+      }
+    </div>
+  </div>
 }
 
+<!-- ── Data Table ────────────────────────────────────────────── -->
 @if (!loading && projects.length > 0) {
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (p of projects; track p.id) {
-        <tr class="clickable" [routerLink]="['/app/projects', p.id]">
-          <td>{{ p.name }}</td>
-          <td>{{ p.description ?? '—' }}</td>
-          <td>{{ p.status }}</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of projects; track p.id) {
+            <tr class="clickable" [routerLink]="['/app/projects', p.id]">
+              <td>{{ p.name }}</td>
+              <td class="td-muted">{{ p.description ?? '—' }}</td>
+              <td>{{ p.status }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- ══ Create Project Modal ════════════════════════════════════ -->
+@if (showModal) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2 class="modal-title">New Project</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (submitError) {
+          <div class="alert alert-error">{{ submitError }}</div>
+        }
+
+        <div class="form-group">
+          <label class="form-label required">Project Name</label>
+          <input class="form-control" type="text" placeholder="e.g. Résidence Atlas"
+                 [(ngModel)]="form.name" [disabled]="submitting" autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3"
+                    placeholder="Optional description, location, notes…"
+                    [(ngModel)]="form.description" [disabled]="submitting"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
+          @if (submitting) { Creating… } @else { Create Project }
+        </button>
+      </div>
+
+    </div>
+  </div>
 }

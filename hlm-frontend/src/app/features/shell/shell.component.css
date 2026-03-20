@@ -50,7 +50,7 @@
 .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
 
-/* Section labels */
+/* Section labels (legacy span.nav-section kept for compatibility) */
 .nav-section {
   font-size: 0.625rem;
   font-weight: 600;
@@ -63,6 +63,19 @@
 }
 /* First section label — less top padding */
 .nav-section:first-child { padding-top: 4px; }
+
+/* Section divider labels used in new nav structure */
+.nav-section-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.28);
+  padding: 14px 12px 4px;
+  display: block;
+  flex-shrink: 0;
+}
+.nav-section-label:first-child { padding-top: 4px; }
 
 /* Nav links */
 .nav-item {
