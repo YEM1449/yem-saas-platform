@@ -11,8 +11,8 @@ import com.yem.hlm.backend.outbox.domain.MessageStatus;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
 import com.yem.hlm.backend.outbox.service.OutboundDispatcherService;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -48,7 +48,7 @@ class OutboxIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper om;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepo;
+    @Autowired SocieteRepository tenantRepo;
     @Autowired UserRepository userRepo;
     @Autowired OutboundMessageRepository messageRepo;
     @Autowired OutboundDispatcherService dispatcher;
@@ -77,7 +77,7 @@ class OutboxIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         UUID msgId = om.readValue(json, SendMessageResponse.class).messageId();
-        var msg = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        var msg = messageRepo.findBySocieteIdAndId(TENANT_ID, msgId).orElseThrow();
 
         assertThat(msg.getStatus()).isEqualTo(MessageStatus.PENDING);
         assertThat(msg.getChannel()).isEqualTo(MessageChannel.EMAIL);
@@ -102,7 +102,7 @@ class OutboxIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         UUID msgId = om.readValue(json, SendMessageResponse.class).messageId();
-        var msg = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        var msg = messageRepo.findBySocieteIdAndId(TENANT_ID, msgId).orElseThrow();
 
         assertThat(msg.getStatus()).isEqualTo(MessageStatus.PENDING);
         assertThat(msg.getChannel()).isEqualTo(MessageChannel.SMS);
@@ -122,10 +122,9 @@ class OutboxIT extends IntegrationTestBase {
                         .content(om.writeValueAsString(emailRequest("iso@example.com", "s", "b"))))
                 .andExpect(status().isAccepted());
 
-        // Create a second tenant and get a bearer for it
-        Tenant t2 = tenantRepo.save(new Tenant("outbox-t2-key", "Outbox Tenant Two"));
-        User u2 = new User(t2, "u2@outbox-t2.com", "hash");
-        u2.setRole(UserRole.ROLE_ADMIN);
+        // Create a second societe and get a bearer for it
+        Societe t2 = tenantRepo.save(new Societe("Outbox T2", "MA"));
+        User u2 = new User("u2@outbox-t2.com", "hash");
         u2 = userRepo.save(u2);
         String t2Bearer = "Bearer " + jwtProvider.generate(u2.getId(), t2.getId(), UserRole.ROLE_ADMIN);
 
@@ -161,7 +160,7 @@ class OutboxIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         UUID msgId = om.readValue(json, SendMessageResponse.class).messageId();
-        var msg = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        var msg = messageRepo.findBySocieteIdAndId(TENANT_ID, msgId).orElseThrow();
 
         assertThat(msg.getRecipient()).isEqualTo("contact-mail@example.com");
         assertThat(msg.getStatus()).isEqualTo(MessageStatus.PENDING);
@@ -237,7 +236,7 @@ class OutboxIT extends IntegrationTestBase {
         UUID msgId = om.readValue(json, SendMessageResponse.class).messageId();
 
         // Verify PENDING before dispatch
-        var pending = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        var pending = messageRepo.findBySocieteIdAndId(TENANT_ID, msgId).orElseThrow();
         assertThat(pending.getStatus()).isEqualTo(MessageStatus.PENDING);
 
         // Move nextRetryAt to a definite past value so the native clock comparison succeeds
@@ -249,7 +248,7 @@ class OutboxIT extends IntegrationTestBase {
         dispatcher.runDispatch();
 
         // Assert: status changed to SENT
-        var msg = messageRepo.findByTenant_IdAndId(TENANT_ID, msgId).orElseThrow();
+        var msg = messageRepo.findBySocieteIdAndId(TENANT_ID, msgId).orElseThrow();
         assertThat(msg.getStatus()).isEqualTo(MessageStatus.SENT);
         assertThat(msg.getSentAt()).isNotNull();
     }

@@ -40,17 +40,17 @@ public class PortalJwtProvider {
      * Generates a signed portal JWT for the given contact + tenant.
      *
      * @param contactId the buyer's contact UUID (becomes JWT subject)
-     * @param tenantId  the tenant UUID (stored in {@code tid} claim)
+     * @param societeId the société UUID (stored in {@code sid} claim)
      * @return signed JWT string
      */
-    public String generate(UUID contactId, UUID tenantId) {
+    public String generate(UUID contactId, UUID societeId) {
         Instant now = Instant.now();
 
         var claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(TTL_SECONDS))
                 .subject(contactId.toString())
-                .claim("tid", tenantId.toString())
+                .claim("sid", societeId.toString())
                 .claim("roles", List.of(ROLE_PORTAL))
                 .build();
 

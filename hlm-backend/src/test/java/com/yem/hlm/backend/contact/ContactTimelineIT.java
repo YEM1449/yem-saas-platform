@@ -7,8 +7,8 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -36,30 +36,29 @@ class ContactTimelineIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ContactRepository contactRepository;
     @Autowired CommercialAuditRepository auditRepository;
 
-    private Tenant tenant;
+    private Societe societe;
     private User admin;
     private String bearer;
 
     @BeforeEach
     void setup() {
         String key = "tl-" + UUID.randomUUID().toString().substring(0, 8);
-        tenant = tenantRepository.save(new Tenant(key, "Timeline Tenant"));
+        societe = societeRepository.save(new Societe("Acme Corp", "MA"));
 
-        admin = new User(tenant, "admin@" + key + ".com", "hash");
-        admin.setRole(UserRole.ROLE_ADMIN);
+        admin = new User("admin@" + key + ".com", "hash");
         admin = userRepository.save(admin);
 
-        bearer = "Bearer " + jwtProvider.generate(admin.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
+        bearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);
     }
 
     @Test
     void timeline_emptyForNewContact_returnsEmptyArray() throws Exception {
-        Contact contact = contactRepository.save(new Contact(tenant, admin.getId(), "Alice", "Smith"));
+        Contact contact = contactRepository.save(new Contact(societe.getId(), admin.getId(), "Alice", "Smith"));
 
         mvc.perform(get("/api/contacts/{id}/timeline", contact.getId())
                         .header("Authorization", bearer))
@@ -69,10 +68,10 @@ class ContactTimelineIT extends IntegrationTestBase {
 
     @Test
     void timeline_afterAuditEvent_returnsEvent() throws Exception {
-        Contact contact = contactRepository.save(new Contact(tenant, admin.getId(), "Bob", "Dupont"));
+        Contact contact = contactRepository.save(new Contact(societe.getId(), admin.getId(), "Bob", "Dupont"));
 
         CommercialAuditEvent event = new CommercialAuditEvent();
-        event.setTenant(tenant);
+        event.setSocieteId(societe.getId());
         event.setEventType(AuditEventType.DEPOSIT_CREATED);
         event.setActorUserId(admin.getId());
         event.setCorrelationId(contact.getId());
@@ -89,12 +88,11 @@ class ContactTimelineIT extends IntegrationTestBase {
     @Test
     void timeline_tenantIsolation_returns404ForOtherTenant() throws Exception {
         String otherKey = "other-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant otherTenant = tenantRepository.save(new Tenant(otherKey, "Other Tenant"));
-        User otherAdmin = new User(otherTenant, "admin@" + otherKey + ".com", "hash");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User otherAdmin = new User("admin@" + otherKey + ".com", "hash");
         otherAdmin = userRepository.save(otherAdmin);
         Contact otherContact = contactRepository.save(
-                new Contact(otherTenant, otherAdmin.getId(), "Eve", "Other"));
+                new Contact(otherTenant.getId(), otherAdmin.getId(), "Eve", "Other"));
 
         mvc.perform(get("/api/contacts/{id}/timeline", otherContact.getId())
                         .header("Authorization", bearer))
@@ -103,7 +101,7 @@ class ContactTimelineIT extends IntegrationTestBase {
 
     @Test
     void timeline_withoutToken_returns401() throws Exception {
-        Contact contact = contactRepository.save(new Contact(tenant, admin.getId(), "Carl", "Anon"));
+        Contact contact = contactRepository.save(new Contact(societe.getId(), admin.getId(), "Carl", "Anon"));
 
         mvc.perform(get("/api/contacts/{id}/timeline", contact.getId()))
                 .andExpect(status().isUnauthorized());

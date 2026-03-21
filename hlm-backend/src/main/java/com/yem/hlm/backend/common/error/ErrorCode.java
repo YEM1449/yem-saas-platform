@@ -7,15 +7,24 @@ package com.yem.hlm.backend.common.error;
 public enum ErrorCode {
     // Validation errors (400)
     VALIDATION_ERROR,
+    INVALID_REQUEST,
 
     // Authentication errors (401)
     UNAUTHORIZED,
+    INVALID_OR_MISSING_TOKEN,   // 401 — JWT missing, malformed, or expired
+    TOKEN_INVALIDATED,          // 401 — JWT token version invalidated (logout / membership removed)
 
     // Authorization errors (403)
     FORBIDDEN,
 
     // Not found errors (404)
     NOT_FOUND,
+    USER_NOT_FOUND,             // 404 — user not found
+    CONTACT_NOT_FOUND,          // 404 — contact not found
+    PROPERTY_NOT_FOUND,         // 404 — property not found
+    CONTRACT_NOT_FOUND,         // 404 — contract not found
+    PROJECT_NOT_FOUND,          // 404 — project not found
+    MEMBERSHIP_NOT_FOUND,       // 404 — société membership not found
 
     // Conflict errors (409)
     TENANT_KEY_EXISTS,
@@ -77,6 +86,12 @@ public enum ErrorCode {
     PROPERTY_NOT_AVAILABLE_FOR_RESERVATION, // 409 — property already reserved, deposited or sold
     INVALID_RESERVATION_STATE,          // 409 — action not permitted in current reservation state
 
+    // Contract immutability (409)
+    SIGNED_CONTRACT_IMMUTABLE,  // 409 — attempt to modify an already SIGNED contract
+
+    // Concurrent update (409)
+    CONCURRENT_UPDATE,          // 409 — optimistic lock failure; resource was modified concurrently
+
     // GDPR / Law 09-08 errors
     GDPR_ERASURE_BLOCKED,       // 409 — contact has SIGNED contracts; erasure not permitted
     GDPR_EXPORT_NOT_FOUND,      // 404 — contact not found for data export
@@ -87,6 +102,14 @@ public enum ErrorCode {
 
     // Account lockout (401)
     ACCOUNT_LOCKED,             // 401 — account temporarily locked after too many failed attempts
+
+    // Multi-société errors
+    NO_SOCIETE_ACCESS,          // 401 — user has no active société membership
+    SOCIETE_NOT_IN_CLAIMS,      // 403 — requested société not accessible by this user
+    SOCIETE_INACTIVE,           // 403 — société membership is inactive
+    SUPER_ADMIN_REQUIRED,       // 403 — operation requires SUPER_ADMIN role
+    SOCIETE_NOT_FOUND,          // 404 — société not found
+    USER_ALREADY_IN_SOCIETE,    // 409 — user already has a membership in this société
 
     // Server errors (500)
     INTERNAL_ERROR

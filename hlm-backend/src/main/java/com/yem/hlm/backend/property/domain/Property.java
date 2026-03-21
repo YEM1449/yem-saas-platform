@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.property.domain;
 
 import com.yem.hlm.backend.project.domain.Project;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,16 +23,16 @@ import java.util.UUID;
 @Table(
         name = "property",
         indexes = {
-                @Index(name = "idx_property_tenant_id", columnList = "tenant_id,id"),
-                @Index(name = "idx_property_tenant_status", columnList = "tenant_id,status"),
-                @Index(name = "idx_property_tenant_type_status", columnList = "tenant_id,type,status"),
-                @Index(name = "idx_property_tenant_city_region", columnList = "tenant_id,city,region"),
-                @Index(name = "idx_property_tenant_price", columnList = "tenant_id,price"),
-                @Index(name = "idx_property_tenant_created_at", columnList = "tenant_id,created_at DESC"),
-                @Index(name = "idx_property_tenant_deleted_at", columnList = "tenant_id,deleted_at")
+                @Index(name = "idx_property_societe_id", columnList = "societe_id,id"),
+                @Index(name = "idx_property_tenant_status", columnList = "societe_id,status"),
+                @Index(name = "idx_property_tenant_type_status", columnList = "societe_id,type,status"),
+                @Index(name = "idx_property_tenant_city_region", columnList = "societe_id,city,region"),
+                @Index(name = "idx_property_tenant_price", columnList = "societe_id,price"),
+                @Index(name = "idx_property_tenant_created_at", columnList = "societe_id,created_at DESC"),
+                @Index(name = "idx_property_tenant_deleted_at", columnList = "societe_id,deleted_at")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_property_tenant_reference", columnNames = {"tenant_id", "reference_code"})
+                @UniqueConstraint(name = "uk_property_tenant_reference", columnNames = {"societe_id", "reference_code"})
         }
 )
 public class Property {
@@ -42,9 +41,12 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_property_tenant"))
-    private Tenant tenant;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Setter
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -336,8 +338,8 @@ public class Property {
      * @param type          the property type (VILLA, DUPLEX, etc.)
      * @param actorUserId   the user creating this property
      */
-    public Property(Tenant tenant, Project project, PropertyType type, UUID actorUserId) {
-        this.tenant = tenant;
+    public Property(UUID societeId, Project project, PropertyType type, UUID actorUserId) {
+        this.societeId = societeId;
         this.project = project;
         this.type = type;
         this.status = PropertyStatus.DRAFT;

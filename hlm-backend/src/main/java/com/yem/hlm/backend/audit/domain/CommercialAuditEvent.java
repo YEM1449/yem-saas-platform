@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.audit.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -20,9 +19,8 @@ public class CommercialAuditEvent {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", length = 50, nullable = false)
@@ -49,7 +47,7 @@ public class CommercialAuditEvent {
     }
 
     public UUID getId()                    { return id; }
-    public Tenant getTenant()              { return tenant; }
+    public UUID getSocieteId()             { return societeId; }
     public AuditEventType getEventType()   { return eventType; }
     public UUID getActorUserId()           { return actorUserId; }
     public String getCorrelationType()     { return correlationType; }
@@ -57,7 +55,7 @@ public class CommercialAuditEvent {
     public LocalDateTime getOccurredAt()   { return occurredAt; }
     public String getPayloadJson()         { return payloadJson; }
 
-    public void setTenant(Tenant tenant)                 { this.tenant = tenant; }
+    public void setSocieteId(UUID societeId)             { this.societeId = societeId; }
     public void setEventType(AuditEventType eventType)   { this.eventType = eventType; }
     public void setActorUserId(UUID actorUserId)         { this.actorUserId = actorUserId; }
     public void setCorrelationType(String ct)            { this.correlationType = ct; }

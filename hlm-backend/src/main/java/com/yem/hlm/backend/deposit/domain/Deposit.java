@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.deposit.domain;
 
 import com.yem.hlm.backend.contact.domain.Contact;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,11 +15,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "deposit",
         indexes = {
-                @Index(name = "idx_deposit_tenant_status", columnList = "tenant_id,status"),
-                @Index(name = "idx_deposit_tenant_contact", columnList = "tenant_id,contact_id"),
-                @Index(name = "idx_deposit_tenant_property", columnList = "tenant_id,property_id"),
-                @Index(name = "idx_deposit_tenant_agent", columnList = "tenant_id,agent_id"),
-                @Index(name = "idx_deposit_tenant_due_date", columnList = "tenant_id,due_date")
+                @Index(name = "idx_deposit_tenant_status", columnList = "societe_id,status"),
+                @Index(name = "idx_deposit_tenant_contact", columnList = "societe_id,contact_id"),
+                @Index(name = "idx_deposit_tenant_property", columnList = "societe_id,property_id"),
+                @Index(name = "idx_deposit_tenant_agent", columnList = "societe_id,agent_id"),
+                @Index(name = "idx_deposit_tenant_due_date", columnList = "societe_id,due_date")
         }
 )
 public class Deposit {
@@ -29,9 +28,8 @@ public class Deposit {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_deposit_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id", nullable = false, foreignKey = @ForeignKey(name = "fk_deposit_contact"))
@@ -107,8 +105,8 @@ public class Deposit {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Deposit(Tenant tenant, Contact contact, User agent) {
-        this.tenant = tenant;
+    public Deposit(UUID societeId, Contact contact, User agent) {
+        this.societeId = societeId;
         this.contact = contact;
         this.agent = agent;
     }

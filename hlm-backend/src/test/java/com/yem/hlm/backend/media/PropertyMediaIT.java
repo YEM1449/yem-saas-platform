@@ -7,8 +7,8 @@ import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -40,11 +40,11 @@ class PropertyMediaIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProjectRepository projectRepository;
 
-    private Tenant tenant;
+    private Societe societe;
     private String adminBearer;
     private String agentBearer;
     private UUID propertyId;
@@ -52,19 +52,17 @@ class PropertyMediaIT extends IntegrationTestBase {
     @BeforeEach
     void setup() throws Exception {
         String key = "media-" + UUID.randomUUID().toString().substring(0, 8);
-        tenant = tenantRepository.save(new Tenant(key, "Media Tenant"));
+        societe = societeRepository.save(new Societe("Acme Corp", "MA"));
 
-        User admin = new User(tenant, "admin@" + key + ".com", "hash");
-        admin.setRole(UserRole.ROLE_ADMIN);
+        User admin = new User("admin@" + key + ".com", "hash");
         admin = userRepository.save(admin);
-        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
+        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);
 
-        User agent = new User(tenant, "agent@" + key + ".com", "hash");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent@" + key + ".com", "hash");
         agent = userRepository.save(agent);
-        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), tenant.getId(), UserRole.ROLE_AGENT);
+        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), societe.getId(), UserRole.ROLE_AGENT);
 
-        Project project = projectRepository.save(new Project(tenant, "Media Test Project"));
+        Project project = projectRepository.save(new Project(societe.getId(), "Media Test Project"));
 
         // Create a property via the API so it goes through normal lifecycle
         var req = new PropertyCreateRequest(
@@ -208,9 +206,8 @@ class PropertyMediaIT extends IntegrationTestBase {
     @Test
     void upload_crossTenant_returns404ForUnknownProperty() throws Exception {
         String otherKey = "other-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant otherTenant = tenantRepository.save(new Tenant(otherKey, "Other Tenant"));
-        User otherAdmin = new User(otherTenant, "admin@" + otherKey + ".com", "hash");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User otherAdmin = new User("admin@" + otherKey + ".com", "hash");
         otherAdmin = userRepository.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(
                 otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);

@@ -135,7 +135,6 @@ export class ContactsComponent implements OnInit {
     this.submitError = '';
 
     this.svc.create({
-      contactType: 'PROSPECT',
       firstName:   this.form.firstName.trim(),
       lastName:    this.form.lastName.trim(),
       email:       this.form.email.trim()  || null,

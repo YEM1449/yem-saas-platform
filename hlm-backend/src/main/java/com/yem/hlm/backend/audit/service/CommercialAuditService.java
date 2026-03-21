@@ -4,8 +4,6 @@ import com.yem.hlm.backend.audit.api.dto.AuditEventResponse;
 import com.yem.hlm.backend.audit.domain.AuditEventType;
 import com.yem.hlm.backend.audit.domain.CommercialAuditEvent;
 import com.yem.hlm.backend.audit.repo.CommercialAuditRepository;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,18 +24,15 @@ import java.util.UUID;
 public class CommercialAuditService {
 
     private final CommercialAuditRepository repo;
-    private final TenantRepository          tenantRepository;
 
-    public CommercialAuditService(CommercialAuditRepository repo,
-                                  TenantRepository tenantRepository) {
-        this.repo            = repo;
-        this.tenantRepository = tenantRepository;
+    public CommercialAuditService(CommercialAuditRepository repo) {
+        this.repo = repo;
     }
 
     /**
      * Appends an audit event within the caller's transaction.
      *
-     * @param tenantId        tenant scope
+     * @param societeId       société scope
      * @param eventType       the commercial event type
      * @param actorUserId     user who triggered the transition
      * @param correlationType entity type label (e.g. {@code "DEPOSIT"}, {@code "CONTRACT"})
@@ -45,15 +40,14 @@ public class CommercialAuditService {
      * @param payloadJson     optional JSON payload for additional context (may be {@code null})
      */
     @Transactional
-    public void record(UUID tenantId,
+    public void record(UUID societeId,
                        AuditEventType eventType,
                        UUID actorUserId,
                        String correlationType,
                        UUID correlationId,
                        String payloadJson) {
-        Tenant tenant = tenantRepository.getReferenceById(tenantId);
         CommercialAuditEvent event = new CommercialAuditEvent();
-        event.setTenant(tenant);
+        event.setSocieteId(societeId);
         event.setEventType(eventType);
         event.setActorUserId(actorUserId);
         event.setCorrelationType(correlationType);
@@ -63,17 +57,17 @@ public class CommercialAuditService {
     }
 
     /**
-     * Queries audit events for the given tenant with optional filters.
+     * Queries audit events for the given société with optional filters.
      *
      * @param limit max results, capped at 500
      */
-    public List<AuditEventResponse> search(UUID tenantId,
+    public List<AuditEventResponse> search(UUID societeId,
                                            LocalDateTime from,
                                            LocalDateTime to,
                                            String correlationType,
                                            UUID correlationId,
                                            int limit) {
-        return repo.search(tenantId, from, to, correlationType, correlationId,
+        return repo.search(societeId, from, to, correlationType, correlationId,
                         PageRequest.of(0, Math.min(limit, 500)))
                 .stream()
                 .map(e -> new AuditEventResponse(

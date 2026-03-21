@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.project.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +8,7 @@ import java.util.UUID;
 
 /**
  * A Project groups one or more Properties under a named real-estate development
- * within a Tenant's portfolio (e.g. "Résidence Les Acacias", "Tour Marina").
+ * within a Société's portfolio (e.g. "Résidence Les Acacias", "Tour Marina").
  * <p>
  * Each Property MUST belong to exactly one Project (mandatory FK).
  * Deletion of a project is prevented at DB level if properties exist (FK RESTRICT).
@@ -21,11 +20,11 @@ import java.util.UUID;
 @Table(
         name = "project",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_project_tenant_name", columnNames = {"tenant_id", "name"})
+                @UniqueConstraint(name = "uk_project_tenant_name", columnNames = {"societe_id", "name"})
         },
         indexes = {
-                @Index(name = "idx_project_tenant_id", columnList = "tenant_id,id"),
-                @Index(name = "idx_project_tenant_status", columnList = "tenant_id,status")
+                @Index(name = "idx_project_tenant_id", columnList = "societe_id,id"),
+                @Index(name = "idx_project_tenant_status", columnList = "societe_id,status")
         }
 )
 public class Project {
@@ -34,9 +33,8 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_project_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Setter
     @Column(name = "name", nullable = false, length = 200)
@@ -75,11 +73,11 @@ public class Project {
     /**
      * Creates a new active project.
      *
-     * @param tenant the owning tenant
-     * @param name   the project name (unique per tenant)
+     * @param societeId the owning société
+     * @param name      the project name (unique per société)
      */
-    public Project(Tenant tenant, String name) {
-        this.tenant = tenant;
+    public Project(UUID societeId, String name) {
+        this.societeId = societeId;
         this.name = name;
         this.status = ProjectStatus.ACTIVE;
     }

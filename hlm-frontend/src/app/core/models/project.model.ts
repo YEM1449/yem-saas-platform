@@ -2,7 +2,7 @@ export type ProjectStatus = 'ACTIVE' | 'ARCHIVED';
 
 export interface Project {
   id: string;
-  tenantId: string;
+  societeId: string;
   name: string;
   description: string | null;
   status: ProjectStatus;

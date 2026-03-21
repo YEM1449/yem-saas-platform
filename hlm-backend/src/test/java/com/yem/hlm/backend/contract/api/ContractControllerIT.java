@@ -16,8 +16,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -48,7 +48,7 @@ class ContractControllerIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     /** ROLE_ADMIN bearer for the seed tenant — used as default throughout. */
@@ -195,9 +195,8 @@ class ContractControllerIT extends IntegrationTestBase {
 
         // Setup tenant B
         String keyB = "iso-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(keyB, "Isolation Tenant B"));
-        User userB = new User(tenantB, "admin@iso-b.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@iso-b.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -233,12 +232,7 @@ class ContractControllerIT extends IntegrationTestBase {
         ContactResponse buyer = createContact("agent-restrict@acme.com");
 
         // Create a second user to use as the "other agent"
-        User otherAgent = new User(
-                tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "other-agent@acme.com",
-                "hashedPass"
-        );
-        otherAgent.setRole(UserRole.ROLE_AGENT);
+        User otherAgent = new User("other-agent@acme.com", "hashedPass");
         otherAgent = userRepository.save(otherAgent);
 
         // Token for the seed user but with ROLE_AGENT privilege

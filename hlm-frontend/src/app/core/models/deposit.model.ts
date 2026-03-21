@@ -16,9 +16,16 @@ export interface Deposit {
   updatedAt: string;
 }
 
+export interface DepositReportByAgent {
+  agentId: string;
+  agentEmail: string;
+  count: number;
+  totalAmount: number;
+}
+
 export interface DepositReportResponse {
   items: Deposit[];
   count: number;
   totalAmount: number;
-  byAgent: unknown[];
+  byAgent: DepositReportByAgent[];
 }

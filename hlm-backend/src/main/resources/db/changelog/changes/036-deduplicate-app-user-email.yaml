@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 036-deduplicate-app-user-email
+      author: YEM1449
+      comment: >
+        Pre-migration data allowed the same email across tenants, producing duplicate
+        app_user rows. This changeset re-points all app_user_societe foreign keys to
+        the canonical (lowest UUID, deterministic) app_user row for each email, deletes
+        the duplicates, then adds a UNIQUE constraint on app_user.email.
+      changes:
+        # Step 1: re-point app_user_societe.user_id to the canonical user (lowest UUID per email)
+        - sql:
+            sql: >
+              UPDATE app_user_societe aus
+              SET user_id = (
+                SELECT MIN(id::text)::uuid FROM app_user u2
+                WHERE u2.email = (SELECT email FROM app_user WHERE id = aus.user_id)
+              )
+              WHERE (
+                SELECT COUNT(*) FROM app_user u3
+                WHERE u3.email = (SELECT email FROM app_user WHERE id = aus.user_id)
+              ) > 1;
+
+        # Step 2: delete duplicate app_user rows (keep the one with the lowest UUID per email)
+        - sql:
+            sql: >
+              DELETE FROM app_user
+              WHERE id NOT IN (
+                SELECT MIN(id::text)::uuid
+                FROM app_user
+                GROUP BY email
+              );
+
+        # Step 3: add UNIQUE constraint to prevent recurrence
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: email
+            constraintName: uq_app_user_email

@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.payments.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,8 +20,8 @@ import java.util.UUID;
 @Table(
         name = "schedule_payment",
         indexes = {
-                @Index(name = "idx_spay_tenant_paid_at", columnList = "tenant_id,paid_at"),
-                @Index(name = "idx_spay_tenant_item",    columnList = "tenant_id,schedule_item_id")
+                @Index(name = "idx_spay_tenant_paid_at", columnList = "societe_id,paid_at"),
+                @Index(name = "idx_spay_tenant_item",    columnList = "societe_id,schedule_item_id")
         }
 )
 public class SchedulePayment {
@@ -31,10 +30,8 @@ public class SchedulePayment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_spay_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Column(name = "schedule_item_id", nullable = false)
     private UUID scheduleItemId;
@@ -67,10 +64,10 @@ public class SchedulePayment {
         this.createdAt = LocalDateTime.now();
     }
 
-    public SchedulePayment(Tenant tenant, UUID scheduleItemId, UUID createdBy,
+    public SchedulePayment(UUID societeId, UUID scheduleItemId, UUID createdBy,
                            BigDecimal amountPaid, LocalDateTime paidAt,
                            String channel, String paymentReference, String notes) {
-        this.tenant           = tenant;
+        this.societeId        = societeId;
         this.scheduleItemId   = scheduleItemId;
         this.createdBy        = createdBy;
         this.amountPaid       = amountPaid;

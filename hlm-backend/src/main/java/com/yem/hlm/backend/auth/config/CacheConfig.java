@@ -25,22 +25,34 @@ public class CacheConfig {
 
     /**
      * Commercial dashboard summary cache.
-     * TTL: 30 s. Key includes tenantId + effectiveAgentId + from + to + projectId.
+     * TTL: 30 s. Key includes societeId + effectiveAgentId + from + to + projectId.
      * Max 500 entries (one per unique filter combination per tenant).
      */
     public static final String COMMERCIAL_DASHBOARD_CACHE = "commercialDashboardSummary";
 
     /**
      * Cash dashboard cache.
-     * TTL: 60 s. Key includes tenantId + from + to.
+     * TTL: 60 s. Key includes societeId + from + to.
      */
     public static final String CASH_DASHBOARD_CACHE = "cashDashboard";
 
     /**
      * Receivables dashboard cache.
-     * TTL: 30 s. Key includes tenantId + effectiveAgentId.
+     * TTL: 30 s. Key includes societeId + effectiveAgentId.
      */
     public static final String RECEIVABLES_DASHBOARD_CACHE = "receivablesDashboard";
+
+    /**
+     * Projects cache — societe-scoped project lists.
+     * TTL: 60 s. Max 1 000 entries.
+     */
+    public static final String PROJECTS_CACHE = "projects";
+
+    /**
+     * Societes cache — super-admin société lookups.
+     * TTL: 120 s. Max 200 entries.
+     */
+    public static final String SOCIETES_CACHE = "societes";
 
     @Bean
     public CacheManager cacheManager() {
@@ -72,6 +84,20 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .maximumSize(200)
                         .expireAfterWrite(30, TimeUnit.SECONDS)
+                        .build());
+
+        // Projects — 60 s TTL, up to 1 000 entries
+        manager.registerCustomCache(PROJECTS_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(1_000)
+                        .expireAfterWrite(60, TimeUnit.SECONDS)
+                        .build());
+
+        // Societes — 120 s TTL, up to 200 entries
+        manager.registerCustomCache(SOCIETES_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(200)
+                        .expireAfterWrite(120, TimeUnit.SECONDS)
                         .build());
 
         return manager;

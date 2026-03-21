@@ -1,0 +1,79 @@
+databaseChangeLog:
+  - changeSet:
+      id: 031-create-societe
+      author: YEM1449
+      changes:
+        - createTable:
+            tableName: societe
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  defaultValueComputed: gen_random_uuid()
+              - column:
+                  name: nom
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: siret_ice
+                  type: VARCHAR(50)
+              - column:
+                  name: adresse
+                  type: TEXT
+              - column:
+                  name: email_dpo
+                  type: VARCHAR(255)
+              - column:
+                  name: logo_url
+                  type: VARCHAR(500)
+              - column:
+                  name: pays
+                  type: VARCHAR(10)
+                  defaultValue: MA
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actif
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        # INSERT SEED BEFORE FK is added in 033 — fixes Bug B1
+        - insert:
+            tableName: societe
+            columns:
+              - column:
+                  name: id
+                  value: "00000000-0000-0000-0000-000000000001"
+              - column:
+                  name: nom
+                  value: "Société par défaut"
+              - column:
+                  name: pays
+                  value: "MA"
+
+        # Backfill existing tenants into societe so FK constraints in 033/034 are satisfied.
+        # On a fresh install, tenant table exists (created by 001) but is empty — 0 rows inserted.
+        - sql:
+            sql: >
+              INSERT INTO societe (id, nom, pays)
+              SELECT t.id, t.name, 'MA'
+              FROM tenant t
+              ON CONFLICT (id) DO NOTHING;

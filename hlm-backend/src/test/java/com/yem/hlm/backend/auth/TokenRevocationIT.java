@@ -3,8 +3,11 @@ package com.yem.hlm.backend.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.AppUserSocieteRepository;
+import com.yem.hlm.backend.societe.domain.AppUserSociete;
+import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -17,8 +20,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -38,26 +39,32 @@ class TokenRevocationIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
+    @Autowired AppUserSocieteRepository appUserSocieteRepository;
     @Autowired PasswordEncoder passwordEncoder;
 
-    private Tenant tenant;
+    private Societe societe;
     private User admin;
     private String adminBearer;
 
     @BeforeEach
     void setup() {
-        tenant = tenantRepository.save(
-                new Tenant("rev-" + UUID.randomUUID().toString().substring(0, 8), "Revocation Tenant"));
+        societe = societeRepository.save(new Societe("Revocation Tenant", "MA"));
 
-        admin = new User(tenant, "admin@rev.test", passwordEncoder.encode("Admin123!Secure"));
-        admin.setRole(UserRole.ROLE_ADMIN);
+        admin = new User("admin@rev.test", passwordEncoder.encode("Admin123!Secure"));
         admin = userRepository.save(admin);
 
         // Generate token with current tokenVersion (0)
         adminBearer = "Bearer " + jwtProvider.generate(
-                admin.getId(), tenant.getId(), UserRole.ROLE_ADMIN, admin.getTokenVersion());
+                admin.getId(), societe.getId(), UserRole.ROLE_ADMIN, admin.getTokenVersion());
+        // Give admin membership so AdminUserService can use it as actor
+        enroll(admin.getId(), "ADMIN");
+    }
+
+    private void enroll(java.util.UUID userId, String role) {
+        appUserSocieteRepository.save(
+                new AppUserSociete(new AppUserSocieteId(userId, societe.getId()), role));
     }
 
     // ===== P1 FIX 1: Role demotion revokes active JWT =====
@@ -65,12 +72,12 @@ class TokenRevocationIT extends IntegrationTestBase {
     @Test
     void roleDemotion_oldToken_returns401() throws Exception {
         // 1) Target user starts as ADMIN
-        User target = new User(tenant, "target@rev.test", "hash");
-        target.setRole(UserRole.ROLE_ADMIN);
+        User target = new User("target@rev.test", "hash");
         target = userRepository.save(target);
+        enroll(target.getId(), "ADMIN");
 
         String targetBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), UserRole.ROLE_ADMIN, target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_ADMIN, target.getTokenVersion());
 
         // 2) Target can access admin endpoint with current token
         mvc.perform(get(ADMIN_USERS)
@@ -94,12 +101,12 @@ class TokenRevocationIT extends IntegrationTestBase {
     @Test
     void rolePromotion_oldToken_returns401() throws Exception {
         // Even promotion invalidates old token (forces re-login with new role)
-        User target = new User(tenant, "promo@rev.test", "hash");
-        target.setRole(UserRole.ROLE_AGENT);
+        User target = new User("promo@rev.test", "hash");
         target = userRepository.save(target);
+        enroll(target.getId(), "AGENT");
 
         String targetBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
 
         // Agent can access properties (authenticated endpoint)
         mvc.perform(get(PROPERTIES)
@@ -123,12 +130,12 @@ class TokenRevocationIT extends IntegrationTestBase {
 
     @Test
     void disableUser_oldToken_returns401() throws Exception {
-        User target = new User(tenant, "disabled@rev.test", "hash");
-        target.setRole(UserRole.ROLE_AGENT);
+        User target = new User("disabled@rev.test", "hash");
         target = userRepository.save(target);
+        enroll(target.getId(), "AGENT");
 
         String targetBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
 
         // 1) Target can access authenticated endpoint
         mvc.perform(get(PROPERTIES)
@@ -152,14 +159,14 @@ class TokenRevocationIT extends IntegrationTestBase {
     @Test
     void disableUser_preventsLogin() throws Exception {
         // Create user with real password
-        User target = new User(tenant, "login-test@rev.test", passwordEncoder.encode("TestPass123!"));
-        target.setRole(UserRole.ROLE_AGENT);
+        User target = new User("login-test@rev.test", passwordEncoder.encode("TestPass123!"));
         target = userRepository.save(target);
+        enroll(target.getId(), "AGENT");
 
         // 1) User can log in
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
+                        .content("{\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
@@ -173,18 +180,18 @@ class TokenRevocationIT extends IntegrationTestBase {
         // 3) Login attempt fails → 401
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenantKey\":\"" + tenant.getKey() + "\",\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
+                        .content("{\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void reEnableUser_oldTokenStillRejected_newTokenWorks() throws Exception {
-        User target = new User(tenant, "reenable@rev.test", "hash");
-        target.setRole(UserRole.ROLE_AGENT);
+        User target = new User("reenable@rev.test", "hash");
         target = userRepository.save(target);
+        enroll(target.getId(), "AGENT");
 
         String originalBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
 
         // 1) Disable (tokenVersion 0 → 1)
         mvc.perform(patch(ADMIN_USERS + "/{id}/enabled", target.getId())
@@ -208,7 +215,7 @@ class TokenRevocationIT extends IntegrationTestBase {
         // 4) New token with current tokenVersion works
         target = userRepository.findById(target.getId()).orElseThrow();
         String newBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), target.getRole(), target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
 
         mvc.perform(get(PROPERTIES)
                         .header("Authorization", newBearer))
@@ -217,12 +224,12 @@ class TokenRevocationIT extends IntegrationTestBase {
 
     @Test
     void resetPassword_incrementsTokenVersion_oldTokenRejected() throws Exception {
-        User target = new User(tenant, "reset-rev@rev.test", passwordEncoder.encode("OldPass123!Sec"));
-        target.setRole(UserRole.ROLE_AGENT);
+        User target = new User("reset-rev@rev.test", passwordEncoder.encode("OldPass123!Sec"));
         target = userRepository.save(target);
+        enroll(target.getId(), "AGENT");
 
         String targetBearer = "Bearer " + jwtProvider.generate(
-                target.getId(), tenant.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
+                target.getId(), societe.getId(), UserRole.ROLE_AGENT, target.getTokenVersion());
 
         // 1) Token works
         mvc.perform(get(PROPERTIES)

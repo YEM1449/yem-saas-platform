@@ -22,7 +22,7 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.auth.service.SecurityAuditLogger;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.auth.service.UserSecurityInfo;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 
 /**
  * JWT Authentication Filter (OncePerRequestFilter).
@@ -56,20 +56,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = resolveBearerToken(request);
 
             if (token != null && jwtProvider.isValid(token)) {
-                // 2) Extract required claims.
-                //    If any required claim is missing/malformed => treat as invalid token.
-                UUID tenantId = safeExtractTenantId(token);
-                UUID userId = safeExtractUserId(token);
+                // 2) Partial tokens (issued during multi-société selection) are only
+                //    valid for /auth/switch-societe. Reject them for all other endpoints
+                //    by skipping authentication — Spring Security will enforce access rules.
+                if (jwtProvider.isPartialToken(token)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
-                if (tenantId != null && userId != null) {
-                    List<GrantedAuthority> authorities = safeExtractAuthorities(token);
+                UUID userId = safeExtractUserId(token);
+                UUID societeId = safeExtractSocieteId(token);   // null for SUPER_ADMIN tokens
+                List<GrantedAuthority> authorities = safeExtractAuthorities(token);
+                boolean isSuperAdmin = authorities.stream()
+                        .anyMatch(a -> "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+
+                // Only proceed when userId is known AND the token has a société context
+                // (normal CRM / portal) OR is a platform-level SUPER_ADMIN token.
+                if (userId != null && (societeId != null || isSuperAdmin)) {
 
                     if (isPortalToken(authorities)) {
                         // Portal token: sub = contactId (not a CRM User row).
                         // Skip UserSecurityCacheService — portal sessions are
                         // stateless (invalidated by TTL / single-use magic-link logic).
-                        TenantContext.setTenantId(tenantId);
-                        TenantContext.setUserId(userId); // userId == contactId for portal
+                        SocieteContext.setSocieteId(societeId);
+                        SocieteContext.setUserId(userId); // userId == contactId for portal
+
                     } else {
                         // 3) Server-side revocation check: verify user is still enabled
                         //    and token version matches (role change / disable increments version)
@@ -80,9 +91,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             filterChain.doFilter(request, response);
                             return;
                         }
-                        // 4) Store multi-tenant context in ThreadLocal
-                        TenantContext.setTenantId(tenantId);
-                        TenantContext.setUserId(userId);
+
+                        // 4) Store multi-société context in ThreadLocal
+                        if (isSuperAdmin) {
+                            // Platform-level SUPER_ADMIN: no société scope, system mode
+                            SocieteContext.setSuperAdmin(true);
+                        } else {
+                            SocieteContext.setSocieteId(societeId);
+                        }
+                        SocieteContext.setUserId(userId);
                     }
 
                     // 5) Build an Authentication object.
@@ -97,9 +114,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } finally {
-            // Critical: clear ThreadLocal to avoid leaking tenant/user between requests
+            // Critical: clear ThreadLocal to avoid leaking société/user between requests
             // when the container reuses threads.
-            TenantContext.clear();
+            SocieteContext.clear();
         }
     }
 
@@ -122,13 +139,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Extract tenantId from JWT. Returns null if missing/malformed.
+     * Extract societeId from JWT. Returns null if missing/malformed.
      */
-    private UUID safeExtractTenantId(String token) {
+    private UUID safeExtractSocieteId(String token) {
         try {
-            return jwtProvider.extractTenantId(token);
+            return jwtProvider.extractSocieteId(token);
         } catch (RuntimeException ex) {
-            // Missing claim "tid" or invalid UUID format => token is not usable in SaaS context.
+            // Missing claim "sid" or invalid UUID format => token is not usable in SaaS context.
             return null;
         }
     }

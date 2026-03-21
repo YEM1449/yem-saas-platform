@@ -15,8 +15,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -47,7 +47,7 @@ class DepositControllerIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String bearer;
@@ -296,9 +296,8 @@ class DepositControllerIT extends IntegrationTestBase {
 
         // Create tenant B + user
         String otherKey = "dep-iso-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Deposit Isolation Tenant"));
-        User userB = new User(tenantB, "admin@dep-iso.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@dep-iso.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -330,9 +329,8 @@ class DepositControllerIT extends IntegrationTestBase {
 
         // Create tenant B + user
         String otherKey = "dep-rpt-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Report Isolation Tenant"));
-        User userB = new User(tenantB, "admin@dep-rpt.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@dep-rpt.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 

@@ -1,0 +1,175 @@
+databaseChangeLog:
+
+  # ── contact ──────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-contact-societe-deleted-status
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_contact_societe_deleted_status
+            tableName: contact
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: deleted
+              - column:
+                  name: status
+
+  - changeSet:
+      id: 037-idx-contact-societe-email
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_contact_societe_email
+            tableName: contact
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: email
+
+  # ── contact_interest ─────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-contact-interest-societe-contact
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_ci_societe_contact
+            tableName: contact_interest
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: contact_id
+
+  # ── deposit ──────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-deposit-societe-status-due
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_deposit_societe_status_due
+            tableName: deposit
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: status
+              - column:
+                  name: due_date
+
+  # ── property ─────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-property-societe-status
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_property_societe_status
+            tableName: property
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: status
+
+  # ── sale_contract ─────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-sale-contract-societe-status
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_sc_societe_status
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: status
+
+  - changeSet:
+      id: 037-idx-sale-contract-societe-agent
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_sc_societe_agent
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: agent_id
+
+  # ── commercial_audit_event ────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-cae-societe-correlation
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_cae_societe_correlation
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: correlation_type
+              - column:
+                  name: correlation_id
+
+  - changeSet:
+      id: 037-idx-cae-societe-occurred-at
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_cae_societe_occurred_at
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: occurred_at
+
+  # ── outbound_message ─────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-outbound-message-status-retry
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_om_societe_status_retry
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: status
+              - column:
+                  name: next_retry_at
+
+  - changeSet:
+      id: 037-idx-outbound-message-correlation
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_om_correlation
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: correlation_type
+              - column:
+                  name: correlation_id
+
+  # ── notification ─────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 037-idx-notification-societe-user-read
+      author: YEM1449
+      changes:
+        - createIndex:
+            indexName: idx_notification_societe_user_read
+            tableName: notification
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: recipient_user_id
+              - column:
+                  name: is_read

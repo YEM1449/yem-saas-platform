@@ -18,8 +18,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class GdprIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired ContactRepository contactRepository;
     @Autowired SaleContractRepository contractRepository;
 
@@ -108,7 +108,7 @@ class GdprIT extends IntegrationTestBase {
         mvc.perform(get("/api/gdpr/contacts/{id}/export", foreignContactId)
                         .header("Authorization", adminBearer))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("GDPR_EXPORT_NOT_FOUND"));
+                .andExpect(jsonPath("$.code").value("GDPR_EXPORT_NOT_FOUND"));
     }
 
     // =========================================================================
@@ -147,7 +147,7 @@ class GdprIT extends IntegrationTestBase {
         mvc.perform(delete("/api/gdpr/contacts/{id}/anonymize", contactId)
                         .header("Authorization", adminBearer))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errorCode").value("GDPR_ERASURE_BLOCKED"));
+                .andExpect(jsonPath("$.code").value("GDPR_ERASURE_BLOCKED"));
     }
 
     // =========================================================================

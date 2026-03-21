@@ -5,7 +5,7 @@ import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,9 +36,9 @@ class PropertyCommercialWorkflowServiceTest {
 
     @BeforeEach
     void setUp() {
-        Tenant tenant = new Tenant("test-key", "Test Tenant");
+        UUID societeId = UUID.randomUUID();
         Project project = mock(Project.class);
-        property = new Property(tenant, project, PropertyType.VILLA, UUID.randomUUID());
+        property = new Property(societeId, project, PropertyType.VILLA, UUID.randomUUID());
         // Start in ACTIVE status for transition tests
         property.setStatus(PropertyStatus.ACTIVE);
 

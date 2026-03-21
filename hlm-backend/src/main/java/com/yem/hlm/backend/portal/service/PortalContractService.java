@@ -10,8 +10,9 @@ import com.yem.hlm.backend.portal.api.dto.PortalPropertyResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTenantInfoResponse;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,18 +33,18 @@ public class PortalContractService {
     private final SaleContractRepository contractRepository;
     private final PaymentScheduleService paymentScheduleService;
     private final PropertyRepository propertyRepository;
-    private final TenantRepository tenantRepository;
+    private final SocieteRepository societeRepository;
     private final ContractDocumentService contractDocumentService;
 
     public PortalContractService(SaleContractRepository contractRepository,
                                  PaymentScheduleService paymentScheduleService,
                                  PropertyRepository propertyRepository,
-                                 TenantRepository tenantRepository,
+                                 SocieteRepository societeRepository,
                                  ContractDocumentService contractDocumentService) {
         this.contractRepository      = contractRepository;
         this.paymentScheduleService  = paymentScheduleService;
         this.propertyRepository      = propertyRepository;
-        this.tenantRepository        = tenantRepository;
+        this.societeRepository       = societeRepository;
         this.contractDocumentService = contractDocumentService;
     }
 
@@ -53,9 +54,9 @@ public class PortalContractService {
 
     /** Returns all contracts where the authenticated contact is the buyer. */
     public List<PortalContractResponse> listContracts() {
-        UUID tenantId  = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
-        return contractRepository.findPortalContracts(tenantId, contactId)
+        return contractRepository.findPortalContracts(societeId, contactId)
                 .stream()
                 .map(PortalContractResponse::from)
                 .toList();
@@ -66,10 +67,10 @@ public class PortalContractService {
      * Enforces: contract must belong to this contact (→ 404 otherwise).
      */
     public byte[] getContractPdf(UUID contractId) {
-        UUID tenantId  = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
 
-        var contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
+        var contract = contractRepository.findBySocieteIdAndId(societeId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
 
         if (!contract.getBuyerContact().getId().equals(contactId)) {
@@ -88,14 +89,14 @@ public class PortalContractService {
     /**
      * Returns the v2 payment schedule items for a contract owned by the authenticated buyer.
      * Enforces buyer ownership (→ 404 if this contact is not the buyer).
-     * Delegates to {@link PaymentScheduleService#listByContract(UUID)} which uses TenantContext
-     * (already set by the portal JWT filter) for tenant isolation.
+     * Delegates to {@link PaymentScheduleService#listByContract(UUID)} which uses SocieteContext
+     * (already set by the portal JWT filter) for société isolation.
      */
     public List<PaymentScheduleItemResponse> getPaymentSchedule(UUID contractId) {
-        UUID tenantId  = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
 
-        var contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
+        var contract = contractRepository.findBySocieteIdAndId(societeId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
 
         if (!contract.getBuyerContact().getId().equals(contactId)) {
@@ -114,40 +115,40 @@ public class PortalContractService {
      * Throws 404 if no such contract exists.
      */
     public PortalPropertyResponse getProperty(UUID propertyId) {
-        UUID tenantId  = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
 
-        boolean hasContract = contractRepository.existsByTenant_IdAndProperty_IdAndBuyerContact_Id(
-                tenantId, propertyId, contactId);
+        boolean hasContract = contractRepository.existsBySocieteIdAndProperty_IdAndBuyerContact_Id(
+                societeId, propertyId, contactId);
         if (!hasContract) {
             throw new PropertyNotFoundException(propertyId);
         }
 
-        var property = propertyRepository.findByTenant_IdAndId(tenantId, propertyId)
+        var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         return PortalPropertyResponse.from(property, property.getProject().getName());
     }
 
     // =========================================================================
-    // Tenant info
+    // Société info
     // =========================================================================
 
-    /** Returns the tenant's display name for the portal shell header. */
+    /** Returns the société's display name for the portal shell header. */
     public PortalTenantInfoResponse getTenantInfo() {
-        UUID tenantId = requireTenantId();
-        var tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new IllegalStateException("Tenant not found in context"));
-        return new PortalTenantInfoResponse(tenant.getName(), null);
+        UUID societeId = requireSocieteId();
+        Societe societe = societeRepository.findById(societeId)
+                .orElseThrow(() -> new IllegalStateException("Société not found in context"));
+        return new PortalTenantInfoResponse(societe.getNom(), null);
     }
 
     // =========================================================================
     // Helpers
     // =========================================================================
 
-    private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new IllegalStateException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new IllegalStateException("Missing société context");
         return id;
     }
 

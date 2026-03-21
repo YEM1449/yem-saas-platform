@@ -61,3 +61,19 @@ databaseChangeLog:
       file: db/changelog/changes/029-add-consent-fields.yaml
   - include:
       file: db/changelog/changes/030-update-seed-password.yaml
+  - include:
+      file: db/changelog/changes/031-create-societe.yaml
+  - include:
+      file: db/changelog/changes/032-create-app-user-societe.yaml
+  - include:
+      file: db/changelog/changes/033-rename-tenant-id-to-societe-id.yaml
+  - include:
+      file: db/changelog/changes/034-migrate-user-societe.yaml
+  - include:
+      file: db/changelog/changes/035-add-societe-key.yaml
+  - include:
+      file: db/changelog/changes/036-deduplicate-app-user-email.yaml
+  - include:
+      file: db/changelog/changes/037-add-performance-indexes.yaml
+  - include:
+      file: db/changelog/changes/038-add-version-columns.yaml

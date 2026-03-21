@@ -2,7 +2,7 @@ package com.yem.hlm.backend.dashboard.api;
 
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.service.ReceivablesDashboardService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,8 +38,8 @@ public class ReceivablesDashboardController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
     public ReceivablesDashboardDTO summary(@RequestParam(required = false) UUID agentId) {
-        UUID tenantId         = TenantContext.getTenantId();
+        UUID societeId        = SocieteContext.getSocieteId();
         UUID effectiveAgentId = service.resolveEffectiveAgentId(agentId);
-        return service.getSummary(tenantId, effectiveAgentId);
+        return service.getSummary(societeId, effectiveAgentId);
     }
 }

@@ -11,7 +11,6 @@ import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ import java.util.UUID;
  * Commission calculation and rule management.
  *
  * <h3>Rule priority</h3>
- * Project-specific rule → tenant-wide default. If no rule exists, commissionAmount = 0.
+ * Project-specific rule → société-wide default. If no rule exists, commissionAmount = 0.
  *
  * <h3>Commission formula</h3>
  * commissionAmount = agreedPrice × ratePercent / 100 + fixedAmount (0 when null).
@@ -39,18 +38,15 @@ public class CommissionService {
     private final CommissionRuleRepository ruleRepository;
     private final SaleContractRepository   contractRepository;
     private final ProjectRepository        projectRepository;
-    private final TenantRepository         tenantRepository;
     private final UserRepository           userRepository;
 
     public CommissionService(CommissionRuleRepository ruleRepository,
                              SaleContractRepository contractRepository,
                              ProjectRepository projectRepository,
-                             TenantRepository tenantRepository,
                              UserRepository userRepository) {
         this.ruleRepository     = ruleRepository;
         this.contractRepository = contractRepository;
         this.projectRepository  = projectRepository;
-        this.tenantRepository   = tenantRepository;
         this.userRepository     = userRepository;
     }
 
@@ -58,26 +54,23 @@ public class CommissionService {
     // Rule CRUD (ADMIN only)
     // =========================================================================
 
-    public List<CommissionRuleResponse> listRules(UUID tenantId) {
-        return ruleRepository.findByTenant_IdOrderByEffectiveFromDesc(tenantId)
+    public List<CommissionRuleResponse> listRules(UUID societeId) {
+        return ruleRepository.findBySocieteIdOrderByEffectiveFromDesc(societeId)
                 .stream()
                 .map(this::toRuleResponse)
                 .toList();
     }
 
     @Transactional
-    public CommissionRuleResponse createRule(UUID tenantId, CommissionRuleRequest req) {
-        var tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
-
+    public CommissionRuleResponse createRule(UUID societeId, CommissionRuleRequest req) {
         com.yem.hlm.backend.project.domain.Project project = null;
         if (req.projectId() != null) {
-            project = projectRepository.findByTenant_IdAndId(tenantId, req.projectId())
+            project = projectRepository.findBySocieteIdAndId(societeId, req.projectId())
                     .orElseThrow(() -> new ProjectNotFoundException(req.projectId()));
         }
 
         CommissionRule rule = new CommissionRule(
-                tenant, project,
+                societeId, project,
                 req.ratePercent(), req.fixedAmount(),
                 req.effectiveFrom(), req.effectiveTo()
         );
@@ -85,13 +78,13 @@ public class CommissionService {
     }
 
     @Transactional
-    public CommissionRuleResponse updateRule(UUID tenantId, UUID ruleId, CommissionRuleRequest req) {
-        CommissionRule rule = ruleRepository.findByTenant_IdAndId(tenantId, ruleId)
+    public CommissionRuleResponse updateRule(UUID societeId, UUID ruleId, CommissionRuleRequest req) {
+        CommissionRule rule = ruleRepository.findBySocieteIdAndId(societeId, ruleId)
                 .orElseThrow(() -> new CommissionRuleNotFoundException(ruleId));
 
         com.yem.hlm.backend.project.domain.Project project = null;
         if (req.projectId() != null) {
-            project = projectRepository.findByTenant_IdAndId(tenantId, req.projectId())
+            project = projectRepository.findBySocieteIdAndId(societeId, req.projectId())
                     .orElseThrow(() -> new ProjectNotFoundException(req.projectId()));
         }
 
@@ -104,8 +97,8 @@ public class CommissionService {
     }
 
     @Transactional
-    public void deleteRule(UUID tenantId, UUID ruleId) {
-        CommissionRule rule = ruleRepository.findByTenant_IdAndId(tenantId, ruleId)
+    public void deleteRule(UUID societeId, UUID ruleId) {
+        CommissionRule rule = ruleRepository.findBySocieteIdAndId(societeId, ruleId)
                 .orElseThrow(() -> new CommissionRuleNotFoundException(ruleId));
         ruleRepository.delete(rule);
     }
@@ -115,29 +108,29 @@ public class CommissionService {
     // =========================================================================
 
     /** Calculates commission for a single SIGNED contract. */
-    public CommissionDTO calculateCommission(UUID tenantId, UUID contractId) {
-        SaleContract contract = contractRepository.findByTenant_IdAndId(tenantId, contractId)
+    public CommissionDTO calculateCommission(UUID societeId, UUID contractId) {
+        SaleContract contract = contractRepository.findBySocieteIdAndId(societeId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
-        return buildCommissionDTO(tenantId, contract);
+        return buildCommissionDTO(societeId, contract);
     }
 
     /**
      * Returns commission entries for all SIGNED contracts of a given agent in a date range.
      * Contracts without a matching rule return commissionAmount = 0.
      */
-    public List<CommissionDTO> getAgentCommissions(UUID tenantId, UUID agentId,
+    public List<CommissionDTO> getAgentCommissions(UUID societeId, UUID agentId,
                                                    LocalDate from, LocalDate to) {
         if (agentId != null) {
-            userRepository.findByTenant_IdAndId(tenantId, agentId)
+            userRepository.findById(agentId)
                     .orElseThrow(() -> new UserNotFoundException(agentId));
         }
 
-        return contractRepository.filter(tenantId, SaleContractStatus.SIGNED,
+        return contractRepository.filter(societeId, SaleContractStatus.SIGNED,
                         null, agentId,
                         from != null ? from.atStartOfDay() : null,
                         to   != null ? to.atTime(23, 59, 59) : null)
                 .stream()
-                .map(c -> buildCommissionDTO(tenantId, c))
+                .map(c -> buildCommissionDTO(societeId, c))
                 .toList();
     }
 
@@ -145,13 +138,13 @@ public class CommissionService {
     // Private helpers
     // =========================================================================
 
-    private CommissionDTO buildCommissionDTO(UUID tenantId, SaleContract contract) {
+    private CommissionDTO buildCommissionDTO(UUID societeId, SaleContract contract) {
         LocalDate onDate = contract.getSignedAt() != null
                 ? contract.getSignedAt().toLocalDate()
                 : LocalDate.now();
         UUID projectId = contract.getProject() != null ? contract.getProject().getId() : null;
 
-        CommissionRule rule = resolveRule(tenantId, projectId, onDate);
+        CommissionRule rule = resolveRule(societeId, projectId, onDate);
 
         BigDecimal rate       = rule != null ? rule.getRatePercent() : BigDecimal.ZERO;
         BigDecimal fixed      = (rule != null && rule.getFixedAmount() != null)
@@ -173,20 +166,20 @@ public class CommissionService {
         );
     }
 
-    private CommissionRule resolveRule(UUID tenantId, UUID projectId, LocalDate onDate) {
+    private CommissionRule resolveRule(UUID societeId, UUID projectId, LocalDate onDate) {
         if (projectId != null) {
             List<CommissionRule> projectRules =
-                    ruleRepository.findProjectRule(tenantId, projectId, onDate);
+                    ruleRepository.findProjectRule(societeId, projectId, onDate);
             if (!projectRules.isEmpty()) return projectRules.get(0);
         }
-        List<CommissionRule> defaults = ruleRepository.findTenantDefaultRule(tenantId, onDate);
+        List<CommissionRule> defaults = ruleRepository.findTenantDefaultRule(societeId, onDate);
         return defaults.isEmpty() ? null : defaults.get(0);
     }
 
     private CommissionRuleResponse toRuleResponse(CommissionRule r) {
         return new CommissionRuleResponse(
                 r.getId(),
-                r.getTenant().getId(),
+                r.getSocieteId(),
                 r.getProject() != null ? r.getProject().getId() : null,
                 r.getProject() != null ? r.getProject().getName() : null,
                 r.getRatePercent(),

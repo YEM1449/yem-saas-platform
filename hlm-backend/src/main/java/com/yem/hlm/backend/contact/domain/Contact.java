@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.contact.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,10 +13,10 @@ import java.util.UUID;
 @Table(
         name = "contact",
         indexes = {
-                @Index(name = "idx_contact_tenant_status", columnList = "tenant_id,status"),
-                @Index(name = "idx_contact_tenant_last_name", columnList = "tenant_id,last_name"),
-                @Index(name = "idx_contact_tenant_created_at", columnList = "tenant_id,created_at"),
-                @Index(name = "idx_contact_tenant_type", columnList = "tenant_id,contact_type")
+                @Index(name = "idx_contact_tenant_status", columnList = "societe_id,status"),
+                @Index(name = "idx_contact_tenant_last_name", columnList = "societe_id,last_name"),
+                @Index(name = "idx_contact_tenant_created_at", columnList = "societe_id,created_at"),
+                @Index(name = "idx_contact_tenant_type", columnList = "societe_id,contact_type")
         }
 )
 public class Contact {
@@ -26,9 +25,12 @@ public class Contact {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_contact_tenant"))
-    private Tenant tenant;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     /**
      * Legacy-but-still-enforced NOT NULL column from changeset 003.
@@ -168,8 +170,8 @@ public class Contact {
         syncFullName();
     }
 
-    public Contact(Tenant tenant, UUID actorUserId, String firstName, String lastName) {
-        this.tenant = tenant;
+    public Contact(UUID societeId, UUID actorUserId, String firstName, String lastName) {
+        this.societeId = societeId;
         this.firstName = firstName;
         this.lastName = lastName;
 

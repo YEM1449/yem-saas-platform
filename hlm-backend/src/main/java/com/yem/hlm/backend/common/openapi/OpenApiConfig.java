@@ -25,14 +25,14 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("CRM-HLM API")
                         .version("1.0")
-                        .description("Multi-tenant CRM for HLM. Every request is scoped to a single tenant via JWT `tid` claim."))
+                        .description("Multi-société CRM for HLM. Every request is scoped to a single société via JWT `sid` claim."))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("JWT token from POST /auth/login. Contains `tid` (tenant ID) and `sub` (user ID) claims.")));
+                                .description("JWT token from POST /auth/login. Contains `sid` (société ID) and `sub` (user ID) claims.")));
     }
 
     @Bean

@@ -9,11 +9,11 @@ import java.util.UUID;
 
 public interface ContactInterestRepository extends JpaRepository<ContactInterest, UUID> {
 
-    boolean existsByTenant_IdAndContactIdAndPropertyId(UUID tenantId, UUID contactId, UUID propertyId);
+    boolean existsBySocieteIdAndContactIdAndPropertyId(UUID societeId, UUID contactId, UUID propertyId);
 
-    Optional<ContactInterest> findByTenant_IdAndContactIdAndPropertyId(UUID tenantId, UUID contactId, UUID propertyId);
+    Optional<ContactInterest> findBySocieteIdAndContactIdAndPropertyId(UUID societeId, UUID contactId, UUID propertyId);
 
-    List<ContactInterest> findAllByTenant_IdAndContactId(UUID tenantId, UUID contactId);
+    List<ContactInterest> findAllBySocieteIdAndContactId(UUID societeId, UUID contactId);
 
-    List<ContactInterest> findAllByTenant_IdAndPropertyId(UUID tenantId, UUID propertyId);
+    List<ContactInterest> findAllBySocieteIdAndPropertyId(UUID societeId, UUID propertyId);
 }

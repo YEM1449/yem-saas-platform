@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.portal.domain;
 
 import com.yem.hlm.backend.contact.domain.Contact;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,7 +24,7 @@ import java.util.UUID;
 @Table(
         name = "portal_token",
         indexes = {
-                @Index(name = "idx_pt_tenant_contact", columnList = "tenant_id,contact_id"),
+                @Index(name = "idx_pt_tenant_contact", columnList = "societe_id,contact_id"),
                 @Index(name = "idx_pt_expires_at",     columnList = "expires_at")
         }
 )
@@ -35,10 +34,8 @@ public class PortalToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_portal_token_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id", nullable = false,
@@ -64,8 +61,8 @@ public class PortalToken {
         this.createdAt = Instant.now();
     }
 
-    public PortalToken(Tenant tenant, Contact contact, String tokenHash, Instant expiresAt) {
-        this.tenant    = tenant;
+    public PortalToken(UUID societeId, Contact contact, String tokenHash, Instant expiresAt) {
+        this.societeId = societeId;
         this.contact   = contact;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;

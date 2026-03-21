@@ -65,7 +65,7 @@ public class AnonymizationService {
      */
     @Transactional
     public void anonymize(Contact contact, UUID actorUserId) {
-        UUID tenantId = contact.getTenant().getId();
+        UUID societeId = contact.getSocieteId();
         UUID contactId = contact.getId();
 
         // Idempotent guard
@@ -75,7 +75,7 @@ public class AnonymizationService {
         }
 
         // Check for signed contracts — cannot erase
-        List<SaleContract> contracts = contractRepo.findPortalContracts(tenantId, contactId);
+        List<SaleContract> contracts = contractRepo.findPortalContracts(societeId, contactId);
         List<UUID> signedContractIds = contracts.stream()
                 .filter(c -> c.getStatus() == SaleContractStatus.SIGNED)
                 .map(SaleContract::getId)
@@ -119,7 +119,7 @@ public class AnonymizationService {
         });
 
         // Zero PII on client_detail
-        clientDetailRepo.findByContact_Tenant_IdAndContactId(tenantId, contactId).ifPresent(cd -> {
+        clientDetailRepo.findBySocieteIdAndContactId(societeId, contactId).ifPresent(cd -> {
             cd.setCompanyName(null);
             cd.setIce(null);
             cd.setSiret(null);
@@ -127,9 +127,9 @@ public class AnonymizationService {
         });
 
         // Write audit event
-        auditService.record(tenantId, AuditEventType.CONTACT_ANONYMIZED,
+        auditService.record(societeId, AuditEventType.CONTACT_ANONYMIZED,
                 actorUserId, "CONTACT", contactId, null);
 
-        log.info("[GDPR] Contact {} anonymized by user {} in tenant {}", contactId, actorUserId, tenantId);
+        log.info("[GDPR] Contact {} anonymized by user {} in société {}", contactId, actorUserId, societeId);
     }
 }

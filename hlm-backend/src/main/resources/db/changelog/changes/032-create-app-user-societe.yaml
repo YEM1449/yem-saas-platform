@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 032-create-app-user-societe
+      author: YEM1449
+      changes:
+        # Add platform_role to app_user FIRST — fixes Bug B3
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: platform_role
+                  type: VARCHAR(50)
+
+        - createTable:
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actif
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            tableName: app_user_societe
+            columnNames: user_id, societe_id
+            constraintName: pk_app_user_societe
+
+        - addForeignKeyConstraint:
+            baseTableName: app_user_societe
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_aus_user
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: app_user_societe
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_aus_societe
+            onDelete: CASCADE
+
+        # CHECK constraint — fixes Bug B6
+        - sql:
+            sql: >
+              ALTER TABLE app_user_societe
+              ADD CONSTRAINT chk_societe_role
+              CHECK (role IN ('ADMIN','MANAGER','AGENT'));

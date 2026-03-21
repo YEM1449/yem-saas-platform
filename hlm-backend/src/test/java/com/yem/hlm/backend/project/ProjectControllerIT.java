@@ -6,8 +6,8 @@ import com.yem.hlm.backend.project.api.dto.ProjectUpdateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -47,10 +47,10 @@ class ProjectControllerIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
-    private Tenant tenant;
+    private Societe societe;
     private User adminUser;
     private User managerUser;
     private User agentUser;
@@ -64,24 +64,21 @@ class ProjectControllerIT extends IntegrationTestBase {
     @BeforeEach
     void setupTestData() throws Exception {
         String uniqueKey = "proj-test-" + UUID.randomUUID().toString().substring(0, 8);
-        tenant = new Tenant(uniqueKey, "Project Test Tenant");
-        tenant = tenantRepository.save(tenant);
+        societe = new Societe("Acme Corp", "MA");
+        societe = societeRepository.save(societe);
 
-        adminUser = new User(tenant, "admin@projtest.com", "hashedPass");
-        adminUser.setRole(UserRole.ROLE_ADMIN);
+        adminUser = new User("admin@projtest.com", "hashedPass");
         adminUser = userRepository.save(adminUser);
 
-        managerUser = new User(tenant, "manager@projtest.com", "hashedPass");
-        managerUser.setRole(UserRole.ROLE_MANAGER);
+        managerUser = new User("manager@projtest.com", "hashedPass");
         managerUser = userRepository.save(managerUser);
 
-        agentUser = new User(tenant, "agent@projtest.com", "hashedPass");
-        agentUser.setRole(UserRole.ROLE_AGENT);
+        agentUser = new User("agent@projtest.com", "hashedPass");
         agentUser = userRepository.save(agentUser);
 
-        adminBearer = "Bearer " + jwtProvider.generate(adminUser.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
-        managerBearer = "Bearer " + jwtProvider.generate(managerUser.getId(), tenant.getId(), UserRole.ROLE_MANAGER);
-        agentBearer = "Bearer " + jwtProvider.generate(agentUser.getId(), tenant.getId(), UserRole.ROLE_AGENT);
+        adminBearer = "Bearer " + jwtProvider.generate(adminUser.getId(), societe.getId(), UserRole.ROLE_ADMIN);
+        managerBearer = "Bearer " + jwtProvider.generate(managerUser.getId(), societe.getId(), UserRole.ROLE_MANAGER);
+        agentBearer = "Bearer " + jwtProvider.generate(agentUser.getId(), societe.getId(), UserRole.ROLE_AGENT);
 
         String json = mvc.perform(post("/api/projects")
                         .header("Authorization", adminBearer)
@@ -108,7 +105,7 @@ class ProjectControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         var created = objectMapper.readTree(json);
-        assertThat(UUID.fromString(created.get("tenantId").asText())).isEqualTo(tenant.getId());
+        assertThat(UUID.fromString(created.get("societeId").asText())).isEqualTo(societe.getId());
     }
 
     @Test
@@ -226,9 +223,8 @@ class ProjectControllerIT extends IntegrationTestBase {
     @Test
     void getProject_crossTenant_returns404() throws Exception {
         String otherKey = "proj-iso-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant otherTenant = tenantRepository.save(new Tenant(otherKey, "Other Tenant"));
-        User otherAdmin = new User(otherTenant, "admin@proj-iso.com", "hashedPass");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User otherAdmin = new User("admin@proj-iso.com", "hashedPass");
         otherAdmin = userRepository.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 

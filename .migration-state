@@ -1,0 +1,50 @@
+# YEM SaaS — Multi-Société Migration State
+# Do not edit manually. Updated by AI agent after each phase.
+# To resume: start a new session, paste the prompt, say "resume from .migration-state"
+
+PHASE_0=DONE
+PHASE_1=DONE
+PHASE_2=DONE
+PHASE_3=DONE
+PHASE_4=DONE
+PHASE_5=DONE
+PHASE_6=DONE
+PHASE_7=DONE
+PHASE_8=PENDING
+PHASE_9=PENDING
+PHASE_10=PENDING
+MIGRATION=INCOMPLETE
+
+# SCAN RESULTS (populated during PHASE_0):
+# tenant_id occurrences: ~300 in YAML changesets, ~200 in Java files
+# tenantId occurrences: ~400 in Java source and test files
+# TenantContext occurrences: static ThreadLocal utility class used in ~15 files
+# tenantKey occurrences: auth service, login DTOs, tests, frontend (portal-login, login component, models)
+# "tid" occurrences: JwtProvider, TestJwtConfig, JwtAuthenticationFilter assertions
+
+# DELETE_LIST (main source — full package or renamed):
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/context/TenantContext.java (replace with SocieteContext)
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/domain/Tenant.java (replace with societe/domain/Societe.java)
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/repo/TenantRepository.java (replace with SocieteRepository)
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/service/TenantService.java (replace with SocieteService)
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/service/TenantKeyAlreadyExistsException.java
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/api/TenantController.java (replace with SocieteController)
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/api/dto/TenantCreateRequest.java
+# hlm-backend/src/main/java/com/yem/hlm/backend/tenant/api/dto/TenantResponse.java
+# hlm-backend/src/main/java/com/yem/hlm/backend/contact/service/CrossTenantAccessException.java (rename)
+# hlm-backend/src/main/java/com/yem/hlm/backend/portal/api/dto/PortalTenantInfoResponse.java (rename)
+# hlm-backend/src/test/java/com/yem/hlm/backend/tenant/CrossTenantIsolationIT.java (→ CrossSocieteIsolationIT)
+# hlm-backend/src/test/java/com/yem/hlm/backend/tenant/TenantScopedRepoGuardTest.java
+# hlm-backend/src/test/java/com/yem/hlm/backend/tenant/api/TenantControllerIT.java
+# hlm-backend/src/test/java/com/yem/hlm/backend/tenant/context/TenantContextTest.java
+
+# KEY ARCHITECTURE FACTS:
+# - User entity is in user/domain/User.java (NOT AppUser.java)
+# - TenantContext is a STATIC ThreadLocal utility (not a Spring bean)
+# - DataRetentionScheduler already iterates tenants directly (good pattern for société migration)
+# - AuthService uses TenantRepository.findByKey(tenantKey) + UserRepository.findByTenant_IdAndEmail()
+# - JwtProvider.generate() uses claim "tid" for tenantId, "roles" (List) for roles, "tv" for tokenVersion
+# - Last changeset: 030-update-seed-password.yaml
+# - Tables with tenant_id: contact, property, project, interest, deposit, contract(sale_contract),
+#   outbox_message(outbound_message), audit_event(commercial_audit_event), commission(commission_rule),
+#   payment (payment_schedule, payment_call, payment), portal_token, property_media, property_reservation

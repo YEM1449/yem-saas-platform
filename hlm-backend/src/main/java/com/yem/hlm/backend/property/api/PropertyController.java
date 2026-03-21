@@ -8,6 +8,8 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.service.PropertyImportService;
 import com.yem.hlm.backend.property.service.PropertyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,7 @@ import java.util.UUID;
  * - MANAGER: Can create, read, update (but not delete)
  * - AGENT: Can only read (list and get details)
  */
+@Tag(name = "Properties", description = "Property inventory CRUD and CSV import")
 @RestController
 @RequestMapping("/api/properties")
 public class PropertyController {
@@ -46,6 +49,7 @@ public class PropertyController {
      * @param request the property creation request
      * @return 201 CREATED with PropertyResponse
      */
+    @Operation(summary = "Create a new property (ADMIN/MANAGER only)")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyCreateRequest request) {
@@ -60,6 +64,7 @@ public class PropertyController {
      * @param id the property ID
      * @return 200 OK with PropertyResponse, or 404 NOT_FOUND
      */
+    @Operation(summary = "Get a property by ID")
     @GetMapping("/{id}")
     public PropertyResponse getById(@PathVariable UUID id) {
         return propertyService.getById(id);
@@ -73,6 +78,7 @@ public class PropertyController {
      * @param status optional property status filter
      * @return 200 OK with list of PropertyResponse
      */
+    @Operation(summary = "List all non-deleted properties with optional type/status filters")
     @GetMapping
     public List<PropertyResponse> list(
             @RequestParam(required = false) PropertyType type,

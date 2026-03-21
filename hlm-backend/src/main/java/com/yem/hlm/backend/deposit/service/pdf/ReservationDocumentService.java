@@ -6,7 +6,9 @@ import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.deposit.service.DepositNotFoundException;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,13 +49,16 @@ public class ReservationDocumentService {
     private final DepositRepository        depositRepository;
     private final PropertyRepository       propertyRepository;
     private final DocumentGenerationService documentGenerationService;
+    private final SocieteRepository        societeRepository;
 
     public ReservationDocumentService(DepositRepository depositRepository,
                                       PropertyRepository propertyRepository,
-                                      DocumentGenerationService documentGenerationService) {
+                                      DocumentGenerationService documentGenerationService,
+                                      SocieteRepository societeRepository) {
         this.depositRepository        = depositRepository;
         this.propertyRepository       = propertyRepository;
         this.documentGenerationService = documentGenerationService;
+        this.societeRepository         = societeRepository;
     }
 
     /**
@@ -66,9 +71,9 @@ public class ReservationDocumentService {
      * @throws PropertyNotFoundException    if the linked property was hard-deleted
      */
     public byte[] generate(UUID depositId) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
-        Deposit deposit = depositRepository.findForPdf(tenantId, depositId)
+        Deposit deposit = depositRepository.findForPdf(societeId, depositId)
                 .orElseThrow(() -> new DepositNotFoundException(depositId));
 
         // RBAC: AGENT callers may only access their own deposits.
@@ -78,11 +83,13 @@ public class ReservationDocumentService {
         Property property = null;
         if (deposit.getPropertyId() != null) {
             property = propertyRepository
-                    .findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, deposit.getPropertyId())
+                    .findBySocieteIdAndIdAndDeletedAtIsNull(societeId, deposit.getPropertyId())
                     .orElse(null); // withdrawn/archived property shouldn't block PDF download
         }
 
-        ReservationDocumentModel model = buildModel(deposit, property);
+        String societeName = societeRepository.findById(societeId)
+                .map(Societe::getNom).orElse("—");
+        ReservationDocumentModel model = buildModel(deposit, property, societeName);
         return documentGenerationService.renderToPdf(
                 "documents/reservation",
                 Map.of("model", model));
@@ -92,7 +99,7 @@ public class ReservationDocumentService {
     // Model builder
     // =========================================================================
 
-    private ReservationDocumentModel buildModel(Deposit deposit, Property property) {
+    private ReservationDocumentModel buildModel(Deposit deposit, Property property, String societeName) {
         // Property fields
         String projectName   = "—";
         String propertyRef   = "—";
@@ -128,7 +135,7 @@ public class ReservationDocumentService {
         String notes            = blankToNull(deposit.getNotes());
 
         return new ReservationDocumentModel(
-                nvl(deposit.getTenant().getName(), "—"),
+                nvl(societeName, "—"),
                 projectName, propertyRef, propertyTitle, propertyType, propertyPrice,
                 buyerFullName, buyerPhone, buyerEmail,
                 depositReference, depositStatus, depositAmount,

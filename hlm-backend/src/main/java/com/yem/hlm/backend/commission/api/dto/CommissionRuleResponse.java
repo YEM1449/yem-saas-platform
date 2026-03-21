@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Response DTO for a commission rule. */
 public record CommissionRuleResponse(
         UUID id,
-        UUID tenantId,
+        UUID societeId,
         UUID projectId,
         String projectName,
         BigDecimal ratePercent,

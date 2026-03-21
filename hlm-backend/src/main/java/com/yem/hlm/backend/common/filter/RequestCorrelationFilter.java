@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Populates MDC with a per-request correlation ID and (after JWT processing) tenantId.
+ * Populates MDC with a per-request correlation ID and (after JWT processing) societeId.
  *
  * <p>Reads {@code X-Request-Id} from the incoming request or generates a UUID.
  * The value is also echoed back as {@code X-Request-Id} in the response so callers
@@ -30,7 +30,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
 
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
     private static final String MDC_REQUEST_ID = "requestId";
-    private static final String MDC_TENANT_ID = "tenantId";
+    private static final String MDC_SOCIETE_ID = "societeId";
 
     @Override
     protected void doFilterInternal(
@@ -51,7 +51,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             MDC.remove(MDC_REQUEST_ID);
-            MDC.remove(MDC_TENANT_ID);
+            MDC.remove(MDC_SOCIETE_ID);
         }
     }
 }

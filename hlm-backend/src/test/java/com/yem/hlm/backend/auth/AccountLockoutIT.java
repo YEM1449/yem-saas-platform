@@ -2,8 +2,11 @@ package com.yem.hlm.backend.auth;
 
 import com.yem.hlm.backend.support.IntegrationTest;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.AppUserSocieteRepository;
+import com.yem.hlm.backend.societe.domain.AppUserSociete;
+import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -36,22 +39,26 @@ class AccountLockoutIT extends IntegrationTestBase {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository userRepository;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
+    @Autowired AppUserSocieteRepository appUserSocieteRepository;
     @Autowired PasswordEncoder passwordEncoder;
 
     private static final UUID SEEDED_TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     private User createUser(String email, String password) {
-        Tenant tenant = tenantRepository.findById(SEEDED_TENANT_ID)
+        Societe societe = societeRepository.findById(SEEDED_TENANT_ID)
                 .orElseThrow(() -> new IllegalStateException("Seed tenant not found"));
-        User user = new User(tenant, email, passwordEncoder.encode(password));
-        return userRepository.save(user);
+        User user = new User(email, passwordEncoder.encode(password));
+        user = userRepository.save(user);
+        appUserSocieteRepository.save(new AppUserSociete(
+                new AppUserSocieteId(user.getId(), SEEDED_TENANT_ID), "AGENT"));
+        return user;
     }
 
     private String wrongPasswordBody(String email) {
         return """
             {
-              "tenantKey": "acme",
+              
               "email": "%s",
               "password": "WrongPass123!"
             }
@@ -61,7 +68,7 @@ class AccountLockoutIT extends IntegrationTestBase {
     private String correctPasswordBody(String email, String password) {
         return """
             {
-              "tenantKey": "acme",
+              
               "email": "%s",
               "password": "%s"
             }
@@ -132,7 +139,7 @@ class AccountLockoutIT extends IntegrationTestBase {
         }
 
         // Override lockedUntil to the past to simulate expiry
-        User lockedUser = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        User lockedUser = userRepository.findByEmail(email).orElseThrow();
         userRepository.setLockedUntilForTest(lockedUser.getId(), Instant.now().minusSeconds(60));
 
         // Now login with correct password — should succeed since lock expired
@@ -164,7 +171,7 @@ class AccountLockoutIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
         // Verify counter was reset in DB
-        User afterLogin = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        User afterLogin = userRepository.findByEmail(email).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(afterLogin.getFailedLoginAttempts()).isZero();
         org.assertj.core.api.Assertions.assertThat(afterLogin.getLockedUntil()).isNull();
     }
@@ -184,7 +191,7 @@ class AccountLockoutIT extends IntegrationTestBase {
         }
 
         // Simulate lockout expiry by back-dating lockedUntil
-        User lockedUser = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        User lockedUser = userRepository.findByEmail(email).orElseThrow();
         userRepository.setLockedUntilForTest(lockedUser.getId(), Instant.now().minusSeconds(60));
 
         // One wrong attempt after expiry — counter resets to 1 (< max-attempts=2), must NOT be ACCOUNT_LOCKED
@@ -195,7 +202,7 @@ class AccountLockoutIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
         // Verify the counter restarted from 1, not re-locked yet
-        User afterExpiredFail = userRepository.findByTenant_IdAndEmail(SEEDED_TENANT_ID, email).orElseThrow();
+        User afterExpiredFail = userRepository.findByEmail(email).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(afterExpiredFail.getFailedLoginAttempts()).isEqualTo(1);
         org.assertj.core.api.Assertions.assertThat(afterExpiredFail.isLockedOut()).isFalse();
     }

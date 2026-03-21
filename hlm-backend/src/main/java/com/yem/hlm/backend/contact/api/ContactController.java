@@ -1,12 +1,14 @@
 package com.yem.hlm.backend.contact.api;
 
+import com.yem.hlm.backend.common.dto.PageResponse;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.domain.ContactType;
 import com.yem.hlm.backend.contact.service.ContactService;
 import com.yem.hlm.backend.contact.service.ContactTimelineService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Contacts", description = "Contact lifecycle management — prospects, clients, interests")
 @RestController
 @RequestMapping("/api")
 public class ContactController {
@@ -29,6 +32,7 @@ public class ContactController {
         this.timelineService = timelineService;
     }
 
+    @Operation(summary = "Create a new contact (ADMIN/MANAGER only)")
     @PostMapping("/contacts")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
@@ -36,21 +40,24 @@ public class ContactController {
         return contactService.create(request);
     }
 
+    @Operation(summary = "Get a contact by ID")
     @GetMapping("/contacts/{id}")
     public ContactResponse get(@PathVariable("id") UUID id) {
         return contactService.get(id);
     }
 
+    @Operation(summary = "List contacts with optional filtering by type, status and search term")
     @GetMapping("/contacts")
-    public Page<ContactResponse> list(
+    public PageResponse<ContactResponse> list(
             @RequestParam(value = "contactType", required = false) List<ContactType> contactType,
             @RequestParam(value = "status", required = false) ContactStatus status,
             @RequestParam(value = "q", required = false) String q,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        return contactService.list(contactType, status, q, pageable);
+        return PageResponse.of(contactService.list(contactType, status, q, pageable));
     }
 
+    @Operation(summary = "Partially update a contact's fields (ADMIN/MANAGER only)")
     @PatchMapping("/contacts/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateContactRequest request) {

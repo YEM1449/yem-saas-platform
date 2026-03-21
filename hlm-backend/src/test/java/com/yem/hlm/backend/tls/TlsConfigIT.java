@@ -90,7 +90,7 @@ class TlsConfigIT extends IntegrationTestBase {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> req = new HttpEntity<>(
-                "{\"tenantKey\":\"acme\",\"email\":\"x@x.com\",\"password\":\"wrong\"}", headers);
+                "{\"email\":\"x@x.com\",\"password\":\"wrong\"}", headers);
         ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, req, String.class);
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }

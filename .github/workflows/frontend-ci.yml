@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -23,9 +26,6 @@ jobs:
     name: Test + Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
-    # Prevent failure if frontend folder doesn't exist yet
-    if: ${{ hashFiles('hlm-frontend/package.json') != '' }}
 
     defaults:
       run:

@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.contact.service;
 
+import com.yem.hlm.backend.common.event.ContactCreatedEvent;
+import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.api.dto.ConvertToProspectRequest;
 import com.yem.hlm.backend.contact.domain.*;
@@ -9,15 +11,13 @@ import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -27,36 +27,36 @@ public class ContactService {
 
     private final ContactRepository contactRepository;
     private final ContactInterestRepository contactInterestRepository;
-    private final TenantRepository tenantRepository;
     private final ProspectDetailRepository prospectDetailRepository;
     private final PropertyRepository propertyRepository;
     private final DepositService depositService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ContactService(
             ContactRepository contactRepository,
             ContactInterestRepository contactInterestRepository,
-            TenantRepository tenantRepository,
             ProspectDetailRepository prospectDetailRepository,
             PropertyRepository propertyRepository,
-            DepositService depositService
+            DepositService depositService,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
-        this.tenantRepository = tenantRepository;
         this.prospectDetailRepository = prospectDetailRepository;
         this.propertyRepository = propertyRepository;
         this.depositService = depositService;
+        this.eventPublisher = eventPublisher;
     }
 
     public ContactResponse create(CreateContactRequest req) {
-        Tenant tenant = requireTenantEntity();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        if (req.email() != null && contactRepository.existsByTenant_IdAndEmail(tenant.getId(), req.email())) {
+        if (req.email() != null && contactRepository.existsBySocieteIdAndEmail(societeId, req.email())) {
             throw new ContactEmailAlreadyExistsException(req.email());
         }
 
-        Contact contact = new Contact(tenant, actorUserId, req.firstName(), req.lastName());
+        Contact contact = new Contact(societeId, actorUserId, req.firstName(), req.lastName());
         contact.setPhone(req.phone());
         contact.setEmail(req.email());
         contact.setNationalId(req.nationalId());
@@ -75,31 +75,32 @@ public class ContactService {
         Contact saved = contactRepository.save(contact);
         // Ensure 1-1 row exists for MVP (future-proofing)
         prospectDetailRepository.save(new ProspectDetail(saved));
+        eventPublisher.publishEvent(new ContactCreatedEvent(societeId, actorUserId, saved.getId(), saved.getFullName()));
         return toResponse(saved);
     }
 
     public ContactResponse get(UUID contactId) {
-        UUID tenantId = requireTenantId();
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        UUID societeId = requireSocieteId();
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
         return toResponse(contact);
     }
 
     public Page<ContactResponse> list(List<ContactType> contactTypes, ContactStatus status, String q, Pageable pageable) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         String query = (q == null || q.isBlank()) ? null : q.trim();
         boolean filterByType = contactTypes != null && !contactTypes.isEmpty();
-        return contactRepository.search(tenantId, filterByType, filterByType ? contactTypes : List.of(), status, query, pageable)
+        return contactRepository.search(societeId, filterByType, filterByType ? contactTypes : List.of(), status, query, pageable)
                 .map(this::toResponse);
     }
 
     public ContactResponse update(UUID contactId, UpdateContactRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
-        if (req.email() != null && contactRepository.existsByTenant_IdAndEmailAndIdNot(tenantId, req.email(), contactId)) {
+        if (req.email() != null && contactRepository.existsBySocieteIdAndEmailAndIdNot(societeId, req.email(), contactId)) {
             throw new ContactEmailAlreadyExistsException(req.email());
         }
 
@@ -131,9 +132,9 @@ public class ContactService {
     }
 
     public ContactResponse updateStatus(UUID contactId, ContactStatus newStatus) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
         ContactStatus current = contact.getStatus();
@@ -145,28 +146,26 @@ public class ContactService {
         contact.markUpdatedBy(actorUserId);
 
         Contact saved = contactRepository.save(contact);
+        eventPublisher.publishEvent(new ContactStatusChangedEvent(societeId, actorUserId, saved.getId(), current, newStatus));
         return toResponse(saved);
     }
 
     /**
      * Qualifies a contact as a prospect: sets status to QUALIFIED_PROSPECT
      * and upserts ProspectDetail with the supplied budget/source enrichment.
-     * Allowed from any non-terminal ContactStatus.
      */
     @Transactional
     public ContactResponse convertToProspect(UUID contactId, ConvertToProspectRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
         ContactStatus current = contact.getStatus();
         if (current == ContactStatus.LOST) {
-            // LOST → PROSPECT is allowed; use the state machine
             contact.setStatus(ContactStatus.PROSPECT);
         } else if (current == ContactStatus.PROSPECT) {
-            // Promote to qualified prospect
             contact.setStatus(ContactStatus.QUALIFIED_PROSPECT);
         } else if (current != ContactStatus.QUALIFIED_PROSPECT) {
             // Already a client — silently enrich ProspectDetail but do not demote status
@@ -196,82 +195,73 @@ public class ContactService {
 
     @Transactional
     public void addInterest(UUID contactId, ContactInterestRequest req) {
-        Tenant tenant = requireTenantEntity();
-        UUID tenantId = tenant.getId();
+        UUID societeId = requireSocieteId();
 
-        // ensure contact exists in tenant scope
-        contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        // ensure contact exists in société scope
+        contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
         UUID propertyId = req.propertyId();
 
-        // Verify property exists and belongs to current tenant
-        propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId)
+        // Verify property exists and belongs to current société
+        propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
-        if (contactInterestRepository.existsByTenant_IdAndContactIdAndPropertyId(tenantId, contactId, propertyId)) {
+        if (contactInterestRepository.existsBySocieteIdAndContactIdAndPropertyId(societeId, contactId, propertyId)) {
             throw new ContactInterestAlreadyExistsException(contactId, propertyId);
         }
 
         InterestStatus status = (req.interestStatus() == null) ? InterestStatus.NEW : req.interestStatus();
-        contactInterestRepository.save(new ContactInterest(tenant, contactId, propertyId, status));
+        contactInterestRepository.save(new ContactInterest(societeId, contactId, propertyId, status));
     }
 
     @Transactional
     public void removeInterest(UUID contactId, UUID propertyId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
 
         ContactInterest interest = contactInterestRepository
-                .findByTenant_IdAndContactIdAndPropertyId(tenantId, contactId, propertyId)
+                .findBySocieteIdAndContactIdAndPropertyId(societeId, contactId, propertyId)
                 .orElseThrow(() -> new ContactInterestNotFoundException(contactId, propertyId));
 
         contactInterestRepository.delete(interest);
     }
 
     public List<ContactInterestResponse> listInterestsForContact(UUID contactId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
 
         // ensure contact exists
-        contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
-        return contactInterestRepository.findAllByTenant_IdAndContactId(tenantId, contactId)
+        return contactInterestRepository.findAllBySocieteIdAndContactId(societeId, contactId)
                 .stream()
                 .map(i -> new ContactInterestResponse(i.getPropertyId(), i.getInterestStatus(), i.getCreatedAt()))
                 .toList();
     }
 
     public List<UUID> listContactsForProperty(UUID propertyId) {
-        UUID tenantId = requireTenantId();
-        return contactInterestRepository.findAllByTenant_IdAndPropertyId(tenantId, propertyId)
+        UUID societeId = requireSocieteId();
+        return contactInterestRepository.findAllBySocieteIdAndPropertyId(societeId, propertyId)
                 .stream()
                 .map(ContactInterest::getContactId)
                 .distinct()
                 .toList();
     }
 
-    // Conversion validation now happens in DepositService.
-
-    private UUID requireTenantId() {
-        UUID tenantId = TenantContext.getTenantId();
-        if (tenantId == null) {
-            throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID societeId = SocieteContext.getSocieteId();
+        if (societeId == null) {
+            throw new CrossTenantAccessException("Missing société context");
         }
-        return tenantId;
+        return societeId;
     }
 
     private UUID requireUserId() {
-        UUID userId = TenantContext.getUserId();
+        UUID userId = SocieteContext.getUserId();
         if (userId == null) {
             throw new CrossTenantAccessException("Missing user context");
         }
         return userId;
-    }
-
-    private Tenant requireTenantEntity() {
-        UUID tenantId = requireTenantId();
-        return tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new CrossTenantAccessException("Unknown tenant: " + tenantId));
     }
 
     private ContactResponse toResponse(Contact c) {

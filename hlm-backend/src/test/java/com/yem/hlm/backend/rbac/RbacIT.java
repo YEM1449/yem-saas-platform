@@ -3,8 +3,8 @@ package com.yem.hlm.backend.rbac;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -34,7 +34,7 @@ class RbacIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String adminBearer;
@@ -44,23 +44,20 @@ class RbacIT extends IntegrationTestBase {
     @BeforeEach
     void setup() {
         String key = "rbac-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenant = tenantRepository.save(new Tenant(key, "RBAC Test"));
+        Societe societe = societeRepository.save(new Societe("Acme Corp", "MA"));
 
-        User admin = new User(tenant, "admin@rbac.test", "hash");
-        admin.setRole(UserRole.ROLE_ADMIN);
+        User admin = new User("admin@rbac.test", "hash");
         admin = userRepository.save(admin);
 
-        User manager = new User(tenant, "mgr@rbac.test", "hash");
-        manager.setRole(UserRole.ROLE_MANAGER);
+        User manager = new User("mgr@rbac.test", "hash");
         manager = userRepository.save(manager);
 
-        User agent = new User(tenant, "agent@rbac.test", "hash");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent@rbac.test", "hash");
         agent = userRepository.save(agent);
 
-        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
-        managerBearer = "Bearer " + jwtProvider.generate(manager.getId(), tenant.getId(), UserRole.ROLE_MANAGER);
-        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), tenant.getId(), UserRole.ROLE_AGENT);
+        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);
+        managerBearer = "Bearer " + jwtProvider.generate(manager.getId(), societe.getId(), UserRole.ROLE_MANAGER);
+        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), societe.getId(), UserRole.ROLE_AGENT);
     }
 
     // ===== ContactController: POST /api/contacts =====

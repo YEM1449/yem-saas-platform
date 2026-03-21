@@ -14,14 +14,23 @@ export interface Prospect {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // GDPR / Law 09-08 consent fields
+  consentGiven: boolean;
+  consentDate: string | null;
+  consentMethod: string | null;
+  processingBasis: string | null;
+}
+
+export interface ProspectPageMeta {
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface ProspectPage {
   content: Prospect[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
+  page: ProspectPageMeta;
 }
 
 export const PROSPECT_STATUSES = [

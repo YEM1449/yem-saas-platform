@@ -11,8 +11,7 @@ import com.yem.hlm.backend.outbox.domain.MessageChannel;
 import com.yem.hlm.backend.outbox.domain.MessageStatus;
 import com.yem.hlm.backend.outbox.domain.OutboundMessage;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,16 +37,13 @@ public class MessageComposeService {
 
     private final OutboundMessageRepository messageRepo;
     private final ContactRepository contactRepo;
-    private final TenantRepository tenantRepo;
     private final UserRepository userRepo;
 
     public MessageComposeService(OutboundMessageRepository messageRepo,
                                  ContactRepository contactRepo,
-                                 TenantRepository tenantRepo,
                                  UserRepository userRepo) {
         this.messageRepo = messageRepo;
         this.contactRepo = contactRepo;
-        this.tenantRepo  = tenantRepo;
         this.userRepo    = userRepo;
     }
 
@@ -62,13 +58,13 @@ public class MessageComposeService {
      */
     @Transactional
     public SendMessageResponse compose(SendMessageRequest req) {
-        UUID tenantId = requireTenantId();
-        UUID userId   = requireUserId();
+        UUID societeId = requireSocieteId();
+        UUID userId    = requireUserId();
 
-        String recipient = resolveRecipient(req, tenantId);
+        String recipient = resolveRecipient(req, societeId);
 
         var msg = new OutboundMessage(
-                tenantRepo.getReferenceById(tenantId),
+                societeId,
                 userRepo.getReferenceById(userId),
                 req.channel(),
                 recipient,
@@ -102,12 +98,12 @@ public class MessageComposeService {
                                       LocalDateTime to,
                                       int page,
                                       int size) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         // contactId filter: messages composed for a specific contact are stored
         // with correlationType=CONTACT and correlationId=contactId.
         // We accept contactId as a convenience filter mapped to correlationId.
         return messageRepo.findByTenant(
-                tenantId, channel, status, contactId, from, to,
+                societeId, channel, status, contactId, from, to,
                 PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), 200))
         ).map(this::toResponse);
     }
@@ -116,9 +112,9 @@ public class MessageComposeService {
     // Internals
     // =========================================================================
 
-    private String resolveRecipient(SendMessageRequest req, UUID tenantId) {
+    private String resolveRecipient(SendMessageRequest req, UUID societeId) {
         if (req.contactId() != null) {
-            Contact contact = contactRepo.findByTenant_IdAndId(tenantId, req.contactId())
+            Contact contact = contactRepo.findBySocieteIdAndId(societeId, req.contactId())
                     .orElseThrow(() -> new ContactNotFoundException(req.contactId()));
 
             if (req.channel() == MessageChannel.EMAIL) {
@@ -166,14 +162,14 @@ public class MessageComposeService {
         );
     }
 
-    private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 
     private UUID requireUserId() {
-        UUID id = TenantContext.getUserId();
+        UUID id = SocieteContext.getUserId();
         if (id == null) throw new CrossTenantAccessException("Missing user context");
         return id;
     }

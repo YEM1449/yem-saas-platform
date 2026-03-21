@@ -14,14 +14,23 @@ export interface Contact {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // GDPR / Law 09-08 consent fields
+  consentGiven: boolean;
+  consentDate: string | null;
+  consentMethod: string | null;
+  processingBasis: string | null;
+}
+
+export interface PageMeta {
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface ContactPage {
   content: Contact[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
+  page: PageMeta;
 }
 
 export interface TimelineEvent {

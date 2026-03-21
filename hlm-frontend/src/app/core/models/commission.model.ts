@@ -13,7 +13,7 @@ export interface CommissionDTO {
 
 export interface CommissionRuleResponse {
   id: string;
-  tenantId: string;
+  societeId: string;
   projectId: string | null;
   projectName: string | null;
   ratePercent: number;

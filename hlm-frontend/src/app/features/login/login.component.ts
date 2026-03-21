@@ -18,7 +18,7 @@ export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  form: LoginRequest = { tenantKey: '', email: '', password: '' };
+  form: LoginRequest = { email: '', password: '' };
   loading = false;
   error = '';
 

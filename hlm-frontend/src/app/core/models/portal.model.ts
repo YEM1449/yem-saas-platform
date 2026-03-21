@@ -1,6 +1,6 @@
 export interface MagicLinkRequest {
   email: string;
-  tenantKey: string;
+  societeKey: string;
 }
 
 export interface MagicLinkResponse {

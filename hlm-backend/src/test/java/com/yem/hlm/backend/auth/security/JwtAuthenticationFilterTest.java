@@ -3,7 +3,7 @@ package com.yem.hlm.backend.auth.security;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.auth.service.UserSecurityInfo;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
  *
  * Objectifs :
  * - Vérifier la logique du filtre (header -> validate -> extract -> set contexts)
- * - Vérifier le nettoyage (TenantContext.clear + SecurityContextHolder.clearContext)
+ * - Vérifier le nettoyage (SocieteContext.clear + SecurityContextHolder.clearContext)
  *
  * NOTE : on n'utilise PAS SpringBootTest ici : c'est un vrai unit test.
  */
@@ -33,7 +33,7 @@ class JwtAuthenticationFilterTest {
     @AfterEach
     void tearDown() {
         // Hygiène : on nettoie au cas où un test aurait échoué avant la fin
-        TenantContext.clear();
+        SocieteContext.clear();
         SecurityContextHolder.clearContext();
     }
 
@@ -59,8 +59,8 @@ class JwtAuthenticationFilterTest {
         verifyNoInteractions(jwtProvider);
 
         // Contextes non remplis
-        assertNull(TenantContext.getTenantId());
-        assertNull(TenantContext.getUserId());
+        assertNull(SocieteContext.getSocieteId());
+        assertNull(SocieteContext.getUserId());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -86,8 +86,8 @@ class JwtAuthenticationFilterTest {
         verifyNoInteractions(jwtProvider);
 
         // Contextes doivent rester vides
-        assertNull(TenantContext.getTenantId());
-        assertNull(TenantContext.getUserId());
+        assertNull(SocieteContext.getSocieteId());
+        assertNull(SocieteContext.getUserId());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -115,11 +115,11 @@ class JwtAuthenticationFilterTest {
         // On valide qu'on a juste check isValid, sans extractions
         verify(jwtProvider, times(1)).isValid("invalid.token.here");
         verify(jwtProvider, never()).extractUserId(anyString());
-        verify(jwtProvider, never()).extractTenantId(anyString());
+        verify(jwtProvider, never()).extractSocieteId(anyString());
 
         // Contextes doivent rester vides
-        assertNull(TenantContext.getTenantId());
-        assertNull(TenantContext.getUserId());
+        assertNull(SocieteContext.getSocieteId());
+        assertNull(SocieteContext.getUserId());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -137,14 +137,14 @@ class JwtAuthenticationFilterTest {
 
         // IDs déterministes => debug plus simple si un test casse
         UUID userId = UUID.fromString("8f33b2c6-8c2c-4cf1-8a87-7cc5c2d9f0a1");
-        UUID tenantId = UUID.fromString("aa460c78-2b1b-4374-bfb3-3c04e5b82455");
+        UUID societeId = UUID.fromString("aa460c78-2b1b-4374-bfb3-3c04e5b82455");
 
         // jwt valide
         when(jwtProvider.isValid("good.token")).thenReturn(true);
 
         // extraction claims (Option A : on travaille en UUID côté app)
         when(jwtProvider.extractUserId("good.token")).thenReturn(userId);
-        when(jwtProvider.extractTenantId("good.token")).thenReturn(tenantId);
+        when(jwtProvider.extractSocieteId("good.token")).thenReturn(societeId);
 
         // tokenVersion check: token has tv=0, cache returns matching info
         when(jwtProvider.extractTokenVersion("good.token")).thenReturn(0);
@@ -153,9 +153,9 @@ class JwtAuthenticationFilterTest {
         // On mock la chain pour vérifier :
         // - que pendant l'exécution de la chain, les contextes sont bien remplis
         FilterChain chain = (req, res) -> {
-            // Assert "pendant" la requête : TenantContext rempli
-            assertEquals(userId, TenantContext.getUserId());
-            assertEquals(tenantId, TenantContext.getTenantId()); // <-- Option A : compare UUID vs UUID
+            // Assert "pendant" la requête : SocieteContext rempli
+            assertEquals(userId, SocieteContext.getUserId());
+            assertEquals(societeId, SocieteContext.getSocieteId()); // <-- Option A : compare UUID vs UUID
 
             // Assert "pendant" la requête : SecurityContext rempli
             assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -169,9 +169,9 @@ class JwtAuthenticationFilterTest {
         // Act
         filter.doFilter(request, response, chain);
 
-        // Assert "après" la requête : nettoyage TenantContext effectué (critique en multi-tenant + ThreadLocal)
-        assertNull(TenantContext.getTenantId());
-        assertNull(TenantContext.getUserId());
+        // Assert "après" la requête : nettoyage SocieteContext effectué (critique en multi-tenant + ThreadLocal)
+        assertNull(SocieteContext.getSocieteId());
+        assertNull(SocieteContext.getUserId());
 
         // NOTE: Ici on exécute le filtre "tout seul" (unit test). En prod, c'est le filtre/framework Spring Security
         // (ex: SecurityContextHolderFilter) qui nettoie le SecurityContext en fin de requête.
@@ -183,10 +183,10 @@ class JwtAuthenticationFilterTest {
         // Et on vérifie les appels au provider
         verify(jwtProvider, times(1)).isValid("good.token");
         verify(jwtProvider, times(1)).extractUserId("good.token");
-        verify(jwtProvider, times(1)).extractTenantId("good.token");
+        verify(jwtProvider, times(1)).extractSocieteId("good.token");
 // Et on vérifie les appels au provider
         verify(jwtProvider, times(1)).isValid("good.token");
         verify(jwtProvider, times(1)).extractUserId("good.token");
-        verify(jwtProvider, times(1)).extractTenantId("good.token");
+        verify(jwtProvider, times(1)).extractSocieteId("good.token");
     }
 }

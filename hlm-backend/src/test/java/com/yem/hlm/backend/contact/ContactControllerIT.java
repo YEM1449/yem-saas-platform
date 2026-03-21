@@ -10,8 +10,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -41,7 +41,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String bearer;
@@ -139,17 +139,20 @@ class ContactControllerIT extends IntegrationTestBase {
     }
 
     @Test
-    void unknownTenant_returns403() throws Exception {
-        UUID unknownTenant = UUID.randomUUID();
-        String badBearer = "Bearer " + jwtProvider.generate(USER_ID, unknownTenant, UserRole.ROLE_ADMIN);
+    void unknownSociete_jwtTrusted_contactScopedToThatSociete() throws Exception {
+        // In the multi-société architecture the JWT is signed & trusted — société ID
+        // comes from the validated JWT claim, no per-request DB lookup required.
+        // A validly-signed JWT for a non-existent société still yields 2xx.
+        UUID unknownSociete = UUID.randomUUID();
+        String badBearer = "Bearer " + jwtProvider.generate(USER_ID, unknownSociete, UserRole.ROLE_ADMIN);
 
         mvc.perform(post("/api/contacts")
                         .header("Authorization", badBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateContactRequest(
-                                "Bad", "Tenant", null, "bad@tenant.com", null, null, null, null, null, null
+                                "Unknown", "Societe", null, "unknown@societe.com", null, null, null, null, null, null
                         ))))
-                .andExpect(status().isForbidden());
+                .andExpect(status().is2xxSuccessful());
     }
 
     // ===== Tenant Isolation Tests =====
@@ -166,9 +169,8 @@ class ContactControllerIT extends IntegrationTestBase {
 
         // Create tenant B with its own user
         String otherKey = "iso-test-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Isolation Tenant"));
-        User userB = new User(tenantB, "admin@iso.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@iso.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -208,9 +210,8 @@ class ContactControllerIT extends IntegrationTestBase {
 
         // Create tenant B
         String otherKey = "iso-get-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Get Isolation Tenant"));
-        User userB = new User(tenantB, "admin@iso-get.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@iso-get.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -302,9 +303,8 @@ class ContactControllerIT extends IntegrationTestBase {
 
         // Create tenant B
         String otherKey = "iso-status-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "Status Isolation"));
-        User userB = new User(tenantB, "admin@iso-status.com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@iso-status.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 

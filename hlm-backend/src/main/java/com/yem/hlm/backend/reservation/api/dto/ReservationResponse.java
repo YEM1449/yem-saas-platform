@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public record ReservationResponse(
         UUID id,
-        UUID tenantId,
+        UUID societeId,
         UUID contactId,
         UUID propertyId,
         UUID reservedByUserId,

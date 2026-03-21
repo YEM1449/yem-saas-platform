@@ -9,10 +9,11 @@ import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.deposit.service.InvalidDepositRequestException;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,31 +37,32 @@ class ContactServiceTest {
 
     @Mock ContactRepository contactRepository;
     @Mock ContactInterestRepository contactInterestRepository;
-    @Mock TenantRepository tenantRepository;
+    @Mock SocieteRepository societeRepository;
     @Mock ProspectDetailRepository prospectDetailRepository;
     @Mock PropertyRepository propertyRepository;
     @Mock DepositService depositService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks ContactService service;
 
     @BeforeEach
-    void setUpTenantContext() {
-        TenantContext.setTenantId(TENANT_ID);
-        TenantContext.setUserId(UUID.randomUUID());
+    void setUpSocieteContext() {
+        SocieteContext.setSocieteId(TENANT_ID);
+        SocieteContext.setUserId(UUID.randomUUID());
 
-        Tenant tenant = mock(Tenant.class);
-        when(tenant.getId()).thenReturn(TENANT_ID);
-        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
+        Societe societe = mock(Societe.class);
+        when(societe.getId()).thenReturn(TENANT_ID);
+        when(societeRepository.findById(TENANT_ID)).thenReturn(Optional.of(societe));
     }
 
     @AfterEach
-    void clearTenantContext() {
-        TenantContext.clear();
+    void clearSocieteContext() {
+        SocieteContext.clear();
     }
 
     @Test
     void create_defaultsToProspect() {
-        when(contactRepository.existsByTenant_IdAndEmail(any(), any())).thenReturn(false);
+        when(contactRepository.existsBySocieteIdAndEmail(any(), any())).thenReturn(false);
 
         // Capture saved entity to verify status
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -134,9 +136,9 @@ class ContactServiceTest {
         UUID contactId = UUID.randomUUID();
         UUID propertyId = UUID.randomUUID();
 
-        when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(mock(Contact.class)));
-        when(propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(TENANT_ID, propertyId)).thenReturn(Optional.of(mock(Property.class)));
-        when(contactInterestRepository.existsByTenant_IdAndContactIdAndPropertyId(TENANT_ID, contactId, propertyId))
+        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(mock(Contact.class)));
+        when(propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(TENANT_ID, propertyId)).thenReturn(Optional.of(mock(Property.class)));
+        when(contactInterestRepository.existsBySocieteIdAndContactIdAndPropertyId(TENANT_ID, contactId, propertyId))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> service.addInterest(contactId, new ContactInterestRequest(propertyId, null)))
@@ -148,7 +150,7 @@ class ContactServiceTest {
         UUID contactId = UUID.randomUUID();
         Contact contact = mock(Contact.class);
         when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
-        when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
+        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
         when(contactRepository.save(any(Contact.class))).thenReturn(contact);
         when(contact.getId()).thenReturn(contactId);
         when(contact.getFirstName()).thenReturn("John");
@@ -166,7 +168,7 @@ class ContactServiceTest {
         UUID contactId = UUID.randomUUID();
         Contact contact = mock(Contact.class);
         when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
-        when(contactRepository.findByTenant_IdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
+        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
 
         // PROSPECT → CLIENT is not allowed (must go through QUALIFIED_PROSPECT first)
         assertThatThrownBy(() -> service.updateStatus(contactId, ContactStatus.CLIENT))

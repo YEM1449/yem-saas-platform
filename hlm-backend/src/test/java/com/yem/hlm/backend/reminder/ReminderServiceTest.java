@@ -8,9 +8,8 @@ import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.notification.repo.NotificationRepository;
 import com.yem.hlm.backend.outbox.domain.OutboundMessage;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
-import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.societe.domain.Societe;
 import com.yem.hlm.backend.user.domain.User;
-import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,16 +44,15 @@ class ReminderServiceTest {
     @InjectMocks
     private ReminderService service;
 
-    private Tenant tenant;
+    private Societe societe;
     private User agent;
 
     @BeforeEach
     void setUp() {
-        tenant = new Tenant("test-key", "Test Tenant");
-        setId(tenant, UUID.randomUUID());
+        societe = new Societe("Acme Corp", "MA");
+        setId(societe, UUID.randomUUID());
 
-        agent = new User(tenant, "agent@test.com", "hash");
-        agent.setRole(UserRole.ROLE_AGENT);
+        agent = new User("agent@test.com", "hash");
         setId(agent, UUID.randomUUID());
 
     }
@@ -114,7 +112,7 @@ class ReminderServiceTest {
     @Test
     void runProspectFollowUp_withNoTenants_doesNothing() {
         when(props.getProspectStaleDays()).thenReturn(14);
-        when(contactRepository.findAll()).thenReturn(List.of());
+        when(contactRepository.findDistinctSocieteIdsWithProspectStatus(any())).thenReturn(List.of());
 
         service.runProspectFollowUp();
 
@@ -131,7 +129,7 @@ class ReminderServiceTest {
         when(deposit.getId()).thenReturn(id);
         // lenient: not invoked when deposit is skipped (already-sent path)
         lenient().when(deposit.getAgent()).thenReturn(agent);
-        lenient().when(deposit.getTenant()).thenReturn(tenant);
+        lenient().when(deposit.getSocieteId()).thenReturn(societe.getId());
         lenient().when(deposit.getDueDate()).thenReturn(dueDate);
         return deposit;
     }

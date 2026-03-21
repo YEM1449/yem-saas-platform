@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.contact.service.CrossSocieteAccessException;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
 import com.yem.hlm.backend.contract.service.InvalidContractStateException;
@@ -34,7 +35,6 @@ import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException
 import com.yem.hlm.backend.reservation.service.InvalidReservationStateException;
 import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservationException;
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
-import com.yem.hlm.backend.tenant.service.TenantKeyAlreadyExistsException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
@@ -181,22 +182,6 @@ public class GlobalExceptionHandler {
     }
 
     // ========== 409 Conflict ==========
-
-    @ExceptionHandler(TenantKeyAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleTenantKeyExists(
-            TenantKeyAlreadyExistsException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.of(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
-                ErrorCode.TENANT_KEY_EXISTS,
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
 
     @ExceptionHandler(ContactEmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleContactEmailExists(
@@ -412,20 +397,20 @@ public class GlobalExceptionHandler {
 
     // ========== 403 Forbidden ==========
 
-    @ExceptionHandler(CrossTenantAccessException.class)
-    public ResponseEntity<ErrorResponse> handleCrossTenantAccess(
-            CrossTenantAccessException ex,
+    @ExceptionHandler(CrossSocieteAccessException.class)
+    public ResponseEntity<ErrorResponse> handleCrossSocieteAccess(
+            CrossSocieteAccessException ex,
             HttpServletRequest request
     ) {
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.getReasonPhrase(),
                 ErrorCode.FORBIDDEN,
-                "Access denied to resource outside your tenant",
+                "Access denied to resource outside your société",
                 request.getRequestURI()
         );
 
-        log.warn("Cross-tenant access attempt: {}", ex.getMessage());
+        log.warn("Cross-société access attempt: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
@@ -734,6 +719,24 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(status).body(error);
+    }
+
+    // ========== 409 Concurrent Update ==========
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(
+            ObjectOptimisticLockingFailureException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.CONCURRENT_UPDATE,
+                "The resource was modified by another request. Please retry.",
+                request.getRequestURI()
+        );
+        log.warn("Optimistic lock failure on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     // ========== 500 Internal Server Error ==========

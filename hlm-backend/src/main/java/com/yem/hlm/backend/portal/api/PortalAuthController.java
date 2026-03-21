@@ -34,7 +34,7 @@ public class PortalAuthController {
     @PostMapping("/request-link")
     public ResponseEntity<MagicLinkResponse> requestLink(
             @Valid @RequestBody MagicLinkRequest req) {
-        MagicLinkResponse response = portalAuthService.requestLink(req.email(), req.tenantKey());
+        MagicLinkResponse response = portalAuthService.requestLink(req.email(), req.societeKey());
         return ResponseEntity.ok(response);
     }
 

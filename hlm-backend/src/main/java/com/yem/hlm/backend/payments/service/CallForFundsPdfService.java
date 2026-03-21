@@ -8,7 +8,9 @@ import com.yem.hlm.backend.deposit.service.pdf.DocumentGenerationService;
 import com.yem.hlm.backend.payments.domain.PaymentScheduleItem;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,15 +36,18 @@ public class CallForFundsPdfService {
     private final SchedulePaymentRepository     paymentRepo;
     private final SaleContractRepository        contractRepo;
     private final DocumentGenerationService     docService;
+    private final SocieteRepository             societeRepository;
 
     public CallForFundsPdfService(PaymentScheduleItemRepository itemRepo,
                                   SchedulePaymentRepository paymentRepo,
                                   SaleContractRepository contractRepo,
-                                  DocumentGenerationService docService) {
-        this.itemRepo     = itemRepo;
-        this.paymentRepo  = paymentRepo;
-        this.contractRepo = contractRepo;
-        this.docService   = docService;
+                                  DocumentGenerationService docService,
+                                  SocieteRepository societeRepository) {
+        this.itemRepo          = itemRepo;
+        this.paymentRepo       = paymentRepo;
+        this.contractRepo      = contractRepo;
+        this.docService        = docService;
+        this.societeRepository = societeRepository;
     }
 
     /**
@@ -55,19 +60,21 @@ public class CallForFundsPdfService {
      * @throws ReservationPdfGenerationException    on rendering failure
      */
     public byte[] generate(UUID itemId) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
-        PaymentScheduleItem item = itemRepo.findByTenant_IdAndId(tenantId, itemId)
+        PaymentScheduleItem item = itemRepo.findBySocieteIdAndId(societeId, itemId)
                 .orElseThrow(() -> new PaymentScheduleItemNotFoundException(itemId));
 
-        SaleContract contract = contractRepo.findByTenant_IdAndId(tenantId, item.getContractId())
+        SaleContract contract = contractRepo.findBySocieteIdAndId(societeId, item.getContractId())
                 .orElseThrow(() -> new ContractNotFoundException(item.getContractId()));
 
-        BigDecimal paid      = paymentRepo.sumPaidForItem(tenantId, itemId);
+        BigDecimal paid      = paymentRepo.sumPaidForItem(societeId, itemId);
         BigDecimal remaining = item.getAmount().subtract(paid);
         if (remaining.compareTo(BigDecimal.ZERO) < 0) remaining = BigDecimal.ZERO;
 
-        CallForFundsDocumentModel model = buildModel(item, contract, paid, remaining);
+        String societeName = societeRepository.findById(societeId)
+                .map(Societe::getNom).orElse("—");
+        CallForFundsDocumentModel model = buildModel(item, contract, paid, remaining, societeName);
         return docService.renderToPdf("documents/call_for_funds", Map.of("model", model));
     }
 
@@ -78,7 +85,8 @@ public class CallForFundsPdfService {
     private CallForFundsDocumentModel buildModel(PaymentScheduleItem item,
                                                   SaleContract contract,
                                                   BigDecimal paid,
-                                                  BigDecimal remaining) {
+                                                  BigDecimal remaining,
+                                                  String societeName) {
         String projectName   = contract.getProject() != null
                 ? nvl(contract.getProject().getName(), "—") : "—";
         String propertyRef   = contract.getProperty() != null
@@ -90,7 +98,7 @@ public class CallForFundsPdfService {
                 ? contract.getAgreedPrice().toPlainString() : "—";
 
         return new CallForFundsDocumentModel(
-                nvl(contract.getTenant().getName(), "—"),
+                nvl(societeName, "—"),
                 projectName, propertyRef, propertyTitle,
                 nvl(contract.getBuyerDisplayName(), "—"),
                 blankToNull(contract.getBuyerPhone()),

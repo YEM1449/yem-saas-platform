@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.media.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +21,7 @@ import java.util.UUID;
         name = "property_media",
         indexes = {
                 @Index(name = "idx_property_media_tenant_property",
-                        columnList = "tenant_id,property_id")
+                        columnList = "societe_id,property_id")
         }
 )
 public class PropertyMedia {
@@ -31,10 +30,8 @@ public class PropertyMedia {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_property_media_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     /** FK to the property this media belongs to. Stored as raw UUID to avoid circular dependency. */
     @Column(name = "property_id", nullable = false)
@@ -67,10 +64,10 @@ public class PropertyMedia {
         }
     }
 
-    public PropertyMedia(Tenant tenant, UUID propertyId, String fileKey,
+    public PropertyMedia(UUID societeId, UUID propertyId, String fileKey,
                          String originalFilename, String contentType,
                          long sizeBytes, int sortOrder) {
-        this.tenant           = tenant;
+        this.societeId        = societeId;
         this.propertyId       = propertyId;
         this.fileKey          = fileKey;
         this.originalFilename = originalFilename;

@@ -17,7 +17,7 @@ import java.util.UUID;
  */
 public record ContractResponse(
         UUID id,
-        UUID tenantId,
+        UUID societeId,
         UUID projectId,
         String projectName,
         UUID propertyId,
@@ -41,7 +41,7 @@ public record ContractResponse(
     public static ContractResponse from(SaleContract c) {
         return new ContractResponse(
                 c.getId(),
-                c.getTenant().getId(),
+                c.getSocieteId(),
                 c.getProject().getId(),
                 c.getProject().getName(),
                 c.getProperty().getId(),

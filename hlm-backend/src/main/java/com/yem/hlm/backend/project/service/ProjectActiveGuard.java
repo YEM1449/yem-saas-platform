@@ -19,7 +19,7 @@ import java.util.UUID;
  *
  * <p>Usage pattern:
  * <pre>{@code
- *   Project project = projectActiveGuard.requireActive(tenantId, request.projectId());
+ *   Project project = projectActiveGuard.requireActive(societeId, request.projectId());
  * }</pre>
  */
 @Service
@@ -32,16 +32,16 @@ public class ProjectActiveGuard {
     }
 
     /**
-     * Loads a tenant-scoped project and asserts it is ACTIVE.
+     * Loads a société-scoped project and asserts it is ACTIVE.
      *
-     * @param tenantId  the current tenant (from TenantContext)
+     * @param societeId the current société (from SocieteContext)
      * @param projectId the requested project UUID
      * @return the loaded {@link Project} entity
-     * @throws ProjectNotFoundException           if the project does not exist or belongs to a different tenant
+     * @throws ProjectNotFoundException           if the project does not exist or belongs to a different société
      * @throws ArchivedProjectAssignmentException if the project exists but its status is not ACTIVE
      */
-    public Project requireActive(UUID tenantId, UUID projectId) {
-        Project project = projectRepository.findByTenant_IdAndId(tenantId, projectId)
+    public Project requireActive(UUID societeId, UUID projectId) {
+        Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
         if (project.getStatus() != ProjectStatus.ACTIVE) {

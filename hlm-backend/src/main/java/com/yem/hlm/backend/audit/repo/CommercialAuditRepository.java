@@ -15,7 +15,7 @@ public interface CommercialAuditRepository extends JpaRepository<CommercialAudit
 
     @Query("""
             SELECT e FROM CommercialAuditEvent e
-            WHERE e.tenant.id = :tenantId
+            WHERE e.societeId = :societeId
               AND (CAST(:from AS LocalDateTime) IS NULL OR e.occurredAt >= :from)
               AND (CAST(:to   AS LocalDateTime) IS NULL OR e.occurredAt <= :to)
               AND (cast(:correlationType as string) IS NULL OR e.correlationType = :correlationType)
@@ -23,7 +23,7 @@ public interface CommercialAuditRepository extends JpaRepository<CommercialAudit
             ORDER BY e.occurredAt DESC
             """)
     List<CommercialAuditEvent> search(
-            @Param("tenantId") UUID tenantId,
+            @Param("societeId") UUID societeId,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("correlationType") String correlationType,
@@ -34,12 +34,12 @@ public interface CommercialAuditRepository extends JpaRepository<CommercialAudit
     /** Returns all audit events whose correlationId is in the provided set (for timeline). */
     @Query("""
             SELECT e FROM CommercialAuditEvent e
-            WHERE e.tenant.id = :tenantId
+            WHERE e.societeId = :societeId
               AND e.correlationId IN :ids
             ORDER BY e.occurredAt DESC
             """)
     List<CommercialAuditEvent> findByTenantAndCorrelationIds(
-            @Param("tenantId") UUID tenantId,
+            @Param("societeId") UUID societeId,
             @Param("ids") Collection<UUID> ids
     );
 }

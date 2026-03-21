@@ -4,7 +4,7 @@ import com.yem.hlm.backend.commission.api.dto.CommissionDTO;
 import com.yem.hlm.backend.commission.api.dto.CommissionRuleRequest;
 import com.yem.hlm.backend.commission.api.dto.CommissionRuleResponse;
 import com.yem.hlm.backend.commission.service.CommissionService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -49,9 +49,9 @@ public class CommissionController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        UUID tenantId = TenantContext.getTenantId();
-        UUID agentId  = TenantContext.getUserId();
-        return service.getAgentCommissions(tenantId, agentId, from, to);
+        UUID societeId = SocieteContext.getSocieteId();
+        UUID agentId  = SocieteContext.getUserId();
+        return service.getAgentCommissions(societeId, agentId, from, to);
     }
 
     /** ADMIN/MANAGER: all commissions, optional agentId filter. */
@@ -64,8 +64,8 @@ public class CommissionController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        UUID tenantId = TenantContext.getTenantId();
-        return service.getAgentCommissions(tenantId, agentId, from, to);
+        UUID societeId = SocieteContext.getSocieteId();
+        return service.getAgentCommissions(societeId, agentId, from, to);
     }
 
     // =========================================================================
@@ -75,27 +75,27 @@ public class CommissionController {
     @GetMapping("/api/commission-rules")
     @PreAuthorize("hasRole('ADMIN')")
     public List<CommissionRuleResponse> listRules() {
-        return service.listRules(TenantContext.getTenantId());
+        return service.listRules(SocieteContext.getSocieteId());
     }
 
     @PostMapping("/api/commission-rules")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     public CommissionRuleResponse createRule(@Valid @RequestBody CommissionRuleRequest req) {
-        return service.createRule(TenantContext.getTenantId(), req);
+        return service.createRule(SocieteContext.getSocieteId(), req);
     }
 
     @PutMapping("/api/commission-rules/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public CommissionRuleResponse updateRule(@PathVariable UUID id,
                                              @Valid @RequestBody CommissionRuleRequest req) {
-        return service.updateRule(TenantContext.getTenantId(), id, req);
+        return service.updateRule(SocieteContext.getSocieteId(), id, req);
     }
 
     @DeleteMapping("/api/commission-rules/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteRule(@PathVariable UUID id) {
-        service.deleteRule(TenantContext.getTenantId(), id);
+        service.deleteRule(SocieteContext.getSocieteId(), id);
     }
 }

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record ProjectResponse(
         UUID id,
-        UUID tenantId,
+        UUID societeId,
         String name,
         String description,
         ProjectStatus status,
@@ -18,7 +18,7 @@ public record ProjectResponse(
     public static ProjectResponse from(Project p) {
         return new ProjectResponse(
                 p.getId(),
-                p.getTenant().getId(),
+                p.getSocieteId(),
                 p.getName(),
                 p.getDescription(),
                 p.getStatus(),

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Login-specific rate limiter with two independent token-bucket maps:
  * - IP bucket: limits total attempts per client IP address
- * - Identity bucket: limits attempts per tenantKey:email combination
+ * - Identity bucket: limits attempts per identity:email combination
  *
  * <p>A @Scheduled cleanup removes idle buckets every 5 minutes to prevent unbounded growth.</p>
  */
@@ -41,14 +41,14 @@ public class LoginRateLimiter {
     /**
      * Tries to consume one token from both the IP bucket and the identity bucket.
      *
-     * @param ip        client IP (from X-Forwarded-For or RemoteAddr)
-     * @param tenantKey the tenant key from the login request
-     * @param email     the email from the login request
+     * @param ip           client IP (from X-Forwarded-For or RemoteAddr)
+     * @param identityKey  identity prefix for the rate-limit bucket (e.g. email)
+     * @param email        the email from the login request
      * @return result indicating whether the request is allowed
      */
-    public RateLimitResult tryConsume(String ip, String tenantKey, String email) {
+    public RateLimitResult tryConsume(String ip, String identityKey, String email) {
         String ipKey  = "ip:" + ip;
-        String idKey  = "id:" + tenantKey + ":" + email;
+        String idKey  = "id:" + identityKey + ":" + email;
 
         Bucket ipBucket  = ipBuckets.computeIfAbsent(ipKey, k -> buildBucket(props.getIpMax(), props.getWindowSeconds()));
         Bucket idBucket  = keyBuckets.computeIfAbsent(idKey, k -> buildBucket(props.getKeyMax(), props.getWindowSeconds()));

@@ -8,7 +8,8 @@ import com.yem.hlm.backend.portal.api.dto.MagicLinkResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTokenVerifyResponse;
 import com.yem.hlm.backend.portal.domain.PortalToken;
 import com.yem.hlm.backend.portal.repo.PortalTokenRepository;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,7 @@ import java.util.HexFormat;
  *
  * <h3>Flow</h3>
  * <ol>
- *   <li>Client calls {@code requestLink(email, tenantKey)}.
+ *   <li>Client calls {@code requestLink(email, societeKey)}.
  *       A random 32-byte token is generated; only its SHA-256 hex hash is stored.
  *       The raw token is embedded in a magic-link URL and sent by email.</li>
  *   <li>Client clicks the link; frontend calls {@code verifyToken(rawToken)}.
@@ -41,7 +42,7 @@ public class PortalAuthService {
     private static final long TOKEN_TTL_HOURS = 48;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    private final TenantRepository tenantRepository;
+    private final SocieteRepository societeRepository;
     private final ContactRepository contactRepository;
     private final PortalTokenRepository portalTokenRepository;
     private final PortalJwtProvider portalJwtProvider;
@@ -52,13 +53,13 @@ public class PortalAuthService {
     @Value("${app.portal.base-url:http://localhost:4200}")
     private String portalBaseUrl;
 
-    public PortalAuthService(TenantRepository tenantRepository,
+    public PortalAuthService(SocieteRepository societeRepository,
                              ContactRepository contactRepository,
                              PortalTokenRepository portalTokenRepository,
                              PortalJwtProvider portalJwtProvider,
                              EmailSender emailSender,
                              RateLimiterService rateLimiterService) {
-        this.tenantRepository      = tenantRepository;
+        this.societeRepository     = societeRepository;
         this.contactRepository     = contactRepository;
         this.portalTokenRepository = portalTokenRepository;
         this.portalJwtProvider     = portalJwtProvider;
@@ -78,17 +79,17 @@ public class PortalAuthService {
      * in the response body for dev/test convenience; production clients should
      * not surface this URL to users (they should wait for the email).
      *
-     * @param email     buyer's email address
-     * @param tenantKey the tenant's functional key (e.g. "acme")
+     * @param email      buyer's email address
+     * @param societeKey the société's functional key (e.g. "acme")
      * @return response with magic-link URL
      */
-    public MagicLinkResponse requestLink(String email, String tenantKey) {
+    public MagicLinkResponse requestLink(String email, String societeKey) {
         rateLimiterService.checkPortalLink(email.trim().toLowerCase());
 
-        var tenant = tenantRepository.findByKey(tenantKey)
+        Societe societe = societeRepository.findByKey(societeKey)
                 .orElseThrow(() -> new PortalTokenInvalidException("Unknown tenant or email"));
 
-        var contactOpt = contactRepository.findByTenant_IdAndEmailIgnoreCase(tenant.getId(), email);
+        var contactOpt = contactRepository.findBySocieteIdAndEmailIgnoreCase(societe.getId(), email);
         if (contactOpt.isEmpty()) {
             // Unknown email — return generic 200 to prevent user enumeration
             return new MagicLinkResponse("Magic link sent to " + email, "");
@@ -104,15 +105,15 @@ public class PortalAuthService {
         String tokenHash = sha256Hex(rawToken);
 
         Instant expiresAt = Instant.now().plusSeconds(TOKEN_TTL_HOURS * 3600);
-        var portalToken = new PortalToken(tenant, contact, tokenHash, expiresAt);
+        var portalToken = new PortalToken(societe.getId(), contact, tokenHash, expiresAt);
         portalTokenRepository.save(portalToken);
 
         // Build magic-link URL
         String magicLinkUrl = portalBaseUrl + "/portal/verify?token=" + rawToken;
 
         // Build HTML email body
-        String tenantName = tenant.getName();
-        String subject = "Votre lien d'accès au portail — " + tenantName;
+        String societeName = societe.getNom();
+        String subject = "Votre lien d'accès au portail — " + societeName;
         String html = """
                 <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
                 <h2 style="color:#1F3864">Bienvenue sur votre espace personnel</h2>
@@ -131,7 +132,7 @@ public class PortalAuthService {
                 <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
                 <p style="color:#999;font-size:11px">%s &#8212; Espace Client</p>
                 </body></html>
-                """.formatted(magicLinkUrl, tenantName);
+                """.formatted(magicLinkUrl, societeName);
 
         // Send email (fire-and-forget; NoopEmailSender used in dev/test)
         try {
@@ -171,7 +172,7 @@ public class PortalAuthService {
 
         String jwt = portalJwtProvider.generate(
                 portalToken.getContact().getId(),
-                portalToken.getTenant().getId());
+                portalToken.getSocieteId());
 
         return new PortalTokenVerifyResponse(jwt);
     }

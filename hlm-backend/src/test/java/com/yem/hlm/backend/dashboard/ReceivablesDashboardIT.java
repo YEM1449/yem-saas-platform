@@ -14,8 +14,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -55,7 +55,7 @@ class ReceivablesDashboardIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String adminBearer;
@@ -121,9 +121,8 @@ class ReceivablesDashboardIT extends IntegrationTestBase {
     @Test
     void summary_emptyState_returns200_withZeroValues() throws Exception {
         // New tenant with no payment data
-        Tenant otherTenant = tenantRepository.save(new Tenant("recv-empty-tenant", "Recv Empty"));
-        User otherAdmin = new User(otherTenant, "recv-admin@test.com", "hash");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User otherAdmin = new User("recv-admin@test.com", "hash");
         otherAdmin = userRepository.save(otherAdmin);
         String bearer = "Bearer " + jwtProvider.generate(
                 otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);

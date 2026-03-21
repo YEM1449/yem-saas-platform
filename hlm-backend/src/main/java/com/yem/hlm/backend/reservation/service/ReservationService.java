@@ -20,8 +20,7 @@ import com.yem.hlm.backend.reservation.api.dto.ReservationResponse;
 import com.yem.hlm.backend.reservation.domain.Reservation;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
+import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.stereotype.Service;
@@ -67,19 +66,17 @@ public class ReservationService {
      */
     @Transactional
     public ReservationResponse create(CreateReservationRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, req.contactId())
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, req.contactId())
                 .orElseThrow(() -> new ContactNotFoundException(req.contactId()));
 
-        User agent = userRepository.findByTenant_IdAndId(tenantId, actorUserId)
-                .orElseThrow(() -> new CrossTenantAccessException("Unknown user in tenant: " + actorUserId));
-
-        Tenant tenant = contact.getTenant();
+        User agent = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new CrossTenantAccessException("Unknown user: " + actorUserId));
 
         // Acquire pessimistic write lock to prevent concurrent reservation
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, req.propertyId())
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, req.propertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(req.propertyId()));
 
         if (property.getStatus() != PropertyStatus.ACTIVE) {
@@ -87,8 +84,8 @@ public class ReservationService {
         }
 
         // Reject if an active reservation already exists for this property
-        if (reservationRepository.existsByTenant_IdAndPropertyIdAndStatus(
-                tenantId, req.propertyId(), ReservationStatus.ACTIVE)) {
+        if (reservationRepository.existsBySocieteIdAndPropertyIdAndStatus(
+                societeId, req.propertyId(), ReservationStatus.ACTIVE)) {
             throw new PropertyNotAvailableForReservationException(req.propertyId());
         }
 
@@ -96,7 +93,7 @@ public class ReservationService {
                 ? req.expiryDate()
                 : LocalDateTime.now().plusDays(7);
 
-        Reservation reservation = new Reservation(tenant, contact, req.propertyId(), agent);
+        Reservation reservation = new Reservation(societeId, contact, req.propertyId(), agent);
         reservation.setReservationPrice(req.reservationPrice());
         reservation.setExpiryDate(expiry);
         reservation.setNotes(req.notes());
@@ -107,22 +104,22 @@ public class ReservationService {
         // Reserve the property
         propertyWorkflow.reserve(property, LocalDateTime.now());
 
-        auditService.record(tenantId, AuditEventType.RESERVATION_CREATED, actorUserId,
+        auditService.record(societeId, AuditEventType.RESERVATION_CREATED, actorUserId,
                 "RESERVATION", saved.getId(), null);
 
         return toResponse(saved);
     }
 
     public ReservationResponse get(UUID id) {
-        UUID tenantId = requireTenantId();
-        Reservation r = reservationRepository.findByTenant_IdAndId(tenantId, id)
+        UUID societeId = requireSocieteId();
+        Reservation r = reservationRepository.findBySocieteIdAndId(societeId, id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
         return toResponse(r);
     }
 
     public List<ReservationResponse> list() {
-        UUID tenantId = requireTenantId();
-        return reservationRepository.findAllByTenant_IdOrderByCreatedAtDesc(tenantId)
+        UUID societeId = requireSocieteId();
+        return reservationRepository.findAllBySocieteIdOrderByCreatedAtDesc(societeId)
                 .stream().map(this::toResponse).toList();
     }
 
@@ -131,10 +128,10 @@ public class ReservationService {
      */
     @Transactional
     public ReservationResponse cancel(UUID id) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Reservation reservation = reservationRepository.findByTenant_IdAndId(tenantId, id)
+        Reservation reservation = reservationRepository.findBySocieteIdAndId(societeId, id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
 
         if (reservation.getStatus() != ReservationStatus.ACTIVE) {
@@ -145,9 +142,9 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CANCELLED);
         Reservation saved = reservationRepository.save(reservation);
 
-        releasePropertyIfStillReserved(tenantId, reservation.getPropertyId());
+        releasePropertyIfStillReserved(societeId, reservation.getPropertyId());
 
-        auditService.record(tenantId, AuditEventType.RESERVATION_CANCELLED, actorUserId,
+        auditService.record(societeId, AuditEventType.RESERVATION_CANCELLED, actorUserId,
                 "RESERVATION", saved.getId(), null);
 
         return toResponse(saved);
@@ -161,10 +158,10 @@ public class ReservationService {
      */
     @Transactional
     public DepositResponse convertToDeposit(UUID id, ConvertReservationToDepositRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Reservation reservation = reservationRepository.findByTenant_IdAndId(tenantId, id)
+        Reservation reservation = reservationRepository.findBySocieteIdAndId(societeId, id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
 
         if (reservation.getStatus() != ReservationStatus.ACTIVE) {
@@ -174,7 +171,7 @@ public class ReservationService {
 
         // Acquire pessimistic write lock to guard against concurrent state changes
         // (e.g. a contract signing that transitions the property to SOLD concurrently).
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, reservation.getPropertyId())
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, reservation.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(reservation.getPropertyId()));
 
         // Guard: property must still be RESERVED before we release it.
@@ -193,7 +190,7 @@ public class ReservationService {
         // Release property so DepositService can re-reserve it
         propertyWorkflow.releaseReservation(property);
 
-        // Create the deposit via the canonical DepositService (applies all business rules)
+        // Create the deposit via the canonical DepositService (applies all existing business rules)
         CreateDepositRequest depositReq = new CreateDepositRequest(
                 reservation.getContact().getId(),
                 reservation.getPropertyId(),
@@ -210,7 +207,7 @@ public class ReservationService {
         reservation.setConvertedDepositId(depositResponse.id());
         reservationRepository.save(reservation);
 
-        auditService.record(tenantId, AuditEventType.RESERVATION_CONVERTED_TO_DEPOSIT, actorUserId,
+        auditService.record(societeId, AuditEventType.RESERVATION_CONVERTED_TO_DEPOSIT, actorUserId,
                 "RESERVATION", id, null);
 
         return depositResponse;
@@ -229,13 +226,13 @@ public class ReservationService {
 
     // ---- Pipeline metrics ----
 
-    public long countActiveReservations(UUID tenantId) {
-        return reservationRepository.countByTenant_IdAndStatus(tenantId, ReservationStatus.ACTIVE);
+    public long countActiveReservations(UUID societeId) {
+        return reservationRepository.countBySocieteIdAndStatus(societeId, ReservationStatus.ACTIVE);
     }
 
-    public long countExpiringSoon(UUID tenantId) {
+    public long countExpiringSoon(UUID societeId) {
         LocalDateTime now = LocalDateTime.now();
-        return reservationRepository.countExpiringBefore(tenantId, now, now.plusHours(48));
+        return reservationRepository.countExpiringBefore(societeId, now, now.plusHours(48));
     }
 
     // ---- Private helpers ----
@@ -244,28 +241,28 @@ public class ReservationService {
         r.setStatus(ReservationStatus.EXPIRED);
         reservationRepository.save(r);
 
-        releasePropertyIfStillReserved(r.getTenant().getId(), r.getPropertyId());
+        releasePropertyIfStillReserved(r.getSocieteId(), r.getPropertyId());
 
-        auditService.record(r.getTenant().getId(), AuditEventType.RESERVATION_EXPIRED,
+        auditService.record(r.getSocieteId(), AuditEventType.RESERVATION_EXPIRED,
                 r.getReservedByUser().getId(), "RESERVATION", r.getId(), null);
     }
 
-    private void releasePropertyIfStillReserved(UUID tenantId, UUID propertyId) {
-        propertyRepository.findByTenant_IdAndId(tenantId, propertyId).ifPresent(property -> {
+    private void releasePropertyIfStillReserved(UUID societeId, UUID propertyId) {
+        propertyRepository.findBySocieteIdAndId(societeId, propertyId).ifPresent(property -> {
             if (property.getStatus() == PropertyStatus.RESERVED) {
                 propertyWorkflow.releaseReservation(property);
             }
         });
     }
 
-    private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 
     private UUID requireUserId() {
-        UUID id = TenantContext.getUserId();
+        UUID id = SocieteContext.getUserId();
         if (id == null) throw new CrossTenantAccessException("Missing user context");
         return id;
     }
@@ -273,7 +270,7 @@ public class ReservationService {
     private ReservationResponse toResponse(Reservation r) {
         return new ReservationResponse(
                 r.getId(),
-                r.getTenant().getId(),
+                r.getSocieteId(),
                 r.getContact().getId(),
                 r.getPropertyId(),
                 r.getReservedByUser().getId(),

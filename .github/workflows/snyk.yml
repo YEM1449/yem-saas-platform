@@ -26,9 +26,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
+  check-token:
+    name: Check Snyk token configured
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.chk.outputs.configured }}
+    steps:
+      - id: chk
+        env:
+          TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "configured=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
   open-source:
     name: Open Source Dependency Scan
-    if: ${{ secrets.SNYK_TOKEN != '' }}
+    needs: check-token
+    if: ${{ needs.check-token.outputs.configured == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -47,7 +65,7 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Set up Node 18
+      - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -97,7 +115,8 @@ jobs:
 
   code:
     name: Snyk Code Scan
-    if: ${{ secrets.SNYK_TOKEN != '' }}
+    needs: check-token
+    if: ${{ needs.check-token.outputs.configured == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -112,7 +131,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node 18
+      - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -135,7 +154,8 @@ jobs:
 
   missing-token:
     name: Snyk Configuration Check
-    if: ${{ secrets.SNYK_TOKEN == '' }}
+    needs: check-token
+    if: ${{ needs.check-token.outputs.configured == 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Warn when Snyk token is missing

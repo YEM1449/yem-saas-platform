@@ -1,14 +1,23 @@
-security:
-  jwt:
-    secret: "0123456789abcdef0123456789abcdef01234567"
-    ttl-seconds: 3600
-
 spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
   liquibase:
     enabled: true
   task:
     scheduling:
       enabled: false
+
+logging:
+  level:
+    org.hibernate.stat: DEBUG
+    org.hibernate.SQL: DEBUG
+
+security:
+  jwt:
+    secret: "0123456789abcdef0123456789abcdef01234567"
+    ttl-seconds: 3600
 
 app:
   media:

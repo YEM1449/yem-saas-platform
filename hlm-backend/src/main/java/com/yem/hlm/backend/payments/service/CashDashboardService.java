@@ -6,7 +6,7 @@ import com.yem.hlm.backend.payments.domain.PaymentScheduleItem;
 import com.yem.hlm.backend.payments.domain.PaymentScheduleStatus;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 /**
  * Computes cash-flow KPIs for a date window and aging analysis for overdue items.
- * Results are cached with a 60-second TTL (keyed on tenantId + from + to).
+ * Results are cached with a 60-second TTL (keyed on societeId + from + to).
  */
 @Service
 public class CashDashboardService {
@@ -44,17 +44,17 @@ public class CashDashboardService {
      */
     @Transactional(readOnly = true)
     @Cacheable(value = "cashDashboard",
-               key = "#root.target.currentTenantId() + '_' + #from + '_' + #to")
+               key = "#root.target.currentSocieteId() + '_' + #from + '_' + #to")
     public CashDashboardResponse getSummary(LocalDate from, LocalDate to) {
-        UUID tenantId = requireTenantId();
-        return compute(tenantId, from, to);
+        UUID societeId = requireSocieteId();
+        return compute(societeId, from, to);
     }
 
     /**
-     * Called reflectively by the @Cacheable key SpEL to get tenant context.
+     * Called reflectively by the @Cacheable key SpEL to get société context.
      */
-    public String currentTenantId() {
-        UUID id = TenantContext.getTenantId();
+    public String currentSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
         return id != null ? id.toString() : "UNKNOWN";
     }
 
@@ -62,24 +62,24 @@ public class CashDashboardService {
     // Internal computation
     // =========================================================================
 
-    CashDashboardResponse compute(UUID tenantId, LocalDate from, LocalDate to) {
+    CashDashboardResponse compute(UUID societeId, LocalDate from, LocalDate to) {
         // ── Headline aggregates ───────────────────────────────────────────────
-        BigDecimal expected  = itemRepo.sumExpectedInPeriod(tenantId, from, to);
-        BigDecimal issued    = itemRepo.sumIssuedInPeriod(tenantId, from, to);
+        BigDecimal expected  = itemRepo.sumExpectedInPeriod(societeId, from, to);
+        BigDecimal issued    = itemRepo.sumIssuedInPeriod(societeId, from, to);
         BigDecimal collected = paymentRepo.sumCollectedInPeriod(
-                tenantId,
+                societeId,
                 from.atStartOfDay(),
                 to.atTime(23, 59, 59));
 
         // ── Overdue / aging ───────────────────────────────────────────────────
-        long overdueCount = itemRepo.countByTenant_IdAndStatus(tenantId, PaymentScheduleStatus.OVERDUE);
+        long overdueCount = itemRepo.countBySocieteIdAndStatus(societeId, PaymentScheduleStatus.OVERDUE);
         LocalDate today      = LocalDate.now();
         LocalDate agingStart = today.minusDays(365 * 5L);
 
-        List<PaymentScheduleItem> b0_30  = itemRepo.findOverdueInRange(tenantId, today.minusDays(30),  today);
-        List<PaymentScheduleItem> b31_60 = itemRepo.findOverdueInRange(tenantId, today.minusDays(60),  today.minusDays(31));
-        List<PaymentScheduleItem> b61_90 = itemRepo.findOverdueInRange(tenantId, today.minusDays(90),  today.minusDays(61));
-        List<PaymentScheduleItem> b91p   = itemRepo.findOverdueInRange(tenantId, agingStart,           today.minusDays(91));
+        List<PaymentScheduleItem> b0_30  = itemRepo.findOverdueInRange(societeId, today.minusDays(30),  today);
+        List<PaymentScheduleItem> b31_60 = itemRepo.findOverdueInRange(societeId, today.minusDays(60),  today.minusDays(31));
+        List<PaymentScheduleItem> b61_90 = itemRepo.findOverdueInRange(societeId, today.minusDays(90),  today.minusDays(61));
+        List<PaymentScheduleItem> b91p   = itemRepo.findOverdueInRange(societeId, agingStart,           today.minusDays(91));
 
         List<UUID> allOverdueIds = new ArrayList<>();
         allOverdueIds.addAll(ids(b0_30));
@@ -87,7 +87,7 @@ public class CashDashboardService {
         allOverdueIds.addAll(ids(b61_90));
         allOverdueIds.addAll(ids(b91p));
 
-        Map<UUID, BigDecimal> paidByItem = batchPaid(tenantId, allOverdueIds);
+        Map<UUID, BigDecimal> paidByItem = batchPaid(societeId, allOverdueIds);
 
         CashDashboardResponse.AgingBucket bucket0 = bucketOf("0-30 jours",  b0_30,  paidByItem);
         CashDashboardResponse.AgingBucket bucket1 = bucketOf("31-60 jours", b31_60, paidByItem);
@@ -101,7 +101,7 @@ public class CashDashboardService {
 
         // ── Next due (upcoming ISSUED/SENT items) ─────────────────────────────
         List<PaymentScheduleItem> upcoming = itemRepo.findUpcomingDue(
-                tenantId, today, PageRequest.of(0, NEXT_DUE_LIMIT));
+                societeId, today, PageRequest.of(0, NEXT_DUE_LIMIT));
 
         List<CashDashboardResponse.NextDueItem> nextDue = upcoming.stream()
                 .map(i -> {
@@ -127,9 +127,9 @@ public class CashDashboardService {
         return items.stream().map(PaymentScheduleItem::getId).toList();
     }
 
-    private Map<UUID, BigDecimal> batchPaid(UUID tenantId, List<UUID> itemIds) {
+    private Map<UUID, BigDecimal> batchPaid(UUID societeId, List<UUID> itemIds) {
         if (itemIds.isEmpty()) return Map.of();
-        return paymentRepo.sumPaidByItemIds(tenantId, itemIds).stream()
+        return paymentRepo.sumPaidByItemIds(societeId, itemIds).stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (BigDecimal) row[1]
@@ -148,9 +148,9 @@ public class CashDashboardService {
         return new CashDashboardResponse.AgingBucket(label, total, items.size());
     }
 
-    private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 }

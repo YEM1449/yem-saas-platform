@@ -1,8 +1,8 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Properties</h1>
-    <p class="page-subtitle">Manage your real estate inventory</p>
+    <h1 class="page-title">Biens immobiliers</h1>
+    <p class="page-subtitle">Gerer votre inventaire immobilier</p>
   </div>
   @if (canCreate) {
     <div class="page-header-actions">
@@ -11,7 +11,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Add Property
+        Ajouter un bien
       </button>
       <!-- CSV import -->
       <label class="btn btn-secondary" [class.disabled]="importLoading" title="Import from CSV">
@@ -51,7 +51,7 @@
         <tbody>
           <tr><td class="font-mono">reference_code</td><td>✓</td><td>Unique text identifier, e.g. <code>PROJ-A-101</code></td></tr>
           <tr><td class="font-mono">title</td><td>✓</td><td>Display name of the property</td></tr>
-          <tr><td class="font-mono">type</td><td>✓</td><td>APARTMENT · VILLA · HOUSE · STUDIO · DUPLEX · PENTHOUSE · LAND · OFFICE · COMMERCIAL</td></tr>
+          <tr><td class="font-mono">type</td><td>✓</td><td>VILLA · APPARTEMENT · STUDIO · T2 · T3 · DUPLEX · COMMERCE · LOCAL · TERRAIN</td></tr>
           <tr><td class="font-mono">status</td><td></td><td>DRAFT (default) · ACTIVE · WITHDRAWN · ARCHIVED</td></tr>
           <tr><td class="font-mono">city</td><td></td><td>Free text, e.g. <code>Casablanca</code></td></tr>
           <tr><td class="font-mono">price</td><td></td><td>Numeric, no currency symbol, e.g. <code>1500000</code></td></tr>
@@ -64,9 +64,9 @@
 
       <p class="text-sm text-muted" style="margin: 10px 0 6px;">Example rows:</p>
       <pre class="code-block">reference_code,title,type,status,city,price,surface_area_sqm,bedrooms,description
-PARK-A-101,Appartement T3 Vue Mer,APARTMENT,ACTIVE,Casablanca,1250000,85,3,"Appartement lumineux face à la mer"
+PARK-A-101,Appartement T3 Vue Mer,APPARTEMENT,ACTIVE,Casablanca,1250000,85,3,"Appartement lumineux face à la mer"
 PARK-V-001,Villa avec Piscine,VILLA,DRAFT,Marrakech,3800000,320,5,"Grande villa avec jardin privatif"
-LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
+LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
     </div>
   </details>
 }
@@ -191,8 +191,8 @@ LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
     <div class="modal" style="max-width: 580px;" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">Add Property</h2>
-        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+        <h2 class="modal-title">Ajouter un bien</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Fermer">✕</button>
       </div>
 
       <div class="modal-body">
@@ -203,90 +203,207 @@ LOT-22,Terrain Résidentiel,LAND,,Rabat,650000,500,0,</pre>
         <!-- Identification -->
         <div class="modal-section-label">Identification</div>
         <div class="form-group">
-          <label class="form-label required">Project</label>
+          <label class="form-label required">Projet</label>
           <select class="form-control" [(ngModel)]="form.projectId" [disabled]="submitting || projectsLoading">
-            <option value="">{{ projectsLoading ? 'Loading projects…' : 'Select a project…' }}</option>
+            <option value="">{{ projectsLoading ? 'Chargement des projets…' : 'Selectionner un projet…' }}</option>
             @for (p of projects; track p.id) {
               <option [value]="p.id">{{ p.name }}</option>
             }
           </select>
-          <span class="form-hint">Every property must belong to a project</span>
+          <span class="form-hint">Chaque bien doit appartenir a un projet</span>
         </div>
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label required">Type</label>
             <select class="form-control" [(ngModel)]="form.type" [disabled]="submitting">
-              <option value="">Select a type…</option>
+              <option value="">Selectionner un type…</option>
               @for (t of propertyTypes; track t) {
-                <option [value]="t">{{ t | titlecase }}</option>
+                <option [value]="t">{{ t }}</option>
               }
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label required">Reference Code</label>
-            <input class="form-control" type="text" placeholder="e.g. PARK-A-101"
+            <label class="form-label required">Code de reference</label>
+            <input class="form-control" type="text" placeholder="ex. PARK-A-101"
                    [(ngModel)]="form.referenceCode" [disabled]="submitting" />
-            <span class="form-hint">Must be unique within your account</span>
+            <span class="form-hint">Doit etre unique dans votre compte</span>
           </div>
         </div>
 
-        <!-- Title -->
         <div class="form-group">
-          <label class="form-label required">Title</label>
-          <input class="form-control" type="text" placeholder="e.g. Appartement T3 Vue Mer"
+          <label class="form-label required">Titre</label>
+          <input class="form-control" type="text" placeholder="ex. Appartement T3 Vue Mer"
                  [(ngModel)]="form.title" [disabled]="submitting" />
         </div>
 
-        <!-- Location & Size -->
-        <div class="modal-section-label">Location &amp; Size</div>
+        <!-- Localisation -->
+        <div class="modal-section-label">Localisation</div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">City</label>
-            <input class="form-control" type="text" placeholder="e.g. Casablanca"
+            <label class="form-label">Ville</label>
+            <input class="form-control" type="text" placeholder="ex. Casablanca"
                    [(ngModel)]="form.city" [disabled]="submitting" />
           </div>
           <div class="form-group">
-            <label class="form-label">Surface (m²)</label>
-            <input class="form-control" type="number" min="0" placeholder="e.g. 85"
-                   [(ngModel)]="form.surfaceAreaSqm" [disabled]="submitting" />
+            <label class="form-label">Region</label>
+            <input class="form-control" type="text" placeholder="ex. Casablanca-Settat"
+                   [(ngModel)]="form.region" [disabled]="submitting" />
           </div>
         </div>
+        <div class="form-group">
+          <label class="form-label">Adresse</label>
+          <input class="form-control" type="text" placeholder="ex. 12 Rue Mohammed V"
+                 [(ngModel)]="form.address" [disabled]="submitting" />
+        </div>
 
-        <!-- Pricing & Status -->
-        <div class="modal-section-label">Pricing &amp; Status</div>
+        <!-- Caracteristiques (conditionnelles par type) -->
+        @if (form.type) {
+          <div class="modal-section-label">Caracteristiques</div>
+
+          @if (needsSurface) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label required">Surface habitable (m²)</label>
+                <input class="form-control" type="number" min="0" placeholder="ex. 85"
+                       [(ngModel)]="form.surfaceAreaSqm" [disabled]="submitting" />
+              </div>
+              @if (needsLand) {
+                <div class="form-group">
+                  <label class="form-label required">Superficie terrain (m²)</label>
+                  <input class="form-control" type="number" min="0" placeholder="ex. 500"
+                         [(ngModel)]="form.landAreaSqm" [disabled]="submitting" />
+                </div>
+              }
+            </div>
+          }
+
+          @if (!needsSurface && needsLand) {
+            <div class="form-group">
+              <label class="form-label required">Superficie terrain (m²)</label>
+              <input class="form-control" type="number" min="0" placeholder="ex. 500"
+                     [(ngModel)]="form.landAreaSqm" [disabled]="submitting" />
+            </div>
+          }
+
+          @if (needsBedrooms) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label required">Chambres</label>
+                <input class="form-control" type="number" min="0" placeholder="ex. 3"
+                       [(ngModel)]="form.bedrooms" [disabled]="submitting" />
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Salles de bain</label>
+                <input class="form-control" type="number" min="0" placeholder="ex. 2"
+                       [(ngModel)]="form.bathrooms" [disabled]="submitting" />
+              </div>
+            </div>
+          }
+
+          @if (needsFloorNumber) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label required">Etage</label>
+                <input class="form-control" type="number" min="0" placeholder="ex. 3"
+                       [(ngModel)]="form.floorNumber" [disabled]="submitting" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre total d'etages</label>
+                <input class="form-control" type="number" min="1" placeholder="ex. 10"
+                       [(ngModel)]="form.floors" [disabled]="submitting" />
+              </div>
+            </div>
+          }
+          @if (needsTotalFloors) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label required">Nombre total d'etages</label>
+                <input class="form-control" type="number" min="1" placeholder="ex. 2"
+                       [(ngModel)]="form.floors" [disabled]="submitting" />
+              </div>
+            </div>
+          }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Places de parking</label>
+              <input class="form-control" type="number" min="0" placeholder="ex. 1"
+                     [(ngModel)]="form.parkingSpaces" [disabled]="submitting" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Annee de construction</label>
+              <input class="form-control" type="number" min="1900" max="2030" placeholder="ex. 2022"
+                     [(ngModel)]="form.buildingYear" [disabled]="submitting" />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Piscine</label>
+              <select class="form-control" [(ngModel)]="form.hasPool" [disabled]="submitting">
+                <option [value]="false">Non</option>
+                <option [value]="true">Oui</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jardin</label>
+              <select class="form-control" [(ngModel)]="form.hasGarden" [disabled]="submitting">
+                <option [value]="false">Non</option>
+                <option [value]="true">Oui</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nom du batiment / residence</label>
+            <input class="form-control" type="text" placeholder="ex. Residence Al Majd"
+                   [(ngModel)]="form.buildingName" [disabled]="submitting" />
+          </div>
+        }
+
+        <!-- Prix & Statut -->
+        <div class="modal-section-label">Prix et statut</div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Price (MAD)</label>
-            <input class="form-control" type="number" min="0" placeholder="e.g. 1500000"
+            <label class="form-label required">Prix</label>
+            <input class="form-control" type="number" min="0" placeholder="ex. 1500000"
                    [(ngModel)]="form.price" [disabled]="submitting" />
           </div>
           <div class="form-group">
-            <label class="form-label">Initial Status</label>
-            <select class="form-control" [(ngModel)]="form.status" [disabled]="submitting">
-              @for (s of statusOptions; track s.value) {
-                <option [value]="s.value">{{ s.label }}</option>
-              }
+            <label class="form-label">Devise</label>
+            <select class="form-control" [(ngModel)]="form.currency" [disabled]="submitting">
+              <option value="MAD">MAD</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Statut initial</label>
+          <select class="form-control" [(ngModel)]="form.status" [disabled]="submitting">
+            @for (s of statusOptions; track s.value) {
+              <option [value]="s.value">{{ s.label }}</option>
+            }
+          </select>
         </div>
 
         <!-- Description -->
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea class="form-control" rows="3"
-                    placeholder="Key features, finishes, orientation, views…"
+                    placeholder="Caracteristiques, finitions, orientation, vues…"
                     [(ngModel)]="form.description" [disabled]="submitting"></textarea>
         </div>
 
         <p class="form-hint" style="margin:0">
-          Media (photos/plans) can be uploaded from the property detail page after creation.
+          Les medias (photos, plans) peuvent etre ajoutes depuis la fiche du bien apres creation.
         </p>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-          @if (submitting) { Creating… } @else { Create Property }
+          @if (submitting) { Creation en cours… } @else { Creer le bien }
         </button>
       </div>
 

@@ -1,5 +1,4 @@
 export interface LoginRequest {
-  tenantKey: string;
   email: string;
   password: string;
 }
@@ -12,6 +11,6 @@ export interface LoginResponse {
 
 export interface MeResponse {
   userId: string;
-  tenantId: string;
+  societeId: string;
   role?: string;
 }

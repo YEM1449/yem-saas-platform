@@ -16,8 +16,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -64,7 +64,7 @@ class ReservationPdfIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ContactRepository contactRepository;
     @Autowired DepositRepository depositRepository;
@@ -149,10 +149,7 @@ class ReservationPdfIT extends IntegrationTestBase {
     @Test
     void downloadPdf_asAgent_ownDeposit_returns200() throws Exception {
         // Create an AGENT user in the same tenant
-        User agent = new User(
-                tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "agent-pdf@acme.com", "hashedPass");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent-pdf@acme.com", "hashedPass");
         agent = userRepository.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
@@ -168,17 +165,11 @@ class ReservationPdfIT extends IntegrationTestBase {
     @Test
     void downloadPdf_asAgent_otherAgentsDeposit_returns404() throws Exception {
         // Agent A owns a deposit
-        User agentA = new User(
-                tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "agent-a-pdf@acme.com", "hashedPass");
-        agentA.setRole(UserRole.ROLE_AGENT);
+        User agentA = new User("agent-a-pdf@acme.com", "hashedPass");
         agentA = userRepository.save(agentA);
 
         // Agent B tries to access Agent A's deposit
-        User agentB = new User(
-                tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "agent-b-pdf@acme.com", "hashedPass");
-        agentB.setRole(UserRole.ROLE_AGENT);
+        User agentB = new User("agent-b-pdf@acme.com", "hashedPass");
         agentB = userRepository.save(agentB);
         String bearerB = "Bearer " + jwtProvider.generate(agentB.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
@@ -285,9 +276,9 @@ class ReservationPdfIT extends IntegrationTestBase {
         UUID propertyId = createActiveProperty(adminBearer);
 
         // Build and save the deposit directly with the specified agent
-        Tenant tenant = tenantRepository.findById(TENANT_ID).orElseThrow();
+        Societe societe = societeRepository.findById(TENANT_ID).orElseThrow();
         var contact = contactRepository.findById(contactId).orElseThrow();
-        Deposit deposit = new Deposit(tenant, contact, agent);
+        Deposit deposit = new Deposit(societe.getId(), contact, agent);
         deposit.setPropertyId(propertyId);
         deposit.setAmount(new BigDecimal("5000.00"));
         deposit.setCurrency("MAD");
@@ -300,9 +291,8 @@ class ReservationPdfIT extends IntegrationTestBase {
 
     private String createOtherTenantBearer(String keyPrefix) {
         String otherKey = keyPrefix + "-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "PDF Isolation Tenant"));
-        User userB = new User(tenantB, "admin@" + keyPrefix + ".com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@" + keyPrefix + ".com", "hashedPass");
         userB = userRepository.save(userB);
         return "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
     }

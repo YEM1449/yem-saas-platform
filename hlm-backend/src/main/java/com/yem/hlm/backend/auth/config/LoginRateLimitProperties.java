@@ -5,7 +5,7 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * Configuration for login-specific rate limiting.
- * Supports two independent buckets: per-IP and per-identity (tenantKey:email).
+ * Supports two independent buckets: per-IP and per-identity (email:email).
  */
 @Validated
 @ConfigurationProperties(prefix = "app.security.rate-limit.login")
@@ -14,7 +14,7 @@ public class LoginRateLimitProperties {
     /** Maximum login attempts allowed per IP within the window. */
     private int ipMax = 20;
 
-    /** Maximum login attempts allowed per tenantKey+email within the window. */
+    /** Maximum login attempts allowed per identity+email within the window. */
     private int keyMax = 10;
 
     /** Sliding window size in seconds. */

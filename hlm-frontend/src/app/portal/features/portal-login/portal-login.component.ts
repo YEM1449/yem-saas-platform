@@ -19,7 +19,7 @@ export class PortalLoginComponent {
 
   step    = signal<Step>('request');
   email   = '';
-  tenantKey = '';
+  societeKey = '';
   error   = signal('');
   loading = signal(false);
 
@@ -31,16 +31,16 @@ export class PortalLoginComponent {
       this.verifyToken(token);
     }
 
-    // Pre-fill tenantKey from URL param if available
-    const tk = this.route.snapshot.queryParamMap.get('tenant');
-    if (tk) this.tenantKey = tk;
+    // Pre-fill societeKey from URL param if available
+    const tk = this.route.snapshot.queryParamMap.get('societe');
+    if (tk) this.societeKey = tk;
   }
 
   requestLink(): void {
-    if (!this.email || !this.tenantKey) return;
+    if (!this.email || !this.societeKey) return;
     this.loading.set(true);
     this.error.set('');
-    this.auth.requestLink({ email: this.email, tenantKey: this.tenantKey }).subscribe({
+    this.auth.requestLink({ email: this.email, societeKey: this.societeKey }).subscribe({
       next: () => {
         this.loading.set(false);
         this.step.set('sent');

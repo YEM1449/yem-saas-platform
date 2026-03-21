@@ -59,6 +59,13 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
+                        // Société switch — token validated internally by AuthService
+                        // (no prior Spring Security auth required; partial tokens are accepted here)
+                        .requestMatchers(HttpMethod.POST, "/auth/switch-societe").permitAll()
+
+                        // Super-admin société management
+                        .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
+
                         // OpenAPI / Swagger UI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 

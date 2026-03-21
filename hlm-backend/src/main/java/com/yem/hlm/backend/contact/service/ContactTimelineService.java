@@ -8,7 +8,7 @@ import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.notification.repo.NotificationRepository;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,10 +63,10 @@ public class ContactTimelineService {
      * @throws ContactNotFoundException if the contact does not belong to the current tenant
      */
     public List<TimelineEventResponse> getTimeline(UUID contactId, int limit) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
-        // Guard: confirm contact belongs to this tenant
-        contactRepository.findByTenant_IdAndId(tenantId, contactId)
+        // Guard: confirm contact belongs to this société
+        contactRepository.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new ContactNotFoundException(contactId));
 
         // Collect all related entity IDs
@@ -74,11 +74,11 @@ public class ContactTimelineService {
         correlationIds.add(contactId); // messages may be correlated directly to contact
 
         // All deposits for this contact (all statuses via the flexible report query)
-        depositRepository.report(tenantId, null, null, contactId, null, null, null)
+        depositRepository.report(societeId, null, null, contactId, null, null, null)
                 .forEach(d -> correlationIds.add(d.getId()));
 
         // All contracts where this contact is the buyer
-        contractRepository.filter(tenantId, null, null, null, null, null).stream()
+        contractRepository.filter(societeId, null, null, null, null, null).stream()
                 .filter(c -> c.getBuyerContact() != null
                         && contactId.equals(c.getBuyerContact().getId()))
                 .forEach(c -> correlationIds.add(c.getId()));
@@ -87,7 +87,7 @@ public class ContactTimelineService {
 
         // 1. Audit events
         if (!correlationIds.isEmpty()) {
-            auditRepository.findByTenantAndCorrelationIds(tenantId, correlationIds).stream()
+            auditRepository.findByTenantAndCorrelationIds(societeId, correlationIds).stream()
                     .map(e -> new TimelineEventResponse(
                             e.getOccurredAt(),
                             e.getEventType().name(),
@@ -98,7 +98,7 @@ public class ContactTimelineService {
                     .forEach(events::add);
 
             // 2. Outbox messages
-            messageRepository.findByTenantAndCorrelationIds(tenantId, correlationIds).stream()
+            messageRepository.findByTenantAndCorrelationIds(societeId, correlationIds).stream()
                     .map(m -> new TimelineEventResponse(
                             m.getCreatedAt(),
                             m.getChannel().name() + "_" + m.getStatus().name(),
@@ -109,7 +109,7 @@ public class ContactTimelineService {
                     .forEach(events::add);
 
             // 3. Notifications
-            notificationRepository.findByTenantAndRefIds(tenantId, correlationIds).stream()
+            notificationRepository.findByTenantAndRefIds(societeId, correlationIds).stream()
                     .map(n -> new TimelineEventResponse(
                             n.getCreatedAt(),
                             n.getType().name(),
