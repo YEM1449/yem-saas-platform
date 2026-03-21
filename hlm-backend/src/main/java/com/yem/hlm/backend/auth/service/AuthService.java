@@ -4,6 +4,8 @@ import com.yem.hlm.backend.auth.api.dto.LoginRequest;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.api.dto.SocieteDto;
 import com.yem.hlm.backend.auth.api.dto.SwitchSocieteRequest;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtException;
 import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.auth.config.LockoutProperties;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
@@ -77,8 +79,10 @@ public class AuthService {
             throw new LoginRateLimitedException(rlResult.waitSeconds());
         }
 
-        // 2) Resolve user by email — unknown email = standard 401
-        var userOpt = userRepository.findByEmail(email);
+        // 2) Resolve user by email — unknown email = standard 401.
+        // findFirstByEmail is used instead of findByEmail to safely handle pre-migration
+        // deployments that may have duplicate email rows (changeset 036 removes them).
+        var userOpt = userRepository.findFirstByEmail(email);
         if (userOpt.isEmpty()) {
             securityAuditLogger.logFailedLogin(email, email, ip, "USER_NOT_FOUND");
             throw new UnauthorizedException();
@@ -111,6 +115,16 @@ public class AuthService {
 
         // 6) Resolve société memberships
         List<AppUserSociete> memberships = appUserSocieteRepository.findByIdUserIdAndActifTrue(user.getId());
+
+        // SUPER_ADMIN with no société memberships is a valid platform operator —
+        // mint a platform-level JWT (no 'sid' claim) that bypasses société context.
+        if ("SUPER_ADMIN".equals(user.getPlatformRole()) && memberships.isEmpty()) {
+            String token = jwtProvider.generate(user.getId(), null, "ROLE_SUPER_ADMIN", user.getTokenVersion());
+            securityAuditLogger.logSuccessfulLogin(email, user.getId(), ip, "ROLE_SUPER_ADMIN");
+            log.debug("Login successful for SUPER_ADMIN email={} (no société membership)", email);
+            return LoginResponse.bearer(token, jwtProperties.ttlSeconds());
+        }
+
         if (memberships.isEmpty()) {
             securityAuditLogger.logFailedLogin(email, email, ip, "NO_SOCIETE_MEMBERSHIP");
             throw new UnauthorizedException();
@@ -127,8 +141,10 @@ public class AuthService {
         if (memberships.size() == 1) {
             AppUserSociete membership = memberships.get(0);
             UUID societeId = membership.getSocieteId();
-            // app_user_societe.role stores "ADMIN"/"MANAGER"/"AGENT"; JWT requires "ROLE_" prefix
-            String role    = toJwtRole(membership.getRole());
+            // platform_role takes precedence: SUPER_ADMIN at platform level overrides société role
+            String role = "SUPER_ADMIN".equals(user.getPlatformRole())
+                    ? "ROLE_SUPER_ADMIN"
+                    : toJwtRole(membership.getRole());
 
             String token = jwtProvider.generate(user.getId(), societeId, role, user.getTokenVersion());
             long expiresInSeconds = jwtProperties.ttlSeconds();
@@ -138,7 +154,8 @@ public class AuthService {
 
             return LoginResponse.bearer(token, expiresInSeconds);
         } else {
-            // Multiple memberships — build société list and ask the client to choose
+            // Multiple memberships — build société list and ask the client to choose.
+            // Mint a short-lived partial token so the client can call /auth/switch-societe.
             List<SocieteDto> societeDtos = memberships.stream()
                     .map(m -> {
                         Societe societe = societeRepository.findById(m.getSocieteId()).orElse(null);
@@ -147,26 +164,50 @@ public class AuthService {
                     })
                     .toList();
 
+            String partialToken = jwtProvider.generatePartial(user.getId(), 300);
             log.debug("Login requires société selection for email={} memberships={}", email, memberships.size());
-            return LoginResponse.selectSociete(societeDtos);
+            return LoginResponse.selectSociete(partialToken, societeDtos);
         }
     }
 
     /**
      * Issues a new JWT scoped to the requested société.
-     * The caller must already hold a valid JWT (enforced by SecurityConfig).
+     * The caller presents either a partial token (issued during multi-société selection)
+     * or a full token (re-selecting a société). Token validation is performed here
+     * because /auth/switch-societe is permitAll in SecurityConfig.
      *
-     * @param userId    authenticated user (from SecurityContextHolder principal)
-     * @param req       the société to switch to
+     * @param authorizationHeader  raw "Authorization: Bearer <token>" header (may be null)
+     * @param req                  the société to switch to
      * @return full JWT scoped to the requested société
      */
     @Transactional(readOnly = true)
-    public LoginResponse switchSociete(UUID userId, SwitchSocieteRequest req) {
+    public LoginResponse switchSociete(String authorizationHeader, SwitchSocieteRequest req) {
+        // 1. Extract and validate the token
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_OR_MISSING_TOKEN");
+        }
+        String rawToken = authorizationHeader.substring(7);
+
+        Jwt jwt;
+        try {
+            jwt = jwtProvider.parse(rawToken);
+        } catch (JwtException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_OR_MISSING_TOKEN");
+        }
+
+        UUID userId;
+        try {
+            userId = UUID.fromString(jwt.getSubject());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_OR_MISSING_TOKEN");
+        }
+
         UUID societeId = req.societeId();
 
+        // 2. Verify the user has an active membership in the requested société
         AppUserSociete membership = appUserSocieteRepository
                 .findByIdUserIdAndIdSocieteId(userId, societeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "SOCIETE_NOT_IN_CLAIMS"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "SOCIETE_NOT_IN_MEMBERSHIPS"));
 
         if (!membership.isActif()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "SOCIETE_INACTIVE");
@@ -175,7 +216,10 @@ public class AuthService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "NO_SOCIETE_ACCESS"));
 
-        String role  = toJwtRole(membership.getRole());
+        // 3. Mint a full scoped JWT (platformRole takes precedence — see Fix 4)
+        String role = "SUPER_ADMIN".equals(user.getPlatformRole())
+                ? "ROLE_SUPER_ADMIN"
+                : toJwtRole(membership.getRole());
         String token = jwtProvider.generate(userId, societeId, role, user.getTokenVersion());
         long expiresInSeconds = jwtProperties.ttlSeconds();
 

@@ -108,6 +108,51 @@ public class JwtProvider {
     }
 
     /**
+     * Generates a short-lived partial token for multi-société selection.
+     * The token has no "sid" claim and carries a "partial=true" marker so
+     * JwtAuthenticationFilter can refuse it for any route except /auth/switch-societe.
+     *
+     * @param userId     the authenticated user
+     * @param ttlSeconds lifetime of the token in seconds (typically 300 = 5 min)
+     * @return signed partial JWT
+     */
+    public String generatePartial(UUID userId, int ttlSeconds) {
+        Instant now = Instant.now();
+        var claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(ttlSeconds))
+                .subject(userId.toString())
+                .claim("partial", true)
+                .build();
+        var headers = JwsHeader.with(MacAlgorithm.HS256).build();
+        return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+    }
+
+    /**
+     * Decodes and validates a token, returning the parsed {@link Jwt}.
+     * Throws {@link JwtException} if the token is null, invalid, or expired.
+     */
+    public Jwt parse(String token) {
+        if (token == null || token.isBlank()) {
+            throw new JwtException("Token must not be null or blank");
+        }
+        return decoder.decode(token);
+    }
+
+    /**
+     * Returns true when the token carries the "partial=true" claim.
+     * Partial tokens are only valid for /auth/switch-societe.
+     */
+    public boolean isPartialToken(String token) {
+        try {
+            Jwt jwt = decoder.decode(token);
+            return Boolean.TRUE.equals(jwt.getClaim("partial"));
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    /**
      * Vérifie si un token est valide.
      *
      * - signature correcte

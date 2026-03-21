@@ -14,8 +14,12 @@ public record LoginResponse(
         return new LoginResponse(token, "Bearer", expiresIn, false, null);
     }
 
-    /** Factory for a partial response when the user belongs to multiple sociétés. */
-    public static LoginResponse selectSociete(List<SocieteDto> societes) {
-        return new LoginResponse(null, null, 0, true, societes);
+    /**
+     * Factory for a société-selection response.
+     * Includes a short-lived partial token so the client can call
+     * POST /auth/switch-societe without a full session token.
+     */
+    public static LoginResponse selectSociete(String partialToken, List<SocieteDto> societes) {
+        return new LoginResponse(partialToken, "Partial", 300, true, societes);
     }
 }

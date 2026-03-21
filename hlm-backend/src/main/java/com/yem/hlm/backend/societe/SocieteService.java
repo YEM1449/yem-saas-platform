@@ -4,6 +4,7 @@ import com.yem.hlm.backend.societe.api.dto.*;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
 import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +18,14 @@ public class SocieteService {
 
     private final SocieteRepository societeRepository;
     private final AppUserSocieteRepository appUserSocieteRepository;
+    private final UserRepository userRepository;
 
     public SocieteService(SocieteRepository societeRepository,
-                          AppUserSocieteRepository appUserSocieteRepository) {
+                          AppUserSocieteRepository appUserSocieteRepository,
+                          UserRepository userRepository) {
         this.societeRepository = societeRepository;
         this.appUserSocieteRepository = appUserSocieteRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +85,13 @@ public class SocieteService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "MEMBERSHIP_NOT_FOUND"));
         aus.setActif(false);
         appUserSocieteRepository.save(aus);
+
+        // Bump tokenVersion so all existing JWTs for this user are immediately invalidated.
+        // JwtAuthenticationFilter checks tokenVersion on every request.
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND"));
+        user.incrementTokenVersion();
+        userRepository.save(user);
     }
 
     private Societe require(UUID id) {

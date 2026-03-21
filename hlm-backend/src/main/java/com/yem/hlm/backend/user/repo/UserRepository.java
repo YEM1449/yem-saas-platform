@@ -16,6 +16,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
+    /**
+     * Safe alternative to findByEmail for deployments where pre-migration data
+     * may have left duplicate email rows. Returns the first matching user,
+     * avoiding NonUniqueResultException.
+     * Liquibase changeset 036 deduplicates and adds a UNIQUE constraint so
+     * this method becomes equivalent to findByEmail once migration is applied.
+     */
+    Optional<User> findFirstByEmail(String email);
+
     Optional<User> findFirstByOrderByEmailAsc();
 
     /**

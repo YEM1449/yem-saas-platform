@@ -59,8 +59,9 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
-                        // Société switch — authenticated CRM users only (any role)
-                        .requestMatchers(HttpMethod.POST, "/auth/switch-societe").authenticated()
+                        // Société switch — token validated internally by AuthService
+                        // (no prior Spring Security auth required; partial tokens are accepted here)
+                        .requestMatchers(HttpMethod.POST, "/auth/switch-societe").permitAll()
 
                         // Super-admin société management
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")

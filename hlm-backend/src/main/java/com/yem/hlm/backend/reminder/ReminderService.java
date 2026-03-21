@@ -161,8 +161,11 @@ public class ReminderService {
         var page = PageRequest.of(0, 500);
         var contacts = contactRepository.search(societeId, false, List.of(), null, null, page);
 
+        // app_user_societe.role stores "ADMIN"/"MANAGER" without the ROLE_ prefix
+        // (enforced by chk_societe_role CHECK constraint). Using the prefixed form
+        // produces an empty result set — no notifications would ever be sent.
         List<User> managers = userRepository.findBySocieteIdAndRoleInAndEnabledTrue(
-                societeId, Set.of("ROLE_ADMIN", "ROLE_MANAGER"));
+                societeId, Set.of("ADMIN", "MANAGER"));
 
         for (var contact : contacts) {
             if (!PROSPECT_STATUSES.contains(contact.getStatus()) || contact.isDeleted()) {

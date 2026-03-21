@@ -56,13 +56,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = resolveBearerToken(request);
 
             if (token != null && jwtProvider.isValid(token)) {
-                // 2) Extract required claims.
-                //    If any required claim is missing/malformed => treat as invalid token.
-                UUID societeId = safeExtractSocieteId(token);
-                UUID userId = safeExtractUserId(token);
+                // 2) Partial tokens (issued during multi-société selection) are only
+                //    valid for /auth/switch-societe. Reject them for all other endpoints
+                //    by skipping authentication — Spring Security will enforce access rules.
+                if (jwtProvider.isPartialToken(token)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
-                if (societeId != null && userId != null) {
-                    List<GrantedAuthority> authorities = safeExtractAuthorities(token);
+                UUID userId = safeExtractUserId(token);
+                UUID societeId = safeExtractSocieteId(token);   // null for SUPER_ADMIN tokens
+                List<GrantedAuthority> authorities = safeExtractAuthorities(token);
+                boolean isSuperAdmin = authorities.stream()
+                        .anyMatch(a -> "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+
+                // Only proceed when userId is known AND the token has a société context
+                // (normal CRM / portal) OR is a platform-level SUPER_ADMIN token.
+                if (userId != null && (societeId != null || isSuperAdmin)) {
 
                     if (isPortalToken(authorities)) {
                         // Portal token: sub = contactId (not a CRM User row).
@@ -70,6 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // stateless (invalidated by TTL / single-use magic-link logic).
                         SocieteContext.setSocieteId(societeId);
                         SocieteContext.setUserId(userId); // userId == contactId for portal
+
                     } else {
                         // 3) Server-side revocation check: verify user is still enabled
                         //    and token version matches (role change / disable increments version)
@@ -80,8 +91,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             filterChain.doFilter(request, response);
                             return;
                         }
+
                         // 4) Store multi-société context in ThreadLocal
-                        SocieteContext.setSocieteId(societeId);
+                        if (isSuperAdmin) {
+                            // Platform-level SUPER_ADMIN: no société scope, system mode
+                            SocieteContext.setSuperAdmin(true);
+                        } else {
+                            SocieteContext.setSocieteId(societeId);
+                        }
                         SocieteContext.setUserId(userId);
                     }
 
