@@ -88,6 +88,14 @@ public enum ErrorCode {
     // Account lockout (401)
     ACCOUNT_LOCKED,             // 401 — account temporarily locked after too many failed attempts
 
+    // Multi-société errors
+    NO_SOCIETE_ACCESS,          // 401 — user has no active société membership
+    SOCIETE_NOT_IN_CLAIMS,      // 403 — requested société not accessible by this user
+    SOCIETE_INACTIVE,           // 403 — société membership is inactive
+    SUPER_ADMIN_REQUIRED,       // 403 — operation requires SUPER_ADMIN role
+    SOCIETE_NOT_FOUND,          // 404 — société not found
+    USER_ALREADY_IN_SOCIETE,    // 409 — user already has a membership in this société
+
     // Server errors (500)
     INTERNAL_ERROR
 }

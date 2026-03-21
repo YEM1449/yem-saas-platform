@@ -25,20 +25,20 @@ public class CacheConfig {
 
     /**
      * Commercial dashboard summary cache.
-     * TTL: 30 s. Key includes tenantId + effectiveAgentId + from + to + projectId.
+     * TTL: 30 s. Key includes societeId + effectiveAgentId + from + to + projectId.
      * Max 500 entries (one per unique filter combination per tenant).
      */
     public static final String COMMERCIAL_DASHBOARD_CACHE = "commercialDashboardSummary";
 
     /**
      * Cash dashboard cache.
-     * TTL: 60 s. Key includes tenantId + from + to.
+     * TTL: 60 s. Key includes societeId + from + to.
      */
     public static final String CASH_DASHBOARD_CACHE = "cashDashboard";
 
     /**
      * Receivables dashboard cache.
-     * TTL: 30 s. Key includes tenantId + effectiveAgentId.
+     * TTL: 30 s. Key includes societeId + effectiveAgentId.
      */
     public static final String RECEIVABLES_DASHBOARD_CACHE = "receivablesDashboard";
 

@@ -5,8 +5,8 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.project.domain.Project;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -39,7 +39,7 @@ class PropertyImportIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProjectRepository projectRepository;
 
@@ -55,19 +55,17 @@ class PropertyImportIT extends IntegrationTestBase {
     @BeforeEach
     void setup() {
         String key = "import-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenant = tenantRepository.save(new Tenant(key, "Import Tenant"));
+        Societe societe = societeRepository.save(new Societe("Import Test Societe", "MA"));
 
-        User admin = new User(tenant, "admin@" + key + ".com", "hash");
-        admin.setRole(UserRole.ROLE_ADMIN);
+        User admin = new User("admin@" + key + ".com", "hash");
         admin = userRepository.save(admin);
-        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
+        adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);
 
-        User agent = new User(tenant, "agent@" + key + ".com", "hash");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent@" + key + ".com", "hash");
         agent = userRepository.save(agent);
-        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), tenant.getId(), UserRole.ROLE_AGENT);
+        agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), societe.getId(), UserRole.ROLE_AGENT);
 
-        Project project = projectRepository.save(new Project(tenant, "Import Test Project"));
+        Project project = projectRepository.save(new Project(societe.getId(), "Import Test Project"));
         projectId = project.getId();
     }
 
@@ -95,11 +93,10 @@ class PropertyImportIT extends IntegrationTestBase {
     @Test
     void import_asManager_returns200() throws Exception {
         String key2 = "import2-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant t2 = tenantRepository.save(new Tenant(key2, "Import Tenant 2"));
-        User manager = new User(t2, "mgr@" + key2 + ".com", "hash");
-        manager.setRole(UserRole.ROLE_MANAGER);
+        Societe t2 = societeRepository.save(new Societe("Import T2 Societe", "MA"));
+        User manager = new User("mgr@" + key2 + ".com", "hash");
         manager = userRepository.save(manager);
-        Project p2 = projectRepository.save(new Project(t2, "P2"));
+        Project p2 = projectRepository.save(new Project(t2.getId(), "P2"));
         String mgrBearer = "Bearer " + jwtProvider.generate(manager.getId(), t2.getId(), UserRole.ROLE_MANAGER);
 
         String csv = CSV_HEADER + "\n" +

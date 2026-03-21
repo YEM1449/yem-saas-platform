@@ -96,7 +96,7 @@ class PortalMagicLinkEmailIT extends IntegrationTestBase {
 
         mvc.perform(post("/api/portal/auth/request-link")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"portal-test@example.com\",\"tenantKey\":\"acme\"}"))
+                        .content("{\"email\":\"portal-test@example.com\",\"societeKey\":\"acme\"}"))
                 .andExpect(status().isOk());
 
         MimeMessage[] received = greenMail.getReceivedMessages();
@@ -126,7 +126,7 @@ class PortalMagicLinkEmailIT extends IntegrationTestBase {
         // Unknown email — server should return 200 (no enumeration) and not send any mail
         mvc.perform(post("/api/portal/auth/request-link")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"nobody@unknown.com\",\"tenantKey\":\"acme\"}"))
+                        .content("{\"email\":\"nobody@unknown.com\",\"societeKey\":\"acme\"}"))
                 .andExpect(status().isOk());
 
         assertThat(greenMail.getReceivedMessages()).isEmpty();

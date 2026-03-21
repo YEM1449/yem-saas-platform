@@ -4,8 +4,9 @@ import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.gdpr.service.AnonymizationService;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,7 @@ import java.util.UUID;
  * Daily data retention sweep (GDPR Art. 5(1)(e) / Law 09-08 Art. 4).
  *
  * <p>Runs at 02:00 by default ({@code DATA_RETENTION_CRON}).
- * For each tenant, finds soft-deleted contacts whose {@code updatedAt} is older than the
+ * For each société, finds soft-deleted contacts whose {@code updatedAt} is older than the
  * effective retention window and anonymizes them — unless SIGNED contracts block erasure
  * (legal archive obligation; a WARN is logged and the contact is skipped).
  */
@@ -38,14 +39,14 @@ public class DataRetentionScheduler {
     @Value("${app.gdpr.default-retention-days:1825}")
     private int defaultRetentionDays;
 
-    private final TenantRepository tenantRepo;
+    private final SocieteRepository societeRepo;
     private final ContactRepository contactRepo;
     private final AnonymizationService anonymizationService;
 
-    public DataRetentionScheduler(TenantRepository tenantRepo,
+    public DataRetentionScheduler(SocieteRepository societeRepo,
                                   ContactRepository contactRepo,
                                   AnonymizationService anonymizationService) {
-        this.tenantRepo = tenantRepo;
+        this.societeRepo = societeRepo;
         this.contactRepo = contactRepo;
         this.anonymizationService = anonymizationService;
     }
@@ -54,32 +55,37 @@ public class DataRetentionScheduler {
     @Transactional
     public void runRetention() {
         log.info("[RETENTION] Starting daily data retention sweep");
+        SocieteContext.setSystem();
 
-        List<Tenant> tenants = tenantRepo.findAll();
+        try {
+            List<Societe> societes = societeRepo.findAllByActifTrue();
 
-        for (Tenant tenant : tenants) {
-            UUID tenantId = tenant.getId();
-            int retentionDays = defaultRetentionDays;
-            LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
+            for (Societe societe : societes) {
+                UUID societeId = societe.getId();
+                int retentionDays = defaultRetentionDays;
+                LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
 
-            List<Contact> candidates = contactRepo.findRetentionCandidates(tenantId, cutoff);
+                List<Contact> candidates = contactRepo.findRetentionCandidates(societeId, cutoff);
 
-            int anonymized = 0;
-            int skipped = 0;
+                int anonymized = 0;
+                int skipped = 0;
 
-            for (Contact contact : candidates) {
-                try {
-                    anonymizationService.anonymize(contact, SYSTEM_ACTOR);
-                    anonymized++;
-                } catch (GdprErasureBlockedException e) {
-                    log.warn("[RETENTION] Tenant {}: contact {} skipped — active SIGNED contracts: {}",
-                            tenantId, contact.getId(), e.getBlockingContractIds());
-                    skipped++;
+                for (Contact contact : candidates) {
+                    try {
+                        anonymizationService.anonymize(contact, SYSTEM_ACTOR);
+                        anonymized++;
+                    } catch (GdprErasureBlockedException e) {
+                        log.warn("[RETENTION] Société {}: contact {} skipped — active SIGNED contracts: {}",
+                                societeId, contact.getId(), e.getBlockingContractIds());
+                        skipped++;
+                    }
                 }
-            }
 
-            log.info("[RETENTION] Tenant {}: anonymized {} contacts, skipped {} (active contracts)",
-                    tenantId, anonymized, skipped);
+                log.info("[RETENTION] Société {}: anonymized {} contacts, skipped {} (active contracts)",
+                        societeId, anonymized, skipped);
+            }
+        } finally {
+            SocieteContext.clear();
         }
 
         log.info("[RETENTION] Daily data retention sweep complete");

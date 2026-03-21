@@ -314,6 +314,15 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
               </div>
             </div>
           }
+          @if (needsTotalFloors) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label required">Nombre total d'etages</label>
+                <input class="form-control" type="number" min="1" placeholder="ex. 2"
+                       [(ngModel)]="form.floors" [disabled]="submitting" />
+              </div>
+            </div>
+          }
 
           <div class="form-grid">
             <div class="form-group">

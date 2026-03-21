@@ -3,7 +3,6 @@ package com.yem.hlm.backend.contract.domain;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.project.domain.Project;
 import com.yem.hlm.backend.property.domain.Property;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -24,7 +23,7 @@ import java.util.UUID;
  * {@link SaleContractStatus#CANCELED}.
  * <p>
  * DB integrity: A Postgres partial unique index ({@code uk_sc_property_signed}) prevents
- * more than one active SIGNED contract per {@code (tenant_id, property_id)}.
+ * more than one active SIGNED contract per {@code (societe_id, property_id)}.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,10 +31,10 @@ import java.util.UUID;
 @Table(
         name = "sale_contract",
         indexes = {
-                @Index(name = "idx_sc_tenant_signed_at",          columnList = "tenant_id,signed_at"),
-                @Index(name = "idx_sc_tenant_project_signed_at",  columnList = "tenant_id,project_id,signed_at"),
-                @Index(name = "idx_sc_tenant_agent_signed_at",    columnList = "tenant_id,agent_id,signed_at"),
-                @Index(name = "idx_sc_tenant_property",           columnList = "tenant_id,property_id")
+                @Index(name = "idx_sc_tenant_signed_at",          columnList = "societe_id,signed_at"),
+                @Index(name = "idx_sc_tenant_project_signed_at",  columnList = "societe_id,project_id,signed_at"),
+                @Index(name = "idx_sc_tenant_agent_signed_at",    columnList = "societe_id,agent_id,signed_at"),
+                @Index(name = "idx_sc_tenant_property",           columnList = "societe_id,property_id")
         }
 )
 public class SaleContract {
@@ -44,10 +43,8 @@ public class SaleContract {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sale_contract_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false,
@@ -157,9 +154,9 @@ public class SaleContract {
 
     // ===== Constructor =====
 
-    public SaleContract(Tenant tenant, Project project, Property property,
+    public SaleContract(UUID societeId, Project project, Property property,
                         Contact buyerContact, User agent) {
-        this.tenant = tenant;
+        this.societeId = societeId;
         this.project = project;
         this.property = property;
         this.buyerContact = buyerContact;

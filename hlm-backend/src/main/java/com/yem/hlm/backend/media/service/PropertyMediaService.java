@@ -5,8 +5,7 @@ import com.yem.hlm.backend.media.api.dto.PropertyMediaResponse;
 import com.yem.hlm.backend.media.domain.PropertyMedia;
 import com.yem.hlm.backend.media.repo.PropertyMediaRepository;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 
 /**
  * Handles upload, listing, download, and deletion of property media files.
- * All operations are tenant-scoped via {@link TenantContext}.
+ * All operations are société-scoped via {@link SocieteContext}.
  */
 @Service
 @Transactional(readOnly = true)
@@ -30,7 +29,6 @@ public class PropertyMediaService {
 
     private final PropertyMediaRepository mediaRepository;
     private final PropertyRepository propertyRepository;
-    private final TenantRepository tenantRepository;
     private final MediaStorageService storageService;
     private final long maxFileSize;
     private final Set<String> allowedTypes;
@@ -38,14 +36,12 @@ public class PropertyMediaService {
     public PropertyMediaService(
             PropertyMediaRepository mediaRepository,
             PropertyRepository propertyRepository,
-            TenantRepository tenantRepository,
             MediaStorageService storageService,
             @Value("${app.media.max-file-size:10485760}") long maxFileSize,
             @Value("${app.media.allowed-types:image/jpeg,image/png,image/webp,application/pdf}")
             String allowedTypesRaw) {
         this.mediaRepository    = mediaRepository;
         this.propertyRepository = propertyRepository;
-        this.tenantRepository   = tenantRepository;
         this.storageService     = storageService;
         this.maxFileSize        = maxFileSize;
         this.allowedTypes       = Arrays.stream(allowedTypesRaw.split(","))
@@ -59,10 +55,10 @@ public class PropertyMediaService {
 
     @Transactional
     public PropertyMediaResponse upload(UUID propertyId, MultipartFile file) throws IOException {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
-        // Guard: property exists in this tenant
-        propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId)
+        // Guard: property exists in this société
+        propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         // Validate size
@@ -76,14 +72,11 @@ public class PropertyMediaService {
             throw new MediaTypeNotAllowedException(contentType);
         }
 
-        var tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new IllegalStateException("Tenant not found"));
-
-        int sortOrder = mediaRepository.nextSortOrder(tenantId, propertyId);
+        int sortOrder = mediaRepository.nextSortOrder(societeId, propertyId);
         String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), contentType);
 
         PropertyMedia media = new PropertyMedia(
-                tenant, propertyId, fileKey,
+                societeId, propertyId, fileKey,
                 file.getOriginalFilename() != null ? file.getOriginalFilename() : fileKey,
                 contentType, file.getSize(), sortOrder);
         PropertyMedia saved = mediaRepository.save(media);
@@ -95,10 +88,10 @@ public class PropertyMediaService {
     // =========================================================================
 
     public List<PropertyMediaResponse> list(UUID propertyId) {
-        UUID tenantId = TenantContext.getTenantId();
-        propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId)
+        UUID societeId = SocieteContext.getSocieteId();
+        propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
-        return mediaRepository.findByTenant_IdAndPropertyIdOrderBySortOrderAsc(tenantId, propertyId)
+        return mediaRepository.findBySocieteIdAndPropertyIdOrderBySortOrderAsc(societeId, propertyId)
                 .stream()
                 .map(PropertyMediaResponse::from)
                 .toList();
@@ -111,8 +104,8 @@ public class PropertyMediaService {
     public record MediaDownload(InputStream stream, String contentType, String filename) {}
 
     public MediaDownload download(UUID mediaId) throws IOException {
-        UUID tenantId = TenantContext.getTenantId();
-        PropertyMedia media = mediaRepository.findByTenant_IdAndId(tenantId, mediaId)
+        UUID societeId = SocieteContext.getSocieteId();
+        PropertyMedia media = mediaRepository.findBySocieteIdAndId(societeId, mediaId)
                 .orElseThrow(() -> new MediaNotFoundException(mediaId));
         InputStream stream = storageService.load(media.getFileKey());
         return new MediaDownload(stream, media.getContentType(), media.getOriginalFilename());
@@ -124,8 +117,8 @@ public class PropertyMediaService {
 
     @Transactional
     public void delete(UUID mediaId) throws IOException {
-        UUID tenantId = TenantContext.getTenantId();
-        PropertyMedia media = mediaRepository.findByTenant_IdAndId(tenantId, mediaId)
+        UUID societeId = SocieteContext.getSocieteId();
+        PropertyMedia media = mediaRepository.findBySocieteIdAndId(societeId, mediaId)
                 .orElseThrow(() -> new MediaNotFoundException(mediaId));
         storageService.delete(media.getFileKey());
         mediaRepository.delete(media);
@@ -135,7 +128,7 @@ public class PropertyMediaService {
     // Count (used by PropertyResponse enrichment)
     // =========================================================================
 
-    public int countForProperty(UUID tenantId, UUID propertyId) {
-        return mediaRepository.countByTenantAndProperty(tenantId, propertyId);
+    public int countForProperty(UUID societeId, UUID propertyId) {
+        return mediaRepository.countByTenantAndProperty(societeId, propertyId);
     }
 }

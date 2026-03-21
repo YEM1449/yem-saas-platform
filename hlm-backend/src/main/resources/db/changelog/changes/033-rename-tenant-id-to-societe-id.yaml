@@ -1,0 +1,562 @@
+databaseChangeLog:
+
+  # ── contact ─────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-contact
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: contact
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: contact
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE contact
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: contact
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: contact
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_contact_societe
+        - dropColumn:
+            tableName: contact
+            columnName: tenant_id
+
+  # ── contact_interest ────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-contact_interest
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: contact_interest
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: contact_interest
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE contact_interest
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: contact_interest
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: contact_interest
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_ci_societe
+        - dropColumn:
+            tableName: contact_interest
+            columnName: tenant_id
+
+  # ── deposit ─────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-deposit
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: deposit
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: deposit
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE deposit
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: deposit
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: deposit
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_deposit_societe
+        - dropColumn:
+            tableName: deposit
+            columnName: tenant_id
+
+  # ── notification ─────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-notification
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: notification
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: notification
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE notification
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: notification
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: notification
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_notification_societe
+        - dropColumn:
+            tableName: notification
+            columnName: tenant_id
+
+  # ── property ─────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-property
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: property
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE property
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: property
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: property
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_property_societe
+        - dropColumn:
+            tableName: property
+            columnName: tenant_id
+
+  # ── project ──────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-project
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: project
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE project
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: project
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: project
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_project_societe
+        - dropColumn:
+            tableName: project
+            columnName: tenant_id
+
+  # ── sale_contract ─────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-sale_contract
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: sale_contract
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE sale_contract
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: sale_contract
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: sale_contract
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_sc_societe
+        - dropColumn:
+            tableName: sale_contract
+            columnName: tenant_id
+
+  # ── outbound_message ──────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-outbound_message
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: outbound_message
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: outbound_message
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE outbound_message
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: outbound_message
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: outbound_message
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_om_societe
+        - dropColumn:
+            tableName: outbound_message
+            columnName: tenant_id
+
+  # ── commercial_audit_event ────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-commercial_audit_event
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: commercial_audit_event
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: commercial_audit_event
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE commercial_audit_event
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: commercial_audit_event
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: commercial_audit_event
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_cae_societe
+        - dropColumn:
+            tableName: commercial_audit_event
+            columnName: tenant_id
+
+  # ── payment_schedule_item ─────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-payment_schedule_item
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: payment_schedule_item
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: payment_schedule_item
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE payment_schedule_item
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: payment_schedule_item
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: payment_schedule_item
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_psi_societe
+        - dropColumn:
+            tableName: payment_schedule_item
+            columnName: tenant_id
+
+  # ── schedule_payment ──────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-schedule_payment
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: schedule_payment
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: schedule_payment
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE schedule_payment
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: schedule_payment
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: schedule_payment
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_spay_societe
+        - dropColumn:
+            tableName: schedule_payment
+            columnName: tenant_id
+
+  # ── schedule_item_reminder ────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-schedule_item_reminder
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: schedule_item_reminder
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: schedule_item_reminder
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE schedule_item_reminder
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: schedule_item_reminder
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: schedule_item_reminder
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_sir_societe
+        - dropColumn:
+            tableName: schedule_item_reminder
+            columnName: tenant_id
+
+  # ── property_media ────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-property_media
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: property_media
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: property_media
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE property_media
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: property_media
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: property_media
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_pm_societe
+        - dropColumn:
+            tableName: property_media
+            columnName: tenant_id
+
+  # ── commission_rule ────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-commission_rule
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: commission_rule
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: commission_rule
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE commission_rule
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: commission_rule
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: commission_rule
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_cr_societe
+        - dropColumn:
+            tableName: commission_rule
+            columnName: tenant_id
+
+  # ── portal_token ──────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-portal_token
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: portal_token
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: portal_token
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE portal_token
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: portal_token
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: portal_token
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_pt_societe
+        - dropColumn:
+            tableName: portal_token
+            columnName: tenant_id
+
+  # ── property_reservation ──────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-property_reservation
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: property_reservation
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE property_reservation
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: property_reservation
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: property_reservation
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_preser_societe
+        - dropColumn:
+            tableName: property_reservation
+            columnName: tenant_id
+
+  # ── crm_project_legacy ────────────────────────────────────────────────────────
+  - changeSet:
+      id: 033-rename-tenant-to-societe-crm_project_legacy
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: crm_project_legacy
+          columnName: tenant_id
+      changes:
+        - addColumn:
+            tableName: crm_project_legacy
+            columns:
+              - column:
+                  name: societe_id
+                  type: UUID
+        - sql:
+            sql: >
+              UPDATE crm_project_legacy
+              SET societe_id = COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001');
+        - addNotNullConstraint:
+            tableName: crm_project_legacy
+            columnName: societe_id
+        - addForeignKeyConstraint:
+            baseTableName: crm_project_legacy
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_cpl_societe
+        - dropColumn:
+            tableName: crm_project_legacy
+            columnName: tenant_id

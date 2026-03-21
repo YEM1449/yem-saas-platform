@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.payments.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,9 +32,9 @@ import java.util.UUID;
 @Table(
         name = "payment_schedule_item",
         indexes = {
-                @Index(name = "idx_psi_tenant_contract",    columnList = "tenant_id,contract_id"),
-                @Index(name = "idx_psi_tenant_project_due", columnList = "tenant_id,project_id,due_date"),
-                @Index(name = "idx_psi_tenant_due_status",  columnList = "tenant_id,due_date,status")
+                @Index(name = "idx_psi_tenant_contract",    columnList = "societe_id,contract_id"),
+                @Index(name = "idx_psi_tenant_project_due", columnList = "societe_id,project_id,due_date"),
+                @Index(name = "idx_psi_tenant_due_status",  columnList = "societe_id,due_date,status")
         }
 )
 public class PaymentScheduleItem {
@@ -44,10 +43,8 @@ public class PaymentScheduleItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_psi_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     /** FK to sale_contract — denormalized for fast queries. */
     @Column(name = "contract_id", nullable = false)
@@ -124,10 +121,10 @@ public class PaymentScheduleItem {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public PaymentScheduleItem(Tenant tenant, UUID contractId, UUID projectId, UUID propertyId,
+    public PaymentScheduleItem(UUID societeId, UUID contractId, UUID projectId, UUID propertyId,
                                UUID createdBy, int sequence, String label,
                                BigDecimal amount, LocalDate dueDate, String notes) {
-        this.tenant      = tenant;
+        this.societeId   = societeId;
         this.contractId  = contractId;
         this.projectId   = projectId;
         this.propertyId  = propertyId;

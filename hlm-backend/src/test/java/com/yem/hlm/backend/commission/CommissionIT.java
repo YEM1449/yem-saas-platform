@@ -13,8 +13,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -55,7 +55,7 @@ class CommissionIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String adminBearer;
@@ -157,9 +157,8 @@ class CommissionIT extends IntegrationTestBase {
         UUID projectId = createProject();
 
         // Create a second agent in same tenant
-        Tenant tenant = tenantRepository.findById(TENANT_ID).orElseThrow();
-        User agentB = new User(tenant, "comm-agent-b@acme.com", "hash");
-        agentB.setRole(UserRole.ROLE_AGENT);
+        Societe societe = societeRepository.findById(TENANT_ID).orElseThrow();
+        User agentB = new User("comm-agent-b@acme.com", "hash");
         agentB = userRepository.save(agentB);
 
         // Sign 1 contract with seed admin (USER_ID) and 1 with agentB
@@ -199,9 +198,8 @@ class CommissionIT extends IntegrationTestBase {
                 LocalDate.now().minusDays(30).toString(), null);
 
         UUID projectId = createProject();
-        Tenant tenant  = tenantRepository.findById(TENANT_ID).orElseThrow();
-        User agentC = new User(tenant, "comm-agent-c@acme.com", "hash");
-        agentC.setRole(UserRole.ROLE_AGENT);
+        Societe societe  = societeRepository.findById(TENANT_ID).orElseThrow();
+        User agentC = new User("comm-agent-c@acme.com", "hash");
         agentC = userRepository.save(agentC);
 
         UUID propA = createAndActivateProperty(projectId);

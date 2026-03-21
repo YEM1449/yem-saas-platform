@@ -5,8 +5,8 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.gdpr.scheduler.DataRetentionScheduler;
 import com.yem.hlm.backend.gdpr.service.AnonymizationService;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,13 +33,13 @@ class DataRetentionSchedulerTest {
     private static final UUID TENANT_ID   = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID SYSTEM_UUID = new UUID(0L, 0L);
 
-    @Mock TenantRepository    tenantRepo;
+    @Mock SocieteRepository   tenantRepo;
     @Mock ContactRepository   contactRepo;
     @Mock AnonymizationService anonymizationService;
 
     DataRetentionScheduler scheduler;
 
-    private Tenant tenant;
+    private Societe societe;
 
     @BeforeEach
     void setup() {
@@ -47,9 +47,9 @@ class DataRetentionSchedulerTest {
         // Set the default retention window to 5 years (1825 days)
         ReflectionTestUtils.setField(scheduler, "defaultRetentionDays", 1825);
 
-        tenant = new Tenant("acme", "Acme Corp");
+        societe = new Societe("Acme Corp", "MA");
         // Inject the UUID so getId() returns a known value
-        ReflectionTestUtils.setField(tenant, "id", TENANT_ID);
+        ReflectionTestUtils.setField(societe, "id", TENANT_ID);
     }
 
     // =========================================================================
@@ -61,7 +61,7 @@ class DataRetentionSchedulerTest {
         Contact c1 = mock(Contact.class);
         Contact c2 = mock(Contact.class);
 
-        when(tenantRepo.findAll()).thenReturn(List.of(tenant));
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of(societe));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any()))
                 .thenReturn(List.of(c1, c2));
 
@@ -87,7 +87,7 @@ class DataRetentionSchedulerTest {
         doThrow(new GdprErasureBlockedException(List.of(contractId)))
                 .when(anonymizationService).anonymize(blocked, SYSTEM_UUID);
 
-        when(tenantRepo.findAll()).thenReturn(List.of(tenant));
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of(societe));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any()))
                 .thenReturn(List.of(blocked));
 
@@ -104,7 +104,7 @@ class DataRetentionSchedulerTest {
 
     @Test
     void runRetention_noCandidates_anonymizeNeverCalled() {
-        when(tenantRepo.findAll()).thenReturn(List.of(tenant));
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of(societe));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any()))
                 .thenReturn(List.of());
 
@@ -120,11 +120,11 @@ class DataRetentionSchedulerTest {
     @Test
     void runRetention_multipleTenants_candidatesQueriedPerTenant() {
         UUID tenant2Id = UUID.fromString("33333333-3333-3333-3333-333333333333");
-        Tenant tenant2 = new Tenant("beta", "Beta Corp");
+        Societe tenant2 = new Societe("Acme Corp 2", "MA");
         ReflectionTestUtils.setField(tenant2, "id", tenant2Id);
 
         Contact c1 = mock(Contact.class);
-        when(tenantRepo.findAll()).thenReturn(List.of(tenant, tenant2));
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of(societe, tenant2));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any())).thenReturn(List.of(c1));
         when(contactRepo.findRetentionCandidates(eq(tenant2Id), any())).thenReturn(List.of());
 
@@ -142,7 +142,7 @@ class DataRetentionSchedulerTest {
 
     @Test
     void runRetention_cutoffIsApproximatelyNowMinusRetentionDays() {
-        when(tenantRepo.findAll()).thenReturn(List.of(tenant));
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of(societe));
         when(contactRepo.findRetentionCandidates(eq(TENANT_ID), any()))
                 .thenReturn(List.of());
 
@@ -162,7 +162,7 @@ class DataRetentionSchedulerTest {
 
     @Test
     void runRetention_noTenants_nothingQueried() {
-        when(tenantRepo.findAll()).thenReturn(List.of());
+        when(tenantRepo.findAllByActifTrue()).thenReturn(List.of());
 
         scheduler.runRetention();
 

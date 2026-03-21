@@ -16,8 +16,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -57,7 +57,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProspectDetailRepository prospectDetailRepository;
 
@@ -129,9 +129,8 @@ class CommercialDashboardIT extends IntegrationTestBase {
         ContactResponse buyer = createContact("dash-agent-scope@acme.com");
 
         // Create second user (AGENT B) in the same tenant
-        Tenant tenant = tenantRepository.findById(TENANT_ID).orElseThrow();
-        User agentB = new User(tenant, "agent-b@acme.com", "hash");
-        agentB.setRole(UserRole.ROLE_AGENT);
+        Societe societe = societeRepository.findById(TENANT_ID).orElseThrow();
+        User agentB = new User("agent-b@acme.com", "hash");
         agentB = userRepository.save(agentB);
 
         // Contract signed by seed USER_ID (agent A)
@@ -159,9 +158,8 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Test
     void summary_projectFilter_crossTenant_returns404() throws Exception {
         // Create a second tenant + project
-        Tenant otherTenant = tenantRepository.save(new Tenant("other-dash-key", "Other Dash Tenant"));
-        User otherAdmin = new User(otherTenant, "other-admin-dash@test.com", "hash");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User otherAdmin = new User("other-admin-dash@test.com", "hash");
         otherAdmin = userRepository.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
@@ -416,7 +414,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
 
     /** Sets the prospect source on the ProspectDetail for a given contact. */
     private void setProspectSource(UUID contactId, String source) {
-        prospectDetailRepository.findByContact_Tenant_IdAndContactId(TENANT_ID, contactId)
+        prospectDetailRepository.findBySocieteIdAndContactId(TENANT_ID, contactId)
                 .ifPresent(pd -> {
                     pd.setSource(source);
                     prospectDetailRepository.save(pd);

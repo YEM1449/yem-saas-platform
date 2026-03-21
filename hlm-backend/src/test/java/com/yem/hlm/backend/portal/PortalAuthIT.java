@@ -69,7 +69,7 @@ class PortalAuthIT extends IntegrationTestBase {
 
     @Test
     void requestLink_knownContact_returns200AndMagicLinkUrl() throws Exception {
-        String body = "{\"email\":\"portal-buyer@acme.com\",\"tenantKey\":\"acme\"}";
+        String body = "{\"email\":\"portal-buyer@acme.com\",\"societeKey\":\"acme\"}";
         String json = mvc.perform(post("/api/portal/auth/request-link")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -148,7 +148,7 @@ class PortalAuthIT extends IntegrationTestBase {
 
     /** Requests a magic link for the given email and returns the raw token. */
     private String requestMagicLink(String email) throws Exception {
-        String body = "{\"email\":\"" + email + "\",\"tenantKey\":\"acme\"}";
+        String body = "{\"email\":\"" + email + "\",\"societeKey\":\"acme\"}";
         String json = mvc.perform(post("/api/portal/auth/request-link")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

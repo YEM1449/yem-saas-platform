@@ -14,7 +14,7 @@ import java.util.UUID;
  * (e.g. ELK, Splunk) can route them independently of application logs.
  * All messages follow the format: {@code [SECURITY] event=X key=val ...}</p>
  *
- * <p>Loggers are named {@code security.auth}, {@code security.tenant},
+ * <p>Loggers are named {@code security.auth}, {@code security.societe},
  * and {@code security.ratelimit} — matching the production log-level overrides
  * in {@code application-production.yml}.</p>
  */
@@ -22,59 +22,59 @@ import java.util.UUID;
 public class SecurityAuditLogger {
 
     private static final Logger authLog      = LoggerFactory.getLogger("security.auth");
-    private static final Logger tenantLog    = LoggerFactory.getLogger("security.tenant");
+    private static final Logger societeLog   = LoggerFactory.getLogger("security.societe");
     private static final Logger rateLimitLog = LoggerFactory.getLogger("security.ratelimit");
 
     /**
      * Logs a failed login attempt.
      *
-     * @param tenantKey the tenant identifier from the request
+     * @param identity  identity string logged with the event (e.g. email)
      * @param email     the email address (will be masked)
      * @param ip        the client IP address
      * @param reason    BAD_CREDENTIALS | ACCOUNT_LOCKED | RATE_LIMITED | USER_NOT_FOUND
      */
-    public void logFailedLogin(String tenantKey, String email, String ip, String reason) {
-        authLog.warn("[SECURITY] event=FAILED_LOGIN tenant={} email={} ip={} reason={}",
-                tenantKey, maskEmail(email), ip, reason);
+    public void logFailedLogin(String identity, String email, String ip, String reason) {
+        authLog.warn("[SECURITY] event=FAILED_LOGIN identity={} email={} ip={} reason={}",
+                identity, maskEmail(email), ip, reason);
     }
 
     /**
      * Logs when an account becomes locked after too many failed attempts.
      *
-     * @param tenantKey   the tenant identifier
+     * @param identity    identity string logged with the event (e.g. email)
      * @param userId      the locked user's ID
      * @param lockedUntil the instant when the lock expires
      * @param attempts    the number of failed attempts that triggered lockout
      */
-    public void logAccountLocked(String tenantKey, UUID userId, Instant lockedUntil, int attempts) {
-        authLog.warn("[SECURITY] event=ACCOUNT_LOCKED tenant={} userId={} lockedUntil={} attempts={}",
-                tenantKey, userId, lockedUntil, attempts);
+    public void logAccountLocked(String identity, UUID userId, Instant lockedUntil, int attempts) {
+        authLog.warn("[SECURITY] event=ACCOUNT_LOCKED identity={} userId={} lockedUntil={} attempts={}",
+                identity, userId, lockedUntil, attempts);
     }
 
     /**
      * Logs a successful login.
      *
-     * @param tenantKey the tenant identifier
+     * @param identity  identity string logged with the event (e.g. email)
      * @param userId    the authenticated user's ID
      * @param ip        the client IP address
      * @param role      the user's role (e.g. ROLE_ADMIN)
      */
-    public void logSuccessfulLogin(String tenantKey, UUID userId, String ip, String role) {
-        authLog.warn("[SECURITY] event=LOGIN_SUCCESS tenant={} userId={} ip={} role={}",
-                tenantKey, userId, ip, role);
+    public void logSuccessfulLogin(String identity, UUID userId, String ip, String role) {
+        authLog.warn("[SECURITY] event=LOGIN_SUCCESS identity={} userId={} ip={} role={}",
+                identity, userId, ip, role);
     }
 
     /**
      * Logs a token revocation event (role change or account disable).
      *
-     * @param tenantKey      the tenant identifier
+     * @param identity       identity string logged with the event (e.g. email)
      * @param targetUserId   the user whose token is being revoked
      * @param actorUserId    the admin/manager performing the action
      * @param reason         ROLE_CHANGE | ACCOUNT_DISABLED
      */
-    public void logTokenRevocation(String tenantKey, UUID targetUserId, UUID actorUserId, String reason) {
-        authLog.warn("[SECURITY] event=TOKEN_REVOCATION tenant={} targetUserId={} actorUserId={} reason={}",
-                tenantKey, targetUserId, actorUserId, reason);
+    public void logTokenRevocation(String identity, UUID targetUserId, UUID actorUserId, String reason) {
+        authLog.warn("[SECURITY] event=TOKEN_REVOCATION identity={} targetUserId={} actorUserId={} reason={}",
+                identity, targetUserId, actorUserId, reason);
     }
 
     /**
@@ -84,22 +84,22 @@ public class SecurityAuditLogger {
      * @param tokenTenantId     the tenant ID from the JWT claim
      * @param path              the request path
      */
-    public void logCrossTenantAttempt(UUID requestedTenantId, UUID tokenTenantId, String path) {
-        tenantLog.warn("[SECURITY] event=CROSS_TENANT_ATTEMPT requestedTenant={} tokenTenant={} path={}",
-                requestedTenantId, tokenTenantId, path);
+    public void logCrossSocieteAttempt(UUID requestedSocieteId, UUID tokenSocieteId, String path) {
+        societeLog.warn("[SECURITY] event=CROSS_SOCIETE_ATTEMPT requestedSociete={} tokenSociete={} path={}",
+                requestedSocieteId, tokenSocieteId, path);
     }
 
     /**
      * Logs when a rate limit bucket is exhausted.
      *
      * @param ip         the client IP address
-     * @param tenantKey  the tenant key from the request
+     * @param identity   identity string logged with the event (e.g. email)
      * @param email      the email address (will be masked)
      * @param bucketType IP | IDENTITY
      */
-    public void logRateLimitTriggered(String ip, String tenantKey, String email, String bucketType) {
-        rateLimitLog.warn("[SECURITY] event=RATE_LIMIT_TRIGGERED ip={} tenant={} email={} bucketType={}",
-                ip, tenantKey, maskEmail(email), bucketType);
+    public void logRateLimitTriggered(String ip, String identity, String email, String bucketType) {
+        rateLimitLog.warn("[SECURITY] event=RATE_LIMIT_TRIGGERED ip={} identity={} email={} bucketType={}",
+                ip, identity, maskEmail(email), bucketType);
     }
 
     /**

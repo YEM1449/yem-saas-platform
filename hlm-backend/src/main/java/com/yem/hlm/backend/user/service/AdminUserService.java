@@ -3,9 +3,10 @@ package com.yem.hlm.backend.user.service;
 import com.yem.hlm.backend.auth.service.SecurityAuditLogger;
 import com.yem.hlm.backend.auth.service.UserSecurityCacheService;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.domain.AppUserSociete;
+import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
+import com.yem.hlm.backend.societe.AppUserSocieteRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.api.dto.*;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -23,19 +24,19 @@ import java.util.UUID;
 public class AdminUserService {
 
     private final UserRepository userRepository;
-    private final TenantRepository tenantRepository;
+    private final AppUserSocieteRepository appUserSocieteRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserSecurityCacheService userSecurityCacheService;
     private final SecurityAuditLogger securityAuditLogger;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AdminUserService(UserRepository userRepository,
-                            TenantRepository tenantRepository,
+                            AppUserSocieteRepository appUserSocieteRepository,
                             PasswordEncoder passwordEncoder,
                             UserSecurityCacheService userSecurityCacheService,
                             SecurityAuditLogger securityAuditLogger) {
         this.userRepository = userRepository;
-        this.tenantRepository = tenantRepository;
+        this.appUserSocieteRepository = appUserSocieteRepository;
         this.passwordEncoder = passwordEncoder;
         this.userSecurityCacheService = userSecurityCacheService;
         this.securityAuditLogger = securityAuditLogger;
@@ -43,8 +44,8 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public List<UserResponse> list(String q) {
-        UUID tenantId = requireTenantId();
-        return userRepository.searchByTenant(tenantId, q)
+        UUID societeId = requireSocieteId();
+        return userRepository.searchBySociete(societeId, q)
                 .stream()
                 .map(UserResponse::from)
                 .toList();
@@ -52,50 +53,59 @@ public class AdminUserService {
 
     @Transactional
     public UserResponse create(CreateUserRequest request) {
-        UUID tenantId = requireTenantId();
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new CrossTenantAccessException("Unknown tenant: " + tenantId));
+        UUID societeId = requireSocieteId();
 
-        userRepository.findByTenant_IdAndEmail(tenantId, request.email())
+        userRepository.findByEmail(request.email())
                 .ifPresent(existing -> {
                     throw new UserEmailAlreadyExistsException(request.email());
                 });
 
-        User user = new User(tenant, request.email(), passwordEncoder.encode(request.password()));
-        user.setRole(request.role());
+        User user = new User(request.email(), passwordEncoder.encode(request.password()));
         User saved = userRepository.save(user);
+
+        // Register membership in this société with the requested role (stored without ROLE_ prefix)
+        var membership = new AppUserSociete(new AppUserSocieteId(saved.getId(), societeId), toSocieteRole(request.role()));
+        appUserSocieteRepository.save(membership);
+
         return UserResponse.from(saved);
     }
 
     @Transactional
     public UserResponse changeRole(UUID userId, ChangeRoleRequest request) {
-        User user = findUserInTenant(userId);
-        user.setRole(request.role());
+        User user = findUserInSociete(userId);
+        UUID societeId = requireSocieteId();
+
+        // Update the AppUserSociete membership role
+        String newRole = toSocieteRole(request.role());
+        appUserSocieteRepository.findByIdUserIdAndIdSocieteId(userId, societeId)
+                .ifPresent(membership -> {
+                    membership.setRole(newRole);
+                    appUserSocieteRepository.save(membership);
+                });
+
         user.incrementTokenVersion();
         User saved = userRepository.save(user);
         userSecurityCacheService.evict(userId);
 
-        // Audit: token revocation due to role change
         UUID actorId = resolveActorId();
-        String tenantKey = resolveTenantKey(requireTenantId());
-        securityAuditLogger.logTokenRevocation(tenantKey, userId, actorId, "ROLE_CHANGE");
+        securityAuditLogger.logTokenRevocation(societeId.toString(), userId, actorId, "ROLE_CHANGE");
 
-        return UserResponse.from(saved);
+        // Return role in JWT format (ROLE_ADMIN/ROLE_MANAGER/ROLE_AGENT) for API consistency
+        return UserResponse.from(saved, "ROLE_" + newRole);
     }
 
     @Transactional
     public UserResponse setEnabled(UUID userId, SetEnabledRequest request) {
-        User user = findUserInTenant(userId);
+        User user = findUserInSociete(userId);
         user.setEnabled(request.enabled());
         user.incrementTokenVersion();
         User saved = userRepository.save(user);
         userSecurityCacheService.evict(userId);
 
-        // Audit: token revocation when account is disabled
         if (!request.enabled()) {
             UUID actorId = resolveActorId();
-            String tenantKey = resolveTenantKey(requireTenantId());
-            securityAuditLogger.logTokenRevocation(tenantKey, userId, actorId, "ACCOUNT_DISABLED");
+            UUID societeId = requireSocieteId();
+            securityAuditLogger.logTokenRevocation(societeId.toString(), userId, actorId, "ACCOUNT_DISABLED");
         }
 
         return UserResponse.from(saved);
@@ -103,7 +113,7 @@ public class AdminUserService {
 
     @Transactional
     public ResetPasswordResponse resetPassword(UUID userId) {
-        User user = findUserInTenant(userId);
+        User user = findUserInSociete(userId);
         String tempPassword = generateTempPassword();
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.incrementTokenVersion();
@@ -112,18 +122,21 @@ public class AdminUserService {
         return new ResetPasswordResponse(tempPassword);
     }
 
-    private User findUserInTenant(UUID userId) {
-        UUID tenantId = requireTenantId();
-        return userRepository.findByTenant_IdAndId(tenantId, userId)
+    private User findUserInSociete(UUID userId) {
+        UUID societeId = requireSocieteId();
+        // Verify user belongs to this société
+        appUserSocieteRepository.findByIdUserIdAndIdSocieteId(userId, societeId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    private UUID requireTenantId() {
-        UUID tenantId = TenantContext.getTenantId();
-        if (tenantId == null) {
-            throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID societeId = SocieteContext.getSocieteId();
+        if (societeId == null) {
+            throw new CrossTenantAccessException("Missing société context");
         }
-        return tenantId;
+        return societeId;
     }
 
     private UUID resolveActorId() {
@@ -136,10 +149,10 @@ public class AdminUserService {
         return null;
     }
 
-    private String resolveTenantKey(UUID tenantId) {
-        return tenantRepository.findById(tenantId)
-                .map(t -> t.getKey())
-                .orElse(tenantId.toString());
+    /** Strips ROLE_ prefix so stored role matches chk_societe_role constraint (ADMIN/MANAGER/AGENT). */
+    private static String toSocieteRole(com.yem.hlm.backend.user.domain.UserRole role) {
+        String name = role.name();
+        return name.startsWith("ROLE_") ? name.substring(5) : name;
     }
 
     private String generateTempPassword() {

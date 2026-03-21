@@ -12,9 +12,9 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,17 +44,17 @@ class ContactServiceIT extends IntegrationTestBase {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private TenantRepository tenantRepository;
+    private SocieteRepository societeRepository;
 
     @BeforeEach
-    void setUpTenantContext() {
-        TenantContext.setTenantId(TENANT_ID);
-        TenantContext.setUserId(UUID.fromString("22222222-2222-2222-2222-222222222222"));
+    void setUpSocieteContext() {
+        SocieteContext.setSocieteId(TENANT_ID);
+        SocieteContext.setUserId(UUID.fromString("22222222-2222-2222-2222-222222222222"));
     }
 
     @AfterEach
-    void clearTenantContext() {
-        TenantContext.clear();
+    void clearSocieteContext() {
+        SocieteContext.clear();
     }
 
     @Test
@@ -197,9 +197,9 @@ class ContactServiceIT extends IntegrationTestBase {
 
     private UUID createActiveProperty() {
         int ref = ++refCounter;
-        Tenant tenant = tenantRepository.getReferenceById(TENANT_ID);
-        Project project = projectRepository.saveAndFlush(new Project(tenant, "CSI-Project-" + ref));
-        Property property = new Property(tenant, project, PropertyType.VILLA, TenantContext.getUserId());
+        Societe societe = societeRepository.getReferenceById(TENANT_ID);
+        Project project = projectRepository.saveAndFlush(new Project(societe.getId(), "CSI-Project-" + ref));
+        Property property = new Property(societe.getId(), project, PropertyType.VILLA, SocieteContext.getUserId());
         property.setReferenceCode("CSI-" + ref);
         property.setTitle("Test Property " + ref);
         property.setPrice(new BigDecimal("500000"));

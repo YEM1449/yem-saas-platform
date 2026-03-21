@@ -14,7 +14,7 @@ import java.util.UUID;
  * Composant métier responsable de :
  * - générer un JWT
  * - valider un JWT
- * - extraire les claims utiles (userId, tenantId)
+ * - extraire les claims utiles (userId, societeId)
  *
  * ⚠️ Il ne fait PAS :
  * - de HTTP
@@ -53,18 +53,18 @@ public class JwtProvider {
      * Defaults to ROLE_AGENT if no role is provided.
      *
      * @param userId   identifiant de l'utilisateur (subject)
-     * @param tenantId identifiant du tenant (claim custom)
+     * @param societeId identifiant de la société (claim custom)
      * @return JWT signé sous forme de String
      */
-    public String generate(UUID userId, UUID tenantId) {
-        return generate(userId, tenantId, UserRole.ROLE_AGENT, 0);
+    public String generate(UUID userId, UUID societeId) {
+        return generate(userId, societeId, UserRole.ROLE_AGENT, 0);
     }
 
-    public String generate(UUID userId, UUID tenantId, UserRole role) {
-        return generate(userId, tenantId, role, 0);
+    public String generate(UUID userId, UUID societeId, UserRole role) {
+        return generate(userId, societeId, role, 0);
     }
 
-    public String generate(UUID userId, UUID tenantId, UserRole role, int tokenVersion) {
+    public String generate(UUID userId, UUID societeId, UserRole role, int tokenVersion) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(ttlSeconds);
 
@@ -72,7 +72,7 @@ public class JwtProvider {
                 .issuedAt(now)
                 .expiresAt(expiresAt)
                 .subject(userId.toString())
-                .claim("tid", tenantId.toString())
+                .claim("sid", societeId != null ? societeId.toString() : null)
                 .claim("roles", List.of(role.name()))
                 .claim("tv", tokenVersion)
                 .build();
@@ -82,6 +82,29 @@ public class JwtProvider {
         return encoder
                 .encode(JwtEncoderParameters.from(headers, claims))
                 .getTokenValue();
+    }
+
+    /**
+     * Génère un JWT signé avec un rôle de type String (pour les rôles de société).
+     *
+     * @param userId       identifiant de l'utilisateur (subject)
+     * @param societeId    identifiant de la société (claim "sid")
+     * @param role         rôle sous forme de String (ex: "ROLE_ADMIN")
+     * @param tokenVersion version du token (pour la révocation)
+     * @return JWT signé sous forme de String
+     */
+    public String generate(UUID userId, UUID societeId, String role, int tokenVersion) {
+        Instant now = Instant.now();
+        var claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(ttlSeconds))
+                .subject(userId.toString())
+                .claim("sid", societeId != null ? societeId.toString() : null)
+                .claim("roles", List.of(role))
+                .claim("tv", tokenVersion)
+                .build();
+        var headers = JwsHeader.with(MacAlgorithm.HS256).build();
+        return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
     }
 
     /**
@@ -116,20 +139,20 @@ public class JwtProvider {
     }
 
     /**
-     * Extrait l'identifiant tenant depuis le token.
+     * Extrait l'identifiant société depuis le token (claim "sid").
      *
      * @param token JWT
-     * @return UUID du tenant
+     * @return UUID de la société
      */
-    public UUID extractTenantId(String token) {
+    public UUID extractSocieteId(String token) {
 
         Jwt jwt = decoder.decode(token);
 
-        String tid = jwt.getClaimAsString("tid");
-        if (tid == null || tid.isBlank()) {
-            throw new JwtException("Missing required claim: tid");
+        String sid = jwt.getClaimAsString("sid");
+        if (sid == null || sid.isBlank()) {
+            throw new JwtException("Missing required claim: sid");
         }
-        return UUID.fromString(tid);
+        return UUID.fromString(sid);
     }
 
     /**

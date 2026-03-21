@@ -12,8 +12,8 @@ import com.yem.hlm.backend.property.domain.PropertyCategory;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -54,11 +54,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProjectRepository projectRepository;
 
-    private Tenant tenant;
+    private Societe societe;
     private User adminUser;
     private User managerUser;
     private User agentUser;
@@ -71,29 +71,24 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @BeforeEach
     void setupTestData() {
-        String uniqueKey = "prop-test-" + UUID.randomUUID().toString().substring(0, 8);
-        tenant = new Tenant(uniqueKey, "Property Test Tenant");
-        tenant = tenantRepository.save(tenant);
+        societe = societeRepository.save(new Societe("Prop Test Societe", "MA"));
 
-        var project = new Project(tenant, "Test Project");
+        var project = new Project(societe.getId(), "Test Project");
         project = projectRepository.save(project);
         projectId = project.getId();
 
-        adminUser = new User(tenant, "admin@proptest.com", "hashedPass");
-        adminUser.setRole(UserRole.ROLE_ADMIN);
+        adminUser = new User("admin@proptest.com", "hashedPass");
         adminUser = userRepository.save(adminUser);
 
-        managerUser = new User(tenant, "manager@proptest.com", "hashedPass");
-        managerUser.setRole(UserRole.ROLE_MANAGER);
+        managerUser = new User("manager@proptest.com", "hashedPass");
         managerUser = userRepository.save(managerUser);
 
-        agentUser = new User(tenant, "agent@proptest.com", "hashedPass");
-        agentUser.setRole(UserRole.ROLE_AGENT);
+        agentUser = new User("agent@proptest.com", "hashedPass");
         agentUser = userRepository.save(agentUser);
 
-        adminBearer = "Bearer " + jwtProvider.generate(adminUser.getId(), tenant.getId(), UserRole.ROLE_ADMIN);
-        managerBearer = "Bearer " + jwtProvider.generate(managerUser.getId(), tenant.getId(), UserRole.ROLE_MANAGER);
-        agentBearer = "Bearer " + jwtProvider.generate(agentUser.getId(), tenant.getId(), UserRole.ROLE_AGENT);
+        adminBearer = "Bearer " + jwtProvider.generate(adminUser.getId(), societe.getId(), UserRole.ROLE_ADMIN);
+        managerBearer = "Bearer " + jwtProvider.generate(managerUser.getId(), societe.getId(), UserRole.ROLE_MANAGER);
+        agentBearer = "Bearer " + jwtProvider.generate(agentUser.getId(), societe.getId(), UserRole.ROLE_AGENT);
     }
 
     // ===== RBAC Tests =====
@@ -540,16 +535,13 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(prop1)))
                 .andExpect(status().isCreated());
 
-        String otherKey = "prop-test-other-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant otherTenant = new Tenant(otherKey, "Other Tenant");
-        otherTenant = tenantRepository.save(otherTenant);
+        Societe otherTenant = societeRepository.save(new Societe("Other Societe", "MA"));
 
-        var otherProject = new Project(otherTenant, "Other Project");
+        var otherProject = new Project(otherTenant.getId(), "Other Project");
         otherProject = projectRepository.save(otherProject);
         UUID otherProjectId = otherProject.getId();
 
-        User otherAdmin = new User(otherTenant, "admin@other.com", "hashedPass");
-        otherAdmin.setRole(UserRole.ROLE_ADMIN);
+        User otherAdmin = new User("admin@other.com", "hashedPass");
         otherAdmin = userRepository.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
@@ -669,7 +661,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
     @Test
     void createProperty_withArchivedProject_returns400() throws Exception {
-        var archived = new Project(tenant, "Archived Project");
+        var archived = new Project(societe.getId(), "Archived Project");
         archived.setStatus(ProjectStatus.ARCHIVED);
         archived = projectRepository.save(archived);
         final UUID archivedProjectId = archived.getId();
@@ -701,7 +693,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
 
-        var archived = new Project(tenant, "Archived Target");
+        var archived = new Project(societe.getId(), "Archived Target");
         archived.setStatus(ProjectStatus.ARCHIVED);
         archived = projectRepository.save(archived);
         final UUID archivedProjectId = archived.getId();

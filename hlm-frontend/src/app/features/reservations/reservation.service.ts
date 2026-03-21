@@ -7,7 +7,7 @@ export type ReservationStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'CONVERTED_
 
 export interface Reservation {
   id: string;
-  tenantId: string;
+  societeId: string;
   contactId: string;
   propertyId: string;
   reservedByUserId: string;

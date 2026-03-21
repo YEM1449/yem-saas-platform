@@ -12,7 +12,6 @@ import com.yem.hlm.backend.payments.domain.ScheduleItemReminder;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.ScheduleItemReminderRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,20 +54,17 @@ public class ReminderService {
     private final ScheduleItemReminderRepository reminderRepo;
     private final SaleContractRepository         contractRepo;
     private final OutboundMessageRepository      outboxRepo;
-    private final TenantRepository               tenantRepo;
 
     public ReminderService(PaymentScheduleItemRepository itemRepo,
                            SchedulePaymentRepository paymentRepo,
                            ScheduleItemReminderRepository reminderRepo,
                            SaleContractRepository contractRepo,
-                           OutboundMessageRepository outboxRepo,
-                           TenantRepository tenantRepo) {
+                           OutboundMessageRepository outboxRepo) {
         this.itemRepo      = itemRepo;
         this.paymentRepo   = paymentRepo;
         this.reminderRepo  = reminderRepo;
         this.contractRepo  = contractRepo;
         this.outboxRepo    = outboxRepo;
-        this.tenantRepo    = tenantRepo;
     }
 
     /**
@@ -78,15 +74,15 @@ public class ReminderService {
     @Transactional
     public void processAll() {
         LocalDate today = LocalDate.now();
-        List<UUID> tenantIds = itemRepo.findActiveTenantIds();
-        log.info("ReminderService: processing {} active tenants for date {}", tenantIds.size(), today);
+        List<UUID> societeIds = itemRepo.findActiveTenantIds();
+        log.info("ReminderService: processing {} active sociétés for date {}", societeIds.size(), today);
 
-        for (UUID tenantId : tenantIds) {
+        for (UUID societeId : societeIds) {
             try {
-                processTenant(tenantId, today);
+                processTenant(societeId, today);
             } catch (Exception ex) {
-                // Isolate per-tenant failures — do not abort other tenants
-                log.error("ReminderService: error processing tenant {}: {}", tenantId, ex.getMessage(), ex);
+                // Isolate per-société failures — do not abort other sociétés
+                log.error("ReminderService: error processing societe {}: {}", societeId, ex.getMessage(), ex);
             }
         }
     }
@@ -95,21 +91,21 @@ public class ReminderService {
     // Per-tenant processing
     // =========================================================================
 
-    private void processTenant(UUID tenantId, LocalDate today) {
-        markOverdue(tenantId, today);
-        firePreDueReminders(tenantId, today, 7, ReminderType.PRE_DUE_7D);
-        firePreDueReminders(tenantId, today, 1, ReminderType.PRE_DUE_1D);
-        fireOverdueReminders(tenantId, today, 1,  ReminderType.OVERDUE_1D);
-        fireOverdueReminders(tenantId, today, 7,  ReminderType.OVERDUE_7D);
-        fireOverdueReminders(tenantId, today, 30, ReminderType.OVERDUE_30D);
+    private void processTenant(UUID societeId, LocalDate today) {
+        markOverdue(societeId, today);
+        firePreDueReminders(societeId, today, 7, ReminderType.PRE_DUE_7D);
+        firePreDueReminders(societeId, today, 1, ReminderType.PRE_DUE_1D);
+        fireOverdueReminders(societeId, today, 1,  ReminderType.OVERDUE_1D);
+        fireOverdueReminders(societeId, today, 7,  ReminderType.OVERDUE_7D);
+        fireOverdueReminders(societeId, today, 30, ReminderType.OVERDUE_30D);
     }
 
     // ── Overdue marking ───────────────────────────────────────────────────────
 
-    private void markOverdue(UUID tenantId, LocalDate today) {
-        List<PaymentScheduleItem> candidates = itemRepo.findOverdueCandidates(tenantId, today);
+    private void markOverdue(UUID societeId, LocalDate today) {
+        List<PaymentScheduleItem> candidates = itemRepo.findOverdueCandidates(societeId, today);
         for (PaymentScheduleItem item : candidates) {
-            BigDecimal paid = paymentRepo.sumPaidForItem(tenantId, item.getId());
+            BigDecimal paid = paymentRepo.sumPaidForItem(societeId, item.getId());
             if (paid.compareTo(item.getAmount()) >= 0) {
                 item.setStatus(PaymentScheduleStatus.PAID);
             } else if (item.getStatus() != PaymentScheduleStatus.OVERDUE) {
@@ -121,37 +117,37 @@ public class ReminderService {
 
     // ── Pre-due reminders ─────────────────────────────────────────────────────
 
-    private void firePreDueReminders(UUID tenantId, LocalDate today,
+    private void firePreDueReminders(UUID societeId, LocalDate today,
                                      int daysAhead, ReminderType type) {
         LocalDate targetDueDate = today.plusDays(daysAhead);
-        List<PaymentScheduleItem> items = itemRepo.findDueOn(tenantId, targetDueDate);
+        List<PaymentScheduleItem> items = itemRepo.findDueOn(societeId, targetDueDate);
         for (PaymentScheduleItem item : items) {
             BigDecimal remaining = item.getAmount().subtract(
-                    paymentRepo.sumPaidForItem(tenantId, item.getId()));
+                    paymentRepo.sumPaidForItem(societeId, item.getId()));
             if (remaining.compareTo(BigDecimal.ZERO) <= 0) continue;
 
             String body    = buildPreDueBody(item, daysAhead);
             String subject = "Rappel \u2013 Appel de fonds dans " + daysAhead + " jour(s)";
-            queueIfNotSent(tenantId, item, type, MessageChannel.EMAIL, today, subject, body);
+            queueIfNotSent(societeId, item, type, MessageChannel.EMAIL, today, subject, body);
         }
     }
 
     // ── Overdue reminders ─────────────────────────────────────────────────────
 
-    private void fireOverdueReminders(UUID tenantId, LocalDate today,
+    private void fireOverdueReminders(UUID societeId, LocalDate today,
                                       int daysPast, ReminderType type) {
         LocalDate targetDueDate = today.minusDays(daysPast);
-        List<PaymentScheduleItem> items = itemRepo.findDueOn(tenantId, targetDueDate);
+        List<PaymentScheduleItem> items = itemRepo.findDueOn(societeId, targetDueDate);
         for (PaymentScheduleItem item : items) {
             if (item.getStatus() == PaymentScheduleStatus.PAID
                     || item.getStatus() == PaymentScheduleStatus.CANCELED) continue;
             BigDecimal remaining = item.getAmount().subtract(
-                    paymentRepo.sumPaidForItem(tenantId, item.getId()));
+                    paymentRepo.sumPaidForItem(societeId, item.getId()));
             if (remaining.compareTo(BigDecimal.ZERO) <= 0) continue;
 
             String body    = buildOverdueBody(item, daysPast, remaining);
             String subject = "Relance \u2013 Appel de fonds en retard (" + daysPast + " jour(s))";
-            queueIfNotSent(tenantId, item, type, MessageChannel.EMAIL, today, subject, body);
+            queueIfNotSent(societeId, item, type, MessageChannel.EMAIL, today, subject, body);
         }
     }
 
@@ -162,7 +158,7 @@ public class ReminderService {
      * buyer-email snapshot as recipient. Skips if an identical reminder already
      * exists for this calendar day (idempotency).
      */
-    private void queueIfNotSent(UUID tenantId, PaymentScheduleItem item,
+    private void queueIfNotSent(UUID societeId, PaymentScheduleItem item,
                                  ReminderType type, MessageChannel channel,
                                  LocalDate reminderDate, String subject, String body) {
         if (reminderRepo.existsByScheduleItemIdAndReminderTypeAndChannelAndReminderDate(
@@ -173,7 +169,7 @@ public class ReminderService {
 
         // Resolve contract to get buyer recipient + agent as actor
         SaleContract contract = contractRepo
-                .findByTenant_IdAndId(tenantId, item.getContractId())
+                .findBySocieteIdAndId(societeId, item.getContractId())
                 .orElse(null);
         if (contract == null) {
             log.warn("Contract {} not found for item {}; skipping reminder",
@@ -194,7 +190,7 @@ public class ReminderService {
             // Write directly to outbox — scheduler has no user session.
             // Contract agent is used as createdByUser.
             OutboundMessage msg = new OutboundMessage(
-                    tenantRepo.getReferenceById(tenantId),
+                    societeId,
                     contract.getAgent(),
                     channel,
                     recipient.trim(),
@@ -211,7 +207,7 @@ public class ReminderService {
 
         // Record idempotency guard
         reminderRepo.save(new ScheduleItemReminder(
-                tenantRepo.getReferenceById(tenantId),
+                societeId,
                 item.getId(), type, channel, reminderDate));
 
         log.info("Reminder queued: item={} type={} channel={} date={}",

@@ -12,8 +12,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -57,7 +57,7 @@ class ContractPdfIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String adminBearer;
@@ -140,10 +140,7 @@ class ContractPdfIT extends IntegrationTestBase {
     @Test
     void downloadPdf_asAgent_ownContract_returns200() throws Exception {
         // Create an AGENT user in the same tenant
-        User agent = new User(
-                tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "agent-cpdf@acme.com", "hashedPass");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent-cpdf@acme.com", "hashedPass");
         agent = userRepository.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 
@@ -227,9 +224,8 @@ class ContractPdfIT extends IntegrationTestBase {
 
     private String createOtherTenantBearer(String keyPrefix) {
         String otherKey = keyPrefix + "-" + UUID.randomUUID().toString().substring(0, 8);
-        Tenant tenantB = tenantRepository.save(new Tenant(otherKey, "CPdf Isolation Tenant"));
-        User userB = new User(tenantB, "admin@" + keyPrefix + ".com", "hashedPass");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@" + keyPrefix + ".com", "hashedPass");
         userB = userRepository.save(userB);
         return "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
     }

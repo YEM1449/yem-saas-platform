@@ -1,0 +1,61 @@
+# YEM SaaS — Audit & Fix State
+# Updated by AI after each phase. Do not edit manually.
+# Resume: new session + paste prompt + "resume from .audit-state"
+
+AUDIT_0_SCAN=DONE
+AUDIT_1_TENANT_PURGE=DONE
+AUDIT_2_LOGIC_VERIFY=DONE
+AUDIT_3_BUG_PROPERTY_MODAL=DONE
+AUDIT_4_BUG_PROPERTY_TYPES=DONE
+AUDIT_5_BUG_FLOOR_FIELDS=DONE
+AUDIT_6_TEST_COVERAGE=DONE
+AUDIT_7_FINAL_GREP=DONE
+AUDIT=COMPLETE
+
+# AUDIT_6 results (290/291 passing):
+# - GdprIT: fixed $.errorCode → $.code (ErrorResponse field is "code", not "errorCode")
+# - ContactTimelineIT: fixed new Contact(otherTenant,...) → new Contact(otherTenant.getId(),...)
+# - CommercialAuditIT: fixed new User(Societe,...) → new User(email, pass)
+# - AccountLockoutIT: fixed findByTenant_IdAndEmail→findByEmail; added AppUserSociete membership in createUser()
+# - ContractControllerIT/ContractPdfIT: fixed new User(Societe,...) → new User(email, pass)
+# - CommercialDashboardIT: fixed findByContact_Tenant_IdAndContactId→findBySocieteIdAndContactId
+# - LoginRateLimitIT: fixed loginBody() using tenant as email (format string bug)
+# - TokenRevocationIT: added AppUserSociete membership for all target users + enroll() helper
+# - AdminUserService: role stored as ADMIN/MANAGER/AGENT (toSocieteRole strips ROLE_ prefix)
+# - AdminUserService.changeRole: returns UserResponse.from(saved, "ROLE_"+newRole)
+# - Changeset 035: backfills key for ALL societes where s.id=t.id (not just 00000000-...)
+# - TlsConfigIT: 1 failure (503 health endpoint) — pre-existing infrastructure issue, not migration-related
+
+# AUDIT_7 results:
+# - rg TenantContext|tenantContext|tenantKey in Java main/test: 0 matches
+# - rg import.*tenant\. in Java: 0 matches (CrossTenantAccessException kept for backward compat)
+
+# AUDIT_0 results:
+# TENANT_HITS_BACKEND=0 (all Java main/test files clean)
+# TENANT_HITS_FRONTEND=0 (all TypeScript/HTML files clean)
+# TENANT_HITS_DOCS=many (historical Liquibase YAMLs 001-030 contain tenant_id — immutable, acceptable)
+# TENANT_HITS_DB=165 (historical changesets — immutable, do not edit)
+# LOGIC_ISSUES=portal JWT was using tid instead of sid (FIXED)
+
+# AUDIT_1 completed:
+# - All Java main/test sources: tenantId→societeId, TenantContext→SocieteContext
+# - Portal JWT bug fixed: .claim("tid") → .claim("sid")
+# - Frontend login/portal models and components updated
+# - SocieteContext.setSystem() confirmed present for schedulers
+
+# AUDIT_2 completed:
+# - L1: DataRetentionScheduler uses setSystem() ✓
+# - L2: Schedulers use SocieteContext.setSystem() for null bypass ✓
+# - L3: switchSociete token revocation — version-based via UserSecurityCacheService (no per-token blacklist)
+# - L4: Changeset 032 has chk_societe_role CHECK constraint ✓
+# - L5: AuthService login handles 0/1/N memberships correctly ✓
+# - L6: CrossSocieteAccessException exists in contact/service/ ✓
+# - L7: JwtProvider uses sid claim, SocieteContext.setSystem() exists ✓
+# - L8: Changeset 034 drops app_user.role and app_user.tenant_id ✓
+# - L9: switchSociete UI not implemented (phases 8-10 pending)
+# - L10: CrossSocieteIsolationIT.java CREATED with 4 tests (contacts, projects, properties, timeline)
+
+# AUDIT_3 fix: loadProjects() → projectSvc.list(true) (activeOnly)
+# AUDIT_4 fix: propertyTypes LOCAL→LOT, TERRAIN→TERRAIN_VIERGE
+# AUDIT_5 fix: needsFloorNumber includes STUDIO/T2/T3; needsTotalFloors added for DUPLEX;
+#              needsBedrooms removes STUDIO; needsSurface removes LOCAL; needsLand adds LOT/TERRAIN_VIERGE

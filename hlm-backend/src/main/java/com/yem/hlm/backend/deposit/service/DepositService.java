@@ -24,9 +24,7 @@ import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -49,7 +47,6 @@ public class DepositService {
     private final ContactInterestRepository contactInterestRepository;
     private final ClientDetailRepository clientDetailRepository;
     private final PropertyRepository propertyRepository;
-    private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
@@ -63,7 +60,6 @@ public class DepositService {
             ContactInterestRepository contactInterestRepository,
             ClientDetailRepository clientDetailRepository,
             PropertyRepository propertyRepository,
-            TenantRepository tenantRepository,
             UserRepository userRepository,
             NotificationService notificationService,
             ObjectMapper objectMapper,
@@ -76,7 +72,6 @@ public class DepositService {
         this.contactInterestRepository = contactInterestRepository;
         this.clientDetailRepository = clientDetailRepository;
         this.propertyRepository = propertyRepository;
-        this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.objectMapper = objectMapper;
@@ -87,7 +82,6 @@ public class DepositService {
 
     /**
      * Called from /api/contacts/{id}/convert-to-client (backward compatible).
-     * It creates a PENDING deposit and converts the contact to TEMP_CLIENT until dueDate.
      */
     @Transactional
     public void createReservationForContact(UUID contactId, ConvertToClientRequest req) {
@@ -109,38 +103,34 @@ public class DepositService {
 
     @Transactional
     public DepositResponse create(CreateDepositRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Contact contact = contactRepository.findByTenant_IdAndId(tenantId, req.contactId())
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, req.contactId())
                 .orElseThrow(() -> new ContactNotFoundException(req.contactId()));
 
-        User agent = userRepository.findByTenant_IdAndId(tenantId, actorUserId)
-                .orElseThrow(() -> new CrossTenantAccessException("Unknown agent in tenant scope: " + actorUserId));
-
-        Tenant tenant = contact.getTenant();
+        User agent = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new CrossTenantAccessException("Unknown agent: " + actorUserId));
 
         UUID propertyId = req.propertyId();
         if (propertyId == null) throw new InvalidDepositRequestException("propertyId is required");
 
-        if (depositRepository.existsByTenant_IdAndContact_IdAndPropertyId(tenantId, contact.getId(), propertyId)) {
+        if (depositRepository.existsBySocieteIdAndContact_IdAndPropertyId(societeId, contact.getId(), propertyId)) {
             throw new DepositAlreadyExistsException(contact.getId(), propertyId);
         }
 
-        if (depositRepository.existsByTenant_IdAndPropertyIdAndStatusIn(tenantId, propertyId, ACTIVE_STATUSES)) {
+        if (depositRepository.existsBySocieteIdAndPropertyIdAndStatusIn(societeId, propertyId, ACTIVE_STATUSES)) {
             throw new PropertyAlreadyReservedException(propertyId);
         }
 
         // Reject direct deposit creation if an unconverted ACTIVE reservation holds the property.
-        // Deposits from reservation conversion are exempt (reservation transitions to
-        // CONVERTED_TO_DEPOSIT before calling this method, so this check will pass).
-        if (reservationRepository.existsByTenant_IdAndPropertyIdAndStatus(
-                tenantId, propertyId, ReservationStatus.ACTIVE)) {
+        if (reservationRepository.existsBySocieteIdAndPropertyIdAndStatus(
+                societeId, propertyId, ReservationStatus.ACTIVE)) {
             throw new PropertyAlreadyReservedException(propertyId);
         }
 
         // Lock ordering: Property first to avoid deadlocks with SaleContractService flows.
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, propertyId)
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         if (property.getStatus() != PropertyStatus.ACTIVE) {
@@ -153,7 +143,7 @@ public class DepositService {
         String currency = (req.currency() == null) ? "MAD" : req.currency();
         String reference = (req.reference() == null) ? DepositReferenceGenerator.generate(now) : req.reference();
 
-        Deposit deposit = new Deposit(tenant, contact, agent);
+        Deposit deposit = new Deposit(societeId, contact, agent);
         deposit.setPropertyId(propertyId);
         deposit.setAmount(req.amount());
         deposit.setCurrency(currency);
@@ -167,18 +157,18 @@ public class DepositService {
             Deposit saved = depositRepository.save(deposit);
             depositRepository.flush();
 
-            // Mark property as RESERVED — delegate to canonical commercial workflow
+            // Mark property as RESERVED
             propertyCommercialWorkflowService.reserve(property, now);
 
-            // Ensure interest link exists (contact remains "interested" even if deposit expires).
-            ensureInterestExists(tenantId, tenant, contact.getId(), propertyId);
+            // Ensure interest link exists
+            ensureInterestExists(societeId, contact.getId(), propertyId);
 
             // Apply workflow: prospect -> qualified + TEMP_CLIENT until dueDate.
             applyContactReservationWorkflow(contact, actorUserId, dueDate);
             contactRepository.save(contact);
 
             notificationService.notify(
-                    tenant,
+                    societeId,
                     agent,
                     NotificationType.DEPOSIT_PENDING,
                     saved.getId(),
@@ -192,16 +182,15 @@ public class DepositService {
                     ))
             );
 
-            auditService.record(tenantId, AuditEventType.DEPOSIT_CREATED, actorUserId,
+            auditService.record(societeId, AuditEventType.DEPOSIT_CREATED, actorUserId,
                     "DEPOSIT", saved.getId(), null);
 
             return toResponse(saved);
         } catch (DataIntegrityViolationException e) {
-            // Handle race conditions in a deterministic way.
-            if (depositRepository.existsByTenant_IdAndContact_IdAndPropertyId(tenantId, contact.getId(), propertyId)) {
+            if (depositRepository.existsBySocieteIdAndContact_IdAndPropertyId(societeId, contact.getId(), propertyId)) {
                 throw new DepositAlreadyExistsException(contact.getId(), propertyId);
             }
-            if (depositRepository.existsByTenant_IdAndPropertyIdAndStatusIn(tenantId, propertyId, ACTIVE_STATUSES)) {
+            if (depositRepository.existsBySocieteIdAndPropertyIdAndStatusIn(societeId, propertyId, ACTIVE_STATUSES)) {
                 throw new PropertyAlreadyReservedException(propertyId);
             }
             throw e;
@@ -209,28 +198,25 @@ public class DepositService {
     }
 
     public DepositResponse get(UUID id) {
-        UUID tenantId = requireTenantId();
-        Deposit deposit = depositRepository.findByTenant_IdAndId(tenantId, id)
+        UUID societeId = requireSocieteId();
+        Deposit deposit = depositRepository.findBySocieteIdAndId(societeId, id)
                 .orElseThrow(() -> new DepositNotFoundException(id));
         return toResponse(deposit);
     }
 
     @Transactional
     public DepositResponse confirm(UUID depositId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Deposit deposit = depositRepository.findByTenant_IdAndId(tenantId, depositId)
+        Deposit deposit = depositRepository.findBySocieteIdAndId(societeId, depositId)
                 .orElseThrow(() -> new DepositNotFoundException(depositId));
 
         if (deposit.getStatus() != DepositStatus.PENDING) {
             throw new InvalidDepositStateException("Only PENDING deposits can be confirmed");
         }
 
-        // Lock ordering: Property first to avoid deadlocks with SaleContractService flows.
-        // Prevents a concurrent contract signing from marking the property SOLD between
-        // our PENDING status check and the deposit save.
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(tenantId, deposit.getPropertyId())
+        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, deposit.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(deposit.getPropertyId()));
         if (property.getStatus() == PropertyStatus.SOLD) {
             throw new InvalidDepositStateException(
@@ -252,19 +238,20 @@ public class DepositService {
         if (clientDetailRepository.findById(contact.getId()).isEmpty()) {
             ClientDetail cd = new ClientDetail(contact);
             cd.setClientKind(ClientKind.PERSONNE_PHYSIQUE);
-            clientDetailRepository.save(cd);        }
+            clientDetailRepository.save(cd);
+        }
 
         Deposit saved = depositRepository.save(deposit);
 
         notificationService.notify(
-                saved.getTenant(),
+                societeId,
                 saved.getAgent(),
                 NotificationType.DEPOSIT_CONFIRMED,
                 saved.getId(),
                 toPayload(Map.of("depositId", saved.getId(), "status", saved.getStatus(), "confirmedAt", saved.getConfirmedAt()))
         );
 
-        auditService.record(tenantId, AuditEventType.DEPOSIT_CONFIRMED, actorUserId,
+        auditService.record(societeId, AuditEventType.DEPOSIT_CONFIRMED, actorUserId,
                 "DEPOSIT", saved.getId(), null);
 
         return toResponse(saved);
@@ -272,10 +259,10 @@ public class DepositService {
 
     @Transactional
     public DepositResponse cancel(UUID depositId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
-        Deposit deposit = depositRepository.findByTenant_IdAndId(tenantId, depositId)
+        Deposit deposit = depositRepository.findBySocieteIdAndId(societeId, depositId)
                 .orElseThrow(() -> new DepositNotFoundException(depositId));
 
         if (deposit.getStatus() == DepositStatus.CANCELLED || deposit.getStatus() == DepositStatus.EXPIRED) {
@@ -288,11 +275,9 @@ public class DepositService {
         deposit.setStatus(DepositStatus.CANCELLED);
         deposit.setCancelledAt(LocalDateTime.now());
 
-        // Release property reservation
-        releasePropertyReservation(deposit);
+        releasePropertyReservation(societeId, deposit);
 
         Contact contact = deposit.getContact();
-        // If not a real client, revert to prospect (qualified stays true)
         if (contact.getContactType() != ContactType.CLIENT) {
             contact.setContactType(ContactType.PROSPECT);
             contact.setStatus(ContactStatus.QUALIFIED_PROSPECT);
@@ -305,14 +290,14 @@ public class DepositService {
         Deposit saved = depositRepository.save(deposit);
 
         notificationService.notify(
-                saved.getTenant(),
+                societeId,
                 saved.getAgent(),
                 NotificationType.DEPOSIT_CANCELLED,
                 saved.getId(),
                 toPayload(Map.of("depositId", saved.getId(), "status", saved.getStatus(), "cancelledAt", saved.getCancelledAt()))
         );
 
-        auditService.record(tenantId, AuditEventType.DEPOSIT_CANCELED, actorUserId,
+        auditService.record(societeId, AuditEventType.DEPOSIT_CANCELED, actorUserId,
                 "DEPOSIT", saved.getId(), null);
 
         return toResponse(saved);
@@ -326,8 +311,8 @@ public class DepositService {
             LocalDateTime from,
             LocalDateTime to
     ) {
-        UUID tenantId = requireTenantId();
-        List<Deposit> deposits = depositRepository.report(tenantId, status, agentId, contactId, propertyId, from, to);
+        UUID societeId = requireSocieteId();
+        List<Deposit> deposits = depositRepository.report(societeId, status, agentId, contactId, propertyId, from, to);
 
         List<DepositResponse> items = deposits.stream().map(this::toResponse).toList();
         BigDecimal total = deposits.stream()
@@ -350,26 +335,22 @@ public class DepositService {
     }
 
     /**
-     * Scheduler entrypoint (hourly):
-     * - expire overdue pending deposits
-     * - notify due soon (within horizon)
+     * Scheduler entrypoint (hourly): expire overdue pending deposits and notify due soon.
      */
     @Transactional
     public void runHourlyWorkflow(Duration dueSoonHorizon) {
         LocalDateTime now = LocalDateTime.now();
 
-        // Expire overdue pending deposits
         List<Deposit> overdue = depositRepository.findAllByStatusAndDueDateBefore(DepositStatus.PENDING, now);
         for (Deposit d : overdue) {
             expireDeposit(d);
         }
 
-        // Notify due soon
         LocalDateTime to = now.plus(dueSoonHorizon);
         List<Deposit> dueSoon = depositRepository.findAllByStatusAndDueDateBetween(DepositStatus.PENDING, now, to);
         for (Deposit d : dueSoon) {
             notificationService.notify(
-                    d.getTenant(),
+                    d.getSocieteId(),
                     d.getAgent(),
                     NotificationType.DEPOSIT_DUE_SOON,
                     d.getId(),
@@ -391,33 +372,32 @@ public class DepositService {
         d.setCancelledAt(LocalDateTime.now());
         depositRepository.save(d);
 
-        // Release property reservation
-        releasePropertyReservation(d);
+        releasePropertyReservation(d.getSocieteId(), d);
 
         Contact contact = d.getContact();
         if (contact.getContactType() != ContactType.CLIENT) {
             contact.setContactType(ContactType.PROSPECT);
-            contact.setStatus(ContactStatus.QUALIFIED_PROSPECT); // stays qualified per MVP decision
+            contact.setStatus(ContactStatus.QUALIFIED_PROSPECT);
             contact.setQualified(true);
             contact.setTempClientUntil(null);
             contactRepository.save(contact);
         }
 
         notificationService.notify(
-                d.getTenant(),
+                d.getSocieteId(),
                 d.getAgent(),
                 NotificationType.DEPOSIT_EXPIRED,
                 d.getId(),
                 toPayload(Map.of("depositId", d.getId(), "status", d.getStatus(), "expiredAt", d.getCancelledAt()))
         );
 
-        auditService.record(d.getTenant().getId(), AuditEventType.DEPOSIT_EXPIRED,
+        auditService.record(d.getSocieteId(), AuditEventType.DEPOSIT_EXPIRED,
                 d.getAgent().getId(), "DEPOSIT", d.getId(), null);
     }
 
-    private void releasePropertyReservation(Deposit deposit) {
+    private void releasePropertyReservation(UUID societeId, Deposit deposit) {
         if (deposit.getPropertyId() == null) return;
-        propertyRepository.findByTenant_IdAndId(deposit.getTenant().getId(), deposit.getPropertyId())
+        propertyRepository.findBySocieteIdAndId(societeId, deposit.getPropertyId())
                 .ifPresent(property -> {
                     if (property.getStatus() == PropertyStatus.RESERVED) {
                         propertyCommercialWorkflowService.releaseReservation(property);
@@ -425,9 +405,9 @@ public class DepositService {
                 });
     }
 
-    private void ensureInterestExists(UUID tenantId, Tenant tenant, UUID contactId, UUID propertyId) {
-        if (!contactInterestRepository.existsByTenant_IdAndContactIdAndPropertyId(tenantId, contactId, propertyId)) {
-            contactInterestRepository.save(new ContactInterest(tenant, contactId, propertyId, InterestStatus.NEW));
+    private void ensureInterestExists(UUID societeId, UUID contactId, UUID propertyId) {
+        if (!contactInterestRepository.existsBySocieteIdAndContactIdAndPropertyId(societeId, contactId, propertyId)) {
+            contactInterestRepository.save(new ContactInterest(societeId, contactId, propertyId, InterestStatus.NEW));
         }
     }
 
@@ -441,14 +421,14 @@ public class DepositService {
         contact.markUpdatedBy(actorUserId);
     }
 
-    private UUID requireTenantId() {
-        UUID tenantId = TenantContext.getTenantId();
-        if (tenantId == null) throw new CrossTenantAccessException("Missing tenant context");
-        return tenantId;
+    private UUID requireSocieteId() {
+        UUID societeId = SocieteContext.getSocieteId();
+        if (societeId == null) throw new CrossTenantAccessException("Missing société context");
+        return societeId;
     }
 
     private UUID requireUserId() {
-        UUID userId = TenantContext.getUserId();
+        UUID userId = SocieteContext.getUserId();
         if (userId == null) throw new CrossTenantAccessException("Missing user context");
         return userId;
     }
@@ -477,7 +457,6 @@ public class DepositService {
         try {
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            // Never fail the business flow for a notification payload
             return "{}";
         }
     }

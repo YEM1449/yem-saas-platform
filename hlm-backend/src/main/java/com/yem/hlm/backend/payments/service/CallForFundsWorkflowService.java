@@ -13,8 +13,7 @@ import com.yem.hlm.backend.payments.domain.PaymentScheduleStatus;
 import com.yem.hlm.backend.payments.domain.SchedulePayment;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,18 +42,15 @@ public class CallForFundsWorkflowService {
 
     private final PaymentScheduleItemRepository itemRepo;
     private final SchedulePaymentRepository     paymentRepo;
-    private final TenantRepository              tenantRepo;
     private final MessageComposeService         messageService;
     private final PaymentScheduleService        scheduleService; // for toResponse helper
 
     public CallForFundsWorkflowService(PaymentScheduleItemRepository itemRepo,
                                        SchedulePaymentRepository paymentRepo,
-                                       TenantRepository tenantRepo,
                                        MessageComposeService messageService,
                                        PaymentScheduleService scheduleService) {
         this.itemRepo       = itemRepo;
         this.paymentRepo    = paymentRepo;
-        this.tenantRepo     = tenantRepo;
         this.messageService = messageService;
         this.scheduleService = scheduleService;
     }
@@ -67,8 +63,8 @@ public class CallForFundsWorkflowService {
      */
     @Transactional
     public PaymentScheduleItemResponse issue(UUID itemId) {
-        UUID tenantId = requireTenantId();
-        PaymentScheduleItem item = scheduleService.requireItem(tenantId, itemId);
+        UUID societeId = requireTenantId();
+        PaymentScheduleItem item = scheduleService.requireItem(societeId, itemId);
 
         if (item.getStatus() != PaymentScheduleStatus.DRAFT) {
             throw new InvalidPaymentScheduleStateException(
@@ -76,7 +72,7 @@ public class CallForFundsWorkflowService {
         }
         item.setStatus(PaymentScheduleStatus.ISSUED);
         item.setIssuedAt(LocalDateTime.now());
-        return scheduleService.toResponse(itemRepo.save(item), tenantId);
+        return scheduleService.toResponse(itemRepo.save(item), societeId);
     }
 
     // ── send ─────────────────────────────────────────────────────────────────
@@ -87,8 +83,8 @@ public class CallForFundsWorkflowService {
      */
     @Transactional
     public PaymentScheduleItemResponse send(UUID itemId, SendScheduleItemRequest req) {
-        UUID tenantId = requireTenantId();
-        PaymentScheduleItem item = scheduleService.requireItem(tenantId, itemId);
+        UUID societeId = requireTenantId();
+        PaymentScheduleItem item = scheduleService.requireItem(societeId, itemId);
 
         if (!SENDABLE.contains(item.getStatus())) {
             throw new InvalidPaymentScheduleStateException(
@@ -133,7 +129,7 @@ public class CallForFundsWorkflowService {
             item.setSentAt(LocalDateTime.now());
         }
 
-        return scheduleService.toResponse(itemRepo.save(item), tenantId);
+        return scheduleService.toResponse(itemRepo.save(item), societeId);
     }
 
     // ── cancel ───────────────────────────────────────────────────────────────
@@ -143,8 +139,8 @@ public class CallForFundsWorkflowService {
      */
     @Transactional
     public PaymentScheduleItemResponse cancel(UUID itemId) {
-        UUID tenantId = requireTenantId();
-        PaymentScheduleItem item = scheduleService.requireItem(tenantId, itemId);
+        UUID societeId = requireTenantId();
+        PaymentScheduleItem item = scheduleService.requireItem(societeId, itemId);
 
         if (item.getStatus() == PaymentScheduleStatus.PAID) {
             throw new InvalidPaymentScheduleStateException("Cannot cancel a fully PAID item");
@@ -154,7 +150,7 @@ public class CallForFundsWorkflowService {
         }
         item.setStatus(PaymentScheduleStatus.CANCELED);
         item.setCanceledAt(LocalDateTime.now());
-        return scheduleService.toResponse(itemRepo.save(item), tenantId);
+        return scheduleService.toResponse(itemRepo.save(item), societeId);
     }
 
     // ── addPayment ───────────────────────────────────────────────────────────
@@ -167,9 +163,9 @@ public class CallForFundsWorkflowService {
      */
     @Transactional
     public PaymentResponse addPayment(UUID itemId, AddPaymentRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireTenantId();
         UUID actorId  = scheduleService.requireUserId();
-        PaymentScheduleItem item = scheduleService.requireItem(tenantId, itemId);
+        PaymentScheduleItem item = scheduleService.requireItem(societeId, itemId);
 
         if (item.getStatus() == PaymentScheduleStatus.CANCELED) {
             throw new InvalidPaymentScheduleStateException("Cannot add a payment to a CANCELED item");
@@ -182,7 +178,7 @@ public class CallForFundsWorkflowService {
         }
 
         SchedulePayment payment = new SchedulePayment(
-                tenantRepo.getReferenceById(tenantId),
+                societeId,
                 itemId,
                 actorId,
                 req.amount(),
@@ -194,7 +190,7 @@ public class CallForFundsWorkflowService {
         SchedulePayment saved = paymentRepo.save(payment);
 
         // Recompute total and possibly mark PAID
-        BigDecimal totalPaid = paymentRepo.sumPaidForItem(tenantId, itemId);
+        BigDecimal totalPaid = paymentRepo.sumPaidForItem(societeId, itemId);
         if (totalPaid.compareTo(item.getAmount()) >= 0) {
             item.setStatus(PaymentScheduleStatus.PAID);
             itemRepo.save(item);
@@ -207,9 +203,9 @@ public class CallForFundsWorkflowService {
 
     @Transactional(readOnly = true)
     public List<PaymentResponse> listPayments(UUID itemId) {
-        UUID tenantId = requireTenantId();
-        scheduleService.requireItem(tenantId, itemId); // ensure item belongs to tenant
-        return paymentRepo.findByTenant_IdAndScheduleItemIdOrderByPaidAtAsc(tenantId, itemId)
+        UUID societeId = requireTenantId();
+        scheduleService.requireItem(societeId, itemId); // ensure item belongs to société
+        return paymentRepo.findBySocieteIdAndScheduleItemIdOrderByPaidAtAsc(societeId, itemId)
                 .stream()
                 .map(PaymentResponse::from)
                 .toList();
@@ -233,8 +229,8 @@ public class CallForFundsWorkflowService {
     }
 
     private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 }

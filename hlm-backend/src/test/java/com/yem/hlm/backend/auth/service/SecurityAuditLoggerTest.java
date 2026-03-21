@@ -20,7 +20,7 @@ class SecurityAuditLoggerTest {
 
     private SecurityAuditLogger logger;
     private ListAppender<ILoggingEvent> authAppender;
-    private ListAppender<ILoggingEvent> tenantAppender;
+    private ListAppender<ILoggingEvent> societeAppender;
     private ListAppender<ILoggingEvent> rateLimitAppender;
 
     @BeforeEach
@@ -28,14 +28,14 @@ class SecurityAuditLoggerTest {
         logger = new SecurityAuditLogger();
 
         authAppender = attachAppender("security.auth");
-        tenantAppender = attachAppender("security.tenant");
+        societeAppender = attachAppender("security.societe");
         rateLimitAppender = attachAppender("security.ratelimit");
     }
 
     @AfterEach
     void tearDown() {
         detachAppender("security.auth", authAppender);
-        detachAppender("security.tenant", tenantAppender);
+        detachAppender("security.societe", societeAppender);
         detachAppender("security.ratelimit", rateLimitAppender);
     }
 
@@ -80,7 +80,7 @@ class SecurityAuditLoggerTest {
         assertThat(authAppender.list).hasSize(1);
         String msg = authAppender.list.get(0).getFormattedMessage();
         assertThat(msg).contains("event=FAILED_LOGIN");
-        assertThat(msg).contains("tenant=acme");
+        assertThat(msg).contains("identity=acme");
         assertThat(msg).contains("BAD_CREDENTIALS");
         // Email should be masked
         assertThat(msg).doesNotContain("johndoe@acme.com");
@@ -95,7 +95,7 @@ class SecurityAuditLoggerTest {
         assertThat(authAppender.list).hasSize(1);
         String msg = authAppender.list.get(0).getFormattedMessage();
         assertThat(msg).contains("event=LOGIN_SUCCESS");
-        assertThat(msg).contains("tenant=acme");
+        assertThat(msg).contains("identity=acme");
         assertThat(msg).contains(userId.toString());
         assertThat(msg).contains("ROLE_ADMIN");
     }
@@ -128,12 +128,12 @@ class SecurityAuditLoggerTest {
     @Test
     void logCrossTenantAttempt_logsToTenantLogger() {
         UUID requested = UUID.randomUUID();
-        UUID tokenTenant = UUID.randomUUID();
-        logger.logCrossTenantAttempt(requested, tokenTenant, "/api/properties");
+        UUID tokenSociete = UUID.randomUUID();
+        logger.logCrossSocieteAttempt(requested, tokenSociete, "/api/properties");
 
-        assertThat(tenantAppender.list).hasSize(1);
-        String msg = tenantAppender.list.get(0).getFormattedMessage();
-        assertThat(msg).contains("event=CROSS_TENANT_ATTEMPT");
+        assertThat(societeAppender.list).hasSize(1);
+        String msg = societeAppender.list.get(0).getFormattedMessage();
+        assertThat(msg).contains("event=CROSS_SOCIETE_ATTEMPT");
         assertThat(msg).contains("/api/properties");
     }
 

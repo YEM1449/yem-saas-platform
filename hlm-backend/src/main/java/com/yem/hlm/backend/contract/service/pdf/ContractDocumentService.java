@@ -5,7 +5,9 @@ import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
 import com.yem.hlm.backend.deposit.service.pdf.DocumentGenerationService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,11 +41,14 @@ public class ContractDocumentService {
 
     private final SaleContractRepository    contractRepository;
     private final DocumentGenerationService documentGenerationService;
+    private final SocieteRepository         societeRepository;
 
     public ContractDocumentService(SaleContractRepository contractRepository,
-                                   DocumentGenerationService documentGenerationService) {
+                                   DocumentGenerationService documentGenerationService,
+                                   SocieteRepository societeRepository) {
         this.contractRepository        = contractRepository;
         this.documentGenerationService = documentGenerationService;
+        this.societeRepository         = societeRepository;
     }
 
     /**
@@ -55,14 +60,16 @@ public class ContractDocumentService {
      *                                   tries to access another agent's contract — 404)
      */
     public byte[] generate(UUID contractId) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
-        SaleContract contract = contractRepository.findForPdf(tenantId, contractId)
+        SaleContract contract = contractRepository.findForPdf(societeId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
 
         enforceAgentOwnership(contractId, contract);
 
-        ContractDocumentModel model = buildModel(contract);
+        String societeName = societeRepository.findById(societeId)
+                .map(Societe::getNom).orElse("—");
+        ContractDocumentModel model = buildModel(contract, societeName);
         return documentGenerationService.renderToPdf("documents/contract", Map.of("model", model));
     }
 
@@ -70,7 +77,7 @@ public class ContractDocumentService {
     // Model builder
     // =========================================================================
 
-    private ContractDocumentModel buildModel(SaleContract contract) {
+    private ContractDocumentModel buildModel(SaleContract contract, String societeName) {
         var property = contract.getProperty();
         var buyer    = contract.getBuyerContact();
 
@@ -90,7 +97,7 @@ public class ContractDocumentService {
                 ? contract.getListPrice().toPlainString() : null;
 
         return new ContractDocumentModel(
-                nvl(contract.getTenant().getName(), "—"),
+                nvl(societeName, "—"),
                 nvl(contract.getProject().getName(), "—"),
                 nvl(property.getReferenceCode(), "—"),
                 nvl(property.getTitle(), "—"),

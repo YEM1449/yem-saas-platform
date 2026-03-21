@@ -1,40 +1,34 @@
 package com.yem.hlm.backend.user.domain;
 
 import jakarta.persistence.*;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table (name = "app_user", uniqueConstraints = {
-        @UniqueConstraint(name="uk_user_tenant_email", columnNames = {"tenant_id","email"})
+@Table(name = "app_user", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_email", columnNames = {"email"})
 })
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_user_tenant"))
-    private Tenant tenant;
-
     @Column(name = "email", nullable = false, length = 160)
     private String email;
 
     @Setter
-    @Column (name = "password_hash", nullable = false, length = 256)
+    @Column(name = "password_hash", nullable = false, length = 256)
     private String passwordHash;
 
     @Setter
-    @Column (name = "enabled", nullable = false)
+    @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
-    @Setter
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
-    private UserRole role = UserRole.ROLE_AGENT;
+    /** Platform-level role (nullable — société-specific roles live in AppUserSociete). */
+    @Column(name = "platform_role", length = 50)
+    private String platformRole;
 
     @Column(name = "token_version", nullable = false)
     private int tokenVersion = 0;
@@ -47,22 +41,20 @@ public class User {
 
     protected User() {}
 
-    public User(Tenant tenant, String email, String passwordHash) {
-        this.tenant = tenant;
+    public User(String email, String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
-        this.role = UserRole.ROLE_AGENT;
     }
 
-    public UUID getId() {return id;}
-    public Tenant getTenant() {return tenant;}
-    public String getEmail() {return email;}
-    public String getPasswordHash() {return passwordHash;}
-    public boolean isEnabled() {return enabled;}
-    public UserRole getRole() {return role;}
-    public int getTokenVersion() {return tokenVersion;}
-    public int getFailedLoginAttempts() {return failedLoginAttempts;}
-    public Instant getLockedUntil() {return lockedUntil;}
+    public UUID getId() { return id; }
+    public String getEmail() { return email; }
+    public String getPasswordHash() { return passwordHash; }
+    public boolean isEnabled() { return enabled; }
+    public String getPlatformRole() { return platformRole; }
+    public void setPlatformRole(String platformRole) { this.platformRole = platformRole; }
+    public int getTokenVersion() { return tokenVersion; }
+    public int getFailedLoginAttempts() { return failedLoginAttempts; }
+    public Instant getLockedUntil() { return lockedUntil; }
 
     public void incrementTokenVersion() {
         this.tokenVersion++;

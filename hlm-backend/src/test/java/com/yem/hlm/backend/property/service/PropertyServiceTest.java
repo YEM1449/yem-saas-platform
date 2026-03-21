@@ -8,9 +8,8 @@ import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,7 @@ class PropertyServiceTest {
     private PropertyRepository propertyRepository;
 
     @Mock
-    private TenantRepository tenantRepository;
+    private SocieteRepository societeRepository;
 
     @Mock
     private ProjectActiveGuard projectActiveGuard;
@@ -46,29 +45,28 @@ class PropertyServiceTest {
     @InjectMocks
     private PropertyService propertyService;
 
-    private UUID tenantId;
+    private UUID societeId;
     private Property mockProperty;
 
     @BeforeEach
     void setUp() {
-        tenantId = UUID.randomUUID();
-        TenantContext.setTenantId(tenantId);
-        TenantContext.setUserId(UUID.randomUUID());
+        societeId = UUID.randomUUID();
+        SocieteContext.setSocieteId(societeId);
+        SocieteContext.setUserId(UUID.randomUUID());
 
-        Tenant mockTenant = new Tenant("test-key", "Test Tenant");
         Project mockProject = mock(Project.class);
-        mockProperty = new Property(mockTenant, mockProject, PropertyType.VILLA, UUID.randomUUID());
+        mockProperty = new Property(societeId, mockProject, PropertyType.VILLA, UUID.randomUUID());
     }
 
     @AfterEach
     void tearDown() {
-        TenantContext.clear();
+        SocieteContext.clear();
     }
 
     @Test
     void listAll_noArgs_callsRepositoryWithNoFilters() {
         // Given
-        when(propertyRepository.findByTenant_IdAndDeletedAtIsNull(tenantId))
+        when(propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -76,15 +74,15 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findByTenant_IdAndDeletedAtIsNull(tenantId);
-        verify(propertyRepository, never()).findByTenant_IdAndTypeAndDeletedAtIsNull(any(), any());
-        verify(propertyRepository, never()).findByTenant_IdAndStatusAndDeletedAtIsNull(any(), any());
+        verify(propertyRepository).findBySocieteIdAndDeletedAtIsNull(societeId);
+        verify(propertyRepository, never()).findBySocieteIdAndTypeAndDeletedAtIsNull(any(), any());
+        verify(propertyRepository, never()).findBySocieteIdAndStatusAndDeletedAtIsNull(any(), any());
     }
 
     @Test
     void listAll_withNullParameters_callsRepositoryWithNoFilters() {
         // Given
-        when(propertyRepository.findByTenant_IdAndDeletedAtIsNull(tenantId))
+        when(propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -92,14 +90,14 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findByTenant_IdAndDeletedAtIsNull(tenantId);
+        verify(propertyRepository).findBySocieteIdAndDeletedAtIsNull(societeId);
     }
 
     @Test
     void listAll_withTypeOnly_callsRepositoryWithTypeFilter() {
         // Given
         PropertyType type = PropertyType.VILLA;
-        when(propertyRepository.findByTenant_IdAndTypeAndDeletedAtIsNull(tenantId, type))
+        when(propertyRepository.findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -107,15 +105,15 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findByTenant_IdAndTypeAndDeletedAtIsNull(tenantId, type);
-        verify(propertyRepository, never()).findByTenant_IdAndDeletedAtIsNull(any());
+        verify(propertyRepository).findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type);
+        verify(propertyRepository, never()).findBySocieteIdAndDeletedAtIsNull(any());
     }
 
     @Test
     void listAll_withStatusOnly_callsRepositoryWithStatusFilter() {
         // Given
         PropertyStatus status = PropertyStatus.ACTIVE;
-        when(propertyRepository.findByTenant_IdAndStatusAndDeletedAtIsNull(tenantId, status))
+        when(propertyRepository.findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -123,7 +121,7 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findByTenant_IdAndStatusAndDeletedAtIsNull(tenantId, status);
+        verify(propertyRepository).findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status);
     }
 
     @Test
@@ -131,7 +129,7 @@ class PropertyServiceTest {
         // Given
         PropertyType type = PropertyType.VILLA;
         PropertyStatus status = PropertyStatus.ACTIVE;
-        when(propertyRepository.findByTenant_IdAndTypeAndStatusAndDeletedAtIsNull(tenantId, type, status))
+        when(propertyRepository.findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -139,14 +137,14 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findByTenant_IdAndTypeAndStatusAndDeletedAtIsNull(tenantId, type, status);
+        verify(propertyRepository).findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status);
     }
 
     @Test
     void getById_nonExistentProperty_throwsNotFoundException() {
         // Given
         UUID propertyId = UUID.randomUUID();
-        when(propertyRepository.findByTenant_IdAndIdAndDeletedAtIsNull(tenantId, propertyId))
+        when(propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId))
                 .thenReturn(Optional.empty());
 
         // When/Then

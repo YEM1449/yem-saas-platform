@@ -37,11 +37,10 @@ class LoginRateLimitIT extends IntegrationTestBase {
     private String loginBody(String tenant, String email) {
         return """
             {
-              "tenantKey": "%s",
               "email": "%s",
               "password": "WrongPass123!"
             }
-            """.formatted(tenant, email);
+            """.formatted(email);
     }
 
     @Test
@@ -73,7 +72,7 @@ class LoginRateLimitIT extends IntegrationTestBase {
     void identityLimitExceeded_returns429WithLoginRateLimited() throws Exception {
         String email = "ratelimit-key@acme.com";
 
-        // First 2 requests with same tenantKey+email are allowed (key-max=2), from different IPs
+        // First 2 requests with same email combination are allowed (key-max=2), from different IPs
         for (int i = 0; i < 2; i++) {
             final String ip = "10.0.2." + i;
             mockMvc.perform(post("/auth/login")

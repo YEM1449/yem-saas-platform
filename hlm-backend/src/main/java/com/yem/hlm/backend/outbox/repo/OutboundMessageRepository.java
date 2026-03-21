@@ -17,15 +17,14 @@ import java.util.UUID;
 
 public interface OutboundMessageRepository extends JpaRepository<OutboundMessage, UUID> {
 
-    Optional<OutboundMessage> findByTenant_IdAndId(UUID tenantId, UUID id);
+    Optional<OutboundMessage> findBySocieteIdAndId(UUID societeId, UUID id);
 
     /**
-     * Paged, tenant-scoped list for the messages API.
-     * All filter params are optional (null disables the constraint).
+     * Paged, société-scoped list for the messages API.
      */
     @Query("""
             SELECT m FROM OutboundMessage m
-            WHERE m.tenant.id = :tenantId
+            WHERE m.societeId = :societeId
               AND (cast(:channel as string) IS NULL OR m.channel = :channel)
               AND (cast(:status as string) IS NULL OR m.status = :status)
               AND (:correlationId IS NULL OR m.correlationId = :correlationId)
@@ -34,7 +33,7 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
             ORDER BY m.createdAt DESC
             """)
     Page<OutboundMessage> findByTenant(
-            @Param("tenantId") UUID tenantId,
+            @Param("societeId") UUID societeId,
             @Param("channel") MessageChannel channel,
             @Param("status") MessageStatus status,
             @Param("correlationId") UUID correlationId,
@@ -48,7 +47,6 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
      * messages for dispatch without blocking other concurrent workers.
      *
      * <p>NOTE: this must be called inside an active {@code @Transactional} context.
-     * The lock is released when the surrounding transaction commits.
      */
     @Query(value = """
             SELECT id FROM outbound_message
@@ -60,22 +58,20 @@ public interface OutboundMessageRepository extends JpaRepository<OutboundMessage
             """, nativeQuery = true)
     List<UUID> fetchPendingBatch(@Param("batchSize") int batchSize);
 
-    /** Returns messages for a contact timeline: correlationId in the provided set, tenant-scoped. */
+    /** Returns messages for a contact timeline: correlationId in the provided set, société-scoped. */
     @Query("""
             SELECT m FROM OutboundMessage m
-            WHERE m.tenant.id = :tenantId
+            WHERE m.societeId = :societeId
               AND m.correlationId IN :ids
             ORDER BY m.createdAt DESC
             """)
     List<OutboundMessage> findByTenantAndCorrelationIds(
-            @Param("tenantId") UUID tenantId,
+            @Param("societeId") UUID societeId,
             @Param("ids") Collection<UUID> ids
     );
 
     /**
-     * Cross-tenant idempotency check for the reminder scheduler.
-     * Returns true if any PENDING or SENT message already exists with the given
-     * correlationId and correlationType (so the reminder is not sent twice).
+     * Cross-société idempotency check for the reminder scheduler.
      */
     @Query("""
             SELECT COUNT(m) > 0 FROM OutboundMessage m

@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.contact.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,12 +14,12 @@ import java.util.UUID;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_contact_interest_tenant_contact_property",
-                        columnNames = {"tenant_id", "contact_id", "property_id"}
+                        columnNames = {"societe_id", "contact_id", "property_id"}
                 )
         },
         indexes = {
-                @Index(name = "idx_ci_tenant_contact", columnList = "tenant_id,contact_id"),
-                @Index(name = "idx_ci_tenant_property", columnList = "tenant_id,property_id")
+                @Index(name = "idx_ci_tenant_contact", columnList = "societe_id,contact_id"),
+                @Index(name = "idx_ci_tenant_property", columnList = "societe_id,property_id")
         }
 )
 public class ContactInterest {
@@ -29,9 +28,8 @@ public class ContactInterest {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_ci_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Column(name = "contact_id", nullable = false)
     private UUID contactId;
@@ -52,10 +50,10 @@ public class ContactInterest {
         this.createdAt = LocalDateTime.now();
     }
 
-    public ContactInterest(Tenant tenant, UUID contactId, UUID propertyId, InterestStatus interestStatus) {
-        this.tenant = tenant;
-        this.contactId = contactId;
-        this.propertyId = propertyId;
+    public ContactInterest(UUID societeId, UUID contactId, UUID propertyId, InterestStatus interestStatus) {
+        this.societeId      = societeId;
+        this.contactId      = contactId;
+        this.propertyId     = propertyId;
         this.interestStatus = interestStatus;
     }
 }

@@ -13,23 +13,23 @@ import java.util.UUID;
 
 public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
 
-    Optional<Reservation> findByTenant_IdAndId(UUID tenantId, UUID id);
+    Optional<Reservation> findBySocieteIdAndId(UUID societeId, UUID id);
 
-    List<Reservation> findAllByTenant_IdOrderByCreatedAtDesc(UUID tenantId);
+    List<Reservation> findAllBySocieteIdOrderByCreatedAtDesc(UUID societeId);
 
-    /** True if property has an ACTIVE reservation in the given tenant. */
-    boolean existsByTenant_IdAndPropertyIdAndStatus(UUID tenantId, UUID propertyId, ReservationStatus status);
+    /** True if property has an ACTIVE reservation in the given société. */
+    boolean existsBySocieteIdAndPropertyIdAndStatus(UUID societeId, UUID propertyId, ReservationStatus status);
 
     /** Find all ACTIVE reservations past their expiry date (for scheduler). */
     @Query("SELECT r FROM Reservation r WHERE r.status = 'ACTIVE' AND r.expiryDate < :now")
     List<Reservation> findExpired(@Param("now") LocalDateTime now);
 
     /** Count active reservations for pipeline dashboard. */
-    long countByTenant_IdAndStatus(UUID tenantId, ReservationStatus status);
+    long countBySocieteIdAndStatus(UUID societeId, ReservationStatus status);
 
     /** Count reservations expiring within the next N hours for pipeline alert. */
-    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.tenant.id = :tenantId AND r.status = 'ACTIVE' AND r.expiryDate BETWEEN :now AND :horizon")
-    long countExpiringBefore(@Param("tenantId") UUID tenantId,
+    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.societeId = :societeId AND r.status = 'ACTIVE' AND r.expiryDate BETWEEN :now AND :horizon")
+    long countExpiringBefore(@Param("societeId") UUID societeId,
                              @Param("now") LocalDateTime now,
                              @Param("horizon") LocalDateTime horizon);
 }

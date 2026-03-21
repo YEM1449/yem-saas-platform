@@ -75,12 +75,12 @@ public class TestJwtConfig {
      *
      * Pourquoi:
      * - Dans certaines IT, tu veux un token valide mais volontairement incomplet
-     *   (ex: missing claim tid) pour tester le comportement de sécurité.
+     *   (ex: missing claim sid) pour tester le comportement de sécurité.
      *
      * Design:
      * - Méthode statique => usage simple dans les tests.
      * - Claims minimaux JWT: iat, exp, sub
-     * - Claims custom en paramètre (tid, rôles, etc.)
+     * - Claims custom en paramètre (sid, rôles, etc.)
      */
     public static String mint(
             JwtEncoder encoder,
@@ -105,13 +105,13 @@ public class TestJwtConfig {
     }
 
     /**
-     * Variante pratique: userId + tenantId.
+     * Variante pratique: userId + societeId.
      * (Utile si tu veux générer un token standard rapidement.)
      */
     public static String mintAccessToken(
             JwtEncoder encoder,
             UUID userId,
-            UUID tenantId,
+            UUID societeId,
             Instant issuedAt,
             Instant expiresAt
     ) {
@@ -120,7 +120,7 @@ public class TestJwtConfig {
                 userId.toString(),
                 issuedAt,
                 expiresAt,
-                Map.of("tid", tenantId.toString())
+                Map.of("sid", societeId.toString())
         );
     }
 

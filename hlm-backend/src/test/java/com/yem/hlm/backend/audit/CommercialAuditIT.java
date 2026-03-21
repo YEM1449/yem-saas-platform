@@ -15,8 +15,8 @@ import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -57,7 +57,7 @@ class CommercialAuditIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String adminBearer;
@@ -158,9 +158,8 @@ class CommercialAuditIT extends IntegrationTestBase {
         assertThat(objectMapper.readTree(jsonA).size()).isGreaterThanOrEqualTo(1);
 
         // Tenant B cannot see tenant A events
-        Tenant tenantB = tenantRepository.save(new Tenant("audit-iso-b", "Audit Isolation Tenant B"));
-        User userB = new User(tenantB, "admin@audit-iso-b.com", "hash");
-        userB.setRole(UserRole.ROLE_ADMIN);
+        Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
+        User userB = new User("admin@audit-iso-b.com", "hash");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -179,9 +178,7 @@ class CommercialAuditIT extends IntegrationTestBase {
 
     @Test
     void auditList_asAgent_returns403() throws Exception {
-        User agent = new User(tenantRepository.findById(TENANT_ID).orElseThrow(),
-                "agent-audit@acme.com", "hash");
-        agent.setRole(UserRole.ROLE_AGENT);
+        User agent = new User("agent-audit@acme.com", "hash");
         agent = userRepository.save(agent);
         String agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), TENANT_ID, UserRole.ROLE_AGENT);
 

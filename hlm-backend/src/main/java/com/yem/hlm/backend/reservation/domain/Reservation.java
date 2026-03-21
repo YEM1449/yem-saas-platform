@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.reservation.domain;
 
 import com.yem.hlm.backend.contact.domain.Contact;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,9 +25,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "property_reservation",
         indexes = {
-                @Index(name = "idx_preser_tenant_status",   columnList = "tenant_id,status"),
-                @Index(name = "idx_preser_tenant_property", columnList = "tenant_id,property_id"),
-                @Index(name = "idx_preser_tenant_contact",  columnList = "tenant_id,contact_id"),
+                @Index(name = "idx_preser_tenant_status",   columnList = "societe_id,status"),
+                @Index(name = "idx_preser_tenant_property", columnList = "societe_id,property_id"),
+                @Index(name = "idx_preser_tenant_contact",  columnList = "societe_id,contact_id"),
                 @Index(name = "idx_preser_expiry_date",     columnList = "expiry_date")
         }
 )
@@ -38,9 +37,8 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_preser_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id", nullable = false, foreignKey = @ForeignKey(name = "fk_preser_contact"))
@@ -96,12 +94,12 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Reservation(Tenant tenant, Contact contact, UUID propertyId, User reservedByUser) {
-        this.tenant = tenant;
-        this.contact = contact;
-        this.propertyId = propertyId;
-        this.reservedByUser = reservedByUser;
+    public Reservation(UUID societeId, Contact contact, UUID propertyId, User reservedByUser) {
+        this.societeId       = societeId;
+        this.contact         = contact;
+        this.propertyId      = propertyId;
+        this.reservedByUser  = reservedByUser;
         this.reservationDate = LocalDate.now();
-        this.status = ReservationStatus.ACTIVE;
+        this.status          = ReservationStatus.ACTIVE;
     }
 }

@@ -19,7 +19,7 @@ import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -54,7 +54,7 @@ import java.util.UUID;
  *
  * <h3>Caching</h3>
  * Cache name: {@value CacheConfig#COMMERCIAL_DASHBOARD_CACHE}, TTL 30 s.
- * Key = tenantId + effectiveAgentId + from + to + projectId.
+ * Key = societeId + effectiveAgentId + from + to + projectId.
  *
  * <h3>Query budget (summary)</h3>
  * Up to 16 aggregate queries; no entity hydration loops.
@@ -124,9 +124,9 @@ public class CommercialDashboardService {
      */
     @Cacheable(
             value = CacheConfig.COMMERCIAL_DASHBOARD_CACHE,
-            key   = "#tenantId + ':' + #effectiveAgentId + ':' + #from + ':' + #to + ':' + #projectId"
+            key   = "#societeId + ':' + #effectiveAgentId + ':' + #from + ':' + #to + ':' + #projectId"
     )
-    public CommercialDashboardSummaryDTO getSummary(UUID tenantId,
+    public CommercialDashboardSummaryDTO getSummary(UUID societeId,
                                                     LocalDateTime from,
                                                     LocalDateTime to,
                                                     UUID projectId,
@@ -136,24 +136,24 @@ public class CommercialDashboardService {
         meterRegistry.counter("commercial_dashboard_summary_cache_misses_total").increment();
 
         try {
-            return computeSummary(tenantId, from, to, projectId, effectiveAgentId);
+            return computeSummary(societeId, from, to, projectId, effectiveAgentId);
         } finally {
             sample.stop(summaryTimer);
             long elapsedMs = System.currentTimeMillis() - startMs;
             if (elapsedMs > SLOW_QUERY_THRESHOLD_MS) {
-                log.warn("[CommercialDashboard] Slow summary generation: {}ms (tenant={}, agent={})",
-                        elapsedMs, tenantId, effectiveAgentId);
+                log.warn("[CommercialDashboard] Slow summary generation: {}ms (societe={}, agent={})",
+                        elapsedMs, societeId, effectiveAgentId);
             }
         }
     }
 
-    private CommercialDashboardSummaryDTO computeSummary(UUID tenantId,
+    private CommercialDashboardSummaryDTO computeSummary(UUID societeId,
                                                          LocalDateTime from,
                                                          LocalDateTime to,
                                                          UUID projectId,
                                                          UUID effectiveAgentId) {
         // 1 ─ Sales totals ──────────────────────────────────────────────────────
-        List<Object[]> salesRows = contractRepository.salesTotals(tenantId, from, to, projectId, effectiveAgentId);
+        List<Object[]> salesRows = contractRepository.salesTotals(societeId, from, to, projectId, effectiveAgentId);
         long salesCount = 0L;
         BigDecimal salesTotalAmount = BigDecimal.ZERO;
         BigDecimal avgSaleValue     = BigDecimal.ZERO;
@@ -165,7 +165,7 @@ public class CommercialDashboardService {
         }
 
         // 2 ─ Deposit totals ────────────────────────────────────────────────────
-        List<Object[]> depRows = depositRepository.depositTotals(tenantId, from, to, effectiveAgentId);
+        List<Object[]> depRows = depositRepository.depositTotals(societeId, from, to, effectiveAgentId);
         long depositsCount          = 0L;
         BigDecimal depositsTotalAmount = BigDecimal.ZERO;
         if (!depRows.isEmpty()) {
@@ -176,48 +176,48 @@ public class CommercialDashboardService {
 
         // 3 ─ Sales by project (top 10) ─────────────────────────────────────────
         List<SalesByProjectRow> salesByProject = contractRepository
-                .salesByProject(tenantId, from, to, effectiveAgentId, PageRequest.of(0, TOP_N))
+                .salesByProject(societeId, from, to, effectiveAgentId, PageRequest.of(0, TOP_N))
                 .stream()
                 .map(r -> new SalesByProjectRow((UUID) r[0], (String) r[1], toLong(r[2]), toBD(r[3])))
                 .toList();
 
         // 4 ─ Sales by agent (top 10) ───────────────────────────────────────────
         List<SalesByAgentRow> salesByAgent = contractRepository
-                .salesByAgent(tenantId, from, to, projectId, PageRequest.of(0, TOP_N))
+                .salesByAgent(societeId, from, to, projectId, PageRequest.of(0, TOP_N))
                 .stream()
                 .map(r -> new SalesByAgentRow((UUID) r[0], (String) r[1], toLong(r[2]), toBD(r[3])))
                 .toList();
 
         // 5 ─ Inventory by status ───────────────────────────────────────────────
         Map<String, Long> inventoryByStatus = new HashMap<>();
-        propertyRepository.inventoryByStatus(tenantId, projectId)
+        propertyRepository.inventoryByStatus(societeId, projectId)
                 .forEach(r -> inventoryByStatus.put(String.valueOf(r[0]), toLong(r[1])));
 
         // 6 ─ Inventory by type ─────────────────────────────────────────────────
         Map<String, Long> inventoryByType = new HashMap<>();
-        propertyRepository.inventoryByType(tenantId, projectId)
+        propertyRepository.inventoryByType(societeId, projectId)
                 .forEach(r -> inventoryByType.put(String.valueOf(r[0]), toLong(r[1])));
 
         // 7 ─ Sales trend (daily) ───────────────────────────────────────────────
         List<DailySalesPoint> salesAmountByDay = contractRepository
-                .salesAmountByDay(tenantId, from, to, projectId, effectiveAgentId)
+                .salesAmountByDay(societeId, from, to, projectId, effectiveAgentId)
                 .stream()
                 .map(r -> new DailySalesPoint(toLocalDate(r[0]), toBD(r[1])))
                 .toList();
 
         // 8 ─ Deposits trend (daily) ────────────────────────────────────────────
         List<DailySalesPoint> depositsAmountByDay = depositRepository
-                .depositsAmountByDay(tenantId, from, to, effectiveAgentId)
+                .depositsAmountByDay(societeId, from, to, effectiveAgentId)
                 .stream()
                 .map(r -> new DailySalesPoint(toLocalDate(r[0]), toBD(r[1])))
                 .toList();
 
         // 9 ─ Cycle time (avgDaysDepositToSale) ────────────────────────────────
         BigDecimal avgDaysDepositToSale = computeAvgCycleTime(
-                contractRepository.cycleTimePairs(tenantId, from, to, effectiveAgentId));
+                contractRepository.cycleTimePairs(societeId, from, to, effectiveAgentId));
 
         // 10 ─ Active reservations snapshot (not date-filtered) ────────────────
-        List<Object[]> activeRows = depositRepository.activeReservationTotals(tenantId, effectiveAgentId);
+        List<Object[]> activeRows = depositRepository.activeReservationTotals(societeId, effectiveAgentId);
         long activeReservationsCount = 0L;
         BigDecimal activeReservationsTotalAmount = BigDecimal.ZERO;
         if (!activeRows.isEmpty()) {
@@ -227,11 +227,11 @@ public class CommercialDashboardService {
         }
 
         BigDecimal avgReservationAgeDays = computeAvgReservationAge(
-                depositRepository.activeReservationDepositDates(tenantId, effectiveAgentId));
+                depositRepository.activeReservationDepositDates(societeId, effectiveAgentId));
 
         // 11 ─ Active prospects (tenant-wide, not date/agent-filtered) ──────────
         long activeProspectsCount = contactRepository.countActiveProspects(
-                tenantId,
+                societeId,
                 List.of(ContactStatus.PROSPECT, ContactStatus.QUALIFIED_PROSPECT));
 
         // ─ Conversion rate ─────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ public class CommercialDashboardService {
 
         // 12 ─ Discount totals (avg + max percent) ──────────────────────────────
         List<Object[]> discountRows = contractRepository.discountTotals(
-                tenantId, effectiveAgentId, projectId);
+                societeId, effectiveAgentId, projectId);
         BigDecimal avgDiscountPercent = null;
         BigDecimal maxDiscountPercent = null;
         if (!discountRows.isEmpty()) {
@@ -254,7 +254,7 @@ public class CommercialDashboardService {
 
         // 13 ─ Discount by agent (top 10) ───────────────────────────────────────
         List<DiscountByAgentRow> discountByAgent = contractRepository
-                .discountByAgent(tenantId, PageRequest.of(0, TOP_N))
+                .discountByAgent(societeId, PageRequest.of(0, TOP_N))
                 .stream()
                 .map(r -> new DiscountByAgentRow(
                         (UUID)   r[0],
@@ -269,7 +269,7 @@ public class CommercialDashboardService {
                 ContactStatus.CLIENT, ContactStatus.ACTIVE_CLIENT,
                 ContactStatus.COMPLETED_CLIENT, ContactStatus.REFERRAL);
         List<ProspectSourceRow> prospectsBySource = contactRepository
-                .prospectSourceFunnel(tenantId, convertedStatuses)
+                .prospectSourceFunnel(societeId, convertedStatuses)
                 .stream()
                 .map(r -> {
                     long total     = toLong(r[1]);
@@ -281,12 +281,12 @@ public class CommercialDashboardService {
 
         // 15 ─ Property holds (ACTIVE property_reservation count) ─────────────
         long propertyHoldsCount = reservationRepository
-                .countByTenant_IdAndStatus(tenantId, ReservationStatus.ACTIVE);
+                .countBySocieteIdAndStatus(societeId, ReservationStatus.ACTIVE);
 
         // 16 ─ Property holds expiring within 48 h ─────────────────────────────
         LocalDateTime now48 = LocalDateTime.now();
         long propertyHoldsExpiringSoon = reservationRepository
-                .countExpiringBefore(tenantId, now48, now48.plusHours(48));
+                .countExpiringBefore(societeId, now48, now48.plusHours(48));
 
         return new CommercialDashboardSummaryDTO(
                 from, to,
@@ -315,7 +315,7 @@ public class CommercialDashboardService {
      * @param page 0-based page index
      * @param size page size (max 100)
      */
-    public CommercialDashboardSalesDTO getSales(UUID tenantId,
+    public CommercialDashboardSalesDTO getSales(UUID societeId,
                                                 LocalDateTime from,
                                                 LocalDateTime to,
                                                 UUID projectId,
@@ -324,7 +324,7 @@ public class CommercialDashboardService {
                                                 int size) {
         int safeSize = Math.min(size, 100);
         Page<Object[]> raw = contractRepository.salesForTable(
-                tenantId, from, to, projectId, effectiveAgentId,
+                societeId, from, to, projectId, effectiveAgentId,
                 PageRequest.of(page, safeSize));
 
         List<SalesTableRow> rows = raw.getContent().stream()
@@ -340,7 +340,7 @@ public class CommercialDashboardService {
                 .toList();
 
         // Reuse total amount from summary totals (1 extra query) for the table header
-        List<Object[]> totals = contractRepository.salesTotals(tenantId, from, to, projectId, effectiveAgentId);
+        List<Object[]> totals = contractRepository.salesTotals(societeId, from, to, projectId, effectiveAgentId);
         BigDecimal totalAmount = totals.isEmpty() ? BigDecimal.ZERO : toBD(totals.get(0)[1]);
 
         return new CommercialDashboardSalesDTO(
@@ -368,26 +368,26 @@ public class CommercialDashboardService {
     }
 
     /**
-     * Validates projectId belongs to the tenant.
+     * Validates projectId belongs to the société.
      * @throws ProjectNotFoundException on mismatch
      */
-    public void validateProject(UUID tenantId, UUID projectId) {
+    public void validateProject(UUID societeId, UUID projectId) {
         if (projectId != null) {
-            projectRepository.findByTenant_IdAndId(tenantId, projectId)
+            projectRepository.findBySocieteIdAndId(societeId, projectId)
                     .orElseThrow(() -> new ProjectNotFoundException(projectId));
         }
     }
 
     /**
      * Resolves the effective agentId applying RBAC.
-     * @throws UserNotFoundException if requestedAgentId is provided but not found in tenant
+     * @throws UserNotFoundException if requestedAgentId is provided but not found
      */
-    public UUID resolveEffectiveAgentId(UUID tenantId, UUID requestedAgentId) {
+    public UUID resolveEffectiveAgentId(UUID societeId, UUID requestedAgentId) {
         if (callerIsAgent()) {
-            return TenantContext.getUserId();
+            return SocieteContext.getUserId();
         }
         if (requestedAgentId != null) {
-            userRepository.findByTenant_IdAndId(tenantId, requestedAgentId)
+            userRepository.findById(requestedAgentId)
                     .orElseThrow(() -> new UserNotFoundException(requestedAgentId));
         }
         return requestedAgentId;

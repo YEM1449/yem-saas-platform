@@ -7,7 +7,7 @@ import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.api.dto.RecentPaymentRow;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,7 +31,7 @@ import java.util.UUID;
  *
  * <h3>Caching</h3>
  * Cache name: {@value CacheConfig#RECEIVABLES_DASHBOARD_CACHE}, TTL 30 s.
- * Key = tenantId + effectiveAgentId.
+ * Key = societeId + effectiveAgentId.
  *
  * <h3>Query budget</h3>
  * 5 aggregate queries against v2 payment_schedule_item / schedule_payment tables;
@@ -59,25 +59,25 @@ public class ReceivablesDashboardService {
      */
     public UUID resolveEffectiveAgentId(UUID requestedAgentId) {
         if (callerIsAgent()) {
-            return TenantContext.getUserId();
+            return SocieteContext.getUserId();
         }
         return requestedAgentId;
     }
 
     @Cacheable(
             value = CacheConfig.RECEIVABLES_DASHBOARD_CACHE,
-            key   = "#tenantId + ':' + #effectiveAgentId"
+            key   = "#societeId + ':' + #effectiveAgentId"
     )
-    public ReceivablesDashboardDTO getSummary(UUID tenantId, UUID effectiveAgentId) {
-        return computeSummary(tenantId, effectiveAgentId);
+    public ReceivablesDashboardDTO getSummary(UUID societeId, UUID effectiveAgentId) {
+        return computeSummary(societeId, effectiveAgentId);
     }
 
-    private ReceivablesDashboardDTO computeSummary(UUID tenantId, UUID effectiveAgentId) {
+    private ReceivablesDashboardDTO computeSummary(UUID societeId, UUID effectiveAgentId) {
 
         // 1 — Outstanding + overdue totals
         List<Object[]> totals = effectiveAgentId == null
-                ? itemRepository.receivablesTotals(tenantId)
-                : itemRepository.receivablesTotalsForAgent(tenantId, effectiveAgentId);
+                ? itemRepository.receivablesTotals(societeId)
+                : itemRepository.receivablesTotalsForAgent(societeId, effectiveAgentId);
         BigDecimal totalOutstanding = BigDecimal.ZERO;
         BigDecimal totalOverdue     = BigDecimal.ZERO;
         if (!totals.isEmpty()) {
@@ -87,8 +87,8 @@ public class ReceivablesDashboardService {
         }
 
         // 2 — Collection rate: totalReceived / totalIssued * 100
-        BigDecimal totalIssued   = itemRepository.totalIssuedAmount(tenantId);
-        BigDecimal totalReceived = paymentRepository.totalReceived(tenantId);
+        BigDecimal totalIssued   = itemRepository.totalIssuedAmount(societeId);
+        BigDecimal totalReceived = paymentRepository.totalReceived(societeId);
         BigDecimal collectionRate = null;
         if (totalIssued != null && totalIssued.compareTo(BigDecimal.ZERO) > 0) {
             collectionRate = totalReceived.divide(totalIssued, 4, RoundingMode.HALF_UP)
@@ -98,25 +98,25 @@ public class ReceivablesDashboardService {
 
         // 3 — Average days to payment (DATE(issued_at) → DATE(paid_at) pairs)
         BigDecimal avgDaysToPayment = computeAvgDaysToPayment(
-                paymentRepository.issuedAndReceivedPairs(tenantId));
+                paymentRepository.issuedAndReceivedPairs(societeId));
 
         // 4 — Aging buckets
         List<Object[]> agingRows = effectiveAgentId == null
-                ? itemRepository.outstandingForAging(tenantId)
-                : itemRepository.outstandingForAgingByAgent(tenantId, effectiveAgentId);
+                ? itemRepository.outstandingForAging(societeId)
+                : itemRepository.outstandingForAgingByAgent(societeId, effectiveAgentId);
         AgingBuckets buckets = buildAgingBuckets(agingRows, LocalDate.now());
 
         // 5 — Overdue by project (top 10)
         List<OverdueByProjectRow> overdueByProject = itemRepository
-                .overdueByProject(tenantId, PageRequest.of(0, TOP_N))
+                .overdueByProject(societeId, PageRequest.of(0, TOP_N))
                 .stream()
                 .map(r -> new OverdueByProjectRow((UUID) r[0], (String) r[1], toBD(r[2])))
                 .toList();
 
         // 6 — Recent payments (last 10)
         List<RecentPaymentRow> recentPayments = (effectiveAgentId == null
-                ? paymentRepository.recentPayments(tenantId, PageRequest.of(0, RECENT_N))
-                : paymentRepository.recentPaymentsByAgent(tenantId, effectiveAgentId, PageRequest.of(0, RECENT_N)))
+                ? paymentRepository.recentPayments(societeId, PageRequest.of(0, RECENT_N))
+                : paymentRepository.recentPaymentsByAgent(societeId, effectiveAgentId, PageRequest.of(0, RECENT_N)))
                 .stream()
                 .map(r -> new RecentPaymentRow(
                         (UUID)      r[0],

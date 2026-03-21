@@ -41,7 +41,7 @@ class AuthControllerTest {
 
         String body = """
             {
-              "tenantKey": "acme",
+              
               "email": "admin@acme.com",
               "password": "Admin123!Secure"
             }
@@ -58,7 +58,6 @@ class AuthControllerTest {
 
         ArgumentCaptor<LoginRequest> requestCaptor = ArgumentCaptor.forClass(LoginRequest.class);
         verify(authService).login(requestCaptor.capture());
-        assertThat(requestCaptor.getValue().tenantKey()).isEqualTo("acme");
         assertThat(requestCaptor.getValue().email()).isEqualTo("admin@acme.com");
         assertThat(requestCaptor.getValue().password()).isEqualTo("Admin123!Secure");
     }

@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.outbox.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -19,7 +18,7 @@ import java.util.UUID;
  * {@link MessageStatus#SENT}; on exhausted retries it becomes
  * {@link MessageStatus#FAILED}.
  *
- * <p>Tenant isolation: all queries must scope to {@code tenant.id}.
+ * <p>Société isolation: all queries must scope to {@code societeId}.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,9 +26,9 @@ import java.util.UUID;
 @Table(name = "outbound_message",
         indexes = {
                 @Index(name = "idx_om_tenant_status_retry",
-                        columnList = "tenant_id,status,next_retry_at"),
+                        columnList = "societe_id,status,next_retry_at"),
                 @Index(name = "idx_om_tenant_created",
-                        columnList = "tenant_id,created_at")
+                        columnList = "societe_id,created_at")
         }
 )
 public class OutboundMessage {
@@ -38,10 +37,8 @@ public class OutboundMessage {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_outbound_message_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id", nullable = false,
@@ -113,10 +110,10 @@ public class OutboundMessage {
     // Constructor
     // =========================================================================
 
-    public OutboundMessage(Tenant tenant, User createdByUser,
+    public OutboundMessage(UUID societeId, User createdByUser,
                            MessageChannel channel, String recipient,
                            String subject, String body) {
-        this.tenant        = tenant;
+        this.societeId     = societeId;
         this.createdByUser = createdByUser;
         this.channel       = channel;
         this.recipient     = recipient;

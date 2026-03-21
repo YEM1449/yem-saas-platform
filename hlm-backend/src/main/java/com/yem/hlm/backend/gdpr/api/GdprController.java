@@ -3,6 +3,9 @@ package com.yem.hlm.backend.gdpr.api;
 import com.yem.hlm.backend.gdpr.api.dto.DataExportResponse;
 import com.yem.hlm.backend.gdpr.api.dto.RectifyContactResponse;
 import com.yem.hlm.backend.gdpr.service.GdprService;
+import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +30,14 @@ public class GdprController {
 
     private final GdprService gdprService;
     private final PrivacyNoticeLoader privacyNoticeLoader;
+    private final SocieteRepository societeRepository;
 
-    public GdprController(GdprService gdprService, PrivacyNoticeLoader privacyNoticeLoader) {
+    public GdprController(GdprService gdprService,
+                          PrivacyNoticeLoader privacyNoticeLoader,
+                          SocieteRepository societeRepository) {
         this.gdprService = gdprService;
         this.privacyNoticeLoader = privacyNoticeLoader;
+        this.societeRepository = societeRepository;
     }
 
     /**
@@ -79,7 +86,19 @@ public class GdprController {
     @GetMapping("/privacy-notice")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
     public ResponseEntity<PrivacyNoticeResponse> getPrivacyNotice() {
-        return ResponseEntity.ok(privacyNoticeLoader.load());
+        PrivacyNoticeResponse template = privacyNoticeLoader.load();
+        String text = template.text();
+        UUID societeId = SocieteContext.getSocieteId();
+        if (societeId != null) {
+            Societe s = societeRepository.findById(societeId).orElse(null);
+            if (s != null) {
+                text = text.replace("[NOM DE LA SOCIÉTÉ]",
+                        s.getNom() != null ? s.getNom() : "[NOM DE LA SOCIÉTÉ]");
+                text = text.replace("[EMAIL DPO]",
+                        s.getEmailDpo() != null ? s.getEmailDpo() : "[EMAIL DPO]");
+            }
+        }
+        return ResponseEntity.ok(new PrivacyNoticeResponse(template.version(), template.lastUpdated(), text));
     }
 
     public record PrivacyNoticeResponse(String version, String lastUpdated, String text) {}

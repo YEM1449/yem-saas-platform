@@ -11,8 +11,7 @@ import com.yem.hlm.backend.payments.domain.PaymentScheduleItem;
 import com.yem.hlm.backend.payments.domain.PaymentScheduleStatus;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,27 +31,24 @@ public class PaymentScheduleService {
     private final PaymentScheduleItemRepository itemRepo;
     private final SchedulePaymentRepository     paymentRepo;
     private final SaleContractRepository        contractRepo;
-    private final TenantRepository              tenantRepo;
 
     public PaymentScheduleService(PaymentScheduleItemRepository itemRepo,
                                   SchedulePaymentRepository paymentRepo,
-                                  SaleContractRepository contractRepo,
-                                  TenantRepository tenantRepo) {
+                                  SaleContractRepository contractRepo) {
         this.itemRepo     = itemRepo;
         this.paymentRepo  = paymentRepo;
         this.contractRepo = contractRepo;
-        this.tenantRepo   = tenantRepo;
     }
 
     // ── List ────────────────────────────────────────────────────────────────
 
     public List<PaymentScheduleItemResponse> listByContract(UUID contractId) {
-        UUID tenantId = requireTenantId();
-        // Verify contract belongs to tenant (also enforces tenant isolation)
-        requireContract(tenantId, contractId);
-        return itemRepo.findByTenant_IdAndContractIdOrderBySequenceAsc(tenantId, contractId)
+        UUID societeId = requireTenantId();
+        // Verify contract belongs to société (also enforces société isolation)
+        requireContract(societeId, contractId);
+        return itemRepo.findBySocieteIdAndContractIdOrderBySequenceAsc(societeId, contractId)
                 .stream()
-                .map(item -> toResponse(item, tenantId))
+                .map(item -> toResponse(item, societeId))
                 .toList();
     }
 
@@ -60,18 +56,18 @@ public class PaymentScheduleService {
 
     @Transactional
     public PaymentScheduleItemResponse create(UUID contractId, CreateScheduleItemRequest req) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireTenantId();
         UUID actorId  = requireUserId();
-        SaleContract contract = requireContract(tenantId, contractId);
+        SaleContract contract = requireContract(societeId, contractId);
 
         if (req.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new PaymentInvalidAmountException("Amount must be greater than zero");
         }
 
-        int nextSeq = itemRepo.maxSequence(tenantId, contractId) + 1;
+        int nextSeq = itemRepo.maxSequence(societeId, contractId) + 1;
 
         PaymentScheduleItem item = new PaymentScheduleItem(
-                tenantRepo.getReferenceById(tenantId),
+                societeId,
                 contractId,
                 contract.getProject().getId(),
                 contract.getProperty().getId(),
@@ -82,15 +78,15 @@ public class PaymentScheduleService {
                 req.dueDate(),
                 req.notes()
         );
-        return toResponse(itemRepo.save(item), tenantId);
+        return toResponse(itemRepo.save(item), societeId);
     }
 
     // ── Update ──────────────────────────────────────────────────────────────
 
     @Transactional
     public PaymentScheduleItemResponse update(UUID itemId, UpdateScheduleItemRequest req) {
-        UUID tenantId = requireTenantId();
-        PaymentScheduleItem item = requireItem(tenantId, itemId);
+        UUID societeId = requireTenantId();
+        PaymentScheduleItem item = requireItem(societeId, itemId);
 
         if (item.getStatus() != PaymentScheduleStatus.DRAFT) {
             throw new InvalidPaymentScheduleStateException(
@@ -107,15 +103,15 @@ public class PaymentScheduleService {
         if (req.dueDate() != null) item.setDueDate(req.dueDate());
         if (req.notes()   != null) item.setNotes(req.notes());
 
-        return toResponse(itemRepo.save(item), tenantId);
+        return toResponse(itemRepo.save(item), societeId);
     }
 
     // ── Delete ──────────────────────────────────────────────────────────────
 
     @Transactional
     public void delete(UUID itemId) {
-        UUID tenantId = requireTenantId();
-        PaymentScheduleItem item = requireItem(tenantId, itemId);
+        UUID societeId = requireTenantId();
+        PaymentScheduleItem item = requireItem(societeId, itemId);
 
         if (item.getStatus() == PaymentScheduleStatus.PAID) {
             throw new InvalidPaymentScheduleStateException(
@@ -126,31 +122,31 @@ public class PaymentScheduleService {
 
     // ── Internal helpers ────────────────────────────────────────────────────
 
-    PaymentScheduleItem requireItem(UUID tenantId, UUID itemId) {
-        return itemRepo.findByTenant_IdAndId(tenantId, itemId)
+    PaymentScheduleItem requireItem(UUID societeId, UUID itemId) {
+        return itemRepo.findBySocieteIdAndId(societeId, itemId)
                 .orElseThrow(() -> new PaymentScheduleItemNotFoundException(itemId));
     }
 
-    SaleContract requireContract(UUID tenantId, UUID contractId) {
-        return contractRepo.findByTenant_IdAndId(tenantId, contractId)
+    SaleContract requireContract(UUID societeId, UUID contractId) {
+        return contractRepo.findBySocieteIdAndId(societeId, contractId)
                 .orElseThrow(() -> new ContractNotFoundException(contractId));
     }
 
-    PaymentScheduleItemResponse toResponse(PaymentScheduleItem item, UUID tenantId) {
-        BigDecimal paid = paymentRepo.sumPaidForItem(tenantId, item.getId());
+    PaymentScheduleItemResponse toResponse(PaymentScheduleItem item, UUID societeId) {
+        BigDecimal paid = paymentRepo.sumPaidForItem(societeId, item.getId());
         BigDecimal remaining = item.getAmount().subtract(paid);
         if (remaining.compareTo(BigDecimal.ZERO) < 0) remaining = BigDecimal.ZERO;
         return PaymentScheduleItemResponse.from(item, paid, remaining);
     }
 
     UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 
     UUID requireUserId() {
-        UUID id = TenantContext.getUserId();
+        UUID id = SocieteContext.getUserId();
         if (id == null) throw new CrossTenantAccessException("Missing user context");
         return id;
     }

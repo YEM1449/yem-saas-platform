@@ -70,7 +70,7 @@ export class PropertiesComponent implements OnInit {
 
   readonly propertyTypes = [
     'VILLA', 'APPARTEMENT', 'STUDIO', 'T2', 'T3',
-    'DUPLEX', 'COMMERCE', 'LOCAL', 'TERRAIN',
+    'DUPLEX', 'COMMERCE', 'LOT', 'TERRAIN_VIERGE',
   ];
 
   readonly statusOptions = [
@@ -89,22 +89,27 @@ export class PropertiesComponent implements OnInit {
 
   /** Returns whether the selected type requires surfaceAreaSqm */
   get needsSurface(): boolean {
-    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX','COMMERCE','LOCAL'].includes(this.form.type);
+    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX','COMMERCE'].includes(this.form.type);
   }
 
   /** Returns whether the selected type requires landAreaSqm */
   get needsLand(): boolean {
-    return ['VILLA','TERRAIN'].includes(this.form.type);
+    return ['VILLA','LOT','TERRAIN_VIERGE'].includes(this.form.type);
   }
 
   /** Returns whether the selected type requires bedrooms / bathrooms */
   get needsBedrooms(): boolean {
-    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX'].includes(this.form.type);
+    return ['VILLA','APPARTEMENT','T2','T3','DUPLEX'].includes(this.form.type);
   }
 
-  /** Returns whether the selected type requires floorNumber */
+  /** Returns whether the selected type requires floorNumber (which floor the unit is on) */
   get needsFloorNumber(): boolean {
-    return ['APPARTEMENT'].includes(this.form.type);
+    return ['APPARTEMENT','STUDIO','T2','T3'].includes(this.form.type);
+  }
+
+  /** Returns whether the selected type requires floors (total number of floors, e.g. DUPLEX) */
+  get needsTotalFloors(): boolean {
+    return this.form.type === 'DUPLEX';
   }
 
   get canImport(): boolean {
@@ -133,7 +138,7 @@ export class PropertiesComponent implements OnInit {
 
   loadProjects(): void {
     this.projectsLoading = true;
-    this.projectSvc.list().subscribe({
+    this.projectSvc.list(true).subscribe({  // activeOnly=true — archived projects excluded
       next: (data) => { this.projects = data; this.projectsLoading = false; },
       error: () => { this.projectsLoading = false; },
     });
@@ -236,7 +241,11 @@ export class PropertiesComponent implements OnInit {
       return;
     }
     if (this.needsFloorNumber && this.form.floorNumber === null) {
-      this.submitError = "Le numero d'etage est obligatoire pour un appartement.";
+      this.submitError = "Le numero d'etage est obligatoire pour ce type de bien.";
+      return;
+    }
+    if (this.needsTotalFloors && this.form.floors === null) {
+      this.submitError = "Le nombre total d'etages est obligatoire pour un duplex.";
       return;
     }
     this.submitting  = true;

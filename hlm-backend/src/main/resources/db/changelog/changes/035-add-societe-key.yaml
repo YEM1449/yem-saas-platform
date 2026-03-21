@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 035-add-societe-key
+      author: YEM1449
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: key
+                  type: VARCHAR(80)
+
+        # Backfill key for ALL societes that were copied from the tenant table (s.id = t.id)
+        - sql:
+            sql: >
+              UPDATE societe s
+              SET key = t.key
+              FROM tenant t
+              WHERE s.id = t.id
+                AND s.key IS NULL;
+
+        # Fallback: set a default key for any société still missing a key (e.g. the seed 00000000-...)
+        - sql:
+            sql: >
+              UPDATE societe
+              SET key = CONCAT('societe-', SUBSTRING(CAST(id AS VARCHAR), 1, 8))
+              WHERE key IS NULL;
+
+        - addUniqueConstraint:
+            tableName: societe
+            columnNames: key
+            constraintName: uk_societe_key

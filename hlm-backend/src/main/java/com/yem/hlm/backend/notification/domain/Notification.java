@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.notification.domain;
 
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import com.yem.hlm.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,8 +17,8 @@ import java.util.UUID;
 @Table(
         name = "notification",
         indexes = {
-                @Index(name = "idx_notification_tenant_recipient_read", columnList = "tenant_id,recipient_user_id,is_read"),
-                @Index(name = "idx_notification_tenant_recipient_created", columnList = "tenant_id,recipient_user_id,created_at")
+                @Index(name = "idx_notification_tenant_recipient_read", columnList = "societe_id,recipient_user_id,is_read"),
+                @Index(name = "idx_notification_tenant_recipient_created", columnList = "societe_id,recipient_user_id,created_at")
         }
 )
 public class Notification {
@@ -28,9 +27,8 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false, foreignKey = @ForeignKey(name = "fk_notification_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "recipient_user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_notification_recipient"))
@@ -62,12 +60,12 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Notification(Tenant tenant, User recipientUser, NotificationType type, UUID refId, String payload) {
-        this.tenant = tenant;
+    public Notification(UUID societeId, User recipientUser, NotificationType type, UUID refId, String payload) {
+        this.societeId     = societeId;
         this.recipientUser = recipientUser;
-        this.type = type;
-        this.refId = refId;
-        this.payload = payload;
+        this.type          = type;
+        this.refId         = refId;
+        this.payload       = payload;
     }
 
     public void markRead() {

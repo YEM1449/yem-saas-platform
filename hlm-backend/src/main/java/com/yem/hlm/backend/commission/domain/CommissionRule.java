@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.commission.domain;
 
 import com.yem.hlm.backend.project.domain.Project;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,12 +13,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Defines a commission rate applicable for a tenant (optionally scoped to a project).
+ * Defines a commission rate applicable for a société (optionally scoped to a project).
  * <p>
  * Rule lookup priority:
  * <ol>
  *   <li>Project-specific rule (project_id = contractProject AND date in range)</li>
- *   <li>Tenant-wide default (project_id IS NULL AND date in range)</li>
+ *   <li>Société-wide default (project_id IS NULL AND date in range)</li>
  * </ol>
  */
 @Getter
@@ -28,8 +27,8 @@ import java.util.UUID;
 @Table(
         name = "commission_rule",
         indexes = {
-                @Index(name = "idx_cr_tenant_project",   columnList = "tenant_id,project_id"),
-                @Index(name = "idx_cr_tenant_effective", columnList = "tenant_id,effective_from")
+                @Index(name = "idx_cr_tenant_project",   columnList = "societe_id,project_id"),
+                @Index(name = "idx_cr_tenant_effective", columnList = "societe_id,effective_from")
         }
 )
 public class CommissionRule {
@@ -38,12 +37,10 @@ public class CommissionRule {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cr_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
-    /** Null means this is the tenant-wide default rule. */
+    /** Null means this is the société-wide default rule. */
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id",
@@ -87,10 +84,10 @@ public class CommissionRule {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public CommissionRule(Tenant tenant, Project project,
+    public CommissionRule(UUID societeId, Project project,
                           BigDecimal ratePercent, BigDecimal fixedAmount,
                           LocalDate effectiveFrom, LocalDate effectiveTo) {
-        this.tenant        = tenant;
+        this.societeId     = societeId;
         this.project       = project;
         this.ratePercent   = ratePercent;
         this.fixedAmount   = fixedAmount;

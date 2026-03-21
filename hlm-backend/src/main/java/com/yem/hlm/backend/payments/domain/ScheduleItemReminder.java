@@ -1,7 +1,6 @@
 package com.yem.hlm.backend.payments.domain;
 
 import com.yem.hlm.backend.outbox.domain.MessageChannel;
-import com.yem.hlm.backend.tenant.domain.Tenant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,7 +26,7 @@ import java.util.UUID;
                 name = "uk_sir_idempotency",
                 columnNames = {"schedule_item_id", "reminder_type", "channel", "reminder_date"}
         ),
-        indexes = @Index(name = "idx_sir_tenant_date", columnList = "tenant_id,reminder_date")
+        indexes = @Index(name = "idx_sir_tenant_date", columnList = "societe_id,reminder_date")
 )
 public class ScheduleItemReminder {
 
@@ -35,10 +34,8 @@ public class ScheduleItemReminder {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sir_tenant"))
-    private Tenant tenant;
+    @Column(name = "societe_id", nullable = false)
+    private UUID societeId;
 
     @Column(name = "schedule_item_id", nullable = false)
     private UUID scheduleItemId;
@@ -58,9 +55,9 @@ public class ScheduleItemReminder {
     @Column(name = "reminder_date", nullable = false)
     private LocalDate reminderDate;
 
-    public ScheduleItemReminder(Tenant tenant, UUID scheduleItemId, ReminderType reminderType,
+    public ScheduleItemReminder(UUID societeId, UUID scheduleItemId, ReminderType reminderType,
                                 MessageChannel channel, LocalDate reminderDate) {
-        this.tenant          = tenant;
+        this.societeId       = societeId;
         this.scheduleItemId  = scheduleItemId;
         this.reminderType    = reminderType;
         this.channel         = channel;

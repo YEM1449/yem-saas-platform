@@ -3,7 +3,7 @@ package com.yem.hlm.backend.dashboard.api;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
 import com.yem.hlm.backend.dashboard.service.CommercialDashboardService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -107,12 +107,12 @@ public class CommercialDashboardController {
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
         LocalDateTime[] range = dashboardService.resolveDateRange(from, to);
-        dashboardService.validateProject(tenantId, projectId);
-        UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(tenantId, agentId);
+        dashboardService.validateProject(societeId, projectId);
+        UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(societeId, agentId);
 
-        return dashboardService.getSales(tenantId, range[0], range[1], projectId, effectiveAgentId, page, size);
+        return dashboardService.getSales(societeId, range[0], range[1], projectId, effectiveAgentId, page, size);
     }
 
     // =========================================================================
@@ -122,11 +122,11 @@ public class CommercialDashboardController {
     private CommercialDashboardSummaryDTO doSummary(LocalDateTime from, LocalDateTime to,
                                                      UUID projectId, UUID agentId) {
         summaryRequestCounter.increment();
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
         LocalDateTime[] range = dashboardService.resolveDateRange(from, to);
-        dashboardService.validateProject(tenantId, projectId);
-        UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(tenantId, agentId);
+        dashboardService.validateProject(societeId, projectId);
+        UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(societeId, agentId);
 
-        return dashboardService.getSummary(tenantId, range[0], range[1], projectId, effectiveAgentId);
+        return dashboardService.getSummary(societeId, range[0], range[1], projectId, effectiveAgentId);
     }
 }

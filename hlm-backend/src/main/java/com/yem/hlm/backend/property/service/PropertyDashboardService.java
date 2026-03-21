@@ -8,7 +8,7 @@ import com.yem.hlm.backend.property.api.dto.SalesByProjectAgentRow;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +43,7 @@ public class PropertyDashboardService {
      * @return PropertySummaryDTO with aggregated statistics
      */
     public PropertySummaryDTO getSummary(LocalDate from, LocalDate to) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
         // Convert LocalDate to LocalDateTime for repository queries
         LocalDateTime fromDateTime = from.atStartOfDay();
@@ -51,7 +51,7 @@ public class PropertyDashboardService {
 
         // Count by status
         Map<PropertyStatus, Integer> statusCounts = new HashMap<>();
-        propertyRepository.countByStatus(tenantId).forEach(row -> {
+        propertyRepository.countByStatus(societeId).forEach(row -> {
             PropertyStatus status = (PropertyStatus) row[0];
             Long count = (Long) row[1];
             statusCounts.put(status, count.intValue());
@@ -59,7 +59,7 @@ public class PropertyDashboardService {
 
         // Count by type
         Map<String, Integer> typeCounts = new HashMap<>();
-        propertyRepository.countByType(tenantId).forEach(row -> {
+        propertyRepository.countByType(societeId).forEach(row -> {
             PropertyType type = (PropertyType) row[0];
             Long count = (Long) row[1];
             typeCounts.put(type.name(), count.intValue());
@@ -67,16 +67,16 @@ public class PropertyDashboardService {
 
         // Average price by type
         Map<String, BigDecimal> avgPriceByType = new HashMap<>();
-        propertyRepository.averagePriceByType(tenantId).forEach(row -> {
+        propertyRepository.averagePriceByType(societeId).forEach(row -> {
             PropertyType type = (PropertyType) row[0];
             Double avgPrice = (Double) row[1];
             avgPriceByType.put(type.name(), BigDecimal.valueOf(avgPrice));
         });
 
         // Period-specific metrics
-        long createdInPeriod = propertyRepository.countCreatedInPeriod(tenantId, fromDateTime, toDateTime);
-        long soldInPeriod = propertyRepository.countSoldInPeriod(tenantId, fromDateTime, toDateTime);
-        Long totalValueSold = propertyRepository.totalValueSoldInPeriod(tenantId, fromDateTime, toDateTime);
+        long createdInPeriod = propertyRepository.countCreatedInPeriod(societeId, fromDateTime, toDateTime);
+        long soldInPeriod = propertyRepository.countSoldInPeriod(societeId, fromDateTime, toDateTime);
+        Long totalValueSold = propertyRepository.totalValueSoldInPeriod(societeId, fromDateTime, toDateTime);
 
         return new PropertySummaryDTO(
                 statusCounts.getOrDefault(PropertyStatus.ACTIVE, 0),
@@ -101,13 +101,13 @@ public class PropertyDashboardService {
      * @return PropertySalesKpiDTO with breakdown rows
      */
     public PropertySalesKpiDTO getSalesKpi(LocalDate from, LocalDate to) {
-        UUID tenantId = TenantContext.getTenantId();
+        UUID societeId = SocieteContext.getSocieteId();
 
         LocalDateTime fromDateTime = from.atStartOfDay();
         LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
 
         List<SalesByProjectAgentRow> byProjectAgent = new ArrayList<>();
-        propertyRepository.salesByProjectAndAgent(tenantId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
+        propertyRepository.salesByProjectAndAgent(societeId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
                 .forEach(row -> byProjectAgent.add(new SalesByProjectAgentRow(
                         (String) row[2],                        // projectName
                         (UUID) row[0],                          // agentId
@@ -117,7 +117,7 @@ public class PropertyDashboardService {
                 )));
 
         List<SalesByBuildingRow> byBuilding = new ArrayList<>();
-        propertyRepository.salesByBuilding(tenantId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
+        propertyRepository.salesByBuilding(societeId, DepositStatus.CONFIRMED, fromDateTime, toDateTime)
                 .forEach(row -> byBuilding.add(new SalesByBuildingRow(
                         (String) row[0],                        // buildingName
                         ((Long) row[1]),                        // count

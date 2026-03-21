@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 034-migrate-user-to-app-user-societe
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        columnExists:
+          tableName: app_user
+          columnName: tenant_id
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO app_user_societe (user_id, societe_id, role)
+              SELECT id,
+                     COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001'),
+                     REPLACE(COALESCE(role, 'ROLE_AGENT'), 'ROLE_', '')
+              FROM app_user
+              ON CONFLICT (user_id, societe_id) DO NOTHING;
+        - sql:
+            sql: >
+              UPDATE app_user SET platform_role = 'SUPER_ADMIN'
+              WHERE role = 'SUPER_ADMIN';
+        - dropColumn:
+            tableName: app_user
+            columnName: tenant_id
+        - dropColumn:
+            tableName: app_user
+            columnName: role

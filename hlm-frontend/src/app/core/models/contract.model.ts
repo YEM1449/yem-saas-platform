@@ -2,7 +2,7 @@ export type SaleContractStatus = 'DRAFT' | 'SIGNED' | 'CANCELED';
 
 export interface ContractResponse {
   id: string;
-  tenantId: string;
+  societeId: string;
   projectId: string;
   projectName: string;
   propertyId: string;

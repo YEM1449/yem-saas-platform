@@ -7,10 +7,10 @@ import jakarta.validation.constraints.Size;
 /**
  * Request body for POST /api/portal/auth/request-link.
  *
- * @param email     buyer's email address
- * @param tenantKey the tenant's key (e.g. "acme")
+ * @param email      buyer's email address
+ * @param societeKey the société's key (e.g. "acme")
  */
 public record MagicLinkRequest(
         @NotBlank @Email @Size(max = 160) String email,
-        @NotBlank @Size(max = 80) String tenantKey
+        @NotBlank @Size(max = 80) String societeKey
 ) {}

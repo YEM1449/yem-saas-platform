@@ -5,7 +5,7 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
 import com.yem.hlm.backend.gdpr.api.dto.DataExportResponse;
 import com.yem.hlm.backend.gdpr.api.dto.RectifyContactResponse;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * Orchestrates GDPR data subject rights operations (Art. 15-17).
  *
- * <p>All operations are tenant-scoped via {@link TenantContext}.
+ * <p>All operations are société-scoped via {@link SocieteContext}.
  */
 @Service
 @Transactional(readOnly = true)
@@ -38,9 +38,9 @@ public class GdprService {
      * @throws GdprExportNotFoundException if the contact is not found within the tenant
      */
     public DataExportResponse exportContact(UUID contactId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
-        Contact contact = contactRepo.findByTenant_IdAndId(tenantId, contactId)
+        Contact contact = contactRepo.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new GdprExportNotFoundException(contactId));
         return exportBuilder.build(contact, actorUserId);
     }
@@ -53,9 +53,9 @@ public class GdprService {
      */
     @Transactional
     public void anonymizeContact(UUID contactId) {
-        UUID tenantId = requireTenantId();
+        UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
-        Contact contact = contactRepo.findByTenant_IdAndId(tenantId, contactId)
+        Contact contact = contactRepo.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new GdprExportNotFoundException(contactId));
         anonymizationService.anonymize(contact, actorUserId);
     }
@@ -64,11 +64,11 @@ public class GdprService {
      * GDPR Art. 16: Return current mutable personal fields to support the rectification workflow.
      * Actual rectification is performed via {@code PATCH /api/contacts/{id}}.
      *
-     * @throws GdprExportNotFoundException if the contact is not found within the tenant
+     * @throws GdprExportNotFoundException if the contact is not found within the société
      */
     public RectifyContactResponse getRectifyView(UUID contactId) {
-        UUID tenantId = requireTenantId();
-        Contact contact = contactRepo.findByTenant_IdAndId(tenantId, contactId)
+        UUID societeId = requireSocieteId();
+        Contact contact = contactRepo.findBySocieteIdAndId(societeId, contactId)
                 .orElseThrow(() -> new GdprExportNotFoundException(contactId));
         return new RectifyContactResponse(
                 contact.getId(),
@@ -81,14 +81,14 @@ public class GdprService {
         );
     }
 
-    private UUID requireTenantId() {
-        UUID id = TenantContext.getTenantId();
-        if (id == null) throw new CrossTenantAccessException("Missing tenant context");
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
         return id;
     }
 
     private UUID requireUserId() {
-        UUID id = TenantContext.getUserId();
+        UUID id = SocieteContext.getUserId();
         if (id == null) throw new CrossTenantAccessException("Missing user context");
         return id;
     }

@@ -16,17 +16,17 @@ import java.util.UUID;
 
 public interface ContactRepository extends JpaRepository<Contact, UUID> {
 
-    Optional<Contact> findByTenant_IdAndId(UUID tenantId, UUID id);
+    Optional<Contact> findBySocieteIdAndId(UUID societeId, UUID id);
 
-    /** Case-insensitive email lookup within a tenant — used by portal magic-link auth. */
-    Optional<Contact> findByTenant_IdAndEmailIgnoreCase(UUID tenantId, String email);
+    /** Case-insensitive email lookup within a société — used by portal magic-link auth. */
+    Optional<Contact> findBySocieteIdAndEmailIgnoreCase(UUID societeId, String email);
 
-    boolean existsByTenant_IdAndEmail(UUID tenantId, String email);
+    boolean existsBySocieteIdAndEmail(UUID societeId, String email);
 
-    boolean existsByTenant_IdAndEmailAndIdNot(UUID tenantId, String email, UUID id);
+    boolean existsBySocieteIdAndEmailAndIdNot(UUID societeId, String email, UUID id);
 
-    @Query("SELECT COUNT(c) FROM Contact c WHERE c.tenant.id = :tenantId AND c.status IN :statuses AND c.deleted = false")
-    long countActiveProspects(@Param("tenantId") UUID tenantId,
+    @Query("SELECT COUNT(c) FROM Contact c WHERE c.societeId = :societeId AND c.status IN :statuses AND c.deleted = false")
+    long countActiveProspects(@Param("societeId") UUID societeId,
                               @Param("statuses") List<ContactStatus> statuses);
 
     /**
@@ -41,14 +41,14 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
                    SUM(CASE WHEN c.status IN :convertedStatuses THEN 1L ELSE 0L END)
             FROM com.yem.hlm.backend.contact.domain.ProspectDetail pd
             JOIN pd.contact c
-            WHERE c.tenant.id = :tenantId
+            WHERE c.societeId = :societeId
               AND c.deleted   = false
               AND pd.source   IS NOT NULL
             GROUP BY pd.source
             ORDER BY COUNT(pd.contactId) DESC
             """)
     List<Object[]> prospectSourceFunnel(
-            @Param("tenantId")          UUID tenantId,
+            @Param("societeId")         UUID societeId,
             @Param("convertedStatuses") List<ContactStatus> convertedStatuses
     );
 
@@ -59,19 +59,19 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
      */
     @Query("""
             SELECT c FROM Contact c
-            WHERE c.tenant.id     = :tenantId
+            WHERE c.societeId    = :societeId
               AND c.deleted       = true
               AND c.anonymizedAt  IS NULL
               AND c.updatedAt     < :cutoff
             """)
     List<Contact> findRetentionCandidates(
-            @Param("tenantId") UUID tenantId,
-            @Param("cutoff")   java.time.LocalDateTime cutoff
+            @Param("societeId") UUID societeId,
+            @Param("cutoff")    java.time.LocalDateTime cutoff
     );
 
     @Query("""
             select c from Contact c
-            where c.tenant.id = :tenantId
+            where c.societeId = :societeId
               and (:filterByType = false or c.contactType IN :contactTypes)
               and (cast(:status as string) is null or c.status = :status)
               and (
@@ -83,7 +83,7 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
               )
             """)
     Page<Contact> search(
-            @Param("tenantId") UUID tenantId,
+            @Param("societeId") UUID societeId,
             @Param("filterByType") boolean filterByType,
             @Param("contactTypes") Collection<ContactType> contactTypes,
             @Param("status") ContactStatus status,

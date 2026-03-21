@@ -59,12 +59,12 @@ public class DataExportBuilder {
      */
     @Transactional(readOnly = true)
     public DataExportResponse build(Contact contact, UUID actorUserId) {
-        UUID tenantId = contact.getTenant().getId();
+        UUID societeId = contact.getSocieteId();
         UUID contactId = contact.getId();
 
         // Interests
         List<InterestExport> interests = interestRepo
-                .findAllByTenant_IdAndContactId(tenantId, contactId)
+                .findAllBySocieteIdAndContactId(societeId, contactId)
                 .stream()
                 .map(i -> {
                     String refCode = propertyRepo
@@ -77,7 +77,7 @@ public class DataExportBuilder {
 
         // Deposits (any status — all are personal records)
         List<DepositExport> deposits = depositRepo
-                .report(tenantId, null, null, contactId, null, null, null)
+                .report(societeId, null, null, contactId, null, null, null)
                 .stream()
                 .map(d -> new DepositExport(
                         d.getId(), d.getAmount(), d.getCurrency(),
@@ -86,7 +86,7 @@ public class DataExportBuilder {
 
         // Contracts for this contact
         List<ContractExport> contracts = contractRepo
-                .findPortalContracts(tenantId, contactId)
+                .findPortalContracts(societeId, contactId)
                 .stream()
                 .map(c -> new ContractExport(
                         c.getId(), c.getAgreedPrice(),
@@ -95,14 +95,14 @@ public class DataExportBuilder {
 
         // Audit events correlated with the contact (correlation type = "CONTACT")
         List<AuditEventExport> auditEvents = auditRepo
-                .search(tenantId, null, null, "CONTACT", contactId, PageRequest.of(0, 500))
+                .search(societeId, null, null, "CONTACT", contactId, PageRequest.of(0, 500))
                 .stream()
                 .map(e -> new AuditEventExport(e.getEventType().name(), e.getOccurredAt()))
                 .toList();
 
         // Outbound messages correlated with the contact
         List<MessageExport> messages = messageRepo
-                .findByTenant(tenantId, null, null, contactId, null, null, PageRequest.of(0, 500))
+                .findByTenant(societeId, null, null, contactId, null, null, PageRequest.of(0, 500))
                 .stream()
                 .map(m -> new MessageExport(m.getChannel().name(), m.getCreatedAt(), m.getStatus().name()))
                 .toList();

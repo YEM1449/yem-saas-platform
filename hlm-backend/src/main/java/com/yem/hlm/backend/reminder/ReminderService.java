@@ -13,7 +13,6 @@ import com.yem.hlm.backend.outbox.domain.MessageChannel;
 import com.yem.hlm.backend.outbox.domain.OutboundMessage;
 import com.yem.hlm.backend.outbox.repo.OutboundMessageRepository;
 import com.yem.hlm.backend.user.domain.User;
-import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +112,7 @@ public class ReminderService {
                         deposit.getId(), deposit.getDueDate());
 
                 OutboundMessage msg = new OutboundMessage(
-                        deposit.getTenant(), agent,
+                        deposit.getSocieteId(), agent,
                         MessageChannel.EMAIL, agent.getEmail(),
                         subject, body);
                 msg.setCorrelationType("DEPOSIT_REMINDER");
@@ -138,32 +137,32 @@ public class ReminderService {
     public void runProspectFollowUp() {
         LocalDateTime staleThreshold = LocalDateTime.now().minusDays(props.getProspectStaleDays());
 
-        // Work across all tenants that have prospect contacts
-        List<UUID> tenantIds = contactRepository.findAll().stream()
+        // Work across all sociétés that have prospect contacts
+        List<UUID> societeIds = contactRepository.findAll().stream()
                 .filter(c -> PROSPECT_STATUSES.contains(c.getStatus()) && !c.isDeleted())
-                .map(c -> c.getTenant().getId())
+                .map(c -> c.getSocieteId())
                 .distinct()
                 .toList();
 
-        log.info("[REMINDER] prospect follow-up: {} tenants to check", tenantIds.size());
+        log.info("[REMINDER] prospect follow-up: {} sociétés to check", societeIds.size());
 
-        for (UUID tenantId : tenantIds) {
+        for (UUID societeId : societeIds) {
             try {
-                processStaleProspectsForTenant(tenantId, staleThreshold);
+                processStaleProspectsForSociete(societeId, staleThreshold);
             } catch (Exception e) {
-                log.error("[REMINDER] error processing prospects for tenant={}: {}",
-                        tenantId, e.getMessage(), e);
+                log.error("[REMINDER] error processing prospects for societe={}: {}",
+                        societeId, e.getMessage(), e);
             }
         }
     }
 
-    private void processStaleProspectsForTenant(UUID tenantId, LocalDateTime staleThreshold) {
+    private void processStaleProspectsForSociete(UUID societeId, LocalDateTime staleThreshold) {
         // Fetch contacts with prospect status
         var page = PageRequest.of(0, 500);
-        var contacts = contactRepository.search(tenantId, false, List.of(), null, null, page);
+        var contacts = contactRepository.search(societeId, false, List.of(), null, null, page);
 
-        List<User> managers = userRepository.findByTenant_IdAndRoleInAndEnabledTrue(
-                tenantId, Set.of(UserRole.ROLE_ADMIN, UserRole.ROLE_MANAGER));
+        List<User> managers = userRepository.findBySocieteIdAndRoleInAndEnabledTrue(
+                societeId, Set.of("ROLE_ADMIN", "ROLE_MANAGER"));
 
         for (var contact : contacts) {
             if (!PROSPECT_STATUSES.contains(contact.getStatus()) || contact.isDeleted()) {
@@ -171,10 +170,10 @@ public class ReminderService {
             }
             // Check most recent audit/message activity
             List<UUID> contactIdList = List.of(contact.getId());
-            boolean hasRecentAudit = auditRepository.findByTenantAndCorrelationIds(tenantId, contactIdList)
+            boolean hasRecentAudit = auditRepository.findByTenantAndCorrelationIds(societeId, contactIdList)
                     .stream()
                     .anyMatch(e -> e.getOccurredAt().isAfter(staleThreshold));
-            boolean hasRecentMessage = messageRepository.findByTenantAndCorrelationIds(tenantId, contactIdList)
+            boolean hasRecentMessage = messageRepository.findByTenantAndCorrelationIds(societeId, contactIdList)
                     .stream()
                     .anyMatch(m -> m.getCreatedAt().isAfter(staleThreshold));
 
@@ -183,7 +182,7 @@ public class ReminderService {
                         + "\"name\":\"" + contact.getFullName() + "\"}";
                 for (User manager : managers) {
                     notificationRepository.save(new Notification(
-                            contact.getTenant(), manager,
+                            contact.getSocieteId(), manager,
                             NotificationType.PROSPECT_STALE, contact.getId(), payload));
                 }
                 log.info("[REMINDER] Stale prospect {} notified {} managers",

@@ -2,7 +2,7 @@ package com.yem.hlm.backend.audit.api;
 
 import com.yem.hlm.backend.audit.api.dto.AuditEventResponse;
 import com.yem.hlm.backend.audit.service.CommercialAuditService;
-import com.yem.hlm.backend.tenant.context.TenantContext;
+import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +48,7 @@ public class CommercialAuditController {
             @RequestParam(required = false) UUID correlationId,
             @RequestParam(defaultValue = "100") int limit
     ) {
-        UUID tenantId = TenantContext.getTenantId();
-        return auditService.search(tenantId, from, to, correlationType, correlationId, limit);
+        UUID societeId = SocieteContext.getSocieteId();
+        return auditService.search(societeId, from, to, correlationType, correlationId, limit);
     }
 }

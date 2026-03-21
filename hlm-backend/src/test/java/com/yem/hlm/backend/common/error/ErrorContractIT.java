@@ -2,8 +2,8 @@ package com.yem.hlm.backend.common.error;
 
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.support.IntegrationTestBase;
-import com.yem.hlm.backend.tenant.domain.Tenant;
-import com.yem.hlm.backend.tenant.repo.TenantRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.domain.UserRole;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests verifying the standard error response contract.
- * Tests all error scenarios (400, 401, 404, 409) return stable JSON structure.
+ * Tests all error scenarios (400, 401, 404) return stable JSON structure.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,45 +33,17 @@ class ErrorContractIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwtProvider;
-    @Autowired TenantRepository tenantRepository;
+    @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
 
     private String validBearer;
 
     @BeforeEach
     void setup() {
-        Tenant tenant = tenantRepository.save(new Tenant("err-" + UUID.randomUUID().toString().substring(0, 8), "Err Tenant"));
-        User user = new User(tenant, "err@test.com", "hash");
-        user.setRole(UserRole.ROLE_ADMIN);
+        Societe societe = societeRepository.save(new Societe("Err Tenant", "MA"));
+        User user = new User("err@test.com", "hash");
         user = userRepository.save(user);
-        validBearer = "Bearer " + jwtProvider.generate(user.getId(), tenant.getId());
-    }
-
-    @Test
-    void validationError_returns400WithFieldErrors() throws Exception {
-        var invalidPayload = """
-                {
-                    "key": "",
-                    "name": "Test Tenant",
-                    "ownerEmail": "not-an-email",
-                    "ownerPassword": "short"
-                }
-                """;
-
-        mvc.perform(post("/tenants")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidPayload))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Validation failed for request"))
-                .andExpect(jsonPath("$.path").value("/tenants"))
-                .andExpect(jsonPath("$.fieldErrors").isArray())
-                .andExpect(jsonPath("$.fieldErrors.length()").value(greaterThanOrEqualTo(3)))
-                .andExpect(jsonPath("$.fieldErrors[*].field").value(hasItems("key", "ownerEmail", "ownerPassword")))
-                .andExpect(jsonPath("$.fieldErrors[*].message").exists());
+        validBearer = "Bearer " + jwtProvider.generate(user.getId(), societe.getId(), UserRole.ROLE_ADMIN);
     }
 
     @Test
@@ -111,37 +83,6 @@ class ErrorContractIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value(containsString(nonExistentContactId.toString())))
                 .andExpect(jsonPath("$.path").value("/api/contacts/" + nonExistentContactId))
-                .andExpect(jsonPath("$.fieldErrors").doesNotExist());
-    }
-
-    @Test
-    void duplicateTenantKey_returns409WithStandardError() throws Exception {
-        String uniqueKey = "error-test-" + UUID.randomUUID().toString().substring(0, 8);
-
-        var payload = """
-                {
-                    "key": "%s",
-                    "name": "Error Test Tenant",
-                    "ownerEmail": "owner@errortest.com",
-                    "ownerPassword": "SecurePass123!"
-                }
-                """.formatted(uniqueKey);
-
-        mvc.perform(post("/tenants")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated());
-
-        mvc.perform(post("/tenants")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.code").value("TENANT_KEY_EXISTS"))
-                .andExpect(jsonPath("$.message").value(containsString(uniqueKey)))
-                .andExpect(jsonPath("$.path").value("/tenants"))
                 .andExpect(jsonPath("$.fieldErrors").doesNotExist());
     }
 
