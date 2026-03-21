@@ -6,6 +6,7 @@ import com.yem.hlm.backend.contact.domain.ContactType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ContactRepository extends JpaRepository<Contact, UUID> {
+public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpecificationExecutor<Contact> {
 
     Optional<Contact> findBySocieteIdAndId(UUID societeId, UUID id);
 
@@ -22,6 +23,17 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
     Optional<Contact> findBySocieteIdAndEmailIgnoreCase(UUID societeId, String email);
 
     boolean existsBySocieteIdAndEmail(UUID societeId, String email);
+
+    /**
+     * Returns distinct societeIds that have at least one non-deleted contact with one of the given statuses.
+     * Used by ReminderService to iterate only over relevant sociétés without loading all contacts.
+     */
+    @Query("""
+            SELECT DISTINCT c.societeId FROM Contact c
+            WHERE c.status IN :statuses
+              AND c.deleted = false
+            """)
+    List<UUID> findDistinctSocieteIdsWithProspectStatus(@Param("statuses") List<ContactStatus> statuses);
 
     boolean existsBySocieteIdAndEmailAndIdNot(UUID societeId, String email, UUID id);
 

@@ -193,3 +193,9 @@ app:
     lockout:
       max-attempts: ${LOCKOUT_MAX_ATTEMPTS:5}
       duration-minutes: ${LOCKOUT_DURATION_MINUTES:15}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

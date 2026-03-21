@@ -6,6 +6,7 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,7 @@ import java.util.UUID;
  * All queries MUST include societe_id filtering for multi-tenant isolation.
  */
 @Repository
-public interface PropertyRepository extends JpaRepository<Property, UUID> {
+public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSpecificationExecutor<Property> {
 
     // ===== Standard CRUD Queries (Société-Scoped) =====
 

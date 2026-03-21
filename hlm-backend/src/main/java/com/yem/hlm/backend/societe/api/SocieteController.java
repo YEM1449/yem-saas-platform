@@ -42,7 +42,7 @@ public class SocieteController {
     @PutMapping("/{id}")
     @RequiresSuperAdmin
     public ResponseEntity<SocieteDto> update(@PathVariable UUID id,
-                                              @RequestBody UpdateSocieteRequest req) {
+                                              @Valid @RequestBody UpdateSocieteRequest req) {
         return ResponseEntity.ok(societeService.updateSociete(id, req));
     }
 

@@ -21,12 +21,16 @@ export interface Contact {
   processingBasis: string | null;
 }
 
-export interface ContactPage {
-  content: Contact[];
-  totalElements: number;
-  totalPages: number;
+export interface PageMeta {
   number: number;
   size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ContactPage {
+  content: Contact[];
+  page: PageMeta;
 }
 
 export interface TimelineEvent {

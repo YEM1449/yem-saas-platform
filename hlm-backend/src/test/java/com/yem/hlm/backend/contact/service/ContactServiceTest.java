@@ -13,6 +13,7 @@ import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.domain.Societe;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,6 +41,7 @@ class ContactServiceTest {
     @Mock ProspectDetailRepository prospectDetailRepository;
     @Mock PropertyRepository propertyRepository;
     @Mock DepositService depositService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks ContactService service;
 

@@ -112,7 +112,7 @@ class ReminderServiceTest {
     @Test
     void runProspectFollowUp_withNoTenants_doesNothing() {
         when(props.getProspectStaleDays()).thenReturn(14);
-        when(contactRepository.findAll()).thenReturn(List.of());
+        when(contactRepository.findDistinctSocieteIdsWithProspectStatus(any())).thenReturn(List.of());
 
         service.runProspectFollowUp();
 

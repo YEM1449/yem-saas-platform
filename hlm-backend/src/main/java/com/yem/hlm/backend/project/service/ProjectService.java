@@ -10,7 +10,10 @@ import com.yem.hlm.backend.project.domain.ProjectStatus;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
+import com.yem.hlm.backend.auth.config.CacheConfig;
 import com.yem.hlm.backend.societe.SocieteContext;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class ProjectService {
      * @throws ProjectNameAlreadyExistsException if name is already used by this société
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse create(ProjectCreateRequest request) {
         UUID societeId = SocieteContext.getSocieteId();
 
@@ -56,6 +60,7 @@ public class ProjectService {
     /**
      * Lists all projects for the current société, ordered by name.
      */
+    @Cacheable(value = CacheConfig.PROJECTS_CACHE, key = "'all:' + T(com.yem.hlm.backend.societe.SocieteContext).getSocieteId()")
     public List<ProjectResponse> listAll() {
         UUID societeId = SocieteContext.getSocieteId();
         return projectRepository.findBySocieteIdOrderByNameAsc(societeId)
@@ -67,6 +72,7 @@ public class ProjectService {
     /**
      * Lists active projects for the current société, ordered by name.
      */
+    @Cacheable(value = CacheConfig.PROJECTS_CACHE, key = "'active:' + T(com.yem.hlm.backend.societe.SocieteContext).getSocieteId()")
     public List<ProjectResponse> listActive() {
         UUID societeId = SocieteContext.getSocieteId();
         return projectRepository.findBySocieteIdAndStatusOrderByNameAsc(societeId, ProjectStatus.ACTIVE)
@@ -91,6 +97,7 @@ public class ProjectService {
      * Updates a project (partial update — null fields are ignored).
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse update(UUID projectId, ProjectUpdateRequest request) {
         UUID societeId = SocieteContext.getSocieteId();
 
@@ -114,6 +121,7 @@ public class ProjectService {
      * Archives a project (sets status to ARCHIVED).
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public void archive(UUID projectId) {
         UUID societeId = SocieteContext.getSocieteId();
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)

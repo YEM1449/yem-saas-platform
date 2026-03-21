@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.contact.service;
 
+import com.yem.hlm.backend.common.event.ContactCreatedEvent;
+import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.api.dto.ConvertToProspectRequest;
 import com.yem.hlm.backend.contact.domain.*;
@@ -10,6 +12,7 @@ import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.societe.SocieteContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,19 +30,22 @@ public class ContactService {
     private final ProspectDetailRepository prospectDetailRepository;
     private final PropertyRepository propertyRepository;
     private final DepositService depositService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ContactService(
             ContactRepository contactRepository,
             ContactInterestRepository contactInterestRepository,
             ProspectDetailRepository prospectDetailRepository,
             PropertyRepository propertyRepository,
-            DepositService depositService
+            DepositService depositService,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
         this.prospectDetailRepository = prospectDetailRepository;
         this.propertyRepository = propertyRepository;
         this.depositService = depositService;
+        this.eventPublisher = eventPublisher;
     }
 
     public ContactResponse create(CreateContactRequest req) {
@@ -69,6 +75,7 @@ public class ContactService {
         Contact saved = contactRepository.save(contact);
         // Ensure 1-1 row exists for MVP (future-proofing)
         prospectDetailRepository.save(new ProspectDetail(saved));
+        eventPublisher.publishEvent(new ContactCreatedEvent(societeId, actorUserId, saved.getId(), saved.getFullName()));
         return toResponse(saved);
     }
 
@@ -139,6 +146,7 @@ public class ContactService {
         contact.markUpdatedBy(actorUserId);
 
         Contact saved = contactRepository.save(contact);
+        eventPublisher.publishEvent(new ContactStatusChangedEvent(societeId, actorUserId, saved.getId(), current, newStatus));
         return toResponse(saved);
     }
 

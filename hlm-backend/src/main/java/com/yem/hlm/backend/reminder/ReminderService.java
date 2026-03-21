@@ -138,11 +138,7 @@ public class ReminderService {
         LocalDateTime staleThreshold = LocalDateTime.now().minusDays(props.getProspectStaleDays());
 
         // Work across all sociétés that have prospect contacts
-        List<UUID> societeIds = contactRepository.findAll().stream()
-                .filter(c -> PROSPECT_STATUSES.contains(c.getStatus()) && !c.isDeleted())
-                .map(c -> c.getSocieteId())
-                .distinct()
-                .toList();
+        List<UUID> societeIds = contactRepository.findDistinctSocieteIdsWithProspectStatus(PROSPECT_STATUSES);
 
         log.info("[REMINDER] prospect follow-up: {} sociétés to check", societeIds.size());
 

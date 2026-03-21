@@ -21,12 +21,16 @@ export interface Prospect {
   processingBasis: string | null;
 }
 
-export interface ProspectPage {
-  content: Prospect[];
-  totalElements: number;
-  totalPages: number;
+export interface ProspectPageMeta {
   number: number;
   size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ProspectPage {
+  content: Prospect[];
+  page: ProspectPageMeta;
 }
 
 export const PROSPECT_STATUSES = [

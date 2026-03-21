@@ -1,10 +1,13 @@
 package com.yem.hlm.backend.societe;
 
+import com.yem.hlm.backend.auth.config.CacheConfig;
 import com.yem.hlm.backend.societe.api.dto.*;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
 import com.yem.hlm.backend.societe.domain.Societe;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,16 +32,19 @@ public class SocieteService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(CacheConfig.SOCIETES_CACHE)
     public List<SocieteDto> listSocietes() {
         return societeRepository.findAll().stream().map(SocieteDto::from).toList();
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.SOCIETES_CACHE, key = "#id")
     public SocieteDto getSociete(UUID id) {
         return SocieteDto.from(require(id));
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.SOCIETES_CACHE, allEntries = true)
     public SocieteDto createSociete(CreateSocieteRequest req) {
         Societe s = new Societe(req.nom(), req.pays() != null ? req.pays() : "MA");
         s.setSiretIce(req.siretIce());
@@ -49,6 +55,7 @@ public class SocieteService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.SOCIETES_CACHE, allEntries = true)
     public SocieteDto updateSociete(UUID id, UpdateSocieteRequest req) {
         Societe s = require(id);
         if (req.nom() != null) s.setNom(req.nom());
@@ -61,6 +68,7 @@ public class SocieteService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.SOCIETES_CACHE, allEntries = true)
     public void deactivateSociete(UUID id) {
         Societe s = require(id);
         s.setActif(false);
