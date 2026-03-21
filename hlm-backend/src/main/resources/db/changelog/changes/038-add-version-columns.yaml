@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 038-add-version-contact
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: contact
+            columnName: version
+      changes:
+        - addColumn:
+            tableName: contact
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 038-add-version-property
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: property
+            columnName: version
+      changes:
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 038-add-version-sale-contract
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: sale_contract
+            columnName: version
+      changes:
+        - addColumn:
+            tableName: sale_contract
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
