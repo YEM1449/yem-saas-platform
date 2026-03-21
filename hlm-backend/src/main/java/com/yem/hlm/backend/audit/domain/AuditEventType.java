@@ -27,5 +27,14 @@ public enum AuditEventType {
 
     // Contact lifecycle events
     CONTACT_CREATED,
-    CONTACT_STATUS_CHANGED
+    CONTACT_STATUS_CHANGED,
+
+    // User management events
+    USER_INVITED,
+    USER_ACTIVATED,
+    USER_ROLE_CHANGED,
+    USER_REMOVED,
+    USER_UPDATED,
+    USER_UNBLOCKED,
+    USER_ANONYMIZED
 }

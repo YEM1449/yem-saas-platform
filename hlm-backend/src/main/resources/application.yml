@@ -129,6 +129,10 @@ app:
     auth-token:   ${TWILIO_AUTH_TOKEN:}
     from-number:  ${TWILIO_FROM:}
 
+  # Frontend base URL — used for invitation links in emails
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+
   # Portal client-facing configuration
   portal:
     base-url: ${PORTAL_BASE_URL:http://localhost:4200}

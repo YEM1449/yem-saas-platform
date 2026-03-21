@@ -4,9 +4,14 @@ import com.yem.hlm.backend.auth.api.dto.LoginRequest;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.api.dto.SwitchSocieteRequest;
 import com.yem.hlm.backend.auth.service.AuthService;
+import com.yem.hlm.backend.usermanagement.InvitationService;
+import com.yem.hlm.backend.usermanagement.dto.ActivationRequest;
+import com.yem.hlm.backend.usermanagement.dto.InvitationDetailsDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -18,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
+    private final InvitationService invitationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, InvitationService invitationService) {
         this.authService = authService;
+        this.invitationService = invitationService;
     }
 
     @Operation(summary = "Authenticate with email + password; returns JWT access token")
@@ -44,5 +51,20 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @Valid @RequestBody SwitchSocieteRequest req) {
         return authService.switchSociete(authorizationHeader, req);
+    }
+
+    // ── Invitation endpoints (public — no JWT required) ────────────────────────
+
+    @Operation(summary = "Vérifier un lien d'invitation et retourner les détails")
+    @GetMapping("/invitation/{token}")
+    public InvitationDetailsDto validateInvitation(@PathVariable String token) {
+        return invitationService.validateToken(token);
+    }
+
+    @Operation(summary = "Activer son compte via un lien d'invitation")
+    @PostMapping("/invitation/{token}/activer")
+    public LoginResponse activerCompte(@PathVariable String token,
+                                       @Valid @RequestBody ActivationRequest req) {
+        return invitationService.activerCompte(token, req);
     }
 }

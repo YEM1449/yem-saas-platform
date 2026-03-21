@@ -1,0 +1,252 @@
+databaseChangeLog:
+
+  # ── Profil personnel ─────────────────────────────────────────────────────────
+  - changeSet:
+      id: 039-app-user-prenom
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: prenom
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: prenom
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 039-app-user-nom-famille
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: nom_famille
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: nom_famille
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 039-app-user-telephone
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: telephone
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: telephone
+                  type: VARCHAR(30)
+
+  - changeSet:
+      id: 039-app-user-poste
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: poste
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: poste
+                  type: VARCHAR(150)
+
+  - changeSet:
+      id: 039-app-user-langue-interface
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: langue_interface
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: langue_interface
+                  type: VARCHAR(10)
+
+  - changeSet:
+      id: 039-app-user-photo-url
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: photo_url
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: photo_url
+                  type: VARCHAR(500)
+
+  # ── Consentement CGU (RGPD Art. 7) ───────────────────────────────────────────
+  - changeSet:
+      id: 039-app-user-consentement-cgu
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: consentement_cgu
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: consentement_cgu
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: consentement_cgu_date
+                  type: TIMESTAMP
+              - column:
+                  name: consentement_cgu_version
+                  type: VARCHAR(20)
+
+  # ── Workflow invitation ───────────────────────────────────────────────────────
+  - changeSet:
+      id: 039-app-user-invitation-token
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: invitation_token
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: invitation_token
+                  type: VARCHAR(128)
+              - column:
+                  name: invitation_expire_at
+                  type: TIMESTAMP
+              - column:
+                  name: invitation_envoyee_at
+                  type: TIMESTAMP
+              - column:
+                  name: invite_par
+                  type: UUID
+        - createIndex:
+            indexName: idx_app_user_invitation_token
+            tableName: app_user
+            columns:
+              - column:
+                  name: invitation_token
+            unique: true
+        - addForeignKeyConstraint:
+            baseTableName: app_user
+            baseColumnNames: invite_par
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_app_user_invite_par
+            onDelete: SET NULL
+
+  # ── Sécurité compte ───────────────────────────────────────────────────────────
+  - changeSet:
+      id: 039-app-user-derniere-connexion
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: derniere_connexion
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: derniere_connexion
+                  type: TIMESTAMP
+
+  - changeSet:
+      id: 039-app-user-compte-bloque
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: compte_bloque
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: compte_bloque
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: compte_bloque_at
+                  type: TIMESTAMP
+
+  # ── Notes internes (organisation — non DCP) ───────────────────────────────────
+  - changeSet:
+      id: 039-app-user-notes-admin
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: notes_admin
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: notes_admin
+                  type: TEXT
+
+  # ── Optimistic locking ────────────────────────────────────────────────────────
+  - changeSet:
+      id: 039-app-user-version
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user
+            columnName: version
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false

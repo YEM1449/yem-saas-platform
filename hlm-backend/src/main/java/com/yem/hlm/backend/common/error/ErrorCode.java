@@ -111,6 +111,18 @@ public enum ErrorCode {
     SOCIETE_NOT_FOUND,          // 404 — société not found
     USER_ALREADY_IN_SOCIETE,    // 409 — user already has a membership in this société
 
+    // User management errors
+    INVITATION_EXPIREE,          // 410 — invitation link expired or already used
+    INVITATION_EN_COURS,         // 409 — a valid pending invitation already exists for this email
+    DERNIER_ADMIN,               // 409 — cannot remove or demote the last admin of a société
+    QUOTA_UTILISATEURS_ATTEINT,  // 409 — société has reached its user quota
+    MEMBRE_DEJA_EXISTANT,        // 409 — user is already an active member of this société
+    MEMBRE_NON_TROUVE,           // 404 — user is not a member of this société
+    MOT_DE_PASSE_TROP_COURT,     // 400 — password too short
+    MOT_DE_PASSE_TROP_FAIBLE,    // 400 — password does not meet complexity requirements
+    MOT_DE_PASSE_CONTIENT_EMAIL, // 400 — password contains the user's email address
+    COMPTE_DEJA_DEBLOQUE,        // 400 — account is not blocked
+
     // Server errors (500)
     INTERNAL_ERROR
 }

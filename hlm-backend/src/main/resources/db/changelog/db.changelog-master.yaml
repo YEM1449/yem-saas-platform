@@ -77,3 +77,9 @@ databaseChangeLog:
       file: db/changelog/changes/037-add-performance-indexes.yaml
   - include:
       file: db/changelog/changes/038-add-version-columns.yaml
+  - include:
+      file: db/changelog/changes/039-extend-app-user-fields.yaml
+  - include:
+      file: db/changelog/changes/040-extend-app-user-societe-fields.yaml
+  - include:
+      file: db/changelog/changes/041-user-security-indexes.yaml

@@ -37,6 +37,7 @@ import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservatio
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
+import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -737,6 +738,34 @@ public class GlobalExceptionHandler {
         );
         log.warn("Optimistic lock failure on {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== User Management Business Rule Errors ==========
+
+    /**
+     * Handles BusinessRuleException from the user management module.
+     * Maps ErrorCode to the appropriate HTTP status.
+     */
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRule(
+            BusinessRuleException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = switch (ex.getErrorCode()) {
+            case INVITATION_EXPIREE -> HttpStatus.GONE;
+            case INVITATION_EN_COURS, DERNIER_ADMIN, QUOTA_UTILISATEURS_ATTEINT,
+                 MEMBRE_DEJA_EXISTANT, CONCURRENT_UPDATE, COMPTE_DEJA_DEBLOQUE -> HttpStatus.CONFLICT;
+            case MEMBRE_NON_TROUVE -> HttpStatus.NOT_FOUND;
+            case MOT_DE_PASSE_TROP_COURT, MOT_DE_PASSE_TROP_FAIBLE,
+                 MOT_DE_PASSE_CONTIENT_EMAIL, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
+            default -> HttpStatus.CONFLICT;
+        };
+        ErrorResponse error = ErrorResponse.of(
+                status.value(), status.getReasonPhrase(),
+                ex.getErrorCode(), ex.getMessage(), request.getRequestURI()
+        );
+        log.warn("Business rule violation on {}: {} — {}", request.getRequestURI(), ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(status).body(error);
     }
 
     // ========== 500 Internal Server Error ==========

@@ -63,6 +63,9 @@ public class SecurityConfig {
                         // (no prior Spring Security auth required; partial tokens are accepted here)
                         .requestMatchers(HttpMethod.POST, "/auth/switch-societe").permitAll()
 
+                        // Invitation flow — public (no JWT required)
+                        .requestMatchers("/auth/invitation/**").permitAll()
+
                         // Super-admin société management
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
 
