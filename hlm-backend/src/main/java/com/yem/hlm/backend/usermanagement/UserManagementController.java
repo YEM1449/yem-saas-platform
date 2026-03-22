@@ -2,7 +2,7 @@ package com.yem.hlm.backend.usermanagement;
 
 import com.yem.hlm.backend.common.dto.PageResponse;
 import com.yem.hlm.backend.common.security.SocieteRoleValidator;
-import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.usermanagement.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,15 +30,18 @@ public class UserManagementController {
     private final InvitationService invitationService;
     private final UserGdprService userGdprService;
     private final SocieteRoleValidator roleValidator;
+    private final SocieteContextHelper societeContextHelper;
 
     public UserManagementController(UserManagementService userManagementService,
                                     InvitationService invitationService,
                                     UserGdprService userGdprService,
-                                    SocieteRoleValidator roleValidator) {
+                                    SocieteRoleValidator roleValidator,
+                                    SocieteContextHelper societeContextHelper) {
         this.userManagementService = userManagementService;
         this.invitationService = invitationService;
         this.userGdprService = userGdprService;
         this.roleValidator = roleValidator;
+        this.societeContextHelper = societeContextHelper;
     }
 
     // ── Lister les membres — ADMIN and MANAGER can see the team ───────────────
@@ -49,7 +52,7 @@ public class UserManagementController {
     public PageResponse<MembreDto> listerMembres(
             MembreFilter filter,
             @PageableDefault(size = 20) Pageable pageable) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         return userManagementService.listerMembres(societeId, filter, pageable);
     }
 
@@ -59,7 +62,7 @@ public class UserManagementController {
     @GetMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPER_ADMIN')")
     public MembreDto getDetail(@PathVariable UUID userId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         return userManagementService.getDetail(userId, societeId);
     }
 
@@ -86,8 +89,8 @@ public class UserManagementController {
     public MembreDto inviter(@Valid @RequestBody InviterUtilisateurRequest req) {
         // Privilege escalation guard: ADMIN can only assign MANAGER or AGENT
         roleValidator.validateAssignableRole(req.role());
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         var savedUser = invitationService.inviter(req, societeId, adminId);
         return userManagementService.getDetail(savedUser.getId(), societeId);
     }
@@ -98,8 +101,8 @@ public class UserManagementController {
     @PostMapping("/{userId}/reinviter")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto reinviter(@PathVariable UUID userId) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         invitationService.reinviter(userId, societeId, adminId);
         return userManagementService.getDetail(userId, societeId);
     }
@@ -111,8 +114,8 @@ public class UserManagementController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto modifierProfil(@PathVariable UUID userId,
                                     @Valid @RequestBody ModifierUtilisateurRequest req) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         return userManagementService.modifierProfil(userId, societeId, req, adminId);
     }
 
@@ -137,8 +140,8 @@ public class UserManagementController {
                                  @Valid @RequestBody ChangerRoleRequest req) {
         // Privilege escalation guard: ADMIN cannot promote a member to ADMIN
         roleValidator.validateAssignableRole(req.nouveauRole());
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         return userManagementService.changerRole(userId, societeId, req, adminId);
     }
 
@@ -150,8 +153,8 @@ public class UserManagementController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public void retirerMembre(@PathVariable UUID userId,
                                @Valid @RequestBody RetirerUtilisateurRequest req) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         userManagementService.retirerMembre(userId, societeId, req, adminId);
     }
 
@@ -161,8 +164,8 @@ public class UserManagementController {
     @PostMapping("/{userId}/debloquer")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto debloquerCompte(@PathVariable UUID userId) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         return userManagementService.debloquerCompte(userId, societeId, adminId);
     }
 
@@ -172,7 +175,7 @@ public class UserManagementController {
     @GetMapping("/{userId}/export-donnees")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPER_ADMIN')")
     public UserGdprService.UserDataExport exportDonnees(@PathVariable UUID userId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         return userGdprService.exportUserData(userId, societeId);
     }
 
@@ -183,8 +186,8 @@ public class UserManagementController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public void anonymiserUtilisateur(@PathVariable UUID userId) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID adminId = SocieteContext.getUserId();
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID adminId   = societeContextHelper.requireUserId();
         userGdprService.anonymiserUtilisateur(userId, societeId, adminId);
     }
 }

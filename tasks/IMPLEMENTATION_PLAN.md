@@ -1,82 +1,71 @@
-# Implementation Plan — YEM SaaS Platform Security Audit
+# Implementation Plan — YEM SaaS Platform (Updated)
 
-This plan was generated from a comprehensive security and architecture audit. Tasks are ordered by priority and dependency. Execute them sequentially using Claude Code.
+**Last updated:** Based on `Epic/users-management` branch state.
+
+## Current Status
+
+The `usermanagement` module has been built (invitation flow, GDPR, role management, events, changesets 039–041). All 10 original audit tasks + 1 new task remain to be implemented.
 
 ## How to Use with Claude Code
 
-For each task, tell Claude Code:
-
-```
-Read tasks/01-critical-null-guard-fix.md and implement it
-```
-
-Or to run all tasks in sequence:
-
-```
-Read tasks/IMPLEMENTATION_PLAN.md. Start with task 01 and work through each task file in order. After each task, run the specified tests before moving to the next.
+```bash
+cd yem-saas-platform
+claude
 ```
 
-## Task Overview
+Then:
+```
+Read tasks/IMPLEMENTATION_PLAN.md. Start with task 01 and work through each task in order. After each task, run the specified tests.
+```
 
-### Phase 1 — Critical Security Fixes (Immediate)
+## Task Order
 
-| Task | File | Risk | Effort | Description |
-|------|------|------|--------|-------------|
-| 01 | `01-critical-null-guard-fix.md` | 🔴 CRITICAL | 30 min | Fix null societeId bypass in Commission + Dashboard controllers |
-| 02 | `02-societe-context-helper.md` | 🟠 MEDIUM | 1 hour | Extract shared `SocieteContextHelper` Spring component |
-| 03 | `03-scheduler-context-standardization.md` | 🟠 MEDIUM | 1 hour | Standardize all scheduler SocieteContext handling |
-| 04 | `04-audit-societe-switch.md` | 🟢 LOW | 20 min | Add audit logging for société switching |
+### Phase 1 — Critical Security (do first)
 
-### Phase 2 — Code Quality & Consistency
+| # | File | What | Effort |
+|---|------|------|--------|
+| 01 | `01-critical-null-guard-fix.md` | Fix null societeId in CommissionController + DashboardControllers | 30 min |
+| 11 | `11-usermanagement-null-guard.md` | Fix null societeId in new UserManagementController (18 occurrences) | 20 min |
+| 02 | `02-societe-context-helper.md` | Extract SocieteContextHelper, refactor all controllers to use it | 1 hour |
 
-| Task | File | Risk | Effort | Description |
-|------|------|------|--------|-------------|
-| 05 | `05-rename-tenant-references.md` | 🟢 LOW | 1 hour | Rename legacy "tenant" references to "societe" |
-| 06 | `06-jwt-secret-validation.md` | 🟢 LOW | 20 min | Add JWT secret minimum length validation at startup |
-| 07 | `07-cors-production-guard.md` | 🟠 MEDIUM | 20 min | CORS production safety check |
+### Phase 2 — Hardening
 
-### Phase 3 — Domain Extensions (New Features)
+| # | File | What | Effort |
+|---|------|------|--------|
+| 03 | `03-scheduler-context-standardization.md` | Wrap all schedulers with runAsSystem() | 1 hour |
+| 04 | `04-audit-societe-switch.md` | Audit log for société switch | 20 min |
+| 05 | `05-rename-tenant-references.md` | Rename findByTenantIdAndIdForUpdate + legacy tenant refs | 1 hour |
+| 06 | `06-jwt-secret-validation.md` | ~~Already done via @Size(min=32)~~ SKIP | — |
+| 07 | `07-cors-production-guard.md` | CORS localhost check in production | 20 min |
 
-| Task | File | Risk | Effort | Description |
-|------|------|------|--------|-------------|
-| 08 | `08-task-module.md` | NEW | 3 hours | New Task/follow-up management module |
-| 09 | `09-document-module.md` | NEW | 3 hours | New Document attachment module |
+### Phase 3 — New Features
+
+| # | File | What | Effort |
+|---|------|------|--------|
+| 08 | `08-task-module.md` | Task/follow-up management module | 3 hours |
+| 09 | `09-document-module.md` | Document attachment module | 3 hours |
 
 ### Phase 4 — Defense in Depth
 
-| Task | File | Risk | Effort | Description |
-|------|------|------|--------|-------------|
-| 10 | `10-rls-policies.md` | 🟠 MEDIUM | 2 hours | PostgreSQL Row-Level Security policies |
+| # | File | What | Effort |
+|---|------|------|--------|
+| 10 | `10-rls-policies.md` | PostgreSQL Row-Level Security | 2 hours |
 
-## Dependency Graph
+### Phase 5 — Next Wave (after audit tasks)
 
-```
-01 (critical fix) ──→ 02 (helper extraction) ──→ 03 (scheduler standardization)
-                                                       │
-04 (audit logging) ─── independent                     │
-05 (rename) ─── independent                            │
-06 (JWT validation) ─── independent                    │
-07 (CORS guard) ─── independent                        │
-                                                       │
-08 (task module) ─── depends on 02 (uses helper) ◄─────┘
-09 (document module) ─── depends on 02 (uses helper)
-10 (RLS) ─── independent, can run anytime after 05
-```
+| # | File | What | Effort |
+|---|------|------|--------|
+| 12 | `12-ci-cd-pipeline.md` | GitHub Actions CI/CD | 2 hours |
+| 13 | `13-frontend-audit.md` | Angular frontend société isolation audit | 2 hours |
+| 14 | `14-frontend-usermanagement.md` | Angular UI for user management module | 4 hours |
+| 15 | `15-e2e-tests.md` | End-to-end Playwright tests | 3 hours |
 
-## Verification After All Tasks
+## Changeset Numbering
 
-After completing all tasks, run the full verification:
+Changesets 039–041 are taken (user management). Next available: **042**.
+
+## Verification
 
 ```bash
-# 1. Full backend test suite
 cd hlm-backend && ./mvnw verify
-
-# 2. Cross-société isolation test specifically
-cd hlm-backend && ./mvnw test -Dtest=CrossSocieteIsolationIT
-
-# 3. Frontend build check
-cd hlm-frontend && npm run build -- --configuration=production
-
-# 4. Docker compose build
-docker compose build
 ```
