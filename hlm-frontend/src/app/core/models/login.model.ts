@@ -7,6 +7,13 @@ export interface LoginResponse {
   accessToken: string;
   tokenType: string;
   expiresIn: number;
+  requiresSocieteSelection?: boolean;
+  societes?: SocieteChoice[];
+}
+
+export interface SocieteChoice {
+  id: string;
+  nom: string;
 }
 
 export interface MeResponse {

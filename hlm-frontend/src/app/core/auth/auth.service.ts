@@ -31,6 +31,20 @@ export class AuthService {
   login(req: LoginRequest): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
+      .pipe(tap((res) => {
+        // Only store token if this is a full auth (not a société selection prompt)
+        if (!res.requiresSocieteSelection) {
+          localStorage.setItem(TOKEN_KEY, res.accessToken);
+        }
+      }));
+  }
+
+  switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/switch-societe`,
+        { societeId },
+        { headers: { Authorization: `Bearer ${partialToken}` } }
+      )
       .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 

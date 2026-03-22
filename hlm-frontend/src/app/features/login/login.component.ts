@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { LoginRequest } from '../../core/models/login.model';
+import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -22,24 +22,51 @@ export class LoginComponent {
   loading = false;
   error = '';
 
+  // Multi-société selection state
+  showSocieteSelection = false;
+  societes: SocieteChoice[] = [];
+  partialToken = '';
+
   onSubmit(): void {
     this.loading = true;
     this.error = '';
 
     this.auth.login(this.form).subscribe({
-      next: () => {
-        this.auth.me().subscribe({
-          next: (user) => {
-            if (user.role === 'ROLE_SUPER_ADMIN') {
-              this.router.navigateByUrl('/superadmin/societes');
-            } else {
-              this.router.navigateByUrl('/app/properties');
-            }
-          },
-          error: () => this.router.navigateByUrl('/app/properties'),
-        });
+      next: (res) => {
+        if (res.requiresSocieteSelection && res.societes) {
+          // Multi-société: show picker
+          this.loading = false;
+          this.showSocieteSelection = true;
+          this.societes = res.societes;
+          this.partialToken = res.accessToken;
+        } else {
+          // Single société: proceed to /auth/me and navigate
+          this.resolvePostLogin();
+        }
       },
       error: (err) => this.handleError(err),
+    });
+  }
+
+  selectSociete(societeId: string): void {
+    this.loading = true;
+    this.error = '';
+    this.auth.switchSociete(this.partialToken, societeId).subscribe({
+      next: () => this.resolvePostLogin(),
+      error: (err) => this.handleError(err),
+    });
+  }
+
+  private resolvePostLogin(): void {
+    this.auth.me().subscribe({
+      next: (user) => {
+        if (user.role === 'ROLE_SUPER_ADMIN' || user.platformRole === 'SUPER_ADMIN') {
+          this.router.navigateByUrl('/superadmin/societes');
+        } else {
+          this.router.navigateByUrl('/app/properties');
+        }
+      },
+      error: () => this.router.navigateByUrl('/app/properties'),
     });
   }
 
