@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SocieteService } from './societe.service';
 import { SocieteDetailDto, SocieteStatsDto, SocieteComplianceDto } from './societe.model';
@@ -12,7 +12,7 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 @Component({
   selector: 'app-societe-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SocieteMembersComponent],
+  imports: [CommonModule, FormsModule, SocieteMembersComponent],
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })
