@@ -4,7 +4,7 @@
 
 1. Export the OpenAPI spec (backend must be running):
    ```bash
-   curl -s http://localhost:8080/v3/api-docs -o scripts/yem-api-spec.json
+   curl -s http://localhost:8080/api-docs -o scripts/yem-api-spec.json
    ```
 2. Open Postman → **Import** → select `scripts/yem-api-spec.json`
 3. Open Postman → **Import** → select `scripts/POSTMAN_ENVIRONMENT.json`
@@ -26,12 +26,35 @@ Copy `accessToken` from the response → paste into `token_admin`.
 POST {{base_url}}/auth/login
 Content-Type: application/json
 
-{"email": "superadmin@yem.ma", "password": "YourSuperAdminPassword!"}
+{"email": "superadmin@yourcompany.com", "password": "YourSecure2026!"}
 ```
 Copy `accessToken` → paste into `token_sa`.
 
 ### Manager / Agent tokens
-Same pattern with manager@demo.ma and agent@demo.ma.
+Same pattern with:
+
+- `manager@demo.ma / Manager123!Sec`
+- `agent@demo.ma / Agent123!Secure`
+
+### Multi-societe note
+
+If `/auth/login` returns:
+
+```json
+{
+  "requiresSocieteSelection": true
+}
+```
+
+then you must call:
+
+```http
+POST {{base_url}}/auth/switch-societe
+Authorization: Bearer {{partial_token}}
+Content-Type: application/json
+
+{"societeId":"{{societe_id}}"}
+```
 
 ## Testing RBAC — expected results
 

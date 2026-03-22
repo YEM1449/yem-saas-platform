@@ -3,18 +3,16 @@
 # Requires: curl, jq
 #
 # Usage:
-#   TENANT_KEY=acme EMAIL=admin@acme.com PASSWORD='Admin123!Secure' ./scripts/smoke-auth.sh
+#   EMAIL=admin@demo.ma PASSWORD='Admin123!Secure' ./scripts/smoke-auth.sh
 #
 # Environment variables:
 #   BASE_URL    — backend URL         (default: http://localhost:8080)
-#   TENANT_KEY  — tenant identifier   (required)
 #   EMAIL       — user email          (required)
 #   PASSWORD    — user password       (required)
 
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-TENANT_KEY="${TENANT_KEY:?ERROR: TENANT_KEY is required}"
 EMAIL="${EMAIL:?ERROR: EMAIL is required}"
 PASSWORD="${PASSWORD:?ERROR: PASSWORD is required}"
 
@@ -39,13 +37,18 @@ fi
 pass "health — backend is UP"
 
 # --- Step 1: Login ---
-info "POST /auth/login (tenant=$TENANT_KEY, email=$EMAIL)"
-LOGIN_BODY=$(jq -n --arg t "$TENANT_KEY" --arg e "$EMAIL" --arg p "$PASSWORD" \
-  '{tenantKey:$t,email:$e,password:$p}')
+info "POST /auth/login (email=$EMAIL)"
+LOGIN_BODY=$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" \
+  '{email:$e,password:$p}')
 LOGIN_RESPONSE=$(curl -sf -X POST "$BASE_URL/auth/login" \
   -H "Content-Type: application/json" \
   -d "$LOGIN_BODY" \
 ) || fail "Login request failed (HTTP error or connection refused)"
+
+REQUIRES_SELECTION=$(echo "$LOGIN_RESPONSE" | jq -r '.requiresSocieteSelection // false')
+if [ "$REQUIRES_SELECTION" = "true" ]; then
+  fail "Login returned requiresSocieteSelection=true. Use a single-membership account for this smoke test or extend the script to call /auth/switch-societe."
+fi
 
 TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.accessToken // empty')
 [ -n "$TOKEN" ] || fail "No accessToken in login response: $LOGIN_RESPONSE"
@@ -63,10 +66,10 @@ ME_RESPONSE=$(curl -sf "$BASE_URL/auth/me" \
 ) || fail "/auth/me request failed (401? token invalid?)"
 
 USER_ID=$(echo "$ME_RESPONSE" | jq -r '.userId // empty')
-TENANT_ID=$(echo "$ME_RESPONSE" | jq -r '.tenantId // empty')
+SOCIETE_ID=$(echo "$ME_RESPONSE" | jq -r '.societeId // empty')
 [ -n "$USER_ID" ] || fail "No userId in /auth/me response: $ME_RESPONSE"
-[ -n "$TENANT_ID" ] || fail "No tenantId in /auth/me response: $ME_RESPONSE"
-pass "/auth/me — userId=$USER_ID tenantId=$TENANT_ID"
+[ -n "$SOCIETE_ID" ] || fail "No societeId in /auth/me response: $ME_RESPONSE"
+pass "/auth/me — userId=$USER_ID societeId=$SOCIETE_ID"
 
 # --- Step 3: Protected endpoint ---
 info "GET /api/properties"

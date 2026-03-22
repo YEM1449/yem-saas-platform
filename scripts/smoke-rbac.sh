@@ -35,14 +35,14 @@ http() {
 }
 
 # ── Credentials ─────────────────────────────────────────────────────────────
-SA_EMAIL="${SA_EMAIL:-superadmin@yem.ma}"
-SA_PASS="${SA_PASS:-SuperAdmin123!}"
+SA_EMAIL="${SA_EMAIL:-superadmin@yourcompany.com}"
+SA_PASS="${SA_PASS:-YourSecure2026!}"
 AD_EMAIL="${AD_EMAIL:-admin@demo.ma}"
-AD_PASS="${AD_PASS:-Admin123!}"
+AD_PASS="${AD_PASS:-Admin123!Secure}"
 MG_EMAIL="${MG_EMAIL:-manager@demo.ma}"
-MG_PASS="${MG_PASS:-Admin123!}"
+MG_PASS="${MG_PASS:-Manager123!Sec}"
 AG_EMAIL="${AG_EMAIL:-agent@demo.ma}"
-AG_PASS="${AG_PASS:-Admin123!}"
+AG_PASS="${AG_PASS:-Agent123!Secure}"
 
 echo ""
 echo "══════════════════════════════════════════════════════"

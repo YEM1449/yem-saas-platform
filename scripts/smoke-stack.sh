@@ -5,9 +5,8 @@
 # Usage:
 #   ./scripts/smoke-stack.sh [--backend-url http://localhost:8080]
 #                            [--frontend-url http://localhost]
-#                            [--tenant-key acme]
-#                            [--email admin@acme.com]
-#                            [--password 'Admin123!']
+#                            [--email admin@demo.ma]
+#                            [--password 'Admin123!Secure']
 #
 # Prerequisites: curl, jq, docker compose
 # Exit codes: 0 = all checks passed, 1 = one or more checks failed
@@ -17,9 +16,8 @@ set -euo pipefail
 # ── Defaults ──────────────────────────────────────────────────────────────────
 BACKEND_URL="${BACKEND_URL:-http://localhost:8080}"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost}"
-TENANT_KEY="${TENANT_KEY:-acme}"
-EMAIL="${EMAIL:-admin@acme.com}"
-PASSWORD="${PASSWORD:-Admin123!}"
+EMAIL="${EMAIL:-admin@demo.ma}"
+PASSWORD="${PASSWORD:-Admin123!Secure}"
 TIMEOUT=120   # seconds to wait for backend to become healthy
 STEP=5
 
@@ -36,7 +34,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --backend-url)  BACKEND_URL="$2";  shift 2 ;;
     --frontend-url) FRONTEND_URL="$2"; shift 2 ;;
-    --tenant-key)   TENANT_KEY="$2";   shift 2 ;;
     --email)        EMAIL="$2";        shift 2 ;;
     --password)     PASSWORD="$2";     shift 2 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
@@ -66,18 +63,24 @@ else
 fi
 
 # ── 3. Login with seed credentials ────────────────────────────────────────────
-info "Authenticating as ${EMAIL} in tenant ${TENANT_KEY}…"
+info "Authenticating as ${EMAIL}…"
 AUTH_BODY=$(curl -sf -X POST "${BACKEND_URL}/auth/login" \
   -H "Content-Type: application/json" \
-  -d "{\"tenantKey\":\"${TENANT_KEY}\",\"email\":\"${EMAIL}\",\"password\":\"${PASSWORD}\"}" \
+  -d "{\"email\":\"${EMAIL}\",\"password\":\"${PASSWORD}\"}" \
   2>/dev/null) || AUTH_BODY=""
 
 if [[ -n "$AUTH_BODY" ]]; then
+  REQUIRES_SELECTION=$(echo "$AUTH_BODY" | jq -r '.requiresSocieteSelection // false')
+  if [[ "$REQUIRES_SELECTION" == "true" ]]; then
+    fail "POST /auth/login requires societe selection. Use a single-membership account for this smoke test."
+    TOKEN=""
+  else
   TOKEN=$(echo "$AUTH_BODY" | jq -r '.accessToken // empty')
   if [[ -n "$TOKEN" ]]; then
     pass "POST /auth/login → token received"
   else
     fail "POST /auth/login → response OK but no accessToken in body"
+  fi
   fi
 else
   fail "POST /auth/login → request failed"

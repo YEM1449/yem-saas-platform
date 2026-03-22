@@ -1,5 +1,13 @@
 # Engineer Onboarding Course
 
+> Legacy learning material
+>
+> Several modules in this course still use earlier `tenant` terminology and pre-societe examples.
+> Treat the course as historical onboarding material, not as the maintained implementation reference.
+> Use [../context/ARCHITECTURE.md](../context/ARCHITECTURE.md),
+> [../context/DATA_MODEL.md](../context/DATA_MODEL.md), and
+> [../context/SECURITY_BASELINE.md](../context/SECURITY_BASELINE.md) for the current system.
+
 This course takes a new backend engineer from zero understanding to full production-readiness on the YEM SaaS Platform. It is structured as 19 sequential modules, each covering one architectural domain.
 
 ## How to Use This Course

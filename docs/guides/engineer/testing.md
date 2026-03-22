@@ -1,5 +1,12 @@
 # Testing Guide — Engineer Guide
 
+> Legacy note
+>
+> Parts of this guide still refer to the older `TenantContext` naming. The current runtime context is
+> `SocieteContext`, and the maintained testing expectations are documented in
+> [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md) and
+> [../../spec/requirements-spec.md](../../spec/requirements-spec.md).
+
 This guide covers the unit test and integration test strategies, base classes, test data setup, how to run tests, and common patterns.
 
 ## Table of Contents

@@ -1,5 +1,11 @@
 # YEM SaaS Platform — Comprehensive Audit Report
 
+> Historical report
+>
+> This audit report is a point-in-time assessment and may not match the maintained source-of-truth
+> documentation under `docs/context`, `docs/spec`, and `docs/runbook-operations.md`.
+> When this file conflicts with the refreshed architecture/specification documents, trust the refreshed documents.
+
 **Date:** 2026-03-22  
 **Auditors:** Elite Software Expert Team  
 **Repository:** `yem-saas-platform` (GitHub: YEM1449/yem-saas-platform)  

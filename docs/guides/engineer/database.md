@@ -1,5 +1,12 @@
 # Database Guide — Engineer Guide
 
+> Legacy note
+>
+> This guide predates the full migration to the current `societe_id` model and still references the
+> earlier `tenant` structure in several examples. For the active schema, use
+> [../../context/DATA_MODEL.md](../../context/DATA_MODEL.md) and
+> [../../spec/technical-spec.md](../../spec/technical-spec.md).
+
 This guide covers the PostgreSQL schema, Liquibase migration strategy, how to add a changeset, how to work with the database locally, and common schema patterns.
 
 ## Table of Contents
