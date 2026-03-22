@@ -29,17 +29,21 @@ export class AuthService {
   }
 
   login(req: LoginRequest): Observable<LoginResponse> {
+    this.clearSession();
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
       .pipe(tap((res) => {
         // Only store token if this is a full auth (not a société selection prompt)
         if (!res.requiresSocieteSelection) {
           localStorage.setItem(TOKEN_KEY, res.accessToken);
+        } else {
+          localStorage.removeItem(TOKEN_KEY);
         }
       }));
   }
 
   switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
+    this.cachedUser = null;
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/switch-societe`,
         { societeId },

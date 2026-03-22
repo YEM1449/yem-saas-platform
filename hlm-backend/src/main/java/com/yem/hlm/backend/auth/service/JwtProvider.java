@@ -106,19 +106,25 @@ public class JwtProvider {
      * JwtAuthenticationFilter can refuse it for any route except /auth/switch-societe.
      *
      * @param userId     the authenticated user
+     * @param tokenVersion the user's current tokenVersion for revocation checks
      * @param ttlSeconds lifetime of the token in seconds (typically 300 = 5 min)
      * @return signed partial JWT
      */
-    public String generatePartial(UUID userId, int ttlSeconds) {
+    public String generatePartial(UUID userId, int tokenVersion, int ttlSeconds) {
         Instant now = Instant.now();
         var claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ttlSeconds))
                 .subject(userId.toString())
                 .claim("partial", true)
+                .claim("tv", tokenVersion)
                 .build();
         var headers = JwsHeader.with(MacAlgorithm.HS256).build();
         return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+    }
+
+    public String generatePartial(UUID userId, int ttlSeconds) {
+        return generatePartial(userId, 0, ttlSeconds);
     }
 
     /**

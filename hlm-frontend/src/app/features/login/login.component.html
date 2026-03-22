@@ -1,6 +1,10 @@
 <div class="login-container">
   <h1>HLM Login</h1>
 
+  @if (error) {
+    <p class="error" data-testid="error-message">{{ error }}</p>
+  }
+
   @if (showSocieteSelection) {
     <div class="societe-selection">
       <h2>Choisir une société</h2>
@@ -11,25 +15,21 @@
         </button>
       }
     </div>
+  } @else {
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" [(ngModel)]="form.email" required data-testid="email" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" [(ngModel)]="form.password" required data-testid="password" />
+      </div>
+
+      <button type="submit" [disabled]="loading || loginForm.invalid" data-testid="login-button">
+        {{ loading ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
   }
-
-  <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-    <div class="field">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" [(ngModel)]="form.email" required data-testid="email" />
-    </div>
-
-    <div class="field">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" [(ngModel)]="form.password" required data-testid="password" />
-    </div>
-
-    @if (error) {
-      <p class="error" data-testid="error-message">{{ error }}</p>
-    }
-
-    <button type="submit" [disabled]="loading || loginForm.invalid" data-testid="login-button">
-      {{ loading ? 'Signing in...' : 'Sign in' }}
-    </button>
-  </form>
 </div>

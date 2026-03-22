@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: 051-repair-app-user-email-dedup
+      author: Codex
+      comment: >
+        Repairs the pre-036 email deduplication path by repointing all pre-existing
+        foreign keys to the canonical app_user row before 036 deletes duplicates.
+        This changeset is intentionally included before 036 so databases that failed
+        during 036 can recover on the next Liquibase run.
+      changes:
+        - sql:
+            sql: >
+              WITH canonical_users AS (
+                SELECT email, MIN(id::text)::uuid AS canonical_user_id
+                FROM app_user
+                GROUP BY email
+                HAVING COUNT(*) > 1
+              )
+              UPDATE app_user_societe aus
+              SET user_id = cu.canonical_user_id
+              FROM app_user u
+              JOIN canonical_users cu ON cu.email = u.email
+              WHERE aus.user_id = u.id
+                AND aus.user_id <> cu.canonical_user_id;
+
+        - sql:
+            sql: >
+              WITH canonical_users AS (
+                SELECT email, MIN(id::text)::uuid AS canonical_user_id
+                FROM app_user
+                GROUP BY email
+                HAVING COUNT(*) > 1
+              )
+              UPDATE deposit d
+              SET agent_id = cu.canonical_user_id
+              FROM app_user u
+              JOIN canonical_users cu ON cu.email = u.email
+              WHERE d.agent_id = u.id
+                AND d.agent_id <> cu.canonical_user_id;
+
+        - sql:
+            sql: >
+              WITH canonical_users AS (
+                SELECT email, MIN(id::text)::uuid AS canonical_user_id
+                FROM app_user
+                GROUP BY email
+                HAVING COUNT(*) > 1
+              )
+              UPDATE notification n
+              SET recipient_user_id = cu.canonical_user_id
+              FROM app_user u
+              JOIN canonical_users cu ON cu.email = u.email
+              WHERE n.recipient_user_id = u.id
+                AND n.recipient_user_id <> cu.canonical_user_id;
+
+        - sql:
+            sql: >
+              WITH canonical_users AS (
+                SELECT email, MIN(id::text)::uuid AS canonical_user_id
+                FROM app_user
+                GROUP BY email
+                HAVING COUNT(*) > 1
+              )
+              UPDATE sale_contract sc
+              SET agent_id = cu.canonical_user_id
+              FROM app_user u
+              JOIN canonical_users cu ON cu.email = u.email
+              WHERE sc.agent_id = u.id
+                AND sc.agent_id <> cu.canonical_user_id;
+
+        - sql:
+            sql: >
+              WITH canonical_users AS (
+                SELECT email, MIN(id::text)::uuid AS canonical_user_id
+                FROM app_user
+                GROUP BY email
+                HAVING COUNT(*) > 1
+              )
+              UPDATE outbound_message om
+              SET created_by_user_id = cu.canonical_user_id
+              FROM app_user u
+              JOIN canonical_users cu ON cu.email = u.email
+              WHERE om.created_by_user_id = u.id
+                AND om.created_by_user_id <> cu.canonical_user_id;

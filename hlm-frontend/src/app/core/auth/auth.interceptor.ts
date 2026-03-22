@@ -8,11 +8,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = auth.token;
 
   // Don't attach token to login requests (public endpoint)
-  const skipAuth = req.url.endsWith('/auth/login');
+  const skipAuth = req.url.endsWith('/auth/login') || req.url.endsWith('/auth/switch-societe');
   // Don't auto-logout on /auth/me — verifySession handles that path
   const isAuthMe = req.url.endsWith('/auth/me');
+  // Preserve explicit Authorization headers (e.g. société switch partial token)
+  const hasExplicitAuth = req.headers.has('Authorization');
 
-  const authReq = token && !skipAuth
+  const authReq = token && !skipAuth && !hasExplicitAuth
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 

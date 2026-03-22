@@ -3,6 +3,8 @@ package com.yem.hlm.backend.societe;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.societe.domain.AppUserSociete;
+import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
 import com.yem.hlm.backend.project.api.dto.ProjectCreateRequest;
 import com.yem.hlm.backend.societe.domain.Societe;
 import com.yem.hlm.backend.support.IntegrationTestBase;
@@ -16,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -35,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class CrossSocieteIsolationIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
@@ -43,20 +43,30 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
     @Autowired JwtProvider jwtProvider;
     @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
+    @Autowired AppUserSocieteRepository appUserSocieteRepository;
 
     private String bearerA;
     private String bearerB;
+    private Societe societeA;
+    private Societe societeB;
 
     @BeforeEach
     void setup() {
-        Societe societeA = societeRepository.save(new Societe("Société Alpha", "MA"));
-        Societe societeB = societeRepository.save(new Societe("Société Beta", "MA"));
+        String suffix = UUID.randomUUID().toString();
+        societeA = societeRepository.saveAndFlush(new Societe("Société Alpha " + suffix, "MA"));
+        societeB = societeRepository.saveAndFlush(new Societe("Société Beta " + suffix, "MA"));
 
-        User userA = userRepository.save(new User("admin@alpha.test", "hash"));
-        User userB = userRepository.save(new User("admin@beta.test", "hash"));
+        User userA = userRepository.saveAndFlush(new User("admin-" + suffix + "@alpha.test", "hash"));
+        User userB = userRepository.saveAndFlush(new User("admin-" + suffix + "@beta.test", "hash"));
+        enroll(userA.getId(), societeA.getId(), "ADMIN");
+        enroll(userB.getId(), societeB.getId(), "ADMIN");
 
         bearerA = "Bearer " + jwtProvider.generate(userA.getId(), societeA.getId(), UserRole.ROLE_ADMIN);
         bearerB = "Bearer " + jwtProvider.generate(userB.getId(), societeB.getId(), UserRole.ROLE_ADMIN);
+    }
+
+    private void enroll(UUID userId, UUID societeId, String role) {
+        appUserSocieteRepository.saveAndFlush(new AppUserSociete(new AppUserSocieteId(userId, societeId), role));
     }
 
     // ── Contacts ──────────────────────────────────────────────────────
@@ -173,6 +183,51 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
 
         mvc.perform(get("/api/contacts/{id}/timeline", contactId)
                         .header("Authorization", bearerB))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void contactStatusUpdate_societeB_returns404ForSocieteAContact() throws Exception {
+        String body = mvc.perform(post("/api/contacts")
+                        .header("Authorization", bearerA)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(new CreateContactRequest(
+                                "Mutation", "Alpha", null, "mutation-" + UUID.randomUUID() + "@alpha.test",
+                                null, null, null, null, null, null))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String contactId = json.readTree(body).get("id").asText();
+
+        mvc.perform(patch("/api/contacts/{id}/status", contactId)
+                        .header("Authorization", bearerB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"QUALIFIED_PROSPECT"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void propertyCreation_societeB_cannotUseSocieteAProject() throws Exception {
+        String body = mvc.perform(post("/api/projects")
+                        .header("Authorization", bearerA)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(new ProjectCreateRequest("Shared Scope Project", null))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String projectId = json.readTree(body).get("id").asText();
+
+        String propertyJson = """
+                {"type":"COMMERCE","title":"Wrong Scope Commerce","referenceCode":"ISO-%s",
+                 "price":200000,"currency":"MAD","surfaceAreaSqm":80,"projectId":"%s"}
+                """.formatted(UUID.randomUUID().toString().substring(0, 8), projectId);
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", bearerB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(propertyJson))
                 .andExpect(status().isNotFound());
     }
 }
