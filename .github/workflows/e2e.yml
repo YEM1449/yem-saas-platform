@@ -1,0 +1,49 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start backend services
+        run: docker compose up -d
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "Backend healthy"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 5
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: hlm-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd hlm-frontend && npm ci
+
+      - name: Install Playwright browsers
+        run: cd hlm-frontend && npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: cd hlm-frontend && npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: hlm-frontend/playwright-report/
+          retention-days: 7

@@ -3,50 +3,45 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminUserService } from './admin-user.service';
-import { AdminUser } from './admin-user.model';
+import { MembreDto, MembreStatut } from './admin-user.model';
+import { UserInviteDialogComponent } from './user-invite-dialog.component';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
-
-const ALL_ROLES = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_AGENT'] as const;
-const NON_ADMIN_ROLES = ['ROLE_MANAGER', 'ROLE_AGENT'] as const;
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UserInviteDialogComponent],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
 })
 export class AdminUsersComponent implements OnInit {
-  private svc = inject(AdminUserService);
+  private svc  = inject(AdminUserService);
   private auth = inject(AuthService);
 
-  users: AdminUser[] = [];
+  membres: MembreDto[] = [];
   loading = true;
   error = '';
   success = '';
 
-  // Search
-  searchQuery = '';
+  // Filters
+  search = '';
+  filterRole = '';
+  filterActif: '' | 'true' | 'false' = '';
 
-  // Create form
-  showCreate = false;
-  createEmail = '';
-  createPassword = '';
-  createRole = 'ROLE_AGENT';
-  creating = false;
+  // Pagination
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
 
-  // Temp password display
-  tempPassword = '';
-  tempPasswordUser = '';
+  // Dialog
+  showInviteDialog = false;
 
-  /**
-   * RBAC: only SUPER_ADMIN can assign the ADMIN role.
-   * Company-level ADMIN sees MANAGER and AGENT only.
-   */
-  get roles(): readonly string[] {
-    return this.auth.user?.role === 'ROLE_SUPER_ADMIN' ? ALL_ROLES : NON_ADMIN_ROLES;
-  }
+  // GDPR export
+  exportData: string | null = null;
+
+  readonly roles = ['', 'ADMIN', 'MANAGER', 'AGENT'];
 
   ngOnInit(): void {
     this.load();
@@ -55,119 +50,110 @@ export class AdminUsersComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    const q = this.searchQuery.trim() || undefined;
-    this.svc.list(q).subscribe({
-      next: (list) => {
-        this.users = list;
+    this.svc.list({
+      search: this.search.trim() || undefined,
+      role:   this.filterRole  || undefined,
+      actif:  this.filterActif === '' ? undefined : this.filterActif === 'true',
+      page:   this.page,
+      size:   this.size,
+    }).subscribe({
+      next: (page) => {
+        this.membres = page.content;
+        this.totalPages = page.page.totalPages;
+        this.totalElements = page.page.totalElements;
         this.loading = false;
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.error = this.extractError(err);
+        const body = err.error as ErrorResponse | null;
+        this.error = body?.message ?? `Erreur (${err.status})`;
       },
     });
   }
 
-  search(): void {
+  applyFilter(): void { this.page = 0; this.load(); }
+  prevPage(): void { if (this.page > 0) { this.page--; this.load(); } }
+  nextPage(): void { if (this.page + 1 < this.totalPages) { this.page++; this.load(); } }
+
+  onInvited(m: MembreDto): void {
+    this.showInviteDialog = false;
+    this.success = `Invitation envoyée à ${m.email}.`;
     this.load();
   }
 
-  toggleCreate(): void {
-    this.showCreate = !this.showCreate;
-    this.clearCreateForm();
-  }
-
-  submitCreate(): void {
-    this.creating = true;
+  reinviter(m: MembreDto): void {
     this.error = '';
-    this.success = '';
-    this.svc.create({ email: this.createEmail, password: this.createPassword, role: this.createRole }).subscribe({
-      next: (user) => {
-        this.creating = false;
-        this.showCreate = false;
-        this.success = `User ${user.email} created.`;
-        this.clearCreateForm();
-        this.load();
-      },
-      error: (err: HttpErrorResponse) => {
-        this.creating = false;
-        this.error = this.extractError(err);
-      },
+    this.svc.reinviter(m.id).subscribe({
+      next: () => { this.success = `Invitation renvoyée à ${m.email}.`; },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
   }
 
-  changeRole(user: AdminUser, newRole: string): void {
-    if (newRole === user.role) return;
+  changerRole(m: MembreDto, role: string): void {
+    if (role === m.role) return;
     this.error = '';
-    this.success = '';
-    this.svc.changeRole(user.id, newRole).subscribe({
+    this.svc.changerRole(m.id, { nouveauRole: role, version: m.version }).subscribe({
       next: (updated) => {
-        const idx = this.users.findIndex((u) => u.id === updated.id);
-        if (idx >= 0) this.users[idx] = updated;
-        this.success = `Role updated for ${updated.email}.`;
+        this.membres = this.membres.map(u => u.id === updated.id ? updated : u);
+        this.success = `Rôle mis à jour pour ${updated.email}.`;
       },
-      error: (err: HttpErrorResponse) => {
-        this.error = this.extractError(err);
-      },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
   }
 
-  toggleEnabled(user: AdminUser): void {
+  debloquer(m: MembreDto): void {
     this.error = '';
-    this.success = '';
-    this.svc.setEnabled(user.id, !user.enabled).subscribe({
+    this.svc.debloquer(m.id).subscribe({
       next: (updated) => {
-        const idx = this.users.findIndex((u) => u.id === updated.id);
-        if (idx >= 0) this.users[idx] = updated;
-        this.success = `${updated.email} ${updated.enabled ? 'enabled' : 'disabled'}.`;
+        this.membres = this.membres.map(u => u.id === updated.id ? updated : u);
+        this.success = `Compte de ${updated.email} débloqué.`;
       },
-      error: (err: HttpErrorResponse) => {
-        this.error = this.extractError(err);
-      },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
   }
 
-  resetPassword(user: AdminUser): void {
+  retirer(m: MembreDto): void {
+    if (!confirm(`Retirer ${m.nomComplet} de la société ?`)) return;
     this.error = '';
-    this.success = '';
-    this.tempPassword = '';
-    this.svc.resetPassword(user.id).subscribe({
-      next: (res) => {
-        this.tempPassword = res.temporaryPassword;
-        this.tempPasswordUser = user.email;
-        this.success = `Temporary password generated for ${user.email}.`;
-      },
-      error: (err: HttpErrorResponse) => {
-        this.error = this.extractError(err);
-      },
+    this.svc.retirer(m.id, { version: m.version }).subscribe({
+      next: () => { this.success = `${m.nomComplet} retiré.`; this.load(); },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
   }
 
-  dismissTempPassword(): void {
-    this.tempPassword = '';
-    this.tempPasswordUser = '';
+  exportDonnees(m: MembreDto): void {
+    this.svc.exportDonnees(m.id).subscribe({
+      next: (data) => { this.exportData = JSON.stringify(data, null, 2); },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
+    });
   }
 
-  formatRole(role: string): string {
-    return role.replace('ROLE_', '');
+  anonymiser(m: MembreDto): void {
+    if (!confirm(`ATTENTION : Anonymiser définitivement les données de ${m.nomComplet} ? Cette action est irréversible.`)) return;
+    this.svc.anonymiser(m.id).subscribe({
+      next: () => { this.success = `Données de ${m.nomComplet} anonymisées.`; this.load(); },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
+    });
   }
 
-  private clearCreateForm(): void {
-    this.createEmail = '';
-    this.createPassword = '';
-    this.createRole = 'ROLE_AGENT';
+  statutBadgeClass(statut: MembreStatut): string {
+    const map: Record<MembreStatut, string> = {
+      ACTIF: 'badge-green', INVITE: 'badge-blue',
+      INVITATION_EXPIREE: 'badge-amber', BLOQUE: 'badge-red', RETIRE: 'badge-gray',
+    };
+    return 'badge ' + (map[statut] ?? '');
+  }
+
+  get assignableRoles(): string[] {
+    return this.auth.user?.role === 'ROLE_ADMIN' ? ['MANAGER', 'AGENT'] : ['ADMIN', 'MANAGER', 'AGENT'];
   }
 
   private extractError(err: HttpErrorResponse): string {
-    if (err.status === 401) return 'Session expired. Please log in again.';
+    if (err.status === 401) return 'Session expirée.';
     const body = err.error as ErrorResponse | null;
-    if (err.status === 403) {
-      if (body?.code === 'ROLE_ESCALATION_FORBIDDEN') {
-        return 'Action non autorisée : seul un Super Administrateur peut attribuer le rôle Administrateur.';
-      }
-      return 'Accès refusé. Rôle insuffisant pour cette action.';
+    if (err.status === 403 && body?.code === 'ROLE_ESCALATION_FORBIDDEN') {
+      return 'Action non autorisée : seul un Super Administrateur peut attribuer le rôle Administrateur.';
     }
-    if (body?.message) return body.message;
-    return `Request failed (${err.status})`;
+    return body?.message ?? `Erreur (${err.status})`;
   }
 }

@@ -12,8 +12,9 @@
 
     <!-- ── Tabs ── -->
     <nav class="tabs">
-      <button [class.active]="activeTab === 'info'"     (click)="switchTab('info')">Informations</button>
-      <button [class.active]="activeTab === 'payments'" (click)="switchTab('payments')">Échéancier</button>
+      <button [class.active]="activeTab === 'info'"      (click)="switchTab('info')">Informations</button>
+      <button [class.active]="activeTab === 'payments'"  (click)="switchTab('payments')">Échéancier</button>
+      <button [class.active]="activeTab === 'documents'" (click)="switchTab('documents')">Documents</button>
     </nav>
 
     <!-- ── Info tab ── -->
@@ -42,6 +43,11 @@
         [contractId]="contract.id"
         [buyerContactId]="contract.buyerContactId">
       </app-payment-schedule>
+    }
+
+    <!-- ── Documents tab ── -->
+    @if (activeTab === 'documents') {
+      <app-document-list entityType="CONTRACT" [entityId]="contract.id" />
     }
   </div>
 }

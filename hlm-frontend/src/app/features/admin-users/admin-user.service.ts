@@ -2,34 +2,64 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AdminUser, CreateUserRequest, ResetPasswordResponse } from './admin-user.model';
+import {
+  MembreDto,
+  InviterUtilisateurRequest,
+  ChangerRoleRequest,
+  ModifierUtilisateurRequest,
+  RetirerUtilisateurRequest,
+  UserDataExport,
+} from './admin-user.model';
+import { PageResponse } from '../../core/models/page-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
   private http = inject(HttpClient);
-  private base = `${environment.apiUrl}/api/admin/users`;
+  private base = `${environment.apiUrl}/api/mon-espace/utilisateurs`;
 
-  list(q?: string): Observable<AdminUser[]> {
-    let params = new HttpParams();
-    if (q) {
-      params = params.set('q', q);
-    }
-    return this.http.get<AdminUser[]>(this.base, { params });
+  list(opts?: { search?: string; role?: string; actif?: boolean; page?: number; size?: number }): Observable<PageResponse<MembreDto>> {
+    let p = new HttpParams();
+    if (opts?.search) p = p.set('search', opts.search);
+    if (opts?.role)   p = p.set('role', opts.role);
+    if (opts?.actif != null) p = p.set('actif', String(opts.actif));
+    if (opts?.page != null)  p = p.set('page', String(opts.page));
+    if (opts?.size != null)  p = p.set('size', String(opts.size));
+    return this.http.get<PageResponse<MembreDto>>(this.base, { params: p });
   }
 
-  create(req: CreateUserRequest): Observable<AdminUser> {
-    return this.http.post<AdminUser>(this.base, req);
+  getById(id: string): Observable<MembreDto> {
+    return this.http.get<MembreDto>(`${this.base}/${id}`);
   }
 
-  changeRole(id: string, role: string): Observable<AdminUser> {
-    return this.http.patch<AdminUser>(`${this.base}/${id}/role`, { role });
+  inviter(req: InviterUtilisateurRequest): Observable<MembreDto> {
+    return this.http.post<MembreDto>(this.base, req);
   }
 
-  setEnabled(id: string, enabled: boolean): Observable<AdminUser> {
-    return this.http.patch<AdminUser>(`${this.base}/${id}/enabled`, { enabled });
+  reinviter(id: string): Observable<MembreDto> {
+    return this.http.post<MembreDto>(`${this.base}/${id}/reinviter`, {});
   }
 
-  resetPassword(id: string): Observable<ResetPasswordResponse> {
-    return this.http.post<ResetPasswordResponse>(`${this.base}/${id}/reset-password`, {});
+  modifierProfil(id: string, req: ModifierUtilisateurRequest): Observable<MembreDto> {
+    return this.http.patch<MembreDto>(`${this.base}/${id}`, req);
+  }
+
+  changerRole(id: string, req: ChangerRoleRequest): Observable<MembreDto> {
+    return this.http.patch<MembreDto>(`${this.base}/${id}/role`, req);
+  }
+
+  retirer(id: string, req: RetirerUtilisateurRequest): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`, { body: req });
+  }
+
+  debloquer(id: string): Observable<MembreDto> {
+    return this.http.post<MembreDto>(`${this.base}/${id}/debloquer`, {});
+  }
+
+  exportDonnees(id: string): Observable<UserDataExport> {
+    return this.http.get<UserDataExport>(`${this.base}/${id}/export-donnees`);
+  }
+
+  anonymiser(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/anonymiser`);
   }
 }

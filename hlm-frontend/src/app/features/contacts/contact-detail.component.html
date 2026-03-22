@@ -18,6 +18,12 @@
     <button class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="selectTab('timeline')">
       Historique
     </button>
+    <button class="tab-btn" [class.active]="activeTab === 'documents'" (click)="selectTab('documents')">
+      Documents
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
+      Tâches
+    </button>
   </div>
 
   @if (activeTab === 'details') {
@@ -77,5 +83,13 @@
         }
       </ul>
     }
+  }
+
+  @if (activeTab === 'documents') {
+    <app-document-list entityType="CONTACT" [entityId]="contact.id" />
+  }
+
+  @if (activeTab === 'tasks') {
+    <app-contact-tasks [contactId]="contact.id" />
   }
 }

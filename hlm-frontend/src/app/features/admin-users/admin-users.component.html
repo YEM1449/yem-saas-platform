@@ -1,108 +1,93 @@
-<h2>User Management</h2>
+<h2>Gestion des utilisateurs</h2>
 
 <div class="toolbar">
-  <input
-    type="text"
-    placeholder="Search by email..."
-    [(ngModel)]="searchQuery"
-    (keyup.enter)="search()"
-    class="search-input"
-  />
-  <button (click)="search()">Search</button>
-  <button (click)="toggleCreate()" class="btn-primary">
-    {{ showCreate ? 'Cancel' : '+ New User' }}
-  </button>
+  <input type="text" [(ngModel)]="search" (keyup.enter)="applyFilter()" placeholder="Rechercher..." class="search-input" />
+  <select [(ngModel)]="filterRole" (ngModelChange)="applyFilter()">
+    <option value="">Tous les rôles</option>
+    @for (r of roles.slice(1); track r) {
+      <option [value]="r">{{ r }}</option>
+    }
+  </select>
+  <select [(ngModel)]="filterActif" (ngModelChange)="applyFilter()">
+    <option value="">Tous</option>
+    <option value="true">Actifs</option>
+    <option value="false">Inactifs</option>
+  </select>
+  <button (click)="applyFilter()">Filtrer</button>
+  <button (click)="showInviteDialog = true" class="btn-primary">+ Inviter</button>
 </div>
 
-@if (success) {
-  <p class="success">{{ success }}</p>
-}
+@if (success) { <p class="success">{{ success }}</p> }
+@if (error)   { <p class="error">{{ error }}</p> }
 
-@if (error) {
-  <p class="error">{{ error }}</p>
-}
-
-@if (tempPassword) {
-  <div class="temp-password-box">
-    <strong>Temporary password for {{ tempPasswordUser }}:</strong>
-    <code>{{ tempPassword }}</code>
-    <button (click)="dismissTempPassword()" class="btn-small">Dismiss</button>
+@if (exportData) {
+  <div class="export-box">
+    <strong>Export RGPD :</strong>
+    <pre>{{ exportData }}</pre>
+    <button (click)="exportData = null" class="btn-small">Fermer</button>
   </div>
 }
 
-@if (showCreate) {
-  <div class="create-form">
-    <h3>Create User</h3>
-    <label>
-      Email
-      <input type="email" [(ngModel)]="createEmail" required />
-    </label>
-    <label>
-      Password
-      <input type="password" [(ngModel)]="createPassword" minlength="8" required />
-    </label>
-    <label>
-      Role
-      <select [(ngModel)]="createRole">
-        @for (r of roles; track r) {
-          <option [value]="r">{{ formatRole(r) }}</option>
-        }
-      </select>
-    </label>
-    <button
-      (click)="submitCreate()"
-      [disabled]="creating || !createEmail || !createPassword"
-      class="btn-primary"
-    >
-      {{ creating ? 'Creating...' : 'Create' }}
-    </button>
-  </div>
+@if (loading) { <p>Chargement...</p> }
+
+@if (!loading && membres.length === 0) {
+  <p class="empty">Aucun utilisateur trouvé.</p>
 }
 
-@if (loading) {
-  <p>Loading users...</p>
-}
-
-@if (!loading && !error && users.length === 0) {
-  <p>No users found.</p>
-}
-
-@if (!loading && users.length > 0) {
+@if (!loading && membres.length > 0) {
   <table>
     <thead>
       <tr>
+        <th>Nom</th>
         <th>Email</th>
-        <th>Role</th>
-        <th>Enabled</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th>Dernière connexion</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      @for (u of users; track u.id) {
+      @for (m of membres; track m.id) {
         <tr>
-          <td>{{ u.email }}</td>
+          <td>{{ m.nomComplet }}</td>
+          <td>{{ m.email }}</td>
           <td>
-            <select [ngModel]="u.role" (ngModelChange)="changeRole(u, $event)">
-              @for (r of roles; track r) {
-                <option [value]="r">{{ formatRole(r) }}</option>
+            <select [ngModel]="m.role" (ngModelChange)="changerRole(m, $event)">
+              @for (r of assignableRoles; track r) {
+                <option [value]="r">{{ r }}</option>
               }
             </select>
           </td>
           <td>
-            <span class="badge" [class.badge-active]="u.enabled" [class.badge-disabled]="!u.enabled">
-              {{ u.enabled ? 'Active' : 'Disabled' }}
-            </span>
+            <span [class]="statutBadgeClass(m.statut)">{{ m.statut }}</span>
           </td>
+          <td>{{ m.derniereConnexion ? (m.derniereConnexion | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
           <td class="actions">
-            <button (click)="toggleEnabled(u)" class="btn-small">
-              {{ u.enabled ? 'Disable' : 'Enable' }}
-            </button>
-            <button (click)="resetPassword(u)" class="btn-small btn-secondary">
-              Reset Password
-            </button>
+            @if (m.statut === 'INVITE' || m.statut === 'INVITATION_EXPIREE') {
+              <button (click)="reinviter(m)" class="btn-small">Ré-inviter</button>
+            }
+            @if (m.compteBloque) {
+              <button (click)="debloquer(m)" class="btn-small btn-green">Débloquer</button>
+            }
+            <button (click)="exportDonnees(m)" class="btn-small">Export RGPD</button>
+            <button (click)="anonymiser(m)" class="btn-small btn-danger">Anonymiser</button>
+            <button (click)="retirer(m)" class="btn-small btn-danger">Retirer</button>
           </td>
         </tr>
       }
     </tbody>
   </table>
+
+  <div class="pagination">
+    <button (click)="prevPage()" [disabled]="page === 0">‹ Précédent</button>
+    <span>Page {{ page + 1 }} / {{ totalPages }} ({{ totalElements }} membres)</span>
+    <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">Suivant ›</button>
+  </div>
+}
+
+@if (showInviteDialog) {
+  <app-user-invite-dialog
+    (invited)="onInvited($event)"
+    (cancelled)="showInviteDialog = false"
+  />
 }

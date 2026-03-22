@@ -6,11 +6,12 @@ import { PropertyService } from './property.service';
 import { Property, PropertyMedia } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
+import { DocumentListComponent } from '../documents/document-list.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, DocumentListComponent],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })

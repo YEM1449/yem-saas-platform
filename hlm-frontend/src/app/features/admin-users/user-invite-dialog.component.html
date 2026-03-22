@@ -1,0 +1,49 @@
+<div class="overlay" (click)="cancel()"></div>
+<div class="modal">
+  <h3>Inviter un utilisateur</h3>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  <label>
+    Email <span class="required">*</span>
+    <input type="email" [(ngModel)]="email" placeholder="prenom.nom@exemple.com" />
+  </label>
+
+  <label>
+    Prénom <span class="required">*</span>
+    <input type="text" [(ngModel)]="prenom" />
+  </label>
+
+  <label>
+    Nom <span class="required">*</span>
+    <input type="text" [(ngModel)]="nomFamille" />
+  </label>
+
+  <label>
+    Téléphone
+    <input type="tel" [(ngModel)]="telephone" placeholder="+212 6 00 00 00 00" />
+  </label>
+
+  <label>
+    Poste
+    <input type="text" [(ngModel)]="poste" placeholder="Ex: Directeur commercial" />
+  </label>
+
+  <label>
+    Rôle <span class="required">*</span>
+    <select [(ngModel)]="role">
+      @for (r of availableRoles; track r) {
+        <option [value]="r">{{ r }}</option>
+      }
+    </select>
+  </label>
+
+  <div class="actions">
+    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">Annuler</button>
+    <button (click)="submit()" [disabled]="submitting || !email.trim() || !prenom.trim() || !nomFamille.trim()" class="btn-primary">
+      {{ submitting ? 'Envoi...' : 'Envoyer l\'invitation' }}
+    </button>
+  </div>
+</div>

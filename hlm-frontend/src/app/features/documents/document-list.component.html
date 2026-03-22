@@ -1,0 +1,50 @@
+<div class="doc-section">
+  <h4>Documents</h4>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+  @if (deleteError) { <p class="error">{{ deleteError }}</p> }
+
+  <!-- Upload area -->
+  <div class="upload-row">
+    <input type="text" [(ngModel)]="description" placeholder="Description (optionnel)" class="desc-input" />
+    <label class="upload-btn" [class.uploading]="uploading">
+      {{ uploading ? 'Envoi...' : '+ Ajouter un fichier' }}
+      <input type="file" (change)="onFileSelected($event)" [disabled]="uploading" style="display:none" />
+    </label>
+  </div>
+  @if (uploadError) { <p class="error">{{ uploadError }}</p> }
+
+  @if (loading) { <p class="loading-text">Chargement...</p> }
+
+  @if (!loading && documents.length === 0) {
+    <p class="empty">Aucun document attaché.</p>
+  }
+
+  @if (!loading && documents.length > 0) {
+    <table>
+      <thead>
+        <tr>
+          <th>Fichier</th>
+          <th>Type</th>
+          <th>Taille</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (doc of documents; track doc.id) {
+          <tr>
+            <td>{{ fileIcon(doc.mimeType) }} {{ doc.fileName }}</td>
+            <td class="mime">{{ doc.mimeType }}</td>
+            <td>{{ formatSize(doc.fileSize) }}</td>
+            <td>{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td class="actions">
+              <button (click)="download(doc)" class="btn-small">Télécharger</button>
+              <button (click)="deleteDoc(doc)" class="btn-small btn-danger">Supprimer</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

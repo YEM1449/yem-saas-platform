@@ -1,0 +1,47 @@
+<div class="form-overlay" (click)="cancel()"></div>
+<div class="form-modal">
+  <h3>{{ isEdit ? 'Modifier la tâche' : 'Nouvelle tâche' }}</h3>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  <label>
+    Titre <span class="required">*</span>
+    <input type="text" [(ngModel)]="title" placeholder="Ex: Rappeler le client" maxlength="300" />
+  </label>
+
+  <label>
+    Description
+    <textarea [(ngModel)]="description" rows="3" placeholder="Détails optionnels..."></textarea>
+  </label>
+
+  <label>
+    Date d'échéance
+    <input type="datetime-local" [(ngModel)]="dueDate" />
+  </label>
+
+  <label>
+    ID Responsable (UUID)
+    <input type="text" [(ngModel)]="assigneeId" placeholder="UUID de l'assigné" />
+  </label>
+
+  @if (!isEdit) {
+    <label>
+      ID Contact lié (UUID)
+      <input type="text" [(ngModel)]="contactId" placeholder="UUID du contact (optionnel)" />
+    </label>
+
+    <label>
+      ID Propriété liée (UUID)
+      <input type="text" [(ngModel)]="propertyId" placeholder="UUID de la propriété (optionnel)" />
+    </label>
+  }
+
+  <div class="form-actions">
+    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">Annuler</button>
+    <button (click)="submit()" [disabled]="submitting || !title.trim()" class="btn-primary">
+      {{ submitting ? 'Enregistrement...' : (isEdit ? 'Modifier' : 'Créer') }}
+    </button>
+  </div>
+</div>

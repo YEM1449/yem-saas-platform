@@ -1,0 +1,73 @@
+.doc-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.doc-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.upload-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.desc-input {
+  flex: 1;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.upload-btn {
+  background: #6366f1;
+  color: #fff;
+  padding: 0.35rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  user-select: none;
+}
+.upload-btn.uploading { opacity: 0.6; cursor: default; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+th { font-weight: 600; color: #6b7280; background: #f9fafb; }
+
+.mime { color: #9ca3af; font-size: 0.72rem; }
+
+.actions { display: flex; gap: 0.3rem; }
+
+.btn-small {
+  padding: 2px 7px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+.btn-small:hover { background: #f3f4f6; }
+.btn-danger { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+
+.error        { color: #991b1b; font-size: 0.8rem; margin: 0.25rem 0; }
+.loading-text { color: #6b7280; font-size: 0.8rem; }
+.empty        { color: #9ca3af; font-size: 0.8rem; font-style: italic; }
