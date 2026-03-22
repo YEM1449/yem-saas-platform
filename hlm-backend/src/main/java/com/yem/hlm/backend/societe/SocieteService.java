@@ -285,12 +285,15 @@ public class SocieteService {
 
         // R6 — revoke all member JWTs atomically
         appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
-            aus.setActif(false);
-            appUserSocieteRepository.save(aus);
-            userRepository.findById(aus.getUserId()).ifPresent(user -> {
-                user.incrementTokenVersion();
-                userRepository.save(user);
-            });
+            if (aus.isActif()) {
+                aus.setActif(false);
+                aus.setDateRetrait(s.getDateSuspension());
+                appUserSocieteRepository.save(aus);
+                userRepository.findById(aus.getUserId()).ifPresent(user -> {
+                    user.incrementTokenVersion();
+                    userRepository.save(user);
+                });
+            }
         });
 
         eventPublisher.publishEvent(new SocieteDesactiveeEvent(id, actorId, req.raison()));
@@ -305,6 +308,17 @@ public class SocieteService {
                     "La société est déjà active.");
         }
         s.setActif(true);
+        Instant suspensionDate = s.getDateSuspension();
+        if (suspensionDate != null) {
+            appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
+                if (!aus.isActif() && aus.getDateRetrait() != null
+                        && !aus.getDateRetrait().isBefore(suspensionDate.minusSeconds(5))) {
+                    aus.setActif(true);
+                    aus.setDateRetrait(null);
+                    appUserSocieteRepository.save(aus);
+                }
+            });
+        }
         s.setDateSuspension(null);
         s.setRaisonSuspension(null);
         societeRepository.save(s);
