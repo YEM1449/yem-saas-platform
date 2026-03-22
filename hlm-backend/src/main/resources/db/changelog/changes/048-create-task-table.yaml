@@ -1,0 +1,114 @@
+databaseChangeLog:
+  - changeSet:
+      id: "048-create-task-table"
+      author: "claude-audit"
+      comment: "Create task table for follow-up and to-do management per société"
+      changes:
+        - createTable:
+            tableName: task
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assignee_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+              - column:
+                  name: property_id
+                  type: uuid
+              - column:
+                  name: title
+                  type: varchar(300)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: due_date
+                  type: timestamp
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: "OPEN"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: completed_at
+                  type: timestamp
+        - addForeignKeyConstraint:
+            baseTableName: task
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_task_societe
+        - createIndex:
+            indexName: idx_task_societe_assignee
+            tableName: task
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: assignee_id
+        - createIndex:
+            indexName: idx_task_societe_status
+            tableName: task
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_task_societe_due_date
+            tableName: task
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: due_date
+        - createIndex:
+            indexName: idx_task_societe_contact
+            tableName: task
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: contact_id
+        - createIndex:
+            indexName: idx_task_societe_property
+            tableName: task
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: property_id

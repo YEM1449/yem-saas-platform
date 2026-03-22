@@ -249,4 +249,6 @@ public interface SaleContractRepository extends JpaRepository<SaleContract, UUID
             @Param("societeId") UUID societeId,
             Pageable pageable
     );
+
+    long countBySocieteId(UUID societeId);
 }

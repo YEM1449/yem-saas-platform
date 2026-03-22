@@ -2,6 +2,8 @@ package com.yem.hlm.backend.portal;
 
 import com.yem.hlm.backend.portal.repo.PortalTokenRepository;
 import com.yem.hlm.backend.portal.scheduler.PortalTokenCleanupScheduler;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,8 +25,12 @@ class PortalTokenCleanupSchedulerTest {
     @Mock
     private PortalTokenRepository portalTokenRepository;
 
-    @InjectMocks
     private PortalTokenCleanupScheduler scheduler;
+
+    @BeforeEach
+    void setup() {
+        scheduler = new PortalTokenCleanupScheduler(portalTokenRepository, new SocieteContextHelper());
+    }
 
     @Test
     void cleanup_calls_deleteExpiredAndUsed_with_current_instant() {

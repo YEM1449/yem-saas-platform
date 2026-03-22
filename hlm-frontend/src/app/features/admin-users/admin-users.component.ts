@@ -5,8 +5,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AdminUserService } from './admin-user.service';
 import { AdminUser } from './admin-user.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
+import { AuthService } from '../../core/auth/auth.service';
 
-const ROLES = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_AGENT'] as const;
+const ALL_ROLES = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_AGENT'] as const;
+const NON_ADMIN_ROLES = ['ROLE_MANAGER', 'ROLE_AGENT'] as const;
 
 @Component({
   selector: 'app-admin-users',
@@ -17,6 +19,7 @@ const ROLES = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_AGENT'] as const;
 })
 export class AdminUsersComponent implements OnInit {
   private svc = inject(AdminUserService);
+  private auth = inject(AuthService);
 
   users: AdminUser[] = [];
   loading = true;
@@ -37,7 +40,13 @@ export class AdminUsersComponent implements OnInit {
   tempPassword = '';
   tempPasswordUser = '';
 
-  roles = ROLES;
+  /**
+   * RBAC: only SUPER_ADMIN can assign the ADMIN role.
+   * Company-level ADMIN sees MANAGER and AGENT only.
+   */
+  get roles(): readonly string[] {
+    return this.auth.user?.role === 'ROLE_SUPER_ADMIN' ? ALL_ROLES : NON_ADMIN_ROLES;
+  }
 
   ngOnInit(): void {
     this.load();
@@ -151,8 +160,13 @@ export class AdminUsersComponent implements OnInit {
 
   private extractError(err: HttpErrorResponse): string {
     if (err.status === 401) return 'Session expired. Please log in again.';
-    if (err.status === 403) return 'Access denied. Admin role required.';
     const body = err.error as ErrorResponse | null;
+    if (err.status === 403) {
+      if (body?.code === 'ROLE_ESCALATION_FORBIDDEN') {
+        return 'Action non autorisée : seul un Super Administrateur peut attribuer le rôle Administrateur.';
+      }
+      return 'Accès refusé. Rôle insuffisant pour cette action.';
+    }
     if (body?.message) return body.message;
     return `Request failed (${err.status})`;
   }

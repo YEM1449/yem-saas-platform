@@ -88,4 +88,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
             @Param("projectId") UUID projectId,
             @Param("confirmedStatus") DepositStatus confirmedStatus
     );
+
+    long countBySocieteId(UUID societeId);
 }

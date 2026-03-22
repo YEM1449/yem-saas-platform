@@ -100,6 +100,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             SocieteContext.setSocieteId(societeId);
                         }
                         SocieteContext.setUserId(userId);
+
+                        // 4b) Impersonation tokens carry an "imp" claim identifying
+                        //     the SUPER_ADMIN who is acting as the target user.
+                        UUID impersonatedBy = jwtProvider.extractImpersonatedBy(token);
+                        if (impersonatedBy != null) {
+                            SocieteContext.setImpersonatedBy(impersonatedBy);
+                        }
                     }
 
                     // 5) Build an Authentication object.

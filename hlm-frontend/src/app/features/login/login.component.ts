@@ -27,7 +27,18 @@ export class LoginComponent {
     this.error = '';
 
     this.auth.login(this.form).subscribe({
-      next: () => this.router.navigateByUrl('/app/properties'),
+      next: () => {
+        this.auth.me().subscribe({
+          next: (user) => {
+            if (user.role === 'ROLE_SUPER_ADMIN') {
+              this.router.navigateByUrl('/superadmin/societes');
+            } else {
+              this.router.navigateByUrl('/app/properties');
+            }
+          },
+          error: () => this.router.navigateByUrl('/app/properties'),
+        });
+      },
       error: (err) => this.handleError(err),
     });
   }

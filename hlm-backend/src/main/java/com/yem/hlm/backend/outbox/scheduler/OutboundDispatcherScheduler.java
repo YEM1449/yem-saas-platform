@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.outbox.scheduler;
 
 import com.yem.hlm.backend.outbox.service.OutboundDispatcherService;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,13 +18,16 @@ import org.springframework.stereotype.Component;
 public class OutboundDispatcherScheduler {
 
     private final OutboundDispatcherService dispatcherService;
+    private final SocieteContextHelper societeContextHelper;
 
-    public OutboundDispatcherScheduler(OutboundDispatcherService dispatcherService) {
+    public OutboundDispatcherScheduler(OutboundDispatcherService dispatcherService,
+                                       SocieteContextHelper societeContextHelper) {
         this.dispatcherService = dispatcherService;
+        this.societeContextHelper = societeContextHelper;
     }
 
     @Scheduled(fixedDelayString = "${app.outbox.polling-interval-ms:5000}")
     public void poll() {
-        dispatcherService.runDispatch();
+        societeContextHelper.runAsSystem(dispatcherService::runDispatch);
     }
 }

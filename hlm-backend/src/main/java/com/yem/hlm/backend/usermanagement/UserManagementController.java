@@ -1,9 +1,14 @@
 package com.yem.hlm.backend.usermanagement;
 
 import com.yem.hlm.backend.common.dto.PageResponse;
+import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.usermanagement.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -17,25 +22,30 @@ import java.util.UUID;
 @Tag(name = "User Management", description = "Gestion des membres d'une société")
 @RestController
 @RequestMapping("/api/mon-espace/utilisateurs")
-@PreAuthorize("hasRole('ADMIN')")
+// NOTE: No class-level @PreAuthorize — each method declares its own access rule.
+// ADMIN is enforced per-method to allow MANAGER read-only access and GDPR export.
 public class UserManagementController {
 
     private final UserManagementService userManagementService;
     private final InvitationService invitationService;
     private final UserGdprService userGdprService;
+    private final SocieteRoleValidator roleValidator;
 
     public UserManagementController(UserManagementService userManagementService,
                                     InvitationService invitationService,
-                                    UserGdprService userGdprService) {
+                                    UserGdprService userGdprService,
+                                    SocieteRoleValidator roleValidator) {
         this.userManagementService = userManagementService;
         this.invitationService = invitationService;
         this.userGdprService = userGdprService;
+        this.roleValidator = roleValidator;
     }
 
-    // ── Lister les membres ─────────────────────────────────────────────────────
+    // ── Lister les membres — ADMIN and MANAGER can see the team ───────────────
 
     @Operation(summary = "Lister les membres de la société avec filtres et pagination")
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPER_ADMIN')")
     public PageResponse<MembreDto> listerMembres(
             MembreFilter filter,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -43,31 +53,50 @@ public class UserManagementController {
         return userManagementService.listerMembres(societeId, filter, pageable);
     }
 
-    // ── Détail d'un membre ─────────────────────────────────────────────────────
+    // ── Détail d'un membre — ADMIN and MANAGER ─────────────────────────────────
 
     @Operation(summary = "Obtenir le détail d'un membre")
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPER_ADMIN')")
     public MembreDto getDetail(@PathVariable UUID userId) {
         UUID societeId = SocieteContext.getSocieteId();
         return userManagementService.getDetail(userId, societeId);
     }
 
-    // ── Inviter un utilisateur ─────────────────────────────────────────────────
+    // ── Inviter un utilisateur — ADMIN only (role restriction via validator) ───
 
-    @Operation(summary = "Inviter un nouvel utilisateur dans la société")
+    @Operation(
+        summary = "Inviter un nouvel utilisateur dans la société",
+        description = "Envoie une invitation par e-mail. " +
+                      "ADMIN : peut attribuer MANAGER ou AGENT uniquement. " +
+                      "SUPER_ADMIN : peut attribuer n'importe quel rôle, y compris ADMIN. " +
+                      "Attribuer le rôle ADMIN en tant qu'ADMIN de société retourne 403 ROLE_ESCALATION_FORBIDDEN."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Invitation envoyée"),
+        @ApiResponse(responseCode = "400", description = "Erreur de validation (champ manquant ou format invalide)"),
+        @ApiResponse(responseCode = "401", description = "Authentification requise"),
+        @ApiResponse(responseCode = "403", description = "Rôle insuffisant OU tentative d'escalade de privilège (ROLE_ESCALATION_FORBIDDEN)",
+            content = @Content(schema = @Schema(implementation = com.yem.hlm.backend.common.error.ErrorResponse.class))),
+        @ApiResponse(responseCode = "409", description = "Utilisateur déjà membre OU quota atteint")
+    })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto inviter(@Valid @RequestBody InviterUtilisateurRequest req) {
+        // Privilege escalation guard: ADMIN can only assign MANAGER or AGENT
+        roleValidator.validateAssignableRole(req.role());
         UUID societeId = SocieteContext.getSocieteId();
         UUID adminId = SocieteContext.getUserId();
         var savedUser = invitationService.inviter(req, societeId, adminId);
         return userManagementService.getDetail(savedUser.getId(), societeId);
     }
 
-    // ── Ré-inviter ─────────────────────────────────────────────────────────────
+    // ── Ré-inviter — ADMIN only ─────────────────────────────────────────────────
 
     @Operation(summary = "Renvoyer le lien d'invitation à un utilisateur en attente")
     @PostMapping("/{userId}/reinviter")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto reinviter(@PathVariable UUID userId) {
         UUID societeId = SocieteContext.getSocieteId();
         UUID adminId = SocieteContext.getUserId();
@@ -75,10 +104,11 @@ public class UserManagementController {
         return userManagementService.getDetail(userId, societeId);
     }
 
-    // ── Modifier le profil ─────────────────────────────────────────────────────
+    // ── Modifier le profil — ADMIN only ────────────────────────────────────────
 
     @Operation(summary = "Modifier le profil d'un membre")
     @PatchMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto modifierProfil(@PathVariable UUID userId,
                                     @Valid @RequestBody ModifierUtilisateurRequest req) {
         UUID societeId = SocieteContext.getSocieteId();
@@ -86,22 +116,38 @@ public class UserManagementController {
         return userManagementService.modifierProfil(userId, societeId, req, adminId);
     }
 
-    // ── Changer le rôle ────────────────────────────────────────────────────────
+    // ── Changer le rôle — ADMIN only (role restriction via validator) ──────────
 
-    @Operation(summary = "Changer le rôle d'un membre dans la société")
+    @Operation(
+        summary = "Changer le rôle d'un membre dans la société",
+        description = "ADMIN : peut changer vers MANAGER ou AGENT uniquement — pas ADMIN. " +
+                      "SUPER_ADMIN : peut attribuer n'importe quel rôle. " +
+                      "Tentative de promotion vers ADMIN par un ADMIN retourne 403 ROLE_ESCALATION_FORBIDDEN."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Rôle mis à jour"),
+        @ApiResponse(responseCode = "400", description = "Erreur de validation ou version manquante"),
+        @ApiResponse(responseCode = "403", description = "Escalade de privilège (ROLE_ESCALATION_FORBIDDEN) ou rôle insuffisant",
+            content = @Content(schema = @Schema(implementation = com.yem.hlm.backend.common.error.ErrorResponse.class))),
+        @ApiResponse(responseCode = "409", description = "Version obsolète (CONCURRENT_UPDATE) ou dernier admin (DERNIER_ADMIN)")
+    })
     @PatchMapping("/{userId}/role")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto changerRole(@PathVariable UUID userId,
                                  @Valid @RequestBody ChangerRoleRequest req) {
+        // Privilege escalation guard: ADMIN cannot promote a member to ADMIN
+        roleValidator.validateAssignableRole(req.nouveauRole());
         UUID societeId = SocieteContext.getSocieteId();
         UUID adminId = SocieteContext.getUserId();
         return userManagementService.changerRole(userId, societeId, req, adminId);
     }
 
-    // ── Retirer un membre ──────────────────────────────────────────────────────
+    // ── Retirer un membre — ADMIN only ─────────────────────────────────────────
 
     @Operation(summary = "Retirer un membre de la société")
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public void retirerMembre(@PathVariable UUID userId,
                                @Valid @RequestBody RetirerUtilisateurRequest req) {
         UUID societeId = SocieteContext.getSocieteId();
@@ -109,30 +155,33 @@ public class UserManagementController {
         userManagementService.retirerMembre(userId, societeId, req, adminId);
     }
 
-    // ── Débloquer un compte ────────────────────────────────────────────────────
+    // ── Débloquer un compte — ADMIN only ───────────────────────────────────────
 
     @Operation(summary = "Débloquer manuellement le compte d'un utilisateur")
     @PostMapping("/{userId}/debloquer")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public MembreDto debloquerCompte(@PathVariable UUID userId) {
         UUID societeId = SocieteContext.getSocieteId();
         UUID adminId = SocieteContext.getUserId();
         return userManagementService.debloquerCompte(userId, societeId, adminId);
     }
 
-    // ── RGPD Art. 15 — Export des données personnelles ────────────────────────
+    // ── RGPD Art. 15 — Export — ADMIN and MANAGER ────────────────────────────
 
     @Operation(summary = "Exporter les données personnelles d'un utilisateur (RGPD Art. 15)")
     @GetMapping("/{userId}/export-donnees")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPER_ADMIN')")
     public UserGdprService.UserDataExport exportDonnees(@PathVariable UUID userId) {
         UUID societeId = SocieteContext.getSocieteId();
         return userGdprService.exportUserData(userId, societeId);
     }
 
-    // ── RGPD Art. 17 — Anonymisation ──────────────────────────────────────────
+    // ── RGPD Art. 17 — Anonymisation — ADMIN only ────────────────────────────
 
     @Operation(summary = "Anonymiser les données personnelles d'un utilisateur (RGPD Art. 17)")
     @DeleteMapping("/{userId}/anonymiser")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public void anonymiserUtilisateur(@PathVariable UUID userId) {
         UUID societeId = SocieteContext.getSocieteId();
         UUID adminId = SocieteContext.getUserId();

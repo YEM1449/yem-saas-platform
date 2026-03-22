@@ -9,13 +9,15 @@ export const adminGuard: CanActivateFn = () => {
 
   return auth.verifySession().pipe(
     map((status) => {
-      if (status === 'valid' && auth.user?.role === 'ROLE_ADMIN') {
-        return true;
-      }
       if (status === 'invalid') {
         return router.createUrlTree(['/login']);
       }
-      // Not admin or unknown session — redirect to app home
+      // SUPER_ADMIN can access admin pages too (they manage company memberships)
+      if (status === 'valid' &&
+          (auth.user?.role === 'ROLE_ADMIN' || auth.user?.role === 'ROLE_SUPER_ADMIN')) {
+        return true;
+      }
+      // MANAGER / AGENT — redirect to app home
       return router.createUrlTree(['/app']);
     })
   );

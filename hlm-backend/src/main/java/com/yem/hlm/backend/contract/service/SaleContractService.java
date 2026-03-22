@@ -134,7 +134,7 @@ public class SaleContractService {
         projectActiveGuard.requireActive(societeId, contract.getProject().getId());
 
         UUID propertyId = contract.getProperty().getId();
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, propertyId)
+        Property property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         if (contractRepository.existsBySocieteIdAndProperty_IdAndStatusAndCanceledAtIsNull(
@@ -181,7 +181,7 @@ public class SaleContractService {
         boolean hasActiveDeposit = false;
         if (wasSigned) {
             UUID propertyId = contract.getProperty().getId();
-            property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, propertyId)
+            property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, propertyId)
                     .orElseThrow(() -> new PropertyNotFoundException(propertyId));
             hasActiveDeposit = depositRepository.existsActiveConfirmedDepositForProperty(societeId, propertyId);
         }

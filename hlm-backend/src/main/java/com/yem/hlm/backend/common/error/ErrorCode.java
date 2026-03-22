@@ -109,7 +109,17 @@ public enum ErrorCode {
     SOCIETE_INACTIVE,           // 403 — société membership is inactive
     SUPER_ADMIN_REQUIRED,       // 403 — operation requires SUPER_ADMIN role
     SOCIETE_NOT_FOUND,          // 404 — société not found
+    SOCIETE_ALREADY_EXISTS,     // 409 — a société with this nom/key already exists
+    SOCIETE_SUSPENDED,          // 403 — société is suspended; operation rejected
     USER_ALREADY_IN_SOCIETE,    // 409 — user already has a membership in this société
+    QUOTA_BIENS_ATTEINT,        // 409 — société has reached its property quota
+    QUOTA_CONTACTS_ATTEINT,     // 409 — société has reached its contact quota
+    QUOTA_PROJETS_ATTEINT,      // 409 — société has reached its project quota
+
+    // RBAC enforcement errors
+    ROLE_ESCALATION_FORBIDDEN,  // 403 — company-level ADMIN tried to assign ADMIN role (privilege escalation)
+    INSUFFICIENT_ROLE,          // 403 — caller's role is insufficient for this operation
+    ROLE_INVALIDE,              // 400 — invalid role value supplied
 
     // User management errors
     INVITATION_EXPIREE,          // 410 — invitation link expired or already used
@@ -122,6 +132,12 @@ public enum ErrorCode {
     MOT_DE_PASSE_TROP_FAIBLE,    // 400 — password does not meet complexity requirements
     MOT_DE_PASSE_CONTIENT_EMAIL, // 400 — password contains the user's email address
     COMPTE_DEJA_DEBLOQUE,        // 400 — account is not blocked
+
+    // Task errors (404)
+    TASK_NOT_FOUND,             // 404 — task not found in société
+
+    // Document errors (404)
+    DOCUMENT_NOT_FOUND,         // 404 — document not found in société
 
     // Server errors (500)
     INTERNAL_ERROR

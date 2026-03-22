@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.usermanagement;
 
+import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
@@ -31,6 +32,7 @@ class UserManagementServiceTest {
     @Mock UserRepository userRepository;
     @Mock AppUserSocieteRepository appUserSocieteRepository;
     @Mock ApplicationEventPublisher eventPublisher;
+    @Mock SocieteRoleValidator roleValidator;
 
     @InjectMocks UserManagementService service;
 

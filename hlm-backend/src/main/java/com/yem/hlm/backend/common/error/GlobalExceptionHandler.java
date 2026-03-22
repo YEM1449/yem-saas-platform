@@ -5,7 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
-import com.yem.hlm.backend.contact.service.CrossSocieteAccessException;
+import com.yem.hlm.backend.societe.CrossSocieteAccessException;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
 import com.yem.hlm.backend.contract.service.InvalidContractStateException;
@@ -28,6 +28,8 @@ import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
 import com.yem.hlm.backend.commission.service.CommissionRuleNotFoundException;
+import com.yem.hlm.backend.task.service.TaskNotFoundException;
+import com.yem.hlm.backend.document.service.DocumentNotFoundException;
 import com.yem.hlm.backend.portal.service.PortalTokenInvalidException;
 import com.yem.hlm.backend.payments.service.InvalidPaymentScheduleStateException;
 import com.yem.hlm.backend.payments.service.PaymentInvalidAmountException;
@@ -154,6 +156,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             CommissionRuleNotFoundException.class,
             ContactNotFoundException.class,
+            TaskNotFoundException.class,
+            DocumentNotFoundException.class,
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,
             DepositNotFoundException.class,
@@ -754,10 +758,13 @@ public class GlobalExceptionHandler {
         HttpStatus status = switch (ex.getErrorCode()) {
             case INVITATION_EXPIREE -> HttpStatus.GONE;
             case INVITATION_EN_COURS, DERNIER_ADMIN, QUOTA_UTILISATEURS_ATTEINT,
-                 MEMBRE_DEJA_EXISTANT, CONCURRENT_UPDATE, COMPTE_DEJA_DEBLOQUE -> HttpStatus.CONFLICT;
+                 MEMBRE_DEJA_EXISTANT, CONCURRENT_UPDATE, COMPTE_DEJA_DEBLOQUE,
+                 SOCIETE_ALREADY_EXISTS, QUOTA_BIENS_ATTEINT,
+                 QUOTA_CONTACTS_ATTEINT, QUOTA_PROJETS_ATTEINT -> HttpStatus.CONFLICT;
+            case SOCIETE_SUSPENDED, ROLE_ESCALATION_FORBIDDEN, INSUFFICIENT_ROLE -> HttpStatus.FORBIDDEN;
             case MEMBRE_NON_TROUVE -> HttpStatus.NOT_FOUND;
             case MOT_DE_PASSE_TROP_COURT, MOT_DE_PASSE_TROP_FAIBLE,
-                 MOT_DE_PASSE_CONTIENT_EMAIL, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
+                 MOT_DE_PASSE_CONTIENT_EMAIL, INVALID_REQUEST, ROLE_INVALIDE -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.CONFLICT;
         };
         ErrorResponse error = ErrorResponse.of(

@@ -66,7 +66,10 @@ public class SecurityConfig {
                         // Invitation flow — public (no JWT required)
                         .requestMatchers("/auth/invitation/**").permitAll()
 
-                        // Super-admin société management
+                        // Super-admin platform management (new canonical path)
+                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+
+                        // Super-admin société management (legacy path — kept for backward compat)
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
 
                         // OpenAPI / Swagger UI

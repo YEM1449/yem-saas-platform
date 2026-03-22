@@ -66,22 +66,16 @@ public class JwtProvider {
 
     public String generate(UUID userId, UUID societeId, UserRole role, int tokenVersion) {
         Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(ttlSeconds);
-
-        var claims = JwtClaimsSet.builder()
+        var builder = JwtClaimsSet.builder()
                 .issuedAt(now)
-                .expiresAt(expiresAt)
+                .expiresAt(now.plusSeconds(ttlSeconds))
                 .subject(userId.toString())
-                .claim("sid", societeId != null ? societeId.toString() : null)
                 .claim("roles", List.of(role.name()))
-                .claim("tv", tokenVersion)
-                .build();
+                .claim("tv", tokenVersion);
+        if (societeId != null) builder.claim("sid", societeId.toString());
 
         var headers = JwsHeader.with(MacAlgorithm.HS256).build();
-
-        return encoder
-                .encode(JwtEncoderParameters.from(headers, claims))
-                .getTokenValue();
+        return encoder.encode(JwtEncoderParameters.from(headers, builder.build())).getTokenValue();
     }
 
     /**
@@ -95,16 +89,15 @@ public class JwtProvider {
      */
     public String generate(UUID userId, UUID societeId, String role, int tokenVersion) {
         Instant now = Instant.now();
-        var claims = JwtClaimsSet.builder()
+        var builder = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ttlSeconds))
                 .subject(userId.toString())
-                .claim("sid", societeId != null ? societeId.toString() : null)
                 .claim("roles", List.of(role))
-                .claim("tv", tokenVersion)
-                .build();
+                .claim("tv", tokenVersion);
+        if (societeId != null) builder.claim("sid", societeId.toString());
         var headers = JwsHeader.with(MacAlgorithm.HS256).build();
-        return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+        return encoder.encode(JwtEncoderParameters.from(headers, builder.build())).getTokenValue();
     }
 
     /**
@@ -126,6 +119,48 @@ public class JwtProvider {
                 .build();
         var headers = JwsHeader.with(MacAlgorithm.HS256).build();
         return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+    }
+
+    /**
+     * Generates a short-lived impersonation token.
+     * The token has the target user's subject and société, but carries an {@code imp} claim
+     * identifying the SUPER_ADMIN who initiated impersonation.
+     *
+     * @param targetUserId   the user being impersonated
+     * @param targetSocieteId the société scope
+     * @param targetRole     the role of the impersonated user in that société (e.g. "ROLE_ADMIN")
+     * @param tokenVersion   the target user's current tokenVersion
+     * @param superAdminId   the SUPER_ADMIN performing impersonation (stored in {@code imp} claim)
+     * @param ttlSeconds     lifetime of the impersonation token (typically 3600 = 1 hour)
+     */
+    public String generateImpersonation(UUID targetUserId, UUID targetSocieteId,
+                                        String targetRole, int tokenVersion,
+                                        UUID superAdminId, int ttlSeconds) {
+        Instant now = Instant.now();
+        var builder = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(ttlSeconds))
+                .subject(targetUserId.toString())
+                .claim("roles", List.of(targetRole))
+                .claim("tv",    tokenVersion)
+                .claim("imp",   superAdminId.toString());
+        if (targetSocieteId != null) builder.claim("sid", targetSocieteId.toString());
+        var headers = JwsHeader.with(MacAlgorithm.HS256).build();
+        return encoder.encode(JwtEncoderParameters.from(headers, builder.build())).getTokenValue();
+    }
+
+    /**
+     * Extracts the {@code imp} claim (impersonating SUPER_ADMIN userId).
+     * Returns {@code null} when the claim is absent (normal non-impersonation token).
+     */
+    public UUID extractImpersonatedBy(String token) {
+        try {
+            Jwt jwt = decoder.decode(token);
+            String imp = jwt.getClaimAsString("imp");
+            return imp != null ? UUID.fromString(imp) : null;
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     /**

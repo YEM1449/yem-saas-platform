@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
+import { ActivationRequest, InvitationDetails, LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
 
 export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
@@ -36,6 +36,15 @@ export class AuthService {
 
   me(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${environment.apiUrl}/auth/me`);
+  }
+
+  validateInvitation(token: string): Observable<InvitationDetails> {
+    return this.http.get<InvitationDetails>(`${environment.apiUrl}/auth/invitation/${token}`);
+  }
+
+  activateAccount(token: string, req: ActivationRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/invitation/${token}/activer`, req)
+      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 
   /**

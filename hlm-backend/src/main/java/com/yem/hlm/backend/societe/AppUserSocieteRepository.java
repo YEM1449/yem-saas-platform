@@ -29,4 +29,10 @@ public interface AppUserSocieteRepository extends JpaRepository<AppUserSociete, 
 
     @Query("SELECT COUNT(aus) FROM AppUserSociete aus WHERE aus.id.societeId = :societeId AND aus.role = :role AND aus.actif = true")
     long countBySocieteIdAndRoleAndActifTrue(@Param("societeId") UUID societeId, @Param("role") String role);
+
+    long countByIdSocieteId(UUID societeId);
+
+    List<AppUserSociete> findByIdSocieteId(UUID societeId);
+
+    List<AppUserSociete> findByIdSocieteIdAndActifTrue(UUID societeId);
 }

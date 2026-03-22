@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.usermanagement;
 
 import com.yem.hlm.backend.common.dto.PageResponse;
+import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.usermanagement.dto.*;
@@ -29,13 +30,16 @@ public class UserManagementService {
     private final UserRepository userRepository;
     private final AppUserSocieteRepository appUserSocieteRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final SocieteRoleValidator roleValidator;
 
     public UserManagementService(UserRepository userRepository,
                                   AppUserSocieteRepository appUserSocieteRepository,
-                                  ApplicationEventPublisher eventPublisher) {
+                                  ApplicationEventPublisher eventPublisher,
+                                  SocieteRoleValidator roleValidator) {
         this.userRepository = userRepository;
         this.appUserSocieteRepository = appUserSocieteRepository;
         this.eventPublisher = eventPublisher;
+        this.roleValidator = roleValidator;
     }
 
     // ── listerMembres ──────────────────────────────────────────────────────────
@@ -99,6 +103,9 @@ public class UserManagementService {
         AppUserSociete aus = appUserSocieteRepository
                 .findByUserIdAndSocieteId(userId, societeId).orElseThrow();
         String ancienRole = aus.getRole();
+
+        // Defense-in-depth: re-validate role even when called programmatically
+        roleValidator.validateAssignableRole(req.nouveauRole());
 
         // C9: protect last ADMIN
         if ("ADMIN".equals(ancienRole) && !"ADMIN".equals(req.nouveauRole())) {

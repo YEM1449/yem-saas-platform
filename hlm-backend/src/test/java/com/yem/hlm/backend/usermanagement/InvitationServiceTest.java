@@ -3,6 +3,7 @@ package com.yem.hlm.backend.usermanagement;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
@@ -46,6 +47,7 @@ class InvitationServiceTest {
     @Mock JwtProvider jwtProvider;
     @Mock JwtProperties jwtProperties;
     @Mock ApplicationEventPublisher eventPublisher;
+    @Mock SocieteRoleValidator roleValidator;
 
     @InjectMocks InvitationService invitationService;
 

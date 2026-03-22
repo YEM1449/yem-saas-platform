@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: "049-create-document-table"
+      author: "claude-audit"
+      comment: "Create document table for file attachments linked to contacts, contracts, deposits, properties, and reservations"
+      changes:
+        - createTable:
+            tableName: document
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: entity_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: entity_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_name
+                  type: varchar(300)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_key
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mime_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_size
+                  type: bigint
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: uploaded_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: document
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_document_societe
+        - createIndex:
+            indexName: idx_doc_societe_entity
+            tableName: document
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: entity_type
+              - column:
+                  name: entity_id
+        - createIndex:
+            indexName: idx_doc_societe_created
+            tableName: document
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: created_at

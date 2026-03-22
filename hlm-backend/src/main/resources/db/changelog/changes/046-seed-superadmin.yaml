@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-seed-superadmin
+      author: YEM1449
+      comment: >
+        Seed the platform SUPER_ADMIN account for local development.
+
+        Credentials:
+          superadmin@yourcompany.com / YourSecure2026!
+
+        The account has no app_user_societe entry — AuthService detects this
+        and mints a platform-level JWT (no 'sid' claim) with ROLE_SUPER_ADMIN.
+
+      preConditions:
+        - onFail: MARK_RAN
+          sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM app_user WHERE email = 'superadmin@yourcompany.com'
+
+      changes:
+        - insert:
+            tableName: app_user
+            columns:
+              - column: { name: id,            value: "00000000-0000-0000-0000-000000000001" }
+              - column: { name: email,          value: "superadmin@yourcompany.com" }
+              - column: { name: password_hash,  value: "$2b$10$IfCd/PvqTE0dF3X7Shf/LuvzC83yF36X3Z01RWAxqFJ/0DPTLrpiy" }
+                # password: YourSecure2026!
+              - column: { name: enabled,        valueBoolean: true }
+              - column: { name: platform_role,  value: "SUPER_ADMIN" }
+              - column: { name: token_version,  valueNumeric: 0 }

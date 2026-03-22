@@ -3,6 +3,7 @@ package com.yem.hlm.backend.usermanagement;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
@@ -41,6 +42,7 @@ public class InvitationService {
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
     private final ApplicationEventPublisher eventPublisher;
+    private final SocieteRoleValidator roleValidator;
 
     public InvitationService(UserRepository userRepository,
                              AppUserSocieteRepository appUserSocieteRepository,
@@ -48,7 +50,8 @@ public class InvitationService {
                              PasswordEncoder passwordEncoder,
                              JwtProvider jwtProvider,
                              JwtProperties jwtProperties,
-                             ApplicationEventPublisher eventPublisher) {
+                             ApplicationEventPublisher eventPublisher,
+                             SocieteRoleValidator roleValidator) {
         this.userRepository = userRepository;
         this.appUserSocieteRepository = appUserSocieteRepository;
         this.societeRepository = societeRepository;
@@ -56,11 +59,15 @@ public class InvitationService {
         this.jwtProvider = jwtProvider;
         this.jwtProperties = jwtProperties;
         this.eventPublisher = eventPublisher;
+        this.roleValidator = roleValidator;
     }
 
     // ── inviter ────────────────────────────────────────────────────────────────
 
     public User inviter(InviterUtilisateurRequest req, UUID societeId, UUID adminId) {
+        // Defense-in-depth: re-validate role even when called programmatically
+        roleValidator.validateAssignableRole(req.role());
+
         Societe societe = societeRepository.findById(societeId)
                 .orElseThrow(() -> new BusinessRuleException(SOCIETE_NOT_FOUND,
                         "Société introuvable : " + societeId));

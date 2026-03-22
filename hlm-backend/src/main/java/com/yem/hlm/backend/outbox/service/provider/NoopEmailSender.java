@@ -19,7 +19,11 @@ public class NoopEmailSender implements EmailSender {
 
     @Override
     public void send(String to, String subject, String body) {
-        log.info("[NOOP-EMAIL] to={} subject=\"{}\" bodyLength={}",
-                to, subject, body != null ? body.length() : 0);
+        log.info("[NOOP-EMAIL] ─────────────────────────────────────────\n" +
+                 "  to      : {}\n" +
+                 "  subject : {}\n" +
+                 "  body    :\n{}\n" +
+                 "──────────────────────────────────────────────────────",
+                to, subject, body);
     }
 }

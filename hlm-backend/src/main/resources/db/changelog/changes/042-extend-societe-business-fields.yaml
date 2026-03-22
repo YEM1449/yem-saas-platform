@@ -1,0 +1,790 @@
+databaseChangeLog:
+
+  # ── Legal identity ───────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-nom-commercial
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: nom_commercial
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: nom_commercial
+                  type: VARCHAR(255)
+
+  - changeSet:
+      id: 042-societe-forme-juridique
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: forme_juridique
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: forme_juridique
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-capital-social
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: capital_social
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: capital_social
+                  type: BIGINT
+
+  - changeSet:
+      id: 042-societe-rc
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: rc
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: rc
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-if-number
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: if_number
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: if_number
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-patente
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: patente
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: patente
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-tva-number
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: tva_number
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: tva_number
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-cnss-number
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: cnss_number
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: cnss_number
+                  type: VARCHAR(50)
+
+  # ── Location ─────────────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-adresse-siege
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: adresse_siege
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: adresse_siege
+                  type: TEXT
+
+  - changeSet:
+      id: 042-societe-ville
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: ville
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: ville
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-code-postal
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: code_postal
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: code_postal
+                  type: VARCHAR(20)
+
+  - changeSet:
+      id: 042-societe-region
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: region
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: region
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-telephone
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: telephone
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: telephone
+                  type: VARCHAR(30)
+
+  - changeSet:
+      id: 042-societe-telephone2
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: telephone2
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: telephone2
+                  type: VARCHAR(30)
+
+  - changeSet:
+      id: 042-societe-email-contact
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: email_contact
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: email_contact
+                  type: VARCHAR(255)
+
+  - changeSet:
+      id: 042-societe-site-web
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: site_web
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: site_web
+                  type: VARCHAR(500)
+
+  - changeSet:
+      id: 042-societe-linkedin-url
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: linkedin_url
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: linkedin_url
+                  type: VARCHAR(500)
+
+  # ── Real-estate licensing ─────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-numero-agrement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: numero_agrement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: numero_agrement
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-carte-professionnelle
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: carte_professionnelle
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: carte_professionnelle
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-caisse-garantie
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: caisse_garantie
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: caisse_garantie
+                  type: VARCHAR(200)
+
+  - changeSet:
+      id: 042-societe-assurance-rc
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: assurance_rc
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: assurance_rc
+                  type: VARCHAR(200)
+
+  - changeSet:
+      id: 042-societe-date-agrement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_agrement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_agrement
+                  type: DATE
+
+  - changeSet:
+      id: 042-societe-date-expiration-agrement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_expiration_agrement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_expiration_agrement
+                  type: DATE
+
+  - changeSet:
+      id: 042-societe-type-activite
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: type_activite
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: type_activite
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-zones-intervention
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: zones_intervention
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: zones_intervention
+                  type: TEXT
+
+  # ── RGPD compliance ───────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-dpo-nom
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: dpo_nom
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: dpo_nom
+                  type: VARCHAR(255)
+
+  - changeSet:
+      id: 042-societe-telephone-dpo
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: telephone_dpo
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: telephone_dpo
+                  type: VARCHAR(30)
+
+  - changeSet:
+      id: 042-societe-numero-cndp
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: numero_cndp
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: numero_cndp
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-numero-cnil
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: numero_cnil
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: numero_cnil
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: 042-societe-date-declaration-cndp
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_declaration_cndp
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_declaration_cndp
+                  type: DATE
+
+  - changeSet:
+      id: 042-societe-date-declaration-cnil
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_declaration_cnil
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_declaration_cnil
+                  type: DATE
+
+  - changeSet:
+      id: 042-societe-base-juridique-defaut
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: base_juridique_defaut
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: base_juridique_defaut
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-duree-retention-jours
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: duree_retention_jours
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: duree_retention_jours
+                  type: INTEGER
+
+  # ── Branding ──────────────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-couleur-primaire
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: couleur_primaire
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: couleur_primaire
+                  type: VARCHAR(7)
+
+  - changeSet:
+      id: 042-societe-couleur-secondaire
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: couleur_secondaire
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: couleur_secondaire
+                  type: VARCHAR(7)
+
+  - changeSet:
+      id: 042-societe-langue-defaut
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: langue_defaut
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: langue_defaut
+                  type: VARCHAR(10)
+
+  - changeSet:
+      id: 042-societe-devise
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: devise
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: devise
+                  type: VARCHAR(3)
+
+  - changeSet:
+      id: 042-societe-fuseau-horaire
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: fuseau_horaire
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: fuseau_horaire
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 042-societe-format-date
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: format_date
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: format_date
+                  type: VARCHAR(20)
+
+  - changeSet:
+      id: 042-societe-mentions-legales
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: mentions_legales
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: mentions_legales
+                  type: TEXT
+
+  # ── Lifecycle & audit ─────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-date-suspension
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_suspension
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_suspension
+                  type: TIMESTAMP WITH TIME ZONE
+
+  - changeSet:
+      id: 042-societe-raison-suspension
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: raison_suspension
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: raison_suspension
+                  type: TEXT
+
+  - changeSet:
+      id: 042-societe-created-by
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: created_by
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: created_by
+                  type: UUID
+        - addForeignKeyConstraint:
+            baseTableName: societe
+            baseColumnNames: created_by
+            constraintName: fk_societe_created_by
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 042-societe-notes-internes
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: notes_internes
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: notes_internes
+                  type: TEXT
+
+  # ── Optimistic locking ────────────────────────────────────────────────────────
+
+  - changeSet:
+      id: 042-societe-version
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: version
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false

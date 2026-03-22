@@ -4,7 +4,7 @@ import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.gdpr.service.AnonymizationService;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
-import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.Societe;
 import org.slf4j.Logger;
@@ -42,22 +42,24 @@ public class DataRetentionScheduler {
     private final SocieteRepository societeRepo;
     private final ContactRepository contactRepo;
     private final AnonymizationService anonymizationService;
+    private final SocieteContextHelper societeContextHelper;
 
     public DataRetentionScheduler(SocieteRepository societeRepo,
                                   ContactRepository contactRepo,
-                                  AnonymizationService anonymizationService) {
+                                  AnonymizationService anonymizationService,
+                                  SocieteContextHelper societeContextHelper) {
         this.societeRepo = societeRepo;
         this.contactRepo = contactRepo;
         this.anonymizationService = anonymizationService;
+        this.societeContextHelper = societeContextHelper;
     }
 
     @Scheduled(cron = "${app.gdpr.retention-cron:0 0 2 * * *}")
     @Transactional
     public void runRetention() {
-        log.info("[RETENTION] Starting daily data retention sweep");
-        SocieteContext.setSystem();
+        societeContextHelper.runAsSystem(() -> {
+            log.info("[RETENTION] Starting daily data retention sweep");
 
-        try {
             List<Societe> societes = societeRepo.findAllByActifTrue();
 
             for (Societe societe : societes) {
@@ -84,10 +86,8 @@ public class DataRetentionScheduler {
                 log.info("[RETENTION] Société {}: anonymized {} contacts, skipped {} (active contracts)",
                         societeId, anonymized, skipped);
             }
-        } finally {
-            SocieteContext.clear();
-        }
 
-        log.info("[RETENTION] Daily data retention sweep complete");
+            log.info("[RETENTION] Daily data retention sweep complete");
+        });
     }
 }

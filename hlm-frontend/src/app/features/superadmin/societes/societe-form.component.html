@@ -1,0 +1,123 @@
+<div class="form-page">
+  <div class="form-page-header">
+    <h2>{{ isEdit ? 'Modifier la société' : 'Nouvelle société' }}</h2>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">Chargement...</div>
+  }
+
+  @if (error) {
+    <div class="alert-error">{{ error }}</div>
+  }
+
+  @if (!loading) {
+    <form class="sa-form" (ngSubmit)="submit()">
+
+      <!-- Identité -->
+      <section class="form-section">
+        <h3 class="section-title">Identité</h3>
+        <div class="form-row">
+          <label class="form-label">
+            Nom <span class="required">*</span>
+            <input class="form-input" type="text" [(ngModel)]="nom" name="nom" required placeholder="Raison sociale"/>
+          </label>
+          <label class="form-label">
+            Pays <span class="required">*</span>
+            <select class="form-input" [(ngModel)]="pays" name="pays" required>
+              <option value="">-- Sélectionner --</option>
+              <option value="MA">Maroc</option>
+              <option value="FR">France</option>
+              <option value="TN">Tunisie</option>
+              <option value="SN">Sénégal</option>
+              <option value="CI">Côte d'Ivoire</option>
+              <option value="OTHER">Autre</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="form-label">
+            Nom commercial
+            <input class="form-input" type="text" [(ngModel)]="nomCommercial" name="nomCommercial" placeholder="Nom commercial"/>
+          </label>
+          <label class="form-label">
+            Forme juridique
+            <input class="form-input" type="text" [(ngModel)]="formeJuridique" name="formeJuridique" placeholder="SA, SARL, SCI..."/>
+          </label>
+        </div>
+      </section>
+
+      <!-- RGPD -->
+      <section class="form-section">
+        <h3 class="section-title">RGPD / Conformité</h3>
+        <div class="form-row">
+          <label class="form-label">
+            Email DPO
+            <input class="form-input" type="email" [(ngModel)]="emailDpo" name="emailDpo" placeholder="dpo@societe.com"/>
+          </label>
+          <label class="form-label">
+            Nom DPO
+            <input class="form-input" type="text" [(ngModel)]="dpoNom" name="dpoNom" placeholder="Prénom Nom"/>
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="form-label">
+            Numéro CNDP
+            <input class="form-input" type="text" [(ngModel)]="numeroCndp" name="numeroCndp" placeholder="Maroc"/>
+          </label>
+          <label class="form-label">
+            Numéro CNIL
+            <input class="form-input" type="text" [(ngModel)]="numeroCnil" name="numeroCnil" placeholder="France"/>
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="form-label full-width">
+            Base juridique par défaut
+            <input class="form-input" type="text" [(ngModel)]="baseJuridiqueDefaut" name="baseJuridiqueDefaut" placeholder="Contrat, Intérêt légitime..."/>
+          </label>
+        </div>
+      </section>
+
+      <!-- Abonnement -->
+      <section class="form-section">
+        <h3 class="section-title">Abonnement &amp; Quotas</h3>
+        <div class="form-row">
+          <label class="form-label">
+            Plan d'abonnement
+            <select class="form-input" [(ngModel)]="planAbonnement" name="planAbonnement">
+              <option value="STARTER">STARTER</option>
+              <option value="PRO">PRO</option>
+              <option value="ENTERPRISE">ENTERPRISE</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="form-label">
+            Max utilisateurs
+            <input class="form-input" type="number" [(ngModel)]="maxUtilisateurs" name="maxUtilisateurs" placeholder="Illimité si vide" min="1"/>
+          </label>
+          <label class="form-label">
+            Max biens
+            <input class="form-input" type="number" [(ngModel)]="maxBiens" name="maxBiens" placeholder="Illimité si vide" min="1"/>
+          </label>
+        </div>
+      </section>
+
+      <!-- Notes internes -->
+      <section class="form-section">
+        <h3 class="section-title">Notes internes</h3>
+        <label class="form-label full-width">
+          <textarea class="form-textarea" [(ngModel)]="notesInternes" name="notesInternes" rows="4" placeholder="Notes visibles uniquement par les super admins..."></textarea>
+        </label>
+      </section>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'Enregistrement...' : (isEdit ? 'Mettre à jour' : 'Créer la société') }}
+        </button>
+      </div>
+
+    </form>
+  }
+</div>

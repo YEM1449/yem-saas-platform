@@ -1,171 +1,237 @@
 # YEM SaaS Platform
 
-Multi-tenant CRM backend for real estate promotion and construction teams, plus an Angular SPA.
-Tenant isolation via JWT claim `tid` → request-scoped `TenantContext`.
-RBAC with three roles: ADMIN, MANAGER, AGENT (see [docs/runbook.md](docs/runbook.md#rbac-conventions)).
+Multi-société real estate CRM. Spring Boot 3.5.8 backend, Angular 19 frontend, PostgreSQL 16.
+
+---
+
+## Architecture
+
+```
+Browser
+  |
+  | HTTP :4200
+  v
+Angular SPA (hlm-frontend)
+  |
+  | Dev proxy: /auth, /api → :8080
+  | (proxy.conf.json)
+  v
+Spring Boot API (hlm-backend :8080)
+  |                    |
+  | JDBC               | Lettuce
+  v                    v
+PostgreSQL :5432     Redis :6379
+                         (distributed cache, optional)
+```
+
+In production, Nginx (`:80`) serves the Angular build and reverse-proxies `/auth` and `/api` to the backend. MinIO (`:9000`) provides S3-compatible object storage for media uploads.
+
+---
 
 ## Prerequisites
 
-- **Java 21** (see `hlm-backend/pom.xml`)
-- **Node 18+** and **npm 9+** (for `hlm-frontend/`)
-- **Docker** (required for Testcontainers integration tests and local PostgreSQL)
-- **PostgreSQL** (local instance or Docker container)
+| Tool | Minimum version | Notes |
+|---|---|---|
+| Java | 21 | See `hlm-backend/pom.xml` |
+| Maven Wrapper | bundled | Use `./mvnw` — no system Maven needed |
+| Node.js | 20 | LTS recommended |
+| npm | 9+ | Bundled with Node 20 |
+| Docker | 24+ | Required for Docker Compose and Testcontainers integration tests |
+| Docker Compose | v2 | Bundled with Docker Desktop |
 
-## Quickstart (backend)
+---
+
+## Quickstart
 
 ```bash
-# 1. Copy env template and fill in your values
+# 1. Copy env template and fill in secrets
 cp .env.example .env
-# Edit .env — set your DB credentials and a JWT secret (≥32 chars)
+#    Required: POSTGRES_PASSWORD, JWT_SECRET (≥32 random chars)
 
-# 2. Export env vars (or use direnv / your IDE)
-export $(grep -v '^#' .env | xargs)
+# 2. Start all services
+docker compose up -d
 
-# 3. Run the backend
-cd hlm-backend
-chmod +x mvnw
-./mvnw spring-boot:run
+# 3. Verify backend is up
+curl -s http://localhost:8080/actuator/health
+#    Expected: {"status":"UP"}
+
+# 4. Open the frontend
+open http://localhost:80   # Docker Compose
+# or for local dev mode:
+# cd hlm-frontend && npm ci && npm start  → http://localhost:4200
 ```
 
-The server starts on **http://localhost:8080**.
-Verify it's running:
+---
+
+## Default Credentials
+
+These credentials are provided by Liquibase seed data for the `demo` société.
+
+| Email | Password | Role | Notes |
+|---|---|---|---|
+| `admin@demo.ma` | `Admin123!Secure` | ADMIN | Full company admin |
+| `manager@demo.ma` | `Admin123!` | MANAGER | Read + write, no delete |
+| `agent@demo.ma` | `Admin123!` | AGENT | Read-only |
+
+> **Change all default passwords before exposing the platform to a network.**
+
+---
+
+## Creating the First SUPER_ADMIN
+
+The SUPER_ADMIN account is bootstrapped on first deploy. It is idempotent and safe to run multiple times.
 
 ```bash
-curl -i http://localhost:8080/actuator/health
-# Expected: 200 {"status":"UP"}
-# If it fails: backend isn't running or is on another port.
-# Check logs for "Tomcat started on port(s): 8080"
+APP_BOOTSTRAP_ENABLED=true \
+APP_BOOTSTRAP_EMAIL=superadmin@yourcompany.com \
+APP_BOOTSTRAP_PASSWORD='YourSecure2026!' \
+cd hlm-backend && ./mvnw spring-boot:run
 ```
 
-## Quickstart (frontend)
+Password requirements: ≥12 chars, upper, lower, digit, special character, must not contain the email local-part.
 
-```bash
-cd hlm-frontend
-npm ci
-npm start
-```
+After the log line `[BOOTSTRAP] SUPER_ADMIN bootstrapped successfully`, stop the server, **remove** the three `APP_BOOTSTRAP_*` environment variables, and restart normally.
 
-The app starts on **http://localhost:4200**. A dev proxy forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to the backend. See [docs/frontend.md](docs/frontend.md) for details.
+---
 
-## Required Environment Variables
+## Permission Matrix
 
-| Variable          | Example                                      | Notes                              |
-|-------------------|----------------------------------------------|------------------------------------|
-| `DB_URL`          | `jdbc:postgresql://localhost:5432/hlm`       | JDBC connection string             |
-| `DB_USER`         | `hlm_user`                                   | Database username                  |
-| `DB_PASSWORD`     | `hlm_pwd`                                    | Database password                  |
-| `JWT_SECRET`      | *(generate a random ≥32-char string)*        | **Required**, no default. HS256    |
-| `JWT_TTL_SECONDS` | `3600`                                       | Token lifetime (default 3600)      |
+| Action | SUPER_ADMIN | ADMIN | MANAGER | AGENT |
+|---|---|---|---|---|
+| Create / suspend / reactivate company | YES | NO | NO | NO |
+| View all companies (platform-wide) | YES | NO | NO | NO |
+| Impersonate a company user | YES | NO | NO | NO |
+| Invite user with ADMIN role | YES | NO | NO | NO |
+| Invite user with MANAGER / AGENT role | YES | YES | NO | NO |
+| Change member role to ADMIN | YES | **NO** | NO | NO |
+| Change member role to MANAGER / AGENT | YES | YES | NO | NO |
+| Remove member from company | YES | YES | NO | NO |
+| Unblock locked account | YES | YES | NO | NO |
+| List / view members | YES | YES | YES | NO |
+| Create / edit properties | YES | YES | YES | NO |
+| Delete properties | YES | YES | NO | NO |
+| View properties / contacts / contracts | YES | YES | YES | YES |
+| Export personal data (RGPD Art. 15) | YES | YES | YES | NO |
+| Anonymise user (RGPD Art. 17) | YES | YES | NO | NO |
 
-> These map to `application.yml` placeholders: `${DB_URL}`, `${DB_USER}`, `${DB_PASSWORD}`, `${JWT_SECRET}`, `${JWT_TTL_SECONDS}`.
->
-> **Fail-fast:** The app refuses to start if `JWT_SECRET` is missing or blank (`JwtProperties` uses `@Validated` + `@NotBlank`).
+> **Key rule:** A company ADMIN cannot assign the ADMIN role. Only SUPER_ADMIN can. Attempting to do so returns `403 ROLE_ESCALATION_FORBIDDEN`. See [docs/adr/002-admin-cannot-escalate-to-admin.md](docs/adr/002-admin-cannot-escalate-to-admin.md).
+
+---
 
 ## Running Tests
 
 ```bash
-cd hlm-backend
+# All tests (unit + integration) — requires Docker for Testcontainers
+cd hlm-backend && ./mvnw verify -q
 
-# Unit tests (Surefire)
-./mvnw test
+# Unit tests only
+cd hlm-backend && ./mvnw test
 
-# Integration tests (Failsafe, requires Docker for Testcontainers)
-./mvnw failsafe:integration-test
+# Integration tests only
+cd hlm-backend && ./mvnw failsafe:integration-test
+
+# Frontend unit tests
+cd hlm-frontend && npm test -- --watch=false
 ```
 
-## Snyk Security Scanning
+Integration tests (`*IT.java`) use Testcontainers to spin up a real PostgreSQL instance. Docker must be running.
 
-Snyk is configured via [`.github/workflows/snyk.yml`](.github/workflows/snyk.yml) for:
-- Open Source dependency scans (Maven + npm)
-- Snyk Code (SAST) scan with SARIF upload to GitHub Security
+---
 
-Required GitHub repository secrets:
-- `SNYK_TOKEN` (required)
-- `SNYK_ORG` (optional; set it if you use multiple Snyk orgs)
+## Environment Variables
 
-Workflow behavior:
-- Runs on `push` and `pull_request` when backend/frontend code changes
-- Fails when vulnerabilities at `high` severity or above are found
-- Sends `snyk monitor` snapshots on push to `main`
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `DB_URL` | YES | `jdbc:postgresql://localhost:5432/hlm` | JDBC connection string |
+| `DB_USER` | YES | `hlm_user` | Database username |
+| `DB_PASSWORD` | YES | — | Database password |
+| `JWT_SECRET` | YES | — | HS256 signing key (≥32 chars). App fails to start if blank. |
+| `JWT_TTL_SECONDS` | NO | `3600` | Access token lifetime (seconds) |
+| `EMAIL_HOST` | NO | *(blank)* | SMTP host. Leave blank to use no-op email sender. |
+| `EMAIL_PORT` | NO | `587` | SMTP port |
+| `EMAIL_USER` | NO | *(blank)* | SMTP username |
+| `EMAIL_PASSWORD` | NO | *(blank)* | SMTP password |
+| `EMAIL_FROM` | NO | `noreply@example.com` | Sender address |
+| `TWILIO_ACCOUNT_SID` | NO | *(blank)* | Twilio SID. Leave blank to use no-op SMS sender. |
+| `TWILIO_AUTH_TOKEN` | NO | *(blank)* | Twilio auth token |
+| `TWILIO_FROM` | NO | *(blank)* | Twilio sender number |
+| `REDIS_ENABLED` | NO | `false` | `true` to use Redis for distributed caching |
+| `REDIS_HOST` | NO | `localhost` | Redis hostname |
+| `CORS_ALLOWED_ORIGINS` | NO | `http://localhost:4200,http://127.0.0.1:4200` | Comma-separated allowed origins |
+| `GDPR_RETENTION_DAYS` | NO | `1825` | Contact data retention in days (5 years) |
+| `APP_BOOTSTRAP_ENABLED` | NO | `false` | Set `true` on first deploy only to create SUPER_ADMIN |
+| `APP_BOOTSTRAP_EMAIL` | NO | *(blank)* | SUPER_ADMIN email (used only when bootstrap is enabled) |
+| `APP_BOOTSTRAP_PASSWORD` | NO | *(blank)* | SUPER_ADMIN password (used only when bootstrap is enabled) |
 
-## Frontend Integration Quickstart
+Full variable reference: [docs/runbook-operations.md](docs/runbook-operations.md#2-environment-variables)
 
-### Step 0 — Health check
+---
 
-```bash
-curl -i http://localhost:8080/actuator/health
-```
-
-If this fails, the backend is not running. Check the server logs for `Tomcat started on port(s): 8080`.
-
-### Step 1 — Login
-
-```bash
-curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"tenantKey":"acme","email":"admin@acme.com","password":"Admin123!Secure"}'
-```
-
-Response (`LoginResponse`):
-```json
-{
-  "accessToken": "<JWT>",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
-}
-```
-
-### Step 2 — Verify identity
-
-```bash
-curl -s http://localhost:8080/auth/me \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-Response:
-```json
-{ "userId": "...", "tenantId": "..." }
-```
-
-### Step 3 — Call a protected endpoint
-
-```bash
-curl -s http://localhost:8080/api/properties \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-### Error shapes
-
-**401 Unauthorized** (missing/invalid token):
-```json
-{ "timestamp": "...", "status": 401, "error": "Unauthorized", "code": "UNAUTHORIZED", "message": "...", "path": "/api/properties" }
-```
-
-**403 Forbidden** (insufficient role):
-```json
-{ "timestamp": "...", "status": 403, "error": "Forbidden", "code": "FORBIDDEN", "message": "...", "path": "/api/properties" }
-```
-
-> Full curl walkthrough: [docs/api-quickstart.md](docs/api-quickstart.md)
-> Troubleshooting (401/403/CORS): [docs/runbook.md](docs/runbook.md)
-> Smoke test script: [scripts/smoke-auth.sh](scripts/smoke-auth.sh)
-
-## Repository map
+## Repository Map
 
 ```
-hlm-backend/   # Spring Boot backend (JWT + multi-tenancy)
-hlm-frontend/  # Angular SPA (auth + properties)
-docs/          # Full documentation set
-scripts/       # Utility scripts
+hlm-backend/            Spring Boot 3.5.8 API (Java 21)
+  src/main/java/
+    auth/               JWT generation, login, invitation flow
+    societe/            Multi-société context, SUPER_ADMIN AOP aspect
+    usermanagement/     Company member CRUD, RGPD, invitation
+    admin/              SUPER_ADMIN bootstrap
+    common/             ErrorCode enum, ErrorResponse, SocieteRoleValidator
+    property/           Real estate listings
+    contact/            CRM contacts
+    contract/           Sale contracts
+    project/            Real estate projects
+    payments/           Payment schedules and calls
+    reservation/        Property reservations
+    portal/             Client-facing portal (magic link)
+    outbox/             Transactional outbox for email/SMS
+    gdpr/               Contact data retention sweep
+  src/main/resources/
+    db/changelog/       Liquibase changesets (additive only)
+
+hlm-frontend/           Angular 19 standalone components
+  src/app/
+    features/           Feature modules (contacts, properties, contracts, …)
+    core/               Auth interceptor, portal interceptor, guards
+  proxy.conf.json       Dev proxy: /auth, /api → :8080
+
+docs/
+  runbook-operations.md Full operations runbook
+  adr/                  Architecture Decision Records
+nginx/                  Nginx production config
+docker-compose.yml      Base Compose file
+docker-compose.prod.yml Production overlay
+scripts/
+  smoke-auth.sh         Authentication smoke test
 ```
 
-## Documentation
+---
 
-- [docs/index.md](docs/index.md) — full doc index
-- [docs/overview.md](docs/overview.md) — platform summary and workflows
-- [docs/backend.md](docs/backend.md) — backend architecture and operations
-- [docs/frontend.md](docs/frontend.md) — frontend setup and structure
-- [docs/api-quickstart.md](docs/api-quickstart.md) — curl flows for frontend integration
-- [docs/runbook.md](docs/runbook.md) — local run, troubleshooting, CORS, RBAC
-- AI Context Pack: [docs/ai/quick-context.md](docs/ai/quick-context.md) | [docs/ai/deep-context.md](docs/ai/deep-context.md) | [docs/ai/prompt-playbook.md](docs/ai/prompt-playbook.md)
-- Agent working agreement: [GPT.md](GPT.md)
+## Key Documentation
+
+| Document | Description |
+|---|---|
+| [docs/runbook-operations.md](docs/runbook-operations.md) | Operations runbook: startup, env vars, SUPER_ADMIN setup, curl examples, error table, health checks |
+| [docs/adr/001-multi-societe-not-multi-tenant.md](docs/adr/001-multi-societe-not-multi-tenant.md) | Why the platform uses a membership table instead of per-tenant isolation |
+| [docs/adr/002-admin-cannot-escalate-to-admin.md](docs/adr/002-admin-cannot-escalate-to-admin.md) | Why company ADMINs cannot assign the ADMIN role |
+| [docs/adr/003-jwt-tokenversion-revocation.md](docs/adr/003-jwt-tokenversion-revocation.md) | How JWTs are revoked without a blocklist |
+| [docs/adr/004-optimistic-locking-version-field.md](docs/adr/004-optimistic-locking-version-field.md) | Why mutable entities carry a `@Version` field |
+| [docs/index.md](docs/index.md) | Full documentation index |
+
+---
+
+## API Reference
+
+Swagger UI is available at `http://localhost:8080/swagger-ui.html` when the backend is running.
+
+OpenAPI JSON: `http://localhost:8080/api-docs`
+
+---
+
+## Security Notes
+
+- `JWT_SECRET` must be at least 32 characters. The application refuses to start if it is blank or missing (`@Validated` + `@NotBlank` on `JwtProperties`).
+- CORS is locked to `CORS_ALLOWED_ORIGINS`. In production, set this to your exact frontend domain.
+- HSTS is emitted only when `SSL_ENABLED=true` (TLS termination at the application level).
+- Rate limiting: 20 login attempts per IP per 60 seconds; accounts lock after 5 failed attempts for 15 minutes.
+- All bootstrap environment variables (`APP_BOOTSTRAP_*`) must be removed after the first deploy.

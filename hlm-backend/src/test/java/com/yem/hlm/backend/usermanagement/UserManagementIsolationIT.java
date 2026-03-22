@@ -89,14 +89,16 @@ class UserManagementIsolationIT extends IntegrationTestBase {
     }
 
     @Test
-    void listeUtilisateurs_avecRoleManager_retourne403() throws Exception {
+    void listeUtilisateurs_avecRoleManager_retourne200() throws Exception {
+        // MANAGER can view team members per the permission matrix
         mvc.perform(get("/api/mon-espace/utilisateurs")
                         .header("Authorization", managerBearerA))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test
     void listeUtilisateurs_avecRoleAgent_retourne403() throws Exception {
+        // AGENT cannot view team members
         mvc.perform(get("/api/mon-espace/utilisateurs")
                         .header("Authorization", agentBearerA))
                 .andExpect(status().isForbidden());
