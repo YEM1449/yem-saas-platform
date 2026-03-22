@@ -80,6 +80,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // stateless (invalidated by TTL / single-use magic-link logic).
                         SocieteContext.setSocieteId(societeId);
                         SocieteContext.setUserId(userId); // userId == contactId for portal
+                        authorities.stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .findFirst()
+                                .ifPresent(SocieteContext::setRole);
 
                     } else {
                         // 3) Server-side revocation check: verify user is still enabled
@@ -100,6 +104,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             SocieteContext.setSocieteId(societeId);
                         }
                         SocieteContext.setUserId(userId);
+                        authorities.stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .findFirst()
+                                .ifPresent(SocieteContext::setRole);
 
                         // 4b) Impersonation tokens carry an "imp" claim identifying
                         //     the SUPER_ADMIN who is acting as the target user.
