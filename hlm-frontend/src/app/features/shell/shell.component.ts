@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -11,6 +11,7 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class ShellComponent {
   auth = inject(AuthService);
+  private router = inject(Router);
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';
@@ -36,6 +37,25 @@ export class ShellComponent {
 
   get userRoleLabel(): string {
     return (this.auth.user?.role ?? '').replace('ROLE_', '');
+  }
+
+  get isImpersonating(): boolean {
+    return localStorage.getItem('hlm_impersonation_active') === 'true';
+  }
+
+  get impersonationTarget(): string {
+    return localStorage.getItem('hlm_impersonation_target') ?? '';
+  }
+
+  endImpersonation(): void {
+    const original = localStorage.getItem('hlm_superadmin_original_token');
+    if (original) {
+      localStorage.setItem('hlm_access_token', original);
+    }
+    localStorage.removeItem('hlm_impersonation_active');
+    localStorage.removeItem('hlm_impersonation_target');
+    localStorage.removeItem('hlm_superadmin_original_token');
+    this.router.navigateByUrl('/superadmin/societes');
   }
 
   logout(): void {

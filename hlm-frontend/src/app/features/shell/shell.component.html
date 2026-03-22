@@ -1,4 +1,12 @@
 <!-- Modern sidebar layout for HLM CRM -->
+@if (isImpersonating) {
+  <div style="background:#e74c3c;color:#fff;text-align:center;padding:8px 16px;font-size:14px;">
+    ⚠ Mode usurpation : <strong>{{ impersonationTarget }}</strong>
+    <button (click)="endImpersonation()" style="margin-left:16px;background:#fff;color:#e74c3c;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;">
+      Revenir au SuperAdmin
+    </button>
+  </div>
+}
 <div class="app-layout">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->

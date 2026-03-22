@@ -6,8 +6,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { SocieteService } from './societe.service';
 import { InviteUserRequest, MembreSocieteDto } from './societe.model';
 
-const IMPERSONATION_TOKEN_KEY = 'hlm_superadmin_impersonation_token';
-
 @Component({
   selector: 'app-societe-members',
   standalone: true,
@@ -122,13 +120,19 @@ export class SocieteMembersComponent implements OnInit {
   }
 
   impersonate(m: MembreSocieteDto): void {
-    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ?`)) return;
+    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ? Vous pourrez revenir via le bandeau.`)) return;
     this.impersonating[m.userId] = true;
     this.error = '';
     this.svc.impersonate(this.societeId, m.userId).subscribe({
       next: (res) => {
         this.impersonating[m.userId] = false;
-        localStorage.setItem(IMPERSONATION_TOKEN_KEY, res.token);
+        const currentToken = localStorage.getItem('hlm_access_token');
+        if (currentToken) {
+          localStorage.setItem('hlm_superadmin_original_token', currentToken);
+        }
+        localStorage.setItem('hlm_access_token', res.token);
+        localStorage.setItem('hlm_impersonation_active', 'true');
+        localStorage.setItem('hlm_impersonation_target', res.targetUserEmail);
         this.router.navigateByUrl('/app/properties');
       },
       error: (err: HttpErrorResponse) => {
