@@ -30,9 +30,6 @@ export class LoginComponent {
   onSubmit(): void {
     this.loading = true;
     this.error = '';
-    this.showSocieteSelection = false;
-    this.societes = [];
-    this.partialToken = '';
 
     this.auth.login(this.form).subscribe({
       next: (res) => {

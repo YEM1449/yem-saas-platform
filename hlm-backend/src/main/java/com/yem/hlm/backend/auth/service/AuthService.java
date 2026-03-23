@@ -4,7 +4,6 @@ import com.yem.hlm.backend.auth.api.dto.LoginRequest;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.api.dto.SocieteDto;
 import com.yem.hlm.backend.auth.api.dto.SwitchSocieteRequest;
-import com.yem.hlm.backend.common.error.ErrorCode;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import com.yem.hlm.backend.auth.config.JwtProperties;
@@ -165,7 +164,7 @@ public class AuthService {
                     })
                     .toList();
 
-            String partialToken = jwtProvider.generatePartial(user.getId(), user.getTokenVersion(), 300);
+            String partialToken = jwtProvider.generatePartial(user.getId(), 300);
             log.debug("Login requires société selection for email={} memberships={}", email, memberships.size());
             return LoginResponse.selectSociete(partialToken, societeDtos);
         }
@@ -205,12 +204,6 @@ public class AuthService {
 
         UUID societeId = req.societeId();
 
-        int tokenVersion = extractTokenVersion(jwt);
-        UserSecurityInfo secInfo = userSecurityCacheService.getSecurityInfo(userId);
-        if (secInfo == null || !secInfo.enabled() || secInfo.tokenVersion() != tokenVersion) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ErrorCode.TOKEN_INVALIDATED.name());
-        }
-
         // 2. Verify the user has an active membership in the requested société
         AppUserSociete membership = appUserSocieteRepository
                 .findByIdUserIdAndIdSocieteId(userId, societeId)
@@ -222,9 +215,6 @@ public class AuthService {
 
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "NO_SOCIETE_ACCESS"));
-        if (!user.isEnabled()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ErrorCode.TOKEN_INVALIDATED.name());
-        }
 
         // 3. Mint a full scoped JWT (platformRole takes precedence — see Fix 4)
         String role = "SUPER_ADMIN".equals(user.getPlatformRole())
@@ -253,11 +243,6 @@ public class AuthService {
     private static String toJwtRole(String role) {
         if (role == null) return "ROLE_AGENT";
         return role.startsWith("ROLE_") ? role : "ROLE_" + role;
-    }
-
-    private static int extractTokenVersion(Jwt jwt) {
-        Object tv = jwt.getClaim("tv");
-        return tv instanceof Number n ? n.intValue() : 0;
     }
 
     private String extractClientIp() {

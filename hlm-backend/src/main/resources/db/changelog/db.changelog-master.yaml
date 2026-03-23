@@ -72,8 +72,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/035-add-societe-key.yaml
   - include:
-      file: db/changelog/changes/051-repair-app-user-email-dedup.yaml
-  - include:
       file: db/changelog/changes/036-deduplicate-app-user-email.yaml
   - include:
       file: db/changelog/changes/037-add-performance-indexes.yaml

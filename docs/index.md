@@ -57,7 +57,6 @@ These guides are still useful, but they are secondary to the source-of-truth doc
 
 | Document | Purpose |
 | --- | --- |
-| [PR_227_MULTI_COMPANY_REVIEW.md](PR_227_MULTI_COMPANY_REVIEW.md) | PR diff audit for the multi-company migration and non-breaking hardening plan |
 | [guides/engineer/getting-started.md](guides/engineer/getting-started.md) | Day-one setup |
 | [guides/engineer/docker.md](guides/engineer/docker.md) | Docker and compose workflows |
 | [guides/engineer/ci-cd.md](guides/engineer/ci-cd.md) | CI and image pipeline overview |
