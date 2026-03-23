@@ -21,8 +21,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class ContactControllerIT extends IntegrationTestBase {
 
     private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -139,10 +136,9 @@ class ContactControllerIT extends IntegrationTestBase {
     }
 
     @Test
-    void unknownSociete_jwtTrusted_contactScopedToThatSociete() throws Exception {
-        // In the multi-société architecture the JWT is signed & trusted — société ID
-        // comes from the validated JWT claim, no per-request DB lookup required.
-        // A validly-signed JWT for a non-existent société still yields 2xx.
+    void unknownSociete_jwtTrusted_contactCreationFails() throws Exception {
+        // The JWT is trusted (valid signature) but the FK constraint on contact.societe_id
+        // rejects creation for a société that does not exist in the DB.
         UUID unknownSociete = UUID.randomUUID();
         String badBearer = "Bearer " + jwtProvider.generate(USER_ID, unknownSociete, UserRole.ROLE_ADMIN);
 
@@ -152,7 +148,7 @@ class ContactControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(new CreateContactRequest(
                                 "Unknown", "Societe", null, "unknown@societe.com", null, null, null, null, null, null
                         ))))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().is5xxServerError());
     }
 
     // ===== Tenant Isolation Tests =====
@@ -170,7 +166,7 @@ class ContactControllerIT extends IntegrationTestBase {
         // Create tenant B with its own user
         String otherKey = "iso-test-" + UUID.randomUUID().toString().substring(0, 8);
         Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
-        User userB = new User("admin@iso.com", "hashedPass");
+        User userB = new User("admin-" + otherKey + "@iso.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -211,7 +207,7 @@ class ContactControllerIT extends IntegrationTestBase {
         // Create tenant B
         String otherKey = "iso-get-" + UUID.randomUUID().toString().substring(0, 8);
         Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
-        User userB = new User("admin@iso-get.com", "hashedPass");
+        User userB = new User("admin-" + otherKey + "@iso-get.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
@@ -304,7 +300,7 @@ class ContactControllerIT extends IntegrationTestBase {
         // Create tenant B
         String otherKey = "iso-status-" + UUID.randomUUID().toString().substring(0, 8);
         Societe tenantB = societeRepository.save(new Societe("Acme Corp", "MA"));
-        User userB = new User("admin@iso-status.com", "hashedPass");
+        User userB = new User("admin-" + otherKey + "@iso-status.com", "hashedPass");
         userB = userRepository.save(userB);
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 

@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class AdminUserControllerIT extends IntegrationTestBase {
 
-    private static final String BASE = "/api/admin/users";
+    private static final String BASE = "/api/users";
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;

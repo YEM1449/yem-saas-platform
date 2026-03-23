@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class TokenRevocationIT extends IntegrationTestBase {
 
-    private static final String ADMIN_USERS = "/api/admin/users";
+    private static final String ADMIN_USERS = "/api/users";
     private static final String PROPERTIES = "/api/properties";
 
     @Autowired MockMvc mvc;

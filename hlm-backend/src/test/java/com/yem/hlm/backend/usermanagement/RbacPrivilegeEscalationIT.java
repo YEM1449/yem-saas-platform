@@ -17,9 +17,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -42,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class RbacPrivilegeEscalationIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
@@ -61,32 +59,33 @@ class RbacPrivilegeEscalationIT extends IntegrationTestBase {
 
     @BeforeEach
     void setup() {
+        String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         societe = societeRepository.save(new Societe("Test Société RBAC", "MA"));
 
         // SUPER_ADMIN (no société scope)
-        User sa = userRepository.save(new User("sa@rbac.local", "hash"));
+        User sa = userRepository.save(new User("sa-" + uid + "@rbac.local", "hash"));
         sa.setPlatformRole("SUPER_ADMIN");
         sa.setEnabled(true);
         sa = userRepository.save(sa);
         superAdminBearer = "Bearer " + jwtProvider.generate(sa.getId(), null, "ROLE_SUPER_ADMIN", 0);
 
         // ADMIN of the société
-        User admin = userRepository.save(new User("admin@rbac.local", "hash"));
+        User admin = userRepository.save(new User("admin-" + uid + "@rbac.local", "hash"));
         appUserSocieteRepository.save(membership(admin, societe, "ADMIN"));
         adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);
 
         // MANAGER of the société
-        User manager = userRepository.save(new User("mgr@rbac.local", "hash"));
+        User manager = userRepository.save(new User("mgr-" + uid + "@rbac.local", "hash"));
         appUserSocieteRepository.save(membership(manager, societe, "MANAGER"));
         managerBearer = "Bearer " + jwtProvider.generate(manager.getId(), societe.getId(), UserRole.ROLE_MANAGER);
 
         // AGENT of the société
-        User agent = userRepository.save(new User("agent@rbac.local", "hash"));
+        User agent = userRepository.save(new User("agent-" + uid + "@rbac.local", "hash"));
         appUserSocieteRepository.save(membership(agent, societe, "AGENT"));
         agentBearer = "Bearer " + jwtProvider.generate(agent.getId(), societe.getId(), UserRole.ROLE_AGENT);
 
         // A target member (AGENT) that role-change tests operate on
-        targetMember = userRepository.save(new User("target@rbac.local", "hash"));
+        targetMember = userRepository.save(new User("target-" + uid + "@rbac.local", "hash"));
         appUserSocieteRepository.save(membership(targetMember, societe, "AGENT"));
     }
 
