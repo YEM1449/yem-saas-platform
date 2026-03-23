@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ActivationRequest, InvitationDetails, LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
+import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, ActivationRequest, InvitationDetails } from '../models/login.model';
 
 export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
@@ -32,7 +32,6 @@ export class AuthService {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
       .pipe(tap((res) => {
-        // Only store token if this is a full auth (not a société selection prompt)
         if (!res.requiresSocieteSelection) {
           localStorage.setItem(TOKEN_KEY, res.accessToken);
         }
@@ -41,8 +40,9 @@ export class AuthService {
 
   switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/auth/switch-societe`,
-        { societeId },
+      .post<LoginResponse>(
+        `${environment.apiUrl}/auth/switch-societe`,
+        { societeId } as SwitchSocieteRequest,
         { headers: { Authorization: `Bearer ${partialToken}` } }
       )
       .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));

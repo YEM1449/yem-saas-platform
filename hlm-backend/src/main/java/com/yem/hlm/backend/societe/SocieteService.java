@@ -284,10 +284,11 @@ public class SocieteService {
         societeRepository.save(s);
 
         // R6 — revoke all member JWTs atomically
+        Instant suspensionTimestamp = s.getDateSuspension();
         appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
             if (aus.isActif()) {
                 aus.setActif(false);
-                aus.setDateRetrait(s.getDateSuspension());
+                aus.setDateRetrait(suspensionTimestamp); // Tag with suspension time for restoration
                 appUserSocieteRepository.save(aus);
                 userRepository.findById(aus.getUserId()).ifPresent(user -> {
                     user.incrementTokenVersion();
@@ -307,7 +308,9 @@ public class SocieteService {
             throw new BusinessRuleException(ErrorCode.SOCIETE_INACTIVE,
                     "La société est déjà active.");
         }
-        s.setActif(true);
+
+        // Restore members that were deactivated during the suspension
+        // (dateRetrait matches dateSuspension — NOT individually removed before suspension)
         Instant suspensionDate = s.getDateSuspension();
         if (suspensionDate != null) {
             appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
@@ -319,6 +322,8 @@ public class SocieteService {
                 }
             });
         }
+
+        s.setActif(true);
         s.setDateSuspension(null);
         s.setRaisonSuspension(null);
         societeRepository.save(s);

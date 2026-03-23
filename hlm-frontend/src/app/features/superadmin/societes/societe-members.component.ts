@@ -120,19 +120,22 @@ export class SocieteMembersComponent implements OnInit {
   }
 
   impersonate(m: MembreSocieteDto): void {
-    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ? Vous pourrez revenir via le bandeau.`)) return;
+    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ? Vous pourrez revenir via le bandeau en haut de page.`)) return;
     this.impersonating[m.userId] = true;
     this.error = '';
     this.svc.impersonate(this.societeId, m.userId).subscribe({
       next: (res) => {
         this.impersonating[m.userId] = false;
+        // Save original super admin token for return
         const currentToken = localStorage.getItem('hlm_access_token');
         if (currentToken) {
           localStorage.setItem('hlm_superadmin_original_token', currentToken);
         }
+        // Set impersonation token as THE active token (auth interceptor reads this key)
         localStorage.setItem('hlm_access_token', res.token);
         localStorage.setItem('hlm_impersonation_active', 'true');
         localStorage.setItem('hlm_impersonation_target', res.targetUserEmail);
+        localStorage.setItem('hlm_impersonation_societe', this.societeId);
         this.router.navigateByUrl('/app/properties');
       },
       error: (err: HttpErrorResponse) => {

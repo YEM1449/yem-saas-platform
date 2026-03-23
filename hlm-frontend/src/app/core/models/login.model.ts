@@ -16,6 +16,10 @@ export interface SocieteChoice {
   nom: string;
 }
 
+export interface SwitchSocieteRequest {
+  societeId: string;
+}
+
 export interface MeResponse {
   userId: string;
   societeId: string;

@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
@@ -22,23 +23,7 @@ export class ShellComponent {
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
   }
 
-  /** Avatar monogram — first character of the userId (or role label) */
-  get userInitial(): string {
-    const role = this.userRoleLabel;
-    return role.charAt(0).toUpperCase();
-  }
-
-  /** Short user identifier shown in the sidebar footer */
-  get userLabel(): string {
-    const id = this.auth.user?.userId ?? '';
-    // Show first 8 chars of the UUID for brevity
-    return id ? id.substring(0, 8).toUpperCase() : 'User';
-  }
-
-  get userRoleLabel(): string {
-    return (this.auth.user?.role ?? '').replace('ROLE_', '');
-  }
-
+  // ── Impersonation ──────────────────────────────────────────────────
   get isImpersonating(): boolean {
     return localStorage.getItem('hlm_impersonation_active') === 'true';
   }
@@ -54,8 +39,25 @@ export class ShellComponent {
     }
     localStorage.removeItem('hlm_impersonation_active');
     localStorage.removeItem('hlm_impersonation_target');
+    localStorage.removeItem('hlm_impersonation_societe');
     localStorage.removeItem('hlm_superadmin_original_token');
     this.router.navigateByUrl('/superadmin/societes');
+  }
+
+  /** Avatar monogram — first character of the userId (or role label) */
+  get userInitial(): string {
+    const role = this.userRoleLabel;
+    return role.charAt(0).toUpperCase();
+  }
+
+  /** Short user identifier shown in the sidebar footer */
+  get userLabel(): string {
+    const id = this.auth.user?.userId ?? '';
+    return id ? id.substring(0, 8).toUpperCase() : 'User';
+  }
+
+  get userRoleLabel(): string {
+    return (this.auth.user?.role ?? '').replace('ROLE_', '');
   }
 
   logout(): void {

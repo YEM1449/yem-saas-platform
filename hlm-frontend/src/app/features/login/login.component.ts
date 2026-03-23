@@ -34,13 +34,11 @@ export class LoginComponent {
     this.auth.login(this.form).subscribe({
       next: (res) => {
         if (res.requiresSocieteSelection && res.societes) {
-          // Multi-société: show picker
           this.loading = false;
           this.showSocieteSelection = true;
           this.societes = res.societes;
           this.partialToken = res.accessToken;
         } else {
-          // Single société: proceed to /auth/me and navigate
           this.resolvePostLogin();
         }
       },
@@ -55,6 +53,13 @@ export class LoginComponent {
       next: () => this.resolvePostLogin(),
       error: (err) => this.handleError(err),
     });
+  }
+
+  backToLogin(): void {
+    this.showSocieteSelection = false;
+    this.societes = [];
+    this.partialToken = '';
+    this.error = '';
   }
 
   private resolvePostLogin(): void {
