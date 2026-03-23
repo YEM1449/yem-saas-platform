@@ -16,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -35,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class CrossSocieteIsolationIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
@@ -52,8 +50,9 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
         Societe societeA = societeRepository.save(new Societe("Société Alpha", "MA"));
         Societe societeB = societeRepository.save(new Societe("Société Beta", "MA"));
 
-        User userA = userRepository.save(new User("admin@alpha.test", "hash"));
-        User userB = userRepository.save(new User("admin@beta.test", "hash"));
+        String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        User userA = userRepository.save(new User("admin-" + uid + "@alpha.test", "hash"));
+        User userB = userRepository.save(new User("admin-" + uid + "@beta.test", "hash"));
 
         bearerA = "Bearer " + jwtProvider.generate(userA.getId(), societeA.getId(), UserRole.ROLE_ADMIN);
         bearerB = "Bearer " + jwtProvider.generate(userB.getId(), societeB.getId(), UserRole.ROLE_ADMIN);
@@ -99,7 +98,7 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         // The list (pageable) should have totalElements == 0
-        long total = json.readTree(listBody).get("totalElements").asLong();
+        long total = json.readTree(listBody).get("page").get("totalElements").asLong();
         org.assertj.core.api.Assertions.assertThat(total).isZero();
     }
 
