@@ -98,8 +98,9 @@ export class TasksComponent implements OnInit {
       this.tasks = this.tasks.map(t => t.id === task.id ? task : t);
       this.success = 'Tâche modifiée.';
     } else {
+      this.tasks = [task, ...this.tasks];
+      this.totalElements++;
       this.success = 'Tâche créée.';
-      this.load();
     }
   }
 
