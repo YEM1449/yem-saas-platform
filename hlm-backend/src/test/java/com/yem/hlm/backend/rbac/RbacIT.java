@@ -15,8 +15,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,7 +26,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class RbacIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
@@ -43,16 +40,16 @@ class RbacIT extends IntegrationTestBase {
 
     @BeforeEach
     void setup() {
-        String key = "rbac-" + UUID.randomUUID().toString().substring(0, 8);
+        String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Societe societe = societeRepository.save(new Societe("Acme Corp", "MA"));
 
-        User admin = new User("admin@rbac.test", "hash");
+        User admin = new User("admin-" + uid + "@rbac.test", "hash");
         admin = userRepository.save(admin);
 
-        User manager = new User("mgr@rbac.test", "hash");
+        User manager = new User("mgr-" + uid + "@rbac.test", "hash");
         manager = userRepository.save(manager);
 
-        User agent = new User("agent@rbac.test", "hash");
+        User agent = new User("agent-" + uid + "@rbac.test", "hash");
         agent = userRepository.save(agent);
 
         adminBearer = "Bearer " + jwtProvider.generate(admin.getId(), societe.getId(), UserRole.ROLE_ADMIN);

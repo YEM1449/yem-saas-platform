@@ -1,3 +1,13 @@
+<!-- Impersonation warning banner -->
+@if (isImpersonating) {
+  <div style="background:#e74c3c;color:#fff;text-align:center;padding:8px 16px;font-size:14px;position:sticky;top:0;z-index:9999;">
+    ⚠ Mode usurpation : <strong>{{ impersonationTarget }}</strong>
+    <button (click)="endImpersonation()" style="margin-left:16px;background:#fff;color:#e74c3c;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">
+      Revenir au SuperAdmin
+    </button>
+  </div>
+}
+
 <!-- Modern sidebar layout for HLM CRM -->
 <div class="app-layout">
 
@@ -70,6 +80,14 @@
           <path d="M13.5 14h3M15 12.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         Contacts / Clients
+      </a>
+
+      <a routerLink="/app/tasks" routerLinkActive="nav-active" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M5 10l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Tâches
       </a>
 
       <a routerLink="/app/reservations" routerLinkActive="nav-active" class="nav-item">
@@ -165,7 +183,7 @@
           <span class="user-role">{{ userRoleLabel }}</span>
         </div>
       </div>
-      <button class="logout-btn" (click)="logout()" title="Sign out">
+      <button class="logout-btn" (click)="logout()" title="Sign out" data-testid="logout-button">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -49,7 +49,7 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Property p WHERE p.societeId = :societeId AND p.id = :propertyId AND p.deletedAt IS NULL")
-    Optional<Property> findByTenantIdAndIdForUpdate(@Param("societeId") UUID societeId, @Param("propertyId") UUID propertyId);
+    Optional<Property> findBySocieteIdAndIdForUpdate(@Param("societeId") UUID societeId, @Param("propertyId") UUID propertyId);
 
     // ===== Search Queries =====
 
@@ -173,4 +173,6 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
             @Param("societeId")  UUID societeId,
             @Param("projectId") UUID projectId
     );
+
+    long countBySocieteIdAndDeletedAtIsNull(UUID societeId);
 }

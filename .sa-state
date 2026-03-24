@@ -1,0 +1,27 @@
+# YEM — SUPER_ADMIN & Company Management State
+# Resume: paste this prompt + "resume from .sa-state"
+
+SA_1_AUDIT=DONE
+SOCIETE_FILES=23
+EXISTING_ENDPOINTS=7
+SOCIETE_COLUMNS=10
+ADMIN_MODULE_EXISTS=0
+# Findings: Societe has 10 cols (needs ~40 more), service is basic CRUD,
+# controller missing stats/compliance/members/impersonation,
+# ErrorCode already has most codes (need SOCIETE_ALREADY_EXISTS, QUOTA_BIENS_ATTEINT etc),
+# @RequiresSuperAdmin aspect exists, Angular admin module does not exist
+SA_2_DB_EXTEND=DONE
+SA_3_BOOTSTRAP=DONE
+SA_4_ENTITY_DTO=DONE
+SA_5_SERVICE=DONE
+SA_6_CONTROLLER=DONE
+SA_7_IMPERSONATION=DONE
+SA_8_TESTS_BACKEND=DONE
+SA_9_ANGULAR_STORE=DONE
+SA_10_ANGULAR_LIST=DONE
+SA_11_ANGULAR_FORM=DONE
+SA_12_ANGULAR_DETAIL=DONE
+SA_13_ANGULAR_MEMBERS=DONE
+SA_14_TESTS_FRONTEND=DONE
+SA_15_FINAL=DONE
+IMPLEMENTATION=COMPLETE

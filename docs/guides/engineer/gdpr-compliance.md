@@ -1,5 +1,12 @@
 # GDPR Compliance Guide — Engineer Guide
 
+> Legacy note
+>
+> This guide remains useful conceptually, but some examples still use pre-migration `tenant` wording.
+> The current contact and user privacy behavior is documented in
+> [../../spec/functional-spec.md](../../spec/functional-spec.md) and
+> [../../spec/requirements-spec.md](../../spec/requirements-spec.md).
+
 This guide covers the GDPR and Moroccan Law 09-08 compliance features implemented in the platform: consent tracking, data export, rectification, erasure (anonymization), and data retention.
 
 ## Table of Contents

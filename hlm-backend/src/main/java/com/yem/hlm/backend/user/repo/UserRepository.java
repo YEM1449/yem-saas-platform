@@ -2,6 +2,7 @@ package com.yem.hlm.backend.user.repo;
 
 import com.yem.hlm.backend.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
 
     Optional<User> findByEmail(String email);
 
@@ -67,4 +68,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @org.springframework.transaction.annotation.Transactional
     @Query("UPDATE User u SET u.lockedUntil = :lockedUntil WHERE u.id = :id")
     void setLockedUntilForTest(@Param("id") UUID id, @Param("lockedUntil") Instant lockedUntil);
+
+    /** Find user by invitation token (used during account activation). */
+    Optional<User> findByInvitationToken(String invitationToken);
 }

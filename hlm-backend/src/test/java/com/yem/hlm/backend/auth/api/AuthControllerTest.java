@@ -4,6 +4,7 @@ import com.yem.hlm.backend.auth.api.dto.LoginRequest;
 import com.yem.hlm.backend.auth.api.dto.LoginResponse;
 import com.yem.hlm.backend.auth.service.AuthService;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.usermanagement.InvitationService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private InvitationService invitationService;
 
     @Test
     void login_returnsAccessToken() throws Exception {

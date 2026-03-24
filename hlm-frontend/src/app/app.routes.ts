@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { adminGuard } from './core/auth/admin.guard';
+import { superadminGuard } from './core/auth/superadmin.guard';
 import { portalGuard } from './portal/core/portal-auth.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent) },
+  { path: 'activation', loadComponent: () => import('./features/activation/activation.component').then(m => m.ActivationComponent) },
   {
     path: 'app',
     loadComponent: () => import('./features/shell/shell.component').then(m => m.ShellComponent),
@@ -31,7 +33,20 @@ export const routes: Routes = [
       { path: 'dashboard/receivables', loadComponent: () => import('./features/dashboard/receivables-dashboard.component').then(m => m.ReceivablesDashboardComponent) },
       { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: 'audit', loadComponent: () => import('./features/audit/audit.component').then(m => m.AuditComponent) },
+      { path: 'tasks', loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent) },
       { path: '', redirectTo: 'properties', pathMatch: 'full' },
+    ],
+  },
+  {
+    path: 'superadmin',
+    loadComponent: () => import('./features/superadmin/superadmin-shell.component').then(m => m.SuperadminShellComponent),
+    canActivate: [superadminGuard],
+    children: [
+      { path: 'societes', loadComponent: () => import('./features/superadmin/societes/societe-list.component').then(m => m.SocieteListComponent) },
+      { path: 'societes/new', loadComponent: () => import('./features/superadmin/societes/societe-form.component').then(m => m.SocieteFormComponent) },
+      { path: 'societes/:id', loadComponent: () => import('./features/superadmin/societes/societe-detail.component').then(m => m.SocieteDetailComponent) },
+      { path: 'societes/:id/edit', loadComponent: () => import('./features/superadmin/societes/societe-form.component').then(m => m.SocieteFormComponent) },
+      { path: '', redirectTo: 'societes', pathMatch: 'full' },
     ],
   },
   {

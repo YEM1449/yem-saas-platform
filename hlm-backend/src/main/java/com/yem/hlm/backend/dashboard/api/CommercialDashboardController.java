@@ -4,7 +4,7 @@ import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
 import com.yem.hlm.backend.dashboard.service.CommercialDashboardService;
 import com.yem.hlm.backend.dashboard.service.DashboardEmitterRegistry;
-import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -34,7 +34,7 @@ import java.util.UUID;
  *
  * RBAC:
  * <ul>
- *   <li>ADMIN / MANAGER — full tenant data, optional filters.</li>
+ *   <li>ADMIN / MANAGER — full société data, optional filters.</li>
  *   <li>AGENT — server-enforced scope to own agentId; no role guard needed on controller.</li>
  * </ul>
  *
@@ -47,12 +47,15 @@ public class CommercialDashboardController {
     private final CommercialDashboardService dashboardService;
     private final DashboardEmitterRegistry   emitterRegistry;
     private final Counter                    summaryRequestCounter;
+    private final SocieteContextHelper       societeContextHelper;
 
     public CommercialDashboardController(CommercialDashboardService dashboardService,
                                          DashboardEmitterRegistry emitterRegistry,
-                                         MeterRegistry meterRegistry) {
+                                         MeterRegistry meterRegistry,
+                                         SocieteContextHelper societeContextHelper) {
         this.dashboardService = dashboardService;
         this.emitterRegistry  = emitterRegistry;
+        this.societeContextHelper = societeContextHelper;
         this.summaryRequestCounter = Counter.builder("commercial_dashboard_summary_requests_total")
                 .description("Total number of commercial dashboard summary requests (cache hits + misses)")
                 .register(meterRegistry);
@@ -114,7 +117,7 @@ public class CommercialDashboardController {
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         LocalDateTime[] range = dashboardService.resolveDateRange(from, to);
         dashboardService.validateProject(societeId, projectId);
         UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(societeId, agentId);
@@ -131,7 +134,7 @@ public class CommercialDashboardController {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
     public SseEmitter subscribe(
             @RequestParam(defaultValue = "default") String sessionId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         return emitterRegistry.register(societeId, sessionId);
     }
 
@@ -142,7 +145,7 @@ public class CommercialDashboardController {
     private CommercialDashboardSummaryDTO doSummary(LocalDateTime from, LocalDateTime to,
                                                      UUID projectId, UUID agentId) {
         summaryRequestCounter.increment();
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = societeContextHelper.requireSocieteId();
         LocalDateTime[] range = dashboardService.resolveDateRange(from, to);
         dashboardService.validateProject(societeId, projectId);
         UUID effectiveAgentId = dashboardService.resolveEffectiveAgentId(societeId, agentId);

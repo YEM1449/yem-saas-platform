@@ -77,3 +77,27 @@ databaseChangeLog:
       file: db/changelog/changes/037-add-performance-indexes.yaml
   - include:
       file: db/changelog/changes/038-add-version-columns.yaml
+  - include:
+      file: db/changelog/changes/039-extend-app-user-fields.yaml
+  - include:
+      file: db/changelog/changes/040-extend-app-user-societe-fields.yaml
+  - include:
+      file: db/changelog/changes/041-user-security-indexes.yaml
+  - include:
+      file: db/changelog/changes/042-extend-societe-business-fields.yaml
+  - include:
+      file: db/changelog/changes/043-extend-societe-quotas.yaml
+  - include:
+      file: db/changelog/changes/044-societe-performance-indexes.yaml
+  - include:
+      file: db/changelog/changes/045-seed-test-users.yaml
+  - include:
+      file: db/changelog/changes/046-seed-superadmin.yaml
+  - include:
+      file: db/changelog/changes/047-rename-tenant-indexes.yaml
+  - include:
+      file: db/changelog/changes/048-create-task-table.yaml
+  - include:
+      file: db/changelog/changes/049-create-document-table.yaml
+  - include:
+      file: db/changelog/changes/050-enable-rls-phase1.yaml

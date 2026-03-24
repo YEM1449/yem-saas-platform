@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
+import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, ActivationRequest, InvitationDetails } from '../models/login.model';
 
 export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
@@ -31,11 +31,34 @@ export class AuthService {
   login(req: LoginRequest): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
+      .pipe(tap((res) => {
+        if (!res.requiresSocieteSelection) {
+          localStorage.setItem(TOKEN_KEY, res.accessToken);
+        }
+      }));
+  }
+
+  switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(
+        `${environment.apiUrl}/auth/switch-societe`,
+        { societeId } as SwitchSocieteRequest,
+        { headers: { Authorization: `Bearer ${partialToken}` } }
+      )
       .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 
   me(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${environment.apiUrl}/auth/me`);
+  }
+
+  validateInvitation(token: string): Observable<InvitationDetails> {
+    return this.http.get<InvitationDetails>(`${environment.apiUrl}/auth/invitation/${token}`);
+  }
+
+  activateAccount(token: string, req: ActivationRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/invitation/${token}/activer`, req)
+      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 
   /**

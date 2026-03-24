@@ -1,5 +1,12 @@
 # Module 01 — Multi-Tenancy
 
+> Legacy learning module
+>
+> This course module explains an earlier `tenant`-based design. The implemented code now uses
+> `societe`, `app_user_societe`, `sid`, and `SocieteContext`.
+> Read [../context/ARCHITECTURE.md](../context/ARCHITECTURE.md) and
+> [../context/DATA_MODEL.md](../context/DATA_MODEL.md) for the current model.
+
 ## Learning Objectives
 
 - Understand the shared-database, separate-schema-by-column tenancy model

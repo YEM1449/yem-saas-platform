@@ -2,7 +2,7 @@ package com.yem.hlm.backend.dashboard.api;
 
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.service.ReceivablesDashboardService;
-import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +21,7 @@ import java.util.UUID;
  *
  * RBAC:
  * <ul>
- *   <li>ADMIN / MANAGER — full tenant data, optional agentId filter.</li>
+ *   <li>ADMIN / MANAGER — full société data, optional agentId filter.</li>
  *   <li>AGENT — server-enforced scope to own contracts.</li>
  * </ul>
  */
@@ -30,15 +30,18 @@ import java.util.UUID;
 public class ReceivablesDashboardController {
 
     private final ReceivablesDashboardService service;
+    private final SocieteContextHelper societeContextHelper;
 
-    public ReceivablesDashboardController(ReceivablesDashboardService service) {
+    public ReceivablesDashboardController(ReceivablesDashboardService service,
+                                          SocieteContextHelper societeContextHelper) {
         this.service = service;
+        this.societeContextHelper = societeContextHelper;
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
     public ReceivablesDashboardDTO summary(@RequestParam(required = false) UUID agentId) {
-        UUID societeId        = SocieteContext.getSocieteId();
+        UUID societeId        = societeContextHelper.requireSocieteId();
         UUID effectiveAgentId = service.resolveEffectiveAgentId(agentId);
         return service.getSummary(societeId, effectiveAgentId);
     }

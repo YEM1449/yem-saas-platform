@@ -1,70 +1,61 @@
 # HLM Frontend
 
-Angular 19 SPA for the HLM multi-tenant CRM backend.
+Angular 19 frontend for the YEM SaaS Platform.
 
-## Prerequisites
+## Surfaces
 
-- **Node 18+** and **npm 9+**
-- Backend running at `http://localhost:8080` (see root [README](../README.md))
+The application currently exposes three route trees:
 
-## Setup
+| Prefix | Audience |
+| --- | --- |
+| `/app/*` | CRM users |
+| `/superadmin/*` | platform `SUPER_ADMIN` |
+| `/portal/*` | buyer portal |
+
+## Local Development
 
 ```bash
 cd hlm-frontend
 npm ci
-```
-
-## Run (development)
-
-```bash
 npm start
-# or: npx ng serve
 ```
 
-Opens at **http://localhost:4200**. A dev proxy (`proxy.conf.json`) forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to `http://localhost:8080`, avoiding CORS issues entirely.
+Default dev URL:
 
-**Important:** Call backend endpoints as relative paths (e.g. `/auth/login`, `/api/properties`). Do NOT hardcode `http://localhost:8080` in frontend code — the proxy handles routing.
+- `http://localhost:4200`
 
-## Build (production)
+The dev proxy forwards `/auth`, `/api`, and `/api/portal` to the backend.
+
+## Production Build
 
 ```bash
+cd hlm-frontend
 npm run build
 ```
 
-Output: `dist/frontend/`. Uses `environment.production.ts` (same-origin `apiUrl`).
+## Auth Notes
 
-## API base URL
+Current local-storage keys:
 
-Configured in `src/environments/environment.ts`:
+- CRM token -> `hlm_access_token`
+- Portal token -> `hlm_portal_token`
 
-```ts
-export const environment = {
-  production: false,
-  apiUrl: '',  // empty = use proxy; set 'http://localhost:8080' to bypass
-};
-```
+Current backend contract notes:
 
-If bypassing the proxy, add your dev origin (`http://localhost:4200`) to the backend's `CorsConfig.java` `allowedOrigins`.
+- CRM login is `email + password`
+- invitation activation logs the user in
+- portal login is magic-link based
+- backend supports a multi-societe selection step after login when needed
 
-## Project structure
+## Current Feature Inventory
 
-```
-src/app/
-  core/
-    auth/           # AuthService, AuthGuard, AuthInterceptor
-    models/         # LoginRequest/Response, ErrorResponse, Property DTOs
-  features/
-    login/          # Login page (tenantKey + email + password)
-    shell/          # App shell with nav bar + router-outlet
-    properties/     # Properties list page + PropertyService
-  app.routes.ts     # Route config: /login, /app/*, guards
-  app.config.ts     # Providers: router, HttpClient + interceptor
-```
+- login and invitation activation
+- CRM shell with projects, properties, contacts, prospects, reservations, contracts, schedules, dashboards, commissions, messages, notifications, audit, tasks, and admin users
+- super-admin societe management
+- buyer portal contracts, payments, and property detail
 
-## Routes
+## Further Reading
 
-| Path              | Guard | Component           |
-|-------------------|-------|---------------------|
-| `/login`          | none  | LoginComponent      |
-| `/app`            | auth  | ShellComponent      |
-| `/app/properties` | auth  | PropertiesComponent |
+- [../docs/guides/engineer/getting-started.md](../docs/guides/engineer/getting-started.md)
+- [../docs/context/ARCHITECTURE.md](../docs/context/ARCHITECTURE.md)
+- [../docs/spec/functional-spec.md](../docs/spec/functional-spec.md)

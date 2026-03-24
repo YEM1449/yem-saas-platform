@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: "047-rename-tenant-indexes"
+      author: "claude-audit"
+      comment: "Rename legacy 'tenant' index names to 'societe' for consistency with multi-société migration"
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              DO $$
+              DECLARE
+                idx RECORD;
+                new_name TEXT;
+              BEGIN
+                FOR idx IN
+                  SELECT indexname FROM pg_indexes
+                  WHERE schemaname = 'public' AND indexname LIKE '%tenant%'
+                LOOP
+                  new_name := replace(idx.indexname, 'tenant', 'societe');
+                  IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE schemaname = 'public' AND indexname = new_name
+                  ) THEN
+                    EXECUTE format('ALTER INDEX IF EXISTS %I RENAME TO %I',
+                      idx.indexname, new_name);
+                  END IF;
+                END LOOP;
+              END $$;

@@ -9,8 +9,8 @@ interface AuthState {
 
 /**
  * Signal-based auth state store.
- * Provides reactive, type-safe access to current authentication state.
- * Complements AuthService which manages localStorage and HTTP calls.
+ * NOTE: Currently unused. AuthService manages auth state via localStorage.
+ * TODO: Migrate AuthService to use AuthStore for reactive state management.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {

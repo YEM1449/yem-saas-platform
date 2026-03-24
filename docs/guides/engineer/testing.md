@@ -1,5 +1,12 @@
 # Testing Guide — Engineer Guide
 
+> Legacy note
+>
+> Parts of this guide still refer to the older `TenantContext` naming. The current runtime context is
+> `SocieteContext`, and the maintained testing expectations are documented in
+> [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md) and
+> [../../spec/requirements-spec.md](../../spec/requirements-spec.md).
+
 This guide covers the unit test and integration test strategies, base classes, test data setup, how to run tests, and common patterns.
 
 ## Table of Contents
@@ -319,6 +326,54 @@ void getPortalContracts_asOtherContact_returnsEmpty() throws Exception {
 
 ---
 
+## E2E Tests (Playwright)
+
+E2E tests live in `hlm-frontend/e2e/` and run against the full stack.
+
+### Setup
+
+```bash
+# Start the full stack first
+docker compose up -d --wait --wait-timeout 180
+
+# Then run Playwright
+cd hlm-frontend
+npx playwright test
+```
+
+`playwright.config.ts` sets `workers: 1` to run tests serially — this prevents login rate-limit races when multiple tests authenticate simultaneously.
+
+### Auth setup
+
+Tests use a `setup` project (`e2e/auth.setup.ts`) that logs in once and saves `storageState` to `playwright/.auth/user.json`. Subsequent test projects load this state and skip the login form.
+
+### data-testid requirement
+
+Every form input and action button that E2E tests interact with needs a `data-testid` attribute. Text-based selectors (`button:has-text("Nouveau")`) break across language changes. Always use `data-testid` as the primary selector.
+
+**Current data-testid map:**
+
+| Surface | Attribute | Element |
+|---------|-----------|---------|
+| Login | `email` | Email input |
+| Login | `password` | Password input |
+| Login | `login-button` | Submit button |
+| Login | `error-message` | Error banner |
+| Shell | `logout-button` | Logout button |
+| Contacts | `create-contact` | New contact button |
+| Contacts | `firstName` | First name input |
+| Contacts | `lastName` | Last name input |
+| Contacts | `save-button` | Save button |
+| Tasks | `task-title` | Title input |
+| Tasks | `task-submit` | Submit button |
+
+### Common E2E pitfalls
+
+- **`button[type="submit"]` fallback is dangerous.** Buttons without `type` default to `submit`, so `button[type="submit"]` matches ALL buttons — Playwright returns the first in DOM order (e.g., "Annuler" before "Créer"). Always use `data-testid`.
+- **Seed account**: E2E tests use `admin@acme.com / Admin123!Secure` — not the `admin@demo.ma` demo seeds.
+
+---
+
 ## Common Pitfalls
 
 ### Scheduler interference
@@ -343,9 +398,23 @@ void expiredReservation_getsMarkedExpired() {
 }
 ```
 
+### @Transactional on IT test classes
+
+**Never** annotate an IT test class with `@Transactional`. `AuditEventListener` uses `Propagation.REQUIRES_NEW`, which opens a separate DB connection that cannot see uncommitted test-transaction data → FK violation (500 instead of 201/200).
+
+Use unique email UIDs instead of rollback:
+
+```java
+@BeforeEach
+void setup() {
+    String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    userRepository.save(new User("admin-" + uid + "@test.local", "hash"));
+}
+```
+
 ### TenantContext in unit tests
 
-Unit tests that test service methods must set `TenantContext` in `@BeforeEach` — otherwise `TenantContext.getTenantId()` returns `null` and the service fails. Always call `TenantContext.clear()` in `@AfterEach`.
+Unit tests that test service methods must set `SocieteContext` in `@BeforeEach` — otherwise `SocieteContextHelper.requireSocieteId()` throws and the service fails. Always call `SocieteContext.clear()` in `@AfterEach`.
 
 ### IT test class naming
 

@@ -1,0 +1,13 @@
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-checkbox input[type="checkbox"] {
+  width: auto;
+}
+
+.field-checkbox label {
+  margin: 0;
+}

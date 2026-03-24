@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.payments.service;
 
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,9 +20,11 @@ public class ReminderScheduler {
     private static final Logger log = LoggerFactory.getLogger(ReminderScheduler.class);
 
     private final ReminderService reminderService;
+    private final SocieteContextHelper societeContextHelper;
 
-    public ReminderScheduler(ReminderService reminderService) {
+    public ReminderScheduler(ReminderService reminderService, SocieteContextHelper societeContextHelper) {
         this.reminderService = reminderService;
+        this.societeContextHelper = societeContextHelper;
     }
 
     /**
@@ -30,12 +33,14 @@ public class ReminderScheduler {
      */
     @Scheduled(cron = "${app.payments.reminder-cron:0 0 7 * * *}")
     public void run() {
-        log.info("ReminderScheduler: starting daily reminder run");
-        try {
-            reminderService.processAll();
-        } catch (Exception ex) {
-            log.error("ReminderScheduler: unexpected error during reminder run", ex);
-        }
-        log.info("ReminderScheduler: daily reminder run complete");
+        societeContextHelper.runAsSystem(() -> {
+            log.info("ReminderScheduler: starting daily reminder run");
+            try {
+                reminderService.processAll();
+            } catch (Exception ex) {
+                log.error("ReminderScheduler: unexpected error during reminder run", ex);
+            }
+            log.info("ReminderScheduler: daily reminder run complete");
+        });
     }
 }

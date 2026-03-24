@@ -102,4 +102,6 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
             @Param("q") String q,
             Pageable pageable
     );
+
+    long countBySocieteIdAndDeletedFalse(UUID societeId);
 }

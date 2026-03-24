@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.portal.scheduler;
 
 import com.yem.hlm.backend.portal.repo.PortalTokenRepository;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,15 +24,20 @@ public class PortalTokenCleanupScheduler {
     private static final Logger log = LoggerFactory.getLogger(PortalTokenCleanupScheduler.class);
 
     private final PortalTokenRepository portalTokenRepository;
+    private final SocieteContextHelper societeContextHelper;
 
-    public PortalTokenCleanupScheduler(PortalTokenRepository portalTokenRepository) {
+    public PortalTokenCleanupScheduler(PortalTokenRepository portalTokenRepository,
+                                       SocieteContextHelper societeContextHelper) {
         this.portalTokenRepository = portalTokenRepository;
+        this.societeContextHelper = societeContextHelper;
     }
 
     @Scheduled(cron = "${app.portal.cleanup-cron:0 0 3 * * *}")
     @Transactional
     public void cleanup() {
-        int deleted = portalTokenRepository.deleteExpiredAndUsed(Instant.now());
-        log.info("[PORTAL-CLEANUP] Deleted {} expired/used portal tokens", deleted);
+        societeContextHelper.runAsSystem(() -> {
+            int deleted = portalTokenRepository.deleteExpiredAndUsed(Instant.now());
+            log.info("[PORTAL-CLEANUP] Deleted {} expired/used portal tokens", deleted);
+        });
     }
 }

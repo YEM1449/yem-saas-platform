@@ -1,5 +1,12 @@
 # Backend Deep Dive — Engineer Guide
 
+> Legacy note
+>
+> This guide still contains pre-societe examples that use the older `tenant` / `TenantContext` model.
+> For the implemented architecture, use [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md),
+> [../../context/MODULES.md](../../context/MODULES.md), and
+> [../../context/SECURITY_BASELINE.md](../../context/SECURITY_BASELINE.md) as the source of truth.
+
 This guide walks through the Spring Boot backend: package layout, layered architecture, request lifecycle, how to add a new feature, and common extension points.
 
 ## Table of Contents

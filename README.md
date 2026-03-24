@@ -1,171 +1,135 @@
 # YEM SaaS Platform
 
-Multi-tenant CRM backend for real estate promotion and construction teams, plus an Angular SPA.
-Tenant isolation via JWT claim `tid` → request-scoped `TenantContext`.
-RBAC with three roles: ADMIN, MANAGER, AGENT (see [docs/runbook.md](docs/runbook.md#rbac-conventions)).
+YEM is a multi-societe real-estate CRM with:
 
-## Prerequisites
+- a Spring Boot backend in [hlm-backend](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend)
+- an Angular CRM and buyer portal in [hlm-frontend](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend)
+- PostgreSQL, optional Redis, optional S3-compatible storage, and async email/SMS delivery
 
-- **Java 21** (see `hlm-backend/pom.xml`)
-- **Node 18+** and **npm 9+** (for `hlm-frontend/`)
-- **Docker** (required for Testcontainers integration tests and local PostgreSQL)
-- **PostgreSQL** (local instance or Docker container)
+## What The System Does
 
-## Quickstart (backend)
+The current codebase supports:
+
+- company (`societe`) administration for `SUPER_ADMIN`
+- company member management for `ADMIN`
+- CRM workflows for projects, properties, contacts, reservations, deposits, contracts, collections, commissions, messaging, notifications, tasks, and audit
+- a buyer-facing portal using one-time magic links
+
+## Architecture
+
+```text
+Browser
+  |- CRM SPA
+  |- Super-admin SPA
+  |- Buyer portal
+  v
+Angular / Nginx
+  |- /auth
+  |- /api
+  |- /api/portal
+  v
+Spring Boot API
+  |- security
+  |- business services
+  |- schedulers
+  v
+PostgreSQL
+
+Optional:
+  Redis
+  MinIO / S3-compatible object storage
+  SMTP
+  Twilio
+```
+
+## Quickstart
 
 ```bash
-# 1. Copy env template and fill in your values
 cp .env.example .env
-# Edit .env — set your DB credentials and a JWT secret (≥32 chars)
-
-# 2. Export env vars (or use direnv / your IDE)
-export $(grep -v '^#' .env | xargs)
-
-# 3. Run the backend
-cd hlm-backend
-chmod +x mvnw
-./mvnw spring-boot:run
+docker compose up -d
+curl -s http://localhost:8080/actuator/health
 ```
 
-The server starts on **http://localhost:8080**.
-Verify it's running:
+Then open:
+
+- frontend via `http://localhost`
+- backend docs via `http://localhost:8080/swagger-ui.html` when enabled
+
+## Seed Accounts
+
+Current seed users from Liquibase:
+
+| Email | Password | Role |
+| --- | --- | --- |
+| `admin@demo.ma` | `Admin123!Secure` | `ADMIN` |
+| `manager@demo.ma` | `Manager123!Sec` | `MANAGER` |
+| `agent@demo.ma` | `Agent123!Secure` | `AGENT` |
+| `superadmin@yourcompany.com` | `YourSecure2026!` | `SUPER_ADMIN` local/dev seed |
+
+## First `SUPER_ADMIN` Bootstrap
+
+You can also bootstrap the first platform operator explicitly:
 
 ```bash
-curl -i http://localhost:8080/actuator/health
-# Expected: 200 {"status":"UP"}
-# If it fails: backend isn't running or is on another port.
-# Check logs for "Tomcat started on port(s): 8080"
+APP_BOOTSTRAP_ENABLED=true \
+APP_BOOTSTRAP_EMAIL=superadmin@yourcompany.com \
+APP_BOOTSTRAP_PASSWORD='YourSecure2026!' \
+cd hlm-backend && ./mvnw spring-boot:run
 ```
 
-## Quickstart (frontend)
+After success, remove the bootstrap variables and restart normally.
+
+## Important Auth Note
+
+The backend supports multi-societe users:
+
+- one membership -> full JWT immediately
+- multiple memberships -> partial token plus `requiresSocieteSelection=true`
+- client must then call `POST /auth/switch-societe`
+
+This is already implemented in the backend contract.
+
+## Repository Map
+
+| Path | Purpose |
+| --- | --- |
+| [hlm-backend](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend) | Spring Boot application |
+| [hlm-frontend](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend) | Angular application |
+| [docs](/home/yem/CRM-HLM/yem-saas-platform/docs) | architecture, specs, runbook, guides |
+| [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts) | smoke tests and API helpers |
+| [.github/workflows](/home/yem/CRM-HLM/yem-saas-platform/.github/workflows) | CI/CD workflows |
+
+## Key Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [docs/index.md](docs/index.md) | documentation index |
+| [docs/context/ARCHITECTURE.md](docs/context/ARCHITECTURE.md) | architecture overview |
+| [docs/context/DATA_MODEL.md](docs/context/DATA_MODEL.md) | inferred data model |
+| [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | workflow and business behavior |
+| [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | technical implementation details |
+| [docs/spec/api-reference.md](docs/spec/api-reference.md) | endpoint catalog |
+| [docs/spec/requirements-spec.md](docs/spec/requirements-spec.md) | reconstructed requirements |
+| [docs/runbook-operations.md](docs/runbook-operations.md) | operational runbook |
+| [docs/guides/engineer/getting-started.md](docs/guides/engineer/getting-started.md) | engineer setup |
+
+## Testing
 
 ```bash
-cd hlm-frontend
-npm ci
-npm start
+# Backend unit tests
+cd hlm-backend && ./mvnw test
+
+# Backend unit + integration tests (requires Docker for Testcontainers)
+cd hlm-backend && ./mvnw verify
+
+# Frontend unit tests
+cd hlm-frontend && npm test -- --watch=false
+
+# Frontend build check
+cd hlm-frontend && npm run build
+
+# E2E tests (requires full stack running via docker compose)
+cd hlm-frontend && npx playwright test
 ```
 
-The app starts on **http://localhost:4200**. A dev proxy forwards `/auth`, `/api`, `/dashboard`, and `/actuator` to the backend. See [docs/frontend.md](docs/frontend.md) for details.
-
-## Required Environment Variables
-
-| Variable          | Example                                      | Notes                              |
-|-------------------|----------------------------------------------|------------------------------------|
-| `DB_URL`          | `jdbc:postgresql://localhost:5432/hlm`       | JDBC connection string             |
-| `DB_USER`         | `hlm_user`                                   | Database username                  |
-| `DB_PASSWORD`     | `hlm_pwd`                                    | Database password                  |
-| `JWT_SECRET`      | *(generate a random ≥32-char string)*        | **Required**, no default. HS256    |
-| `JWT_TTL_SECONDS` | `3600`                                       | Token lifetime (default 3600)      |
-
-> These map to `application.yml` placeholders: `${DB_URL}`, `${DB_USER}`, `${DB_PASSWORD}`, `${JWT_SECRET}`, `${JWT_TTL_SECONDS}`.
->
-> **Fail-fast:** The app refuses to start if `JWT_SECRET` is missing or blank (`JwtProperties` uses `@Validated` + `@NotBlank`).
-
-## Running Tests
-
-```bash
-cd hlm-backend
-
-# Unit tests (Surefire)
-./mvnw test
-
-# Integration tests (Failsafe, requires Docker for Testcontainers)
-./mvnw failsafe:integration-test
-```
-
-## Snyk Security Scanning
-
-Snyk is configured via [`.github/workflows/snyk.yml`](.github/workflows/snyk.yml) for:
-- Open Source dependency scans (Maven + npm)
-- Snyk Code (SAST) scan with SARIF upload to GitHub Security
-
-Required GitHub repository secrets:
-- `SNYK_TOKEN` (required)
-- `SNYK_ORG` (optional; set it if you use multiple Snyk orgs)
-
-Workflow behavior:
-- Runs on `push` and `pull_request` when backend/frontend code changes
-- Fails when vulnerabilities at `high` severity or above are found
-- Sends `snyk monitor` snapshots on push to `main`
-
-## Frontend Integration Quickstart
-
-### Step 0 — Health check
-
-```bash
-curl -i http://localhost:8080/actuator/health
-```
-
-If this fails, the backend is not running. Check the server logs for `Tomcat started on port(s): 8080`.
-
-### Step 1 — Login
-
-```bash
-curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"tenantKey":"acme","email":"admin@acme.com","password":"Admin123!Secure"}'
-```
-
-Response (`LoginResponse`):
-```json
-{
-  "accessToken": "<JWT>",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
-}
-```
-
-### Step 2 — Verify identity
-
-```bash
-curl -s http://localhost:8080/auth/me \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-Response:
-```json
-{ "userId": "...", "tenantId": "..." }
-```
-
-### Step 3 — Call a protected endpoint
-
-```bash
-curl -s http://localhost:8080/api/properties \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-### Error shapes
-
-**401 Unauthorized** (missing/invalid token):
-```json
-{ "timestamp": "...", "status": 401, "error": "Unauthorized", "code": "UNAUTHORIZED", "message": "...", "path": "/api/properties" }
-```
-
-**403 Forbidden** (insufficient role):
-```json
-{ "timestamp": "...", "status": 403, "error": "Forbidden", "code": "FORBIDDEN", "message": "...", "path": "/api/properties" }
-```
-
-> Full curl walkthrough: [docs/api-quickstart.md](docs/api-quickstart.md)
-> Troubleshooting (401/403/CORS): [docs/runbook.md](docs/runbook.md)
-> Smoke test script: [scripts/smoke-auth.sh](scripts/smoke-auth.sh)
-
-## Repository map
-
-```
-hlm-backend/   # Spring Boot backend (JWT + multi-tenancy)
-hlm-frontend/  # Angular SPA (auth + properties)
-docs/          # Full documentation set
-scripts/       # Utility scripts
-```
-
-## Documentation
-
-- [docs/index.md](docs/index.md) — full doc index
-- [docs/overview.md](docs/overview.md) — platform summary and workflows
-- [docs/backend.md](docs/backend.md) — backend architecture and operations
-- [docs/frontend.md](docs/frontend.md) — frontend setup and structure
-- [docs/api-quickstart.md](docs/api-quickstart.md) — curl flows for frontend integration
-- [docs/runbook.md](docs/runbook.md) — local run, troubleshooting, CORS, RBAC
-- AI Context Pack: [docs/ai/quick-context.md](docs/ai/quick-context.md) | [docs/ai/deep-context.md](docs/ai/deep-context.md) | [docs/ai/prompt-playbook.md](docs/ai/prompt-playbook.md)
-- Agent working agreement: [GPT.md](GPT.md)
+Smoke helpers live in [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts).

@@ -6,6 +6,7 @@ import com.yem.hlm.backend.gdpr.scheduler.DataRetentionScheduler;
 import com.yem.hlm.backend.gdpr.service.AnonymizationService;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class DataRetentionSchedulerTest {
     @Mock SocieteRepository   tenantRepo;
     @Mock ContactRepository   contactRepo;
     @Mock AnonymizationService anonymizationService;
+    private final SocieteContextHelper societeContextHelper = new SocieteContextHelper();
 
     DataRetentionScheduler scheduler;
 
@@ -43,7 +45,7 @@ class DataRetentionSchedulerTest {
 
     @BeforeEach
     void setup() {
-        scheduler = new DataRetentionScheduler(tenantRepo, contactRepo, anonymizationService);
+        scheduler = new DataRetentionScheduler(tenantRepo, contactRepo, anonymizationService, societeContextHelper);
         // Set the default retention window to 5 years (1825 days)
         ReflectionTestUtils.setField(scheduler, "defaultRetentionDays", 1825);
 

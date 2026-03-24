@@ -76,7 +76,7 @@ public class ReservationService {
                 .orElseThrow(() -> new CrossTenantAccessException("Unknown user: " + actorUserId));
 
         // Acquire pessimistic write lock to prevent concurrent reservation
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, req.propertyId())
+        Property property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, req.propertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(req.propertyId()));
 
         if (property.getStatus() != PropertyStatus.ACTIVE) {
@@ -171,7 +171,7 @@ public class ReservationService {
 
         // Acquire pessimistic write lock to guard against concurrent state changes
         // (e.g. a contract signing that transitions the property to SOLD concurrently).
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, reservation.getPropertyId())
+        Property property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, reservation.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(reservation.getPropertyId()));
 
         // Guard: property must still be RESERVED before we release it.

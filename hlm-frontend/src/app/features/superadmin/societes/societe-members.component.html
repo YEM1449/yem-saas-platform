@@ -1,0 +1,135 @@
+<div class="members-container">
+  @if (error) {
+    <div class="alert-error">{{ error }}</div>
+  }
+  @if (success) {
+    <div class="alert-success">{{ success }}</div>
+  }
+
+  <!-- Invite user form -->
+  <div class="add-form">
+    <div class="add-form-header">
+      <h4 class="add-form-title">Membres</h4>
+      <button class="btn-add" (click)="showInviteForm = !showInviteForm">
+        {{ showInviteForm ? 'Annuler' : '+ Inviter un utilisateur' }}
+      </button>
+    </div>
+
+    @if (showInviteForm) {
+      <div class="invite-form">
+        <div class="form-row">
+          <input
+            class="form-input"
+            type="email"
+            placeholder="Email *"
+            [(ngModel)]="inviteForm.email"
+            name="inviteEmail"
+          />
+          <input
+            class="form-input"
+            type="text"
+            placeholder="Prénom *"
+            [(ngModel)]="inviteForm.prenom"
+            name="invitePrenom"
+          />
+          <input
+            class="form-input"
+            type="text"
+            placeholder="Nom de famille *"
+            [(ngModel)]="inviteForm.nomFamille"
+            name="inviteNomFamille"
+          />
+          <select class="form-input form-select" [(ngModel)]="inviteForm.role" name="inviteRole">
+            <option value="ADMIN">ADMIN</option>
+            <option value="MANAGER">MANAGER</option>
+            <option value="AGENT">AGENT</option>
+          </select>
+          <button class="btn-add" [disabled]="inviting" (click)="submitInvite()">
+            {{ inviting ? 'Envoi...' : 'Envoyer l\'invitation' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Members table -->
+  @if (loading) {
+    <div class="loading-state">Chargement des membres...</div>
+  }
+
+  @if (!loading) {
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Rôle</th>
+            <th>Actif</th>
+            <th>Date ajout</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of membres; track m.userId) {
+            <tr>
+              <td>
+                <div class="user-info-cell">
+                  @if (m.email) {
+                    <span class="user-email">{{ m.email }}</span>
+                  }
+                  @if (m.prenom || m.nom) {
+                    <span class="user-name">{{ m.prenom }} {{ m.nom }}</span>
+                  }
+                  @if (!m.email && !m.prenom && !m.nom) {
+                    <span class="user-id">{{ m.userId }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class]="roleClass(m.role)">{{ m.role }}</span>
+              </td>
+              <td>
+                @if (m.actif) {
+                  <span class="badge badge-active">Actif</span>
+                } @else {
+                  <span class="badge badge-inactive">Inactif</span>
+                }
+              </td>
+              <td class="date-cell">{{ m.dateAjout | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="actions">
+                  <select
+                    class="role-select"
+                    [(ngModel)]="roleEditing[m.userId]"
+                    [name]="'role_' + m.userId"
+                    (change)="changeRole(m)"
+                  >
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="MANAGER">MANAGER</option>
+                    <option value="AGENT">AGENT</option>
+                  </select>
+                  <button
+                    class="btn-small btn-impersonate"
+                    [disabled]="impersonating[m.userId]"
+                    (click)="impersonate(m)"
+                    title="Usurper l'identité"
+                  >
+                    {{ impersonating[m.userId] ? '...' : 'Usurper' }}
+                  </button>
+                  <button class="btn-small btn-remove" (click)="removeMembre(m)" title="Retirer">
+                    Retirer
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @if (membres.length === 0) {
+            <tr>
+              <td colspan="5" class="empty-state">Aucun membre dans cette société.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

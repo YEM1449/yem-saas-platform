@@ -1,0 +1,81 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 044-idx-societe-actif
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_societe_actif
+      changes:
+        - createIndex:
+            indexName: idx_societe_actif
+            tableName: societe
+            columns:
+              - column:
+                  name: actif
+
+  - changeSet:
+      id: 044-idx-societe-pays
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_societe_pays
+      changes:
+        - createIndex:
+            indexName: idx_societe_pays
+            tableName: societe
+            columns:
+              - column:
+                  name: pays
+
+  - changeSet:
+      id: 044-idx-societe-plan
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_societe_plan
+      changes:
+        - createIndex:
+            indexName: idx_societe_plan
+            tableName: societe
+            columns:
+              - column:
+                  name: plan_abonnement
+
+  - changeSet:
+      id: 044-idx-societe-nom
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_societe_nom
+      changes:
+        - createIndex:
+            indexName: idx_societe_nom
+            tableName: societe
+            columns:
+              - column:
+                  name: nom
+
+  - changeSet:
+      id: 044-idx-societe-created-by
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_societe_created_by
+      changes:
+        - createIndex:
+            indexName: idx_societe_created_by
+            tableName: societe
+            columns:
+              - column:
+                  name: created_by

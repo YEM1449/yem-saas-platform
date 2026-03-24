@@ -1,5 +1,11 @@
 # Module 02 — JWT Authentication
 
+> Legacy learning module
+>
+> This module still describes older JWT claim naming in places. The current implementation uses `sid`
+> for societe scope, supports partial tokens for multi-societe selection, and issues separate portal
+> JWTs. Use [../context/SECURITY_BASELINE.md](../context/SECURITY_BASELINE.md) as the maintained source.
+
 ## Learning Objectives
 
 - Describe the JWT claims used in this platform

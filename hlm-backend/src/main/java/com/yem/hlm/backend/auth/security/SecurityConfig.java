@@ -63,7 +63,13 @@ public class SecurityConfig {
                         // (no prior Spring Security auth required; partial tokens are accepted here)
                         .requestMatchers(HttpMethod.POST, "/auth/switch-societe").permitAll()
 
-                        // Super-admin société management
+                        // Invitation flow — public (no JWT required)
+                        .requestMatchers("/auth/invitation/**").permitAll()
+
+                        // Super-admin platform management (new canonical path)
+                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+
+                        // Super-admin société management (legacy path — kept for backward compat)
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
 
                         // OpenAPI / Swagger UI

@@ -130,7 +130,7 @@ public class DepositService {
         }
 
         // Lock ordering: Property first to avoid deadlocks with SaleContractService flows.
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, propertyId)
+        Property property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
 
         if (property.getStatus() != PropertyStatus.ACTIVE) {
@@ -216,7 +216,7 @@ public class DepositService {
             throw new InvalidDepositStateException("Only PENDING deposits can be confirmed");
         }
 
-        Property property = propertyRepository.findByTenantIdAndIdForUpdate(societeId, deposit.getPropertyId())
+        Property property = propertyRepository.findBySocieteIdAndIdForUpdate(societeId, deposit.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException(deposit.getPropertyId()));
         if (property.getStatus() == PropertyStatus.SOLD) {
             throw new InvalidDepositStateException(

@@ -223,7 +223,9 @@ public class AuthService {
         String token = jwtProvider.generate(userId, societeId, role, user.getTokenVersion());
         long expiresInSeconds = jwtProperties.ttlSeconds();
 
-        log.debug("switchSociete userId={} societeId={} role={}", userId, societeId, role);
+        String ip = extractClientIp();
+        securityAuditLogger.logSuccessfulLogin(user.getEmail(), userId, ip, role + " [SWITCH→" + societeId + "]");
+        log.info("Société switch: userId={} → societeId={} role={}", userId, societeId, role);
         return LoginResponse.bearer(token, expiresInSeconds);
     }
 

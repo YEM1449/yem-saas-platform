@@ -5,11 +5,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from './contact.service';
 import { Contact, TimelineEvent } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
+import { DocumentListComponent } from '../documents/document-list.component';
+import { ContactTasksComponent } from '../tasks/contact-tasks.component';
 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, DocumentListComponent, ContactTasksComponent],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })
@@ -21,7 +23,7 @@ export class ContactDetailComponent implements OnInit {
   loading = true;
   error = '';
 
-  activeTab: 'details' | 'timeline' = 'details';
+  activeTab: 'details' | 'timeline' | 'documents' | 'tasks' = 'details';
   timeline: TimelineEvent[] = [];
   timelineLoading = false;
   timelineError = '';
@@ -52,7 +54,7 @@ export class ContactDetailComponent implements OnInit {
     });
   }
 
-  selectTab(tab: 'details' | 'timeline'): void {
+  selectTab(tab: 'details' | 'timeline' | 'documents' | 'tasks'): void {
     this.activeTab = tab;
     if (tab === 'timeline' && !this.timelineLoaded) {
       this.loadTimeline();

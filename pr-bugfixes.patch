@@ -1,0 +1,396 @@
+diff --git a/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java b/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java
+index bc019f6..bcbc323 100644
+--- a/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java
++++ b/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java
+@@ -80,6 +80,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
+                         // stateless (invalidated by TTL / single-use magic-link logic).
+                         SocieteContext.setSocieteId(societeId);
+                         SocieteContext.setUserId(userId); // userId == contactId for portal
++                        authorities.stream().map(GrantedAuthority::getAuthority)
++                                .findFirst().ifPresent(SocieteContext::setRole);
+ 
+                     } else {
+                         // 3) Server-side revocation check: verify user is still enabled
+@@ -100,6 +102,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
+                             SocieteContext.setSocieteId(societeId);
+                         }
+                         SocieteContext.setUserId(userId);
++                        authorities.stream().map(GrantedAuthority::getAuthority)
++                                .findFirst().ifPresent(SocieteContext::setRole);
+ 
+                         // 4b) Impersonation tokens carry an "imp" claim identifying
+                         //     the SUPER_ADMIN who is acting as the target user.
+diff --git a/hlm-backend/src/main/java/com/yem/hlm/backend/societe/SocieteService.java b/hlm-backend/src/main/java/com/yem/hlm/backend/societe/SocieteService.java
+index 7a369e2..6998ec2 100644
+--- a/hlm-backend/src/main/java/com/yem/hlm/backend/societe/SocieteService.java
++++ b/hlm-backend/src/main/java/com/yem/hlm/backend/societe/SocieteService.java
+@@ -284,13 +284,17 @@ public class SocieteService {
+         societeRepository.save(s);
+ 
+         // R6 — revoke all member JWTs atomically
++        Instant suspensionTimestamp = s.getDateSuspension();
+         appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
+-            aus.setActif(false);
+-            appUserSocieteRepository.save(aus);
+-            userRepository.findById(aus.getUserId()).ifPresent(user -> {
+-                user.incrementTokenVersion();
+-                userRepository.save(user);
+-            });
++            if (aus.isActif()) {
++                aus.setActif(false);
++                aus.setDateRetrait(suspensionTimestamp); // Tag with suspension time for restoration
++                appUserSocieteRepository.save(aus);
++                userRepository.findById(aus.getUserId()).ifPresent(user -> {
++                    user.incrementTokenVersion();
++                    userRepository.save(user);
++                });
++            }
+         });
+ 
+         eventPublisher.publishEvent(new SocieteDesactiveeEvent(id, actorId, req.raison()));
+@@ -304,6 +308,21 @@ public class SocieteService {
+             throw new BusinessRuleException(ErrorCode.SOCIETE_INACTIVE,
+                     "La société est déjà active.");
+         }
++
++        // Restore members that were deactivated during the suspension
++        // (dateRetrait matches dateSuspension — NOT individually removed before suspension)
++        Instant suspensionDate = s.getDateSuspension();
++        if (suspensionDate != null) {
++            appUserSocieteRepository.findByIdSocieteId(id).forEach(aus -> {
++                if (!aus.isActif() && aus.getDateRetrait() != null
++                        && !aus.getDateRetrait().isBefore(suspensionDate.minusSeconds(5))) {
++                    aus.setActif(true);
++                    aus.setDateRetrait(null);
++                    appUserSocieteRepository.save(aus);
++                }
++            });
++        }
++
+         s.setActif(true);
+         s.setDateSuspension(null);
+         s.setRaisonSuspension(null);
+diff --git a/hlm-frontend/src/app/core/auth/auth.service.ts b/hlm-frontend/src/app/core/auth/auth.service.ts
+index 34b6ebc..1191615 100644
+--- a/hlm-frontend/src/app/core/auth/auth.service.ts
++++ b/hlm-frontend/src/app/core/auth/auth.service.ts
+@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+ import { Router } from '@angular/router';
+ import { Observable, of, tap, map, catchError } from 'rxjs';
+ import { environment } from '../../../environments/environment';
+-import { ActivationRequest, InvitationDetails, LoginRequest, LoginResponse, MeResponse } from '../models/login.model';
++import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, ActivationRequest, InvitationDetails } from '../models/login.model';
+ 
+ export type SessionStatus = 'valid' | 'invalid' | 'unknown';
+ 
+@@ -31,6 +31,20 @@ export class AuthService {
+   login(req: LoginRequest): Observable<LoginResponse> {
+     return this.http
+       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
++      .pipe(tap((res) => {
++        if (!res.requiresSocieteSelection) {
++          localStorage.setItem(TOKEN_KEY, res.accessToken);
++        }
++      }));
++  }
++
++  switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
++    return this.http
++      .post<LoginResponse>(
++        `${environment.apiUrl}/auth/switch-societe`,
++        { societeId } as SwitchSocieteRequest,
++        { headers: { Authorization: `Bearer ${partialToken}` } }
++      )
+       .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
+   }
+ 
+diff --git a/hlm-frontend/src/app/core/models/login.model.ts b/hlm-frontend/src/app/core/models/login.model.ts
+index bcc3e6f..d532f39 100644
+--- a/hlm-frontend/src/app/core/models/login.model.ts
++++ b/hlm-frontend/src/app/core/models/login.model.ts
+@@ -7,6 +7,17 @@ export interface LoginResponse {
+   accessToken: string;
+   tokenType: string;
+   expiresIn: number;
++  requiresSocieteSelection?: boolean;
++  societes?: SocieteChoice[];
++}
++
++export interface SocieteChoice {
++  id: string;
++  nom: string;
++}
++
++export interface SwitchSocieteRequest {
++  societeId: string;
+ }
+ 
+ export interface MeResponse {
+diff --git a/hlm-frontend/src/app/features/login/login.component.html b/hlm-frontend/src/app/features/login/login.component.html
+index b18ffed..131d376 100644
+--- a/hlm-frontend/src/app/features/login/login.component.html
++++ b/hlm-frontend/src/app/features/login/login.component.html
+@@ -1,23 +1,46 @@
+ <div class="login-container">
+   <h1>HLM Login</h1>
+ 
+-  <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+-    <div class="field">
+-      <label for="email">Email</label>
+-      <input id="email" name="email" type="email" [(ngModel)]="form.email" required />
+-    </div>
++  @if (!showSocieteSelection) {
++    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
++      <div class="field">
++        <label for="email">Email</label>
++        <input id="email" name="email" type="email" [(ngModel)]="form.email" required />
++      </div>
+ 
+-    <div class="field">
+-      <label for="password">Password</label>
+-      <input id="password" name="password" type="password" [(ngModel)]="form.password" required />
+-    </div>
++      <div class="field">
++        <label for="password">Password</label>
++        <input id="password" name="password" type="password" [(ngModel)]="form.password" required />
++      </div>
++
++      @if (error) {
++        <p class="error">{{ error }}</p>
++      }
++
++      <button type="submit" [disabled]="loading || loginForm.invalid">
++        {{ loading ? 'Signing in...' : 'Sign in' }}
++      </button>
++    </form>
++  }
+ 
+-    @if (error) {
+-      <p class="error">{{ error }}</p>
+-    }
++  @if (showSocieteSelection) {
++    <div class="societe-selection">
++      <h2>Choisir une société</h2>
++      <p>Votre compte est associé à plusieurs sociétés.</p>
+ 
+-    <button type="submit" [disabled]="loading || loginForm.invalid">
+-      {{ loading ? 'Signing in...' : 'Sign in' }}
+-    </button>
+-  </form>
++      @for (s of societes; track s.id) {
++        <button class="societe-choice" (click)="selectSociete(s.id)" [disabled]="loading">
++          {{ s.nom }}
++        </button>
++      }
++
++      @if (error) {
++        <p class="error">{{ error }}</p>
++      }
++
++      <button class="back-link" (click)="backToLogin()" [disabled]="loading">
++        ← Retour
++      </button>
++    </div>
++  }
+ </div>
+diff --git a/hlm-frontend/src/app/features/login/login.component.ts b/hlm-frontend/src/app/features/login/login.component.ts
+index 1a39e8b..ecb722e 100644
+--- a/hlm-frontend/src/app/features/login/login.component.ts
++++ b/hlm-frontend/src/app/features/login/login.component.ts
+@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
+ import { FormsModule } from '@angular/forms';
+ import { Router } from '@angular/router';
+ import { AuthService } from '../../core/auth/auth.service';
+-import { LoginRequest } from '../../core/models/login.model';
++import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
+ import { ErrorResponse } from '../../core/models/error-response.model';
+ import { HttpErrorResponse } from '@angular/common/http';
+ 
+@@ -22,27 +22,59 @@ export class LoginComponent {
+   loading = false;
+   error = '';
+ 
++  // Multi-société selection state
++  showSocieteSelection = false;
++  societes: SocieteChoice[] = [];
++  partialToken = '';
++
+   onSubmit(): void {
+     this.loading = true;
+     this.error = '';
+ 
+     this.auth.login(this.form).subscribe({
+-      next: () => {
+-        this.auth.me().subscribe({
+-          next: (user) => {
+-            if (user.role === 'ROLE_SUPER_ADMIN') {
+-              this.router.navigateByUrl('/superadmin/societes');
+-            } else {
+-              this.router.navigateByUrl('/app/properties');
+-            }
+-          },
+-          error: () => this.router.navigateByUrl('/app/properties'),
+-        });
++      next: (res) => {
++        if (res.requiresSocieteSelection && res.societes) {
++          this.loading = false;
++          this.showSocieteSelection = true;
++          this.societes = res.societes;
++          this.partialToken = res.accessToken;
++        } else {
++          this.resolvePostLogin();
++        }
+       },
+       error: (err) => this.handleError(err),
+     });
+   }
+ 
++  selectSociete(societeId: string): void {
++    this.loading = true;
++    this.error = '';
++    this.auth.switchSociete(this.partialToken, societeId).subscribe({
++      next: () => this.resolvePostLogin(),
++      error: (err) => this.handleError(err),
++    });
++  }
++
++  backToLogin(): void {
++    this.showSocieteSelection = false;
++    this.societes = [];
++    this.partialToken = '';
++    this.error = '';
++  }
++
++  private resolvePostLogin(): void {
++    this.auth.me().subscribe({
++      next: (user) => {
++        if (user.role === 'ROLE_SUPER_ADMIN' || user.platformRole === 'SUPER_ADMIN') {
++          this.router.navigateByUrl('/superadmin/societes');
++        } else {
++          this.router.navigateByUrl('/app/properties');
++        }
++      },
++      error: () => this.router.navigateByUrl('/app/properties'),
++    });
++  }
++
+   private handleError(err: HttpErrorResponse): void {
+     this.loading = false;
+     const body = err.error as ErrorResponse | null;
+diff --git a/hlm-frontend/src/app/features/shell/shell.component.html b/hlm-frontend/src/app/features/shell/shell.component.html
+index dd04b35..b33e183 100644
+--- a/hlm-frontend/src/app/features/shell/shell.component.html
++++ b/hlm-frontend/src/app/features/shell/shell.component.html
+@@ -1,3 +1,13 @@
++<!-- Impersonation warning banner -->
++@if (isImpersonating) {
++  <div style="background:#e74c3c;color:#fff;text-align:center;padding:8px 16px;font-size:14px;position:sticky;top:0;z-index:9999;">
++    ⚠ Mode usurpation : <strong>{{ impersonationTarget }}</strong>
++    <button (click)="endImpersonation()" style="margin-left:16px;background:#fff;color:#e74c3c;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">
++      Revenir au SuperAdmin
++    </button>
++  </div>
++}
++
+ <!-- Modern sidebar layout for HLM CRM -->
+ <div class="app-layout">
+ 
+diff --git a/hlm-frontend/src/app/features/shell/shell.component.ts b/hlm-frontend/src/app/features/shell/shell.component.ts
+index 1269c96..5397a0c 100644
+--- a/hlm-frontend/src/app/features/shell/shell.component.ts
++++ b/hlm-frontend/src/app/features/shell/shell.component.ts
+@@ -1,16 +1,18 @@
+ import { Component, inject } from '@angular/core';
+-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
++import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+ import { AuthService } from '../../core/auth/auth.service';
++import { CommonModule } from '@angular/common';
+ 
+ @Component({
+   selector: 'app-shell',
+   standalone: true,
+-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
++  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+   templateUrl: './shell.component.html',
+   styleUrl: './shell.component.css',
+ })
+ export class ShellComponent {
+   auth = inject(AuthService);
++  private router = inject(Router);
+ 
+   get isAdmin(): boolean {
+     return this.auth.user?.role === 'ROLE_ADMIN';
+@@ -21,6 +23,27 @@ export class ShellComponent {
+     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
+   }
+ 
++  // ── Impersonation ──────────────────────────────────────────────────
++  get isImpersonating(): boolean {
++    return localStorage.getItem('hlm_impersonation_active') === 'true';
++  }
++
++  get impersonationTarget(): string {
++    return localStorage.getItem('hlm_impersonation_target') ?? '';
++  }
++
++  endImpersonation(): void {
++    const original = localStorage.getItem('hlm_superadmin_original_token');
++    if (original) {
++      localStorage.setItem('hlm_access_token', original);
++    }
++    localStorage.removeItem('hlm_impersonation_active');
++    localStorage.removeItem('hlm_impersonation_target');
++    localStorage.removeItem('hlm_impersonation_societe');
++    localStorage.removeItem('hlm_superadmin_original_token');
++    this.router.navigateByUrl('/superadmin/societes');
++  }
++
+   /** Avatar monogram — first character of the userId (or role label) */
+   get userInitial(): string {
+     const role = this.userRoleLabel;
+@@ -30,7 +53,6 @@ export class ShellComponent {
+   /** Short user identifier shown in the sidebar footer */
+   get userLabel(): string {
+     const id = this.auth.user?.userId ?? '';
+-    // Show first 8 chars of the UUID for brevity
+     return id ? id.substring(0, 8).toUpperCase() : 'User';
+   }
+ 
+diff --git a/hlm-frontend/src/app/features/superadmin/societes/societe-members.component.ts b/hlm-frontend/src/app/features/superadmin/societes/societe-members.component.ts
+index 346d8bc..222b5ba 100644
+--- a/hlm-frontend/src/app/features/superadmin/societes/societe-members.component.ts
++++ b/hlm-frontend/src/app/features/superadmin/societes/societe-members.component.ts
+@@ -6,8 +6,6 @@ import { HttpErrorResponse } from '@angular/common/http';
+ import { SocieteService } from './societe.service';
+ import { InviteUserRequest, MembreSocieteDto } from './societe.model';
+ 
+-const IMPERSONATION_TOKEN_KEY = 'hlm_superadmin_impersonation_token';
+-
+ @Component({
+   selector: 'app-societe-members',
+   standalone: true,
+@@ -122,13 +120,22 @@ export class SocieteMembersComponent implements OnInit {
+   }
+ 
+   impersonate(m: MembreSocieteDto): void {
+-    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ?`)) return;
++    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ? Vous pourrez revenir via le bandeau en haut de page.`)) return;
+     this.impersonating[m.userId] = true;
+     this.error = '';
+     this.svc.impersonate(this.societeId, m.userId).subscribe({
+       next: (res) => {
+         this.impersonating[m.userId] = false;
+-        localStorage.setItem(IMPERSONATION_TOKEN_KEY, res.token);
++        // Save original super admin token for return
++        const currentToken = localStorage.getItem('hlm_access_token');
++        if (currentToken) {
++          localStorage.setItem('hlm_superadmin_original_token', currentToken);
++        }
++        // Set impersonation token as THE active token (auth interceptor reads this key)
++        localStorage.setItem('hlm_access_token', res.token);
++        localStorage.setItem('hlm_impersonation_active', 'true');
++        localStorage.setItem('hlm_impersonation_target', res.targetUserEmail);
++        localStorage.setItem('hlm_impersonation_societe', this.societeId);
+         this.router.navigateByUrl('/app/properties');
+       },
+       error: (err: HttpErrorResponse) => {

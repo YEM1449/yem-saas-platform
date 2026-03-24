@@ -5,13 +5,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ContractService } from './contract.service';
 import { ContractResponse } from '../../core/models/contract.model';
 import { PaymentScheduleComponent } from './payment-schedule.component';
+import { DocumentListComponent } from '../documents/document-list.component';
 
-type Tab = 'info' | 'payments';
+type Tab = 'info' | 'payments' | 'documents';
 
 @Component({
   selector: 'app-contract-detail',
   standalone: true,
-  imports: [CommonModule, PaymentScheduleComponent],
+  imports: [CommonModule, PaymentScheduleComponent, DocumentListComponent],
   templateUrl: './contract-detail.component.html',
   styleUrl: './contract-detail.component.css',
 })

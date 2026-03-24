@@ -1,0 +1,141 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 043-societe-plan-abonnement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: plan_abonnement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: plan_abonnement
+                  type: VARCHAR(50)
+                  defaultValue: STARTER
+
+  - changeSet:
+      id: 043-societe-max-utilisateurs
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: max_utilisateurs
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: max_utilisateurs
+                  type: INTEGER
+
+  - changeSet:
+      id: 043-societe-max-biens
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: max_biens
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: max_biens
+                  type: INTEGER
+
+  - changeSet:
+      id: 043-societe-max-contacts
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: max_contacts
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: max_contacts
+                  type: INTEGER
+
+  - changeSet:
+      id: 043-societe-max-projets
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: max_projets
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: max_projets
+                  type: INTEGER
+
+  - changeSet:
+      id: 043-societe-date-debut-abonnement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_debut_abonnement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_debut_abonnement
+                  type: DATE
+
+  - changeSet:
+      id: 043-societe-date-fin-abonnement
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: date_fin_abonnement
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: date_fin_abonnement
+                  type: DATE
+
+  - changeSet:
+      id: 043-societe-periode-essai
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: periode_essai
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: periode_essai
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false

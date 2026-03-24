@@ -97,6 +97,13 @@ security:
     ttl-seconds: ${JWT_TTL_SECONDS:3600}
 
 app:
+  # Bootstrap — set APP_BOOTSTRAP_ENABLED=true ONLY on first deploy, then remove
+  bootstrap:
+    enabled: ${APP_BOOTSTRAP_ENABLED:false}
+    superadmin:
+      email:    ${APP_BOOTSTRAP_EMAIL:}
+      password: ${APP_BOOTSTRAP_PASSWORD:}
+
   rate-limit:
     login:
       capacity: ${RATE_LIMIT_LOGIN_CAPACITY:5}
@@ -128,6 +135,10 @@ app:
     account-sid:  ${TWILIO_ACCOUNT_SID:}
     auth-token:   ${TWILIO_AUTH_TOKEN:}
     from-number:  ${TWILIO_FROM:}
+
+  # Frontend base URL — used for invitation links in emails
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
 
   # Portal client-facing configuration
   portal:

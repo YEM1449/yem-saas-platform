@@ -1,0 +1,269 @@
+<div class="detail-page">
+  <div class="back-link">
+    <button class="btn-back" (click)="goBack()">&#8592; Retour</button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">Chargement...</div>
+  }
+
+  @if (error) {
+    <div class="alert-error">{{ error }}</div>
+  }
+
+  @if (success) {
+    <div class="alert-success">{{ success }}</div>
+  }
+
+  @if (!loading && detail) {
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="detail-header-info">
+        <h2>{{ detail.nom }}</h2>
+        @if (detail.nomCommercial) {
+          <p class="header-sub">{{ detail.nomCommercial }}</p>
+        }
+        <div class="header-badges">
+          @if (detail.actif) {
+            <span class="badge badge-active">Actif</span>
+          } @else {
+            <span class="badge badge-inactive">Inactif</span>
+          }
+          <span class="badge badge-plan" [class]="planClass(detail.planAbonnement)">{{ detail.planAbonnement }}</span>
+          @if (detail.periodeEssai) {
+            <span class="badge badge-trial">Essai</span>
+          }
+        </div>
+      </div>
+      <div class="detail-header-actions">
+        <button class="btn-secondary" (click)="goEdit()">Modifier</button>
+        @if (detail.actif) {
+          <button class="btn-danger" (click)="openSuspend()">Suspendre</button>
+        } @else {
+          <button class="btn-success" (click)="reactiver()">Réactiver</button>
+        }
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">Informations</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'stats'" (click)="setTab('stats')">Statistiques</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'compliance'" (click)="setTab('compliance')">Conformité RGPD</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'membres'" (click)="setTab('membres')">Membres</button>
+    </div>
+
+    <!-- Tab: Informations -->
+    @if (activeTab === 'info') {
+      <div class="tab-content">
+        <div class="info-grid">
+          <div class="info-section">
+            <h4 class="info-section-title">Identité</h4>
+            <dl class="info-dl">
+              <dt>Clé</dt><dd>{{ detail.key ?? '—' }}</dd>
+              <dt>Pays</dt><dd>{{ detail.pays }}</dd>
+              <dt>Forme juridique</dt><dd>{{ detail.formeJuridique ?? '—' }}</dd>
+              <dt>Capital social</dt><dd>{{ detail.capitalSocial !== null && detail.capitalSocial !== undefined ? (detail.capitalSocial | number) : '—' }}</dd>
+              <dt>SIRET / ICE</dt><dd>{{ detail.siretIce ?? '—' }}</dd>
+              <dt>RC</dt><dd>{{ detail.rc ?? '—' }}</dd>
+              <dt>Numéro agréement</dt><dd>{{ detail.numeroAgrement ?? '—' }}</dd>
+              <dt>Type d'activité</dt><dd>{{ detail.typeActivite ?? '—' }}</dd>
+            </dl>
+          </div>
+          <div class="info-section">
+            <h4 class="info-section-title">Contact</h4>
+            <dl class="info-dl">
+              <dt>Email contact</dt><dd>{{ detail.emailContact ?? '—' }}</dd>
+              <dt>Téléphone</dt><dd>{{ detail.telephone ?? '—' }}</dd>
+              <dt>Site web</dt><dd>{{ detail.siteWeb ?? '—' }}</dd>
+              <dt>Ville</dt><dd>{{ detail.ville ?? '—' }}</dd>
+              <dt>Adresse</dt><dd>{{ detail.adresse ?? '—' }}</dd>
+              <dt>Code postal</dt><dd>{{ detail.codePostal ?? '—' }}</dd>
+              <dt>Région</dt><dd>{{ detail.region ?? '—' }}</dd>
+            </dl>
+          </div>
+          <div class="info-section">
+            <h4 class="info-section-title">RGPD</h4>
+            <dl class="info-dl">
+              <dt>Email DPO</dt><dd>{{ detail.emailDpo ?? '—' }}</dd>
+              <dt>Nom DPO</dt><dd>{{ detail.dpoNom ?? '—' }}</dd>
+              <dt>Numéro CNDP</dt><dd>{{ detail.numeroCndp ?? '—' }}</dd>
+              <dt>Numéro CNIL</dt><dd>{{ detail.numeroCnil ?? '—' }}</dd>
+              <dt>Base juridique</dt><dd>{{ detail.baseJuridiqueDefaut ?? '—' }}</dd>
+              <dt>Durée rétention (j)</dt><dd>{{ detail.dureeRetentionJours ?? '—' }}</dd>
+            </dl>
+          </div>
+          <div class="info-section">
+            <h4 class="info-section-title">Abonnement</h4>
+            <dl class="info-dl">
+              <dt>Plan</dt><dd>{{ detail.planAbonnement }}</dd>
+              <dt>Période d'essai</dt><dd>{{ detail.periodeEssai ? 'Oui' : 'Non' }}</dd>
+              <dt>Début abonnement</dt><dd>{{ detail.dateDebutAbonnement ?? '—' }}</dd>
+              <dt>Fin abonnement</dt><dd>{{ detail.dateFinAbonnement ?? '—' }}</dd>
+              <dt>Max utilisateurs</dt><dd>{{ detail.maxUtilisateurs ?? 'Illimité' }}</dd>
+              <dt>Max biens</dt><dd>{{ detail.maxBiens ?? 'Illimité' }}</dd>
+              <dt>Max contacts</dt><dd>{{ detail.maxContacts ?? 'Illimité' }}</dd>
+              <dt>Max projets</dt><dd>{{ detail.maxProjets ?? 'Illimité' }}</dd>
+            </dl>
+          </div>
+        </div>
+        @if (detail.notesInternes) {
+          <div class="notes-box">
+            <h4 class="info-section-title">Notes internes</h4>
+            <p class="notes-text">{{ detail.notesInternes }}</p>
+          </div>
+        }
+        <div class="meta-info">
+          <span>Créé le {{ detail.createdAt | date:'dd/MM/yyyy' }}</span>
+          <span>Mis à jour le {{ detail.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Tab: Statistiques -->
+    @if (activeTab === 'stats') {
+      <div class="tab-content">
+        @if (loadingStats) {
+          <div class="loading-state">Chargement des statistiques...</div>
+        }
+        @if (!loadingStats && stats) {
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.totalMembres }}</div>
+              <div class="stat-label">Membres total</div>
+              @if (stats.maxUtilisateurs) {
+                <div class="quota-bar-bg">
+                  <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalMembres, stats.maxUtilisateurs)" [style.width.%]="quotaBarWidth(stats.totalMembres, stats.maxUtilisateurs)"></div>
+                </div>
+                <div class="quota-text">{{ stats.totalMembres }} / {{ stats.maxUtilisateurs }}</div>
+              }
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.membresActifs }}</div>
+              <div class="stat-label">Membres actifs</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.totalContacts }}</div>
+              <div class="stat-label">Contacts</div>
+              @if (stats.maxContacts) {
+                <div class="quota-bar-bg">
+                  <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalContacts, stats.maxContacts)" [style.width.%]="quotaBarWidth(stats.totalContacts, stats.maxContacts)"></div>
+                </div>
+                <div class="quota-text">{{ stats.totalContacts }} / {{ stats.maxContacts }}</div>
+              }
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.totalBiens }}</div>
+              <div class="stat-label">Biens</div>
+              @if (stats.maxBiens) {
+                <div class="quota-bar-bg">
+                  <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalBiens, stats.maxBiens)" [style.width.%]="quotaBarWidth(stats.totalBiens, stats.maxBiens)"></div>
+                </div>
+                <div class="quota-text">{{ stats.totalBiens }} / {{ stats.maxBiens }}</div>
+              }
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.totalProjets }}</div>
+              <div class="stat-label">Projets</div>
+              @if (stats.maxProjets) {
+                <div class="quota-bar-bg">
+                  <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalProjets, stats.maxProjets)" [style.width.%]="quotaBarWidth(stats.totalProjets, stats.maxProjets)"></div>
+                </div>
+                <div class="quota-text">{{ stats.totalProjets }} / {{ stats.maxProjets }}</div>
+              }
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats.totalContrats }}</div>
+              <div class="stat-label">Contrats</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Tab: Conformité RGPD -->
+    @if (activeTab === 'compliance') {
+      <div class="tab-content">
+        @if (loadingCompliance) {
+          <div class="loading-state">Chargement...</div>
+        }
+        @if (!loadingCompliance && compliance) {
+          <div class="compliance-header">
+            <div class="compliance-score-circle" [class]="complianceBarClass(compliance.score)">
+              {{ compliance.score }}%
+            </div>
+            <div class="compliance-score-label">Score de conformité RGPD</div>
+          </div>
+          <div class="compliance-bar-lg">
+            <div class="compliance-bar-lg-fill" [class]="complianceBarClass(compliance.score)" [style.width.%]="compliance.score"></div>
+          </div>
+
+          <div class="compliance-checks">
+            <div class="check-item" [class.check-ok]="compliance.hasNom" [class.check-fail]="!compliance.hasNom">
+              <span class="check-icon">{{ compliance.hasNom ? '&#10003;' : '&#10007;' }}</span>
+              Raison sociale renseignée
+            </div>
+            <div class="check-item" [class.check-ok]="compliance.hasEmailDpo" [class.check-fail]="!compliance.hasEmailDpo">
+              <span class="check-icon">{{ compliance.hasEmailDpo ? '&#10003;' : '&#10007;' }}</span>
+              Email DPO renseigné
+            </div>
+            <div class="check-item" [class.check-ok]="compliance.hasDpoNom" [class.check-fail]="!compliance.hasDpoNom">
+              <span class="check-icon">{{ compliance.hasDpoNom ? '&#10003;' : '&#10007;' }}</span>
+              Nom DPO renseigné
+            </div>
+            <div class="check-item" [class.check-ok]="compliance.hasAdresse" [class.check-fail]="!compliance.hasAdresse">
+              <span class="check-icon">{{ compliance.hasAdresse ? '&#10003;' : '&#10007;' }}</span>
+              Adresse renseignée
+            </div>
+            <div class="check-item" [class.check-ok]="compliance.hasRegistreNumber" [class.check-fail]="!compliance.hasRegistreNumber">
+              <span class="check-icon">{{ compliance.hasRegistreNumber ? '&#10003;' : '&#10007;' }}</span>
+              Numéro registre (CNDP/CNIL) renseigné
+            </div>
+            <div class="check-item" [class.check-ok]="compliance.hasBaseJuridique" [class.check-fail]="!compliance.hasBaseJuridique">
+              <span class="check-icon">{{ compliance.hasBaseJuridique ? '&#10003;' : '&#10007;' }}</span>
+              Base juridique renseignée
+            </div>
+          </div>
+
+          @if (compliance.missingFields.length > 0) {
+            <div class="missing-fields">
+              <h4>Champs manquants</h4>
+              <ul>
+                @for (f of compliance.missingFields; track f) {
+                  <li>{{ f }}</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- Tab: Membres -->
+    @if (activeTab === 'membres') {
+      <div class="tab-content">
+        <app-societe-members [societeId]="societeId" />
+      </div>
+    }
+  }
+
+  <!-- Suspend dialog -->
+  @if (showSuspendDialog) {
+    <div class="dialog-overlay">
+      <div class="dialog">
+        <h3>Suspendre la société</h3>
+        <p>Cette action désactivera la société et tous ses accès.</p>
+        <label class="dialog-label">
+          Raison de suspension
+          <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" placeholder="Motif..."></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button class="btn-secondary" (click)="cancelSuspend()">Annuler</button>
+          <button class="btn-danger-solid" [disabled]="suspending" (click)="confirmSuspend()">
+            {{ suspending ? 'En cours...' : 'Confirmer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

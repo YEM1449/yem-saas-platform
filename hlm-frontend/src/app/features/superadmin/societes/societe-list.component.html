@@ -1,0 +1,134 @@
+<div class="page-header">
+  <h2>Gestion des Sociétés</h2>
+  <button class="btn-primary" routerLink="/superadmin/societes/new">+ Nouvelle Société</button>
+</div>
+
+@if (success) {
+  <div class="alert-success">{{ success }}</div>
+}
+@if (error) {
+  <div class="alert-error">{{ error }}</div>
+}
+
+<!-- Filter bar -->
+<div class="filter-bar">
+  <input class="filter-input" type="text" placeholder="Rechercher..." [(ngModel)]="search" (keyup.enter)="applyFilters()"/>
+  <select class="filter-select" [(ngModel)]="pays" (change)="applyFilters()">
+    <option value="">Tous les pays</option>
+    <option value="MA">Maroc</option>
+    <option value="FR">France</option>
+    <option value="TN">Tunisie</option>
+    <option value="SN">Sénégal</option>
+    <option value="CI">Côte d'Ivoire</option>
+  </select>
+  <select class="filter-select" [(ngModel)]="planAbonnement" (change)="applyFilters()">
+    <option value="">Tous les plans</option>
+    <option value="STARTER">STARTER</option>
+    <option value="PRO">PRO</option>
+    <option value="ENTERPRISE">ENTERPRISE</option>
+  </select>
+  <select class="filter-select" [(ngModel)]="actifFilter" (change)="applyFilters()">
+    <option value="">Tous statuts</option>
+    <option value="true">Actif</option>
+    <option value="false">Inactif</option>
+  </select>
+  <button class="btn-search" (click)="applyFilters()">Rechercher</button>
+</div>
+
+<!-- Loading -->
+@if (loading) {
+  <div class="loading-state">Chargement...</div>
+}
+
+<!-- Table -->
+@if (!loading) {
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Pays</th>
+          <th>Plan</th>
+          <th>Conformité</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of societes; track s.id) {
+          <tr>
+            <td>
+              <div class="societe-nom">{{ s.nom }}</div>
+              @if (s.nomCommercial) {
+                <div class="societe-sub">{{ s.nomCommercial }}</div>
+              }
+            </td>
+            <td>{{ s.pays }}</td>
+            <td>
+              <span class="badge" [class]="planClass(s.planAbonnement)">{{ s.planAbonnement }}</span>
+            </td>
+            <td>
+              <div class="compliance-cell">
+                <div class="compliance-bar-bg">
+                  <div class="compliance-bar-fill" [class]="scoreClass(s.complianceScore)" [style.width.%]="s.complianceScore"></div>
+                </div>
+                <span class="compliance-pct" [class]="scoreClass(s.complianceScore)">{{ s.complianceScore }}%</span>
+              </div>
+            </td>
+            <td>
+              @if (s.actif) {
+                <span class="badge badge-active">Actif</span>
+              } @else {
+                <span class="badge badge-inactive">Inactif</span>
+              }
+            </td>
+            <td>
+              <div class="actions">
+                <button class="btn-small" (click)="viewDetail(s)">Voir</button>
+                @if (s.actif) {
+                  <button class="btn-small btn-danger" (click)="openSuspend(s)">Suspendre</button>
+                } @else {
+                  <button class="btn-small btn-success" (click)="reactiver(s)">Réactiver</button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+        @if (societes.length === 0) {
+          <tr>
+            <td colspan="6" class="empty-state">Aucune société trouvée.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages > 1) {
+    <div class="pagination">
+      <button class="btn-page" [disabled]="currentPage === 0" (click)="prevPage()">&#8592; Précédent</button>
+      <span class="page-info">Page {{ currentPage + 1 }} / {{ totalPages }} ({{ totalElements }} sociétés)</span>
+      <button class="btn-page" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">Suivant &#8594;</button>
+    </div>
+  }
+}
+
+<!-- Suspend dialog -->
+@if (showSuspendDialog && suspendTarget) {
+  <div class="dialog-overlay">
+    <div class="dialog">
+      <h3>Suspendre "{{ suspendTarget.nom }}"</h3>
+      <p>Cette action désactivera la société et tous ses membres.</p>
+      <label class="dialog-label">
+        Raison de suspension
+        <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" placeholder="Motif..."></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button class="btn-secondary" (click)="cancelSuspend()">Annuler</button>
+        <button class="btn-danger-solid" [disabled]="suspending" (click)="confirmSuspend()">
+          {{ suspending ? 'En cours...' : 'Confirmer la suspension' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

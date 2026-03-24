@@ -1,0 +1,95 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 040-aus-date-ajout
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user_societe
+            columnName: date_ajout
+      changes:
+        - addColumn:
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: date_ajout
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 040-aus-date-retrait
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user_societe
+            columnName: date_retrait
+      changes:
+        - addColumn:
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: date_retrait
+                  type: TIMESTAMP
+              - column:
+                  name: raison_retrait
+                  type: TEXT
+
+  - changeSet:
+      id: 040-aus-ajoute-par
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user_societe
+            columnName: ajoute_par
+      changes:
+        - addColumn:
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: ajoute_par
+                  type: UUID
+              - column:
+                  name: retire_par
+                  type: UUID
+        - addForeignKeyConstraint:
+            baseTableName: app_user_societe
+            baseColumnNames: ajoute_par
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_aus_ajoute_par
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: app_user_societe
+            baseColumnNames: retire_par
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_aus_retire_par
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 040-aus-notifications-actives
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: app_user_societe
+            columnName: notifications_actives
+      changes:
+        - addColumn:
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: notifications_actives
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false

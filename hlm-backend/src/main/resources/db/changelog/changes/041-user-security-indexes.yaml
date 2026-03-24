@@ -1,0 +1,71 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 041-idx-aus-societe-actif
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_aus_societe_actif
+      changes:
+        - createIndex:
+            indexName: idx_aus_societe_actif
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: actif
+
+  - changeSet:
+      id: 041-idx-aus-societe-role
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_aus_societe_role
+      changes:
+        - createIndex:
+            indexName: idx_aus_societe_role
+            tableName: app_user_societe
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: role
+
+  - changeSet:
+      id: 041-idx-user-derniere-connexion
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_user_derniere_connexion
+      changes:
+        - createIndex:
+            indexName: idx_user_derniere_connexion
+            tableName: app_user
+            columns:
+              - column:
+                  name: derniere_connexion
+
+  - changeSet:
+      id: 041-idx-user-compte-bloque
+      author: YEM1449
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          indexExists:
+            indexName: idx_user_compte_bloque
+      changes:
+        - createIndex:
+            indexName: idx_user_compte_bloque
+            tableName: app_user
+            columns:
+              - column:
+                  name: compte_bloque
+              - column:
+                  name: enabled

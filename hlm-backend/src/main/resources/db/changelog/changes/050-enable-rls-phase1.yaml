@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: "050-enable-rls-phase1"
+      author: "claude-audit"
+      comment: "Enable Row-Level Security on contact and property tables (Phase 1). Defense-in-depth: app-layer isolation remains primary; RLS is a safety net."
+      changes:
+        - sql:
+            sql: |
+              -- Enable RLS on contact table
+              ALTER TABLE contact ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE contact FORCE ROW LEVEL SECURITY;
+
+              -- Policy: rows visible only when societe_id matches session variable.
+              -- current_setting('app.current_societe_id', true) returns NULL if not set
+              -- (the 'true' arg = missing_ok), so Liquibase migrations are unaffected.
+              CREATE POLICY societe_isolation_contact ON contact
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+                WITH CHECK (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                );
+
+              -- Enable RLS on property table
+              ALTER TABLE property ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE property FORCE ROW LEVEL SECURITY;
+
+              CREATE POLICY societe_isolation_property ON property
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+                WITH CHECK (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                );
+      rollback:
+        - sql:
+            sql: |
+              DROP POLICY IF EXISTS societe_isolation_contact ON contact;
+              ALTER TABLE contact DISABLE ROW LEVEL SECURITY;
+              DROP POLICY IF EXISTS societe_isolation_property ON property;
+              ALTER TABLE property DISABLE ROW LEVEL SECURITY;

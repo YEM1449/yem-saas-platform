@@ -1,0 +1,76 @@
+<div class="login-container">
+
+  <!-- Loading -->
+  @if (state === 'loading') {
+    <p>Vérification du lien d'activation...</p>
+  }
+
+  <!-- Invalid / expired token -->
+  @if (state === 'invalid') {
+    <h2>Lien invalide</h2>
+    <p class="error">{{ error }}</p>
+    <a href="/login">Retour à la connexion</a>
+  }
+
+  <!-- Success -->
+  @if (state === 'done') {
+    <h2>Compte activé !</h2>
+    <p>Votre compte a été créé avec succès. Redirection vers la connexion...</p>
+  }
+
+  <!-- Activation form -->
+  @if (state === 'form' && invitation) {
+    <h1>Activer votre compte</h1>
+    <p>
+      Bonjour <strong>{{ invitation.prenom }}</strong>, vous êtes invité(e) à rejoindre
+      <strong>{{ invitation.societeNom }}</strong> en tant que <strong>{{ invitation.role }}</strong>.
+      Ce lien expire dans {{ invitation.expireDans }}.
+    </p>
+
+    <form (ngSubmit)="onSubmit()" #activationForm="ngForm">
+      <div class="field">
+        <label for="motDePasse">Mot de passe</label>
+        <input
+          id="motDePasse"
+          name="motDePasse"
+          type="password"
+          [(ngModel)]="form.motDePasse"
+          required
+          minlength="12"
+          placeholder="Min. 12 caractères"
+        />
+      </div>
+
+      <div class="field">
+        <label for="confirmationMotDePasse">Confirmer le mot de passe</label>
+        <input
+          id="confirmationMotDePasse"
+          name="confirmationMotDePasse"
+          type="password"
+          [(ngModel)]="form.confirmationMotDePasse"
+          required
+          placeholder="Répétez le mot de passe"
+        />
+      </div>
+
+      <div class="field field-checkbox">
+        <input
+          id="cgu"
+          name="consentementCgu"
+          type="checkbox"
+          [(ngModel)]="form.consentementCgu"
+        />
+        <label for="cgu">J'accepte les conditions générales d'utilisation (v{{ form.consentementCguVersion }})</label>
+      </div>
+
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+
+      <button type="submit" [disabled]="submitting || activationForm.invalid">
+        {{ submitting ? 'Activation en cours...' : 'Activer mon compte' }}
+      </button>
+    </form>
+  }
+
+</div>

@@ -1,9 +1,11 @@
 package com.yem.hlm.backend.user.domain;
 
+import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import jakarta.persistence.*;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -39,6 +41,74 @@ public class User {
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
+    // ── Profil ────────────────────────────────────────────────────────────────
+    @Column(name = "prenom", length = 100)
+    private String prenom;
+
+    @Column(name = "nom_famille", length = 100)
+    private String nomFamille;
+
+    @Column(name = "telephone", length = 30)
+    private String telephone;
+
+    @Column(name = "poste", length = 150)
+    private String poste;
+
+    @Column(name = "langue_interface", length = 10)
+    private String langueInterface;
+
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
+    // ── Consentement CGU (RGPD Art. 7) ───────────────────────────────────────
+    @Column(name = "consentement_cgu", nullable = false)
+    private boolean consentementCgu = false;
+
+    @Column(name = "consentement_cgu_date")
+    private Instant consentementCguDate;
+
+    @Column(name = "consentement_cgu_version", length = 20)
+    private String consentementCguVersion;
+
+    // ── Workflow invitation ───────────────────────────────────────────────────
+    @Column(name = "invitation_token", length = 128, unique = true)
+    private String invitationToken;
+
+    @Column(name = "invitation_expire_at")
+    private Instant invitationExpireAt;
+
+    @Column(name = "invitation_envoyee_at")
+    private Instant invitationEnvoyeeAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invite_par")
+    private User invitePar;
+
+    // ── Sécurité compte ───────────────────────────────────────────────────────
+    @Column(name = "derniere_connexion")
+    private Instant derniereConnexion;
+
+    /** Persistent manual block set by an admin — distinct from the timed lockout via locked_until. */
+    @Column(name = "compte_bloque", nullable = false)
+    private boolean compteBloque = false;
+
+    @Column(name = "compte_bloque_at")
+    private Instant compteBlockeAt;
+
+    // ── Notes internes (organisation — non DCP) ───────────────────────────────
+    @Column(name = "notes_admin", columnDefinition = "TEXT")
+    private String notesAdmin;
+
+    // ── Optimistic locking ────────────────────────────────────────────────────
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
+    // ── Société memberships (read-only nav for Specification queries) ─────────
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private List<AppUserSociete> societes;
+
     protected User() {}
 
     public User(String email, String passwordHash) {
@@ -55,6 +125,62 @@ public class User {
     public int getTokenVersion() { return tokenVersion; }
     public int getFailedLoginAttempts() { return failedLoginAttempts; }
     public Instant getLockedUntil() { return lockedUntil; }
+
+    // ── Profil getters/setters ────────────────────────────────────────────────
+    public String getPrenom() { return prenom; }
+    public void setPrenom(String prenom) { this.prenom = prenom; }
+    public String getNomFamille() { return nomFamille; }
+    public void setNomFamille(String nomFamille) { this.nomFamille = nomFamille; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
+    public String getPoste() { return poste; }
+    public void setPoste(String poste) { this.poste = poste; }
+    public String getLangueInterface() { return langueInterface; }
+    public void setLangueInterface(String langueInterface) { this.langueInterface = langueInterface; }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
+    // ── CGU getters/setters ───────────────────────────────────────────────────
+    public boolean isConsentementCgu() { return consentementCgu; }
+    public void setConsentementCgu(boolean consentementCgu) { this.consentementCgu = consentementCgu; }
+    public Instant getConsentementCguDate() { return consentementCguDate; }
+    public void setConsentementCguDate(Instant consentementCguDate) { this.consentementCguDate = consentementCguDate; }
+    public String getConsentementCguVersion() { return consentementCguVersion; }
+    public void setConsentementCguVersion(String consentementCguVersion) { this.consentementCguVersion = consentementCguVersion; }
+
+    // ── Invitation getters/setters ────────────────────────────────────────────
+    public String getInvitationToken() { return invitationToken; }
+    public void setInvitationToken(String invitationToken) { this.invitationToken = invitationToken; }
+    public Instant getInvitationExpireAt() { return invitationExpireAt; }
+    public void setInvitationExpireAt(Instant invitationExpireAt) { this.invitationExpireAt = invitationExpireAt; }
+    public Instant getInvitationEnvoyeeAt() { return invitationEnvoyeeAt; }
+    public void setInvitationEnvoyeeAt(Instant invitationEnvoyeeAt) { this.invitationEnvoyeeAt = invitationEnvoyeeAt; }
+    public User getInvitePar() { return invitePar; }
+    public void setInvitePar(User invitePar) { this.invitePar = invitePar; }
+
+    // ── Sécurité getters/setters ──────────────────────────────────────────────
+    public Instant getDerniereConnexion() { return derniereConnexion; }
+    public void setDerniereConnexion(Instant derniereConnexion) { this.derniereConnexion = derniereConnexion; }
+    public boolean isCompteBloque() { return compteBloque; }
+    public void setCompteBloque(boolean compteBloque) { this.compteBloque = compteBloque; }
+    public Instant getCompteBlockeAt() { return compteBlockeAt; }
+    public void setCompteBlockeAt(Instant compteBlockeAt) { this.compteBlockeAt = compteBlockeAt; }
+
+    // ── Notes admin getter/setter ─────────────────────────────────────────────
+    public String getNotesAdmin() { return notesAdmin; }
+    public void setNotesAdmin(String notesAdmin) { this.notesAdmin = notesAdmin; }
+
+    // ── Optimistic locking ────────────────────────────────────────────────────
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
+    /** Nom complet calculé — sans null checks dupliqués partout. */
+    public String getNomComplet() {
+        if (prenom != null && nomFamille != null) return prenom + " " + nomFamille;
+        if (prenom != null) return prenom;
+        if (nomFamille != null) return nomFamille;
+        return email;
+    }
 
     public void incrementTokenVersion() {
         this.tokenVersion++;
