@@ -12,19 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start backend services
-        run: docker compose up -d
-
-      - name: Wait for backend health
+      - name: Create .env for CI
         run: |
-          for i in {1..30}; do
-            if curl -sf http://localhost:8080/actuator/health; then
-              echo "Backend healthy"
-              break
-            fi
-            echo "Waiting for backend... ($i/30)"
-            sleep 5
-          done
+          cat > .env << 'EOF'
+          JWT_SECRET=ci-e2e-test-secret-not-for-production-x32c
+          EOF
+
+      - name: Start backend services
+        run: docker compose up -d --wait --wait-timeout 180
 
       - uses: actions/setup-node@v4
         with:
@@ -40,6 +35,10 @@ jobs:
 
       - name: Run E2E tests
         run: cd hlm-frontend && npx playwright test
+
+      - name: Dump backend logs on failure
+        if: failure()
+        run: docker compose logs hlm-backend --tail=100
 
       - uses: actions/upload-artifact@v4
         if: failure()
