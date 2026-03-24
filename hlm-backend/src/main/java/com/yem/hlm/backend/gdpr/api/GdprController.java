@@ -6,6 +6,7 @@ import com.yem.hlm.backend.gdpr.service.GdprService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.Societe;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.UUID;
  *   <li>{@code GET /api/gdpr/privacy-notice} — Art. 13 / Law 09-08 Art. 5 transparency notice</li>
  * </ul>
  */
+@Tag(name = "GDPR", description = "Data subject rights — Art. 15/16/17/20 and Moroccan Law 09-08")
 @RestController
 @RequestMapping("/api/gdpr")
 public class GdprController {

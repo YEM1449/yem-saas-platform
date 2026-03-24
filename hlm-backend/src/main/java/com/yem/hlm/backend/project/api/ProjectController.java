@@ -5,6 +5,7 @@ import com.yem.hlm.backend.project.api.dto.ProjectKpiDTO;
 import com.yem.hlm.backend.project.api.dto.ProjectResponse;
 import com.yem.hlm.backend.project.api.dto.ProjectUpdateRequest;
 import com.yem.hlm.backend.project.service.ProjectService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * - ADMIN / MANAGER : create, read, update, archive
  * - AGENT           : read-only (list, get, kpis)
  */
+@Tag(name = "Projects", description = "Real-estate project master management")
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectController {

@@ -5,6 +5,7 @@ import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
 import com.yem.hlm.backend.contract.service.SaleContractService;
 import com.yem.hlm.backend.contract.service.pdf.ContractDocumentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,7 @@ import java.util.UUID;
  *   <li>GET    /api/contracts/{id}/documents/contract.pdf — all roles (AGENT sees own only)</li>
  * </ul>
  */
+@Tag(name = "Contracts", description = "Sale contract lifecycle and PDF generation")
 @RestController
 @RequestMapping("/api/contracts")
 public class ContractController {

@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.usermanagement;
 
 import com.yem.hlm.backend.common.dto.PageResponse;
+import com.yem.hlm.backend.common.ratelimit.RateLimiterService;
 import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.usermanagement.dto.*;
@@ -31,17 +32,20 @@ public class UserManagementController {
     private final UserGdprService userGdprService;
     private final SocieteRoleValidator roleValidator;
     private final SocieteContextHelper societeContextHelper;
+    private final RateLimiterService rateLimiterService;
 
     public UserManagementController(UserManagementService userManagementService,
                                     InvitationService invitationService,
                                     UserGdprService userGdprService,
                                     SocieteRoleValidator roleValidator,
-                                    SocieteContextHelper societeContextHelper) {
+                                    SocieteContextHelper societeContextHelper,
+                                    RateLimiterService rateLimiterService) {
         this.userManagementService = userManagementService;
         this.invitationService = invitationService;
         this.userGdprService = userGdprService;
         this.roleValidator = roleValidator;
         this.societeContextHelper = societeContextHelper;
+        this.rateLimiterService = rateLimiterService;
     }
 
     // ── Lister les membres — ADMIN and MANAGER can see the team ───────────────
@@ -91,6 +95,7 @@ public class UserManagementController {
         roleValidator.validateAssignableRole(req.role());
         UUID societeId = societeContextHelper.requireSocieteId();
         UUID adminId   = societeContextHelper.requireUserId();
+        rateLimiterService.checkInvitation(adminId.toString());
         var savedUser = invitationService.inviter(req, societeId, adminId);
         return userManagementService.getDetail(savedUser.getId(), societeId);
     }

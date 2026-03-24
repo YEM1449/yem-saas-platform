@@ -6,6 +6,7 @@ import com.yem.hlm.backend.dashboard.service.CommercialDashboardService;
 import com.yem.hlm.backend.dashboard.service.DashboardEmitterRegistry;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.micrometer.core.instrument.Counter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -40,6 +41,7 @@ import java.util.UUID;
  *
  * Caching: summary responses are cached 30 s in {@code commercialDashboardSummaryCache}.
  */
+@Tag(name = "Dashboard \u2013 Commercial", description = "Commercial KPIs and sales pipeline analytics")
 @RestController
 @RequestMapping("/api/dashboard/commercial")
 public class CommercialDashboardController {

@@ -3,6 +3,7 @@ package com.yem.hlm.backend.media.api;
 import com.yem.hlm.backend.media.api.dto.PropertyMediaResponse;
 import com.yem.hlm.backend.media.service.PropertyMediaService;
 import com.yem.hlm.backend.media.service.PropertyMediaService.MediaDownload;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +30,7 @@ import java.util.UUID;
  *   <li>DELETE /api/media/{mediaId}          — delete (ADMIN)</li>
  * </ul>
  */
+@Tag(name = "Property Media", description = "Property image and document media management")
 @RestController
 public class PropertyMediaController {
 

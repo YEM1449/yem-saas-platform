@@ -199,6 +199,18 @@
 			<artifactId>opentelemetry-exporter-otlp</artifactId>
 		</dependency>
 
+		<!-- ShedLock — distributed scheduler lock (prevents duplicate execution across nodes) -->
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-spring</artifactId>
+			<version>6.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-provider-jdbc-template</artifactId>
+			<version>6.9.1</version>
+		</dependency>
+
 		<!-- Structured JSON logging (logstash encoder) -->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>

@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.config.JwtProperties;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
@@ -43,6 +44,7 @@ public class InvitationService {
     private final JwtProperties jwtProperties;
     private final ApplicationEventPublisher eventPublisher;
     private final SocieteRoleValidator roleValidator;
+    private final QuotaService quotaService;
 
     public InvitationService(UserRepository userRepository,
                              AppUserSocieteRepository appUserSocieteRepository,
@@ -51,7 +53,8 @@ public class InvitationService {
                              JwtProvider jwtProvider,
                              JwtProperties jwtProperties,
                              ApplicationEventPublisher eventPublisher,
-                             SocieteRoleValidator roleValidator) {
+                             SocieteRoleValidator roleValidator,
+                             QuotaService quotaService) {
         this.userRepository = userRepository;
         this.appUserSocieteRepository = appUserSocieteRepository;
         this.societeRepository = societeRepository;
@@ -60,6 +63,7 @@ public class InvitationService {
         this.jwtProperties = jwtProperties;
         this.eventPublisher = eventPublisher;
         this.roleValidator = roleValidator;
+        this.quotaService = quotaService;
     }
 
     // ── inviter ────────────────────────────────────────────────────────────────
@@ -99,7 +103,10 @@ public class InvitationService {
             user.setEnabled(false);
         }
 
-        // 5. Set profile & generate token
+        // 5. Quota guard — only count as a new slot if this is a new/reactivated membership
+        quotaService.enforceUserQuota(societeId);
+
+        // 6. Set profile & generate token
         user.setPrenom(req.prenom());
         user.setNomFamille(req.nomFamille());
         user.setTelephone(req.telephone());

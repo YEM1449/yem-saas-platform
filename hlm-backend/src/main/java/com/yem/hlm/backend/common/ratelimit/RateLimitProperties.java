@@ -24,6 +24,8 @@ public class RateLimitProperties {
     private Limit login = new Limit();
     @Valid
     private Limit portalLink = new Limit();
+    @Valid
+    private Limit invitation = new Limit();
 
     public RateLimitProperties() {
         login.setCapacity(5);
@@ -33,6 +35,10 @@ public class RateLimitProperties {
         portalLink.setCapacity(3);
         portalLink.setRefillPeriod(Duration.ofHours(1));
         portalLink.setExceededMessage("Too many magic link requests. Please try again in 1 hour.");
+
+        invitation.setCapacity(10);
+        invitation.setRefillPeriod(Duration.ofHours(1));
+        invitation.setExceededMessage("Too many invitation requests. Please try again in 1 hour.");
     }
 
     public Limit getLogin() {
@@ -49,6 +55,14 @@ public class RateLimitProperties {
 
     public void setPortalLink(Limit portalLink) {
         this.portalLink = portalLink;
+    }
+
+    public Limit getInvitation() {
+        return invitation;
+    }
+
+    public void setInvitation(Limit invitation) {
+        this.invitation = invitation;
     }
 
     public static class Limit {

@@ -5,6 +5,7 @@ import com.yem.hlm.backend.commission.api.dto.CommissionRuleRequest;
 import com.yem.hlm.backend.commission.api.dto.CommissionRuleResponse;
 import com.yem.hlm.backend.commission.service.CommissionService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ import java.util.UUID;
  * DELETE /api/commission-rules/{id}           ← ADMIN: delete rule
  * </pre>
  */
+@Tag(name = "Commissions", description = "Commission rules and agent commission tracking")
 @RestController
 public class CommissionController {
 

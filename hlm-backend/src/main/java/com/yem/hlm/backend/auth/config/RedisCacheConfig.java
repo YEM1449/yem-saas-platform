@@ -56,6 +56,12 @@ public class RedisCacheConfig {
         cacheConfigs.put(CacheConfig.RECEIVABLES_DASHBOARD_CACHE,
                 defaultConfig.entryTtl(Duration.ofSeconds(30)));
 
+        cacheConfigs.put(CacheConfig.PROJECTS_CACHE,
+                defaultConfig.entryTtl(Duration.ofSeconds(60)));
+
+        cacheConfigs.put(CacheConfig.SOCIETES_CACHE,
+                defaultConfig.entryTtl(Duration.ofSeconds(120)));
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig.entryTtl(Duration.ofSeconds(60)))
                 .withInitialCacheConfigurations(cacheConfigs)

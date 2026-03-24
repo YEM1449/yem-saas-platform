@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.auth.api;
 
 import com.yem.hlm.backend.societe.SocieteContext;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import java.util.Map;
  * - JWT est lu
  * - SocieteContext est rempli par le filtre
  */
+@Tag(name = "Auth", description = "JWT validation and session introspection")
 @RestController
 public class AuthMeController {
 

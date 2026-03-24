@@ -3,6 +3,7 @@ package com.yem.hlm.backend.portal.api;
 import com.yem.hlm.backend.portal.api.dto.PortalContractResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTenantInfoResponse;
 import com.yem.hlm.backend.portal.service.PortalContractService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.UUID;
 /**
  * Portal contract endpoints — ROLE_PORTAL only.
  */
+@Tag(name = "Portal \u2013 Contracts", description = "Buyer portal contract endpoints (ROLE_PORTAL)")
 @RestController
 @RequestMapping("/api/portal")
 @PreAuthorize("hasRole('PORTAL')")

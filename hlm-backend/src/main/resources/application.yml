@@ -77,12 +77,22 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # health + info always on; metrics + prometheus for Prometheus/Grafana scraping;
+        # loggers for dynamic log-level changes without restart.
+        include: health,info,metrics,prometheus,loggers
   health:
     mail:
       enabled: ${MAIL_HEALTH_ENABLED:false}
     defaults:
       enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: ${PROMETHEUS_ENABLED:true}
+    tags:
+      # Standard service labels on every metric for Grafana dashboards
+      application: hlm-backend
+      environment: ${APP_ENV:local}
   tracing:
     enabled: ${OTEL_ENABLED:false}
     sampling:
@@ -90,6 +100,9 @@ management:
   otlp:
     tracing:
       endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+    metrics:
+      # Grafana Mimir / Tempo OTLP metrics endpoint (set OTEL_ENABLED=true to activate)
+      endpoint: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://localhost:4318/v1/metrics}
 
 security:
   jwt:
@@ -113,6 +126,10 @@ app:
       capacity: ${RATE_LIMIT_PORTAL_CAPACITY:3}
       refill-period: ${RATE_LIMIT_PORTAL_REFILL_PERIOD:1h}
       exceeded-message: ${RATE_LIMIT_PORTAL_MESSAGE:Too many magic link requests. Please try again in 1 hour.}
+    invitation:
+      capacity: ${RATE_LIMIT_INVITATION_CAPACITY:10}
+      refill-period: ${RATE_LIMIT_INVITATION_REFILL_PERIOD:1h}
+      exceeded-message: ${RATE_LIMIT_INVITATION_MESSAGE:Too many invitation requests. Please try again in 1 hour.}
 
   outbox:
     # Number of PENDING messages claimed per scheduler tick (SKIP LOCKED batch).
