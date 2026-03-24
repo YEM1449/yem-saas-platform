@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 // Note: these tests require a SUPER_ADMIN account in the seed data.
-// Seed changeset 046 creates superadmin@hlm.io / SuperSecret123!
+// Seed changeset 046 creates superadmin@yourcompany.com / YourSecure2026!
 
 async function loginSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/login');
-  await page.fill('[data-testid="email"]', 'superadmin@hlm.io');
-  await page.fill('[data-testid="password"]', 'SuperSecret123!');
+  await page.fill('[data-testid="email"]', 'superadmin@yourcompany.com');
+  await page.fill('[data-testid="password"]', 'YourSecure2026!');
   await page.click('[data-testid="login-button"]');
   await page.waitForURL(/.*superadmin/, { timeout: 10000 });
 }
