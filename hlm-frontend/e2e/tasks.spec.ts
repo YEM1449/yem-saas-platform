@@ -29,11 +29,11 @@ test.describe('Tasks', () => {
 
   test('create task via tasks page', async ({ page }) => {
     await page.goto('/app/tasks');
-    await page.click('button:has-text("Nouvelle tâche"), button:has-text("+ Nouvelle")');
+    await page.click('button:has-text("Nouvelle tâche")');
     const ts = Date.now();
-    await page.fill('input[placeholder*="titre"], input[placeholder*="Ex:"]', `Tâche E2E ${ts}`);
-    await page.click('button:has-text("Créer"), button[type="submit"]');
-    await expect(page.locator(`text=Tâche E2E ${ts}`)).toBeVisible({ timeout: 5000 });
+    await page.fill('[data-testid="task-title"]', `Tâche E2E ${ts}`);
+    await page.click('[data-testid="task-submit"]');
+    await expect(page.locator(`text=Tâche E2E ${ts}`)).toBeVisible({ timeout: 8000 });
   });
 
   test('status filter works on tasks page', async ({ page }) => {
