@@ -63,7 +63,7 @@
               <dt>Clé</dt><dd>{{ detail.key ?? '—' }}</dd>
               <dt>Pays</dt><dd>{{ detail.pays }}</dd>
               <dt>Forme juridique</dt><dd>{{ detail.formeJuridique ?? '—' }}</dd>
-              <dt>Capital social</dt><dd>{{ detail.capitalSocial != null ? (detail.capitalSocial | number) : '—' }}</dd>
+              <dt>Capital social</dt><dd>{{ detail.capitalSocial !== null && detail.capitalSocial !== undefined ? (detail.capitalSocial | number) : '—' }}</dd>
               <dt>SIRET / ICE</dt><dd>{{ detail.siretIce ?? '—' }}</dd>
               <dt>RC</dt><dd>{{ detail.rc ?? '—' }}</dd>
               <dt>Numéro agréement</dt><dd>{{ detail.numeroAgrement ?? '—' }}</dd>

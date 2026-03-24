@@ -8,6 +8,7 @@ import { MeResponse } from '../models/login.model';
 describe('superadminGuard', () => {
   let authSpy: jasmine.SpyObj<AuthService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let mockUser: MeResponse | null;
 
   const run = () =>
     TestBed.runInInjectionContext(() =>
@@ -18,7 +19,11 @@ describe('superadminGuard', () => {
     ) as ReturnType<typeof superadminGuard>;
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', ['verifySession'], { user: null });
+    mockUser = null;
+    // Do NOT pass properties in createSpyObj — Jasmine 5.x marks them configurable:false
+    authSpy = jasmine.createSpyObj('AuthService', ['verifySession']);
+    Object.defineProperty(authSpy, 'user', { get: () => mockUser, configurable: true });
+
     routerSpy = jasmine.createSpyObj('Router', ['createUrlTree']);
     routerSpy.createUrlTree.and.callFake((commands: unknown[]) => commands as unknown as ReturnType<Router['createUrlTree']>);
 
@@ -31,7 +36,7 @@ describe('superadminGuard', () => {
   });
 
   it('should return true for valid SUPER_ADMIN session', (done) => {
-    Object.defineProperty(authSpy, 'user', { get: () => ({ role: 'ROLE_SUPER_ADMIN' } as MeResponse) });
+    mockUser = { role: 'ROLE_SUPER_ADMIN' } as MeResponse;
     authSpy.verifySession.and.returnValue(of('valid'));
 
     (run() as ReturnType<typeof of>).subscribe((result: unknown) => {
@@ -43,27 +48,27 @@ describe('superadminGuard', () => {
   it('should redirect to /login when session is invalid', (done) => {
     authSpy.verifySession.and.returnValue(of('invalid'));
 
-    (run() as ReturnType<typeof of>).subscribe((result: unknown) => {
+    (run() as ReturnType<typeof of>).subscribe((_result: unknown) => {
       expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/login']);
       done();
     });
   });
 
   it('should redirect to /app for ROLE_ADMIN (not super admin)', (done) => {
-    Object.defineProperty(authSpy, 'user', { get: () => ({ role: 'ROLE_ADMIN' } as MeResponse) });
+    mockUser = { role: 'ROLE_ADMIN' } as MeResponse;
     authSpy.verifySession.and.returnValue(of('valid'));
 
-    (run() as ReturnType<typeof of>).subscribe((result: unknown) => {
+    (run() as ReturnType<typeof of>).subscribe((_result: unknown) => {
       expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/app']);
       done();
     });
   });
 
   it('should redirect to /app for ROLE_MANAGER', (done) => {
-    Object.defineProperty(authSpy, 'user', { get: () => ({ role: 'ROLE_MANAGER' } as MeResponse) });
+    mockUser = { role: 'ROLE_MANAGER' } as MeResponse;
     authSpy.verifySession.and.returnValue(of('valid'));
 
-    (run() as ReturnType<typeof of>).subscribe((result: unknown) => {
+    (run() as ReturnType<typeof of>).subscribe((_result: unknown) => {
       expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/app']);
       done();
     });
