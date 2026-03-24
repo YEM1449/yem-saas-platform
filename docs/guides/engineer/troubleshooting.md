@@ -232,7 +232,11 @@ Could not find a valid Docker environment
 **Fix:**
 1. Run `docker info` to confirm Docker is running.
 2. On Windows with WSL2: ensure Docker Desktop has WSL integration enabled (Settings → Resources → WSL Integration).
-3. On Linux: ensure your user is in the `docker` group: `sudo usermod -aG docker $USER` then re-login.
+3. If Docker Desktop uses a named pipe (`npipe:////./pipe/...`) rather than the standard Unix socket, export the WSL2 proxy socket:
+   ```bash
+   export DOCKER_HOST=unix:///mnt/wsl/docker-desktop/shared-sockets/host-services/docker.proxy.sock
+   ```
+4. On Linux: ensure your user is in the `docker` group: `sudo usermod -aG docker $USER` then re-login.
 
 ### MinIO container unhealthy
 
@@ -267,10 +271,14 @@ no suitable constructor found for type ...
 
 **Cause:** Tests share the same database and a previous test left data that affects the next test.
 
-**Fix:** Either:
-1. Use `@Transactional` on the test method (rolls back after each test).
-2. Delete specific entities in `@AfterEach`.
-3. Use unique email addresses / names in each test to avoid unique constraint violations.
+**Fix:**
+1. **Do NOT use `@Transactional` on IT test classes.** `AuditEventListener` uses `Propagation.REQUIRES_NEW`, opening a separate DB connection that cannot see uncommitted data → FK violation (returns 500 instead of 201). This has burned us before.
+2. Use unique email/name suffixes per test run:
+   ```java
+   String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+   String email = "admin-" + uid + "@test.local";
+   ```
+3. Delete specific entities in `@AfterEach` if uniqueness alone is not sufficient.
 
 ### "No qualifying bean of type 'SmtpEmailSender'"
 

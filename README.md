@@ -116,10 +116,20 @@ This is already implemented in the backend contract.
 ## Testing
 
 ```bash
+# Backend unit tests
 cd hlm-backend && ./mvnw test
+
+# Backend unit + integration tests (requires Docker for Testcontainers)
 cd hlm-backend && ./mvnw verify
+
+# Frontend unit tests
 cd hlm-frontend && npm test -- --watch=false
+
+# Frontend build check
 cd hlm-frontend && npm run build
+
+# E2E tests (requires full stack running via docker compose)
+cd hlm-frontend && npx playwright test
 ```
 
 Smoke helpers live in [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts).

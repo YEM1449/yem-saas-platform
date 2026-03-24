@@ -302,4 +302,4 @@ Base path: `/api/contracts`
 ## 15. Known API-Level Oddities
 
 - `POST /tenants` is still permitted in security configuration, but no active controller was found.
-- `/api/admin/users` exists in backend code but is not the active membership API used by the frontend.
+- `AdminUserController` is on `/api/users` (moved from `/api/admin/users`; the `/api/admin/**` prefix is reserved for SUPER_ADMIN in `SecurityConfig`). The HR membership surface is `/api/mon-espace/utilisateurs`.

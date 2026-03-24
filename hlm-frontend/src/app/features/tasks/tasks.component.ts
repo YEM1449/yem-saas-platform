@@ -22,6 +22,8 @@ export class TasksComponent implements OnInit {
   error = '';
   success = '';
 
+  private loadSeq = 0;
+
   // Filters
   filterStatus: TaskStatus | '' = '';
 
@@ -50,18 +52,21 @@ export class TasksComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
+    const seq = ++this.loadSeq;
     this.svc.list({
       status: this.filterStatus || undefined,
       page: this.page,
       size: this.size,
     }).subscribe({
       next: (page) => {
+        if (seq !== this.loadSeq) return; // Superseded by onSaved or a newer load
         this.tasks = page.content;
         this.totalPages = page.page.totalPages;
         this.totalElements = page.page.totalElements;
         this.loading = false;
       },
       error: (err: HttpErrorResponse) => {
+        if (seq !== this.loadSeq) return;
         this.loading = false;
         const body = err.error as ErrorResponse | null;
         this.error = body?.message ?? `Erreur de chargement (${err.status})`;
@@ -93,6 +98,8 @@ export class TasksComponent implements OnInit {
   }
 
   onSaved(task: Task): void {
+    this.loadSeq++; // Invalidate any in-flight load so it won't overwrite this update
+    this.loading = false;
     this.showForm = false;
     if (this.editingTask) {
       this.tasks = this.tasks.map(t => t.id === task.id ? task : t);

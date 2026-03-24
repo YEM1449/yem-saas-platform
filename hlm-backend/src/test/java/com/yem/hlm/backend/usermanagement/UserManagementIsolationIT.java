@@ -16,9 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,10 +28,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   <li>Only ROLE_ADMIN can access user management endpoints (RBAC).</li>
  *   <li>A member of société A is not visible from société B (isolation).</li>
  * </ol>
+ *
+ * NOTE: No @Transactional — AuditEventListener uses Propagation.REQUIRES_NEW which
+ * opens a separate connection that cannot see uncommitted test data → FK violation.
+ * Use per-test UID suffixes on all email addresses to avoid uk_user_email collisions.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class UserManagementIsolationIT extends IntegrationTestBase {
 
     @Autowired MockMvc mvc;
@@ -52,26 +54,28 @@ class UserManagementIsolationIT extends IntegrationTestBase {
 
     @BeforeEach
     void setup() {
+        String uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
         societeA = societeRepository.save(new Societe("Société Alpha", "MA"));
         societeB = societeRepository.save(new Societe("Société Beta", "MA"));
 
         // Admin of société A
-        User adminA = userRepository.save(new User("admin-a@test.local", "hash"));
+        User adminA = userRepository.save(new User("admin-a-" + uid + "@test.local", "hash"));
         appUserSocieteRepository.save(membership(adminA, societeA, "ADMIN"));
 
         // Manager and Agent of société A
-        User managerA = userRepository.save(new User("mgr-a@test.local", "hash"));
+        User managerA = userRepository.save(new User("mgr-a-" + uid + "@test.local", "hash"));
         appUserSocieteRepository.save(membership(managerA, societeA, "MANAGER"));
 
-        User agentA = userRepository.save(new User("agent-a@test.local", "hash"));
+        User agentA = userRepository.save(new User("agent-a-" + uid + "@test.local", "hash"));
         appUserSocieteRepository.save(membership(agentA, societeA, "AGENT"));
 
         // Admin of société B
-        User adminB = userRepository.save(new User("admin-b@test.local", "hash"));
+        User adminB = userRepository.save(new User("admin-b-" + uid + "@test.local", "hash"));
         appUserSocieteRepository.save(membership(adminB, societeB, "ADMIN"));
 
         // A regular member in société A that we will try to fetch
-        targetUser = userRepository.save(new User("target@test.local", "hash"));
+        targetUser = userRepository.save(new User("target-" + uid + "@test.local", "hash"));
         appUserSocieteRepository.save(membership(targetUser, societeA, "AGENT"));
 
         adminBearerA   = "Bearer " + jwtProvider.generate(adminA.getId(),   societeA.getId(), UserRole.ROLE_ADMIN);

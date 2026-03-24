@@ -259,7 +259,7 @@ These are functional inconsistencies or incomplete behaviors confirmed from code
 - The backend supports multi-societe login selection, but the current Angular login flow does not implement the `requiresSocieteSelection` branch.
 - Societe suspension exists as administrative data but was not found as an enforced access-control rule.
 - Societe quotas for contacts, properties, and projects exist in the data model but were not found enforced in the corresponding services.
-- A legacy `/api/admin/users` backend surface still exists even though the active frontend uses `/api/mon-espace/utilisateurs`.
+- `AdminUserController` is on `/api/users` (not `/api/admin/users` — that prefix is SUPER_ADMIN-only). The HR membership surface is `/api/mon-espace/utilisateurs`.
 
 ## 12. Needs Clarification
 

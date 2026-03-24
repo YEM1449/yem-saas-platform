@@ -4,11 +4,19 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Task, TaskPage, CreateTaskRequest, UpdateTaskRequest, TaskStatus } from './task.model';
 
+/**
+ * HTTP client for the Tasks API (`/api/tasks`).
+ *
+ * Note: the backend default for `GET /api/tasks` returns only tasks where
+ * `assigneeId` matches the current user. Unassigned tasks are excluded unless
+ * an explicit `assigneeId` filter is provided.
+ */
 @Injectable({ providedIn: 'root' })
 export class TaskService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/api/tasks`;
 
+  /** Lists tasks for the current société, optionally filtered by status or assignee. */
   list(opts?: { status?: TaskStatus; assigneeId?: string; page?: number; size?: number }): Observable<TaskPage> {
     let p = new HttpParams();
     if (opts?.status)     p = p.set('status', opts.status);

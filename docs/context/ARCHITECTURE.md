@@ -154,5 +154,5 @@ Important nuance:
 The current architecture also contains some legacy edges that matter for maintainers:
 
 - `SecurityConfig` still permits `POST /tenants`, but there is no active tenant-bootstrap controller in the current backend.
-- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) remains on `/api/admin/users`, while the active frontend uses `/api/mon-espace/utilisateurs`.
+- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) is on `/api/users` (moved from `/api/admin/users` — the `/api/admin/**` prefix is SUPER_ADMIN-only in `SecurityConfig`). The HR membership surface is `/api/mon-espace/utilisateurs`.
 - The Angular login flow currently assumes every successful `/auth/login` returns a full token and does not yet implement the multi-societe selection step exposed by the backend.

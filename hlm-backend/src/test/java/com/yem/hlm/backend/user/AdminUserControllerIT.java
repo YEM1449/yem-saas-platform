@@ -16,8 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +23,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for AdminUserController (/api/admin/users).
+ * Integration tests for AdminUserController (/api/users).
  * Covers 401/403 RBAC, CRUD as ADMIN, and cross-societe isolation.
+ *
+ * NOTE: No @Transactional — AuditEventListener uses Propagation.REQUIRES_NEW which
+ * opens a separate connection that cannot see uncommitted test data → FK violation.
+ * Use per-test UID suffixes on all email addresses to avoid uk_user_email collisions.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class AdminUserControllerIT extends IntegrationTestBase {
 
     private static final String BASE = "/api/users";
@@ -53,18 +54,23 @@ class AdminUserControllerIT extends IntegrationTestBase {
     private User adminB;
     private String adminBearerB;
 
+    /** Per-test unique suffix — prevents uk_user_email violations across test methods. */
+    private String uid;
+
     @BeforeEach
     void setup() {
+        uid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
         // ── Societe A ──
         societeA = societeRepository.save(new Societe("Tenant A", "MA"));
 
-        adminA = new User("admin@tenant-a.test", "hash");
+        adminA = new User("admin-" + uid + "@tenant-a.test", "hash");
         adminA = userRepository.save(adminA);
 
-        User managerA = new User("mgr@tenant-a.test", "hash");
+        User managerA = new User("mgr-" + uid + "@tenant-a.test", "hash");
         managerA = userRepository.save(managerA);
 
-        User agentA = new User("agent@tenant-a.test", "hash");
+        User agentA = new User("agent-" + uid + "@tenant-a.test", "hash");
         agentA = userRepository.save(agentA);
 
         adminBearerA = "Bearer " + jwtProvider.generate(adminA.getId(), societeA.getId(), UserRole.ROLE_ADMIN);
@@ -74,7 +80,7 @@ class AdminUserControllerIT extends IntegrationTestBase {
         // ── Societe B ──
         societeB = societeRepository.save(new Societe("Tenant B", "MA"));
 
-        adminB = new User("admin@tenant-b.test", "hash");
+        adminB = new User("admin-" + uid + "@tenant-b.test", "hash");
         adminB = userRepository.save(adminB);
 
         adminBearerB = "Bearer " + jwtProvider.generate(adminB.getId(), societeB.getId(), UserRole.ROLE_ADMIN);
@@ -172,12 +178,13 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
     @Test
     void createUser_asAdmin_returns201() throws Exception {
+        String email = "new-" + uid + "@tenant-a.test";
         String body = mvc.perform(post(BASE)
                         .header("Authorization", adminBearerA)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createUserJson("new-user@tenant-a.test")))
+                        .content(createUserJson(email)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("new-user@tenant-a.test"))
+                .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.enabled").value(true))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andReturn().getResponse().getContentAsString();
@@ -188,7 +195,7 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
     @Test
     void changeRole_asAdmin_returns200() throws Exception {
-        UUID userId = createUserViaApi(adminBearerA, "role-target@tenant-a.test");
+        UUID userId = createUserViaApi(adminBearerA, "role-" + uid + "@tenant-a.test");
 
         mvc.perform(patch(BASE + "/{id}/role", userId)
                         .header("Authorization", adminBearerA)
@@ -199,7 +206,7 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
     @Test
     void setEnabled_asAdmin_returns200() throws Exception {
-        UUID userId = createUserViaApi(adminBearerA, "enabled-target@tenant-a.test");
+        UUID userId = createUserViaApi(adminBearerA, "enabled-" + uid + "@tenant-a.test");
 
         mvc.perform(patch(BASE + "/{id}/enabled", userId)
                         .header("Authorization", adminBearerA)
@@ -211,7 +218,7 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
     @Test
     void resetPassword_asAdmin_returns200() throws Exception {
-        UUID userId = createUserViaApi(adminBearerA, "reset-target@tenant-a.test");
+        UUID userId = createUserViaApi(adminBearerA, "reset-" + uid + "@tenant-a.test");
 
         mvc.perform(post(BASE + "/{id}/reset-password", userId)
                         .header("Authorization", adminBearerA))
@@ -223,12 +230,13 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
     @Test
     void createUser_duplicateEmail_returns409() throws Exception {
-        createUserViaApi(adminBearerA, "dup@tenant-a.test");
+        String email = "dup-" + uid + "@tenant-a.test";
+        createUserViaApi(adminBearerA, email);
 
         mvc.perform(post(BASE)
                         .header("Authorization", adminBearerA)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createUserJson("dup@tenant-a.test")))
+                        .content(createUserJson(email)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_EMAIL_EXISTS"));
     }
