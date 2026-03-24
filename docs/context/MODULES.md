@@ -10,7 +10,7 @@ This document maps the main responsibilities of the current codebase.
 | `societe` | Company admin model and super-admin management | `/api/admin/societes/*` | Owns `SocieteContext`, membership model, impersonation |
 | `admin` | First `SUPER_ADMIN` bootstrap | startup only | Activated by `APP_BOOTSTRAP_ENABLED=true` |
 | `usermanagement` | Active company member management | `/api/mon-espace/utilisateurs/*` | Invitations, role changes, removals, GDPR export/anonymize |
-| `user` | Legacy admin-user API surface | `/api/admin/users/*` | Still present in code, but no longer the active frontend path |
+| `user` | Legacy admin-user API surface | `/api/users/*` | Path was moved from `/api/admin/users` to avoid the `SUPER_ADMIN`-only security block; frontend uses this path |
 | `project` | Project catalog and KPIs | `/api/projects/*` | Archive instead of hard delete |
 | `property` | Inventory CRUD and CSV import | `/api/properties/*`, `/dashboard/properties/*` | Type-specific validation, soft delete |
 | `contact` | Contact lifecycle, interests, timeline | `/api/contacts/*` | Prospect and client states plus GDPR fields |
@@ -90,7 +90,7 @@ This document maps the main responsibilities of the current codebase.
 Two user-management surfaces exist in the backend:
 
 - [UserManagementController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/usermanagement/UserManagementController.java) is the active, richer company-member flow used by the frontend.
-- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) is a legacy controller on `/api/admin/users`.
+- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) is on `/api/users` (moved from `/api/admin/users` — the `/api/admin/**` prefix is reserved for `SUPER_ADMIN` only).
 
 ### `societe` versus `tenant`
 

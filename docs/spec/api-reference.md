@@ -258,6 +258,8 @@ Base path: `/api/contracts`
 | `GET` | `/api/tasks/by-contact/{contactId}` | any CRM role | tasks for contact |
 | `GET` | `/api/tasks/by-property/{propertyId}` | any CRM role | tasks for property |
 
+**Default list behavior:** `GET /api/tasks` without query params returns tasks scoped to the current user's `assigneeId`. Pass `?status=` to return all tasks of a given status regardless of assignee. If no `assigneeId` is provided on create, it defaults to the creator.
+
 ### Documents
 
 | Method | Path | Auth | Purpose |

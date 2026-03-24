@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 async function login(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/login');
-  await page.fill('[data-testid="email"]', 'admin@acme.com');
-  await page.fill('[data-testid="password"]', 'Admin123!Secure');
-  await page.click('[data-testid="login-button"]');
-  await page.waitForURL(/.*app/, { timeout: 10000 });
+  await page.goto('/app/properties');
+  // If storageState was injected, we are already authenticated — skip login form
+  if (page.url().includes('/login') || !page.url().includes('/app')) {
+    await page.fill('[data-testid="email"]', 'admin@acme.com');
+    await page.fill('[data-testid="password"]', 'Admin123!Secure');
+    await page.click('[data-testid="login-button"]');
+    await page.waitForURL(/.*app/, { timeout: 10000 });
+  }
 }
 
 test.describe('Contacts', () => {
