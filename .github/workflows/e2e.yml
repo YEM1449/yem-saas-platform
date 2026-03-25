@@ -18,8 +18,60 @@ jobs:
           JWT_SECRET=ci-e2e-test-secret-not-for-production-x32c
           EOF
 
-      - name: Start backend services
-        run: docker compose up -d --wait --wait-timeout 180
+      - name: Start infrastructure (postgres, redis, minio)
+        run: docker compose up -d postgres redis minio
+
+      - name: Wait for infrastructure health
+        run: |
+          for i in $(seq 1 24); do
+            PG=$(docker inspect --format='{{.State.Health.Status}}' hlm-postgres 2>/dev/null || echo "missing")
+            RD=$(docker inspect --format='{{.State.Health.Status}}' hlm-redis 2>/dev/null || echo "missing")
+            echo "[$i/24] postgres=$PG redis=$RD"
+            [ "$PG" = "healthy" ] && [ "$RD" = "healthy" ] && echo "Infrastructure ready" && break
+            sleep 5
+          done
+
+      - name: Start backend
+        run: docker compose up -d hlm-backend
+
+      - name: Wait for backend — dump logs on failure
+        run: |
+          echo "Waiting for backend health (max 5 min)..."
+          for i in $(seq 1 30); do
+            STATE=$(docker inspect --format='{{.State.Status}}' hlm-backend 2>/dev/null || echo "gone")
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' hlm-backend 2>/dev/null || echo "none")
+            echo "[$i/30] state=$STATE health=$HEALTH"
+            if [ "$HEALTH" = "healthy" ]; then
+              echo "Backend is healthy"
+              break
+            fi
+            if [ "$STATE" = "exited" ] || [ "$STATE" = "dead" ]; then
+              echo "Backend crashed — logs:"
+              docker logs hlm-backend 2>&1 | tail -100
+              exit 1
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Backend timed out — logs:"
+              docker logs hlm-backend 2>&1 | tail -100
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Start frontend
+        run: docker compose up -d hlm-frontend
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 12); do
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' hlm-frontend 2>/dev/null || echo "none")
+            echo "[$i/12] frontend=$HEALTH"
+            [ "$HEALTH" = "healthy" ] && echo "Frontend ready" && exit 0
+            sleep 5
+          done
+          echo "Frontend timed out — logs:"
+          docker logs hlm-frontend 2>&1 | tail -50
+          exit 1
 
       - uses: actions/setup-node@v4
         with:
