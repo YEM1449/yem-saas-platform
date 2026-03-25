@@ -15,9 +15,11 @@ databaseChangeLog:
 
         Tables covered: contact, property (updated), project, property_reservation,
         sale_contract, deposit, commission_rule, task, document, notification,
-        property_media, payment_schedule, payment_call, payment.
+        property_media, payment_schedule_item, schedule_payment, schedule_item_reminder.
         Excluded: outbound_message, portal_token, app_user, societe, app_user_societe
         (no per-request societe_id filter needed on these infrastructure tables).
+        Note: v1 payment tables (payment_schedule, payment_call, payment) were dropped
+        by changeset 028 and are NOT referenced here.
       changes:
         - sql:
             sql: |
@@ -255,10 +257,10 @@ databaseChangeLog:
                   )
                 );
 
-              -- PAYMENT_SCHEDULE
-              ALTER TABLE payment_schedule ENABLE ROW LEVEL SECURITY;
-              ALTER TABLE payment_schedule FORCE ROW LEVEL SECURITY;
-              CREATE POLICY societe_isolation_payment_schedule ON payment_schedule
+              -- PAYMENT_SCHEDULE_ITEM (v2 payment table — replaces dropped v1 payment_schedule)
+              ALTER TABLE payment_schedule_item ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE payment_schedule_item FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_payment_schedule_item ON payment_schedule_item
                 USING (
                   current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
                   OR (
@@ -276,10 +278,10 @@ databaseChangeLog:
                   )
                 );
 
-              -- PAYMENT_CALL
-              ALTER TABLE payment_call ENABLE ROW LEVEL SECURITY;
-              ALTER TABLE payment_call FORCE ROW LEVEL SECURITY;
-              CREATE POLICY societe_isolation_payment_call ON payment_call
+              -- SCHEDULE_PAYMENT (v2 cash-in records)
+              ALTER TABLE schedule_payment ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE schedule_payment FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_schedule_payment ON schedule_payment
                 USING (
                   current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
                   OR (
@@ -297,10 +299,10 @@ databaseChangeLog:
                   )
                 );
 
-              -- PAYMENT (tranche/receipt table)
-              ALTER TABLE payment ENABLE ROW LEVEL SECURITY;
-              ALTER TABLE payment FORCE ROW LEVEL SECURITY;
-              CREATE POLICY societe_isolation_payment ON payment
+              -- SCHEDULE_ITEM_REMINDER (v2 idempotency guard for payment reminders)
+              ALTER TABLE schedule_item_reminder ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE schedule_item_reminder FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_schedule_item_reminder ON schedule_item_reminder
                 USING (
                   current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
                   OR (
@@ -360,11 +362,11 @@ databaseChangeLog:
               DROP POLICY IF EXISTS societe_isolation_property_media ON property_media;
               ALTER TABLE property_media DISABLE ROW LEVEL SECURITY;
 
-              DROP POLICY IF EXISTS societe_isolation_payment_schedule ON payment_schedule;
-              ALTER TABLE payment_schedule DISABLE ROW LEVEL SECURITY;
+              DROP POLICY IF EXISTS societe_isolation_payment_schedule_item ON payment_schedule_item;
+              ALTER TABLE payment_schedule_item DISABLE ROW LEVEL SECURITY;
 
-              DROP POLICY IF EXISTS societe_isolation_payment_call ON payment_call;
-              ALTER TABLE payment_call DISABLE ROW LEVEL SECURITY;
+              DROP POLICY IF EXISTS societe_isolation_schedule_payment ON schedule_payment;
+              ALTER TABLE schedule_payment DISABLE ROW LEVEL SECURITY;
 
-              DROP POLICY IF EXISTS societe_isolation_payment ON payment;
-              ALTER TABLE payment DISABLE ROW LEVEL SECURITY;
+              DROP POLICY IF EXISTS societe_isolation_schedule_item_reminder ON schedule_item_reminder;
+              ALTER TABLE schedule_item_reminder DISABLE ROW LEVEL SECURITY;
