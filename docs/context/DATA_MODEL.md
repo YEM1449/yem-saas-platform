@@ -369,12 +369,23 @@ The following constraints materially shape the system:
 | Property identity | unique property reference per societe |
 | One signed contract per property | partial unique index on signed contract rows |
 | Optimistic concurrency | `@Version` on mutable entities such as `User`, `Societe`, `Property`, `Contact`, `SaleContract` |
-| RLS coverage | currently only `contact` and `property` |
+| RLS coverage | all 13 domain tables (Wave 4, changeset 051): `contact`, `property`, `project`, `property_reservation`, `sale_contract`, `deposit`, `commission_rule`, `task`, `document`, `notification`, `property_media`, `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder` |
+
+## Wave 4 Additions (changeset 051-052)
+
+| Feature | Implementation |
+| --- | --- |
+| RLS on all domain tables | `RlsContextAspect` + changeset 051; nil-UUID bypass for system schedulers |
+| ShedLock | `shedlock` table (changeset 052); `@SchedulerLock` on `OutboundDispatcherScheduler.poll()` |
+| Quota enforcement | `QuotaService.enforceUserQuota()` checks `Societe.maxUtilisateurs` vs active memberships |
+| Invitation rate limiting | `RateLimiterService.checkInvitation(adminId)` — 10 req/h per admin |
+| Self-service profile | `GET/PATCH /api/me` → `UserProfileController` |
+| Redis caches wired | `PROJECTS_CACHE` (60s TTL), `SOCIETES_CACHE` (120s TTL) in `RedisCacheConfig` |
 
 ## Gaps and Clarifications
 
 The schema contains fields whose enforcement is not equally visible in the service layer:
 
-- `max_utilisateurs` is enforced when adding members to a societe.
+- `max_utilisateurs` is enforced at service layer (Wave 4 `QuotaService`).
 - `max_biens`, `max_contacts`, and `max_projets` exist in the model, but no matching enforcement was found in the current property, contact, or project services.
-- societe suspension fields exist, but no request-time blocking of suspended societes was found in the current auth or domain service flow.
+- Societe suspension fields exist, but no request-time blocking of suspended societes was found in the current auth or domain service flow.

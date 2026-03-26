@@ -299,7 +299,31 @@ Base path: `/api/contracts`
 | `GET` | `/api-docs` | environment-dependent | OpenAPI JSON |
 | `GET` | `/swagger-ui.html` | environment-dependent | Swagger UI |
 
-## 15. Known API-Level Oddities
+## 15. Self-Service Profile (Wave 4)
+
+Base path: `/api/me`
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/me` | any CRM role | get own profile |
+| `PATCH` | `/api/me` | any CRM role | update own profile |
+
+Editable fields: `prenom`, `nomFamille`, `telephone`, `poste`, `langueInterface`
+Read-only: `email`, `role`, `photoUrl`
+
+## 16. Admin User Management
+
+Base path: `/api/users` (NOT `/api/admin/users` — that prefix is SUPER_ADMIN-only in `SecurityConfig`)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/users` | `ADMIN`, `SUPER_ADMIN` | list CRM users |
+| `POST` | `/api/users` | `ADMIN`, `SUPER_ADMIN` | create CRM user |
+| `GET` | `/api/users/{id}` | `ADMIN`, `SUPER_ADMIN` | get user |
+| `PATCH` | `/api/users/{id}` | `ADMIN`, `SUPER_ADMIN` | update user |
+| `DELETE` | `/api/users/{id}` | `ADMIN`, `SUPER_ADMIN` | remove user |
+
+## 17. Known API-Level Oddities
 
 - `POST /tenants` is still permitted in security configuration, but no active controller was found.
 - `AdminUserController` is on `/api/users` (moved from `/api/admin/users`; the `/api/admin/**` prefix is reserved for SUPER_ADMIN in `SecurityConfig`). The HR membership surface is `/api/mon-espace/utilisateurs`.

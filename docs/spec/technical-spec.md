@@ -9,7 +9,7 @@ This document summarizes how the current system is implemented and operated.
 | Area | Technology |
 | --- | --- |
 | Language | Java 21 |
-| Framework | Spring Boot 3.5.11 |
+| Framework | Spring Boot 3.5.8 |
 | Persistence | Spring Data JPA + Hibernate 6 |
 | Database | PostgreSQL 16 |
 | Migrations | Liquibase 5.0.0 |
@@ -97,34 +97,42 @@ Database-level safety:
 
 Default cache backend:
 
-- Caffeine
+- Caffeine (in-process, not shared between instances)
 
 Optional backend:
 
 - Redis, activated by `REDIS_ENABLED=true`
+- Required for horizontally scaled deployments
 
-Usage patterns confirmed from code:
+Named caches (Wave 4, `RedisCacheConfig`):
 
-- user security / token revocation state
-- dashboard or societe list style cache usage
+| Cache name | TTL | Purpose |
+| --- | --- | --- |
+| user security cache | configurable | Token revocation and lockout state |
+| `PROJECTS_CACHE` | 60s | Project list per societe |
+| `SOCIETES_CACHE` | 120s | Societe list (SUPER_ADMIN) |
 
 ## 7. Async and Scheduler Design
 
 Implemented scheduled or asynchronous processes:
 
-| Process | Purpose |
-| --- | --- |
-| Outbox dispatcher | deliver queued email/SMS with retries |
-| Deposit workflow scheduler | expire pending deposits and raise reminders |
-| Reservation expiry scheduler | expire reservations and release property state |
-| Payment reminder scheduler | pre-due and overdue payment notifications |
-| Portal token cleanup scheduler | remove expired portal tokens |
-| GDPR retention scheduler | retention sweep / anonymization processing |
+| Process | ShedLock | Purpose |
+| --- | --- | --- |
+| Outbox dispatcher | `outbox_dispatcher` (PT1M) | deliver queued email/SMS with retries; `FOR UPDATE SKIP LOCKED` |
+| Deposit workflow scheduler | — | expire pending deposits and raise reminders |
+| Reservation expiry scheduler | — | expire reservations and release property state |
+| Payment reminder scheduler | — | pre-due and overdue payment notifications |
+| Portal token cleanup scheduler | — | remove expired portal tokens |
+| GDPR retention scheduler | — | retention sweep / anonymization processing |
 
 Design pattern:
 
 - business transaction persists state first
 - secondary communication or follow-up work happens asynchronously
+
+`ShedLockConfig` (`JdbcTemplateLockProvider` + `usingDbTime()`) uses the `shedlock` table (changeset 052) to prevent duplicate execution across instances.
+
+`@Async` methods receive a full `SocieteContext` copy via `SocieteContextTaskDecorator`, which propagates `societeId`, `userId`, `role`, `superAdmin`, and `impersonatedBy` to worker threads.
 
 ## 8. Storage
 
@@ -197,8 +205,10 @@ The repository includes GitHub Actions workflows for:
 Implemented observability features include:
 
 - Actuator `health` and `info`
-- correlation IDs through a request filter
-- optional OTLP trace export
+- Correlation IDs through a request filter
+- Optional OTLP trace export via `management.otlp.*` when `OTEL_ENABLED=true`
+
+Note: `opentelemetry-exporter-otlp` is intentionally **not** on the classpath. It creates `BatchSpanProcessor_WorkerThread` background threads that never stop on JVM shutdown. Only `micrometer-tracing-bridge-otel` (the bridge) is present. Add back the exporter only when an OTel collector endpoint is configured and managed.
 
 ## 14. Confirmed Technical Gaps
 
