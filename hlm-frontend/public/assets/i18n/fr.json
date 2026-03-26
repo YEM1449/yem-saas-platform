@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "HLM CRM",
+    "logout": "Déconnexion"
+  },
+  "nav": {
+    "pipeline": "PIPELINE COMMERCIAL",
+    "analytics": "ANALYTIQUE",
+    "admin": "ADMINISTRATION",
+    "platform": "GESTION PLATEFORME",
+    "navigation": "NAVIGATION",
+    "properties": "Propriétés",
+    "contacts": "Contacts / Clients",
+    "prospects": "Prospects",
+    "projects": "Projets",
+    "reservations": "Réservations",
+    "contracts": "Contrats",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "users": "Gestion Utilisateurs",
+    "audit": "Journal d'audit",
+    "commissions": "Commissions",
+    "dashboard": "Tableau de bord",
+    "commercial": "Commercial",
+    "sales": "Ventes",
+    "cash": "Trésorerie",
+    "receivables": "Créances",
+    "societes": "Sociétés",
+    "tasks": "Tâches",
+    "backToApp": "Retour app"
+  },
+  "login": {
+    "title": "HLM Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "selectSociete": "Choisir une société",
+    "selectSocieteDesc": "Votre compte est associé à plusieurs sociétés.",
+    "back": "← Retour"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "noResults": "Aucun résultat trouvé.",
+    "actions": "Actions",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "yes": "Oui",
+    "no": "Non",
+    "previous": "← Précédent",
+    "next": "Suivant →",
+    "page": "Page",
+    "of": "sur",
+    "error": "Erreur",
+    "success": "Succès",
+    "sessionExpired": "Session expirée. Veuillez vous reconnecter.",
+    "accessDenied": "Accès refusé.",
+    "notFound": "Ressource introuvable.",
+    "all": "Tous"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "create": "Nouveau contact",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "phone": "Téléphone",
+    "email": "Email",
+    "type": "Type",
+    "status": "Statut"
+  },
+  "properties": {
+    "title": "Biens immobiliers",
+    "create": "Nouveau bien",
+    "reference": "Référence",
+    "type": "Type",
+    "price": "Prix",
+    "status": "Statut",
+    "project": "Projet",
+    "city": "Ville"
+  },
+  "impersonation": {
+    "banner": "Mode usurpation :",
+    "return": "Revenir au SuperAdmin"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

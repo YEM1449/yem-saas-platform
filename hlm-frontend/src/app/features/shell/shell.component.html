@@ -1,9 +1,9 @@
 <!-- Impersonation warning banner -->
 @if (isImpersonating) {
   <div style="background:#e74c3c;color:#fff;text-align:center;padding:8px 16px;font-size:14px;position:sticky;top:0;z-index:9999;">
-    ⚠ Mode usurpation : <strong>{{ impersonationTarget }}</strong>
+    ⚠ {{ 'impersonation.banner' | translate }} <strong>{{ impersonationTarget }}</strong>
     <button (click)="endImpersonation()" style="margin-left:16px;background:#fff;color:#e74c3c;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">
-      Revenir au SuperAdmin
+      {{ 'impersonation.return' | translate }}
     </button>
   </div>
 }
@@ -24,14 +24,14 @@
           <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
       </span>
-      <span class="brand-name">HLM CRM</span>
+      <span class="brand-name">{{ 'app.name' | translate }}</span>
     </div>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
 
       <!-- PIPELINE COMMERCIAL section -->
-      <div class="nav-section-label">PIPELINE COMMERCIAL</div>
+      <div class="nav-section-label">{{ 'nav.pipeline' | translate }}</div>
 
       <a routerLink="/app/dashboard/commercial" routerLinkActive="nav-active" class="nav-item"
          [routerLinkActiveOptions]="{ exact: true }">
@@ -40,7 +40,7 @@
           <rect x="8" y="7" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/>
           <rect x="14" y="3" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.5"/>
         </svg>
-        Tableau de bord
+        {{ 'nav.dashboard' | translate }}
       </a>
 
       <a routerLink="/app/projects" routerLinkActive="nav-active" class="nav-item">
@@ -50,7 +50,7 @@
                 stroke="currentColor" stroke-width="1.5"/>
           <path d="M6 10h8M6 13h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Projets
+        {{ 'nav.projects' | translate }}
       </a>
 
       <a routerLink="/app/properties" routerLinkActive="nav-active" class="nav-item">
@@ -59,7 +59,7 @@
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 18V12h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
-        Proprietes
+        {{ 'nav.properties' | translate }}
       </a>
 
       <a routerLink="/app/prospects" routerLinkActive="nav-active" class="nav-item">
@@ -69,7 +69,7 @@
           <path d="M10 3v1.5M10 15.5V17M17 10h-1.5M4.5 10H3"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Prospects
+        {{ 'nav.prospects' | translate }}
       </a>
 
       <a routerLink="/app/contacts" routerLinkActive="nav-active" class="nav-item">
@@ -79,7 +79,7 @@
           <circle cx="15" cy="14" r="3.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M13.5 14h3M15 12.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Contacts / Clients
+        {{ 'nav.contacts' | translate }}
       </a>
 
       <a routerLink="/app/tasks" routerLinkActive="nav-active" class="nav-item">
@@ -87,7 +87,7 @@
           <path d="M5 10l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
         </svg>
-        Tâches
+        {{ 'nav.tasks' | translate }}
       </a>
 
       <a routerLink="/app/reservations" routerLinkActive="nav-active" class="nav-item">
@@ -96,7 +96,7 @@
                 stroke="currentColor" stroke-width="1.5"/>
           <path d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Reservations
+        {{ 'nav.reservations' | translate }}
       </a>
 
       <a routerLink="/app/contracts" routerLinkActive="nav-active" class="nav-item">
@@ -105,17 +105,17 @@
                 stroke="currentColor" stroke-width="1.5"/>
           <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Contrats
+        {{ 'nav.contracts' | translate }}
       </a>
 
       <!-- ANALYTIQUE section -->
-      <div class="nav-section-label">ANALYTIQUE</div>
+      <div class="nav-section-label">{{ 'nav.analytics' | translate }}</div>
 
       <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active" class="nav-item">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
           <path d="M3 5h14M3 10h14M3 15h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Creances
+        {{ 'nav.receivables' | translate }}
       </a>
 
       <a routerLink="/app/commissions" routerLinkActive="nav-active" class="nav-item">
@@ -124,7 +124,7 @@
           <path d="M7.5 12.5c0 1.1.9 2 2 2H11a1.5 1.5 0 000-3H9a1.5 1.5 0 010-3h1.5a2 2 0 012 2M10 5.5V7m0 9v1.5"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Commissions
+        {{ 'nav.commissions' | translate }}
       </a>
 
       <a routerLink="/app/messages" routerLinkActive="nav-active" class="nav-item">
@@ -133,7 +133,7 @@
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M7 8h6M7 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Messages
+        {{ 'nav.messages' | translate }}
       </a>
 
       <a routerLink="/app/notifications" routerLinkActive="nav-active" class="nav-item">
@@ -142,12 +142,12 @@
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 15.5a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Notifications
+        {{ 'nav.notifications' | translate }}
       </a>
 
       <!-- ADMINISTRATION section (admin and manager only) -->
       @if (isAdminOrManager) {
-        <div class="nav-section-label">ADMINISTRATION</div>
+        <div class="nav-section-label">{{ 'nav.admin' | translate }}</div>
 
         <a routerLink="/app/audit" routerLinkActive="nav-active" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
@@ -155,7 +155,7 @@
             <circle cx="16" cy="15" r="2.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M18 17l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          Journal d'audit
+          {{ 'nav.audit' | translate }}
         </a>
 
         @if (isAdmin) {
@@ -167,7 +167,7 @@
               <path d="M14 11l1.5 1.5L18 10" stroke="currentColor" stroke-width="1.5"
                     stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Gestion Utilisateurs
+            {{ 'nav.users' | translate }}
           </a>
         }
       }
@@ -183,12 +183,13 @@
           <span class="user-role">{{ userRoleLabel }}</span>
         </div>
       </div>
+      <app-language-switcher />
       <button class="logout-btn" (click)="logout()" title="Sign out" data-testid="logout-button">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Sign out
+        {{ 'app.logout' | translate }}
       </button>
     </div>
 

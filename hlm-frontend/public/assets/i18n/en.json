@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "HLM CRM",
+    "logout": "Logout"
+  },
+  "nav": {
+    "pipeline": "COMMERCIAL PIPELINE",
+    "analytics": "ANALYTICS",
+    "admin": "ADMINISTRATION",
+    "platform": "PLATFORM MANAGEMENT",
+    "navigation": "NAVIGATION",
+    "properties": "Properties",
+    "contacts": "Contacts / Clients",
+    "prospects": "Prospects",
+    "projects": "Projects",
+    "reservations": "Reservations",
+    "contracts": "Contracts",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "users": "User Management",
+    "audit": "Audit Log",
+    "commissions": "Commissions",
+    "dashboard": "Dashboard",
+    "commercial": "Commercial",
+    "sales": "Sales",
+    "cash": "Cash Flow",
+    "receivables": "Receivables",
+    "societes": "Companies",
+    "tasks": "Tasks",
+    "backToApp": "Back to app"
+  },
+  "login": {
+    "title": "HLM Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "selectSociete": "Select a company",
+    "selectSocieteDesc": "Your account is linked to multiple companies.",
+    "back": "← Back"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found.",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No",
+    "previous": "← Previous",
+    "next": "Next →",
+    "page": "Page",
+    "of": "of",
+    "error": "Error",
+    "success": "Success",
+    "sessionExpired": "Session expired. Please log in again.",
+    "accessDenied": "Access denied.",
+    "notFound": "Resource not found.",
+    "all": "All"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "create": "New contact",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "email": "Email",
+    "type": "Type",
+    "status": "Status"
+  },
+  "properties": {
+    "title": "Properties",
+    "create": "New property",
+    "reference": "Reference",
+    "type": "Type",
+    "price": "Price",
+    "status": "Status",
+    "project": "Project",
+    "city": "City"
+  },
+  "impersonation": {
+    "banner": "Impersonating:",
+    "return": "Return to SuperAdmin"
+  },
+  "language": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

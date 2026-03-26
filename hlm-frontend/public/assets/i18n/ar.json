@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "HLM CRM",
+    "logout": "تسجيل الخروج"
+  },
+  "nav": {
+    "pipeline": "المسار التجاري",
+    "analytics": "التحليلات",
+    "admin": "الإدارة",
+    "platform": "إدارة المنصة",
+    "navigation": "التنقل",
+    "properties": "العقارات",
+    "contacts": "جهات الاتصال / العملاء",
+    "prospects": "العملاء المحتملون",
+    "projects": "المشاريع",
+    "reservations": "الحجوزات",
+    "contracts": "العقود",
+    "notifications": "الإشعارات",
+    "messages": "الرسائل",
+    "users": "إدارة المستخدمين",
+    "audit": "سجل المراجعة",
+    "commissions": "العمولات",
+    "dashboard": "لوحة القيادة",
+    "commercial": "تجاري",
+    "sales": "المبيعات",
+    "cash": "التدفق النقدي",
+    "receivables": "المستحقات",
+    "societes": "الشركات",
+    "tasks": "المهام",
+    "backToApp": "العودة للتطبيق"
+  },
+  "login": {
+    "title": "HLM Login",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "دخول",
+    "submitting": "جاري الدخول...",
+    "selectSociete": "اختر شركة",
+    "selectSocieteDesc": "حسابك مرتبط بعدة شركات.",
+    "back": "→ رجوع"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "add": "إضافة",
+    "search": "بحث",
+    "filter": "تصفية",
+    "noResults": "لم يتم العثور على نتائج.",
+    "actions": "إجراءات",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "yes": "نعم",
+    "no": "لا",
+    "previous": "السابق ←",
+    "next": "→ التالي",
+    "page": "صفحة",
+    "of": "من",
+    "error": "خطأ",
+    "success": "نجاح",
+    "sessionExpired": "انتهت الجلسة. الرجاء تسجيل الدخول مجدداً.",
+    "accessDenied": "الوصول مرفوض.",
+    "notFound": "المورد غير موجود.",
+    "all": "الكل"
+  },
+  "contacts": {
+    "title": "جهات الاتصال",
+    "create": "جهة اتصال جديدة",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "type": "النوع",
+    "status": "الحالة"
+  },
+  "properties": {
+    "title": "العقارات",
+    "create": "عقار جديد",
+    "reference": "المرجع",
+    "type": "النوع",
+    "price": "السعر",
+    "status": "الحالة",
+    "project": "المشروع",
+    "city": "المدينة"
+  },
+  "impersonation": {
+    "banner": "وضع الانتحال:",
+    "return": "العودة للمسؤول"
+  },
+  "language": {
+    "label": "اللغة",
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

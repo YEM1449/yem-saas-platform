@@ -11,13 +11,13 @@
         </svg>
       </span>
       <div class="sa-brand-text">
-        <span class="sa-brand-name">HLM CRM</span>
+        <span class="sa-brand-name">{{ 'app.name' | translate }}</span>
         <span class="sa-brand-sub">SUPER ADMIN</span>
       </div>
     </div>
 
     <nav class="sa-nav">
-      <div class="sa-nav-section-label">GESTION PLATEFORME</div>
+      <div class="sa-nav-section-label">{{ 'nav.platform' | translate }}</div>
 
       <a routerLink="/superadmin/societes" routerLinkActive="sa-nav-active" class="sa-nav-item">
         <svg class="sa-nav-icon" viewBox="0 0 20 20" fill="none">
@@ -25,26 +25,27 @@
           <path d="M6 18v-4h8v4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M2 8l8-5 8 5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
-        Sociétés
+        {{ 'nav.societes' | translate }}
       </a>
 
-      <div class="sa-nav-section-label">NAVIGATION</div>
+      <div class="sa-nav-section-label">{{ 'nav.navigation' | translate }}</div>
 
       <a routerLink="/app/properties" class="sa-nav-item">
         <svg class="sa-nav-icon" viewBox="0 0 20 20" fill="none">
           <path d="M10 2L2 9h2v9h5v-5h2v5h5V9h2L10 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
-        Retour app
+        {{ 'nav.backToApp' | translate }}
       </a>
     </nav>
 
     <div class="sa-sidebar-footer">
+      <app-language-switcher />
       <button class="sa-logout-btn" (click)="logout()">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Se déconnecter
+        {{ 'app.logout' | translate }}
       </button>
     </div>
   </aside>

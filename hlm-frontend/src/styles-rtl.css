@@ -1,0 +1,42 @@
+/* RTL overrides for Arabic language support */
+
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .main-content {
+  margin-right: 240px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .sa-sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .sa-main-content {
+  margin-right: 240px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] table th,
+[dir="rtl"] table td {
+  text-align: right;
+}
+
+[dir="rtl"] .filter-bar {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .back-link {
+  direction: rtl;
+}
+
+[dir="rtl"] .lang-switcher {
+  flex-direction: row-reverse;
+}
