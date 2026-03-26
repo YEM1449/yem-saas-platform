@@ -1,53 +1,253 @@
-.login-container {
-  max-width: 360px;
-  margin: 80px auto;
-  padding: 24px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+/* ================================================================
+   Login — Full-page branded authentication screen
+   UX rationale: single-focus layout removes all distraction;
+   gradient backdrop creates depth without heavy imagery;
+   progressive disclosure (form → société selection) keeps
+   cognitive load minimal at each step.
+   ================================================================ */
+
+/* ── Page wrapper ─────────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37,99,235,.12) 0%, transparent 70%),
+    var(--c-bg, #f8fafc);
+  padding: var(--sp-6, 24px) var(--sp-4, 16px);
 }
 
-h1 {
-  margin: 0 0 20px;
-  font-size: 1.4rem;
-}
-
-.field {
-  margin-bottom: 12px;
-}
-
-label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-input {
+/* ── Card ─────────────────────────────────────────────────────── */
+.login-card {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  max-width: 400px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-xl, 16px);
+  box-shadow: var(--sh-xl, 0 20px 25px -5px rgba(0,0,0,.08));
+  overflow: hidden;
+}
+
+/* ── Card header (brand strip) ───────────────────────────────── */
+.login-header {
+  padding: var(--sp-8, 32px) var(--sp-8, 32px) var(--sp-6, 24px);
+  text-align: center;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  border-radius: var(--r-lg, 12px);
+  margin-bottom: var(--sp-4, 16px);
+  box-shadow: 0 4px 12px rgba(37,99,235,.3);
+}
+
+.login-title {
+  margin: 0 0 var(--sp-1, 4px);
+  font-size: var(--text-2xl, 1.5rem);
+  font-weight: var(--fw-bold, 700);
+  letter-spacing: var(--ls-tight, -0.025em);
+  color: var(--c-text, #0f172a);
+  line-height: var(--lh-tight, 1.25);
+}
+
+.login-subtitle {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--c-text-secondary, #475569);
+}
+
+/* ── Card body (form) ─────────────────────────────────────────── */
+.login-body {
+  padding: var(--sp-7, 28px) var(--sp-8, 32px) var(--sp-8, 32px);
+}
+
+/* ── Form fields ──────────────────────────────────────────────── */
+.field {
+  margin-bottom: var(--sp-5, 20px);
+}
+
+.field label {
+  display: block;
+  margin-bottom: var(--sp-1-5, 6px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--c-text, #0f172a);
+}
+
+.field input {
+  width: 100%;
+  padding: var(--sp-2-5, 10px) var(--sp-3, 12px);
+  font-size: var(--text-base, 1rem);
+  font-family: var(--font, inherit);
+  color: var(--c-text, #0f172a);
+  background: var(--c-surface, #fff);
+  border: 1.5px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  transition: border-color var(--tr, 150ms ease), box-shadow var(--tr, 150ms ease);
+  outline: none;
   box-sizing: border-box;
 }
 
-button {
-  width: 100%;
-  padding: 10px;
-  background: #1a73e8;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+.field input:hover {
+  border-color: var(--c-border-strong, #cbd5e1);
 }
 
-button:disabled {
-  opacity: 0.6;
+.field input:focus {
+  border-color: var(--c-primary-400, #60a5fa);
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(37,99,235,.2));
+}
+
+/* ── Submit button ────────────────────────────────────────────── */
+.btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2, 8px);
+  width: 100%;
+  min-height: var(--touch-target, 44px);
+  padding: var(--sp-2-5, 10px) var(--sp-4, 16px);
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--fw-semibold, 600);
+  font-family: var(--font, inherit);
+  color: #fff;
+  background: var(--c-primary, #2563eb);
+  border: none;
+  border-radius: var(--r-md, 8px);
+  cursor: pointer;
+  transition: background var(--tr, 150ms ease), box-shadow var(--tr, 150ms ease),
+              transform var(--tr-fast, 100ms ease);
+  margin-top: var(--sp-2, 8px);
+}
+
+.btn-login:hover:not(:disabled) {
+  background: var(--c-primary-hover, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(37,99,235,.35);
+  transform: translateY(-1px);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-login:focus-visible {
+  outline: 3px solid rgba(37,99,235,.4);
+  outline-offset: 2px;
+}
+
+.btn-login:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner inside button (signature micro-interaction) */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Error state ──────────────────────────────────────────────── */
+.login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2, 8px);
+  padding: var(--sp-3, 12px) var(--sp-3-5, 14px);
+  background: var(--c-danger-light, #fef2f2);
+  border: 1px solid var(--c-danger-border, #fecaca);
+  border-radius: var(--r-md, 8px);
+  margin-bottom: var(--sp-4, 16px);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--c-danger, #dc2626);
+  line-height: var(--lh-normal, 1.5);
+}
+
+/* ── Card footer (language switcher) ─────────────────────────── */
+.login-footer {
+  padding: var(--sp-4, 16px) var(--sp-8, 32px);
+  border-top: 1px solid var(--c-border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2, 8px);
+}
+
+.login-footer-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+/* ── Société selection (step 2) ───────────────────────────────── */
+.societe-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2, 8px);
+  margin: var(--sp-5, 20px) 0;
+}
+
+.societe-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  width: 100%;
+  min-height: var(--touch-target, 44px);
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  background: var(--c-surface, #fff);
+  border: 1.5px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-medium, 500);
+  font-family: var(--font, inherit);
+  color: var(--c-text, #0f172a);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--tr), background var(--tr), box-shadow var(--tr);
+}
+
+.societe-choice:hover:not(:disabled) {
+  border-color: var(--c-primary-400, #60a5fa);
+  background: var(--c-primary-50, #eff6ff);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+.societe-choice:focus-visible {
+  outline: 3px solid rgba(37,99,235,.3);
+  outline-offset: 1px;
+}
+
+.societe-choice:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.error {
-  color: #d32f2f;
-  font-size: 0.85rem;
-  margin: 8px 0;
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1-5, 6px);
+  background: transparent;
+  border: none;
+  padding: var(--sp-2, 8px) 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font, inherit);
+  color: var(--c-text-secondary, #475569);
+  cursor: pointer;
+  transition: color var(--tr);
 }
+
+.btn-back:hover { color: var(--c-primary, #2563eb); }

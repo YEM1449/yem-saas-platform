@@ -36,9 +36,37 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .headers(h -> {
+                    // Content-Security-Policy: restrict resource origins; block framing;
+                    // allow inline styles (Angular requirement); restrict form submissions.
                     h.contentSecurityPolicy(csp -> csp.policyDirectives(
-                            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"));
+                            "default-src 'self'; " +
+                            "script-src 'self'; " +
+                            "style-src 'self' 'unsafe-inline'; " +
+                            "img-src 'self' data:; " +
+                            "font-src 'self'; " +
+                            "connect-src 'self'; " +
+                            "frame-ancestors 'none'; " +
+                            "form-action 'self'; " +
+                            "base-uri 'self'"));
+                    // Clickjacking protection (belt-and-suspenders alongside CSP frame-ancestors)
                     h.frameOptions(fo -> fo.deny());
+                    // Prevent MIME-type sniffing
+                    h.contentTypeOptions(ct -> {});
+                    // Referrer: send origin only on same-site; omit on cross-origin downgrade
+                    h.referrerPolicy(rp -> rp.policy(
+                            org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter
+                                    .ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+                    // Permissions-Policy: disable sensors/media not used by this app
+                    // (using StaticHeadersWriter — permissionsPolicy() deprecated in Spring Security 6.4)
+                    h.addHeaderWriter(new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                            "Permissions-Policy",
+                            "geolocation=(), microphone=(), camera=(), " +
+                            "payment=(), usb=(), magnetometer=(), gyroscope=()"));
+                    // X-XSS-Protection: legacy browser safeguard (ignored by modern browsers,
+                    // harmless to keep for defense-in-depth)
+                    h.xssProtection(xss -> xss.headerValue(
+                            org.springframework.security.web.header.writers.XXssProtectionHeaderWriter
+                                    .HeaderValue.ENABLED_MODE_BLOCK));
                     // HSTS is only meaningful (and safe) when the connection is already over TLS.
                     // Emitting it over plain HTTP would cause browsers to block future plain-HTTP
                     // access, which is wrong if TLS is terminated externally.

@@ -1,74 +1,131 @@
-# YEM SaaS Platform
+# HLM CRM — YEM SaaS Platform
 
-YEM is a multi-societe real-estate CRM with:
+![CI Backend](https://github.com/yem/yem-saas-platform/actions/workflows/backend-ci.yml/badge.svg)
+![CI Frontend](https://github.com/yem/yem-saas-platform/actions/workflows/frontend-ci.yml/badge.svg)
+![Security Scan](https://github.com/yem/yem-saas-platform/actions/workflows/snyk.yml/badge.svg)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 
-- a Spring Boot backend in [hlm-backend](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend)
-- an Angular CRM and buyer portal in [hlm-frontend](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend)
-- PostgreSQL, optional Redis, optional S3-compatible storage, and async email/SMS delivery
+Multi-société real-estate CRM SaaS targeting Morocco.
+Built with Spring Boot 3 + Angular 19 + PostgreSQL.
 
-## What The System Does
+---
 
-The current codebase supports:
+## What it does
 
-- company (`societe`) administration for `SUPER_ADMIN`
-- company member management for `ADMIN`
-- CRM workflows for projects, properties, contacts, reservations, deposits, contracts, collections, commissions, messaging, notifications, tasks, and audit
-- a buyer-facing portal using one-time magic links
+- **SUPER_ADMIN** — platform management (société CRUD, user quotas, impersonation)
+- **ADMIN / MANAGER / AGENT** — full CRM: projects, properties, contacts, prospects, reservations, contracts, payments, commissions, tasks, documents, messaging, notifications
+- **Buyer portal** — magic-link authentication, contract status and payment schedule (read-only)
+- **Multi-language** — French (default), English, Arabic (RTL) — switchable per user without page reload
+
+---
 
 ## Architecture
 
-```text
-Browser
-  |- CRM SPA
-  |- Super-admin SPA
-  |- Buyer portal
-  v
-Angular / Nginx
-  |- /auth
-  |- /api
-  |- /api/portal
-  v
-Spring Boot API
-  |- security
-  |- business services
-  |- schedulers
-  v
-PostgreSQL
-
-Optional:
-  Redis
-  MinIO / S3-compatible object storage
-  SMTP
-  Twilio
 ```
+Browser (Angular 19)
+  CRM SPA /app/*          →  ADMIN / MANAGER / AGENT
+  Super-admin SPA /superadmin/*  →  SUPER_ADMIN
+  Buyer portal /portal/*  →  ROLE_PORTAL (magic-link)
+       │ HTTPS, TLS 1.2/1.3, HSTS preload
+       ▼
+Nginx  (TLS termination, CSP, security headers)
+       │ proxy_pass → localhost:8080
+       ▼
+Spring Boot 3 API
+  JWT auth  │  Rate limiting  │  RLS context aspect
+  23 modules: audit, auth, commission, contact, contract,
+              dashboard, deposit, document, gdpr, media,
+              notification, outbox, payments, portal,
+              project, property, reminder, reservation,
+              societe, task, user, usermanagement
+       │
+       ▼
+PostgreSQL 16  (Row-Level Security on all domain tables)
+   Optional:  Redis (cache)  │  MinIO / S3  │  SMTP  │  Twilio
+```
+
+---
 
 ## Quickstart
 
 ```bash
+# 1. Copy environment template
 cp .env.example .env
-docker compose up -d
-curl -s http://localhost:8080/actuator/health
+
+# 2. Start full stack (postgres, redis, minio, backend, frontend)
+docker compose up -d --wait --wait-timeout 180
+
+# 3. Verify backend health
+curl -s http://localhost:8080/actuator/health | jq .
+
+# 4. Open the app
+open http://localhost
 ```
 
-Then open:
+> **WSL2 + Docker Desktop:** export `DOCKER_HOST=unix:///mnt/wsl/docker-desktop/shared-sockets/host-services/docker.proxy.sock` before running Testcontainers-based integration tests.
 
-- frontend via `http://localhost`
-- backend docs via `http://localhost:8080/swagger-ui.html` when enabled
+---
 
 ## Seed Accounts
 
-Current seed users from Liquibase:
-
 | Email | Password | Role |
-| --- | --- | --- |
-| `admin@demo.ma` | `Admin123!Secure` | `ADMIN` |
-| `manager@demo.ma` | `Manager123!Sec` | `MANAGER` |
-| `agent@demo.ma` | `Agent123!Secure` | `AGENT` |
-| `superadmin@yourcompany.com` | `YourSecure2026!` | `SUPER_ADMIN` local/dev seed |
+|-------|----------|------|
+| `admin@acme.com` | `Admin123!Secure` | `ROLE_ADMIN` (société acme) |
+| `superadmin@yourcompany.com` | `YourSecure2026!` | `ROLE_SUPER_ADMIN` |
 
-## First `SUPER_ADMIN` Bootstrap
+> Other demo users seeded by changeset 045: `manager@demo.ma`, `agent@demo.ma`.
 
-You can also bootstrap the first platform operator explicitly:
+---
+
+## Local Development
+
+```bash
+# Backend only
+cd hlm-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+
+# Frontend only (proxies /api → :8080)
+cd hlm-frontend && npm start
+```
+
+---
+
+## Testing
+
+```bash
+# Backend unit tests
+cd hlm-backend && ./mvnw test
+
+# Backend integration tests (requires Docker)
+cd hlm-backend && ./mvnw failsafe:integration-test
+
+# Frontend unit tests
+cd hlm-frontend && npm test -- --watch=false
+
+# Production build check
+cd hlm-frontend && npm run build -- --configuration=production
+
+# E2E tests (requires full stack via docker compose)
+cd hlm-frontend && npx playwright test
+```
+
+---
+
+## Multi-Language Support
+
+The platform supports **French** (default), **English**, and **Arabic** (RTL).
+
+Users switch language via the FR / EN / ع buttons in the sidebar footer. The choice is:
+1. Stored in `localStorage` for instant re-apply on next load.
+2. Persisted to the backend via `PUT /auth/me/langue`.
+3. Applied on session restore — no re-login needed.
+
+Translation files live in `hlm-frontend/public/assets/i18n/`.
+
+---
+
+## First SUPER_ADMIN Bootstrap
+
+Create the first platform operator on a fresh deployment:
 
 ```bash
 APP_BOOTSTRAP_ENABLED=true \
@@ -77,59 +134,45 @@ APP_BOOTSTRAP_PASSWORD='YourSecure2026!' \
 cd hlm-backend && ./mvnw spring-boot:run
 ```
 
-After success, remove the bootstrap variables and restart normally.
+Remove the bootstrap variables and restart after the first run.
 
-## Important Auth Note
+---
 
-The backend supports multi-societe users:
+## Security
 
-- one membership -> full JWT immediately
-- multiple memberships -> partial token plus `requiresSocieteSelection=true`
-- client must then call `POST /auth/switch-societe`
+See [SECURITY.md](SECURITY.md) for the full threat model, security controls map, and vulnerability disclosure policy.
 
-This is already implemented in the backend contract.
+Key controls:
+- JWT HS256 with token-version revocation
+- Dual-bucket rate limiting (IP + identity)
+- Email-enumeration timing-attack mitigation
+- PostgreSQL Row-Level Security on all domain tables
+- CSP, HSTS preload, X-Frame-Options DENY, Permissions-Policy
+
+---
 
 ## Repository Map
 
 | Path | Purpose |
-| --- | --- |
-| [hlm-backend](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend) | Spring Boot application |
-| [hlm-frontend](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend) | Angular application |
-| [docs](/home/yem/CRM-HLM/yem-saas-platform/docs) | architecture, specs, runbook, guides |
-| [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts) | smoke tests and API helpers |
-| [.github/workflows](/home/yem/CRM-HLM/yem-saas-platform/.github/workflows) | CI/CD workflows |
+|------|---------|
+| [hlm-backend/](hlm-backend/) | Spring Boot application (Java 21, Maven) |
+| [hlm-frontend/](hlm-frontend/) | Angular 19 application |
+| [docs/](docs/) | Architecture, specs, runbook, guides |
+| [scripts/](scripts/) | Smoke tests and API helpers |
+| [.github/workflows/](.github/workflows/) | CI/CD workflows |
+| [SECURITY.md](SECURITY.md) | Threat model and disclosure policy |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+
+---
 
 ## Key Documentation
 
 | Document | Purpose |
-| --- | --- |
-| [docs/index.md](docs/index.md) | documentation index |
-| [docs/context/ARCHITECTURE.md](docs/context/ARCHITECTURE.md) | architecture overview |
-| [docs/context/DATA_MODEL.md](docs/context/DATA_MODEL.md) | inferred data model |
-| [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | workflow and business behavior |
-| [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | technical implementation details |
-| [docs/spec/api-reference.md](docs/spec/api-reference.md) | endpoint catalog |
-| [docs/spec/requirements-spec.md](docs/spec/requirements-spec.md) | reconstructed requirements |
-| [docs/runbook-operations.md](docs/runbook-operations.md) | operational runbook |
-| [docs/guides/engineer/getting-started.md](docs/guides/engineer/getting-started.md) | engineer setup |
-
-## Testing
-
-```bash
-# Backend unit tests
-cd hlm-backend && ./mvnw test
-
-# Backend unit + integration tests (requires Docker for Testcontainers)
-cd hlm-backend && ./mvnw verify
-
-# Frontend unit tests
-cd hlm-frontend && npm test -- --watch=false
-
-# Frontend build check
-cd hlm-frontend && npm run build
-
-# E2E tests (requires full stack running via docker compose)
-cd hlm-frontend && npx playwright test
-```
-
-Smoke helpers live in [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts).
+|----------|---------|
+| [docs/context/ARCHITECTURE.md](docs/context/ARCHITECTURE.md) | Architecture overview |
+| [docs/context/DATA_MODEL.md](docs/context/DATA_MODEL.md) | Data model |
+| [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | Business workflows |
+| [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Technical implementation |
+| [docs/spec/api-reference.md](docs/spec/api-reference.md) | Endpoint catalogue |
+| [docs/runbook-operations.md](docs/runbook-operations.md) | Operational runbook |
+| [docs/guides/engineer/getting-started.md](docs/guides/engineer/getting-started.md) | Engineer setup |

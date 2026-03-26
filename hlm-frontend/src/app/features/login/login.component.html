@@ -1,46 +1,113 @@
-<div class="login-container">
-  <h1>{{ 'login.title' | translate }}</h1>
+<div class="login-page">
+  <div class="login-card">
 
-  @if (!showSocieteSelection) {
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-      <div class="field">
-        <label for="email">{{ 'login.email' | translate }}</label>
-        <input id="email" name="email" type="email" [(ngModel)]="form.email" required data-testid="email" />
+    <!-- Brand header -->
+    <div class="login-header">
+      <div class="login-logo" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <rect x="3" y="10" width="20" height="14" rx="2" stroke="white" stroke-width="1.8"/>
+          <path d="M9 24v-6h8v6" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M1 10l12-8 12 8" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
       </div>
-
-      <div class="field">
-        <label for="password">{{ 'login.password' | translate }}</label>
-        <input id="password" name="password" type="password" [(ngModel)]="form.password" required data-testid="password" />
-      </div>
-
-      @if (error) {
-        <p class="error" data-testid="error-message">{{ error }}</p>
-      }
-
-      <button type="submit" [disabled]="loading || loginForm.invalid" data-testid="login-button">
-        {{ loading ? ('login.submitting' | translate) : ('login.submit' | translate) }}
-      </button>
-    </form>
-  }
-
-  @if (showSocieteSelection) {
-    <div class="societe-selection">
-      <h2>{{ 'login.selectSociete' | translate }}</h2>
-      <p>{{ 'login.selectSocieteDesc' | translate }}</p>
-
-      @for (s of societes; track s.id) {
-        <button class="societe-choice" (click)="selectSociete(s.id)" [disabled]="loading">
-          {{ s.nom }}
-        </button>
-      }
-
-      @if (error) {
-        <p class="error">{{ error }}</p>
-      }
-
-      <button class="back-link" (click)="backToLogin()" [disabled]="loading">
-        {{ 'login.back' | translate }}
-      </button>
+      <h1 class="login-title">HLM CRM</h1>
+      <p class="login-subtitle">{{ 'login.title' | translate }}</p>
     </div>
-  }
+
+    <!-- Login form -->
+    @if (!showSocieteSelection) {
+      <div class="login-body">
+
+        @if (error) {
+          <div class="login-error" role="alert" data-testid="error-message">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;margin-top:1px">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            {{ error }}
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
+          <div class="field">
+            <label for="email">{{ 'login.email' | translate }}</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              [(ngModel)]="form.email"
+              required
+              data-testid="email"
+              [attr.aria-invalid]="error ? 'true' : null"
+            />
+          </div>
+
+          <div class="field">
+            <label for="password">{{ 'login.password' | translate }}</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              [(ngModel)]="form.password"
+              required
+              data-testid="password"
+              [attr.aria-invalid]="error ? 'true' : null"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="btn-login"
+            [disabled]="loading || loginForm.invalid"
+            data-testid="login-button">
+            @if (loading) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+            }
+            {{ loading ? ('login.submitting' | translate) : ('login.submit' | translate) }}
+          </button>
+        </form>
+      </div>
+    }
+
+    <!-- Société selection (step 2) -->
+    @if (showSocieteSelection) {
+      <div class="login-body">
+        <h2 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:var(--c-text)">
+          {{ 'login.selectSociete' | translate }}
+        </h2>
+        <p style="margin:0 0 4px;font-size:.875rem;color:var(--c-text-secondary)">
+          {{ 'login.selectSocieteDesc' | translate }}
+        </p>
+
+        @if (error) {
+          <div class="login-error" role="alert">{{ error }}</div>
+        }
+
+        <div class="societe-list">
+          @for (s of societes; track s.id) {
+            <button class="societe-choice" (click)="selectSociete(s.id)" [disabled]="loading">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <rect x="2" y="8" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M2 8l8-5 8 5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+              {{ s.nom }}
+            </button>
+          }
+        </div>
+
+        <button class="btn-back" (click)="backToLogin()" [disabled]="loading">
+          ← {{ 'login.back' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- Footer: language switcher -->
+    <div class="login-footer">
+      <span class="login-footer-label">{{ 'language.label' | translate }}</span>
+      <app-language-switcher />
+    </div>
+
+  </div>
 </div>

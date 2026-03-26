@@ -3,6 +3,7 @@
    Design tokens, resets, and shared utility classes.
    Individual components can rely on these without duplicating CSS.
    ================================================================ */
+@import './design-tokens.css';
 
 /* ── 1. Design Tokens (CSS Custom Properties) ─────────────────── */
 :root {
