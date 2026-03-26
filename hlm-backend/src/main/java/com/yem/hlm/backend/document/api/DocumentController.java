@@ -6,6 +6,7 @@ import com.yem.hlm.backend.document.domain.DocumentEntityType;
 import com.yem.hlm.backend.document.service.DocumentService;
 import com.yem.hlm.backend.document.service.DocumentService.DocumentDownload;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,7 @@ import java.util.UUID;
  * DELETE /api/documents/{id}                                ← delete (ADMIN/MANAGER)
  * </pre>
  */
+@Tag(name = "Documents", description = "Cross-entity document attachments")
 @RestController
 @RequestMapping("/api/documents")
 @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")

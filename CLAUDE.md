@@ -74,7 +74,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **051**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **053**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -108,8 +108,10 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 036–047 | User management: dedup email, indexes, version columns, extended fields, quotas, seed users, superadmin seed, rename tenant indexes |
 | 048–049 | Task and document tables |
 | 050 | RLS phase 1 (PostgreSQL Row-Level Security scaffolding) |
+| 051 | RLS phase 2 — all domain tables + nil-UUID system bypass |
+| 052 | ShedLock table for distributed scheduler locking |
 
-Next available changeset: **051**
+Next available changeset: **053**
 
 ## CI Pipeline Map
 
@@ -160,10 +162,24 @@ When adding a new service method or repository query:
 
 ## Current Backlog
 
-See `tasks/IMPLEMENTATION_PLAN.md` — Wave 3 complete:
+See `tasks/IMPLEMENTATION_PLAN.md` — Wave 4 complete:
 - Tasks 01–15: Security audit fixes + CI/CD ✅
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
-- Task 20: Production readiness — checklist in `tasks/20-production-readiness.md`
+- Task 20: Production readiness — Wave 4 hardening complete ✅
+
+### Wave 4 — Production Hardening (complete)
+
+| Priority | Task | Files |
+|---|---|---|
+| P0 | PostgreSQL RLS phase 2 — all domain tables + nil-UUID bypass | `RlsContextAspect.java`, changeset `051-rls-phase2-all-tables.yaml` |
+| P0 | Async boundary fix — SocieteContext propagation across @Async | `SocieteContextTaskDecorator.java`, `AsyncConfig.java` |
+| P1 | ShedLock distributed scheduler lock | `ShedLockConfig.java`, `OutboundDispatcherScheduler.java`, changeset `052-shedlock-table.yaml` |
+| P1 | Redis cache — PROJECTS_CACHE + SOCIETES_CACHE wired | `RedisCacheConfig.java` |
+| P1 | OTel / Prometheus metrics endpoint | `application.yml` — `management.metrics`, `management.otlp` |
+| P1 | Springdoc OpenAPI `@Tag` on all 21 controllers | All `*Controller.java` files |
+| P2 | Self-service profile endpoint | `UserProfileController`, `UserProfileService`, `UserProfileResponse`, `UpdateProfileRequest` |
+| P2 | Quota enforcement | `QuotaService` — wired into `InvitationService` + `AdminUserService` |
+| P2 | Invitation rate limiting (10 req/h per admin) | `RateLimiterService.checkInvitation()`, `RateLimitProperties.invitation`, `UserManagementController` |
 
 ## Quick Commands
 

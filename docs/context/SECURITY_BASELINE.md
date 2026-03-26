@@ -158,16 +158,22 @@ Config keys:
 
 ## Data Isolation
 
-Application-layer isolation is the primary control:
+Isolation operates on three layers:
 
-- services resolve the active societe from `SocieteContext`
-- clients do not supply societe scope directly for CRM resources
+**Application layer (primary control):**
+- services resolve active societe from `SocieteContext` via `requireSocieteId()`
+- all repository queries include `WHERE societe_id = :societeId`
 - portal services further constrain reads to the current buyer contact
 
-Database defense in depth:
+**AOP layer:**
+- `RlsContextAspect` at `@Order(LOWEST_PRECEDENCE - 1)` fires inside the open transaction
+- sets PostgreSQL transaction-local variable `app.current_societe_id` via `SET LOCAL`
+- `TransactionOrderConfig` ensures transaction interceptor is outer (order `LOWEST_PRECEDENCE - 10`) so RLS aspect runs inside an open transaction
 
-- `RlsContextAspect` sets PostgreSQL session variable `app.current_societe_id`
-- RLS is currently enabled only on `contact` and `property`
+**Database layer (Wave 4, changeset 051):**
+- RLS enabled on all 13 domain tables: `contact`, `property`, `project`, `property_reservation`, `sale_contract`, `deposit`, `commission_rule`, `task`, `document`, `notification`, `property_media`, `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`
+- Nil-UUID `00000000-0000-0000-0000-000000000000` is the system/scheduler bypass sentinel — allows schedulers to operate cross-société without impersonating a real company
+- Policy: nil-UUID → all rows; real UUID → matching rows only; unset → no rows
 
 ## Transport and Browser Security
 

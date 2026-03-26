@@ -5,6 +5,7 @@ import com.yem.hlm.backend.reservation.api.dto.ConvertReservationToDepositReques
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
 import com.yem.hlm.backend.reservation.api.dto.ReservationResponse;
 import com.yem.hlm.backend.reservation.service.ReservationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Reservations", description = "Property reservation (hold) management")
 @RestController
 @RequestMapping("/api/reservations")
 public class ReservationController {

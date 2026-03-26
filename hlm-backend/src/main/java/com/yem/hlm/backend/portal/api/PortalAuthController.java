@@ -4,6 +4,7 @@ import com.yem.hlm.backend.portal.api.dto.MagicLinkRequest;
 import com.yem.hlm.backend.portal.api.dto.MagicLinkResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTokenVerifyResponse;
 import com.yem.hlm.backend.portal.service.PortalAuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>Both endpoints are explicitly permitted in {@code SecurityConfig}
  * (no JWT required).
  */
+@Tag(name = "Portal Auth", description = "Magic-link portal authentication (public)")
 @RestController
 @RequestMapping("/api/portal/auth")
 public class PortalAuthController {

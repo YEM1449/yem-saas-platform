@@ -3,6 +3,7 @@ package com.yem.hlm.backend.audit.api;
 import com.yem.hlm.backend.audit.api.dto.AuditEventResponse;
 import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.societe.SocieteContext;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ import java.util.UUID;
  *
  * RBAC: ADMIN and MANAGER only.
  */
+@Tag(name = "Audit", description = "Read-only commercial audit log")
 @RestController
 @RequestMapping("/api/audit/commercial")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")

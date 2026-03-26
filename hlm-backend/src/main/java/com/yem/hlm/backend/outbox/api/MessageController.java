@@ -6,6 +6,7 @@ import com.yem.hlm.backend.outbox.api.dto.SendMessageResponse;
 import com.yem.hlm.backend.outbox.domain.MessageChannel;
 import com.yem.hlm.backend.outbox.domain.MessageStatus;
 import com.yem.hlm.backend.outbox.service.MessageComposeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * <p>Note: This controller intentionally lives at {@code /api/messages} to avoid ambiguity
  * with the existing {@code /api/notifications} in-app notification endpoint.
  */
+@Tag(name = "Messages", description = "Outbound SMS and email via the transactional outbox")
 @RestController
 @RequestMapping("/api/messages")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")

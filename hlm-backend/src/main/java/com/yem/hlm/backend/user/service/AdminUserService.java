@@ -6,6 +6,7 @@ import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
 import com.yem.hlm.backend.societe.domain.AppUserSociete;
 import com.yem.hlm.backend.societe.domain.AppUserSocieteId;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.api.dto.*;
 import com.yem.hlm.backend.user.domain.User;
@@ -28,18 +29,21 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final UserSecurityCacheService userSecurityCacheService;
     private final SecurityAuditLogger securityAuditLogger;
+    private final QuotaService quotaService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AdminUserService(UserRepository userRepository,
                             AppUserSocieteRepository appUserSocieteRepository,
                             PasswordEncoder passwordEncoder,
                             UserSecurityCacheService userSecurityCacheService,
-                            SecurityAuditLogger securityAuditLogger) {
+                            SecurityAuditLogger securityAuditLogger,
+                            QuotaService quotaService) {
         this.userRepository = userRepository;
         this.appUserSocieteRepository = appUserSocieteRepository;
         this.passwordEncoder = passwordEncoder;
         this.userSecurityCacheService = userSecurityCacheService;
         this.securityAuditLogger = securityAuditLogger;
+        this.quotaService = quotaService;
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +58,7 @@ public class AdminUserService {
     @Transactional
     public UserResponse create(CreateUserRequest request) {
         UUID societeId = requireSocieteId();
+        quotaService.enforceUserQuota(societeId);
 
         userRepository.findByEmail(request.email())
                 .ifPresent(existing -> {

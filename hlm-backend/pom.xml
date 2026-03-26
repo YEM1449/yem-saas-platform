@@ -188,15 +188,24 @@
 			<version>2.27.21</version>
 		</dependency>
 
-		<!-- OpenTelemetry — distributed tracing via OTLP exporter -->
-		<!-- Spring Boot 3.x Micrometer OTLP exporter (auto-configures from management.otlp.*) -->
+		<!-- OpenTelemetry — distributed tracing bridge (no OTLP exporter by default) -->
+		<!-- opentelemetry-exporter-otlp omitted: it spawns BatchSpanProcessor/BatchLogRecord -->
+		<!-- background threads that leak on shutdown. Add back when an OTEL collector is wired. -->
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-tracing-bridge-otel</artifactId>
 		</dependency>
+
+		<!-- ShedLock — distributed scheduler lock (prevents duplicate execution across nodes) -->
 		<dependency>
-			<groupId>io.opentelemetry</groupId>
-			<artifactId>opentelemetry-exporter-otlp</artifactId>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-spring</artifactId>
+			<version>6.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-provider-jdbc-template</artifactId>
+			<version>6.9.1</version>
 		</dependency>
 
 		<!-- Structured JSON logging (logstash encoder) -->

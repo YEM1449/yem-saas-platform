@@ -101,3 +101,7 @@ databaseChangeLog:
       file: db/changelog/changes/049-create-document-table.yaml
   - include:
       file: db/changelog/changes/050-enable-rls-phase1.yaml
+  - include:
+      file: db/changelog/changes/051-rls-phase2-all-tables.yaml
+  - include:
+      file: db/changelog/changes/052-shedlock-table.yaml

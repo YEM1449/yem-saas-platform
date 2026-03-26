@@ -132,10 +132,10 @@ services:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 90s
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
   hlm-frontend:

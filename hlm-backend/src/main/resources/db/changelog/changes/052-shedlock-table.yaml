@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: "052-shedlock-table"
+      author: "wave4-hardening"
+      comment: >
+        Creates the shedlock table required by ShedLock's JdbcTemplateLockProvider.
+        This table is used to prevent duplicate scheduler execution when multiple
+        backend instances share the same PostgreSQL database (horizontal scaling).
+        See ShedLockConfig for configuration details.
+      changes:
+        - createTable:
+            tableName: shedlock
+            columns:
+              - column:
+                  name: name
+                  type: VARCHAR(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lock_until
+                  type: TIMESTAMP(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_at
+                  type: TIMESTAMP(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_by
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: shedlock

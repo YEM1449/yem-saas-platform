@@ -2,6 +2,7 @@ package com.yem.hlm.backend.user.api;
 
 import com.yem.hlm.backend.user.api.dto.*;
 import com.yem.hlm.backend.user.service.AdminUserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * All operations are automatically scoped to the caller's société via
  * {@code SocieteContext} (populated by {@code JwtAuthenticationFilter}).
  */
+@Tag(name = "Users", description = "Société-scoped user administration")
 @RestController
 @RequestMapping("/api/users")
 @PreAuthorize("hasRole('ADMIN')")

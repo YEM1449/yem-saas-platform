@@ -3,6 +3,7 @@ package com.yem.hlm.backend.dashboard.api;
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.service.ReceivablesDashboardService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import java.util.UUID;
  *   <li>AGENT — server-enforced scope to own contracts.</li>
  * </ul>
  */
+@Tag(name = "Dashboard \u2013 Receivables", description = "Receivables aging and collection analytics")
 @RestController
 @RequestMapping("/api/dashboard/receivables")
 public class ReceivablesDashboardController {

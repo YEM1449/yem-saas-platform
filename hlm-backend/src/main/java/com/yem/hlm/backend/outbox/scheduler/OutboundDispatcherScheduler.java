@@ -2,6 +2,7 @@ package com.yem.hlm.backend.outbox.scheduler;
 
 import com.yem.hlm.backend.outbox.service.OutboundDispatcherService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ public class OutboundDispatcherScheduler {
     }
 
     @Scheduled(fixedDelayString = "${app.outbox.polling-interval-ms:5000}")
+    @SchedulerLock(name = "outbox_dispatcher", lockAtMostFor = "PT1M", lockAtLeastFor = "PT200MS")
     public void poll() {
         societeContextHelper.runAsSystem(dispatcherService::runDispatch);
     }

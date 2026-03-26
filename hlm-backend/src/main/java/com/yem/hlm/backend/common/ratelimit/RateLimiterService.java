@@ -40,6 +40,22 @@ public class RateLimiterService {
     }
 
     /**
+     * Checks and consumes one invitation token for the given admin userId.
+     * Keyed per admin so each admin gets their own bucket (10 invitations / hour by default).
+     *
+     * @throws RateLimitExceededException if the rate limit is exceeded
+     */
+    public void checkInvitation(String adminId) {
+        RateLimitProperties.Limit config = properties.getInvitation();
+        Bucket bucket = buckets.computeIfAbsent(
+                "invitation:" + adminId,
+                k -> buildBucket(config.getCapacity(), config.getRefillPeriod()));
+        if (!bucket.tryConsume(1)) {
+            throw new RateLimitExceededException(config.getExceededMessage());
+        }
+    }
+
+    /**
      * Checks and consumes one portal magic-link token for the given email.
      *
      * @throws RateLimitExceededException if the rate limit is exceeded

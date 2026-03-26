@@ -126,7 +126,7 @@ Current route inventory is defined in [app.routes.ts](/home/yem/CRM-HLM/yem-saas
 
 | Component | Behavior |
 | --- | --- |
-| `OutboundDispatcherService` | Polls `outbound_message`, claims batches with `FOR UPDATE SKIP LOCKED`, retries failed sends |
+| `OutboundDispatcherService` | Polls `outbound_message`, claims batches with `FOR UPDATE SKIP LOCKED`, retries failed sends; guarded by `@SchedulerLock(name="outbox_dispatcher")` via ShedLock |
 | `DepositWorkflowScheduler` | Expires overdue pending deposits and produces due reminders |
 | `ReservationExpiryScheduler` | Expires active reservations after their expiry date |
 | `ReminderService` | Marks payment items overdue and emits reminders |
@@ -135,18 +135,47 @@ Current route inventory is defined in [app.routes.ts](/home/yem/CRM-HLM/yem-saas
 
 Schedulers that operate across companies use `SocieteContextHelper.runAsSystem(...)` and pass societe IDs explicitly where needed.
 
+`ShedLockConfig` (changeset 052 `shedlock` table) prevents duplicate scheduler runs in multi-instance deployments.
+
+### @Async Context Propagation
+
+`SocieteContextTaskDecorator` propagates all five ThreadLocal values to `@Async` worker threads:
+
+- `societeId`
+- `userId`
+- `role`
+- `superAdmin`
+- `impersonatedBy`
+
+Wired via `AsyncConfig` (`ThreadPoolTaskExecutor`). Without this decorator, `@Async` methods would see a null `SocieteContext`, causing `requireSocieteId()` to throw.
+
 ## Data Isolation Model
 
-Isolation is implemented primarily in application code:
+Isolation is implemented in three layers:
 
-- repository calls are scoped by `societeId`
-- `SecurityConfig` separates platform, CRM, and portal routes
-- method-level `@PreAuthorize` refines permissions
-- `RlsContextAspect` adds database-level defense in depth for `contact` and `property`
+- **Application layer**: repository calls are scoped by `societeId`; services call `requireSocieteId()` as first step
+- **Framework layer**: `SecurityConfig` separates platform, CRM, and portal routes; method-level `@PreAuthorize` refines permissions
+- **Database layer**: `RlsContextAspect` sets `app.current_societe_id` as a PostgreSQL transaction-local variable; RLS policies enforce isolation
+
+Wave 4 (changeset 051) extended RLS to all 13 domain tables:
+`contact`, `property`, `project`, `property_reservation`, `sale_contract`, `deposit`, `commission_rule`, `task`, `document`, `notification`, `property_media`, `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`
+
+RLS policy logic:
+- nil-UUID `00000000-0000-0000-0000-000000000000` → all rows visible (system/scheduler bypass)
+- real UUID → only rows where `societe_id` matches
+- unset or `NULL` → no rows visible
+
+## AOP Ordering — Transaction vs RLS
+
+Critical ordering enforced by `TransactionOrderConfig`:
+
+- `@EnableTransactionManagement(order = LOWEST_PRECEDENCE - 10)` → `TransactionInterceptor` is the **outer** proxy
+- `RlsContextAspect` at `@Order(LOWEST_PRECEDENCE - 1)` → fires **inside** the open transaction
+
+This ordering is mandatory. Reversing it causes `RlsContextAspect` to run the `SET LOCAL app.current_societe_id` call on a standalone connection (no transaction), which is immediately discarded. The subsequent Hibernate transaction would then run against a connection with no `current_societe_id` set, violating isolation.
 
 Important nuance:
 
-- PostgreSQL RLS is currently enabled only for `contact` and `property`, not the full schema
 - the migration history still contains older `tenant` artifacts used for data transition, but the runtime code uses `societe`
 
 ## Notable Consistency Findings

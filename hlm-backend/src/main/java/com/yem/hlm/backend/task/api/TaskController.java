@@ -6,6 +6,7 @@ import com.yem.hlm.backend.task.api.dto.UpdateTaskRequest;
 import com.yem.hlm.backend.task.domain.TaskStatus;
 import com.yem.hlm.backend.task.service.TaskService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,7 @@ import java.util.UUID;
  * GET    /api/tasks/by-property/{propertyId}← tasks linked to a property
  * </pre>
  */
+@Tag(name = "Tasks", description = "Task and follow-up management")
 @RestController
 @RequestMapping("/api/tasks")
 @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")

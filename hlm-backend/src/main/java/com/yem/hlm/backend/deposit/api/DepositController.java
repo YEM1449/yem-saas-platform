@@ -4,6 +4,7 @@ import com.yem.hlm.backend.deposit.api.dto.*;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.deposit.service.pdf.ReservationDocumentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Tag(name = "Deposits", description = "Deposit (réservation notariale) lifecycle management")
 @RestController
 @RequestMapping("/api/deposits")
 public class DepositController {

@@ -2,6 +2,7 @@ package com.yem.hlm.backend.portal.api;
 
 import com.yem.hlm.backend.payments.api.dto.PaymentScheduleItemResponse;
 import com.yem.hlm.backend.portal.service.PortalContractService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.util.UUID;
 /**
  * Portal payment-schedule endpoints — ROLE_PORTAL only.
  */
+@Tag(name = "Portal \u2013 Payments", description = "Buyer portal payment schedule endpoints (ROLE_PORTAL)")
 @RestController
 @RequestMapping("/api/portal/contracts")
 @PreAuthorize("hasRole('PORTAL')")

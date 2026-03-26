@@ -1,0 +1,372 @@
+databaseChangeLog:
+  - changeSet:
+      id: "051-rls-phase2-all-tables"
+      author: "wave4-hardening"
+      comment: >
+        Phase 2 RLS: (a) Recreate contact/property policies with nil-UUID system bypass
+        so cross-société schedulers work correctly. (b) Extend RLS to all remaining
+        domain tables that carry societe_id. Defense-in-depth — application-layer
+        isolation (SocieteContext + WHERE clauses) remains the primary mechanism.
+
+        Policy logic:
+          • sid = nil-UUID (00000000-…) → all rows visible (system/scheduler bypass)
+          • sid = real UUID             → only rows where societe_id matches
+          • sid not set / NULL          → no rows (should never happen in production)
+
+        Tables covered: contact, property (updated), project, property_reservation,
+        sale_contract, deposit, commission_rule, task, document, notification,
+        property_media, payment_schedule_item, schedule_payment, schedule_item_reminder.
+        Excluded: outbound_message, portal_token, app_user, societe, app_user_societe
+        (no per-request societe_id filter needed on these infrastructure tables).
+        Note: v1 payment tables (payment_schedule, payment_call, payment) were dropped
+        by changeset 028 and are NOT referenced here.
+      changes:
+        - sql:
+            sql: |
+              -- ────────────────────────────────────────────────────────────────────
+              -- Helper: create a standard isolation policy on a given table.
+              -- Nil-UUID (00000000-…) is the system/scheduler bypass sentinel.
+              -- ────────────────────────────────────────────────────────────────────
+
+              -- CONTACT (update: drop old policy, recreate with bypass)
+              DROP POLICY IF EXISTS societe_isolation_contact ON contact;
+              CREATE POLICY societe_isolation_contact ON contact
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- PROPERTY (update: drop old policy, recreate with bypass)
+              DROP POLICY IF EXISTS societe_isolation_property ON property;
+              CREATE POLICY societe_isolation_property ON property
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- PROJECT
+              ALTER TABLE project ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE project FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_project ON project
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- PROPERTY_RESERVATION
+              ALTER TABLE property_reservation ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE property_reservation FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_property_reservation ON property_reservation
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- SALE_CONTRACT
+              ALTER TABLE sale_contract ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE sale_contract FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_sale_contract ON sale_contract
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- DEPOSIT
+              ALTER TABLE deposit ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE deposit FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_deposit ON deposit
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- COMMISSION_RULE
+              ALTER TABLE commission_rule ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE commission_rule FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_commission_rule ON commission_rule
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- TASK
+              ALTER TABLE task ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE task FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_task ON task
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- DOCUMENT
+              ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE document FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_document ON document
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- NOTIFICATION
+              ALTER TABLE notification ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE notification FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_notification ON notification
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- PROPERTY_MEDIA
+              ALTER TABLE property_media ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE property_media FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_property_media ON property_media
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- PAYMENT_SCHEDULE_ITEM (v2 payment table — replaces dropped v1 payment_schedule)
+              ALTER TABLE payment_schedule_item ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE payment_schedule_item FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_payment_schedule_item ON payment_schedule_item
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- SCHEDULE_PAYMENT (v2 cash-in records)
+              ALTER TABLE schedule_payment ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE schedule_payment FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_schedule_payment ON schedule_payment
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+              -- SCHEDULE_ITEM_REMINDER (v2 idempotency guard for payment reminders)
+              ALTER TABLE schedule_item_reminder ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE schedule_item_reminder FORCE ROW LEVEL SECURITY;
+              CREATE POLICY societe_isolation_schedule_item_reminder ON schedule_item_reminder
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+      rollback:
+        - sql:
+            sql: |
+              -- Restore strict (no-bypass) policies on contact and property
+              DROP POLICY IF EXISTS societe_isolation_contact ON contact;
+              CREATE POLICY societe_isolation_contact ON contact
+                USING (societe_id = current_setting('app.current_societe_id', true)::uuid)
+                WITH CHECK (societe_id = current_setting('app.current_societe_id', true)::uuid);
+
+              DROP POLICY IF EXISTS societe_isolation_property ON property;
+              CREATE POLICY societe_isolation_property ON property
+                USING (societe_id = current_setting('app.current_societe_id', true)::uuid)
+                WITH CHECK (societe_id = current_setting('app.current_societe_id', true)::uuid);
+
+              -- Disable RLS on newly added tables
+              DROP POLICY IF EXISTS societe_isolation_project ON project;
+              ALTER TABLE project DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_property_reservation ON property_reservation;
+              ALTER TABLE property_reservation DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_sale_contract ON sale_contract;
+              ALTER TABLE sale_contract DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_deposit ON deposit;
+              ALTER TABLE deposit DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_commission_rule ON commission_rule;
+              ALTER TABLE commission_rule DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_task ON task;
+              ALTER TABLE task DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_document ON document;
+              ALTER TABLE document DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_notification ON notification;
+              ALTER TABLE notification DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_property_media ON property_media;
+              ALTER TABLE property_media DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_payment_schedule_item ON payment_schedule_item;
+              ALTER TABLE payment_schedule_item DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_schedule_payment ON schedule_payment;
+              ALTER TABLE schedule_payment DISABLE ROW LEVEL SECURITY;
+
+              DROP POLICY IF EXISTS societe_isolation_schedule_item_reminder ON schedule_item_reminder;
+              ALTER TABLE schedule_item_reminder DISABLE ROW LEVEL SECURITY;

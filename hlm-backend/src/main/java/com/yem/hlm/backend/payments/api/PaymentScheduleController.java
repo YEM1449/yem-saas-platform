@@ -5,6 +5,7 @@ import com.yem.hlm.backend.payments.service.CallForFundsPdfService;
 import com.yem.hlm.backend.payments.service.CallForFundsWorkflowService;
 import com.yem.hlm.backend.payments.service.PaymentScheduleService;
 import com.yem.hlm.backend.payments.service.ReminderService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,7 @@ import java.util.UUID;
  * <h3>RBAC</h3>
  * All write operations require ADMIN or MANAGER. AGENT may only read.
  */
+@Tag(name = "Payment Schedules", description = "Appels de fonds — payment schedule items and workflow")
 @RestController
 @RequestMapping("/api")
 public class PaymentScheduleController {
