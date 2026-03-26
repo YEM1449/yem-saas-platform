@@ -1,15 +1,19 @@
 package com.yem.hlm.backend.auth.api;
 
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.user.repo.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Endpoint simple pour valider que :
@@ -19,6 +23,12 @@ import java.util.Map;
 @Tag(name = "Auth", description = "JWT validation and session introspection")
 @RestController
 public class AuthMeController {
+
+    private final UserRepository userRepository;
+
+    public AuthMeController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/auth/me")
     public Map<String, Object> me() {
@@ -33,6 +43,32 @@ public class AuthMeController {
                     .findFirst()
                     .ifPresent(role -> result.put("role", role));
         }
+
+        UUID userId = SocieteContext.getUserId();
+        if (userId != null) {
+            userRepository.findById(userId).ifPresent(user -> {
+                result.put("langueInterface", user.getLangueInterface());
+                result.put("platformRole", user.getPlatformRole());
+            });
+        }
+
         return result;
+    }
+
+    @PutMapping("/auth/me/langue")
+    public Map<String, String> updateLangue(@RequestBody Map<String, String> body) {
+        UUID userId = SocieteContext.getUserId();
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing user context");
+        }
+        String langue = body.get("langue");
+        if (langue == null || !Set.of("fr", "en", "ar").contains(langue)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_LANGUAGE");
+        }
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setLangueInterface(langue);
+            userRepository.save(user);
+        });
+        return Map.of("langue", langue);
     }
 }

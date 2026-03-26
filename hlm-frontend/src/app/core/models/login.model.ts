@@ -25,6 +25,7 @@ export interface MeResponse {
   societeId: string;
   role?: string;
   platformRole?: string;
+  langueInterface?: string;
 }
 
 export interface InvitationDetails {

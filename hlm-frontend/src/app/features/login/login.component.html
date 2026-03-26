@@ -1,15 +1,15 @@
 <div class="login-container">
-  <h1>HLM Login</h1>
+  <h1>{{ 'login.title' | translate }}</h1>
 
   @if (!showSocieteSelection) {
     <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">{{ 'login.email' | translate }}</label>
         <input id="email" name="email" type="email" [(ngModel)]="form.email" required data-testid="email" />
       </div>
 
       <div class="field">
-        <label for="password">Password</label>
+        <label for="password">{{ 'login.password' | translate }}</label>
         <input id="password" name="password" type="password" [(ngModel)]="form.password" required data-testid="password" />
       </div>
 
@@ -18,15 +18,15 @@
       }
 
       <button type="submit" [disabled]="loading || loginForm.invalid" data-testid="login-button">
-        {{ loading ? 'Signing in...' : 'Sign in' }}
+        {{ loading ? ('login.submitting' | translate) : ('login.submit' | translate) }}
       </button>
     </form>
   }
 
   @if (showSocieteSelection) {
     <div class="societe-selection">
-      <h2>Choisir une société</h2>
-      <p>Votre compte est associé à plusieurs sociétés.</p>
+      <h2>{{ 'login.selectSociete' | translate }}</h2>
+      <p>{{ 'login.selectSocieteDesc' | translate }}</p>
 
       @for (s of societes; track s.id) {
         <button class="societe-choice" (click)="selectSociete(s.id)" [disabled]="loading">
@@ -39,7 +39,7 @@
       }
 
       <button class="back-link" (click)="backToLogin()" [disabled]="loading">
-        ← Retour
+        {{ 'login.back' | translate }}
       </button>
     </div>
   }
