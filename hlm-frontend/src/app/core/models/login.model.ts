@@ -26,6 +26,7 @@ export interface MeResponse {
   role?: string;
   platformRole?: string;
   langueInterface?: string;
+  societeLogoUrl?: string;
 }
 
 export interface InvitationDetails {

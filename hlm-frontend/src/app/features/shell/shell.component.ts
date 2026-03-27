@@ -62,6 +62,10 @@ export class ShellComponent {
     return (this.auth.user?.role ?? '').replace('ROLE_', '');
   }
 
+  get societeLogoUrl(): string | null {
+    return this.auth.user?.societeLogoUrl ?? null;
+  }
+
   logout(): void {
     this.auth.logout();
   }

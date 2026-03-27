@@ -13,9 +13,13 @@ public record ProjectResponse(
         String description,
         ProjectStatus status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String logoUrl
 ) {
     public static ProjectResponse from(Project p) {
+        String logoUrl = p.getLogoFileKey() != null
+                ? "/api/projects/" + p.getId() + "/logo"
+                : null;
         return new ProjectResponse(
                 p.getId(),
                 p.getSocieteId(),
@@ -23,7 +27,8 @@ public record ProjectResponse(
                 p.getDescription(),
                 p.getStatus(),
                 p.getCreatedAt(),
-                p.getUpdatedAt()
+                p.getUpdatedAt(),
+                logoUrl
         );
     }
 }

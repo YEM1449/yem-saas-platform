@@ -16,15 +16,19 @@
 
     <!-- Brand -->
     <div class="sidebar-brand">
-      <span class="brand-icon">
-        <!-- Building icon -->
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="3" y="8" width="16" height="12" rx="1.5" stroke="#93c5fd" stroke-width="1.5"/>
-          <path d="M8 20v-5h6v5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-      </span>
-      <span class="brand-name">{{ 'app.name' | translate }}</span>
+      @if (societeLogoUrl) {
+        <img [src]="societeLogoUrl" alt="Logo" class="sidebar-logo" />
+      } @else {
+        <span class="brand-icon">
+          <!-- Building icon -->
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="8" width="16" height="12" rx="1.5" stroke="#93c5fd" stroke-width="1.5"/>
+            <path d="M8 20v-5h6v5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-name">{{ 'app.name' | translate }}</span>
+      }
     </div>
 
     <!-- Navigation -->

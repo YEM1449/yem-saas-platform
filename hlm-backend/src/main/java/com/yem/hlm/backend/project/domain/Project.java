@@ -55,6 +55,16 @@ public class Project {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /** Cover image / logo for the project (stored via MediaStorageService). */
+    @Setter @Column(name = "logo_file_key", length = 500)
+    private String logoFileKey;
+
+    @Setter @Column(name = "logo_content_type", length = 100)
+    private String logoContentType;
+
+    @Setter @Column(name = "logo_original_filename", length = 255)
+    private String logoOriginalFilename;
+
     @PrePersist
     void onCreate() {
         var now = LocalDateTime.now();

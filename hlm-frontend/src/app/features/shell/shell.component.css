@@ -22,6 +22,12 @@
 }
 
 /* Brand */
+.sidebar-logo {
+  max-height: 36px;
+  max-width: 160px;
+  object-fit: contain;
+}
+
 .sidebar-brand {
   display: flex;
   align-items: center;

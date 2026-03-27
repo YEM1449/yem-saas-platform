@@ -1,8 +1,12 @@
 package com.yem.hlm.backend.contact.service;
 
+import com.yem.hlm.backend.audit.domain.AuditEventType;
+import com.yem.hlm.backend.audit.service.CommercialAuditService;
+import com.yem.hlm.backend.common.error.ErrorCode;
 import com.yem.hlm.backend.common.event.ContactCreatedEvent;
 import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
 import com.yem.hlm.backend.contact.api.dto.*;
+import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
 import com.yem.hlm.backend.contact.api.dto.ConvertToProspectRequest;
 import com.yem.hlm.backend.contact.domain.*;
 import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
@@ -31,6 +35,7 @@ public class ContactService {
     private final PropertyRepository propertyRepository;
     private final DepositService depositService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommercialAuditService auditService;
 
     public ContactService(
             ContactRepository contactRepository,
@@ -38,7 +43,8 @@ public class ContactService {
             ProspectDetailRepository prospectDetailRepository,
             PropertyRepository propertyRepository,
             DepositService depositService,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            CommercialAuditService auditService
     ) {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
@@ -46,6 +52,7 @@ public class ContactService {
         this.propertyRepository = propertyRepository;
         this.depositService = depositService;
         this.eventPublisher = eventPublisher;
+        this.auditService = auditService;
     }
 
     public ContactResponse create(CreateContactRequest req) {
@@ -54,6 +61,12 @@ public class ContactService {
 
         if (req.email() != null && contactRepository.existsBySocieteIdAndEmail(societeId, req.email())) {
             throw new ContactEmailAlreadyExistsException(req.email());
+        }
+
+        // GDPR / Loi 09-08: require either explicit consent or a stated legal basis
+        if (!Boolean.TRUE.equals(req.consentGiven()) && req.processingBasis() == null) {
+            throw new BusinessRuleException(ErrorCode.CONSENT_REQUIRED,
+                    "Le consentement ou une base juridique est requis (Loi 09-08 Art. 4 / RGPD Art. 6).");
         }
 
         Contact contact = new Contact(societeId, actorUserId, req.firstName(), req.lastName());
@@ -115,11 +128,21 @@ public class ContactService {
         // GDPR consent fields — only update when explicitly provided
         if (req.consentGiven() != null) {
             boolean nowConsenting = Boolean.TRUE.equals(req.consentGiven());
+            boolean changed = nowConsenting != contact.isConsentGiven();
             // Record consent date only when transitioning to true
             if (nowConsenting && !contact.isConsentGiven()) {
                 contact.setConsentDate(Instant.now());
             }
             contact.setConsentGiven(nowConsenting);
+            if (changed) {
+                String payload = String.format(
+                        "{\"oldValue\":%b,\"newValue\":%b,\"method\":\"%s\",\"basis\":\"%s\"}",
+                        !nowConsenting, nowConsenting,
+                        req.consentMethod() != null ? req.consentMethod() : "",
+                        req.processingBasis() != null ? req.processingBasis() : "");
+                auditService.record(societeId, AuditEventType.CONSENT_CHANGED, actorUserId,
+                        "CONTACT", contactId, payload);
+            }
         }
         if (req.consentMethod() != null) contact.setConsentMethod(req.consentMethod());
         if (req.processingBasis() != null) contact.setProcessingBasis(req.processingBasis());

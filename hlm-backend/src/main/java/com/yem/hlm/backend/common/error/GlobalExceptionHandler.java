@@ -764,7 +764,8 @@ public class GlobalExceptionHandler {
             case SOCIETE_SUSPENDED, ROLE_ESCALATION_FORBIDDEN, INSUFFICIENT_ROLE -> HttpStatus.FORBIDDEN;
             case MEMBRE_NON_TROUVE -> HttpStatus.NOT_FOUND;
             case MOT_DE_PASSE_TROP_COURT, MOT_DE_PASSE_TROP_FAIBLE,
-                 MOT_DE_PASSE_CONTIENT_EMAIL, INVALID_REQUEST, ROLE_INVALIDE -> HttpStatus.BAD_REQUEST;
+                 MOT_DE_PASSE_CONTIENT_EMAIL, INVALID_REQUEST, ROLE_INVALIDE,
+                 CONSENT_REQUIRED -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.CONFLICT;
         };
         ErrorResponse error = ErrorResponse.of(

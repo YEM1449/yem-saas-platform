@@ -1,6 +1,9 @@
 package com.yem.hlm.backend.project.service;
 
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
+import com.yem.hlm.backend.media.service.MediaStorageService;
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.project.api.dto.ProjectCreateRequest;
 import com.yem.hlm.backend.project.api.dto.ProjectKpiDTO;
 import com.yem.hlm.backend.project.api.dto.ProjectResponse;
@@ -16,11 +19,15 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -30,10 +37,17 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ProjectService {
 
-    private final ProjectRepository projectRepository;
+    private static final long MAX_LOGO_BYTES = 5 * 1024 * 1024; // 5 MB
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"
+    );
 
-    public ProjectService(ProjectRepository projectRepository) {
+    private final ProjectRepository projectRepository;
+    private final MediaStorageService storageService;
+
+    public ProjectService(ProjectRepository projectRepository, MediaStorageService storageService) {
         this.projectRepository = projectRepository;
+        this.storageService = storageService;
     }
 
     /**
@@ -183,6 +197,69 @@ public class ProjectService {
                 salesCount,
                 salesTotalAmount
         );
+    }
+
+    // =========================================================================
+    // Logo management
+    // =========================================================================
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
+    public ProjectResponse uploadLogo(UUID projectId, MultipartFile file) throws IOException {
+        UUID societeId = SocieteContext.getSocieteId();
+        Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        validateImageFile(file);
+        if (project.getLogoFileKey() != null) {
+            storageService.delete(project.getLogoFileKey());
+        }
+        String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), file.getContentType());
+        project.setLogoFileKey(fileKey);
+        project.setLogoContentType(file.getContentType());
+        project.setLogoOriginalFilename(file.getOriginalFilename());
+        return ProjectResponse.from(projectRepository.save(project));
+    }
+
+    public InputStream downloadLogo(UUID projectId) throws IOException {
+        UUID societeId = SocieteContext.getSocieteId();
+        Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        if (project.getLogoFileKey() == null) {
+            throw new ProjectNotFoundException(projectId);
+        }
+        return storageService.load(project.getLogoFileKey());
+    }
+
+    public String getLogoContentType(UUID projectId) {
+        UUID societeId = SocieteContext.getSocieteId();
+        return projectRepository.findBySocieteIdAndId(societeId, projectId)
+                .map(Project::getLogoContentType)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
+    public void deleteLogo(UUID projectId) throws IOException {
+        UUID societeId = SocieteContext.getSocieteId();
+        Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        if (project.getLogoFileKey() != null) {
+            storageService.delete(project.getLogoFileKey());
+            project.setLogoFileKey(null);
+            project.setLogoContentType(null);
+            project.setLogoOriginalFilename(null);
+            projectRepository.save(project);
+        }
+    }
+
+    private void validateImageFile(MultipartFile file) {
+        if (file.getSize() > MAX_LOGO_BYTES) {
+            throw new MediaTooLargeException(file.getSize(), MAX_LOGO_BYTES);
+        }
+        String ct = file.getContentType();
+        if (ct == null || !ALLOWED_IMAGE_TYPES.contains(ct)) {
+            throw new MediaTypeNotAllowedException(ct);
+        }
     }
 
     private BigDecimal toBigDecimal(Object value) {

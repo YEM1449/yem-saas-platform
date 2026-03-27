@@ -3,7 +3,7 @@ export interface SocieteDto {
   pays: string; actif: boolean; planAbonnement: string; periodeEssai: boolean;
   emailDpo?: string; dpoNom?: string; emailContact?: string; telephone?: string;
   adresse?: string; adresseSiege?: string; ville?: string;
-  logoUrl?: string; couleurPrimaire?: string; langueDefaut?: string; devise?: string;
+  logoUrl?: string; logoDownloadUrl?: string; couleurPrimaire?: string; langueDefaut?: string; devise?: string;
   baseJuridiqueDefaut?: string; numeroAgrement?: string; typeActivite?: string;
   complianceScore: number; version: number; createdAt: string; updatedAt: string;
 }

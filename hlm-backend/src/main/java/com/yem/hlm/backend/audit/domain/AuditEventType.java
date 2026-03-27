@@ -24,6 +24,7 @@ public enum AuditEventType {
 
     // GDPR / Law 09-08 events
     CONTACT_ANONYMIZED,
+    CONSENT_CHANGED,
 
     // Contact lifecycle events
     CONTACT_CREATED,

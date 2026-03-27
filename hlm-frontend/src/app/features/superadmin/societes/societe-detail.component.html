@@ -45,6 +45,20 @@
       </div>
     </div>
 
+    <!-- Logo -->
+    <div class="logo-section">
+      @if (detail.logoDownloadUrl) {
+        <img [src]="detail.logoDownloadUrl" alt="Logo société" class="societe-logo" />
+        <button class="btn-danger btn-sm" (click)="deleteLogo()">Supprimer le logo</button>
+      } @else {
+        <span class="muted-text">Aucun logo</span>
+      }
+      <label class="btn-upload btn-sm">
+        @if (logoUploading) { Envoi... } @else { Téléverser un logo }
+        <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" style="display:none" data-testid="societe-logo-upload" />
+      </label>
+    </div>
+
     <!-- Tabs -->
     <div class="tabs">
       <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">Informations</button>

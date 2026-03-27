@@ -95,6 +95,7 @@ public enum ErrorCode {
     // GDPR / Law 09-08 errors
     GDPR_ERASURE_BLOCKED,       // 409 — contact has SIGNED contracts; erasure not permitted
     GDPR_EXPORT_NOT_FOUND,      // 404 — contact not found for data export
+    CONSENT_REQUIRED,           // 400 — consent or legal basis required (Loi 09-08 Art. 4 / RGPD Art. 6)
 
     // Rate limiting (429)
     RATE_LIMIT_EXCEEDED,        // 429 — too many requests for this operation

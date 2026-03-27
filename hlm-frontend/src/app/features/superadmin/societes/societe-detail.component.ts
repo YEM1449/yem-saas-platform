@@ -29,6 +29,7 @@ export class SocieteDetailComponent implements OnInit {
   loading = false;
   loadingStats = false;
   loadingCompliance = false;
+  logoUploading = false;
   error = '';
   success = '';
 
@@ -153,6 +154,24 @@ export class SocieteDetailComponent implements OnInit {
       case 'PRO': return 'badge-pro';
       default: return 'badge-starter';
     }
+  }
+
+  onLogoFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.logoUploading = true;
+    this.svc.uploadLogo(this.societeId, file).subscribe({
+      next: () => { this.logoUploading = false; this.success = 'Logo mis à jour.'; this.loadDetail(); },
+      error: (err: HttpErrorResponse) => { this.logoUploading = false; this.error = this.extractError(err); },
+    });
+  }
+
+  deleteLogo(): void {
+    this.svc.deleteLogo(this.societeId).subscribe({
+      next: () => { this.success = 'Logo supprimé.'; this.loadDetail(); },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
+    });
   }
 
   private extractError(err: HttpErrorResponse): string {

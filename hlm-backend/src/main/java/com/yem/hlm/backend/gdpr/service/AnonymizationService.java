@@ -8,11 +8,15 @@ import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.domain.SaleContractStatus;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
+import com.yem.hlm.backend.document.domain.DocumentEntityType;
+import com.yem.hlm.backend.document.repo.DocumentRepository;
+import com.yem.hlm.backend.media.service.MediaStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,17 +45,23 @@ public class AnonymizationService {
     private final ProspectDetailRepository prospectDetailRepo;
     private final ClientDetailRepository clientDetailRepo;
     private final CommercialAuditService auditService;
+    private final DocumentRepository documentRepository;
+    private final MediaStorageService storageService;
 
     public AnonymizationService(
             SaleContractRepository contractRepo,
             ProspectDetailRepository prospectDetailRepo,
             ClientDetailRepository clientDetailRepo,
-            CommercialAuditService auditService
+            CommercialAuditService auditService,
+            DocumentRepository documentRepository,
+            MediaStorageService storageService
     ) {
         this.contractRepo = contractRepo;
         this.prospectDetailRepo = prospectDetailRepo;
         this.clientDetailRepo = clientDetailRepo;
         this.auditService = auditService;
+        this.documentRepository = documentRepository;
+        this.storageService = storageService;
     }
 
     /**
@@ -94,6 +104,19 @@ public class AnonymizationService {
                     c.setBuyerPhone(null);
                     c.setBuyerIce(null);
                     c.setBuyerAddress(null);
+                });
+
+        // Delete all documents attached to the contact (Right to be Forgotten)
+        documentRepository
+                .findBySocieteIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                        societeId, DocumentEntityType.CONTACT, contactId)
+                .forEach(doc -> {
+                    try {
+                        storageService.delete(doc.getFileKey());
+                        documentRepository.delete(doc);
+                    } catch (IOException e) {
+                        log.warn("[GDPR] Failed to delete document {} during anonymization: {}", doc.getId(), e.getMessage());
+                    }
                 });
 
         // Anonymize contact main row

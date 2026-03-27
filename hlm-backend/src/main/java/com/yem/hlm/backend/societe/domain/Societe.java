@@ -142,6 +142,12 @@ public class Societe {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(name = "logo_file_key", length = 500)
+    private String logoFileKey;
+
+    @Column(name = "logo_content_type", length = 100)
+    private String logoContentType;
+
     @Column(name = "couleur_primaire", length = 7)
     private String couleurPrimaire;
 
@@ -331,6 +337,10 @@ public class Societe {
     public void setZonesIntervention(String zonesIntervention) { this.zonesIntervention = zonesIntervention; }
     public String getLogoUrl() { return logoUrl; }
     public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
+    public String getLogoFileKey() { return logoFileKey; }
+    public void setLogoFileKey(String logoFileKey) { this.logoFileKey = logoFileKey; }
+    public String getLogoContentType() { return logoContentType; }
+    public void setLogoContentType(String logoContentType) { this.logoContentType = logoContentType; }
     public String getCouleurPrimaire() { return couleurPrimaire; }
     public void setCouleurPrimaire(String couleurPrimaire) { this.couleurPrimaire = couleurPrimaire; }
     public String getCouleurSecondaire() { return couleurSecondaire; }

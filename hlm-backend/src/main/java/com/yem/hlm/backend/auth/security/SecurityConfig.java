@@ -97,6 +97,9 @@ public class SecurityConfig {
                         // Super-admin platform management (new canonical path)
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
 
+                        // Société logo download — accessible to all CRM roles (agents see société branding)
+                        .requestMatchers(HttpMethod.GET, "/api/societes/*/logo").hasAnyRole("ADMIN", "MANAGER", "AGENT", "SUPER_ADMIN")
+
                         // Super-admin société management (legacy path — kept for backward compat)
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
 

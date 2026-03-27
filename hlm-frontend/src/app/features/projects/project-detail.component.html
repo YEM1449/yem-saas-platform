@@ -13,6 +13,54 @@
     <p>{{ project.description }}</p>
   }
 
+  <!-- Logo section -->
+  <section class="logo-section">
+    <h3>Logo du projet</h3>
+    @if (project.logoUrl) {
+      <img [src]="project.logoUrl" alt="Logo projet" class="project-logo" />
+      @if (isAdminOrManager) {
+        <button (click)="deleteLogo()" class="btn-danger">Supprimer le logo</button>
+      }
+    } @else {
+      <p class="muted">Aucun logo configuré.</p>
+    }
+    @if (isAdminOrManager) {
+      <label class="btn-upload">
+        @if (logoUploading) { Envoi... } @else { Téléverser un logo }
+        <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
+      </label>
+    }
+  </section>
+
+  <!-- Documents section -->
+  <section class="documents-section">
+    <h3>Documents</h3>
+    @if (documents.length === 0) {
+      <p class="muted">Aucun document attaché.</p>
+    }
+    <ul class="doc-list">
+      @for (doc of documents; track doc.id) {
+        <li class="doc-item">
+          @if (isImage(doc.contentType)) {
+            <img [src]="'/api/documents/' + doc.id + '/download'" class="doc-thumb" alt="aperçu" />
+          } @else {
+            <span class="doc-icon">📄</span>
+          }
+          <a [href]="'/api/documents/' + doc.id + '/download'" target="_blank">{{ doc.fileName }}</a>
+          @if (isAdminOrManager) {
+            <button (click)="deleteDocument(doc.id)" class="btn-icon-danger">✕</button>
+          }
+        </li>
+      }
+    </ul>
+    @if (isAdminOrManager) {
+      <label class="btn-upload">
+        @if (docUploading) { Envoi... } @else { Ajouter un document }
+        <input type="file" (change)="onDocFileSelected($event)" style="display:none" data-testid="doc-upload" />
+      </label>
+    }
+  </section>
+
   <h3>KPIs</h3>
 
   @if (loadingKpi) {

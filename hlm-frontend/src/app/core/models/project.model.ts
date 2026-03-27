@@ -8,6 +8,7 @@ export interface Project {
   status: ProjectStatus;
   createdAt: string;
   updatedAt: string;
+  logoUrl?: string | null;
 }
 
 export interface ProjectKpi {
