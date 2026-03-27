@@ -109,3 +109,5 @@ databaseChangeLog:
       file: db/changelog/changes/053-project-logo-fields.yaml
   - include:
       file: db/changelog/changes/054-societe-logo-fields.yaml
+  - include:
+      file: db/changelog/changes/055-create-contract-template.yaml

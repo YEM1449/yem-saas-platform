@@ -34,6 +34,8 @@ export const routes: Routes = [
       { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: 'audit', loadComponent: () => import('./features/audit/audit.component').then(m => m.AuditComponent) },
       { path: 'tasks', loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent) },
+      { path: 'templates', canActivate: [adminGuard], loadComponent: () => import('./features/templates/template-list.component').then(m => m.TemplateListComponent) },
+      { path: 'templates/:type/edit', canActivate: [adminGuard], loadComponent: () => import('./features/templates/template-editor.component').then(m => m.TemplateEditorComponent) },
       { path: '', redirectTo: 'properties', pathMatch: 'full' },
     ],
   },

@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 055-create-contract-template
+      author: yem
+      changes:
+        - createTable:
+            tableName: contract_template
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_contract_template_societe
+                    references: societe(id)
+              - column:
+                  name: template_type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: html_content
+                  type: clob
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: contract_template
+            columnNames: societe_id, template_type
+            constraintName: uk_contract_template
+        - createIndex:
+            tableName: contract_template
+            indexName: idx_contract_template_societe
+            columns:
+              - column:
+                  name: societe_id

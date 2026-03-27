@@ -5,6 +5,8 @@ import com.yem.hlm.backend.deposit.service.ReservationPdfGenerationException;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,9 +35,15 @@ import java.util.Map;
 public class DocumentGenerationService {
 
     private final TemplateEngine templateEngine;
+    private final TemplateEngine stringTemplateEngine;
 
     public DocumentGenerationService(TemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
+        StringTemplateResolver resolver = new StringTemplateResolver();
+        resolver.setTemplateMode(TemplateMode.HTML);
+        resolver.setCacheable(false);
+        this.stringTemplateEngine = new TemplateEngine();
+        this.stringTemplateEngine.addTemplateResolver(resolver);
     }
 
     /**
@@ -49,6 +57,20 @@ public class DocumentGenerationService {
      */
     public byte[] renderToPdf(String templateName, Map<String, Object> variables) {
         String html = renderHtml(templateName, variables);
+        return convertToPdf(html);
+    }
+
+    /**
+     * Renders a raw Thymeleaf HTML string (instead of a classpath template) and converts to PDF.
+     *
+     * @param htmlTemplate raw HTML with optional Thymeleaf expressions (e.g. {@code ${model.name}})
+     * @param variables    variables to expose in the template context
+     * @return PDF byte array
+     */
+    public byte[] renderToPdfFromString(String htmlTemplate, Map<String, Object> variables) {
+        Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariables(variables);
+        String html = stringTemplateEngine.process(htmlTemplate, ctx);
         return convertToPdf(html);
     }
 

@@ -4,6 +4,8 @@ import com.yem.hlm.backend.contract.domain.BuyerType;
 import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
+import com.yem.hlm.backend.contract.template.domain.TemplateType;
+import com.yem.hlm.backend.contract.template.service.ContractTemplateService;
 import com.yem.hlm.backend.deposit.service.pdf.DocumentGenerationService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteRepository;
@@ -42,13 +44,16 @@ public class ContractDocumentService {
     private final SaleContractRepository    contractRepository;
     private final DocumentGenerationService documentGenerationService;
     private final SocieteRepository         societeRepository;
+    private final ContractTemplateService   templateService;
 
     public ContractDocumentService(SaleContractRepository contractRepository,
                                    DocumentGenerationService documentGenerationService,
-                                   SocieteRepository societeRepository) {
+                                   SocieteRepository societeRepository,
+                                   ContractTemplateService templateService) {
         this.contractRepository        = contractRepository;
         this.documentGenerationService = documentGenerationService;
         this.societeRepository         = societeRepository;
+        this.templateService           = templateService;
     }
 
     /**
@@ -70,7 +75,10 @@ public class ContractDocumentService {
         String societeName = societeRepository.findById(societeId)
                 .map(Societe::getNom).orElse("—");
         ContractDocumentModel model = buildModel(contract, societeName);
-        return documentGenerationService.renderToPdf("documents/contract", Map.of("model", model));
+        Map<String, Object> vars = Map.of("model", model);
+        return templateService.resolveCustomHtml(societeId, TemplateType.CONTRACT)
+                .map(html -> documentGenerationService.renderToPdfFromString(html, vars))
+                .orElseGet(() -> documentGenerationService.renderToPdf("documents/contract", vars));
     }
 
     // =========================================================================

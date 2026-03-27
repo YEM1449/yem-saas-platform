@@ -3,6 +3,8 @@ package com.yem.hlm.backend.payments.service;
 import com.yem.hlm.backend.contract.domain.SaleContract;
 import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
+import com.yem.hlm.backend.contract.template.domain.TemplateType;
+import com.yem.hlm.backend.contract.template.service.ContractTemplateService;
 import com.yem.hlm.backend.deposit.service.ReservationPdfGenerationException;
 import com.yem.hlm.backend.deposit.service.pdf.DocumentGenerationService;
 import com.yem.hlm.backend.payments.domain.PaymentScheduleItem;
@@ -37,17 +39,20 @@ public class CallForFundsPdfService {
     private final SaleContractRepository        contractRepo;
     private final DocumentGenerationService     docService;
     private final SocieteRepository             societeRepository;
+    private final ContractTemplateService       templateService;
 
     public CallForFundsPdfService(PaymentScheduleItemRepository itemRepo,
                                   SchedulePaymentRepository paymentRepo,
                                   SaleContractRepository contractRepo,
                                   DocumentGenerationService docService,
-                                  SocieteRepository societeRepository) {
+                                  SocieteRepository societeRepository,
+                                  ContractTemplateService templateService) {
         this.itemRepo          = itemRepo;
         this.paymentRepo       = paymentRepo;
         this.contractRepo      = contractRepo;
         this.docService        = docService;
         this.societeRepository = societeRepository;
+        this.templateService   = templateService;
     }
 
     /**
@@ -75,7 +80,10 @@ public class CallForFundsPdfService {
         String societeName = societeRepository.findById(societeId)
                 .map(Societe::getNom).orElse("—");
         CallForFundsDocumentModel model = buildModel(item, contract, paid, remaining, societeName);
-        return docService.renderToPdf("documents/call_for_funds", Map.of("model", model));
+        Map<String, Object> vars = Map.of("model", model);
+        return templateService.resolveCustomHtml(societeId, TemplateType.CALL_FOR_FUNDS)
+                .map(html -> docService.renderToPdfFromString(html, vars))
+                .orElseGet(() -> docService.renderToPdf("documents/call_for_funds", vars));
     }
 
     // =========================================================================

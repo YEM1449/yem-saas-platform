@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.deposit.service.pdf;
 
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
+import com.yem.hlm.backend.contract.template.domain.TemplateType;
+import com.yem.hlm.backend.contract.template.service.ContractTemplateService;
 import com.yem.hlm.backend.deposit.domain.Deposit;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.deposit.service.DepositNotFoundException;
@@ -46,19 +48,22 @@ public class ReservationDocumentService {
     private static final DateTimeFormatter DATE_FMT     = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final DepositRepository        depositRepository;
-    private final PropertyRepository       propertyRepository;
+    private final DepositRepository         depositRepository;
+    private final PropertyRepository        propertyRepository;
     private final DocumentGenerationService documentGenerationService;
-    private final SocieteRepository        societeRepository;
+    private final SocieteRepository         societeRepository;
+    private final ContractTemplateService   templateService;
 
     public ReservationDocumentService(DepositRepository depositRepository,
                                       PropertyRepository propertyRepository,
                                       DocumentGenerationService documentGenerationService,
-                                      SocieteRepository societeRepository) {
+                                      SocieteRepository societeRepository,
+                                      ContractTemplateService templateService) {
         this.depositRepository        = depositRepository;
         this.propertyRepository       = propertyRepository;
         this.documentGenerationService = documentGenerationService;
         this.societeRepository         = societeRepository;
+        this.templateService           = templateService;
     }
 
     /**
@@ -90,9 +95,10 @@ public class ReservationDocumentService {
         String societeName = societeRepository.findById(societeId)
                 .map(Societe::getNom).orElse("—");
         ReservationDocumentModel model = buildModel(deposit, property, societeName);
-        return documentGenerationService.renderToPdf(
-                "documents/reservation",
-                Map.of("model", model));
+        Map<String, Object> vars = Map.of("model", model);
+        return templateService.resolveCustomHtml(societeId, TemplateType.RESERVATION)
+                .map(html -> documentGenerationService.renderToPdfFromString(html, vars))
+                .orElseGet(() -> documentGenerationService.renderToPdf("documents/reservation", vars));
     }
 
     // =========================================================================
