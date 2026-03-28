@@ -28,7 +28,7 @@ public class OutboundDispatcherScheduler {
     }
 
     @Scheduled(fixedDelayString = "${app.outbox.polling-interval-ms:5000}")
-    @SchedulerLock(name = "outbox_dispatcher", lockAtMostFor = "PT1M", lockAtLeastFor = "PT200MS")
+    @SchedulerLock(name = "outbox_dispatcher", lockAtMostFor = "PT1M", lockAtLeastFor = "PT0.2S")
     public void poll() {
         societeContextHelper.runAsSystem(dispatcherService::runDispatch);
     }
