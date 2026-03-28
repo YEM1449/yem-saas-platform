@@ -37,7 +37,7 @@ test.describe('Contacts', () => {
     const ts = Date.now();
     await page.fill('[data-testid="firstName"], input[placeholder*="Prénom"], input[name="firstName"]', 'E2E');
     await page.fill('[data-testid="lastName"], input[placeholder*="Nom"], input[name="lastName"]', `Test-${ts}`);
-    await page.click('[data-testid="save-button"], button[type="submit"], button:has-text("Créer"), button:has-text("Enregistrer")');
+    await page.click('[data-testid="save-button"]');
 
     await expect(page.locator(`text=Test-${ts}`)).toBeVisible({ timeout: 5000 });
   });

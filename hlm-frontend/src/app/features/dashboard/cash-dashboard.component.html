@@ -42,7 +42,7 @@
         <canvas #kpiCanvas style="max-height:200px"></canvas>
       </div>
 
-      @if (data.agingBuckets?.length) {
+      @if (data.agingBuckets.length) {
         <div class="chart-card">
           <h4>{{ 'dashboard.cash.agingTitle' | translate }}</h4>
           <canvas #agingCanvas style="max-height:200px"></canvas>

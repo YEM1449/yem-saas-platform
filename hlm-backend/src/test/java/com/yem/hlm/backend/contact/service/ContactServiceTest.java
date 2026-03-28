@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.contact.service;
 
+import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.*;
 import com.yem.hlm.backend.contact.repo.ContactInterestRepository;
@@ -42,6 +43,7 @@ class ContactServiceTest {
     @Mock PropertyRepository propertyRepository;
     @Mock DepositService depositService;
     @Mock ApplicationEventPublisher eventPublisher;
+    @Mock CommercialAuditService auditService;
 
     @InjectMocks ContactService service;
 
@@ -68,7 +70,7 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ContactResponse res = service.create(new CreateContactRequest(
-                "John", "Doe", "0612", "john@example.com", null, null, null, null, null, null
+                "John", "Doe", "0612", "john@example.com", null, null, null, null, null, ProcessingBasis.CONTRACT
         ));
 
         assertThat(res.status()).isEqualTo(ContactStatus.PROSPECT);
