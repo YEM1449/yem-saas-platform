@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { ReceivablesDashboardService } from './receivables-dashboard.service';
 import { ReceivablesDashboard } from '../../core/models/receivables-dashboard.model';
@@ -8,7 +9,7 @@ import { ReceivablesDashboard } from '../../core/models/receivables-dashboard.mo
 @Component({
   selector: 'app-receivables-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './receivables-dashboard.component.html',
 })
 export class ReceivablesDashboardComponent implements OnInit {

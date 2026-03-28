@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminUserService } from './admin-user.service';
 import { MembreDto, InviterUtilisateurRequest } from './admin-user.model';
@@ -10,7 +11,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-user-invite-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './user-invite-dialog.component.html',
   styles: [`
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; }

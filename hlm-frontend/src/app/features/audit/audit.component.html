@@ -1,50 +1,58 @@
 <div class="page-header">
-  <h1>Audit Trail</h1>
+  <h1 class="page-title">{{ 'audit.title' | translate }}</h1>
 </div>
 
 @if (!isAuthorized) {
-  <div class="error-state">Accès refusé</div>
+  <div class="alert alert-error">{{ 'common.accessDenied' | translate }}</div>
 } @else {
   <div class="filter-bar">
     <label>
-      Du
+      {{ 'dashboard.commercial.fromDate' | translate }}
       <input type="date" [(ngModel)]="from" />
     </label>
     <label>
-      Au
+      {{ 'dashboard.commercial.toDate' | translate }}
       <input type="date" [(ngModel)]="to" />
     </label>
-    <button (click)="load()" [disabled]="loading">Actualiser</button>
+    <button (click)="load()" [disabled]="loading">{{ 'common.filter' | translate }}</button>
   </div>
 
   @if (loading) {
-    <div class="loading-state">Chargement...</div>
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
   } @else if (error) {
-    <div class="error-state">{{ error }}</div>
+    <div class="alert alert-error">{{ error }}</div>
   } @else if (events.length === 0) {
-    <div class="empty-state">Aucun événement trouvé.</div>
+    <div class="card">
+      <div class="empty-state">
+        <p class="empty-state-title">{{ 'audit.noEvents' | translate }}</p>
+      </div>
+    </div>
   } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Date/Heure</th>
-          <th>Événement</th>
-          <th>Acteur</th>
-          <th>Type</th>
-          <th>Corrélation</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (event of events; track event.id) {
-          <tr>
-            <td>{{ event.occurredAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-            <td>{{ event.eventType }}</td>
-            <td><code>{{ actorShort(event.actorUserId) }}</code></td>
-            <td>{{ event.correlationType }}</td>
-            <td><code>{{ event.correlationId | slice:0:8 }}</code></td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="card">
+      <div class="card-body-flush">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'audit.date' | translate }}</th>
+              <th>{{ 'audit.eventType' | translate }}</th>
+              <th>{{ 'audit.actor' | translate }}</th>
+              <th>{{ 'audit.target' | translate }}</th>
+              <th>{{ 'common.reference' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of events; track event.id) {
+              <tr>
+                <td>{{ event.occurredAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                <td>{{ event.eventType }}</td>
+                <td><code>{{ actorShort(event.actorUserId) }}</code></td>
+                <td>{{ event.correlationType }}</td>
+                <td><code>{{ event.correlationId | slice:0:8 }}</code></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 }

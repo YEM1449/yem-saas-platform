@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { ActivationRequest, InvitationDetails } from '../../core/models/login.model';
 
@@ -11,7 +12,7 @@ type PageState = 'loading' | 'form' | 'invalid' | 'done';
 @Component({
   selector: 'app-activation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './activation.component.html',
   styleUrl: './activation.component.css',
 })

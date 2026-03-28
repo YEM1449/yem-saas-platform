@@ -1,132 +1,139 @@
 <div class="page-header">
-  <h2>Gestion des Sociétés</h2>
-  <button class="btn-primary" routerLink="/superadmin/societes/new">+ Nouvelle Société</button>
+  <h2 class="page-title">{{ 'societes.title' | translate }}</h2>
+  <div class="page-header-actions">
+    <button class="btn btn-primary" routerLink="/superadmin/societes/new">+ {{ 'societes.create' | translate }}</button>
+  </div>
 </div>
 
 @if (success) {
-  <div class="alert-success">{{ success }}</div>
+  <div class="alert alert-success">{{ success }}</div>
 }
 @if (error) {
-  <div class="alert-error">{{ error }}</div>
+  <div class="alert alert-error">{{ error }}</div>
 }
 
 <!-- Filter bar -->
 <div class="filter-bar">
-  <input class="filter-input" type="text" placeholder="Rechercher..." [(ngModel)]="search" (keyup.enter)="applyFilters()"/>
-  <select class="filter-select" [(ngModel)]="pays" (change)="applyFilters()">
-    <option value="">Tous les pays</option>
+  <input class="search-input form-control" type="text" [placeholder]="'common.search' | translate" [(ngModel)]="search" (keyup.enter)="applyFilters()"/>
+  <select class="form-control" style="width:auto" [(ngModel)]="pays" (change)="applyFilters()">
+    <option value="">{{ 'common.all' | translate }}</option>
     <option value="MA">Maroc</option>
     <option value="FR">France</option>
     <option value="TN">Tunisie</option>
     <option value="SN">Sénégal</option>
     <option value="CI">Côte d'Ivoire</option>
   </select>
-  <select class="filter-select" [(ngModel)]="planAbonnement" (change)="applyFilters()">
-    <option value="">Tous les plans</option>
+  <select class="form-control" style="width:auto" [(ngModel)]="planAbonnement" (change)="applyFilters()">
+    <option value="">{{ 'common.all' | translate }}</option>
     <option value="STARTER">STARTER</option>
     <option value="PRO">PRO</option>
     <option value="ENTERPRISE">ENTERPRISE</option>
   </select>
-  <select class="filter-select" [(ngModel)]="actifFilter" (change)="applyFilters()">
-    <option value="">Tous statuts</option>
-    <option value="true">Actif</option>
-    <option value="false">Inactif</option>
+  <select class="form-control" style="width:auto" [(ngModel)]="actifFilter" (change)="applyFilters()">
+    <option value="">{{ 'common.all' | translate }}</option>
+    <option value="true">{{ 'common.active' | translate }}</option>
+    <option value="false">{{ 'common.inactive' | translate }}</option>
   </select>
-  <button class="btn-search" (click)="applyFilters()">Rechercher</button>
+  <button class="btn btn-secondary" (click)="applyFilters()">{{ 'common.search' | translate }}</button>
 </div>
 
 <!-- Loading -->
 @if (loading) {
-  <div class="loading-state">Chargement...</div>
+  <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
 }
 
 <!-- Table -->
 @if (!loading) {
-  <div class="table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Pays</th>
-          <th>Plan</th>
-          <th>Conformité</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (s of societes; track s.id) {
+  <div class="card">
+    <div class="card-body-flush">
+      <table class="data-table">
+        <thead>
           <tr>
-            <td>
-              <div class="societe-nom">{{ s.nom }}</div>
-              @if (s.nomCommercial) {
-                <div class="societe-sub">{{ s.nomCommercial }}</div>
-              }
-            </td>
-            <td>{{ s.pays }}</td>
-            <td>
-              <span class="badge" [class]="planClass(s.planAbonnement)">{{ s.planAbonnement }}</span>
-            </td>
-            <td>
-              <div class="compliance-cell">
-                <div class="compliance-bar-bg">
-                  <div class="compliance-bar-fill" [class]="scoreClass(s.complianceScore)" [style.width.%]="s.complianceScore"></div>
-                </div>
-                <span class="compliance-pct" [class]="scoreClass(s.complianceScore)">{{ s.complianceScore }}%</span>
-              </div>
-            </td>
-            <td>
-              @if (s.actif) {
-                <span class="badge badge-active">Actif</span>
-              } @else {
-                <span class="badge badge-inactive">Inactif</span>
-              }
-            </td>
-            <td>
-              <div class="actions">
-                <button class="btn-small" (click)="viewDetail(s)">Voir</button>
-                @if (s.actif) {
-                  <button class="btn-small btn-danger" (click)="openSuspend(s)">Suspendre</button>
-                } @else {
-                  <button class="btn-small btn-success" (click)="reactiver(s)">Réactiver</button>
+            <th>{{ 'societes.name' | translate }}</th>
+            <th>{{ 'societes.country' | translate }}</th>
+            <th>{{ 'societes.plan' | translate }}</th>
+            <th>GDPR</th>
+            <th>{{ 'societes.status' | translate }}</th>
+            <th>{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of societes; track s.id) {
+            <tr>
+              <td>
+                <div class="societe-nom">{{ s.nom }}</div>
+                @if (s.nomCommercial) {
+                  <div class="td-muted">{{ s.nomCommercial }}</div>
                 }
-              </div>
-            </td>
-          </tr>
-        }
-        @if (societes.length === 0) {
-          <tr>
-            <td colspan="6" class="empty-state">Aucune société trouvée.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+              </td>
+              <td>{{ s.pays }}</td>
+              <td>
+                <span class="badge" [class]="planClass(s.planAbonnement)">{{ s.planAbonnement }}</span>
+              </td>
+              <td>
+                <div class="compliance-cell">
+                  <div class="compliance-bar-bg">
+                    <div class="compliance-bar-fill" [class]="scoreClass(s.complianceScore)" [style.width.%]="s.complianceScore"></div>
+                  </div>
+                  <span class="compliance-pct" [class]="scoreClass(s.complianceScore)">{{ s.complianceScore }}%</span>
+                </div>
+              </td>
+              <td>
+                @if (s.actif) {
+                  <span class="badge badge-active">{{ 'common.active' | translate }}</span>
+                } @else {
+                  <span class="badge badge-inactive">{{ 'common.inactive' | translate }}</span>
+                }
+              </td>
+              <td class="td-actions">
+                <div class="row-actions">
+                  <button class="btn btn-sm btn-secondary" (click)="viewDetail(s)">{{ 'common.edit' | translate }}</button>
+                  @if (s.actif) {
+                    <button class="btn btn-sm btn-danger" (click)="openSuspend(s)">{{ 'societes.suspend' | translate }}</button>
+                  } @else {
+                    <button class="btn btn-sm btn-secondary" (click)="reactiver(s)">{{ 'societes.unsuspend' | translate }}</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          @if (societes.length === 0) {
+            <tr>
+              <td colspan="6" class="empty-state">{{ 'common.noResults' | translate }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Pagination -->
   @if (totalPages > 1) {
     <div class="pagination">
-      <button class="btn-page" [disabled]="currentPage === 0" (click)="prevPage()">&#8592; Précédent</button>
-      <span class="page-info">Page {{ currentPage + 1 }} / {{ totalPages }} ({{ totalElements }} sociétés)</span>
-      <button class="btn-page" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">Suivant &#8594;</button>
+      <button class="btn btn-secondary btn-sm" [disabled]="currentPage === 0" (click)="prevPage()">{{ 'common.previous' | translate }}</button>
+      <span class="page-info">{{ 'common.page' | translate }} {{ currentPage + 1 }} {{ 'common.of' | translate }} {{ totalPages }}</span>
+      <button class="btn btn-secondary btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">{{ 'common.next' | translate }}</button>
     </div>
   }
 }
 
 <!-- Suspend dialog -->
 @if (showSuspendDialog && suspendTarget) {
-  <div class="dialog-overlay">
-    <div class="dialog">
-      <h3>Suspendre "{{ suspendTarget.nom }}"</h3>
-      <p>Cette action désactivera la société et tous ses membres.</p>
-      <label class="dialog-label">
-        Raison de suspension
-        <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" placeholder="Motif..."></textarea>
-      </label>
-      <div class="dialog-actions">
-        <button class="btn-secondary" (click)="cancelSuspend()">Annuler</button>
-        <button class="btn-danger-solid" [disabled]="suspending" (click)="confirmSuspend()">
-          {{ suspending ? 'En cours...' : 'Confirmer la suspension' }}
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ 'societes.suspendConfirm' | translate }} "{{ suspendTarget.nom }}"</h3>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">{{ 'common.notes' | translate }}</label>
+          <textarea class="form-control" [(ngModel)]="suspendRaison" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelSuspend()">{{ 'common.cancel' | translate }}</button>
+        <button class="btn btn-danger" [disabled]="suspending" (click)="confirmSuspend()">
+          @if (suspending) { {{ 'common.saving' | translate }} } @else { {{ 'societes.suspend' | translate }} }
         </button>
       </div>
     </div>

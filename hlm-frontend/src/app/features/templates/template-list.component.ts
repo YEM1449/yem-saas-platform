@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { TemplateService } from './template.service';
 import { TemplateSummary, TemplateType } from './template.model';
 
@@ -15,11 +16,11 @@ const TYPE_LABELS: Record<TemplateType, string> = {
 @Component({
   selector: 'app-template-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   template: `
     <div class="page-header">
-      <h1>Modèles de documents PDF</h1>
-      <p class="subtitle">Personnalisez les modèles Thymeleaf utilisés pour générer vos PDF.</p>
+      <h1>{{ 'templates.title' | translate }}</h1>
+      <p class="subtitle">{{ 'templates.subtitle' | translate }}</p>
     </div>
 
     <div class="template-grid">
@@ -30,7 +31,7 @@ const TYPE_LABELS: Record<TemplateType, string> = {
             @if (isCustomized(type)) {
               <span class="badge-custom">Personnalisé</span>
             } @else {
-              <span class="badge-default">Modèle intégré</span>
+              <span class="badge-default">{{ 'templates.default' | translate }}</span>
             }
           </div>
           <div class="template-card-body">
@@ -41,14 +42,14 @@ const TYPE_LABELS: Record<TemplateType, string> = {
           </div>
           <div class="template-card-actions">
             <a [routerLink]="['/app/templates', type, 'edit']" class="btn btn-primary btn-sm">
-              Éditer
+              {{ 'templates.edit' | translate }}
             </a>
             <button (click)="previewPdf(type)" class="btn btn-outline btn-sm">
-              Aperçu PDF
+              {{ 'templates.preview' | translate }}
             </button>
             @if (isCustomized(type)) {
               <button (click)="revert(type)" class="btn btn-danger btn-sm">
-                Réinitialiser
+                {{ 'templates.revert' | translate }}
               </button>
             }
           </div>

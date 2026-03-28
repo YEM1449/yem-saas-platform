@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { InviteUserRequest, MembreSocieteDto } from './societe.model';
 
 @Component({
   selector: 'app-societe-members',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './societe-members.component.html',
   styleUrl: './societe-members.component.css',
 })

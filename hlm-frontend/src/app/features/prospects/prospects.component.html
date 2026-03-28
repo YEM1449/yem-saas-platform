@@ -1,7 +1,7 @@
-<h2>Prospects</h2>
+<h2>{{ 'prospects.title' | translate }}</h2>
 
 @if (loading) {
-  <p>Loading prospects...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (error) {
@@ -9,7 +9,7 @@
 }
 
 @if (!loading && !error && prospects.length === 0) {
-  <p>No prospects found.</p>
+  <p>{{ 'common.noResults' | translate }}</p>
 }
 
 @if (!loading && prospects.length > 0) {
@@ -19,7 +19,7 @@
         <th>Name</th>
         <th>Email</th>
         <th>Phone</th>
-        <th>Status</th>
+        <th>{{ 'prospects.status' | translate }}</th>
         <th>Qualified</th>
       </tr>
     </thead>

@@ -1,7 +1,7 @@
 <p><a routerLink="/app/prospects">&larr; Back to Prospects</a></p>
 
 @if (loading) {
-  <p>Loading prospect...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (error) {
@@ -12,7 +12,7 @@
   <h2>{{ prospect.fullName }}</h2>
 
   <div class="status-control">
-    <label for="status">Status:</label>
+    <label for="status">{{ 'prospects.status' | translate }}:</label>
     <select id="status" [(ngModel)]="selectedStatus" (change)="onStatusChange()" [disabled]="updating">
       @for (s of statuses; track s) {
         <option [value]="s">{{ s }}</option>
@@ -66,16 +66,16 @@
       }
     </select>
     <button (click)="addInterest()" [disabled]="!selectedPropertyId || addingInterest">
-      {{ addingInterest ? 'Adding...' : 'Add' }}
+      {{ addingInterest ? ('common.loading' | translate) : 'Add' }}
     </button>
   </div>
 
   @if (interestsLoading) {
-    <p>Loading interests...</p>
+    <p>{{ 'common.loading' | translate }}</p>
   }
 
   @if (!interestsLoading && interests.length === 0) {
-    <p class="muted">No interested properties yet.</p>
+    <p class="muted">{{ 'common.noResults' | translate }}</p>
   }
 
   @if (!interestsLoading && interests.length > 0) {
@@ -83,7 +83,7 @@
       <thead>
         <tr>
           <th>Property</th>
-          <th>Status</th>
+          <th>{{ 'prospects.status' | translate }}</th>
           <th>Added</th>
           <th></th>
         </tr>
@@ -97,7 +97,7 @@
             <td>
               <button class="remove-btn" (click)="removeInterest(i.propertyId)"
                       [disabled]="removingPropertyId === i.propertyId">
-                {{ removingPropertyId === i.propertyId ? 'Removing...' : 'Remove' }}
+                {{ removingPropertyId === i.propertyId ? ('common.loading' | translate) : 'Remove' }}
               </button>
             </td>
           </tr>
@@ -145,16 +145,16 @@
     </div>
     <button (click)="createDeposit()"
             [disabled]="!depositPropertyId || !depositAmount || creatingDeposit">
-      {{ creatingDeposit ? 'Creating...' : 'Create Deposit' }}
+      {{ creatingDeposit ? ('common.loading' | translate) : ('prospects.createDeposit' | translate) }}
     </button>
   </div>
 
   @if (depositsLoading) {
-    <p>Loading deposits...</p>
+    <p>{{ 'common.loading' | translate }}</p>
   }
 
   @if (!depositsLoading && deposits.length === 0) {
-    <p class="muted">No deposits yet.</p>
+    <p class="muted">{{ 'common.noResults' | translate }}</p>
   }
 
   @if (!depositsLoading && deposits.length > 0) {
@@ -163,7 +163,7 @@
         <tr>
           <th>Property</th>
           <th>Amount</th>
-          <th>Status</th>
+          <th>{{ 'prospects.status' | translate }}</th>
           <th>Reference</th>
           <th>Due Date</th>
           <th>Created</th>

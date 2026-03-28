@@ -36,11 +36,11 @@
         </div>
       </div>
       <div class="detail-header-actions">
-        <button class="btn-secondary" (click)="goEdit()">Modifier</button>
+        <button class="btn btn-secondary" (click)="goEdit()">{{ 'common.edit' | translate }}</button>
         @if (detail.actif) {
-          <button class="btn-danger" (click)="openSuspend()">Suspendre</button>
+          <button class="btn btn-danger" (click)="openSuspend()">{{ 'societes.suspend' | translate }}</button>
         } @else {
-          <button class="btn-success" (click)="reactiver()">Réactiver</button>
+          <button class="btn btn-secondary" (click)="reactiver()">{{ 'societes.unsuspend' | translate }}</button>
         }
       </div>
     </div>
@@ -61,10 +61,10 @@
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">Informations</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'stats'" (click)="setTab('stats')">Statistiques</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'compliance'" (click)="setTab('compliance')">Conformité RGPD</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'membres'" (click)="setTab('membres')">Membres</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">{{ 'societes.tabs.info' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'stats'" (click)="setTab('stats')">{{ 'common.status' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'compliance'" (click)="setTab('compliance')">{{ 'societes.tabs.gdpr' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'membres'" (click)="setTab('membres')">{{ 'societes.tabs.members' | translate }}</button>
     </div>
 
     <!-- Tab: Informations -->
@@ -272,9 +272,9 @@
           <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" placeholder="Motif..."></textarea>
         </label>
         <div class="dialog-actions">
-          <button class="btn-secondary" (click)="cancelSuspend()">Annuler</button>
-          <button class="btn-danger-solid" [disabled]="suspending" (click)="confirmSuspend()">
-            {{ suspending ? 'En cours...' : 'Confirmer' }}
+          <button class="btn btn-secondary" (click)="cancelSuspend()">{{ 'common.cancel' | translate }}</button>
+          <button class="btn btn-danger" [disabled]="suspending" (click)="confirmSuspend()">
+            @if (suspending) { {{ 'common.saving' | translate }} } @else { {{ 'societes.suspend' | translate }} }
           </button>
         </div>
       </div>

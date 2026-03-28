@@ -1,31 +1,31 @@
 <div class="dashboard">
   <div class="dashboard-header">
-    <h2>Commercial Dashboard</h2>
-    <a routerLink="/app/dashboard/commercial/sales" class="btn-link">View Sales details &rsaquo;</a>
+    <h2>{{ 'dashboard.commercial.title' | translate }}</h2>
+    <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.viewSales' | translate }} &rsaquo;</a>
   </div>
 
   <!-- ── Filter bar ──────────────────────────────────────────────── -->
   <div class="filter-bar">
-    <label>From <input type="date" [(ngModel)]="fromDate" /></label>
-    <label>To   <input type="date" [(ngModel)]="toDate"   /></label>
+    <label>{{ 'dashboard.commercial.fromDate' | translate }} <input type="date" [(ngModel)]="fromDate" /></label>
+    <label>{{ 'dashboard.commercial.toDate' | translate }}   <input type="date" [(ngModel)]="toDate"   /></label>
 
     @if (isAdminOrManager) {
-      <label>Project
+      <label>{{ 'common.project' | translate }}
         <select [(ngModel)]="projectId">
-          <option value="">All projects</option>
+          <option value="">{{ 'dashboard.commercial.allProjects' | translate }}</option>
           @for (p of projects; track p.id) {
             <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
       </label>
-      <label>Agent ID <input type="text" [(ngModel)]="agentId" placeholder="UUID" /></label>
+      <label>{{ 'common.agent' | translate }} <input type="text" [(ngModel)]="agentId" [placeholder]="'common.reference' | translate" /></label>
     }
 
-    <button (click)="load()">Apply</button>
+    <button (click)="load()">{{ 'common.filter' | translate }}</button>
   </div>
 
   @if (loading) {
-    <p class="loading">Loading dashboard…</p>
+    <p class="loading">{{ 'common.loading' | translate }}</p>
   }
 
   @if (error) {
@@ -34,57 +34,57 @@
 
   @if (!loading && !error && summary) {
     <!-- ── Freshness stamp ──────────────────────────────────────────── -->
-    <p class="as-of">Data as of {{ summary.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p class="as-of">{{ 'dashboard.commercial.asOf' | translate }} {{ summary.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
 
     <!-- ── KPI cards ───────────────────────────────────────────────── -->
     <section class="kpi-section">
       <div class="kpi-card accent-green">
-        <span class="kpi-label">Sales Amount</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiRevenue' | translate }}</span>
         <span class="kpi-value">{{ formatAmount(summary.salesTotalAmount) }}</span>
       </div>
       <div class="kpi-card accent-green">
-        <span class="kpi-label">Sales Count</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiSales' | translate }}</span>
         <span class="kpi-value">{{ summary.salesCount }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">Avg Sale Value</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiAvgSale' | translate }}</span>
         <span class="kpi-value">{{ formatAmount(summary.avgSaleValue) }}</span>
       </div>
       <div class="kpi-card accent-blue">
-        <span class="kpi-label">Deposits Amount</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiDepositsAmount' | translate }}</span>
         <span class="kpi-value">{{ formatAmount(summary.depositsTotalAmount) }}</span>
       </div>
       <div class="kpi-card accent-blue">
-        <span class="kpi-label">Deposits Count</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiDeposits' | translate }}</span>
         <span class="kpi-value">{{ summary.depositsCount }}</span>
       </div>
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">Active Reservations</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiActiveReservations' | translate }}</span>
         <span class="kpi-value">{{ summary.activeReservationsCount }}</span>
       </div>
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">Active Res. Amount</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiActiveProspects' | translate }}</span>
         <span class="kpi-value">{{ formatAmount(summary.activeReservationsTotalAmount) }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">Avg Res. Age (days)</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiAvgDiscount' | translate }}</span>
         <span class="kpi-value">{{ summary.avgReservationAgeDays !== null ? (summary.avgReservationAgeDays + ' d') : '—' }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">Conversion Rate</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiConversionRate' | translate }}</span>
         <span class="kpi-value">{{ formatPct(summary.conversionDepositToSaleRate) }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">Avg Days to Sale</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiAvgDaysToSale' | translate }}</span>
         <span class="kpi-value">{{ summary.avgDaysDepositToSale !== null ? (summary.avgDaysDepositToSale + ' d') : '—' }}</span>
       </div>
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">Property Holds</span>
+        <span class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHolds' | translate }}</span>
         <span class="kpi-value">{{ summary.propertyHoldsCount }}</span>
       </div>
       @if (summary.propertyHoldsExpiringSoon > 0) {
         <div class="kpi-card accent-warning">
-          <span class="kpi-label">Holds Expiring Soon</span>
+          <span class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHoldsExpiring' | translate }}</span>
           <span class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</span>
         </div>
       }
@@ -103,9 +103,9 @@
     <!-- ── Charts ─────────────────────────────────────────────────── -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>Sales Amount by Day</h4>
+        <h4>{{ 'dashboard.commercial.dailySales' | translate }}</h4>
         @if (summary.salesAmountByDay.length === 0) {
-          <p class="no-data">No data for this period.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <div class="bar-chart">
             @for (pt of summary.salesAmountByDay; track pt.date) {
@@ -119,9 +119,9 @@
       </div>
 
       <div class="chart-card">
-        <h4>Deposits Amount by Day</h4>
+        <h4>{{ 'dashboard.commercial.dailyDeposits' | translate }}</h4>
         @if (summary.depositsAmountByDay.length === 0) {
-          <p class="no-data">No data for this period.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <div class="bar-chart">
             @for (pt of summary.depositsAmountByDay; track pt.date) {
@@ -138,12 +138,12 @@
     <!-- ── Top-10 tables ──────────────────────────────────────────── -->
     <section class="tables-row">
       <div class="breakdown-table">
-        <h4>Sales by Project (top 10)</h4>
+        <h4>{{ 'dashboard.commercial.salesByProject' | translate }}</h4>
         @if (summary.salesByProject.length === 0) {
-          <p class="no-data">No sales in this period.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <table>
-            <thead><tr><th>Project</th><th>Sales</th><th>Amount</th></tr></thead>
+            <thead><tr><th>{{ 'common.project' | translate }}</th><th>{{ 'dashboard.commercial.count' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr></thead>
             <tbody>
               @for (r of summary.salesByProject; track r.projectId) {
                 <tr>
@@ -158,12 +158,12 @@
       </div>
 
       <div class="breakdown-table">
-        <h4>Sales by Agent (top 10)</h4>
+        <h4>{{ 'dashboard.commercial.salesByAgent' | translate }}</h4>
         @if (summary.salesByAgent.length === 0) {
-          <p class="no-data">No sales in this period.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <table>
-            <thead><tr><th>Agent</th><th>Sales</th><th>Amount</th></tr></thead>
+            <thead><tr><th>{{ 'common.agent' | translate }}</th><th>{{ 'dashboard.commercial.count' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr></thead>
             <tbody>
               @for (r of summary.salesByAgent; track r.agentId) {
                 <tr>
@@ -181,7 +181,7 @@
     <!-- ── Inventory by type ──────────────────────────────────────── -->
     @if (inventoryTypeEntries.length > 0) {
       <section class="inventory-types">
-        <h4>Inventory by Type</h4>
+        <h4>{{ 'dashboard.commercial.inventoryByType' | translate }}</h4>
         <div class="inv-type-row">
           @for (e of inventoryTypeEntries; track e.label) {
             <span class="inv-type-chip">{{ e.label }} <strong>{{ e.value }}</strong></span>
@@ -193,22 +193,22 @@
     <!-- ── Discount Analytics + Prospect Source Funnel ────────────── -->
     <section class="tables-row">
       <div class="breakdown-table">
-        <h4>Discount Analytics</h4>
+        <h4>{{ 'dashboard.commercial.discountAnalytics' | translate }}</h4>
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
           <div class="kpi-card" style="min-width:120px">
-            <span class="kpi-label">Avg Discount</span>
+            <span class="kpi-label">{{ 'dashboard.commercial.avgDiscount' | translate }}</span>
             <span class="kpi-value">{{ summary.avgDiscountPercent !== null ? (summary.avgDiscountPercent + ' %') : '—' }}</span>
           </div>
           <div class="kpi-card" style="min-width:120px">
-            <span class="kpi-label">Max Discount</span>
+            <span class="kpi-label">{{ 'dashboard.commercial.maxDiscount' | translate }}</span>
             <span class="kpi-value">{{ summary.maxDiscountPercent !== null ? (summary.maxDiscountPercent + ' %') : '—' }}</span>
           </div>
         </div>
         @if (summary.discountByAgent.length === 0) {
-          <p class="no-data">No discount data (contracts need listPrice set).</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <table>
-            <thead><tr><th>Agent</th><th>Sales</th><th>Avg Discount %</th></tr></thead>
+            <thead><tr><th>{{ 'common.agent' | translate }}</th><th>{{ 'dashboard.commercial.count' | translate }}</th><th>{{ 'dashboard.commercial.discountByAgent' | translate }}</th></tr></thead>
             <tbody>
               @for (r of summary.discountByAgent; track r.agentId) {
                 <tr>
@@ -223,12 +223,12 @@
       </div>
 
       <div class="breakdown-table">
-        <h4>Prospect Sources</h4>
+        <h4>{{ 'dashboard.commercial.prospectSources' | translate }}</h4>
         @if (summary.prospectsBySource.length === 0) {
-          <p class="no-data">No source data (set source on prospect profiles).</p>
+          <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
         } @else {
           <table>
-            <thead><tr><th>Source</th><th>Total</th><th>Converted</th><th>Rate</th></tr></thead>
+            <thead><tr><th>{{ 'common.type' | translate }}</th><th>Total</th><th>Converted</th><th>{{ 'dashboard.commercial.kpiConversionRate' | translate }}</th></tr></thead>
             <tbody>
               @for (r of summary.prospectsBySource; track r.source) {
                 <tr>
@@ -246,6 +246,6 @@
   }
 
   @if (!loading && !error && !summary) {
-    <p class="no-data">Apply filters to load the dashboard.</p>
+    <p class="no-data">{{ 'dashboard.commercial.noData' | translate }}</p>
   }
 </div>

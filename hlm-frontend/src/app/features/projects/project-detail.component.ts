@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
 import { Project, ProjectKpi } from '../../core/models/project.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -18,7 +19,7 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })

@@ -1,7 +1,7 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Biens immobiliers</h1>
+    <h1 class="page-title">{{ 'properties.title' | translate }}</h1>
     <p class="page-subtitle">Gerer votre inventaire immobilier</p>
   </div>
   @if (canCreate) {
@@ -11,15 +11,15 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Ajouter un bien
+        {{ 'properties.create' | translate }}
       </button>
       <!-- CSV import -->
-      <label class="btn btn-secondary" [class.disabled]="importLoading" title="Import from CSV">
+      <label class="btn btn-secondary" [class.disabled]="importLoading" [title]="'properties.import' | translate">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2 10.5V12h10v-1.5M7 1v7.5M4.5 6.5L7 9l2.5-2.5"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        @if (importLoading) { Importing… } @else { Import CSV }
+        @if (importLoading) { Importing… } @else { {{ 'properties.import' | translate }} }
         <input type="file" accept=".csv,text/csv" (change)="onImportFileSelected($event)"
                [disabled]="importLoading" hidden />
       </label>
@@ -104,11 +104,11 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
       </svg>
     </span>
     <input class="search-input" type="search"
-           placeholder="Search by reference, title, city or type…"
+           [placeholder]="'properties.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
   @if (!loading && properties.length > 0) {
-    <span class="stat-chip">{{ filtered.length }}&nbsp;/&nbsp;{{ properties.length }} properties</span>
+    <span class="stat-chip">{{ filtered.length }}&nbsp;/&nbsp;{{ properties.length }} {{ 'properties.count' | translate }}</span>
   }
 </div>
 
@@ -121,7 +121,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
 @if (loading) {
   <div class="loading-wrap">
     <div class="spinner"></div>
-    Loading properties…
+    {{ 'common.loading' | translate }}
   </div>
 }
 
@@ -130,10 +130,10 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🏠</div>
-      <p class="empty-state-title">No properties yet</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">Add your first property manually or import a list via CSV.</p>
       @if (canCreate) {
-        <button class="btn btn-primary" (click)="openModal()">Add Property</button>
+        <button class="btn btn-primary" (click)="openModal()">{{ 'properties.create' | translate }}</button>
       }
     </div>
   </div>
@@ -144,9 +144,9 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔍</div>
-      <p class="empty-state-title">No results</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">No properties match "{{ searchQuery }}"</p>
-      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Clear search</button>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'common.cancel' | translate }}</button>
     </div>
   </div>
 }
@@ -158,12 +158,12 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
       <table class="data-table">
         <thead>
           <tr>
-            <th>Reference</th>
+            <th>{{ 'properties.reference' | translate }}</th>
             <th>Title</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>City</th>
-            <th class="text-right">Price</th>
+            <th>{{ 'common.type' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'properties.city' | translate }}</th>
+            <th class="text-right">{{ 'properties.price' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -191,8 +191,8 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
     <div class="modal" style="max-width: 580px;" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">Ajouter un bien</h2>
-        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Fermer">✕</button>
+        <h2 class="modal-title">{{ 'properties.create' | translate }}</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" [attr.aria-label]="'common.close' | translate">✕</button>
       </div>
 
       <div class="modal-body">
@@ -214,7 +214,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Type</label>
+            <label class="form-label required">{{ 'common.type' | translate }}</label>
             <select class="form-control" [(ngModel)]="form.type" [disabled]="submitting">
               <option value="">Selectionner un type…</option>
               @for (t of propertyTypes; track t) {
@@ -223,7 +223,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label required">Code de reference</label>
+            <label class="form-label required">{{ 'properties.reference' | translate }}</label>
             <input class="form-control" type="text" placeholder="ex. PARK-A-101"
                    [(ngModel)]="form.referenceCode" [disabled]="submitting" />
             <span class="form-hint">Doit etre unique dans votre compte</span>
@@ -240,7 +240,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
         <div class="modal-section-label">Localisation</div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Ville</label>
+            <label class="form-label">{{ 'properties.city' | translate }}</label>
             <input class="form-control" type="text" placeholder="ex. Casablanca"
                    [(ngModel)]="form.city" [disabled]="submitting" />
           </div>
@@ -251,7 +251,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Adresse</label>
+          <label class="form-label">{{ 'common.address' | translate }}</label>
           <input class="form-control" type="text" placeholder="ex. 12 Rue Mohammed V"
                  [(ngModel)]="form.address" [disabled]="submitting" />
         </div>
@@ -263,13 +263,13 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           @if (needsSurface) {
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label required">Surface habitable (m²)</label>
+                <label class="form-label required">{{ 'properties.surface' | translate }}</label>
                 <input class="form-control" type="number" min="0" placeholder="ex. 85"
                        [(ngModel)]="form.surfaceAreaSqm" [disabled]="submitting" />
               </div>
               @if (needsLand) {
                 <div class="form-group">
-                  <label class="form-label required">Superficie terrain (m²)</label>
+                  <label class="form-label required">{{ 'properties.landArea' | translate }}</label>
                   <input class="form-control" type="number" min="0" placeholder="ex. 500"
                          [(ngModel)]="form.landAreaSqm" [disabled]="submitting" />
                 </div>
@@ -279,7 +279,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
 
           @if (!needsSurface && needsLand) {
             <div class="form-group">
-              <label class="form-label required">Superficie terrain (m²)</label>
+              <label class="form-label required">{{ 'properties.landArea' | translate }}</label>
               <input class="form-control" type="number" min="0" placeholder="ex. 500"
                      [(ngModel)]="form.landAreaSqm" [disabled]="submitting" />
             </div>
@@ -288,12 +288,12 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           @if (needsBedrooms) {
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label required">Chambres</label>
+                <label class="form-label required">{{ 'properties.bedrooms' | translate }}</label>
                 <input class="form-control" type="number" min="0" placeholder="ex. 3"
                        [(ngModel)]="form.bedrooms" [disabled]="submitting" />
               </div>
               <div class="form-group">
-                <label class="form-label required">Salles de bain</label>
+                <label class="form-label required">{{ 'properties.bathrooms' | translate }}</label>
                 <input class="form-control" type="number" min="0" placeholder="ex. 2"
                        [(ngModel)]="form.bathrooms" [disabled]="submitting" />
               </div>
@@ -303,7 +303,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           @if (needsFloorNumber) {
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label required">Etage</label>
+                <label class="form-label required">{{ 'properties.floor' | translate }}</label>
                 <input class="form-control" type="number" min="0" placeholder="ex. 3"
                        [(ngModel)]="form.floorNumber" [disabled]="submitting" />
               </div>
@@ -362,10 +362,10 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
         }
 
         <!-- Prix & Statut -->
-        <div class="modal-section-label">Prix et statut</div>
+        <div class="modal-section-label">{{ 'properties.price' | translate }} et statut</div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Prix</label>
+            <label class="form-label required">{{ 'properties.price' | translate }}</label>
             <input class="form-control" type="number" min="0" placeholder="ex. 1500000"
                    [(ngModel)]="form.price" [disabled]="submitting" />
           </div>
@@ -379,7 +379,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Statut initial</label>
+          <label class="form-label">{{ 'common.status' | translate }}</label>
           <select class="form-control" [(ngModel)]="form.status" [disabled]="submitting">
             @for (s of statusOptions; track s.value) {
               <option [value]="s.value">{{ s.label }}</option>
@@ -389,7 +389,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
 
         <!-- Description -->
         <div class="form-group">
-          <label class="form-label">Description</label>
+          <label class="form-label">{{ 'common.description' | translate }}</label>
           <textarea class="form-control" rows="3"
                     placeholder="Caracteristiques, finitions, orientation, vues…"
                     [(ngModel)]="form.description" [disabled]="submitting"></textarea>
@@ -401,9 +401,9 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.cancel' | translate }}</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-          @if (submitting) { Creation en cours… } @else { Creer le bien }
+          @if (submitting) { {{ 'common.saving' | translate }} } @else { {{ 'common.save' | translate }} }
         </button>
       </div>
 

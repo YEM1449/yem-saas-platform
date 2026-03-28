@@ -1,7 +1,7 @@
-<p><a routerLink="/app/properties">&larr; Back to Properties</a></p>
+<p><a routerLink="/app/properties">&larr; {{ 'common.back' | translate }}</a></p>
 
 @if (loading) {
-  <p>Loading property...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (error) {
@@ -12,39 +12,39 @@
   <h2>{{ property.title }}</h2>
 
   <dl>
-    <dt>Reference</dt>
+    <dt>{{ 'common.reference' | translate }}</dt>
     <dd>{{ property.referenceCode }}</dd>
 
-    <dt>Type</dt>
+    <dt>{{ 'common.type' | translate }}</dt>
     <dd>{{ property.type }}</dd>
 
-    <dt>Status</dt>
+    <dt>{{ 'common.status' | translate }}</dt>
     <dd>
       <span class="badge" [class]="'badge-' + property.status.toLowerCase()">
         {{ property.status }}
       </span>
     </dd>
 
-    <dt>Price</dt>
+    <dt>{{ 'properties.price' | translate }}</dt>
     <dd>{{ property.price | number:'1.0-0' }} {{ property.currency }}</dd>
 
     @if (property.surfaceAreaSqm) {
-      <dt>Surface</dt>
+      <dt>{{ 'properties.surface' | translate }}</dt>
       <dd>{{ property.surfaceAreaSqm }} m²</dd>
     }
 
     @if (property.bedrooms) {
-      <dt>Chambres</dt>
+      <dt>{{ 'properties.bedrooms' | translate }}</dt>
       <dd>{{ property.bedrooms }}</dd>
     }
 
     @if (property.city) {
-      <dt>Ville</dt>
+      <dt>{{ 'properties.city' | translate }}</dt>
       <dd>{{ property.city }}</dd>
     }
 
     @if (property.projectName) {
-      <dt>Projet</dt>
+      <dt>{{ 'common.project' | translate }}</dt>
       <dd>{{ property.projectName }}</dd>
     }
   </dl>
@@ -70,7 +70,7 @@
     }
 
     @if (mediaLoading) {
-      <p>Loading media...</p>
+      <p>{{ 'common.loading' | translate }}</p>
     }
 
     @if (!mediaLoading && media.length === 0) {
@@ -93,7 +93,7 @@
             <div class="media-name">{{ m.originalFilename }}</div>
             <div class="media-meta">{{ m.sizeBytes | number }} octets</div>
             @if (isAdmin) {
-              <button class="btn-delete" (click)="deleteMedia(m.id)">Supprimer</button>
+              <button class="btn-delete" (click)="deleteMedia(m.id)">{{ 'common.delete' | translate }}</button>
             }
           </li>
         }

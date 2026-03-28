@@ -1,121 +1,136 @@
 <div class="schedule-container">
-  <div class="schedule-header">
-    <h3>Échéancier de paiement</h3>
+  <div class="schedule-header page-header">
+    <h3 class="page-title">{{ 'payments.title' | translate }}</h3>
     @if (canWrite) {
-      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">+ Ajouter</button>
+      <div class="page-header-actions">
+        <button class="btn btn-primary btn-sm" (click)="showCreateForm = !showCreateForm">+ {{ 'payments.addPayment' | translate }}</button>
+      </div>
     }
   </div>
 
-  @if (actionError) { <p class="error-msg">{{ actionError }}</p> }
-  @if (actionSuccess) { <p class="success-msg">{{ actionSuccess }}</p> }
-  @if (sendSuccess) { <p class="success-msg">{{ sendSuccess }}</p> }
+  @if (actionError) { <div class="alert alert-error">{{ actionError }}</div> }
+  @if (actionSuccess) { <div class="alert alert-success">{{ actionSuccess }}</div> }
+  @if (sendSuccess) { <div class="alert alert-success">{{ sendSuccess }}</div> }
 
   <!-- ── Create form ── -->
   @if (showCreateForm && canWrite) {
-    <div class="create-form">
-      <h4>Nouvelle échéance</h4>
-      <div class="form-row">
-        <label>Libellé*</label>
-        <input [(ngModel)]="newLabel" maxlength="200" placeholder="ex: Acompte 1 – 10%" />
+    <div class="card" style="padding:16px;margin-bottom:16px">
+      <h4>{{ 'payments.addPayment' | translate }}</h4>
+      <div class="form-group">
+        <label class="form-label required">{{ 'payments.label' | translate }}</label>
+        <input class="form-control" [(ngModel)]="newLabel" maxlength="200" />
       </div>
-      <div class="form-row">
-        <label>Montant*</label>
-        <input type="number" [(ngModel)]="newAmount" min="0.01" step="0.01" />
+      <div class="form-group">
+        <label class="form-label required">{{ 'payments.amount' | translate }}</label>
+        <input class="form-control" type="number" [(ngModel)]="newAmount" min="0.01" step="0.01" />
       </div>
-      <div class="form-row">
-        <label>Date d'échéance*</label>
-        <input type="date" [(ngModel)]="newDueDate" />
+      <div class="form-group">
+        <label class="form-label required">{{ 'payments.dueDate' | translate }}</label>
+        <input class="form-control" type="date" [(ngModel)]="newDueDate" />
       </div>
-      <div class="form-row">
-        <label>Notes</label>
-        <textarea [(ngModel)]="newNotes" rows="2" maxlength="2000"></textarea>
+      <div class="form-group">
+        <label class="form-label">{{ 'common.notes' | translate }}</label>
+        <textarea class="form-control" [(ngModel)]="newNotes" rows="2" maxlength="2000"></textarea>
       </div>
-      @if (createError) { <p class="error-msg">{{ createError }}</p> }
-      <div class="form-actions">
-        <button class="btn-primary" (click)="submitCreate()">Créer</button>
-        <button class="btn-secondary" (click)="showCreateForm = false; resetCreateForm()">Annuler</button>
+      @if (createError) { <div class="alert alert-error">{{ createError }}</div> }
+      <div class="modal-footer" style="padding:0">
+        <button class="btn btn-primary" (click)="submitCreate()">{{ 'common.create' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showCreateForm = false; resetCreateForm()">{{ 'common.cancel' | translate }}</button>
       </div>
     </div>
   }
 
   <!-- ── Loading / empty ── -->
-  @if (loading) { <p class="loading">Chargement…</p> }
-  @if (!loading && error) { <p class="error-msg">{{ error }}</p> }
+  @if (loading) {
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+  }
+  @if (!loading && error) { <div class="alert alert-error">{{ error }}</div> }
   @if (!loading && !error && items.length === 0) {
-    <p class="empty">Aucune échéance définie.</p>
+    <div class="card">
+      <div class="empty-state"><p class="empty-state-title">{{ 'payments.noItems' | translate }}</p></div>
+    </div>
   }
 
   <!-- ── Items table ── -->
   @if (!loading && items.length > 0) {
-    <table class="schedule-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Libellé</th>
-          <th>Montant</th>
-          <th>Payé</th>
-          <th>Restant</th>
-          <th>Échéance</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of items; track item.id) {
-          <tr [class.overdue-row]="item.status === 'OVERDUE'">
-            <td>{{ item.sequence }}</td>
-            <td>{{ item.label }}</td>
-            <td class="amount">{{ item.amount | number:'1.2-2' }}</td>
-            <td class="amount paid">{{ item.amountPaid | number:'1.2-2' }}</td>
-            <td class="amount" [class.remaining-nonzero]="item.amountRemaining > 0">
-              {{ item.amountRemaining | number:'1.2-2' }}
-            </td>
-            <td>{{ item.dueDate }}</td>
-            <td><span class="badge" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td>
-            <td class="actions">
-              <!-- PDF -->
-              <button class="btn-icon" title="Télécharger PDF" (click)="downloadPdf(item)">📄</button>
+    <div class="card">
+      <div class="card-body-flush">
+        <table class="data-table schedule-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ 'payments.label' | translate }}</th>
+              <th>{{ 'payments.amount' | translate }}</th>
+              <th>{{ 'payments.paid' | translate }}</th>
+              <th>{{ 'payments.remaining' | translate }}</th>
+              <th>{{ 'payments.dueDate' | translate }}</th>
+              <th>{{ 'payments.status' | translate }}</th>
+              <th>{{ 'common.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items; track item.id) {
+              <tr [class.overdue-row]="item.status === 'OVERDUE'">
+                <td>{{ item.sequence }}</td>
+                <td>{{ item.label }}</td>
+                <td class="amount num">{{ item.amount | number:'1.2-2' }}</td>
+                <td class="amount num paid">{{ item.amountPaid | number:'1.2-2' }}</td>
+                <td class="amount num" [class.remaining-nonzero]="item.amountRemaining > 0">
+                  {{ item.amountRemaining | number:'1.2-2' }}
+                </td>
+                <td>{{ item.dueDate }}</td>
+                <td><span class="badge" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td>
+                <td class="td-actions">
+                  <!-- PDF -->
+                  <button class="btn btn-sm btn-ghost" [title]="'payments.downloadCall' | translate" (click)="downloadPdf(item)">📄</button>
 
-              @if (canWrite) {
-                <!-- Issue -->
-                @if (item.status === 'DRAFT') {
-                  <button class="btn-icon" title="Émettre" (click)="issue(item)">✅</button>
-                }
-                <!-- Send -->
-                @if (item.status === 'ISSUED' || item.status === 'SENT' || item.status === 'OVERDUE') {
-                  <button class="btn-icon" title="Envoyer" (click)="openSendModal(item)">📨</button>
-                }
-                <!-- Add payment -->
-                @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
-                  <button class="btn-icon" title="Encaisser" (click)="openPaymentModal(item)">💰</button>
-                }
-                <!-- Cancel -->
-                @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
-                  <button class="btn-icon btn-danger" title="Annuler" (click)="cancelItem(item)">✖</button>
-                }
-                <!-- Delete -->
-                @if (item.status === 'DRAFT') {
-                  <button class="btn-icon btn-danger" title="Supprimer" (click)="deleteItem(item)">🗑</button>
-                }
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+                  @if (canWrite) {
+                    <!-- Issue -->
+                    @if (item.status === 'DRAFT') {
+                      <button class="btn btn-sm btn-secondary" (click)="issue(item)">✅</button>
+                    }
+                    <!-- Send -->
+                    @if (item.status === 'ISSUED' || item.status === 'SENT' || item.status === 'OVERDUE') {
+                      <button class="btn btn-sm btn-secondary" (click)="openSendModal(item)">📨</button>
+                    }
+                    <!-- Add payment -->
+                    @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
+                      <button class="btn btn-sm btn-secondary" (click)="openPaymentModal(item)">💰</button>
+                    }
+                    <!-- Cancel -->
+                    @if (item.status !== 'PAID' && item.status !== 'CANCELED') {
+                      <button class="btn btn-sm btn-danger" (click)="cancelItem(item)">✖</button>
+                    }
+                    <!-- Delete -->
+                    @if (item.status === 'DRAFT') {
+                      <button class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑</button>
+                    }
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 
   <!-- ── Send modal ── -->
   @if (sendItemId) {
-    <div class="modal-overlay" (click)="sendItemId = null">
+    <div class="modal-backdrop" (click)="sendItemId = null">
       <div class="modal" (click)="$event.stopPropagation()">
-        <h4>Envoyer l'appel de fonds</h4>
-        <label><input type="checkbox" [(ngModel)]="sendEmail" /> Envoyer par Email</label><br/>
-        <label><input type="checkbox" [(ngModel)]="sendSms" /> Envoyer par SMS</label>
-        @if (sendError) { <p class="error-msg">{{ sendError }}</p> }
-        <div class="form-actions">
-          <button class="btn-primary" [disabled]="!sendEmail && !sendSms" (click)="submitSend()">Envoyer</button>
-          <button class="btn-secondary" (click)="sendItemId = null">Annuler</button>
+        <div class="modal-header">
+          <h4 class="modal-title">{{ 'payments.downloadCall' | translate }}</h4>
+          <button class="modal-close" (click)="sendItemId = null">✕</button>
+        </div>
+        <div class="modal-body">
+          <label><input type="checkbox" [(ngModel)]="sendEmail" /> Email</label><br/>
+          <label><input type="checkbox" [(ngModel)]="sendSms" /> SMS</label>
+          @if (sendError) { <div class="alert alert-error">{{ sendError }}</div> }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" [disabled]="!sendEmail && !sendSms" (click)="submitSend()">{{ 'common.save' | translate }}</button>
+          <button class="btn btn-secondary" (click)="sendItemId = null">{{ 'common.cancel' | translate }}</button>
         </div>
       </div>
     </div>
@@ -123,47 +138,56 @@
 
   <!-- ── Payment modal ── -->
   @if (paymentItemId) {
-    <div class="modal-overlay" (click)="paymentItemId = null">
+    <div class="modal-backdrop" (click)="paymentItemId = null">
       <div class="modal" (click)="$event.stopPropagation()">
-        <h4>Encaissements – {{ paymentItemLabel }}</h4>
+        <div class="modal-header">
+          <h4 class="modal-title">{{ 'payments.addPayment' | translate }} — {{ paymentItemLabel }}</h4>
+          <button class="modal-close" (click)="paymentItemId = null">✕</button>
+        </div>
+        <div class="modal-body">
+          @if (payments.length > 0) {
+            <table class="data-table payment-table">
+              <thead><tr>
+                <th>{{ 'payments.amount' | translate }}</th>
+                <th>{{ 'payments.paymentDate' | translate }}</th>
+                <th>{{ 'payments.method' | translate }}</th>
+                <th>{{ 'payments.reference' | translate }}</th>
+              </tr></thead>
+              <tbody>
+                @for (p of payments; track p.id) {
+                  <tr>
+                    <td>{{ p.amountPaid | number:'1.2-2' }}</td>
+                    <td>{{ p.paidAt | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ p.channel ?? '—' }}</td>
+                    <td>{{ p.paymentReference ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
 
-        @if (payments.length > 0) {
-          <table class="payment-table">
-            <thead><tr><th>Montant</th><th>Date</th><th>Canal</th><th>Réf.</th></tr></thead>
-            <tbody>
-              @for (p of payments; track p.id) {
-                <tr>
-                  <td>{{ p.amountPaid | number:'1.2-2' }}</td>
-                  <td>{{ p.paidAt | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ p.channel ?? '—' }}</td>
-                  <td>{{ p.paymentReference ?? '—' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-
-        <h5>Ajouter un règlement</h5>
-        <div class="form-row">
-          <label>Montant*</label>
-          <input type="number" [(ngModel)]="paymentAmount" min="0.01" step="0.01" />
+          <h5>{{ 'payments.addPayment' | translate }}</h5>
+          <div class="form-group">
+            <label class="form-label required">{{ 'payments.amount' | translate }}</label>
+            <input class="form-control" type="number" [(ngModel)]="paymentAmount" min="0.01" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">{{ 'payments.paymentDate' | translate }}</label>
+            <input class="form-control" type="date" [(ngModel)]="paymentDate" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ 'payments.method' | translate }}</label>
+            <input class="form-control" [(ngModel)]="paymentChannel" maxlength="50" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ 'payments.reference' | translate }}</label>
+            <input class="form-control" [(ngModel)]="paymentRef" maxlength="200" />
+          </div>
+          @if (paymentError) { <div class="alert alert-error">{{ paymentError }}</div> }
         </div>
-        <div class="form-row">
-          <label>Date*</label>
-          <input type="date" [(ngModel)]="paymentDate" />
-        </div>
-        <div class="form-row">
-          <label>Canal</label>
-          <input [(ngModel)]="paymentChannel" placeholder="BANK_TRANSFER, CASH…" maxlength="50" />
-        </div>
-        <div class="form-row">
-          <label>Référence</label>
-          <input [(ngModel)]="paymentRef" maxlength="200" />
-        </div>
-        @if (paymentError) { <p class="error-msg">{{ paymentError }}</p> }
-        <div class="form-actions">
-          <button class="btn-primary" (click)="submitPayment()">Enregistrer</button>
-          <button class="btn-secondary" (click)="paymentItemId = null">Fermer</button>
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="submitPayment()">{{ 'common.save' | translate }}</button>
+          <button class="btn btn-secondary" (click)="paymentItemId = null">{{ 'common.close' | translate }}</button>
         </div>
       </div>
     </div>

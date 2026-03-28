@@ -1,7 +1,7 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Projects</h1>
+    <h1 class="page-title">{{ 'projects.title' | translate }}</h1>
     <p class="page-subtitle">Manage your real-estate development projects</p>
   </div>
   @if (canWrite) {
@@ -10,7 +10,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        New Project
+        {{ 'projects.create' | translate }}
       </button>
     </div>
   }
@@ -25,7 +25,7 @@
 @if (loading) {
   <div class="loading-wrap">
     <div class="spinner"></div>
-    Loading projects…
+    {{ 'common.loading' | translate }}
   </div>
 }
 
@@ -34,14 +34,14 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🏗️</div>
-      <p class="empty-state-title">No projects yet</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">Create your first project to start grouping properties.</p>
       @if (canWrite) {
         <button class="btn btn-primary" (click)="openModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          New Project
+          {{ 'projects.create' | translate }}
         </button>
       }
     </div>
@@ -55,9 +55,9 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Status</th>
+            <th>{{ 'projects.name' | translate }}</th>
+            <th>{{ 'common.description' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -80,7 +80,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">New Project</h2>
+        <h2 class="modal-title">{{ 'projects.create' | translate }}</h2>
         <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
       </div>
 
@@ -90,23 +90,23 @@
         }
 
         <div class="form-group">
-          <label class="form-label required">Project Name</label>
-          <input class="form-control" type="text" placeholder="e.g. Résidence Atlas"
+          <label class="form-label required">{{ 'projects.name' | translate }}</label>
+          <input class="form-control" type="text" [placeholder]="'projects.searchPlaceholder' | translate"
                  [(ngModel)]="form.name" [disabled]="submitting" autocomplete="off" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Description</label>
+          <label class="form-label">{{ 'common.description' | translate }}</label>
           <textarea class="form-control" rows="3"
-                    placeholder="Optional description, location, notes…"
+                    [placeholder]="'common.notes' | translate"
                     [(ngModel)]="form.description" [disabled]="submitting"></textarea>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.cancel' | translate }}</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-          @if (submitting) { Creating… } @else { Create Project }
+          @if (submitting) { {{ 'common.saving' | translate }} } @else { {{ 'common.create' | translate }} }
         </button>
       </div>
 

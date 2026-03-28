@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { TemplateService } from './template.service';
 import { TemplateType } from './template.model';
 
@@ -14,31 +15,31 @@ const TYPE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-template-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   template: `
     <div class="editor-header">
-      <a routerLink="/app/templates" class="back-link">← Retour aux modèles</a>
+      <a routerLink="/app/templates" class="back-link">{{ 'templates.backToList' | translate }}</a>
       <h1>{{ typeLabel }} <span class="badge-type">{{ type }}</span></h1>
       @if (isCustom) {
         <span class="badge-custom">Modèle personnalisé actif</span>
       } @else {
-        <span class="badge-default">Modèle intégré (lecture seule jusqu'à enregistrement)</span>
+        <span class="badge-default">{{ 'templates.default' | translate }}</span>
       }
     </div>
 
     <div class="editor-toolbar">
       <button (click)="save()" [disabled]="saving" class="btn btn-primary">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+        {{ saving ? ('templates.save' | translate) : ('templates.save' | translate) }}
       </button>
-      <button (click)="previewPdf()" class="btn btn-outline">Aperçu PDF</button>
+      <button (click)="previewPdf()" class="btn btn-outline">{{ 'templates.preview' | translate }}</button>
       @if (isCustom) {
-        <button (click)="revert()" class="btn btn-danger">Réinitialiser</button>
+        <button (click)="revert()" class="btn btn-danger">{{ 'templates.revert' | translate }}</button>
       }
       @if (saveError) {
         <span class="error-msg">{{ saveError }}</span>
       }
       @if (saveSuccess) {
-        <span class="success-msg">Enregistré avec succès.</span>
+        <span class="success-msg">{{ 'templates.saved' | translate }}</span>
       }
     </div>
 

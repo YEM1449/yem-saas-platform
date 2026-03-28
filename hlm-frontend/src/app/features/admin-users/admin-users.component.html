@@ -1,7 +1,7 @@
-<h2>Gestion des utilisateurs</h2>
+<h2>{{ 'admin.title' | translate }}</h2>
 
 <div class="toolbar">
-  <input type="text" [(ngModel)]="search" (keyup.enter)="applyFilter()" placeholder="Rechercher..." class="search-input" />
+  <input type="text" [(ngModel)]="search" (keyup.enter)="applyFilter()" [placeholder]="'admin.searchPlaceholder' | translate" class="search-input" />
   <select [(ngModel)]="filterRole" (ngModelChange)="applyFilter()">
     <option value="">Tous les rôles</option>
     @for (r of roles.slice(1); track r) {
@@ -14,7 +14,7 @@
     <option value="false">Inactifs</option>
   </select>
   <button (click)="applyFilter()">Filtrer</button>
-  <button (click)="showInviteDialog = true" class="btn-primary">+ Inviter</button>
+  <button (click)="showInviteDialog = true" class="btn-primary">+ {{ 'admin.invite' | translate }}</button>
 </div>
 
 @if (success) { <p class="success">{{ success }}</p> }
@@ -28,10 +28,10 @@
   </div>
 }
 
-@if (loading) { <p>Chargement...</p> }
+@if (loading) { <p>{{ 'common.loading' | translate }}</p> }
 
 @if (!loading && membres.length === 0) {
-  <p class="empty">Aucun utilisateur trouvé.</p>
+  <p class="empty">{{ 'admin.noUsers' | translate }}</p>
 }
 
 @if (!loading && membres.length > 0) {
@@ -39,10 +39,10 @@
     <thead>
       <tr>
         <th>Nom</th>
-        <th>Email</th>
-        <th>Rôle</th>
-        <th>Statut</th>
-        <th>Dernière connexion</th>
+        <th>{{ 'admin.inviteEmail' | translate }}</th>
+        <th>{{ 'admin.role' | translate }}</th>
+        <th>{{ 'common.status' | translate }}</th>
+        <th>{{ 'admin.lastLogin' | translate }}</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -67,11 +67,11 @@
               <button (click)="reinviter(m)" class="btn-small">Ré-inviter</button>
             }
             @if (m.compteBloque) {
-              <button (click)="debloquer(m)" class="btn-small btn-green">Débloquer</button>
+              <button (click)="debloquer(m)" class="btn-small btn-green">{{ 'admin.activate' | translate }}</button>
             }
             <button (click)="exportDonnees(m)" class="btn-small">Export RGPD</button>
             <button (click)="anonymiser(m)" class="btn-small btn-danger">Anonymiser</button>
-            <button (click)="retirer(m)" class="btn-small btn-danger">Retirer</button>
+            <button (click)="retirer(m)" class="btn-small btn-danger">{{ 'admin.deactivate' | translate }}</button>
           </td>
         </tr>
       }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { ProjectService } from '../projects/project.service';
 import { CommercialDashboardService } from './commercial-dashboard.service';
@@ -16,7 +17,7 @@ import { Project } from '../../core/models/project.model';
 @Component({
   selector: 'app-commercial-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   templateUrl: './commercial-dashboard.component.html',
   styleUrl: './commercial-dashboard.component.css',
 })

@@ -1,4 +1,4 @@
-<h2>Tâches &amp; Suivis</h2>
+<h2>{{ 'tasks.title' | translate }}</h2>
 
 <div class="toolbar">
   <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
@@ -6,7 +6,7 @@
       <option [value]="s.value">{{ s.label }}</option>
     }
   </select>
-  <button (click)="openCreate()" class="btn-primary">+ Nouvelle tâche</button>
+  <button (click)="openCreate()" class="btn-primary">+ {{ 'tasks.create' | translate }}</button>
 </div>
 
 @if (success) {
@@ -17,21 +17,21 @@
 }
 
 @if (loading) {
-  <p>Chargement...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (!loading && tasks.length === 0) {
-  <p class="empty">Aucune tâche trouvée.</p>
+  <p class="empty">{{ 'tasks.noTasks' | translate }}</p>
 }
 
 @if (!loading && tasks.length > 0) {
   <table>
     <thead>
       <tr>
-        <th>Titre</th>
-        <th>Statut</th>
-        <th>Échéance</th>
-        <th>Actions</th>
+        <th>{{ 'tasks.titleLabel' | translate }}</th>
+        <th>{{ 'common.status' | translate }}</th>
+        <th>{{ 'tasks.dueDate' | translate }}</th>
+        <th>{{ 'common.actions' | translate }}</th>
       </tr>
     </thead>
     <tbody>
@@ -47,10 +47,10 @@
               <button (click)="changeStatus(task, 'IN_PROGRESS')" class="btn-small">Démarrer</button>
             }
             @if (task.status === 'IN_PROGRESS') {
-              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">Terminer</button>
+              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">{{ 'tasks.done' | translate }}</button>
             }
-            <button (click)="openEdit(task)" class="btn-small">Modifier</button>
-            <button (click)="deleteTask(task)" class="btn-small btn-danger">Supprimer</button>
+            <button (click)="openEdit(task)" class="btn-small">{{ 'common.edit' | translate }}</button>
+            <button (click)="deleteTask(task)" class="btn-small btn-danger">{{ 'common.delete' | translate }}</button>
           </td>
         </tr>
       }

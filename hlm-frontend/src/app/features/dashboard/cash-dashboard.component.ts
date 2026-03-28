@@ -1,13 +1,14 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { PaymentScheduleService } from '../contracts/payment-schedule.service';
 import { CashDashboardResponse } from '../../core/models/payment-schedule.model';
 
 @Component({
   selector: 'app-cash-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './cash-dashboard.component.html',
   styleUrl: './cash-dashboard.component.css',
 })

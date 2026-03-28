@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { ContactService } from './contact.service';
 import { Contact, TimelineEvent } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -11,7 +12,7 @@ import { ContactTasksComponent } from '../tasks/contact-tasks.component';
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, DocumentListComponent, ContactTasksComponent],
+  imports: [CommonModule, RouterLink, DocumentListComponent, ContactTasksComponent, TranslateModule],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })
