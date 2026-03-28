@@ -1,0 +1,3 @@
+/api/*        https://yem-hlm-backend.onrender.com/api/:splat      200
+/auth/*       https://yem-hlm-backend.onrender.com/auth/:splat     200
+/actuator/*   https://yem-hlm-backend.onrender.com/actuator/:splat 200
