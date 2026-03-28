@@ -10,7 +10,8 @@
     "lint": "ng lint",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "deploy": "ng build --configuration production && wrangler pages deploy dist/frontend/browser"
   },
   "private": true,
   "dependencies": {
