@@ -4,7 +4,7 @@
     <div class="date-filter filter-bar">
       <label>{{ 'dashboard.cash.fromDate' | translate }} <input type="date" [(ngModel)]="from" /></label>
       <label>{{ 'dashboard.cash.toDate' | translate }} <input type="date" [(ngModel)]="to" /></label>
-      <button class="btn btn-secondary" (click)="load()">{{ 'dashboard.cash.load' | translate }}</button>
+      <button (click)="load()">{{ 'dashboard.cash.load' | translate }}</button>
     </div>
   </div>
 
@@ -14,7 +14,7 @@
   @if (error) { <div class="alert alert-error">{{ error }}</div> }
 
   @if (data) {
-    <!-- ── KPI Cards ── -->
+    <!-- KPI Cards -->
     <section class="kpi-section">
       <div class="kpi-card">
         <span class="kpi-label">{{ 'dashboard.cash.expected' | translate }}</span>
@@ -35,33 +35,25 @@
       </div>
     </section>
 
-    <!-- ── Aging buckets ── -->
-    <div class="section breakdown-table">
-      <h3>{{ 'dashboard.cash.agingTitle' | translate }}</h3>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'common.type' | translate }}</th>
-            <th>{{ 'dashboard.cash.remaining' | translate }}</th>
-            <th>{{ 'dashboard.commercial.count' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (b of data.agingBuckets; track b.label) {
-            <tr>
-              <td>{{ b.label }}</td>
-              <td class="amount num">{{ b.totalAmount | number:'1.0-0' }}</td>
-              <td class="num">{{ b.itemCount }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <!-- Charts row -->
+    <section class="charts-row">
+      <div class="chart-card">
+        <h4>{{ 'dashboard.commercial.kpiRevenue' | translate }}</h4>
+        <canvas #kpiCanvas style="max-height:200px"></canvas>
+      </div>
 
-    <!-- ── Next due ── -->
+      @if (data.agingBuckets?.length) {
+        <div class="chart-card">
+          <h4>{{ 'dashboard.cash.agingTitle' | translate }}</h4>
+          <canvas #agingCanvas style="max-height:200px"></canvas>
+        </div>
+      }
+    </section>
+
+    <!-- Next due items -->
     @if (data.nextDueItems.length > 0) {
-      <div class="section breakdown-table">
-        <h3>{{ 'dashboard.cash.nextDue' | translate }}</h3>
+      <section class="breakdown-table">
+        <h4>{{ 'dashboard.cash.nextDue' | translate }}</h4>
         <table class="data-table">
           <thead>
             <tr>
@@ -80,7 +72,7 @@
             }
           </tbody>
         </table>
-      </div>
+      </section>
     }
   }
 

@@ -31,7 +31,28 @@
       </div>
     </section>
 
-    <!-- Aging buckets -->
+    <!-- Charts row: aging doughnut + overdue by project -->
+    <section class="charts-row">
+      <div class="chart-card">
+        <h4>{{ 'dashboard.receivables.agingTitle' | translate }}</h4>
+        <div style="max-width:280px;margin:0 auto">
+          <canvas #agingCanvas></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h4>{{ 'dashboard.receivables.overdueByProject' | translate }}</h4>
+        @if (data.overdueByProject.length === 0) {
+          <p class="no-data">{{ 'dashboard.receivables.noData' | translate }}</p>
+        } @else {
+          <div [style.height.px]="chartHeight(data.overdueByProject)">
+            <canvas #projectCanvas></canvas>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Aging detail table -->
     <section class="tables-row">
       <div class="breakdown-table">
         <h4>{{ 'dashboard.receivables.agingTitle' | translate }}</h4>
@@ -51,60 +72,34 @@
         </table>
       </div>
 
+      <!-- Recent payments -->
       <div class="breakdown-table">
-        <h4>{{ 'dashboard.receivables.overdueByProject' | translate }}</h4>
-        @if (data.overdueByProject.length === 0) {
+        <h4>{{ 'dashboard.receivables.recentPayments' | translate }}</h4>
+        @if (data.recentPayments.length === 0) {
           <p class="no-data">{{ 'dashboard.receivables.noData' | translate }}</p>
         } @else {
           <table>
-            <thead><tr>
-              <th>{{ 'common.project' | translate }}</th>
-              <th>{{ 'dashboard.receivables.totalOverdue' | translate }}</th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>{{ 'dashboard.receivables.paymentDate' | translate }}</th>
+                <th>{{ 'common.amount' | translate }}</th>
+                <th>{{ 'dashboard.receivables.method' | translate }}</th>
+                <th>{{ 'common.project' | translate }}</th>
+              </tr>
+            </thead>
             <tbody>
-              @for (r of data.overdueByProject; track r.projectId) {
+              @for (p of data.recentPayments; track p.paymentId) {
                 <tr>
-                  <td>{{ r.projectName }}</td>
-                  <td class="num">{{ formatAmount(r.overdueAmount) }}</td>
+                  <td>{{ p.receivedAt | date:'dd/MM/yyyy' }}</td>
+                  <td class="num">{{ formatAmount(p.amountReceived) }}</td>
+                  <td>{{ p.method }}</td>
+                  <td>{{ p.projectName }}</td>
                 </tr>
               }
             </tbody>
           </table>
         }
       </div>
-    </section>
-
-    <!-- Recent payments -->
-    <section class="breakdown-table" style="max-width:900px">
-      <h4>{{ 'dashboard.receivables.recentPayments' | translate }}</h4>
-      @if (data.recentPayments.length === 0) {
-        <p class="no-data">{{ 'dashboard.receivables.noData' | translate }}</p>
-      } @else {
-        <table>
-          <thead>
-            <tr>
-              <th>{{ 'dashboard.receivables.paymentDate' | translate }}</th>
-              <th>{{ 'common.amount' | translate }}</th>
-              <th>{{ 'dashboard.receivables.method' | translate }}</th>
-              <th>{{ 'common.project' | translate }}</th>
-              <th>{{ 'common.reference' | translate }}</th>
-              <th>{{ 'common.agent' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of data.recentPayments; track p.paymentId) {
-              <tr>
-                <td>{{ p.receivedAt | date:'dd/MM/yyyy' }}</td>
-                <td class="num">{{ formatAmount(p.amountReceived) }}</td>
-                <td>{{ p.method }}</td>
-                <td>{{ p.projectName }}</td>
-                <td>{{ p.propertyRef }}</td>
-                <td>{{ p.agentEmail }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
     </section>
   }
 </div>

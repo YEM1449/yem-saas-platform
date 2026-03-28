@@ -1,18 +1,30 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component, inject, OnInit, OnDestroy, AfterViewInit,
+  ViewChild, ElementRef, ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import {
+  Chart,
+  BarController, BarElement, CategoryScale, LinearScale,
+  DoughnutController, ArcElement,
+  Tooltip, Legend,
+} from 'chart.js';
 import { AuthService } from '../../core/auth/auth.service';
 import { ProjectService } from '../projects/project.service';
 import { CommercialDashboardService } from './commercial-dashboard.service';
 import {
   CommercialDashboardSummary,
-  DailyPoint,
   DashboardParams,
 } from '../../core/models/commercial-dashboard.model';
 import { Project } from '../../core/models/project.model';
+
+// Register only what we use
+Chart.register(BarController, BarElement, CategoryScale, LinearScale,
+  DoughnutController, ArcElement, Tooltip, Legend);
 
 @Component({
   selector: 'app-commercial-dashboard',
@@ -21,7 +33,17 @@ import { Project } from '../../core/models/project.model';
   templateUrl: './commercial-dashboard.component.html',
   styleUrl: './commercial-dashboard.component.css',
 })
-export class CommercialDashboardComponent implements OnInit {
+export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('salesByDayCanvas')    salesByDayRef!:    ElementRef<HTMLCanvasElement>;
+  @ViewChild('depositsByDayCanvas') depositsByDayRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('salesByProjectCanvas') salesByProjectRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('salesByAgentCanvas')  salesByAgentRef!:  ElementRef<HTMLCanvasElement>;
+  @ViewChild('inventoryCanvas')     inventoryRef!:     ElementRef<HTMLCanvasElement>;
+  @ViewChild('prospectsCanvas')     prospectsRef!:     ElementRef<HTMLCanvasElement>;
+
+  private charts: Chart[] = [];
+  private cdr = inject(ChangeDetectorRef);
+
   private svc     = inject(CommercialDashboardService);
   private auth    = inject(AuthService);
   private projSvc = inject(ProjectService);
@@ -38,6 +60,8 @@ export class CommercialDashboardComponent implements OnInit {
   projectId = '';
   agentId   = '';
 
+  viewReady = false;
+
   get isAdminOrManager(): boolean {
     const role = this.auth.user?.role;
     return role === 'ROLE_ADMIN' || role === 'ROLE_MANAGER';
@@ -45,22 +69,12 @@ export class CommercialDashboardComponent implements OnInit {
 
   get inventoryEntries(): { label: string; value: number }[] {
     if (!this.summary?.inventoryByStatus) return [];
-    return Object.entries(this.summary.inventoryByStatus)
-      .map(([k, v]) => ({ label: k, value: v }));
+    return Object.entries(this.summary.inventoryByStatus).map(([k, v]) => ({ label: k, value: v }));
   }
 
   get inventoryTypeEntries(): { label: string; value: number }[] {
     if (!this.summary?.inventoryByType) return [];
-    return Object.entries(this.summary.inventoryByType)
-      .map(([k, v]) => ({ label: k, value: v }));
-  }
-
-  get maxSalesDay(): number {
-    return Math.max(1, ...(this.summary?.salesAmountByDay ?? []).map(p => p.amount));
-  }
-
-  get maxDepositsDay(): number {
-    return Math.max(1, ...(this.summary?.depositsAmountByDay ?? []).map(p => p.amount));
+    return Object.entries(this.summary.inventoryByType).map(([k, v]) => ({ label: k, value: v }));
   }
 
   ngOnInit(): void {
@@ -68,6 +82,14 @@ export class CommercialDashboardComponent implements OnInit {
       this.projSvc.list(true).subscribe({ next: p => (this.projects = p) });
     }
     this.load();
+  }
+
+  ngAfterViewInit(): void {
+    this.viewReady = true;
+  }
+
+  ngOnDestroy(): void {
+    this.destroyCharts();
   }
 
   load(): void {
@@ -83,13 +105,14 @@ export class CommercialDashboardComponent implements OnInit {
       next: data => {
         this.summary = data;
         this.loading = false;
+        this.cdr.detectChanges();
+        // Allow DOM to render canvases before building charts
+        setTimeout(() => this.buildCharts(), 50);
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         if (err.status === 403) {
           this.error = 'Dashboard not available for your role.';
-        } else if (err.status === 400) {
-          this.error = 'Invalid filter: ' + (err.error?.message ?? 'bad request');
         } else {
           this.error = err.error?.message ?? `Failed to load dashboard (${err.status})`;
         }
@@ -97,9 +120,162 @@ export class CommercialDashboardComponent implements OnInit {
     });
   }
 
-  barHeight(point: DailyPoint, maxVal: number, maxPx = 80): number {
-    if (!point.amount || maxVal <= 0) return 0;
-    return Math.max(2, Math.round((point.amount / maxVal) * maxPx));
+  private destroyCharts(): void {
+    this.charts.forEach(c => c.destroy());
+    this.charts = [];
+  }
+
+  private buildCharts(): void {
+    if (!this.summary) return;
+    this.destroyCharts();
+
+    const s = this.summary;
+
+    // ── Sales by day (bar) ────────────────────────────────────────────
+    if (this.salesByDayRef?.nativeElement && s.salesAmountByDay?.length) {
+      this.charts.push(new Chart(this.salesByDayRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: s.salesAmountByDay.map(p => p.date),
+          datasets: [{
+            label: 'Sales (MAD)',
+            data: s.salesAmountByDay.map(p => p.amount),
+            backgroundColor: 'rgba(67,160,71,0.75)',
+            borderColor: '#43a047',
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { maxTicksLimit: 5 } },
+            x: { ticks: { maxRotation: 45, maxTicksLimit: 10 } },
+          },
+        },
+      }));
+    }
+
+    // ── Deposits by day (bar) ─────────────────────────────────────────
+    if (this.depositsByDayRef?.nativeElement && s.depositsAmountByDay?.length) {
+      this.charts.push(new Chart(this.depositsByDayRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: s.depositsAmountByDay.map(p => p.date),
+          datasets: [{
+            label: 'Deposits (MAD)',
+            data: s.depositsAmountByDay.map(p => p.amount),
+            backgroundColor: 'rgba(25,118,210,0.75)',
+            borderColor: '#1976d2',
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { maxTicksLimit: 5 } },
+            x: { ticks: { maxRotation: 45, maxTicksLimit: 10 } },
+          },
+        },
+      }));
+    }
+
+    // ── Sales by project (horizontal bar) ────────────────────────────
+    if (this.salesByProjectRef?.nativeElement && s.salesByProject?.length) {
+      this.charts.push(new Chart(this.salesByProjectRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: s.salesByProject.map(r => r.projectName ?? 'N/A'),
+          datasets: [{
+            label: 'Amount (MAD)',
+            data: s.salesByProject.map(r => r.salesAmount),
+            backgroundColor: 'rgba(67,160,71,0.7)',
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } },
+        },
+      }));
+    }
+
+    // ── Sales by agent (horizontal bar) ──────────────────────────────
+    if (this.salesByAgentRef?.nativeElement && s.salesByAgent?.length) {
+      this.charts.push(new Chart(this.salesByAgentRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: s.salesByAgent.map(r => r.agentEmail?.split('@')[0] ?? r.agentId?.substring(0, 8)),
+          datasets: [{
+            label: 'Amount (MAD)',
+            data: s.salesByAgent.map(r => r.salesAmount),
+            backgroundColor: 'rgba(25,118,210,0.7)',
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } },
+        },
+      }));
+    }
+
+    // ── Inventory by status (doughnut) ───────────────────────────────
+    if (this.inventoryRef?.nativeElement && this.inventoryEntries.length) {
+      const statusColors: Record<string, string> = {
+        ACTIVE: '#e8f5e9', RESERVED: '#fff3e0', SOLD: '#e3f2fd',
+        DRAFT: '#f3e5f5',
+      };
+      this.charts.push(new Chart(this.inventoryRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: this.inventoryEntries.map(e => e.label),
+          datasets: [{
+            data: this.inventoryEntries.map(e => e.value),
+            backgroundColor: this.inventoryEntries.map(e =>
+              statusColors[e.label] ?? 'rgba(158,158,158,0.5)'),
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } },
+        },
+      }));
+    }
+
+    // ── Prospect sources (doughnut) ───────────────────────────────────
+    if (this.prospectsRef?.nativeElement && s.prospectsBySource?.length) {
+      const palette = ['#42a5f5','#66bb6a','#ffa726','#ef5350','#ab47bc','#26c6da'];
+      this.charts.push(new Chart(this.prospectsRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: s.prospectsBySource.map(r => r.source ?? 'Unknown'),
+          datasets: [{
+            data: s.prospectsBySource.map(r => r.count),
+            backgroundColor: s.prospectsBySource.map((_, i) => palette[i % palette.length]),
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } },
+        },
+      }));
+    }
+  }
+
+  chartHeight(items: unknown[]): number {
+    return Math.max(100, items.length * 32);
   }
 
   formatAmount(value: number | null | undefined): string {
