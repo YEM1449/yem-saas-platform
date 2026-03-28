@@ -136,11 +136,12 @@ export class ContactsComponent implements OnInit {
     this.submitError = '';
 
     this.svc.create({
-      firstName:   this.form.firstName.trim(),
-      lastName:    this.form.lastName.trim(),
-      email:       this.form.email.trim()  || null,
-      phone:       this.form.phone.trim()  || null,
-      notes:       this.form.notes.trim()  || null,
+      firstName:       this.form.firstName.trim(),
+      lastName:        this.form.lastName.trim(),
+      email:           this.form.email.trim()  || null,
+      phone:           this.form.phone.trim()  || null,
+      notes:           this.form.notes.trim()  || null,
+      processingBasis: 'LEGITIMATE_INTEREST',
     }).subscribe({
       next: (created) => {
         this.submitting = false;
