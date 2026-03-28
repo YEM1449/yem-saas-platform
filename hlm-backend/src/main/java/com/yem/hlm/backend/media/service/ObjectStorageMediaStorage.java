@@ -180,6 +180,18 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
         } catch (NoSuchBucketException e) {
             s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
             log.info("[OBJ-STORE] Created bucket '{}'", bucket);
+        } catch (S3Exception e) {
+            if (e.statusCode() == 403) {
+                // Cloudflare R2 (and some other providers) return 403 on headBucket
+                // when the API token has object-level permissions only (no ListBuckets/
+                // HeadBucket right). The bucket is assumed to already exist — if the
+                // credentials are genuinely wrong, the first store() call will fail.
+                log.warn("[OBJ-STORE] headBucket returned 403 for bucket '{}' — "
+                        + "assuming it exists (R2 object-scoped token?). "
+                        + "Auth errors will surface on first upload.", bucket);
+            } else {
+                throw e;
+            }
         }
     }
 
