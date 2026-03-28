@@ -1,5 +1,8 @@
 package com.yem.hlm.backend.auth.config;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -8,6 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
@@ -22,6 +28,10 @@ import java.util.Map;
  * as {@link CacheConfig} (Caffeine) but backed by Redis so that multiple backend
  * instances share a single cache layer.
  *
+ * <p>This class also owns the {@link LettuceConnectionFactory} bean because
+ * {@code RedisAutoConfiguration} is excluded globally (see {@code application.yml}).
+ * That exclusion prevents any Redis connection attempts when Redis is not provisioned.
+ *
  * <p>All cache values are serialized as JSON via {@link GenericJackson2JsonRedisSerializer}
  * so they are human-readable in Redis CLI and survive class renames within the same major version.
  */
@@ -31,7 +41,28 @@ import java.util.Map;
 public class RedisCacheConfig {
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    RedisConnectionFactory redisConnectionFactory(
+            @Value("${spring.data.redis.host:localhost}") String host,
+            @Value("${spring.data.redis.port:6379}") int port,
+            @Value("${spring.data.redis.password:}") String password,
+            @Value("${spring.data.redis.timeout:2000ms}") Duration commandTimeout,
+            @Value("${spring.data.redis.connect-timeout:2000ms}") Duration connectTimeout) {
+        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(host, port);
+        if (!password.isBlank()) {
+            serverConfig.setPassword(password);
+        }
+        SocketOptions socketOptions = SocketOptions.builder()
+                .connectTimeout(connectTimeout)
+                .build();
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .commandTimeout(commandTimeout)
+                .clientOptions(ClientOptions.builder().socketOptions(socketOptions).build())
+                .build();
+        return new LettuceConnectionFactory(serverConfig, clientConfig);
+    }
+
+    @Bean
+    CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         GenericJackson2JsonRedisSerializer jsonSerializer =
                 new GenericJackson2JsonRedisSerializer();
 

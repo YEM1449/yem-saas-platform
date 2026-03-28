@@ -1,4 +1,12 @@
 spring:
+  autoconfigure:
+    exclude:
+      # Exclude Redis auto-configuration globally. LettuceConnectionFactory is provided
+      # by RedisCacheConfig only when app.redis.enabled=true, so no Redis beans (and no
+      # connection attempts) are created when Redis is not provisioned.
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/hlm}
     username: ${DB_USER:hlm_user}
