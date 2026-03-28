@@ -43,7 +43,9 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
+      connect-timeout: 2000ms
       lettuce:
+        shutdown-timeout: 200ms
         pool:
           max-active: 8
           max-idle: 8
@@ -83,6 +85,12 @@ management:
   health:
     mail:
       enabled: ${MAIL_HEALTH_ENABLED:false}
+    redis:
+      # Only probe Redis when it is actually provisioned (app.redis.enabled=true).
+      # Without this, Spring Boot's RedisHealthIndicator attempts localhost:6379
+      # even when REDIS_ENABLED is false, causing the readiness probe to fail on
+      # Render (or any host without a local Redis) and killing the deployment.
+      enabled: ${REDIS_ENABLED:false}
     defaults:
       enabled: true
   metrics:
