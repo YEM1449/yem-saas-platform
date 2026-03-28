@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: "054-societe-logo-fields"
+      author: "audit"
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: logo_file_key
+                  type: varchar(500)
+              - column:
+                  name: logo_content_type
+                  type: varchar(100)

@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, TaskStatus } from './task.model';
 import { TaskFormComponent } from './task-form.component';
@@ -9,16 +10,16 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-contact-tasks',
   standalone: true,
-  imports: [CommonModule, TaskFormComponent],
+  imports: [CommonModule, TaskFormComponent, TranslateModule],
   template: `
     <div class="task-widget">
       <div class="widget-header">
-        <h4>Tâches liées</h4>
-        <button (click)="showForm = true" class="btn-small-primary">+ Nouvelle tâche</button>
+        <h4>{{ 'tasks.relatedTasks' | translate }}</h4>
+        <button (click)="showForm = true" class="btn-small-primary">+ {{ 'tasks.create' | translate }}</button>
       </div>
       @if (error) { <p class="error">{{ error }}</p> }
-      @if (loading) { <p class="loading-text">Chargement...</p> }
-      @if (!loading && tasks.length === 0) { <p class="empty">Aucune tâche.</p> }
+      @if (loading) { <p class="loading-text">{{ 'common.loading' | translate }}</p> }
+      @if (!loading && tasks.length === 0) { <p class="empty">{{ 'tasks.noTasks' | translate }}</p> }
       @if (!loading && tasks.length > 0) {
         <ul class="task-list">
           @for (t of tasks; track t.id) {

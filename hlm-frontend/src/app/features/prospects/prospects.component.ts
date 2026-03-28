@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { ProspectService } from './prospect.service';
 import { Prospect } from '../../core/models/prospect.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -9,7 +10,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-prospects',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './prospects.component.html',
   styleUrl: './prospects.component.css',
 })

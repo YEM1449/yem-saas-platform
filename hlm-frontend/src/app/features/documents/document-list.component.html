@@ -1,46 +1,48 @@
 <div class="doc-section">
-  <h4>Documents</h4>
+  <h4>{{ 'documents.title' | translate }}</h4>
 
-  @if (error) { <p class="error">{{ error }}</p> }
-  @if (deleteError) { <p class="error">{{ deleteError }}</p> }
+  @if (error) { <div class="alert alert-error">{{ error }}</div> }
+  @if (deleteError) { <div class="alert alert-error">{{ deleteError }}</div> }
 
   <!-- Upload area -->
   <div class="upload-row">
-    <input type="text" [(ngModel)]="description" placeholder="Description (optionnel)" class="desc-input" />
-    <label class="upload-btn" [class.uploading]="uploading">
-      {{ uploading ? 'Envoi...' : '+ Ajouter un fichier' }}
+    <input type="text" [(ngModel)]="description" [placeholder]="'common.notes' | translate" class="desc-input form-control" />
+    <label class="btn btn-secondary upload-btn" [class.uploading]="uploading">
+      @if (uploading) { {{ 'common.saving' | translate }} } @else { {{ 'documents.upload' | translate }} }
       <input type="file" (change)="onFileSelected($event)" [disabled]="uploading" style="display:none" />
     </label>
   </div>
-  @if (uploadError) { <p class="error">{{ uploadError }}</p> }
+  @if (uploadError) { <div class="alert alert-error">{{ uploadError }}</div> }
 
-  @if (loading) { <p class="loading-text">Chargement...</p> }
+  @if (loading) {
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+  }
 
   @if (!loading && documents.length === 0) {
-    <p class="empty">Aucun document attaché.</p>
+    <p class="empty-state-desc">{{ 'documents.noDocuments' | translate }}</p>
   }
 
   @if (!loading && documents.length > 0) {
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
-          <th>Fichier</th>
-          <th>Type</th>
-          <th>Taille</th>
-          <th>Date</th>
-          <th>Actions</th>
+          <th>{{ 'documents.fileName' | translate }}</th>
+          <th>{{ 'common.type' | translate }}</th>
+          <th>{{ 'documents.size' | translate }}</th>
+          <th>{{ 'documents.date' | translate }}</th>
+          <th>{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @for (doc of documents; track doc.id) {
           <tr>
             <td>{{ fileIcon(doc.mimeType) }} {{ doc.fileName }}</td>
-            <td class="mime">{{ doc.mimeType }}</td>
+            <td class="td-muted">{{ doc.mimeType }}</td>
             <td>{{ formatSize(doc.fileSize) }}</td>
             <td>{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
-            <td class="actions">
-              <button (click)="download(doc)" class="btn-small">Télécharger</button>
-              <button (click)="deleteDoc(doc)" class="btn-small btn-danger">Supprimer</button>
+            <td class="td-actions">
+              <button (click)="download(doc)" class="btn btn-sm btn-secondary">{{ 'documents.download' | translate }}</button>
+              <button (click)="deleteDoc(doc)" class="btn btn-sm btn-danger">{{ 'documents.delete' | translate }}</button>
             </td>
           </tr>
         }

@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { PropertyService } from './property.service';
 import { Property, PropertyMedia } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -11,7 +12,7 @@ import { DocumentListComponent } from '../documents/document-list.component';
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, DocumentListComponent],
+  imports: [CommonModule, RouterLink, DocumentListComponent, TranslateModule],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })

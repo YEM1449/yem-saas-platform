@@ -1,51 +1,49 @@
 <div class="members-container">
   @if (error) {
-    <div class="alert-error">{{ error }}</div>
+    <div class="alert alert-error">{{ error }}</div>
   }
   @if (success) {
-    <div class="alert-success">{{ success }}</div>
+    <div class="alert alert-success">{{ success }}</div>
   }
 
   <!-- Invite user form -->
   <div class="add-form">
-    <div class="add-form-header">
-      <h4 class="add-form-title">Membres</h4>
-      <button class="btn-add" (click)="showInviteForm = !showInviteForm">
-        {{ showInviteForm ? 'Annuler' : '+ Inviter un utilisateur' }}
-      </button>
+    <div class="add-form-header page-header" style="margin-bottom:12px">
+      <h4 class="page-title" style="font-size:15px">{{ 'societes.members.title' | translate }}</h4>
+      <div class="page-header-actions">
+        <button class="btn btn-primary btn-sm" (click)="showInviteForm = !showInviteForm">
+          {{ showInviteForm ? ('common.cancel' | translate) : ('societes.members.invite' | translate) }}
+        </button>
+      </div>
     </div>
 
     @if (showInviteForm) {
-      <div class="invite-form">
-        <div class="form-row">
-          <input
-            class="form-input"
-            type="email"
-            placeholder="Email *"
-            [(ngModel)]="inviteForm.email"
-            name="inviteEmail"
-          />
-          <input
-            class="form-input"
-            type="text"
-            placeholder="Prénom *"
-            [(ngModel)]="inviteForm.prenom"
-            name="invitePrenom"
-          />
-          <input
-            class="form-input"
-            type="text"
-            placeholder="Nom de famille *"
-            [(ngModel)]="inviteForm.nomFamille"
-            name="inviteNomFamille"
-          />
-          <select class="form-input form-select" [(ngModel)]="inviteForm.role" name="inviteRole">
-            <option value="ADMIN">ADMIN</option>
-            <option value="MANAGER">MANAGER</option>
-            <option value="AGENT">AGENT</option>
-          </select>
-          <button class="btn-add" [disabled]="inviting" (click)="submitInvite()">
-            {{ inviting ? 'Envoi...' : 'Envoyer l\'invitation' }}
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label required">{{ 'common.email' | translate }}</label>
+            <input class="form-control" type="email" [(ngModel)]="inviteForm.email" name="inviteEmail" />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">{{ 'contacts.firstName' | translate }}</label>
+            <input class="form-control" type="text" [(ngModel)]="inviteForm.prenom" name="invitePrenom" />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">{{ 'contacts.lastName' | translate }}</label>
+            <input class="form-control" type="text" [(ngModel)]="inviteForm.nomFamille" name="inviteNomFamille" />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">{{ 'societes.members.role' | translate }}</label>
+            <select class="form-control" [(ngModel)]="inviteForm.role" name="inviteRole">
+              <option value="ADMIN">ADMIN</option>
+              <option value="MANAGER">MANAGER</option>
+              <option value="AGENT">AGENT</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:0">
+          <button class="btn btn-primary" [disabled]="inviting" (click)="submitInvite()">
+            @if (inviting) { {{ 'admin.inviteSending' | translate }} } @else { {{ 'admin.inviteSend' | translate }} }
           </button>
         </div>
       </div>
@@ -54,82 +52,74 @@
 
   <!-- Members table -->
   @if (loading) {
-    <div class="loading-state">Chargement des membres...</div>
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
   }
 
   @if (!loading) {
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Utilisateur</th>
-            <th>Rôle</th>
-            <th>Actif</th>
-            <th>Date ajout</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (m of membres; track m.userId) {
+    <div class="card">
+      <div class="card-body-flush">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td>
-                <div class="user-info-cell">
-                  @if (m.email) {
-                    <span class="user-email">{{ m.email }}</span>
-                  }
-                  @if (m.prenom || m.nom) {
-                    <span class="user-name">{{ m.prenom }} {{ m.nom }}</span>
-                  }
-                  @if (!m.email && !m.prenom && !m.nom) {
-                    <span class="user-id">{{ m.userId }}</span>
-                  }
-                </div>
-              </td>
-              <td>
-                <span class="badge" [class]="roleClass(m.role)">{{ m.role }}</span>
-              </td>
-              <td>
-                @if (m.actif) {
-                  <span class="badge badge-active">Actif</span>
-                } @else {
-                  <span class="badge badge-inactive">Inactif</span>
-                }
-              </td>
-              <td class="date-cell">{{ m.dateAjout | date:'dd/MM/yyyy' }}</td>
-              <td>
-                <div class="actions">
-                  <select
-                    class="role-select"
-                    [(ngModel)]="roleEditing[m.userId]"
-                    [name]="'role_' + m.userId"
-                    (change)="changeRole(m)"
-                  >
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="AGENT">AGENT</option>
-                  </select>
-                  <button
-                    class="btn-small btn-impersonate"
-                    [disabled]="impersonating[m.userId]"
-                    (click)="impersonate(m)"
-                    title="Usurper l'identité"
-                  >
-                    {{ impersonating[m.userId] ? '...' : 'Usurper' }}
-                  </button>
-                  <button class="btn-small btn-remove" (click)="removeMembre(m)" title="Retirer">
-                    Retirer
-                  </button>
-                </div>
-              </td>
+              <th>{{ 'common.email' | translate }}</th>
+              <th>{{ 'societes.members.role' | translate }}</th>
+              <th>{{ 'societes.members.status' | translate }}</th>
+              <th>{{ 'common.date' | translate }}</th>
+              <th>{{ 'common.actions' | translate }}</th>
             </tr>
-          }
-          @if (membres.length === 0) {
-            <tr>
-              <td colspan="5" class="empty-state">Aucun membre dans cette société.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (m of membres; track m.userId) {
+              <tr>
+                <td>
+                  <div class="user-info-cell">
+                    @if (m.email) {
+                      <span class="user-email">{{ m.email }}</span>
+                    }
+                    @if (m.prenom || m.nom) {
+                      <span class="td-muted">{{ m.prenom }} {{ m.nom }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="roleClass(m.role)">{{ m.role }}</span>
+                </td>
+                <td>
+                  @if (m.actif) {
+                    <span class="badge badge-active">{{ 'common.active' | translate }}</span>
+                  } @else {
+                    <span class="badge badge-inactive">{{ 'common.inactive' | translate }}</span>
+                  }
+                </td>
+                <td class="td-muted">{{ m.dateAjout | date:'dd/MM/yyyy' }}</td>
+                <td class="td-actions">
+                  <div class="row-actions">
+                    <select class="form-control" style="width:auto;height:28px;font-size:12px"
+                            [(ngModel)]="roleEditing[m.userId]"
+                            [name]="'role_' + m.userId"
+                            (change)="changeRole(m)">
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="MANAGER">MANAGER</option>
+                      <option value="AGENT">AGENT</option>
+                    </select>
+                    <button class="btn btn-sm btn-ghost" [disabled]="impersonating[m.userId]" (click)="impersonate(m)">
+                      {{ impersonating[m.userId] ? '...' : 'Imp.' }}
+                    </button>
+                    <button class="btn btn-sm btn-danger" (click)="removeMembre(m)">
+                      {{ 'societes.members.deactivate' | translate }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @if (membres.length === 0) {
+              <tr>
+                <td colspan="5" class="empty-state">{{ 'societes.members.noMembers' | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
 </div>

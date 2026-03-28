@@ -30,15 +30,16 @@ test.describe('Contacts', () => {
   test('create contact appears in list', async ({ page }) => {
     await page.goto('/app/contacts');
     // Open create modal
-    const createBtn = page.locator('[data-testid="create-contact"], button:has-text("Nouveau"), button:has-text("+ Nouveau")');
-    await expect(createBtn.first()).toBeVisible({ timeout: 5000 });
-    await createBtn.first().click();
+    await expect(page.locator('[data-testid="create-contact"]')).toBeVisible({ timeout: 5000 });
+    await page.click('[data-testid="create-contact"]');
 
     const ts = Date.now();
-    await page.fill('[data-testid="firstName"], input[placeholder*="Prénom"], input[name="firstName"]', 'E2E');
-    await page.fill('[data-testid="lastName"], input[placeholder*="Nom"], input[name="lastName"]', `Test-${ts}`);
-    await page.click('[data-testid="save-button"], button[type="submit"], button:has-text("Créer"), button:has-text("Enregistrer")');
+    await page.fill('[data-testid="firstName"]', 'E2E');
+    await page.fill('[data-testid="lastName"]', `Test-${ts}`);
+    await page.click('[data-testid="save-button"]');
 
+    // Wait for modal to close (success path closes it) then assert row is visible
+    await expect(page.locator('.modal-backdrop')).toBeHidden({ timeout: 5000 });
     await expect(page.locator(`text=Test-${ts}`)).toBeVisible({ timeout: 5000 });
   });
 });

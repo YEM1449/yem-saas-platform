@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!--
+    Suppress expected ERROR from TwilioSmsSender during the
+    send_throws_runtime_exception_when_twilio_fails test.
+    The exception propagation is tested via assertThatThrownBy; the log entry
+    is intentional production behaviour but is noise in the test output.
+  -->
+  <logger name="com.yem.hlm.backend.outbox.service.provider.TwilioSmsSender"
+          level="OFF" additivity="false"/>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+</configuration>

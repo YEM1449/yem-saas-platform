@@ -1,7 +1,7 @@
-<p><a routerLink="/app/contacts">&larr; Back to Contacts</a></p>
+<p><a routerLink="/app/contacts">&larr; {{ 'common.back' | translate }}</a></p>
 
 @if (loading) {
-  <p>Loading contact...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (error) {
@@ -19,50 +19,50 @@
       Historique
     </button>
     <button class="tab-btn" [class.active]="activeTab === 'documents'" (click)="selectTab('documents')">
-      Documents
+      {{ 'contacts.documents' | translate }}
     </button>
     <button class="tab-btn" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
-      Tâches
+      {{ 'contacts.tasks' | translate }}
     </button>
   </div>
 
   @if (activeTab === 'details') {
     <dl>
-      <dt>Type</dt>
+      <dt>{{ 'common.type' | translate }}</dt>
       <dd>{{ contact.contactType }}</dd>
 
-      <dt>Status</dt>
+      <dt>{{ 'common.status' | translate }}</dt>
       <dd>{{ contact.status }}</dd>
 
-      <dt>Qualified</dt>
-      <dd>{{ contact.qualified ? 'Yes' : 'No' }}</dd>
+      <dt>{{ 'common.yes' | translate }}</dt>
+      <dd>{{ contact.qualified ? ('common.yes' | translate) : ('common.no' | translate) }}</dd>
 
-      <dt>Email</dt>
+      <dt>{{ 'common.email' | translate }}</dt>
       <dd>{{ contact.email ?? '—' }}</dd>
 
-      <dt>Phone</dt>
+      <dt>{{ 'common.phone' | translate }}</dt>
       <dd>{{ contact.phone ?? '—' }}</dd>
 
-      <dt>National ID</dt>
+      <dt>{{ 'contacts.nationalId' | translate }}</dt>
       <dd>{{ contact.nationalId ?? '—' }}</dd>
 
-      <dt>Address</dt>
+      <dt>{{ 'common.address' | translate }}</dt>
       <dd>{{ contact.address ?? '—' }}</dd>
 
-      <dt>Notes</dt>
+      <dt>{{ 'common.notes' | translate }}</dt>
       <dd>{{ contact.notes ?? '—' }}</dd>
 
-      <dt>Created</dt>
+      <dt>{{ 'common.date' | translate }}</dt>
       <dd>{{ contact.createdAt }}</dd>
 
-      <dt>Updated</dt>
+      <dt>{{ 'common.date' | translate }}</dt>
       <dd>{{ contact.updatedAt }}</dd>
     </dl>
   }
 
   @if (activeTab === 'timeline') {
     @if (timelineLoading) {
-      <p>Loading timeline...</p>
+      <p>{{ 'common.loading' | translate }}</p>
     }
     @if (timelineError) {
       <p class="error">{{ timelineError }}</p>

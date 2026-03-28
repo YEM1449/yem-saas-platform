@@ -39,4 +39,14 @@ export class ProjectService {
   getKpis(id: string): Observable<ProjectKpi> {
     return this.http.get<ProjectKpi>(`${this.base}/${id}/kpis`);
   }
+
+  uploadLogo(id: string, file: File): Observable<Project> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<Project>(`${this.base}/${id}/logo`, form);
+  }
+
+  deleteLogo(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/logo`);
+  }
 }

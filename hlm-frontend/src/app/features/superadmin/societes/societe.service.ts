@@ -77,4 +77,14 @@ export class SocieteService {
   impersonate(id: string, userId: string): Observable<ImpersonateResponse> {
     return this.http.post<ImpersonateResponse>(`${this.base}/${id}/impersonate/${userId}`, {});
   }
+
+  uploadLogo(id: string, file: File): Observable<void> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<void>(`${this.base}/${id}/logo`, form);
+  }
+
+  deleteLogo(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/logo`);
+  }
 }

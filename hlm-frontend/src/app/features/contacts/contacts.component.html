@@ -1,8 +1,8 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Contacts</h1>
-    <p class="page-subtitle">Manage your CRM contacts, prospects and clients</p>
+    <h1 class="page-title">{{ 'contacts.title' | translate }}</h1>
+    <p class="page-subtitle">{{ 'contacts.title' | translate }}</p>
   </div>
   @if (canWrite) {
     <div class="page-header-actions">
@@ -11,7 +11,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        New Contact
+        {{ 'contacts.create' | translate }}
       </button>
     </div>
   }
@@ -28,7 +28,7 @@
         </svg>
         Notice d'information — Protection des données personnelles
       </span>
-      <button class="privacy-banner-dismiss" (click)="dismissPrivacyBanner()" aria-label="Dismiss privacy notice">✕</button>
+      <button class="privacy-banner-dismiss" (click)="dismissPrivacyBanner()" [attr.aria-label]="'common.close' | translate">✕</button>
     </div>
     <details class="privacy-banner-details">
       <summary>Afficher la notice complète (RGPD / Loi 09-08)</summary>
@@ -47,12 +47,12 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" placeholder="Search by name, email or phone…"
+    <input class="search-input" type="search" [placeholder]="'contacts.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
   @if (!loading && contacts.length > 0) {
     <span class="stat-chip">
-      {{ filtered.length }}&nbsp;/&nbsp;{{ contacts.length }} contacts
+      {{ filtered.length }}&nbsp;/&nbsp;{{ contacts.length }} {{ 'contacts.count' | translate }}
     </span>
   }
 </div>
@@ -66,7 +66,7 @@
 @if (loading) {
   <div class="loading-wrap">
     <div class="spinner"></div>
-    Loading contacts…
+    {{ 'common.loading' | translate }}
   </div>
 }
 
@@ -75,14 +75,14 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">👥</div>
-      <p class="empty-state-title">No contacts yet</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">Add your first contact to start building your CRM pipeline.</p>
       @if (canWrite) {
         <button class="btn btn-primary" (click)="openModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          New Contact
+          {{ 'contacts.create' | translate }}
         </button>
       }
     </div>
@@ -94,9 +94,9 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔍</div>
-      <p class="empty-state-title">No results</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">No contacts match "{{ searchQuery }}"</p>
-      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Clear search</button>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'common.cancel' | translate }}</button>
     </div>
   </div>
 }
@@ -108,11 +108,11 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Type</th>
-            <th>Status</th>
+            <th>{{ 'common.name' | translate }}</th>
+            <th>{{ 'common.email' | translate }}</th>
+            <th>{{ 'common.phone' | translate }}</th>
+            <th>{{ 'common.type' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -137,8 +137,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">New Contact</h2>
-        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+        <h2 class="modal-title">{{ 'contacts.create' | translate }}</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" [attr.aria-label]="'common.close' | translate">✕</button>
       </div>
 
       <div class="modal-body">
@@ -149,13 +149,13 @@
         <!-- Name row -->
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">First Name</label>
+            <label class="form-label required">{{ 'contacts.firstName' | translate }}</label>
             <input class="form-control" type="text" placeholder="e.g. Jean"
                    [(ngModel)]="form.firstName" [disabled]="submitting" autocomplete="off"
                    data-testid="firstName" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Last Name</label>
+            <label class="form-label required">{{ 'contacts.lastName' | translate }}</label>
             <input class="form-control" type="text" placeholder="e.g. Dupont"
                    [(ngModel)]="form.lastName" [disabled]="submitting" autocomplete="off"
                    data-testid="lastName" />
@@ -164,7 +164,7 @@
 
         <!-- Email -->
         <div class="form-group">
-          <label class="form-label">Email Address</label>
+          <label class="form-label">{{ 'contacts.email' | translate }}</label>
           <input class="form-control" type="email" placeholder="jean.dupont@example.com"
                  [(ngModel)]="form.email" [disabled]="submitting" />
           <span class="form-hint">Used for portal access and automated messaging</span>
@@ -172,14 +172,14 @@
 
         <!-- Phone -->
         <div class="form-group">
-          <label class="form-label">Phone Number</label>
+          <label class="form-label">{{ 'contacts.phone' | translate }}</label>
           <input class="form-control" type="tel" placeholder="+212 6 xx xx xx xx"
                  [(ngModel)]="form.phone" [disabled]="submitting" />
         </div>
 
         <!-- Notes -->
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label">{{ 'common.notes' | translate }}</label>
           <textarea class="form-control" rows="3"
                     placeholder="Lead source, first contact context, interests…"
                     [(ngModel)]="form.notes" [disabled]="submitting"></textarea>
@@ -192,9 +192,9 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Cancel</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.cancel' | translate }}</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting" data-testid="save-button">
-          @if (submitting) { Creating… } @else { Create Contact }
+          @if (submitting) { {{ 'common.saving' | translate }} } @else { {{ 'contacts.create' | translate }} }
         </button>
       </div>
 

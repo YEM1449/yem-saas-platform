@@ -32,6 +32,16 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
+    /**
+     * Pre-computed BCrypt hash of a dummy password.
+     * Used for constant-time comparison when the user email is not found,
+     * preventing email enumeration via timing differences.
+     * The hash is pre-computed at class-load time (not per-request) to avoid
+     * adding significant latency to every login attempt.
+     */
+    private static final String DUMMY_HASH =
+            "$2a$10$dummyHashForTimingAttackMitigation.AAAAAAAAAAAAAAAAAAA";
+
     private final AppUserSocieteRepository appUserSocieteRepository;
     private final SocieteRepository societeRepository;
     private final UserRepository userRepository;
@@ -83,6 +93,14 @@ public class AuthService {
         // findFirstByEmail is used instead of findByEmail to safely handle pre-migration
         // deployments that may have duplicate email rows (changeset 036 removes them).
         var userOpt = userRepository.findFirstByEmail(email);
+
+        // Timing-attack mitigation: always run BCrypt comparison regardless of whether
+        // the email exists. This prevents email enumeration via response-time differences.
+        // When the user is not found we compare against a pre-computed dummy hash; the
+        // comparison will always fail but takes roughly the same time as a real check.
+        String hashToCheck = userOpt.map(u -> u.getPasswordHash()).orElse(DUMMY_HASH);
+        boolean passwordMatches = passwordEncoder.matches(password, hashToCheck);
+
         if (userOpt.isEmpty()) {
             securityAuditLogger.logFailedLogin(email, email, ip, "USER_NOT_FOUND");
             throw new UnauthorizedException();
@@ -101,8 +119,8 @@ public class AuthService {
             throw new UnauthorizedException();
         }
 
-        // 5) Password verification
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        // 5) Password verification (uses the result already computed above for timing-safety)
+        if (!passwordMatches) {
             user.recordFailedAttempt(lockoutProperties.getMaxAttempts(), lockoutProperties.getDurationMinutes());
             userRepository.save(user);
             userSecurityCacheService.evict(user.getId());

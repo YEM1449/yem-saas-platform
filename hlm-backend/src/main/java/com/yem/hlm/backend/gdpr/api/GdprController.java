@@ -3,6 +3,7 @@ package com.yem.hlm.backend.gdpr.api;
 import com.yem.hlm.backend.gdpr.api.dto.DataExportResponse;
 import com.yem.hlm.backend.gdpr.api.dto.RectifyContactResponse;
 import com.yem.hlm.backend.gdpr.service.GdprService;
+import com.yem.hlm.backend.gdpr.service.ProcessingRegisterService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -33,13 +34,16 @@ public class GdprController {
     private final GdprService gdprService;
     private final PrivacyNoticeLoader privacyNoticeLoader;
     private final SocieteRepository societeRepository;
+    private final ProcessingRegisterService processingRegisterService;
 
     public GdprController(GdprService gdprService,
                           PrivacyNoticeLoader privacyNoticeLoader,
-                          SocieteRepository societeRepository) {
+                          SocieteRepository societeRepository,
+                          ProcessingRegisterService processingRegisterService) {
         this.gdprService = gdprService;
         this.privacyNoticeLoader = privacyNoticeLoader;
         this.societeRepository = societeRepository;
+        this.processingRegisterService = processingRegisterService;
     }
 
     /**
@@ -98,9 +102,30 @@ public class GdprController {
                         s.getNom() != null ? s.getNom() : "[NOM DE LA SOCIÉTÉ]");
                 text = text.replace("[EMAIL DPO]",
                         s.getEmailDpo() != null ? s.getEmailDpo() : "[EMAIL DPO]");
+                // Resolve address: prefer adresseSiege, fallback to adresse
+                String adresse = s.getAdresseSiege() != null ? s.getAdresseSiege()
+                        : (s.getAdresse() != null ? s.getAdresse() : "[ADRESSE]");
+                text = text.replace("[ADRESSE]", adresse);
+                // Resolve CNDP/CNIL registration number
+                String numCndpCnil = s.getNumeroCndp() != null ? s.getNumeroCndp()
+                        : (s.getNumeroCnil() != null ? s.getNumeroCnil() : "[NUMÉRO CNDP/CNIL]");
+                text = text.replace("[NUMÉRO CNDP/CNIL]", numCndpCnil);
             }
         }
         return ResponseEntity.ok(new PrivacyNoticeResponse(template.version(), template.lastUpdated(), text));
+    }
+
+    /**
+     * RGPD Art. 30 / Law 09-08 Art. 20 — Record of processing activities.
+     * Returns the structured CNDP register for the current société.
+     * <p>
+     * RBAC: ADMIN only.
+     */
+    @GetMapping("/processing-register")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProcessingRegisterService.ProcessingRegisterResponse> getProcessingRegister() {
+        UUID societeId = SocieteContext.getSocieteId();
+        return ResponseEntity.ok(processingRegisterService.buildRegister(societeId));
     }
 
     public record PrivacyNoticeResponse(String version, String lastUpdated, String text) {}

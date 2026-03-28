@@ -2,6 +2,7 @@ import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/cor
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { PaymentScheduleService } from './payment-schedule.service';
 import {
   AddPaymentRequest,
@@ -15,7 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-payment-schedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, TranslateModule],
   templateUrl: './payment-schedule.component.html',
   styleUrl: './payment-schedule.component.css',
 })

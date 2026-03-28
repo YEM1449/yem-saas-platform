@@ -51,9 +51,13 @@ public record SocieteDto(
         int     complianceScore,
         Long    version,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String  logoDownloadUrl
 ) {
     public static SocieteDto from(Societe s) {
+        String logoDownloadUrl = s.getLogoFileKey() != null
+                ? "/api/societes/" + s.getId() + "/logo"
+                : null;
         return new SocieteDto(
                 s.getId(),
                 s.getKey(),
@@ -89,7 +93,8 @@ public record SocieteDto(
                 s.getComplianceScore(),
                 s.getVersion(),
                 s.getCreatedAt(),
-                s.getUpdatedAt()
+                s.getUpdatedAt(),
+                logoDownloadUrl
         );
     }
 }

@@ -105,3 +105,9 @@ databaseChangeLog:
       file: db/changelog/changes/051-rls-phase2-all-tables.yaml
   - include:
       file: db/changelog/changes/052-shedlock-table.yaml
+  - include:
+      file: db/changelog/changes/053-project-logo-fields.yaml
+  - include:
+      file: db/changelog/changes/054-societe-logo-fields.yaml
+  - include:
+      file: db/changelog/changes/055-create-contract-template.yaml

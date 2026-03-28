@@ -1,31 +1,31 @@
 <div class="form-page">
-  <div class="form-page-header">
-    <h2>{{ isEdit ? 'Modifier la société' : 'Nouvelle société' }}</h2>
+  <div class="page-header">
+    <h2 class="page-title">{{ isEdit ? ('common.edit' | translate) : ('societes.create' | translate) }}</h2>
   </div>
 
   @if (loading) {
-    <div class="loading-state">Chargement...</div>
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
   }
 
   @if (error) {
-    <div class="alert-error">{{ error }}</div>
+    <div class="alert alert-error">{{ error }}</div>
   }
 
   @if (!loading) {
     <form class="sa-form" (ngSubmit)="submit()">
 
-      <!-- Identité -->
+      <!-- Identity -->
       <section class="form-section">
-        <h3 class="section-title">Identité</h3>
-        <div class="form-row">
-          <label class="form-label">
-            Nom <span class="required">*</span>
-            <input class="form-input" type="text" [(ngModel)]="nom" name="nom" required placeholder="Raison sociale"/>
-          </label>
-          <label class="form-label">
-            Pays <span class="required">*</span>
-            <select class="form-input" [(ngModel)]="pays" name="pays" required>
-              <option value="">-- Sélectionner --</option>
+        <h3 class="section-title">{{ 'societes.tabs.info' | translate }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label required">{{ 'societes.name' | translate }}</label>
+            <input class="form-control" type="text" [(ngModel)]="nom" name="nom" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">{{ 'societes.country' | translate }}</label>
+            <select class="form-control" [(ngModel)]="pays" name="pays" required>
+              <option value="">—</option>
               <option value="MA">Maroc</option>
               <option value="FR">France</option>
               <option value="TN">Tunisie</option>
@@ -33,88 +33,80 @@
               <option value="CI">Côte d'Ivoire</option>
               <option value="OTHER">Autre</option>
             </select>
-          </label>
-        </div>
-        <div class="form-row">
-          <label class="form-label">
-            Nom commercial
-            <input class="form-input" type="text" [(ngModel)]="nomCommercial" name="nomCommercial" placeholder="Nom commercial"/>
-          </label>
-          <label class="form-label">
-            Forme juridique
-            <input class="form-input" type="text" [(ngModel)]="formeJuridique" name="formeJuridique" placeholder="SA, SARL, SCI..."/>
-          </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom commercial</label>
+            <input class="form-control" type="text" [(ngModel)]="nomCommercial" name="nomCommercial" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Forme juridique</label>
+            <input class="form-control" type="text" [(ngModel)]="formeJuridique" name="formeJuridique" />
+          </div>
         </div>
       </section>
 
-      <!-- RGPD -->
+      <!-- GDPR -->
       <section class="form-section">
-        <h3 class="section-title">RGPD / Conformité</h3>
-        <div class="form-row">
-          <label class="form-label">
-            Email DPO
-            <input class="form-input" type="email" [(ngModel)]="emailDpo" name="emailDpo" placeholder="dpo@societe.com"/>
-          </label>
-          <label class="form-label">
-            Nom DPO
-            <input class="form-input" type="text" [(ngModel)]="dpoNom" name="dpoNom" placeholder="Prénom Nom"/>
-          </label>
-        </div>
-        <div class="form-row">
-          <label class="form-label">
-            Numéro CNDP
-            <input class="form-input" type="text" [(ngModel)]="numeroCndp" name="numeroCndp" placeholder="Maroc"/>
-          </label>
-          <label class="form-label">
-            Numéro CNIL
-            <input class="form-input" type="text" [(ngModel)]="numeroCnil" name="numeroCnil" placeholder="France"/>
-          </label>
-        </div>
-        <div class="form-row">
-          <label class="form-label full-width">
-            Base juridique par défaut
-            <input class="form-input" type="text" [(ngModel)]="baseJuridiqueDefaut" name="baseJuridiqueDefaut" placeholder="Contrat, Intérêt légitime..."/>
-          </label>
+        <h3 class="section-title">{{ 'societes.tabs.gdpr' | translate }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Email DPO</label>
+            <input class="form-control" type="email" [(ngModel)]="emailDpo" name="emailDpo" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom DPO</label>
+            <input class="form-control" type="text" [(ngModel)]="dpoNom" name="dpoNom" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro CNDP</label>
+            <input class="form-control" type="text" [(ngModel)]="numeroCndp" name="numeroCndp" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro CNIL</label>
+            <input class="form-control" type="text" [(ngModel)]="numeroCnil" name="numeroCnil" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Base juridique</label>
+            <input class="form-control" type="text" [(ngModel)]="baseJuridiqueDefaut" name="baseJuridiqueDefaut" />
+          </div>
         </div>
       </section>
 
-      <!-- Abonnement -->
+      <!-- Subscription -->
       <section class="form-section">
-        <h3 class="section-title">Abonnement &amp; Quotas</h3>
-        <div class="form-row">
-          <label class="form-label">
-            Plan d'abonnement
-            <select class="form-input" [(ngModel)]="planAbonnement" name="planAbonnement">
+        <h3 class="section-title">{{ 'societes.tabs.subscription' | translate }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">{{ 'societes.plan' | translate }}</label>
+            <select class="form-control" [(ngModel)]="planAbonnement" name="planAbonnement">
               <option value="STARTER">STARTER</option>
               <option value="PRO">PRO</option>
               <option value="ENTERPRISE">ENTERPRISE</option>
             </select>
-          </label>
-        </div>
-        <div class="form-row">
-          <label class="form-label">
-            Max utilisateurs
-            <input class="form-input" type="number" [(ngModel)]="maxUtilisateurs" name="maxUtilisateurs" placeholder="Illimité si vide" min="1"/>
-          </label>
-          <label class="form-label">
-            Max biens
-            <input class="form-input" type="number" [(ngModel)]="maxBiens" name="maxBiens" placeholder="Illimité si vide" min="1"/>
-          </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max {{ 'societes.users' | translate }}</label>
+            <input class="form-control" type="number" [(ngModel)]="maxUtilisateurs" name="maxUtilisateurs" min="1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max biens</label>
+            <input class="form-control" type="number" [(ngModel)]="maxBiens" name="maxBiens" min="1" />
+          </div>
         </div>
       </section>
 
-      <!-- Notes internes -->
+      <!-- Internal notes -->
       <section class="form-section">
-        <h3 class="section-title">Notes internes</h3>
-        <label class="form-label full-width">
-          <textarea class="form-textarea" [(ngModel)]="notesInternes" name="notesInternes" rows="4" placeholder="Notes visibles uniquement par les super admins..."></textarea>
-        </label>
+        <h3 class="section-title">{{ 'common.notes' | translate }}</h3>
+        <div class="form-group">
+          <textarea class="form-control" [(ngModel)]="notesInternes" name="notesInternes" rows="4"></textarea>
+        </div>
       </section>
 
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
-        <button type="submit" class="btn-primary" [disabled]="saving">
-          {{ saving ? 'Enregistrement...' : (isEdit ? 'Mettre à jour' : 'Créer la société') }}
+      <div class="modal-footer" style="padding:0">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          @if (saving) { {{ 'common.saving' | translate }} } @else { {{ 'common.save' | translate }} }
         </button>
       </div>
 

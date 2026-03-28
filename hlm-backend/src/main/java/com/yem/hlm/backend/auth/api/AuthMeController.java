@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.auth.api;
 
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,11 @@ import java.util.UUID;
 public class AuthMeController {
 
     private final UserRepository userRepository;
+    private final SocieteRepository societeRepository;
 
-    public AuthMeController(UserRepository userRepository) {
+    public AuthMeController(UserRepository userRepository, SocieteRepository societeRepository) {
         this.userRepository = userRepository;
+        this.societeRepository = societeRepository;
     }
 
     @GetMapping("/auth/me")
@@ -49,6 +52,15 @@ public class AuthMeController {
             userRepository.findById(userId).ifPresent(user -> {
                 result.put("langueInterface", user.getLangueInterface());
                 result.put("platformRole", user.getPlatformRole());
+            });
+        }
+
+        UUID societeId = SocieteContext.getSocieteId();
+        if (societeId != null) {
+            societeRepository.findById(societeId).ifPresent(s -> {
+                if (s.getLogoFileKey() != null) {
+                    result.put("societeLogoUrl", "/api/societes/" + societeId + "/logo");
+                }
             });
         }
 

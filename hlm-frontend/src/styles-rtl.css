@@ -1,8 +1,12 @@
 /* RTL overrides for Arabic language support */
 
+[dir="rtl"] { text-align: right; }
+
 [dir="rtl"] .sidebar {
   right: 0;
   left: auto;
+  border-right: none;
+  border-left: 1px solid rgba(255,255,255,.06);
 }
 
 [dir="rtl"] .main-content {
@@ -29,6 +33,8 @@
   text-align: right;
 }
 
+[dir="rtl"] .data-table thead th { text-align: right; }
+
 [dir="rtl"] .filter-bar {
   flex-direction: row-reverse;
 }
@@ -37,6 +43,92 @@
   direction: rtl;
 }
 
+[dir="rtl"] .lang-bar,
 [dir="rtl"] .lang-switcher {
   flex-direction: row-reverse;
+}
+
+[dir="rtl"] .page-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .page-header-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .toolbar {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-footer {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+[dir="rtl"] .card-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .btn svg {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .badge {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .alert {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .form-control,
+[dir="rtl"] .search-input {
+  text-align: right;
+}
+
+[dir="rtl"] .search-icon {
+  left: auto;
+  right: 10px;
+}
+
+[dir="rtl"] .search-input {
+  padding: 0 32px 0 12px;
+}
+
+[dir="rtl"] .sidebar-footer {
+  direction: rtl;
+}
+
+[dir="rtl"] .user-details {
+  text-align: right;
+}
+
+[dir="rtl"] .nav-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .kpi-accent {
+  border-left: none;
+  border-right: 4px solid;
+}
+
+[dir="rtl"] .stat-chip {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .empty-state {
+  direction: rtl;
+}
+
+[dir="rtl"] .info-panel summary {
+  flex-direction: row-reverse;
+}
+
+/* KPI dashboard cards — flip accent border */
+[dir="rtl"] [style*="border-left"] {
+  border-left: none !important;
 }

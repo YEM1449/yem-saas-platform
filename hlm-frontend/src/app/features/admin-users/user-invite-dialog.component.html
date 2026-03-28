@@ -1,49 +1,55 @@
-<div class="overlay" (click)="cancel()"></div>
-<div class="modal">
-  <h3>Inviter un utilisateur</h3>
+<div class="modal-backdrop" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ 'admin.invite' | translate }}</h2>
+      <button class="modal-close" (click)="cancel()" aria-label="Close">✕</button>
+    </div>
 
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
-
-  <label>
-    Email <span class="required">*</span>
-    <input type="email" [(ngModel)]="email" placeholder="prenom.nom@exemple.com" />
-  </label>
-
-  <label>
-    Prénom <span class="required">*</span>
-    <input type="text" [(ngModel)]="prenom" />
-  </label>
-
-  <label>
-    Nom <span class="required">*</span>
-    <input type="text" [(ngModel)]="nomFamille" />
-  </label>
-
-  <label>
-    Téléphone
-    <input type="tel" [(ngModel)]="telephone" placeholder="+212 6 00 00 00 00" />
-  </label>
-
-  <label>
-    Poste
-    <input type="text" [(ngModel)]="poste" placeholder="Ex: Directeur commercial" />
-  </label>
-
-  <label>
-    Rôle <span class="required">*</span>
-    <select [(ngModel)]="role">
-      @for (r of availableRoles; track r) {
-        <option [value]="r">{{ r }}</option>
+    <div class="modal-body">
+      @if (error) {
+        <div class="alert alert-error">{{ error }}</div>
       }
-    </select>
-  </label>
 
-  <div class="actions">
-    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">Annuler</button>
-    <button (click)="submit()" [disabled]="submitting || !email.trim() || !prenom.trim() || !nomFamille.trim()" class="btn-primary">
-      {{ submitting ? 'Envoi...' : 'Envoyer l\'invitation' }}
-    </button>
+      <div class="form-group">
+        <label class="form-label required">{{ 'admin.inviteEmail' | translate }}</label>
+        <input class="form-control" type="email" [(ngModel)]="email" placeholder="prenom.nom@exemple.com" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label required">{{ 'contacts.firstName' | translate }}</label>
+        <input class="form-control" type="text" [(ngModel)]="prenom" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label required">{{ 'contacts.lastName' | translate }}</label>
+        <input class="form-control" type="text" [(ngModel)]="nomFamille" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'common.phone' | translate }}</label>
+        <input class="form-control" type="tel" [(ngModel)]="telephone" placeholder="+212 6 00 00 00 00" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'common.description' | translate }}</label>
+        <input class="form-control" type="text" [(ngModel)]="poste" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label required">{{ 'admin.inviteRole' | translate }}</label>
+        <select class="form-control" [(ngModel)]="role">
+          @for (r of availableRoles; track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancel()" [disabled]="submitting">{{ 'common.cancel' | translate }}</button>
+      <button class="btn btn-primary" (click)="submit()" [disabled]="submitting || !email.trim() || !prenom.trim() || !nomFamille.trim()">
+        @if (submitting) { {{ 'admin.inviteSending' | translate }} } @else { {{ 'admin.inviteSend' | translate }} }
+      </button>
+    </div>
   </div>
 </div>

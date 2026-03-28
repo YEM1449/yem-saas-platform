@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: "053-project-logo-fields"
+      author: "audit"
+      changes:
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: logo_file_key
+                  type: varchar(500)
+              - column:
+                  name: logo_content_type
+                  type: varchar(100)
+              - column:
+                  name: logo_original_filename
+                  type: varchar(255)

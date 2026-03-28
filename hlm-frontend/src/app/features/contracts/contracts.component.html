@@ -1,16 +1,16 @@
 <!-- Page header -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Contracts</h1>
+    <h1 class="page-title">{{ 'contracts.title' | translate }}</h1>
     <p class="page-subtitle">Manage sale agreements across all projects</p>
   </div>
 </div>
 
 <!-- Status filter toolbar -->
 <div class="toolbar">
-  <label class="form-label" style="margin:0; white-space:nowrap;">Status</label>
+  <label class="form-label" style="margin:0; white-space:nowrap;">{{ 'common.status' | translate }}</label>
   <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" (change)="load()">
-    <option value="">All statuses</option>
+    <option value="">{{ 'contracts.allStatuses' | translate }}</option>
     @for (s of statuses; track s) {
       <option [value]="s">{{ s }}</option>
     }
@@ -35,7 +35,7 @@
 @if (loading) {
   <div class="loading-wrap">
     <div class="spinner"></div>
-    Loading contracts…
+    {{ 'common.loading' | translate }}
   </div>
 }
 
@@ -44,7 +44,7 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">📄</div>
-      <p class="empty-state-title">No contracts found</p>
+      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
       <p class="empty-state-desc">
         @if (filterStatus) {
           No contracts with status <strong>{{ filterStatus }}</strong>. Try changing the filter.
@@ -67,13 +67,13 @@
         <thead>
           <tr>
             <th>Ref</th>
-            <th>Project</th>
-            <th>Buyer</th>
-            <th>Agreed Price</th>
-            <th>Status</th>
+            <th>{{ 'common.project' | translate }}</th>
+            <th>{{ 'contracts.buyer' | translate }}</th>
+            <th>{{ 'contracts.agreedPrice' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
             <th>Created</th>
-            <th>Signed</th>
-            <th class="text-right">Actions</th>
+            <th>{{ 'contracts.signedAt' | translate }}</th>
+            <th class="text-right">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -92,12 +92,12 @@
                 <div class="row-actions">
                   <!-- Detail link (resolved from merge conflict) -->
                   <a class="btn btn-sm btn-secondary" [routerLink]="['/app/contracts', c.id]"
-                     title="View contract details">Detail</a>
+                     [title]="'contracts.title' | translate">Detail</a>
                   <!-- Schedule / Payments link -->
                   <a class="btn btn-sm btn-ghost" [routerLink]="['/app/contracts', c.id, 'payments']"
-                     title="View payment schedule">Schedule</a>
+                     [title]="'contracts.payments' | translate">{{ 'contracts.payments' | translate }}</a>
                   <!-- PDF download -->
-                  <button class="btn btn-sm btn-ghost" (click)="downloadPdf(c)" title="Download PDF">
+                  <button class="btn btn-sm btn-ghost" (click)="downloadPdf(c)" [title]="'common.download' | translate">
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                       <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

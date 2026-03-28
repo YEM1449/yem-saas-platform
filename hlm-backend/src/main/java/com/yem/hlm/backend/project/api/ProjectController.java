@@ -7,11 +7,16 @@ import com.yem.hlm.backend.project.api.dto.ProjectUpdateRequest;
 import com.yem.hlm.backend.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -101,5 +106,29 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ProjectKpiDTO getKpis(@PathVariable UUID id) {
         return projectService.getKpis(id);
+    }
+
+    @PostMapping("/{id}/logo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ProjectResponse> uploadLogo(
+            @PathVariable UUID id,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(projectService.uploadLogo(id, file));
+    }
+
+    @GetMapping("/{id}/logo")
+    public ResponseEntity<InputStreamResource> downloadLogo(@PathVariable UUID id) throws IOException {
+        String contentType = projectService.getLogoContentType(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE,
+                        contentType != null ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .body(new InputStreamResource(projectService.downloadLogo(id)));
+    }
+
+    @DeleteMapping("/{id}/logo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<Void> deleteLogo(@PathVariable UUID id) throws IOException {
+        projectService.deleteLogo(id);
+        return ResponseEntity.noContent().build();
     }
 }

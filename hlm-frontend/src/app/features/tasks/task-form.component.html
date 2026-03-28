@@ -1,13 +1,13 @@
 <div class="form-overlay" (click)="cancel()"></div>
 <div class="form-modal">
-  <h3>{{ isEdit ? 'Modifier la tâche' : 'Nouvelle tâche' }}</h3>
+  <h3>{{ isEdit ? ('tasks.editTask' | translate) : ('tasks.newTask' | translate) }}</h3>
 
   @if (error) {
     <p class="error">{{ error }}</p>
   }
 
   <label>
-    Titre <span class="required">*</span>
+    {{ 'tasks.titleLabel' | translate }} <span class="required">*</span>
     <input data-testid="task-title" type="text" [(ngModel)]="title" placeholder="Ex: Rappeler le client" maxlength="300" />
   </label>
 
@@ -17,12 +17,12 @@
   </label>
 
   <label>
-    Date d'échéance
+    {{ 'tasks.dueDate' | translate }}
     <input type="datetime-local" [(ngModel)]="dueDate" />
   </label>
 
   <label>
-    ID Responsable (UUID)
+    {{ 'tasks.assignee' | translate }} (UUID)
     <input type="text" [(ngModel)]="assigneeId" placeholder="UUID de l'assigné" />
   </label>
 
@@ -39,9 +39,9 @@
   }
 
   <div class="form-actions">
-    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">Annuler</button>
+    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">{{ 'common.cancel' | translate }}</button>
     <button data-testid="task-submit" (click)="submit()" [disabled]="submitting || !title.trim()" class="btn-primary">
-      {{ submitting ? 'Enregistrement...' : (isEdit ? 'Modifier' : 'Créer') }}
+      {{ submitting ? ('common.saving' | translate) : (isEdit ? ('common.edit' | translate) : ('common.create' | translate)) }}
     </button>
   </div>
 </div>

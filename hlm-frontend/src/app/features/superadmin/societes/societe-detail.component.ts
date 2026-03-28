@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { SocieteDetailDto, SocieteStatsDto, SocieteComplianceDto } from './societe.model';
 import { SocieteMembersComponent } from './societe-members.component';
@@ -12,7 +13,7 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 @Component({
   selector: 'app-societe-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, SocieteMembersComponent],
+  imports: [CommonModule, FormsModule, SocieteMembersComponent, TranslateModule],
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })
@@ -29,6 +30,7 @@ export class SocieteDetailComponent implements OnInit {
   loading = false;
   loadingStats = false;
   loadingCompliance = false;
+  logoUploading = false;
   error = '';
   success = '';
 
@@ -153,6 +155,24 @@ export class SocieteDetailComponent implements OnInit {
       case 'PRO': return 'badge-pro';
       default: return 'badge-starter';
     }
+  }
+
+  onLogoFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.logoUploading = true;
+    this.svc.uploadLogo(this.societeId, file).subscribe({
+      next: () => { this.logoUploading = false; this.success = 'Logo mis à jour.'; this.loadDetail(); },
+      error: (err: HttpErrorResponse) => { this.logoUploading = false; this.error = this.extractError(err); },
+    });
+  }
+
+  deleteLogo(): void {
+    this.svc.deleteLogo(this.societeId).subscribe({
+      next: () => { this.success = 'Logo supprimé.'; this.loadDetail(); },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
+    });
   }
 
   private extractError(err: HttpErrorResponse): string {

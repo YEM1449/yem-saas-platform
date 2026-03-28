@@ -4,6 +4,7 @@ import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteService;
 import com.yem.hlm.backend.societe.annotation.RequiresSuperAdmin;
 import com.yem.hlm.backend.societe.api.dto.*;
+import com.yem.hlm.backend.societe.service.SocieteLogoService;
 import com.yem.hlm.backend.usermanagement.InvitationService;
 import com.yem.hlm.backend.usermanagement.dto.InviterUtilisateurRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,13 +14,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,10 +40,14 @@ public class SocieteController {
 
     private final SocieteService societeService;
     private final InvitationService invitationService;
+    private final SocieteLogoService societeLogoService;
 
-    public SocieteController(SocieteService societeService, InvitationService invitationService) {
+    public SocieteController(SocieteService societeService,
+                             InvitationService invitationService,
+                             SocieteLogoService societeLogoService) {
         this.societeService = societeService;
         this.invitationService = invitationService;
+        this.societeLogoService = societeLogoService;
     }
 
     // ── List / Read ───────────────────────────────────────────────────────────
@@ -175,6 +185,33 @@ public class SocieteController {
                                               @PathVariable UUID userId) {
         UUID actorId = SocieteContext.getUserId();
         societeService.removeMembre(id, userId, actorId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Logo management ──────────────────────────────────────────────────────
+
+    @PostMapping("/{id}/logo")
+    @RequiresSuperAdmin
+    public ResponseEntity<Void> uploadLogo(@PathVariable UUID id,
+                                           @RequestParam("file") MultipartFile file) throws IOException {
+        societeLogoService.uploadLogo(id, file);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/logo")
+    @RequiresSuperAdmin
+    public ResponseEntity<InputStreamResource> downloadLogoAdmin(@PathVariable UUID id) throws IOException {
+        String contentType = societeLogoService.getLogoContentType(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE,
+                        contentType != null ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .body(new InputStreamResource(societeLogoService.downloadLogo(id)));
+    }
+
+    @DeleteMapping("/{id}/logo")
+    @RequiresSuperAdmin
+    public ResponseEntity<Void> deleteLogo(@PathVariable UUID id) throws IOException {
+        societeLogoService.deleteLogo(id);
         return ResponseEntity.noContent().build();
     }
 

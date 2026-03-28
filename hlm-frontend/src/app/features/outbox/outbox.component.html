@@ -2,115 +2,126 @@
 
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="page-header">
-    <h1>Messages</h1>
-    <button class="btn-primary" (click)="openCompose()">+ Compose</button>
+    <h1 class="page-title">{{ 'outbox.title' | translate }}</h1>
+    <div class="page-header-actions">
+      <button class="btn btn-primary" (click)="openCompose()">+ {{ 'common.create' | translate }}</button>
+    </div>
   </div>
 
   <!-- ── Success banner ─────────────────────────────────────────────────── -->
   @if (composeSuccess) {
-    <p class="banner-success">{{ composeSuccess }}</p>
+    <div class="alert alert-success">{{ composeSuccess }}</div>
   }
 
   <!-- ── Compose form (inline) ─────────────────────────────────────────── -->
   @if (showCompose) {
-    <div class="compose-card">
-      <h2>New Message</h2>
-
-      @if (composeError) {
-        <p class="error">{{ composeError }}</p>
-      }
-
-      <div class="form-group">
-        <label for="channel">Channel</label>
-        <select id="channel" [(ngModel)]="form.channel">
-          <option value="EMAIL">Email</option>
-          <option value="SMS">SMS</option>
-        </select>
+    <div class="card compose-card">
+      <div class="card-header">
+        <h2 class="card-title">{{ 'common.create' | translate }}</h2>
       </div>
+      <div class="card-body">
+        @if (composeError) {
+          <div class="alert alert-error">{{ composeError }}</div>
+        }
 
-      <div class="form-group">
-        <label for="recipient">Recipient {{ isEmail ? '(email)' : '(phone)' }}</label>
-        <input id="recipient" type="text" [(ngModel)]="form.recipient"
-               [placeholder]="isEmail ? 'user@example.com' : '+212600000000'" />
-      </div>
-
-      @if (isEmail) {
         <div class="form-group">
-          <label for="subject">Subject</label>
-          <input id="subject" type="text" [(ngModel)]="form.subject" placeholder="Subject line" />
+          <label class="form-label">{{ 'outbox.channel' | translate }}</label>
+          <select class="form-control" [(ngModel)]="form.channel">
+            <option value="EMAIL">Email</option>
+            <option value="SMS">SMS</option>
+          </select>
         </div>
-      }
 
-      <div class="form-group">
-        <label for="body">Body</label>
-        <textarea id="body" rows="5" [(ngModel)]="form.body" placeholder="Message body…"></textarea>
-      </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'outbox.recipient' | translate }} {{ isEmail ? '(email)' : '(phone)' }}</label>
+          <input class="form-control" type="text" [(ngModel)]="form.recipient"
+                 [placeholder]="isEmail ? 'user@example.com' : '+212600000000'" />
+        </div>
 
-      <div class="form-actions">
-        <button class="btn-primary" (click)="submitCompose()" [disabled]="composing">
-          {{ composing ? 'Sending…' : 'Send' }}
-        </button>
-        <button class="btn-secondary" (click)="cancelCompose()">Cancel</button>
+        @if (isEmail) {
+          <div class="form-group">
+            <label class="form-label">{{ 'outbox.subject' | translate }}</label>
+            <input class="form-control" type="text" [(ngModel)]="form.subject" />
+          </div>
+        }
+
+        <div class="form-group">
+          <label class="form-label">{{ 'common.notes' | translate }}</label>
+          <textarea class="form-control" rows="5" [(ngModel)]="form.body"></textarea>
+        </div>
+
+        <div class="modal-footer" style="padding:0">
+          <button class="btn btn-primary" (click)="submitCompose()" [disabled]="composing">
+            @if (composing) { {{ 'common.saving' | translate }} } @else { {{ 'common.save' | translate }} }
+          </button>
+          <button class="btn btn-secondary" (click)="cancelCompose()">{{ 'common.cancel' | translate }}</button>
+        </div>
       </div>
     </div>
   }
 
   <!-- ── Filter bar ─────────────────────────────────────────────────────── -->
   <div class="filter-bar">
-    <select [(ngModel)]="filterChannel" (change)="applyFilters()">
-      <option value="">All channels</option>
+    <select class="form-control" style="width:auto" [(ngModel)]="filterChannel" (change)="applyFilters()">
+      <option value="">{{ 'common.all' | translate }}</option>
       <option value="EMAIL">Email</option>
       <option value="SMS">SMS</option>
     </select>
 
-    <select [(ngModel)]="filterStatus" (change)="applyFilters()">
-      <option value="">All statuses</option>
+    <select class="form-control" style="width:auto" [(ngModel)]="filterStatus" (change)="applyFilters()">
+      <option value="">{{ 'common.all' | translate }}</option>
       <option value="PENDING">Pending</option>
-      <option value="SENT">Sent</option>
+      <option value="SENT">{{ 'outbox.status' | translate }}</option>
       <option value="FAILED">Failed</option>
     </select>
   </div>
 
   <!-- ── List ──────────────────────────────────────────────────────────── -->
   @if (listLoading) {
-    <p class="loading">Loading…</p>
+    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
   } @else if (listError) {
-    <p class="error">{{ listError }}</p>
+    <div class="alert alert-error">{{ listError }}</div>
   } @else if (messages.length === 0) {
-    <p class="empty">No messages found.</p>
+    <div class="card">
+      <div class="empty-state">
+        <p class="empty-state-title">{{ 'outbox.noMessages' | translate }}</p>
+      </div>
+    </div>
   } @else {
-    <table class="message-table">
-      <thead>
-        <tr>
-          <th>Channel</th>
-          <th>Status</th>
-          <th>Recipient</th>
-          <th>Subject</th>
-          <th>Sent at</th>
-          <th>Retries</th>
-          <th>Created at</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (msg of messages; track msg.id) {
-          <tr>
-            <td><span class="channel-badge channel-{{ msg.channel }}">{{ msg.channel }}</span></td>
-            <td><span class="badge {{ statusClass(msg.status) }}">{{ msg.status }}</span></td>
-            <td class="cell-truncate">{{ msg.recipient }}</td>
-            <td class="cell-truncate">{{ msg.subject ?? '—' }}</td>
-            <td>{{ msg.sentAt ? (msg.sentAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
-            <td>{{ msg.retriesCount }}</td>
-            <td>{{ msg.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="card">
+      <div class="card-body-flush">
+        <table class="data-table message-table">
+          <thead>
+            <tr>
+              <th>{{ 'outbox.channel' | translate }}</th>
+              <th>{{ 'outbox.status' | translate }}</th>
+              <th>{{ 'outbox.recipient' | translate }}</th>
+              <th>{{ 'outbox.subject' | translate }}</th>
+              <th>{{ 'outbox.sentAt' | translate }}</th>
+              <th>{{ 'outbox.attempts' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (msg of messages; track msg.id) {
+              <tr>
+                <td><span class="badge channel-{{ msg.channel }}">{{ msg.channel }}</span></td>
+                <td><span class="badge {{ statusClass(msg.status) }}">{{ msg.status }}</span></td>
+                <td class="cell-truncate">{{ msg.recipient }}</td>
+                <td class="cell-truncate">{{ msg.subject ?? '—' }}</td>
+                <td>{{ msg.sentAt ? (msg.sentAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+                <td>{{ msg.retriesCount }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Pagination -->
     <div class="pagination">
-      <button (click)="prevPage()" [disabled]="currentPage === 0">‹ Prev</button>
-      <span>Page {{ currentPage + 1 }} / {{ totalPages }}</span>
-      <button (click)="nextPage()" [disabled]="(currentPage + 1) >= totalPages">Next ›</button>
+      <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage === 0">{{ 'common.previous' | translate }}</button>
+      <span class="page-info">{{ 'common.page' | translate }} {{ currentPage + 1 }} {{ 'common.of' | translate }} {{ totalPages }}</span>
+      <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="(currentPage + 1) >= totalPages">{{ 'common.next' | translate }}</button>
     </div>
   }
 </div>

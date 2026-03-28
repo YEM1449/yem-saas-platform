@@ -5,5 +5,6 @@ public enum DocumentEntityType {
     CONTRACT,
     DEPOSIT,
     PROPERTY,
-    RESERVATION
+    RESERVATION,
+    PROJECT
 }

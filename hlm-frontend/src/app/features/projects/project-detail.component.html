@@ -1,5 +1,5 @@
 @if (loadingProject) {
-  <p>Loading project...</p>
+  <p>{{ 'common.loading' | translate }}</p>
 }
 
 @if (projectError) {
@@ -8,15 +8,63 @@
 
 @if (!loadingProject && project) {
   <h2>{{ project.name }}</h2>
-  <p><strong>Status:</strong> {{ project.status }}</p>
+  <p><strong>{{ 'common.status' | translate }}:</strong> {{ project.status }}</p>
   @if (project.description) {
     <p>{{ project.description }}</p>
   }
 
+  <!-- Logo section -->
+  <section class="logo-section">
+    <h3>{{ 'projects.logo' | translate }}</h3>
+    @if (project.logoUrl) {
+      <img [src]="project.logoUrl" alt="Logo projet" class="project-logo" />
+      @if (isAdminOrManager) {
+        <button (click)="deleteLogo()" class="btn-danger">{{ 'projects.deleteLogo' | translate }}</button>
+      }
+    } @else {
+      <p class="muted">Aucun logo configuré.</p>
+    }
+    @if (isAdminOrManager) {
+      <label class="btn-upload">
+        @if (logoUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.uploadLogo' | translate }} }
+        <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
+      </label>
+    }
+  </section>
+
+  <!-- Documents section -->
+  <section class="documents-section">
+    <h3>{{ 'projects.documents' | translate }}</h3>
+    @if (documents.length === 0) {
+      <p class="muted">{{ 'common.noResults' | translate }}</p>
+    }
+    <ul class="doc-list">
+      @for (doc of documents; track doc.id) {
+        <li class="doc-item">
+          @if (isImage(doc.contentType)) {
+            <img [src]="'/api/documents/' + doc.id + '/download'" class="doc-thumb" alt="aperçu" />
+          } @else {
+            <span class="doc-icon">📄</span>
+          }
+          <a [href]="'/api/documents/' + doc.id + '/download'" target="_blank">{{ doc.fileName }}</a>
+          @if (isAdminOrManager) {
+            <button (click)="deleteDocument(doc.id)" class="btn-icon-danger">✕</button>
+          }
+        </li>
+      }
+    </ul>
+    @if (isAdminOrManager) {
+      <label class="btn-upload">
+        @if (docUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.addDocument' | translate }} }
+        <input type="file" (change)="onDocFileSelected($event)" style="display:none" data-testid="doc-upload" />
+      </label>
+    }
+  </section>
+
   <h3>KPIs</h3>
 
   @if (loadingKpi) {
-    <p>Loading KPIs...</p>
+    <p>{{ 'common.loading' | translate }}</p>
   }
 
   @if (kpiError) {

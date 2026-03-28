@@ -7,11 +7,12 @@ import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, LanguageSwitcherComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
