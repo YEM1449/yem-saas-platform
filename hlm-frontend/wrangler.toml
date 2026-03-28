@@ -1,0 +1,6 @@
+name = "yem-hlm"
+compatibility_date = "2024-01-01"
+
+# Angular 19 outputs the browser bundle to dist/frontend/browser/
+# _worker.js (from public/_worker.js) and _redirects are placed here too.
+pages_build_output_dir = "./dist/frontend/browser"
