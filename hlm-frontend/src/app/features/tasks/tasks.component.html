@@ -1,12 +1,12 @@
 <h2>{{ 'tasks.title' | translate }}</h2>
 
 <div class="toolbar">
-  <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
+  <select data-testid="status-filter" [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
     @for (s of statuses; track s.value) {
       <option [value]="s.value">{{ s.label }}</option>
     }
   </select>
-  <button (click)="openCreate()" class="btn-primary">+ {{ 'tasks.create' | translate }}</button>
+  <button data-testid="new-task-btn" (click)="openCreate()" class="btn-primary">+ {{ 'tasks.create' | translate }}</button>
 </div>
 
 @if (success) {
