@@ -75,6 +75,27 @@ jobs:
       - name: Install Playwright browsers
         run: cd hlm-frontend && npx playwright install chromium --with-deps
 
+      - name: Start Angular dev server
+        working-directory: hlm-frontend
+        run: npm start > /tmp/ng-serve.log 2>&1 &
+
+      - name: Wait for Angular compilation to complete
+        run: |
+          echo "Waiting for Angular to compile (max 3 min)..."
+          for i in $(seq 1 36); do
+            if grep -qE "Application bundle generation complete|Compiled successfully" /tmp/ng-serve.log 2>/dev/null; then
+              echo "Angular compiled successfully"
+              break
+            fi
+            if [ "$i" -eq 36 ]; then
+              echo "Angular compilation timed out — log:"
+              cat /tmp/ng-serve.log
+              exit 1
+            fi
+            echo "[$i/36] Waiting..."
+            sleep 5
+          done
+
       - name: Run E2E tests
         run: cd hlm-frontend && npx playwright test
 
