@@ -118,7 +118,9 @@ services:
       GDPR_RETENTION_DAYS:  ${GDPR_RETENTION_DAYS:-1825}
       DATA_RETENTION_CRON:  ${DATA_RETENTION_CRON:-0 0 2 * * *}
       # CORS
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      # Comma-separated list of allowed origins.
+      # Default covers ng serve (4200) for local dev and E2E CI. Override in production.
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}
       # Scheduler (SPRING_TASK_SCHEDULING_ENABLED → spring.task.scheduling.enabled via relaxed binding)
       SPRING_TASK_SCHEDULING_ENABLED: "true"
       # OpenTelemetry — all exporters off by default; set OTEL_*_EXPORTER=otlp to activate

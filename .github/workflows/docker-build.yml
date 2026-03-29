@@ -28,6 +28,10 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
 
+# Force all JavaScript actions to use Node.js 24 (Node 20 deprecated June 2026)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # ── Permissions ────────────────────────────────────────────────────────────────
 permissions:
   contents: read
