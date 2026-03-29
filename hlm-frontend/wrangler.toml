@@ -1,6 +1,13 @@
 name = "yem-hlm"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-01-01"
 
-# Angular 19 outputs the browser bundle to dist/frontend/browser/
-# _worker.js (from public/_worker.js) and _redirects are placed here too.
-pages_build_output_dir = "./dist/frontend/browser"
+# Worker entry point — compiled by wrangler (esbuild) at deploy time.
+# Lives outside src/app/ to avoid Angular's compiler picking it up.
+main = "worker/index.ts"
+
+# Static assets served by the Workers Assets runtime.
+# Angular 19 outputs the browser bundle to dist/frontend/browser/.
+# The binding name "ASSETS" must match env.ASSETS in worker/index.ts.
+[assets]
+directory = "./dist/frontend/browser"
+binding = "ASSETS"

@@ -1,28 +1,32 @@
 /**
- * Cloudflare Pages Advanced Mode Worker
+ * Cloudflare Worker — reverse proxy for the HLM SaaS backend
  *
- * Routes /api/*, /auth/*, /actuator/* to the Render backend.
- * Everything else is served from Pages static assets.
+ * Deployment target: Cloudflare Workers + Assets (wrangler deploy)
+ * NOT Cloudflare Pages — do not use wrangler pages deploy.
  *
- * Why this file exists:
- *   Cloudflare Pages _redirects does NOT support proxying (status 200 rewrites)
- *   to external absolute URLs — error 10021. The correct approach is a Worker
- *   that forwards matching requests to the backend and delegates the rest to
- *   the Pages asset-serving runtime via env.ASSETS.fetch().
+ * Request routing:
+ *   /api/*       → https://yem-hlm-backend.onrender.com
+ *   /auth/*      → https://yem-hlm-backend.onrender.com
+ *   /actuator/*  → https://yem-hlm-backend.onrender.com
+ *   OPTIONS      → CORS preflight response (no upstream call)
+ *   /*           → static assets served by env.ASSETS (Angular SPA)
  *
- * Deployment:
- *   This file lives in public/ and Angular copies it verbatim to
- *   dist/frontend/browser/_worker.js on every build. Cloudflare Pages
- *   detects _worker.js at the deploy root and activates Advanced Mode
- *   automatically — no dashboard toggle required.
+ * The ASSETS binding is declared in wrangler.toml:
+ *   [assets]
+ *   directory = "./dist/frontend/browser"
+ *   binding   = "ASSETS"
  */
+
+export interface Env {
+  ASSETS: Fetcher;
+}
 
 const BACKEND = "https://yem-hlm-backend.onrender.com";
 
 const PROXY_PREFIXES = ["/api/", "/auth/", "/actuator/"];
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     // ── CORS preflight ────────────────────────────────────────────────────────
@@ -44,17 +48,20 @@ export default {
     if (shouldProxy) {
       const backendUrl = BACKEND + url.pathname + url.search;
 
-      const proxyRequest = new Request(backendUrl, {
-        method: request.method,
-        headers: request.headers,
-        body: ["GET", "HEAD"].includes(request.method) ? null : request.body,
-        redirect: "follow",
-      });
-
-      return fetch(proxyRequest);
+      return fetch(
+        new Request(backendUrl, {
+          method: request.method,
+          headers: request.headers,
+          body: ["GET", "HEAD"].includes(request.method) ? null : request.body,
+          redirect: "follow",
+        })
+      );
     }
 
     // ── Static assets (SPA) ───────────────────────────────────────────────────
+    // Workers Assets serves index.html for unmatched routes automatically
+    // when not_found_handling = "single-page-application" is set, or falls
+    // back to the _redirects file in the assets directory.
     return env.ASSETS.fetch(request);
   },
-};
+} satisfies ExportedHandler<Env>;
