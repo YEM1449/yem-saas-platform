@@ -11,7 +11,7 @@
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
-    "deploy": "ng build --configuration production && wrangler pages deploy dist/frontend/browser"
+    "deploy": "ng build --configuration production && wrangler deploy"
   },
   "private": true,
   "dependencies": {
@@ -48,6 +48,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.7.2"
+    "typescript": "~5.7.2",
+    "@cloudflare/workers-types": "^4.0.0",
+    "wrangler": "^3.99.0"
   }
 }
