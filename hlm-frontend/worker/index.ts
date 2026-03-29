@@ -23,6 +23,25 @@ export interface Env {
 
 const BACKEND = "https://yem-hlm-backend.onrender.com";
 
+/**
+ * Security headers added to every response served by this Worker.
+ * These cannot be set as <meta http-equiv> tags — browsers ignore them
+ * for X-Frame-Options and X-Content-Type-Options.
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function applySecurityHeaders(response: Response): Response {
+  const patched = new Response(response.body, response);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    patched.headers.set(key, value);
+  }
+  return patched;
+}
+
 const PROXY_PREFIXES = ["/api/", "/auth/", "/actuator/"];
 
 /**
@@ -78,7 +97,7 @@ export default {
     if (shouldProxy) {
       const backendUrl = BACKEND + url.pathname + url.search;
 
-      return fetch(
+      const backendResponse = await fetch(
         new Request(backendUrl, {
           method: request.method,
           headers: buildProxyHeaders(request.headers), // Origin/Referer stripped
@@ -86,10 +105,12 @@ export default {
           redirect: "follow",
         })
       );
+      return applySecurityHeaders(backendResponse);
     }
 
     // ── Static assets (SPA) ───────────────────────────────────────────────────
     // Workers Assets serves index.html for unmatched routes automatically.
-    return env.ASSETS.fetch(request);
+    const assetResponse = await env.ASSETS.fetch(request);
+    return applySecurityHeaders(assetResponse);
   },
 } satisfies ExportedHandler<Env>;
