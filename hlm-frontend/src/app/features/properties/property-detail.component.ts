@@ -46,20 +46,18 @@ export class PropertyDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.propertyId = this.route.snapshot.paramMap.get('id')!;
-    this.svc.list().subscribe({
-      next: (list) => {
-        this.property = list.find(p => p.id === this.propertyId) ?? null;
+    this.svc.getById(this.propertyId).subscribe({
+      next: (p) => {
+        this.property = p;
         this.loading = false;
-        if (this.property) {
-          this.loadMedia();
-        } else {
-          this.error = 'Property not found.';
-        }
+        this.loadMedia();
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Failed to load property (${err.status})`;
+        this.error = err.status === 404
+          ? 'Property not found.'
+          : (body?.message ?? `Failed to load property (${err.status})`);
       },
     });
   }

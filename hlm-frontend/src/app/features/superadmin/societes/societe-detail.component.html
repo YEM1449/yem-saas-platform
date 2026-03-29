@@ -48,7 +48,11 @@
     <!-- Logo -->
     <div class="logo-section">
       @if (detail.logoDownloadUrl) {
-        <img [src]="detail.logoDownloadUrl" alt="Logo société" class="societe-logo" />
+        @if (logoSrc) {
+          <img [src]="logoSrc" alt="Logo société" class="societe-logo" />
+        } @else {
+          <span class="muted-text">Chargement...</span>
+        }
         <button class="btn-danger btn-sm" (click)="deleteLogo()">Supprimer le logo</button>
       } @else {
         <span class="muted-text">Aucun logo</span>

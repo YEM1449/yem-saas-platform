@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
 import { Project, ProjectKpi } from '../../core/models/project.model';
@@ -23,10 +24,11 @@ interface DocumentItem {
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })
-export class ProjectDetailComponent implements OnInit {
+export class ProjectDetailComponent implements OnInit, OnDestroy {
   private svc = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
   auth = inject(AuthService);
 
   project: Project | null = null;
@@ -39,6 +41,9 @@ export class ProjectDetailComponent implements OnInit {
   kpiError = '';
   logoUploading = false;
   docUploading = false;
+
+  logoSrc: SafeUrl | null = null;
+  private logoObjectUrl: string | null = null;
 
   get projectId(): string {
     return this.route.snapshot.paramMap.get('id') ?? '';
@@ -77,6 +82,7 @@ export class ProjectDetailComponent implements OnInit {
       next: (p) => {
         this.project = p;
         this.loadingProject = false;
+        if (p.logoUrl) this.fetchLogoAsBlob(p.logoUrl);
       },
       error: (err: HttpErrorResponse) => {
         this.loadingProject = false;
@@ -112,13 +118,21 @@ export class ProjectDetailComponent implements OnInit {
     ).subscribe({ next: (docs) => this.documents = docs, error: () => {} });
   }
 
+  ngOnDestroy(): void {
+    this.revokeLogo();
+  }
+
   onLogoFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.project) return;
     this.logoUploading = true;
     this.svc.uploadLogo(this.project.id, file).subscribe({
-      next: (p) => { this.project = p; this.logoUploading = false; },
+      next: (p) => {
+        this.project = p;
+        this.logoUploading = false;
+        if (p.logoUrl) this.fetchLogoAsBlob(p.logoUrl);
+      },
       error: () => { this.logoUploading = false; },
     });
   }
@@ -126,9 +140,31 @@ export class ProjectDetailComponent implements OnInit {
   deleteLogo(): void {
     if (!this.project) return;
     this.svc.deleteLogo(this.project.id).subscribe({
-      next: () => { if (this.project) this.project = { ...this.project, logoUrl: null }; },
+      next: () => {
+        if (this.project) this.project = { ...this.project, logoUrl: null };
+        this.revokeLogo();
+      },
       error: () => {},
     });
+  }
+
+  private fetchLogoAsBlob(relativeUrl: string): void {
+    this.http.get(`${environment.apiUrl}${relativeUrl}`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.revokeLogo();
+        this.logoObjectUrl = URL.createObjectURL(blob);
+        this.logoSrc = this.sanitizer.bypassSecurityTrustUrl(this.logoObjectUrl);
+      },
+      error: () => { this.logoSrc = null; },
+    });
+  }
+
+  private revokeLogo(): void {
+    if (this.logoObjectUrl) {
+      URL.revokeObjectURL(this.logoObjectUrl);
+      this.logoObjectUrl = null;
+    }
+    this.logoSrc = null;
   }
 
   onDocFileSelected(event: Event): void {

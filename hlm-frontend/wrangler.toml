@@ -8,6 +8,13 @@ main = "worker/index.ts"
 # Static assets served by the Workers Assets runtime.
 # Angular 19 outputs the browser bundle to dist/frontend/browser/.
 # The binding name "ASSETS" must match env.ASSETS in worker/index.ts.
+#
+# not_found_handling = "single-page-application":
+#   For any path that does not match a real file in dist/frontend/browser/,
+#   the Assets runtime serves index.html instead of returning 404.
+#   This is the correct SPA fallback for Angular client-side routing
+#   (e.g. /login, /app/contacts, /superadmin/societes all need index.html).
 [assets]
 directory = "./dist/frontend/browser"
 binding = "ASSETS"
+not_found_handling = "single-page-application"

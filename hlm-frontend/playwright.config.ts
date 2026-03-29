@@ -5,7 +5,7 @@ const authFile = path.join(__dirname, 'playwright/.auth/admin.json');
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30000,
+  timeout: 45000,
   retries: 1,
   workers: 1,
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
@@ -14,6 +14,9 @@ export default defineConfig({
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
+    // Angular dev-server can be slower in CI; allow more time per action
+    actionTimeout: 15000,
+    navigationTimeout: 20000,
   },
   projects: [
     {
