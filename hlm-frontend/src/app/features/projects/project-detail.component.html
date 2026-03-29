@@ -17,7 +17,11 @@
   <section class="logo-section">
     <h3>{{ 'projects.logo' | translate }}</h3>
     @if (project.logoUrl) {
-      <img [src]="project.logoUrl" alt="Logo projet" class="project-logo" />
+      @if (logoSrc) {
+        <img [src]="logoSrc" alt="Logo projet" class="project-logo" />
+      } @else {
+        <span class="muted">{{ 'common.loading' | translate }}</span>
+      }
       @if (isAdminOrManager) {
         <button (click)="deleteLogo()" class="btn-danger">{{ 'projects.deleteLogo' | translate }}</button>
       }

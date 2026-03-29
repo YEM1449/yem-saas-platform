@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { KeepAliveService } from '../../core/keep-alive.service';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
@@ -12,9 +13,13 @@ import { LanguageSwitcherComponent } from '../../core/components/language-switch
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   private router = inject(Router);
+  private keepAlive = inject(KeepAliveService);
+
+  ngOnInit(): void { this.keepAlive.start(); }
+  ngOnDestroy(): void { this.keepAlive.stop(); }
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';

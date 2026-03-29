@@ -1,12 +1,14 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { SocieteDetailDto, SocieteStatsDto, SocieteComplianceDto } from './societe.model';
 import { SocieteMembersComponent } from './societe-members.component';
+import { environment } from '../../../../environments/environment';
 
 type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 
@@ -17,10 +19,12 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })
-export class SocieteDetailComponent implements OnInit {
+export class SocieteDetailComponent implements OnInit, OnDestroy {
   private svc = inject(SocieteService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
 
   societeId = '';
   detail: SocieteDetailDto | null = null;
@@ -34,6 +38,9 @@ export class SocieteDetailComponent implements OnInit {
   error = '';
   success = '';
 
+  logoSrc: SafeUrl | null = null;
+  private logoObjectUrl: string | null = null;
+
   activeTab: Tab = 'info';
 
   // Suspend dialog
@@ -46,6 +53,10 @@ export class SocieteDetailComponent implements OnInit {
     this.loadDetail();
   }
 
+  ngOnDestroy(): void {
+    this.revokeLogo();
+  }
+
   loadDetail(): void {
     this.loading = true;
     this.error = '';
@@ -53,6 +64,11 @@ export class SocieteDetailComponent implements OnInit {
       next: (d) => {
         this.detail = d;
         this.loading = false;
+        if (d.logoDownloadUrl) {
+          this.fetchLogoAsBlob(d.logoDownloadUrl);
+        } else {
+          this.revokeLogo();
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
@@ -170,9 +186,28 @@ export class SocieteDetailComponent implements OnInit {
 
   deleteLogo(): void {
     this.svc.deleteLogo(this.societeId).subscribe({
-      next: () => { this.success = 'Logo supprimé.'; this.loadDetail(); },
+      next: () => { this.success = 'Logo supprimé.'; this.revokeLogo(); this.loadDetail(); },
       error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
+  }
+
+  private fetchLogoAsBlob(relativeUrl: string): void {
+    this.http.get(`${environment.apiUrl}${relativeUrl}`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.revokeLogo();
+        this.logoObjectUrl = URL.createObjectURL(blob);
+        this.logoSrc = this.sanitizer.bypassSecurityTrustUrl(this.logoObjectUrl);
+      },
+      error: () => { this.logoSrc = null; },
+    });
+  }
+
+  private revokeLogo(): void {
+    if (this.logoObjectUrl) {
+      URL.revokeObjectURL(this.logoObjectUrl);
+      this.logoObjectUrl = null;
+    }
+    this.logoSrc = null;
   }
 
   private extractError(err: HttpErrorResponse): string {
