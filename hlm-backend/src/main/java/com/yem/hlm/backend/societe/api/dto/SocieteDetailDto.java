@@ -95,7 +95,7 @@ public record SocieteDetailDto(
 ) {
     public static SocieteDetailDto from(Societe s) {
         String logoDownloadUrl = s.getLogoFileKey() != null
-                ? "/api/societes/" + s.getId() + "/logo"
+                ? "/api/admin/societes/" + s.getId() + "/logo"
                 : null;
         return new SocieteDetailDto(
                 s.getId(),

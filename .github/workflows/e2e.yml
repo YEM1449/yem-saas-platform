@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Force all JavaScript actions to use Node.js 24 (Node 20 deprecated June 2026)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -16,6 +20,7 @@ jobs:
         run: |
           cat > .env << 'EOF'
           JWT_SECRET=ci-e2e-test-secret-not-for-production-x32c
+          CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200
           EOF
 
       - name: Start infrastructure (postgres, redis, minio)
@@ -58,21 +63,6 @@ jobs:
             sleep 10
           done
 
-      - name: Start frontend
-        run: docker compose up -d hlm-frontend
-
-      - name: Wait for frontend
-        run: |
-          for i in $(seq 1 12); do
-            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' hlm-frontend 2>/dev/null || echo "none")
-            echo "[$i/12] frontend=$HEALTH"
-            [ "$HEALTH" = "healthy" ] && echo "Frontend ready" && exit 0
-            sleep 5
-          done
-          echo "Frontend timed out — logs:"
-          docker logs hlm-frontend 2>&1 | tail -50
-          exit 1
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -84,6 +74,55 @@ jobs:
 
       - name: Install Playwright browsers
         run: cd hlm-frontend && npx playwright install chromium --with-deps
+
+      - name: Build Angular (ci configuration)
+        # Builds with environment.ci.ts so apiUrl='http://localhost:8080'
+        # — no proxy needed; CORS is already open for localhost:4200.
+        # outputHashing=none keeps filenames stable (main.js, polyfills.js).
+        working-directory: hlm-frontend
+        run: npx ng build --configuration=ci
+
+      - name: Serve Angular static build (SPA)
+        # Python3 SPA handler: serves index.html for any path that isn't a real
+        # file so Angular's client-side router works correctly. Python3 is
+        # always available on ubuntu-latest, sets correct MIME types, and does
+        # NOT redirect to / (unlike some versions of the `serve` npm package).
+        run: |
+          cat > /tmp/spa_server.py << 'PYEOF'
+          import http.server, os, socketserver, mimetypes
+
+          os.chdir('hlm-frontend/dist/frontend/browser')
+
+          class SPAHandler(http.server.SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  p = self.path.split('?')[0]
+                  if not os.path.exists('.' + p) or os.path.isdir('.' + p):
+                      self.path = '/index.html'
+                  return super().do_GET()
+              def log_message(self, *a):
+                  pass
+
+          mimetypes.add_type('application/javascript', '.js')
+          mimetypes.add_type('application/javascript', '.mjs')
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(('', 4200), SPAHandler) as srv:
+              srv.serve_forever()
+          PYEOF
+          python3 /tmp/spa_server.py &
+
+      - name: Wait for static server to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4200/ >/dev/null 2>&1; then
+              echo "Server ready (iteration $i)"
+              exit 0
+            fi
+            echo "[$i/30] waiting..."
+            sleep 2
+          done
+          echo "Static server did not start in time"
+          exit 1
 
       - name: Run E2E tests
         run: cd hlm-frontend && npx playwright test

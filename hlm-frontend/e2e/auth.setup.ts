@@ -10,10 +10,11 @@ setup('authenticate as admin', async ({ page }) => {
   fs.mkdirSync(authDir, { recursive: true });
 
   await page.goto('/login');
+  await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
   await page.fill('[data-testid="email"]',    'admin@acme.com');
   await page.fill('[data-testid="password"]', 'Admin123!Secure');
   await page.click('[data-testid="login-button"]');
-  await page.waitForURL(/.*app/, { timeout: 15000 });
+  await page.waitForURL(/.*\/app/, { timeout: 20000 });
 
   // Persist token in localStorage so subsequent tests skip the login form
   await page.context().storageState({ path: authFile });

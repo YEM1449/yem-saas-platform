@@ -22,7 +22,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor, portalInterceptor])),
-    provideTranslateService({ defaultLanguage: 'fr' }),
+    provideTranslateService({ fallbackLang: 'fr' }),
     ...provideTranslateHttpLoader({ prefix: '/assets/i18n/', suffix: '.json' }),
     {
       provide: APP_INITIALIZER,

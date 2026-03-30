@@ -5,7 +5,7 @@ const authFile = path.join(__dirname, 'playwright/.auth/admin.json');
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30000,
+  timeout: 45000,
   retries: 1,
   workers: 1,
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
@@ -14,6 +14,9 @@ export default defineConfig({
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
+    // Angular dev-server can be slower in CI; allow more time per action
+    actionTimeout: 15000,
+    navigationTimeout: 20000,
   },
   projects: [
     {
@@ -31,10 +34,16 @@ export default defineConfig({
       use: { storageState: authFile },
     },
   ],
-  webServer: {
-    command: 'npm start',
-    url: 'http://localhost:4200',
-    reuseExistingServer: true,
-    timeout: 120000,
-  },
+  // In CI the static server is started by the workflow before Playwright runs.
+  // Setting undefined skips webServer so Playwright never launches `npm start`
+  // (ng serve), which would race against Angular compilation and cause flaky
+  // timeouts. Locally, webServer starts `npm start` automatically.
+  webServer: process.env['CI']
+    ? undefined
+    : {
+        command: 'npm start',
+        url: 'http://localhost:4200',
+        reuseExistingServer: true,
+        timeout: 120000,
+      },
 });
