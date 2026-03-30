@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Authentication', () => {
   test('login with valid credentials redirects to app', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
     await page.fill('[data-testid="email"]', 'admin@acme.com');
     await page.fill('[data-testid="password"]', 'Admin123!Secure');
     await page.click('[data-testid="login-button"]');
@@ -11,6 +12,7 @@ test.describe('Authentication', () => {
 
   test('login with wrong password shows error', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
     await page.fill('[data-testid="email"]', 'admin@acme.com');
     await page.fill('[data-testid="password"]', 'wrongpassword');
     await page.click('[data-testid="login-button"]');
@@ -24,6 +26,7 @@ test.describe('Authentication', () => {
 
   test('logout clears session and redirects to login', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
     await page.fill('[data-testid="email"]', 'admin@acme.com');
     await page.fill('[data-testid="password"]', 'Admin123!Secure');
     await page.click('[data-testid="login-button"]');

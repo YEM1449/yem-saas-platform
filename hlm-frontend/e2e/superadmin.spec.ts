@@ -5,6 +5,7 @@ import { test, expect } from '@playwright/test';
 
 async function loginSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/login');
+  await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
   await page.fill('[data-testid="email"]', 'superadmin@yourcompany.com');
   await page.fill('[data-testid="password"]', 'YourSecure2026!');
   await page.click('[data-testid="login-button"]');
@@ -24,6 +25,7 @@ test.describe('SuperAdmin — Société management', () => {
 
   test('regular user cannot access superadmin area', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
     await page.fill('[data-testid="email"]', 'admin@acme.com');
     await page.fill('[data-testid="password"]', 'Admin123!Secure');
     await page.click('[data-testid="login-button"]');

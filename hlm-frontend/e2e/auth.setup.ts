@@ -10,6 +10,7 @@ setup('authenticate as admin', async ({ page }) => {
   fs.mkdirSync(authDir, { recursive: true });
 
   await page.goto('/login');
+  await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
   await page.fill('[data-testid="email"]',    'admin@acme.com');
   await page.fill('[data-testid="password"]', 'Admin123!Secure');
   await page.click('[data-testid="login-button"]');
