@@ -34,10 +34,16 @@ export default defineConfig({
       use: { storageState: authFile },
     },
   ],
-  webServer: {
-    command: 'npm start',
-    url: 'http://localhost:4200',
-    reuseExistingServer: true,
-    timeout: 120000,
-  },
+  // In CI the static server is started by the workflow before Playwright runs.
+  // Setting undefined skips webServer so Playwright never launches `npm start`
+  // (ng serve), which would race against Angular compilation and cause flaky
+  // timeouts. Locally, webServer starts `npm start` automatically.
+  webServer: process.env['CI']
+    ? undefined
+    : {
+        command: 'npm start',
+        url: 'http://localhost:4200',
+        reuseExistingServer: true,
+        timeout: 120000,
+      },
 });

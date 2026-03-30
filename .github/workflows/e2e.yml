@@ -82,17 +82,43 @@ jobs:
         working-directory: hlm-frontend
         run: npx ng build --configuration=ci
 
-      - name: Serve Angular static build
-        # 'serve' is a zero-config static file server with SPA support.
-        # --single rewrites all 404 → index.html so Angular router works.
-        working-directory: hlm-frontend
-        run: npx --yes serve dist/frontend/browser --listen 4200 --single &
+      - name: Serve Angular static build (SPA)
+        # Python3 SPA handler: serves index.html for any path that isn't a real
+        # file so Angular's client-side router works correctly. Python3 is
+        # always available on ubuntu-latest, sets correct MIME types, and does
+        # NOT redirect to / (unlike some versions of the `serve` npm package).
+        run: |
+          cat > /tmp/spa_server.py << 'PYEOF'
+          import http.server, os, socketserver, mimetypes
+
+          os.chdir('hlm-frontend/dist/frontend/browser')
+
+          class SPAHandler(http.server.SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  p = self.path.split('?')[0]
+                  if not os.path.exists('.' + p) or os.path.isdir('.' + p):
+                      self.path = '/index.html'
+                  return super().do_GET()
+              def log_message(self, *a):
+                  pass
+
+          mimetypes.add_type('application/javascript', '.js')
+          mimetypes.add_type('application/javascript', '.mjs')
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(('', 4200), SPAHandler) as srv:
+              srv.serve_forever()
+          PYEOF
+          python3 /tmp/spa_server.py &
 
       - name: Wait for static server to be ready
         run: |
-          for i in $(seq 1 20); do
-            curl -sf http://localhost:4200/ >/dev/null 2>&1 && echo "Server ready (iteration $i)" && exit 0
-            echo "[$i/20] waiting..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4200/ >/dev/null 2>&1; then
+              echo "Server ready (iteration $i)"
+              exit 0
+            fi
+            echo "[$i/30] waiting..."
             sleep 2
           done
           echo "Static server did not start in time"
