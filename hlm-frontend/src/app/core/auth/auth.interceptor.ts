@@ -1,11 +1,15 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { tap } from 'rxjs';
-import { AuthService } from './auth.service';
+
+const TOKEN_KEY = 'hlm_access_token';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
-  const token = auth.token;
+  // Read session state directly here to avoid a DI cycle:
+  // AuthService -> HttpClient -> authInterceptor -> AuthService.
+  const router = inject(Router);
+  const token = localStorage.getItem(TOKEN_KEY);
 
   // Don't attach token to login requests (public endpoint)
   const skipAuth = req.url.endsWith('/auth/login');
@@ -22,7 +26,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         // On 401 from protected endpoints, clear token and redirect to login.
         // Skip for /auth/login itself to avoid redirect loop on bad credentials.
         if (err.status === 401 && !skipAuth && !isAuthMe) {
-          auth.logout();
+          localStorage.removeItem(TOKEN_KEY);
+          void router.navigateByUrl('/login');
         }
       },
     })
