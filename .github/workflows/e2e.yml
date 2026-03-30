@@ -75,31 +75,27 @@ jobs:
       - name: Install Playwright browsers
         run: cd hlm-frontend && npx playwright install chromium --with-deps
 
-      - name: Start Angular dev server
+      - name: Build Angular (ci configuration)
+        # Builds with environment.ci.ts so apiUrl='http://localhost:8080'
+        # — no proxy needed; CORS is already open for localhost:4200.
+        # outputHashing=none keeps filenames stable (main.js, polyfills.js).
         working-directory: hlm-frontend
-        run: nohup npm start > /tmp/ng-serve.log 2>&1 &
+        run: npx ng build --configuration=ci
 
-      - name: Wait for Angular compilation to complete
-        # Angular's esbuild dev-server injects <script type="module"> tags into
-        # index.html only AFTER the initial compilation finishes.  The source
-        # index.html has zero <script> tags, so polling the HTTP response body
-        # for '<script' is a reliable compilation-complete signal — unlike HTTP
-        # 200 which is returned immediately even before JS bundles are built.
+      - name: Serve Angular static build
+        # 'serve' is a zero-config static file server with SPA support.
+        # --single rewrites all 404 → index.html so Angular router works.
+        working-directory: hlm-frontend
+        run: npx --yes serve dist/frontend/browser --listen 4200 --single &
+
+      - name: Wait for static server to be ready
         run: |
-          echo "Waiting for Angular to compile (max 5 min)..."
-          for i in $(seq 1 100); do
-            RESPONSE=$(curl -sf --max-time 5 http://localhost:4200/ 2>&1 || echo "")
-            if echo "$RESPONSE" | grep -q '<script'; then
-              echo "Angular compiled and serving (iteration $i)"
-              exit 0
-            fi
-            echo "[$i/100] not ready yet... preview: ${RESPONSE:0:120}"
-            sleep 3
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:4200/ >/dev/null 2>&1 && echo "Server ready (iteration $i)" && exit 0
+            echo "[$i/20] waiting..."
+            sleep 2
           done
-          echo "Angular compilation timed out — ng-serve log:"
-          cat /tmp/ng-serve.log
-          echo "--- final curl ---"
-          curl -v http://localhost:4200/ 2>&1 || true
+          echo "Static server did not start in time"
           exit 1
 
       - name: Run E2E tests
