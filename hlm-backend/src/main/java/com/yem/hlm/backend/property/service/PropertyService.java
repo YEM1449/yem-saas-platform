@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.property.service;
 
+import com.yem.hlm.backend.immeuble.domain.Immeuble;
 import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
+import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -249,10 +251,7 @@ public class PropertyService {
         property.setListedForSale(req.listedForSale() != null && req.listedForSale());
         property.setBuildingName(req.buildingName());
         if (req.immeubleId() != null) {
-            UUID societeId = SocieteContext.getSocieteId();
-            var immeuble = immeubleRepository.findBySocieteIdAndId(societeId, req.immeubleId())
-                    .orElseThrow(() -> new IllegalArgumentException("Immeuble not found: " + req.immeubleId()));
-            property.setImmeuble(immeuble);
+            property.setImmeuble(loadImmeubleForProject(req.immeubleId(), property.getProject().getId()));
         }
     }
 
@@ -280,17 +279,31 @@ public class PropertyService {
         if (req.zoning() != null) property.setZoning(req.zoning());
         if (req.isServiced() != null) property.setIsServiced(req.isServiced());
         if (req.listedForSale() != null) property.setListedForSale(req.listedForSale());
+        UUID previousProjectId = property.getProject().getId();
+        boolean projectChanged = false;
         if (req.projectId() != null) {
             UUID societeId = SocieteContext.getSocieteId();
             var project = projectActiveGuard.requireActive(societeId, req.projectId());
             property.setProject(project);
+            projectChanged = !project.getId().equals(previousProjectId);
         }
         if (req.buildingName() != null) property.setBuildingName(req.buildingName());
         if (req.immeubleId() != null) {
-            UUID societeId = SocieteContext.getSocieteId();
-            var immeuble = immeubleRepository.findBySocieteIdAndId(societeId, req.immeubleId())
-                    .orElseThrow(() -> new IllegalArgumentException("Immeuble not found: " + req.immeubleId()));
-            property.setImmeuble(immeuble);
+            property.setImmeuble(loadImmeubleForProject(req.immeubleId(), property.getProject().getId()));
+        } else if (projectChanged) {
+            property.setImmeuble(null);
         }
+    }
+
+    private Immeuble loadImmeubleForProject(UUID immeubleId, UUID projectId) {
+        UUID societeId = SocieteContext.getSocieteId();
+        Immeuble immeuble = immeubleRepository.findBySocieteIdAndId(societeId, immeubleId)
+                .orElseThrow(() -> new ImmeubleNotFoundException(immeubleId));
+
+        if (!immeuble.getProject().getId().equals(projectId)) {
+            throw new ImmeubleProjectMismatchException(immeubleId, projectId);
+        }
+
+        return immeuble;
     }
 }

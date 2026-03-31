@@ -2,6 +2,8 @@ package com.yem.hlm.backend.property;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.immeuble.domain.Immeuble;
+import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
 import com.yem.hlm.backend.project.domain.Project;
 import com.yem.hlm.backend.project.domain.ProjectStatus;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
@@ -57,6 +59,7 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProjectRepository projectRepository;
+    @Autowired ImmeubleRepository immeubleRepository;
 
     private Societe societe;
     private User adminUser;
@@ -68,12 +71,13 @@ class PropertyControllerIT extends IntegrationTestBase {
     private String agentBearer;
 
     private UUID projectId;
+    private Project project;
 
     @BeforeEach
     void setupTestData() {
         societe = societeRepository.save(new Societe("Prop Test Societe", "MA"));
 
-        var project = new Project(societe.getId(), "Test Project");
+        project = new Project(societe.getId(), "Test Project");
         project = projectRepository.save(project);
         projectId = project.getId();
 
@@ -657,6 +661,25 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void createProperty_withNonExistentImmeubleId_returns404() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa Bad Immeuble", "VIL-BAD-IMM-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa with bad immeuble ref", null,
+                null, projectId, UUID.randomUUID(), null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message", startsWith("Immeuble not found:")));
+    }
+
     // ===== Archived Project Tests =====
 
     @Test
@@ -710,6 +733,111 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void updateProperty_withNonExistentImmeubleId_returns404() throws Exception {
+        var createReq = createValidVillaRequest("VIL-UPD-IMM-404");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, UUID.randomUUID(), null
+        );
+
+        mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message", startsWith("Immeuble not found:")));
+    }
+
+    @Test
+    void updateProperty_reassignProjectWithoutImmeuble_clearsExistingImmeuble() throws Exception {
+        Immeuble immeuble = createImmeuble(project, "Tour A");
+
+        var createReq = new PropertyCreateRequest(
+                PropertyType.APPARTEMENT, "Building Unit", "APP-IMM-001", new BigDecimal("1500000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
+                null, null, null, null,
+                null, projectId, immeuble.getId(), null
+        );
+
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        Project newProject = projectRepository.save(new Project(societe.getId(), "Second Project"));
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, newProject.getId(), null, null
+        );
+
+        String updatedJson = mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(newProject.getId().toString()))
+                .andReturn().getResponse().getContentAsString();
+
+        PropertyResponse updated = objectMapper.readValue(updatedJson, PropertyResponse.class);
+        assertThat(updated.immeubleId()).isNull();
+        assertThat(updated.immeubleName()).isNull();
+    }
+
+    @Test
+    void updateProperty_reassignProjectWithMismatchedImmeuble_returns400() throws Exception {
+        Immeuble immeuble = createImmeuble(project, "Tour A");
+
+        var createReq = new PropertyCreateRequest(
+                PropertyType.APPARTEMENT, "Building Unit", "APP-IMM-002", new BigDecimal("1500000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
+                null, null, null, null,
+                null, projectId, immeuble.getId(), null
+        );
+
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        Project newProject = projectRepository.save(new Project(societe.getId(), "Third Project"));
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, newProject.getId(), immeuble.getId(), null
+        );
+
+        mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Immeuble " + immeuble.getId() + " does not belong to project " + newProject.getId()));
     }
 
     @Test
@@ -891,5 +1019,9 @@ class PropertyControllerIT extends IntegrationTestBase {
                 projectId, null, // projectId
                 null       // buildingName
         );
+    }
+
+    private Immeuble createImmeuble(Project targetProject, String nom) {
+        return immeubleRepository.save(new Immeuble(societe.getId(), targetProject, nom));
     }
 }

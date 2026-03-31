@@ -35,8 +35,10 @@ test.describe('Contacts', () => {
     await page.click('[data-testid="create-contact"]');
 
     const ts = Date.now();
+    const email = `e2e-contact-${ts}@example.com`;
     await page.fill('[data-testid="firstName"]', 'E2E');
     await page.fill('[data-testid="lastName"]', `Test-${ts}`);
+    await page.getByPlaceholder('jean.dupont@example.com').fill(email);
     await page.click('[data-testid="save-button"]');
 
     // Wait for modal to close (success path closes it) then assert row is visible
