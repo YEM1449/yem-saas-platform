@@ -48,6 +48,8 @@ public record PropertyResponse(
         UUID projectId,
         String projectName,
         String buildingName,
+        UUID immeubleId,
+        String immeubleName,
         UUID createdBy,
         UUID updatedBy,
         LocalDateTime createdAt,
@@ -71,6 +73,7 @@ public record PropertyResponse(
                 p.getZoning(), p.getIsServiced(), p.isListedForSale(),
                 p.getProject() != null ? p.getProject().getId() : null,
                 p.getProjectName(), p.getBuildingName(),
+                p.getImmeubleId(), p.getImmeubleName(),
                 p.getCreatedBy(), p.getUpdatedBy(),
                 p.getCreatedAt(), p.getUpdatedAt(), p.getDeletedAt(), p.getPublishedAt(),
                 p.getSoldAt(), p.getReservedAt()

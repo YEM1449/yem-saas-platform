@@ -173,8 +173,7 @@ class PortalContractsIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "PC-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Portal Appt " + ref, ref,
-                new BigDecimal("400000"), "MAD",
+                PropertyType.APPARTEMENT, "Portal Appt " + ref, ref, null, new BigDecimal("400000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("85"), null,

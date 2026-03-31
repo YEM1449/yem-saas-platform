@@ -350,8 +350,7 @@ class PaymentScheduleIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "PAY-PROP-" + (++counter);
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Pay Test Apt " + ref, ref,
-                new BigDecimal("500000"), "MAD",
+                PropertyType.VILLA, "Pay Test Apt " + ref, ref, null, new BigDecimal("500000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("80"), new BigDecimal("100"),

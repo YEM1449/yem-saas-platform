@@ -41,6 +41,7 @@ public record PropertyCreateRequest(
         @Size(max = 5000) String notes,
         Boolean listedForSale,
         @NotNull UUID projectId,
+        UUID immeubleId,
         @Size(max = 100) String buildingName
 ) {
     public PropertyCreateRequest {

@@ -273,8 +273,7 @@ class ContractControllerIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId, String bearer) throws Exception {
         String ref = "CTR-PROP-" + (++refCounter);
         var propReq = new PropertyCreateRequest(
-                PropertyType.VILLA, "Contract Test Villa " + ref, ref,
-                new BigDecimal("800000"), "MAD",
+                PropertyType.VILLA, "Contract Test Villa " + ref, ref, null, new BigDecimal("800000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("180"), new BigDecimal("350"),

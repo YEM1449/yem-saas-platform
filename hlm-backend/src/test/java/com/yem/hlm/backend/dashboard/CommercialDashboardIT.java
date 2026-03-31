@@ -302,8 +302,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId, String bearer) throws Exception {
         String ref = "DASH-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Dash Test Appt " + ref, ref,
-                new BigDecimal("450000"), "MAD",
+                PropertyType.APPARTEMENT, "Dash Test Appt " + ref, ref, null, new BigDecimal("450000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("90"), null,

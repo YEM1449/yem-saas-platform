@@ -256,8 +256,7 @@ class CommissionIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "COMM-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Comm Appt " + ref, ref,
-                new BigDecimal("450000"), "MAD",
+                PropertyType.APPARTEMENT, "Comm Appt " + ref, ref, null, new BigDecimal("450000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("90"), null,

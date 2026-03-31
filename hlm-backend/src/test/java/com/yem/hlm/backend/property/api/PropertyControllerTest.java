@@ -42,55 +42,55 @@ class PropertyControllerTest {
     @Test
     void list_noQueryParams_callsServiceWithNullFilters() {
         // Given
-        when(propertyService.listAll(null, null)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAll(null, null, null, null)).thenReturn(List.of(mockResponse));
 
         // When
-        List<PropertyResponse> result = propertyController.list(null, null);
+        List<PropertyResponse> result = propertyController.list(null, null, null, null);
 
         // Then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).id()).isEqualTo(mockResponse.id());
-        verify(propertyService).listAll(null, null);
+        verify(propertyService).listAll(null, null, null, null);
     }
 
     @Test
     void list_withTypeParam_callsServiceWithType() {
         // Given
-        when(propertyService.listAll(PropertyType.VILLA, null)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAll(null, null, PropertyType.VILLA, null)).thenReturn(List.of(mockResponse));
 
         // When
-        List<PropertyResponse> result = propertyController.list(PropertyType.VILLA, null);
+        List<PropertyResponse> result = propertyController.list(null, null, PropertyType.VILLA, null);
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyService).listAll(PropertyType.VILLA, null);
+        verify(propertyService).listAll(null, null, PropertyType.VILLA, null);
     }
 
     @Test
     void list_withStatusParam_callsServiceWithStatus() {
         // Given
-        when(propertyService.listAll(null, PropertyStatus.ACTIVE)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAll(null, null, null, PropertyStatus.ACTIVE)).thenReturn(List.of(mockResponse));
 
         // When
-        List<PropertyResponse> result = propertyController.list(null, PropertyStatus.ACTIVE);
+        List<PropertyResponse> result = propertyController.list(null, null, null, PropertyStatus.ACTIVE);
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyService).listAll(null, PropertyStatus.ACTIVE);
+        verify(propertyService).listAll(null, null, null, PropertyStatus.ACTIVE);
     }
 
     @Test
     void list_withBothParams_callsServiceWithBothFilters() {
         // Given
-        when(propertyService.listAll(PropertyType.VILLA, PropertyStatus.ACTIVE))
+        when(propertyService.listAll(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE))
                 .thenReturn(List.of(mockResponse));
 
         // When
-        List<PropertyResponse> result = propertyController.list(PropertyType.VILLA, PropertyStatus.ACTIVE);
+        List<PropertyResponse> result = propertyController.list(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE);
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyService).listAll(PropertyType.VILLA, PropertyStatus.ACTIVE);
+        verify(propertyService).listAll(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE);
     }
 
     private PropertyResponse createMockPropertyResponse() {
@@ -133,6 +133,8 @@ class PropertyControllerTest {
                 UUID.randomUUID(), // projectId
                 "Test Project", // projectName
                 null, // buildingName
+                null, // immeubleId
+                null, // immeubleName
                 UUID.randomUUID(), // createdBy
                 UUID.randomUUID(), // updatedBy
                 java.time.LocalDateTime.now(), // createdAt

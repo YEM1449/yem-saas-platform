@@ -33,6 +33,7 @@ public record PropertyUpdateRequest(
         // Listing + project/building fields
         Boolean listedForSale,
         UUID projectId,
+        UUID immeubleId,
         @Size(max = 100) String buildingName
 ) {
 }

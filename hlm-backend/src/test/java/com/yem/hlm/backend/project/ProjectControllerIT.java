@@ -367,8 +367,7 @@ class ProjectControllerIT extends IntegrationTestBase {
     @Test
     void getKpis_withOneProperty_returnsTotalOne() throws Exception {
         var propReq = new PropertyCreateRequest(
-                PropertyType.VILLA, "KPI Villa", "VIL-KPI-001",
-                new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "KPI Villa", "VIL-KPI-001", null, new BigDecimal("5000000"), "MAD",
                 null, null, "123 Palm Ave", "Casablanca", null, null,
                 null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,

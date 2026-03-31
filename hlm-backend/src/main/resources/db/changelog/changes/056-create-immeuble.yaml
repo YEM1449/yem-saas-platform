@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: 056-create-immeuble
+      author: yem
+      changes:
+        - createTable:
+            tableName: immeuble
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_immeuble_societe
+                    references: societe(id)
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_immeuble_project
+                    references: project(id)
+              - column:
+                  name: nom
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: adresse
+                  type: text
+              - column:
+                  name: nb_etages
+                  type: integer
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: immeuble
+            columnNames: societe_id, project_id, nom
+            constraintName: uk_immeuble_societe_project_nom
+        - createIndex:
+            tableName: immeuble
+            indexName: idx_immeuble_project
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            tableName: immeuble
+            indexName: idx_immeuble_societe
+            columns:
+              - column:
+                  name: societe_id
+        # Add immeuble_id FK to property table
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: immeuble_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_property_immeuble
+                    references: immeuble(id)
+        - createIndex:
+            tableName: property
+            indexName: idx_property_immeuble
+            columns:
+              - column:
+                  name: immeuble_id

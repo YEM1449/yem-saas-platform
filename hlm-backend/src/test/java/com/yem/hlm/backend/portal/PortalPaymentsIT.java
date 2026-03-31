@@ -176,8 +176,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "PP-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Portal Pay Appt " + ref, ref,
-                new BigDecimal("450000"), "MAD",
+                PropertyType.APPARTEMENT, "Portal Pay Appt " + ref, ref, null, new BigDecimal("450000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("90"), null,

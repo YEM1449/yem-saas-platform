@@ -227,8 +227,7 @@ class ReservationPdfIT extends IntegrationTestBase {
         UUID projId = UUID.fromString(objectMapper.readTree(projectBody).get("id").asText());
 
         var propReq = new PropertyCreateRequest(
-                PropertyType.VILLA, "PDF Villa " + ref, ref,
-                new BigDecimal("2000000"), "MAD",
+                PropertyType.VILLA, "PDF Villa " + ref, ref, null, new BigDecimal("2000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),

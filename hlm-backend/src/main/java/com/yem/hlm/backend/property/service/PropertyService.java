@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.property.service;
 
+import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -34,13 +35,16 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final ProjectActiveGuard projectActiveGuard;
     private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
+    private final ImmeubleRepository immeubleRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
                            ProjectActiveGuard projectActiveGuard,
-                           PropertyCommercialWorkflowService propertyCommercialWorkflowService) {
+                           PropertyCommercialWorkflowService propertyCommercialWorkflowService,
+                           ImmeubleRepository immeubleRepository) {
         this.propertyRepository = propertyRepository;
         this.projectActiveGuard = projectActiveGuard;
         this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
+        this.immeubleRepository = immeubleRepository;
     }
 
     @Transactional
@@ -79,22 +83,19 @@ public class PropertyService {
     }
 
     public List<PropertyResponse> listAll() {
-        return listAll(null, null);
+        return listAll(null, null, null, null);
     }
 
     public List<PropertyResponse> listAll(PropertyType type, PropertyStatus status) {
+        return listAll(null, null, type, status);
+    }
+
+    public List<PropertyResponse> listAll(UUID projectId, UUID immeubleId,
+                                           PropertyType type, PropertyStatus status) {
         UUID societeId = SocieteContext.getSocieteId();
 
-        List<Property> properties;
-        if (type != null && status != null) {
-            properties = propertyRepository.findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status);
-        } else if (type != null) {
-            properties = propertyRepository.findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type);
-        } else if (status != null) {
-            properties = propertyRepository.findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status);
-        } else {
-            properties = propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId);
-        }
+        List<Property> properties = propertyRepository.findWithFilters(
+                societeId, projectId, immeubleId, type, status);
 
         return properties.stream()
                 .map(PropertyResponse::from)
@@ -247,6 +248,12 @@ public class PropertyService {
         property.setIsServiced(req.isServiced());
         property.setListedForSale(req.listedForSale() != null && req.listedForSale());
         property.setBuildingName(req.buildingName());
+        if (req.immeubleId() != null) {
+            UUID societeId = SocieteContext.getSocieteId();
+            var immeuble = immeubleRepository.findBySocieteIdAndId(societeId, req.immeubleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Immeuble not found: " + req.immeubleId()));
+            property.setImmeuble(immeuble);
+        }
     }
 
     private void mapUpdateRequestToEntity(PropertyUpdateRequest req, Property property) {
@@ -279,5 +286,11 @@ public class PropertyService {
             property.setProject(project);
         }
         if (req.buildingName() != null) property.setBuildingName(req.buildingName());
+        if (req.immeubleId() != null) {
+            UUID societeId = SocieteContext.getSocieteId();
+            var immeuble = immeubleRepository.findBySocieteIdAndId(societeId, req.immeubleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Immeuble not found: " + req.immeubleId()));
+            property.setImmeuble(immeuble);
+        }
     }
 }

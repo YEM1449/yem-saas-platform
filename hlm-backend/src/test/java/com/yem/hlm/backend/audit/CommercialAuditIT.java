@@ -204,8 +204,7 @@ class CommercialAuditIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId, String bearer) throws Exception {
         String ref = "AUDIT-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Audit Test Appt " + ref, ref,
-                new BigDecimal("300000"), "MAD",
+                PropertyType.APPARTEMENT, "Audit Test Appt " + ref, ref, null, new BigDecimal("300000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("80"), null,

@@ -169,8 +169,7 @@ class ContractPdfIT extends IntegrationTestBase {
 
         // Property (DRAFT → ACTIVE) — always use adminBearer
         var propReq = new PropertyCreateRequest(
-                PropertyType.VILLA, "CPdf Villa " + ref, ref,
-                new BigDecimal("1800000"), "MAD",
+                PropertyType.VILLA, "CPdf Villa " + ref, ref, null, new BigDecimal("1800000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("150"), new BigDecimal("300"),

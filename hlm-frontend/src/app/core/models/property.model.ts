@@ -37,6 +37,8 @@ export interface Property {
   projectId: string | null;
   projectName: string | null;
   buildingName: string | null;
+  immeubleId: string | null;
+  immeubleName: string | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;

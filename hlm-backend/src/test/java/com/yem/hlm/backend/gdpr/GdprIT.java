@@ -260,8 +260,7 @@ class GdprIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "GDPR-REF-" + refCounter++;
         var req = new PropertyCreateRequest(
-                PropertyType.STUDIO, ref, ref,
-                new BigDecimal("200000"), "MAD",
+                PropertyType.STUDIO, ref, ref, null, new BigDecimal("200000"), "MAD",
                 null, null, null,
                 "CASABLANCA", "Grand Casablanca", null,
                 null, null, null, null, null, null,
