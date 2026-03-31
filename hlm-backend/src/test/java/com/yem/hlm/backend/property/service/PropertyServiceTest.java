@@ -67,11 +67,7 @@ class PropertyServiceTest {
         SocieteContext.setUserId(userId);
 
         mockProject = mock(Project.class);
-        when(mockProject.getId()).thenReturn(projectId);
-        when(mockProject.getName()).thenReturn("Project A");
-
         mockProperty = new Property(societeId, mockProject, PropertyType.VILLA, userId);
-        when(propertyRepository.save(any(Property.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @AfterEach
@@ -82,6 +78,7 @@ class PropertyServiceTest {
     @Test
     void listAll_noArgs_callsRepositoryWithNullFilters() {
         // Given
+        stubMockProject(projectId, "Project A");
         when(propertyRepository.findWithFilters(societeId, null, null, null, null))
                 .thenReturn(List.of(mockProperty));
 
@@ -96,6 +93,7 @@ class PropertyServiceTest {
     @Test
     void listAll_withNullParameters_callsRepositoryWithNullFilters() {
         // Given
+        stubMockProject(projectId, "Project A");
         when(propertyRepository.findWithFilters(societeId, null, null, null, null))
                 .thenReturn(List.of(mockProperty));
 
@@ -111,6 +109,7 @@ class PropertyServiceTest {
     void listAll_withTypeOnly_callsRepositoryWithTypeFilter() {
         // Given
         PropertyType type = PropertyType.VILLA;
+        stubMockProject(projectId, "Project A");
         when(propertyRepository.findWithFilters(societeId, null, null, type, null))
                 .thenReturn(List.of(mockProperty));
 
@@ -126,6 +125,7 @@ class PropertyServiceTest {
     void listAll_withStatusOnly_callsRepositoryWithStatusFilter() {
         // Given
         PropertyStatus status = PropertyStatus.ACTIVE;
+        stubMockProject(projectId, "Project A");
         when(propertyRepository.findWithFilters(societeId, null, null, null, status))
                 .thenReturn(List.of(mockProperty));
 
@@ -142,6 +142,7 @@ class PropertyServiceTest {
         // Given
         PropertyType type = PropertyType.VILLA;
         PropertyStatus status = PropertyStatus.ACTIVE;
+        stubMockProject(projectId, "Project A");
         when(propertyRepository.findWithFilters(societeId, null, null, type, status))
                 .thenReturn(List.of(mockProperty));
 
@@ -170,6 +171,7 @@ class PropertyServiceTest {
         UUID immeubleId = UUID.randomUUID();
         PropertyCreateRequest request = validCreateRequest(projectId, immeubleId);
 
+        when(mockProject.getId()).thenReturn(projectId);
         when(propertyRepository.existsBySocieteIdAndReferenceCode(societeId, request.referenceCode()))
                 .thenReturn(false);
         when(projectActiveGuard.requireActive(societeId, projectId)).thenReturn(mockProject);
@@ -188,6 +190,7 @@ class PropertyServiceTest {
         Project newProject = mock(Project.class);
         when(newProject.getId()).thenReturn(newProjectId);
         when(newProject.getName()).thenReturn("Project B");
+        when(propertyRepository.save(any(Property.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Immeuble existingImmeuble = mock(Immeuble.class);
         mockProperty.setImmeuble(existingImmeuble);
@@ -218,8 +221,8 @@ class PropertyServiceTest {
         when(otherProject.getId()).thenReturn(otherProjectId);
 
         Immeuble immeuble = mock(Immeuble.class);
-        when(immeuble.getId()).thenReturn(immeubleId);
         when(immeuble.getProject()).thenReturn(otherProject);
+        when(mockProject.getId()).thenReturn(projectId);
 
         when(propertyRepository.findBySocieteIdAndId(societeId, propertyId)).thenReturn(Optional.of(mockProperty));
         when(immeubleRepository.findBySocieteIdAndId(societeId, immeubleId)).thenReturn(Optional.of(immeuble));
@@ -272,5 +275,10 @@ class PropertyServiceTest {
                 immeubleId,
                 null
         );
+    }
+
+    private void stubMockProject(UUID id, String name) {
+        when(mockProject.getId()).thenReturn(id);
+        when(mockProject.getName()).thenReturn(name);
     }
 }
