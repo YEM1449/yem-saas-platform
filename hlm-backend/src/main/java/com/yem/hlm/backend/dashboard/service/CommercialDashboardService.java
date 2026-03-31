@@ -124,7 +124,13 @@ public class CommercialDashboardService {
      */
     @Cacheable(
             value = CacheConfig.COMMERCIAL_DASHBOARD_CACHE,
-            key   = "#societeId + ':' + #effectiveAgentId + ':' + #from + ':' + #to + ':' + #projectId"
+            // Truncate to minutes so requests within the same minute share a cache entry.
+            // LocalDateTime.toString() includes nanoseconds which differ on every call,
+            // making every request a cache miss and rendering the 30 s TTL useless.
+            key   = "#societeId + ':' + #effectiveAgentId + ':'"
+                  + "+ (#from  == null ? 'null' : #from.truncatedTo(T(java.time.temporal.ChronoUnit).MINUTES).toString()) + ':'"
+                  + "+ (#to    == null ? 'null' : #to.truncatedTo(T(java.time.temporal.ChronoUnit).MINUTES).toString()) + ':'"
+                  + "+ #projectId"
     )
     public CommercialDashboardSummaryDTO getSummary(UUID societeId,
                                                     LocalDateTime from,

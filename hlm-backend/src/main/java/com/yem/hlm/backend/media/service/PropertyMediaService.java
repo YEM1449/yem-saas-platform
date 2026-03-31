@@ -73,7 +73,10 @@ public class PropertyMediaService {
         }
 
         int sortOrder = mediaRepository.nextSortOrder(societeId, propertyId);
-        String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), contentType);
+        // Use the streaming overload to avoid loading the entire file into the JVM heap.
+        // MultipartFile.getInputStream() returns the underlying stream; getSize() provides
+        // the exact content-length required by S3-compatible PUT requests.
+        String fileKey = storageService.store(file.getInputStream(), file.getSize(), file.getOriginalFilename(), contentType);
 
         PropertyMedia media = new PropertyMedia(
                 societeId, propertyId, fileKey,

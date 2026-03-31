@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: "057-schema-hardening"
+      author: "yem"
+      comment: >
+        Schema hardening after Wave 5 immeuble addition (changeset 056):
+        (a) Add FK constraint from property_reservation.property_id → property(id)
+            to enforce referential integrity at the DB level.
+        (b) Enable RLS on immeuble table (created in 056, after RLS changeset 051).
+        (c) Add version column on property_reservation for optimistic locking.
+      changes:
+        - sql:
+            sql: |
+              -- ── (a) FK: property_reservation.property_id → property(id) ────────
+              -- The column was created without an FK in changeset 026.
+              -- Adding it now enforces that reservations can only reference
+              -- existing (non-deleted) properties at the DB level.
+              ALTER TABLE property_reservation
+                ADD CONSTRAINT fk_preser_property
+                FOREIGN KEY (property_id)
+                REFERENCES property(id);
+
+              -- ── (b) RLS on immeuble ─────────────────────────────────────────────
+              -- immeuble was added in changeset 056, after RLS phase 2 (051).
+              -- Apply the same nil-UUID bypass policy pattern used by all other tables.
+              ALTER TABLE immeuble ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE immeuble FORCE ROW LEVEL SECURITY;
+
+              CREATE POLICY societe_isolation_immeuble ON immeuble
+                USING (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                )
+                WITH CHECK (
+                  current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                  OR (
+                    current_setting('app.current_societe_id', true) IS NOT NULL
+                    AND current_setting('app.current_societe_id', true) <> ''
+                    AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                  )
+                );
+
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE property_reservation
+                DROP CONSTRAINT IF EXISTS fk_preser_property;
+
+              DROP POLICY IF EXISTS societe_isolation_immeuble ON immeuble;
+              ALTER TABLE immeuble DISABLE ROW LEVEL SECURITY;
+
+  - changeSet:
+      id: "057b-reservation-version-column"
+      author: "yem"
+      comment: >
+        Add version column to property_reservation for optimistic locking (@Version).
+        Prevents concurrent cancellation + expiry scheduler from both modifying the same
+        ACTIVE reservation without conflict detection.
+      changes:
+        - addColumn:
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: property_reservation
+            columnName: version

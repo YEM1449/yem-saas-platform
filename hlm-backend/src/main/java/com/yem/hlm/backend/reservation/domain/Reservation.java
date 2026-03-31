@@ -76,6 +76,10 @@ public class Reservation {
     @Column(name = "converted_deposit_id")
     private UUID convertedDepositId;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -190,4 +190,37 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
     );
 
     long countBySocieteIdAndDeletedAtIsNull(UUID societeId);
+
+    // =========================================================================
+    // KPI — per-project and per-immeuble inventory breakdown
+    // =========================================================================
+
+    /**
+     * Returns rows of (projectId, projectName, status, count) so callers can
+     * compute per-project KPIs (total, sold, reserved, available) in one query.
+     */
+    @Query("""
+            SELECT p.project.id, p.project.name, p.status, COUNT(p)
+            FROM Property p
+            WHERE p.societeId = :societeId
+              AND p.deletedAt IS NULL
+            GROUP BY p.project.id, p.project.name, p.status
+            ORDER BY p.project.name ASC
+            """)
+    List<Object[]> inventoryByProjectAndStatus(@Param("societeId") UUID societeId);
+
+    /**
+     * Returns rows of (immeubleId, immeubleNom, projectId, projectName, status, count)
+     * so callers can compute per-building KPIs. Only includes properties with an immeuble set.
+     */
+    @Query("""
+            SELECT p.immeuble.id, p.immeuble.nom, p.project.id, p.project.name, p.status, COUNT(p)
+            FROM Property p
+            WHERE p.societeId = :societeId
+              AND p.deletedAt IS NULL
+              AND p.immeuble IS NOT NULL
+            GROUP BY p.immeuble.id, p.immeuble.nom, p.project.id, p.project.name, p.status
+            ORDER BY p.project.name ASC, p.immeuble.nom ASC
+            """)
+    List<Object[]> inventoryByImmeubleAndStatus(@Param("societeId") UUID societeId);
 }
