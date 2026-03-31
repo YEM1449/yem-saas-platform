@@ -50,9 +50,9 @@ Every domain entity has `societe_id UUID NOT NULL`. Isolation enforced at:
 
 Base package: `com.yem.hlm.backend`
 
-### Current Modules (23)
+### Current Modules (24)
 
-audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, user, usermanagement
+audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, **immeuble**, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, user, usermanagement
 
 ### Frontend Surfaces
 
@@ -66,6 +66,8 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 |---|---|---|
 | Admin user CRUD | `/api/users` | Was `/api/admin/users` — moved to avoid SUPER_ADMIN-only security block |
 | Company members | `/api/mon-espace/utilisateurs` | Active path for HR/membership; MANAGER can read, ADMIN can write |
+| **Immeubles** | `/api/immeubles` | **Building CRUD; optional `?projectId=` filter** |
+| Properties | `/api/properties` | Now supports `?projectId=&immeubleId=&type=&status=` filters |
 | Tasks | `/api/tasks` | Default list = current user's tasks (assigneeId filter) |
 | Documents | `/api/documents` | Cross-entity attachments |
 | Super-admin societes | `/api/admin/societes` | SUPER_ADMIN only |
@@ -74,7 +76,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **053**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **057**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -96,7 +98,7 @@ Shell: `logout-button`
 Contacts: `create-contact`, `firstName`, `lastName`, `save-button`
 Tasks: `task-title` (form input), `task-submit` (submit button)
 
-## Liquibase Changeset Chain (001–050)
+## Liquibase Changeset Chain (001–056)
 
 | Range | Domain |
 |---|---|
@@ -110,8 +112,10 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 050 | RLS phase 1 (PostgreSQL Row-Level Security scaffolding) |
 | 051 | RLS phase 2 — all domain tables + nil-UUID system bypass |
 | 052 | ShedLock table for distributed scheduler locking |
+| 053–055 | Project/société logo fields, contract templates |
+| 056 | Immeuble (Building) table + property.immeuble_id FK |
 
-Next available changeset: **053**
+Next available changeset: **057**
 
 ## CI Pipeline Map
 
@@ -162,10 +166,11 @@ When adding a new service method or repository query:
 
 ## Current Backlog
 
-See `tasks/IMPLEMENTATION_PLAN.md` — Wave 4 complete:
+See `tasks/IMPLEMENTATION_PLAN.md` — Wave 5 complete:
 - Tasks 01–15: Security audit fixes + CI/CD ✅
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
 - Task 20: Production readiness — Wave 4 hardening complete ✅
+- Wave 5: After-deploy bug fixes ✅ (Immeuble entity, property filters, prospect auto-promotion, email AFTER_COMMIT, phone-or-email validation)
 
 ### Wave 4 — Production Hardening (complete)
 
