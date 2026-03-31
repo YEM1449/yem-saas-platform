@@ -1,239 +1,375 @@
-<p><a routerLink="/app/prospects">&larr; Back to Prospects</a></p>
+<!-- ── Back / Loading / Error ──────────────────────────────── -->
+<a routerLink="/app/prospects" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M9 2L5 7l4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  Retour au pipeline
+</a>
 
 @if (loading) {
-  <p>{{ 'common.loading' | translate }}</p>
+  <div class="loading-wrap" style="margin-top:40px">
+    <div class="spinner"></div>
+    Chargement du contact…
+  </div>
 }
 
-@if (error) {
-  <p class="error">{{ error }}</p>
+@if (error && !loading) {
+  <div class="alert alert-error" style="margin-top:16px">{{ error }}</div>
 }
 
 @if (!loading && prospect) {
-  <h2>{{ prospect.fullName }}</h2>
 
-  <dl>
-    <dt>{{ 'prospects.status' | translate }}</dt>
-    <dd><span class="badge badge-{{ prospect.status.toLowerCase().replace('_', '-') }}">{{ prospect.status }}</span></dd>
-  </dl>
+  <!-- ── Page Header ────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ prospect.fullName }}</h1>
+      <p class="page-subtitle">
+        <span class="badge badge-{{ prospect.status.toLowerCase().replace('_', '-') }}">
+          {{ prospect.status.replace('_', ' ') }}
+        </span>
+        @if (prospect.tempClientUntil) {
+          <span style="margin-left:8px;font-size:0.8125rem;color:var(--c-text-muted)">
+            Acompte jusqu'au {{ prospect.tempClientUntil | date:'dd/MM/yyyy' }}
+          </span>
+        }
+      </p>
+    </div>
+    <div class="page-header-actions">
+      <a [routerLink]="['/app/contacts', prospect.id]" class="btn btn-secondary">
+        Modifier le contact
+      </a>
+    </div>
+  </div>
 
-  <dl>
-    <dt>Email</dt>
-    <dd>{{ prospect.email ?? '—' }}</dd>
+  <!-- ── Two-column layout ─────────────────────────────────── -->
+  <div class="detail-layout">
 
-    <dt>Phone</dt>
-    <dd>{{ prospect.phone ?? '—' }}</dd>
+    <!-- ── LEFT COLUMN — Identity ─────────────────────────── -->
+    <div class="detail-col-left">
+      <div class="card">
+        <div class="card-header">Informations</div>
+        <div class="card-body">
+          <dl class="info-dl">
+            <dt>Email</dt>
+            <dd>{{ prospect.email ?? '—' }}</dd>
 
-    <dt>Qualified</dt>
-    <dd>{{ prospect.qualified ? 'Yes' : 'No' }}</dd>
+            <dt>Téléphone</dt>
+            <dd>{{ prospect.phone ?? '—' }}</dd>
 
-    <dt>National ID</dt>
-    <dd>{{ prospect.nationalId ?? '—' }}</dd>
+            <dt>CIN / ID</dt>
+            <dd>{{ prospect.nationalId ?? '—' }}</dd>
 
-    <dt>Address</dt>
-    <dd>{{ prospect.address ?? '—' }}</dd>
+            <dt>Adresse</dt>
+            <dd>{{ prospect.address ?? '—' }}</dd>
 
-    <dt>Notes</dt>
-    <dd>{{ prospect.notes ?? '—' }}</dd>
+            @if (prospect.notes) {
+              <dt>Notes</dt>
+              <dd>{{ prospect.notes }}</dd>
+            }
 
-    <dt>Created</dt>
-    <dd>{{ prospect.createdAt }}</dd>
+            <dt>Qualifié</dt>
+            <dd>{{ prospect.qualified ? 'Oui' : 'Non' }}</dd>
 
-    <dt>Updated</dt>
-    <dd>{{ prospect.updatedAt }}</dd>
-  </dl>
+            @if (prospect.processingBasis) {
+              <dt>Base légale</dt>
+              <dd>{{ prospect.processingBasis }}</dd>
+            }
 
-  <h3>Interested Properties</h3>
+            <dt>Créé le</dt>
+            <dd>{{ prospect.createdAt | date:'dd/MM/yyyy' }}</dd>
+          </dl>
+        </div>
+      </div>
 
-  @if (interestError) {
-    <p class="error">{{ interestError }}</p>
-  }
+      <!-- ── Interests ─────────────────────────────────────── -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          Biens d'intérêt
+          @if (interests.length > 0) {
+            <span class="card-header-count">{{ interests.length }}</span>
+          }
+        </div>
+        <div class="card-body">
 
-  <div class="add-interest">
-    <select [(ngModel)]="selectedPropertyId" [disabled]="addingInterest">
-      <option value="">-- Select a property --</option>
-      @for (p of availableProperties; track p.id) {
-        <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
+          @if (interestError) {
+            <div class="alert alert-error">{{ interestError }}</div>
+          }
+
+          <!-- Add interest -->
+          @if (propertiesError) {
+            <div class="alert alert-error" style="margin-bottom:10px">
+              <strong>Biens indisponibles :</strong> {{ propertiesError }}
+            </div>
+          }
+          <div class="inline-form">
+            <select class="form-control form-control-sm"
+                    [(ngModel)]="selectedPropertyId"
+                    [disabled]="addingInterest || propertiesLoading">
+              <option value="">
+                {{ propertiesLoading ? 'Chargement des biens…' : '— Sélectionner un bien —' }}
+              </option>
+              @for (p of availableProperties; track p.id) {
+                <option [value]="p.id">{{ p.title }} · {{ p.referenceCode }}</option>
+              }
+            </select>
+            <button class="btn btn-sm btn-primary"
+                    (click)="addInterest()"
+                    [disabled]="!selectedPropertyId || addingInterest">
+              {{ addingInterest ? '…' : 'Ajouter' }}
+            </button>
+          </div>
+
+          @if (interestsLoading) {
+            <div class="loading-wrap loading-sm"><div class="spinner spinner-sm"></div></div>
+          }
+
+          @if (!interestsLoading && interests.length === 0) {
+            <p class="text-muted" style="margin-top:8px">Aucun bien d'intérêt enregistré.</p>
+          }
+
+          @if (!interestsLoading && interests.length > 0) {
+            <div class="interest-list">
+              @for (i of interests; track i.propertyId) {
+                <div class="interest-row">
+                  <span class="interest-title">{{ propertyTitle(i.propertyId) }}</span>
+                  <span class="badge badge-{{ i.interestStatus.toLowerCase() }}">
+                    {{ i.interestStatus }}
+                  </span>
+                  <button class="btn-icon-danger"
+                          (click)="removeInterest(i.propertyId)"
+                          [disabled]="removingPropertyId === i.propertyId"
+                          title="Supprimer">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN — Actions ─────────────────────────── -->
+    <div class="detail-col-right">
+
+      <!-- ── Properties banner when loading/error ──────────── -->
+      @if (propertiesLoading) {
+        <div class="alert" style="background:var(--c-surface);border:1px solid var(--c-border);color:var(--c-text-secondary);margin-bottom:16px">
+          <div class="spinner spinner-sm" style="display:inline-block;margin-right:6px"></div>
+          Chargement des biens disponibles…
+        </div>
       }
-    </select>
-    <button (click)="addInterest()" [disabled]="!selectedPropertyId || addingInterest">
-      {{ addingInterest ? ('common.loading' | translate) : 'Add' }}
-    </button>
-  </div>
+      @if (propertiesError && !propertiesLoading) {
+        <div class="alert alert-error" style="margin-bottom:16px">
+          <strong>Biens non disponibles :</strong> {{ propertiesError }}
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px" (click)="loadProperties()">
+            Réessayer
+          </button>
+        </div>
+      }
 
-  @if (interestsLoading) {
-    <p>{{ 'common.loading' | translate }}</p>
-  }
+      <!-- ── Reservation ────────────────────────────────────── -->
+      <div class="card">
+        <div class="card-header">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+            <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Créer une réservation
+        </div>
+        <div class="card-body">
+          <p class="form-hint" style="margin-bottom:12px">
+            Bloque le bien pendant 7 jours et fait évoluer automatiquement
+            le statut vers <strong>Prospect Qualifié</strong>.
+          </p>
 
-  @if (!interestsLoading && interests.length === 0) {
-    <p class="muted">{{ 'common.noResults' | translate }}</p>
-  }
+          @if (reservationError) {
+            <div class="alert alert-error">{{ reservationError }}</div>
+          }
+          @if (reservationSuccess) {
+            <div class="alert alert-success">{{ reservationSuccess }}</div>
+          }
 
-  @if (!interestsLoading && interests.length > 0) {
-    <table>
-      <thead>
-        <tr>
-          <th>Property</th>
-          <th>{{ 'prospects.status' | translate }}</th>
-          <th>Added</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (i of interests; track i.propertyId) {
-          <tr>
-            <td>{{ propertyTitle(i.propertyId) }}</td>
-            <td>{{ i.interestStatus }}</td>
-            <td>{{ i.createdAt }}</td>
-            <td>
-              <button class="remove-btn" (click)="removeInterest(i.propertyId)"
-                      [disabled]="removingPropertyId === i.propertyId">
-                {{ removingPropertyId === i.propertyId ? ('common.loading' | translate) : 'Remove' }}
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
-
-  <!-- ── Reservation (hold) ─────────────────────────────────────────── -->
-  <h3>Réservation (blocage du bien)</h3>
-
-  @if (reservationError) {
-    <p class="error">{{ reservationError }}</p>
-  }
-  @if (reservationSuccess) {
-    <p class="success">{{ reservationSuccess }}</p>
-  }
-
-  <div class="deposit-form">
-    <div class="form-row">
-      <label for="res-property">Bien immobilier</label>
-      <select id="res-property" [(ngModel)]="reservationPropertyId" [disabled]="creatingReservation">
-        <option value="">-- Sélectionner un bien --</option>
-        @for (p of activeProperties; track p.id) {
-          <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
-        }
-      </select>
-    </div>
-    <div class="form-row">
-      <label for="res-price">Prix de réservation (optionnel)</label>
-      <input id="res-price" type="number" min="0" step="0.01"
-             [(ngModel)]="reservationPrice" [disabled]="creatingReservation"
-             placeholder="ex. 5000" />
-    </div>
-    <div class="form-row">
-      <label for="res-notes">Notes</label>
-      <input id="res-notes" type="text" [(ngModel)]="reservationNotes"
-             [disabled]="creatingReservation" placeholder="Optionnel" />
-    </div>
-    <button (click)="createReservation()"
-            [disabled]="!reservationPropertyId || creatingReservation">
-      {{ creatingReservation ? ('common.loading' | translate) : 'Créer la réservation' }}
-    </button>
-    <p class="form-hint">
-      La création d'une réservation bloque le bien et fait automatiquement
-      passer le contact à <strong>Prospect Qualifié</strong> si nécessaire.
-    </p>
-  </div>
-
-  <!-- ── Acompte (deposit) ──────────────────────────────────────────── -->
-  <h3>Acompte</h3>
-
-  @if (depositError) {
-    <p class="error">{{ depositError }}</p>
-  }
-  @if (depositSuccess) {
-    <p class="success">{{ depositSuccess }}</p>
-  }
-  @if (messageSendSuccess) {
-    <p class="success">{{ messageSendSuccess }}</p>
-  }
-  @if (messageSendError) {
-    <p class="error">{{ messageSendError }}</p>
-  }
-
-  <div class="deposit-form">
-    <div class="form-row">
-      <label for="dep-property">Property</label>
-      <select id="dep-property" [(ngModel)]="depositPropertyId" [disabled]="creatingDeposit">
-        <option value="">-- Select a property --</option>
-        @for (p of activeProperties; track p.id) {
-          <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
-        }
-      </select>
-    </div>
-    <div class="form-row">
-      <label for="dep-amount">Amount</label>
-      <input id="dep-amount" type="number" min="1" step="0.01"
-             [(ngModel)]="depositAmount" [disabled]="creatingDeposit"
-             placeholder="e.g. 5000" />
-    </div>
-    <div class="form-row">
-      <label for="dep-notes">Notes</label>
-      <input id="dep-notes" type="text" [(ngModel)]="depositNotes"
-             [disabled]="creatingDeposit" placeholder="Optional" />
-    </div>
-    <button (click)="createDeposit()"
-            [disabled]="!depositPropertyId || !depositAmount || creatingDeposit">
-      {{ creatingDeposit ? ('common.loading' | translate) : ('prospects.createDeposit' | translate) }}
-    </button>
-  </div>
-
-  @if (depositsLoading) {
-    <p>{{ 'common.loading' | translate }}</p>
-  }
-
-  @if (!depositsLoading && deposits.length === 0) {
-    <p class="muted">{{ 'common.noResults' | translate }}</p>
-  }
-
-  @if (!depositsLoading && deposits.length > 0) {
-    <table>
-      <thead>
-        <tr>
-          <th>Property</th>
-          <th>Amount</th>
-          <th>{{ 'prospects.status' | translate }}</th>
-          <th>Reference</th>
-          <th>Due Date</th>
-          <th>Created</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (d of deposits; track d.id) {
-          <tr>
-            <td>{{ propertyTitle(d.propertyId) }}</td>
-            <td>{{ d.amount }} {{ d.currency }}</td>
-            <td>
-              <span class="badge" [class]="'badge-' + d.status.toLowerCase()">
-                {{ d.status }}
+          <div class="form-group">
+            <label class="form-label required">Bien immobilier</label>
+            <select class="form-control"
+                    [(ngModel)]="reservationPropertyId"
+                    [disabled]="creatingReservation || propertiesLoading">
+              <option value="">
+                {{ propertiesLoading ? 'Chargement…' : '— Sélectionner un bien disponible —' }}
+              </option>
+              @for (p of activeProperties; track p.id) {
+                <option [value]="p.id">
+                  {{ p.title }} · {{ p.referenceCode }}
+                  @if (p.price) { — {{ p.price | number:'1.0-0' }} {{ p.currency ?? 'MAD' }} }
+                </option>
+              }
+            </select>
+            @if (!propertiesLoading && activeProperties.length === 0 && !propertiesError) {
+              <span class="form-hint" style="color:var(--c-warning,#f59e0b)">
+                Aucun bien ACTIF disponible pour le moment.
               </span>
-            </td>
-            <td>{{ d.reference }}</td>
-            <td>{{ d.dueDate ?? '—' }}</td>
-            <td>{{ d.createdAt }}</td>
-            <td class="dep-actions">
-              <button class="pdf-btn" (click)="downloadReservationPdf(d)">PDF</button>
-              @if (prospect.email) {
-                <button class="msg-btn msg-email"
-                        [disabled]="sendingDepositId === d.id"
-                        (click)="sendDepositMessage(d, 'EMAIL')">
-                  {{ sendingDepositId === d.id ? '...' : 'Email' }}
-                </button>
+            }
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Prix de réservation</label>
+              <input class="form-control" type="number" min="0" step="1"
+                     [(ngModel)]="reservationPrice"
+                     [disabled]="creatingReservation"
+                     placeholder="ex. 5 000" />
+              <span class="form-hint">Optionnel — montant bloqué</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <input class="form-control" type="text"
+                     [(ngModel)]="reservationNotes"
+                     [disabled]="creatingReservation"
+                     placeholder="Optionnel" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary"
+                  (click)="createReservation()"
+                  [disabled]="!reservationPropertyId || creatingReservation || propertiesLoading">
+            @if (creatingReservation) { Création en cours… }
+            @else { Créer la réservation }
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Deposit (Acompte) ──────────────────────────────── -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M5.5 9.5c0 .8.7 1.5 1.5 1.5h.5c.8 0 1.5-.7 1.5-1.5s-.7-1.5-1.5-1.5H7C6.2 8 5.5 7.3 5.5 6.5S6.2 5 7 5h.5c.8 0 1.5.7 1.5 1.5M7 3.5V5m0 7v1.5"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Saisir un acompte
+        </div>
+        <div class="card-body">
+          @if (depositError) {
+            <div class="alert alert-error">{{ depositError }}</div>
+          }
+          @if (depositSuccess) {
+            <div class="alert alert-success">{{ depositSuccess }}</div>
+          }
+          @if (messageSendSuccess) {
+            <div class="alert alert-success">{{ messageSendSuccess }}</div>
+          }
+          @if (messageSendError) {
+            <div class="alert alert-error">{{ messageSendError }}</div>
+          }
+
+          <div class="form-group">
+            <label class="form-label required">Bien immobilier</label>
+            <select class="form-control"
+                    [(ngModel)]="depositPropertyId"
+                    [disabled]="creatingDeposit || propertiesLoading">
+              <option value="">
+                {{ propertiesLoading ? 'Chargement…' : '— Sélectionner un bien —' }}
+              </option>
+              @for (p of activeProperties; track p.id) {
+                <option [value]="p.id">
+                  {{ p.title }} · {{ p.referenceCode }}
+                  @if (p.price) { — {{ p.price | number:'1.0-0' }} {{ p.currency ?? 'MAD' }} }
+                </option>
               }
-              @if (prospect.phone) {
-                <button class="msg-btn msg-sms"
-                        [disabled]="sendingDepositId === d.id"
-                        (click)="sendDepositMessage(d, 'SMS')">
-                  {{ sendingDepositId === d.id ? '...' : 'SMS' }}
-                </button>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
-}
+            </select>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label required">Montant</label>
+              <input class="form-control" type="number" min="1" step="1"
+                     [(ngModel)]="depositAmount"
+                     [disabled]="creatingDeposit"
+                     placeholder="ex. 50 000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <input class="form-control" type="text"
+                     [(ngModel)]="depositNotes"
+                     [disabled]="creatingDeposit"
+                     placeholder="Optionnel" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary"
+                  (click)="createDeposit()"
+                  [disabled]="!depositPropertyId || !depositAmount || creatingDeposit || propertiesLoading">
+            @if (creatingDeposit) { Enregistrement… }
+            @else { Enregistrer l'acompte }
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Deposits list ──────────────────────────────────── -->
+      @if (depositsLoading) {
+        <div class="loading-wrap loading-sm" style="margin-top:12px">
+          <div class="spinner spinner-sm"></div>
+        </div>
+      }
+
+      @if (!depositsLoading && deposits.length > 0) {
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">
+            Acomptes enregistrés
+            <span class="card-header-count">{{ deposits.length }}</span>
+          </div>
+          <div class="card-body-flush">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bien</th>
+                  <th>Montant</th>
+                  <th>Statut</th>
+                  <th>Réf.</th>
+                  <th>Échéance</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of deposits; track d.id) {
+                  <tr>
+                    <td class="fw-medium">{{ propertyTitle(d.propertyId) }}</td>
+                    <td class="td-mono">{{ d.amount | number:'1.0-0' }} {{ d.currency }}</td>
+                    <td>
+                      <span class="badge badge-{{ d.status.toLowerCase() }}">{{ d.status }}</span>
+                    </td>
+                    <td class="td-muted">{{ d.reference }}</td>
+                    <td class="td-muted">{{ d.dueDate ? (d.dueDate | date:'dd/MM/yy') : '—' }}</td>
+                    <td class="dep-actions">
+                      <button class="btn btn-sm btn-secondary" (click)="downloadReservationPdf(d)" title="PDF">
+                        PDF
+                      </button>
+                      @if (prospect.email) {
+                        <button class="btn btn-sm btn-outline"
+                                [disabled]="sendingDepositId === d.id"
+                                (click)="sendDepositMessage(d, 'EMAIL')">
+                          {{ sendingDepositId === d.id ? '…' : 'Email' }}
+                        </button>
+                      }
+                      @if (prospect.phone) {
+                        <button class="btn btn-sm btn-outline"
+                                [disabled]="sendingDepositId === d.id"
+                                (click)="sendDepositMessage(d, 'SMS')">
+                          {{ sendingDepositId === d.id ? '…' : 'SMS' }}
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+    </div><!-- end right column -->
+  </div><!-- end detail-layout -->
+
+}<!-- end @if prospect -->

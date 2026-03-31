@@ -62,6 +62,10 @@ export class ProspectDetailComponent implements OnInit {
   reservationSuccess = '';
   reservationError = '';
 
+  // Property loading state — shared across all three action sections
+  propertiesLoading = false;
+  propertiesError = '';
+
   sendingDepositId: string | null = null;
   messageSendSuccess = '';
   messageSendError   = '';
@@ -113,9 +117,25 @@ export class ProspectDetailComponent implements OnInit {
     // Fetch only ACTIVE properties server-side — avoids loading RESERVED/SOLD
     // properties that cannot be booked, and eliminates the client-side filter race
     // condition where a just-reserved property still appears in the dropdown.
+    this.propertiesLoading = true;
+    this.propertiesError = '';
     this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
-      next: (data) => (this.properties = data),
-      error: () => {},
+      next: (data) => {
+        this.properties = data;
+        this.propertiesLoading = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.propertiesLoading = false;
+        const body = err.error as ErrorResponse | null;
+        if (err.status === 401) {
+          this.propertiesError = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (err.status === 403) {
+          this.propertiesError = 'Accès refusé aux biens immobiliers.';
+        } else {
+          this.propertiesError = body?.message
+            ?? `Impossible de charger les biens (${err.status})`;
+        }
+      },
     });
   }
 

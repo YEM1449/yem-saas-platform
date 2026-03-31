@@ -57,10 +57,16 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     /**
      * Flexible filter query supporting optional projectId, immeubleId, type, and status.
+     *
+     * Uses an explicit LEFT JOIN for the nullable immeuble association so that
+     * properties without a building assigned are never silently excluded.
+     * An implicit path navigation (p.immeuble.id) would generate an INNER JOIN
+     * and drop all un-assigned properties from every result set.
      */
-    @Query("SELECT p FROM Property p WHERE p.societeId = :societeId AND p.deletedAt IS NULL " +
+    @Query("SELECT p FROM Property p LEFT JOIN p.immeuble imm " +
+           "WHERE p.societeId = :societeId AND p.deletedAt IS NULL " +
            "AND (:projectId IS NULL OR p.project.id = :projectId) " +
-           "AND (:immeubleId IS NULL OR p.immeuble.id = :immeubleId) " +
+           "AND (:immeubleId IS NULL OR imm.id = :immeubleId) " +
            "AND (:type IS NULL OR p.type = :type) " +
            "AND (:status IS NULL OR p.status = :status) " +
            "ORDER BY p.createdAt DESC")
