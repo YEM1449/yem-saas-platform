@@ -106,7 +106,36 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
                 bucket);
     }
 
-    // ── store ─────────────────────────────────────────────────────────────────
+    // ── store (streaming — preferred path) ───────────────────────────────────
+
+    /**
+     * Streaming upload: reads directly from the {@link InputStream} without loading
+     * the entire file into the JVM heap. The S3 SDK requires the exact content length
+     * when using an InputStream (it cannot infer it from the stream), which is provided
+     * by {@code MultipartFile.getSize()} at the call site.
+     */
+    @Override
+    public String store(InputStream stream, long size, String originalFilename, String contentType) throws IOException {
+        String ext = extractExtension(originalFilename);
+        String key = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
+
+        try {
+            s3Client.putObject(PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(contentType)
+                            .contentLength(size)
+                            .build(),
+                    RequestBody.fromInputStream(stream, size));
+        } catch (S3Exception e) {
+            throw new IOException("Object storage upload failed: " + e.getMessage(), e);
+        }
+
+        log.debug("[OBJ-STORE] Stored (streaming) key={} size={} bytes", key, size);
+        return key;
+    }
+
+    // ── store (byte-array fallback) ───────────────────────────────────────────
 
     @Override
     public String store(byte[] data, String originalFilename, String contentType) throws IOException {

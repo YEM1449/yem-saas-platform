@@ -36,5 +36,9 @@ export interface ProspectPage {
 export const PROSPECT_STATUSES = [
   'PROSPECT',
   'QUALIFIED_PROSPECT',
+  'CLIENT',
+  'ACTIVE_CLIENT',
+  'COMPLETED_CLIENT',
+  'REFERRAL',
   'LOST',
 ] as const;

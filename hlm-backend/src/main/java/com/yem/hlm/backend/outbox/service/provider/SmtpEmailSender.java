@@ -33,6 +33,9 @@ import org.springframework.stereotype.Service;
 public class SmtpEmailSender implements EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(SmtpEmailSender.class);
+    /** Matches any opening HTML tag, e.g. {@code <b>}, {@code <p class="x">}, {@code <html>}. */
+    private static final java.util.regex.Pattern HTML_TAG_PATTERN =
+            java.util.regex.Pattern.compile("<[a-zA-Z][^>]*>", java.util.regex.Pattern.DOTALL);
 
     private final JavaMailSender mailSender;
     private final String         from;
@@ -51,8 +54,11 @@ public class SmtpEmailSender implements EmailSender {
             helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject != null ? subject : "");
-            // Send as HTML when body contains HTML tags, else plain-text
-            boolean isHtml = body != null && body.contains("<html");
+            // Send as HTML when the body contains ANY HTML tag (not just a full <html> document).
+            // The original check `body.contains("<html")` missed bodies with partial HTML
+            // such as "<b>bold</b>" or "<p>paragraph</p>", which were sent as plain text
+            // and rendered as raw markup in email clients.
+            boolean isHtml = body != null && HTML_TAG_PATTERN.matcher(body).find();
             helper.setText(body != null ? body : "", isHtml);
             mailSender.send(message);
             log.debug("[SMTP] Sent email to={} subject=\"{}\"", to, subject);
