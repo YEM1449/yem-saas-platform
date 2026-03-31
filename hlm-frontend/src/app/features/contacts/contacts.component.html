@@ -162,7 +162,7 @@
           </div>
         </div>
 
-        <!-- Email -->
+        <!-- Email + Phone (at least one required) -->
         <div class="form-group">
           <label class="form-label">{{ 'contacts.email' | translate }}</label>
           <input class="form-control" type="email" placeholder="jean.dupont@example.com"
@@ -170,12 +170,17 @@
           <span class="form-hint">Used for portal access and automated messaging</span>
         </div>
 
-        <!-- Phone -->
         <div class="form-group">
           <label class="form-label">{{ 'contacts.phone' | translate }}</label>
           <input class="form-control" type="tel" placeholder="+212 6 xx xx xx xx"
                  [(ngModel)]="form.phone" [disabled]="submitting" />
         </div>
+
+        @if (!form.email.trim() && !form.phone.trim()) {
+          <p class="form-hint" style="color:var(--c-warning);margin-top:0;">
+            Telephone ou email obligatoire
+          </p>
+        }
 
         <!-- Notes -->
         <div class="form-group">

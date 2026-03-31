@@ -5,6 +5,7 @@ import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.common.error.ErrorCode;
 import com.yem.hlm.backend.common.event.ContactCreatedEvent;
 import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
+import com.yem.hlm.backend.common.event.PropertyInterestEvent;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
 import com.yem.hlm.backend.contact.api.dto.ConvertToProspectRequest;
@@ -125,6 +126,14 @@ public class ContactService {
         if (req.address() != null) contact.setAddress(req.address());
         if (req.notes() != null) contact.setNotes(req.notes());
 
+        // Enforce phone-or-email after applying partial updates
+        boolean hasPhone = contact.getPhone() != null && !contact.getPhone().isBlank();
+        boolean hasEmail = contact.getEmail() != null && !contact.getEmail().isBlank();
+        if (!hasPhone && !hasEmail) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_ERROR,
+                    "Phone number or email is required");
+        }
+
         // GDPR consent fields — only update when explicitly provided
         if (req.consentGiven() != null) {
             boolean nowConsenting = Boolean.TRUE.equals(req.consentGiven());
@@ -236,6 +245,11 @@ public class ContactService {
 
         InterestStatus status = (req.interestStatus() == null) ? InterestStatus.NEW : req.interestStatus();
         contactInterestRepository.save(new ContactInterest(societeId, contactId, propertyId, status));
+
+        // Auto-promote prospect status
+        UUID actorUserId = requireUserId();
+        eventPublisher.publishEvent(new PropertyInterestEvent(
+                societeId, actorUserId, contactId, propertyId, "INTEREST"));
     }
 
     @Transactional
