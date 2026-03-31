@@ -337,4 +337,22 @@ export class PropertiesComponent implements OnInit {
   badgeClass(status: string): string {
     return 'badge badge-' + status.toLowerCase();
   }
+
+  statusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      DRAFT: 'Brouillon', ACTIVE: 'Disponible',
+      RESERVED: 'Réservé', SOLD: 'Vendu',
+      WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
+    };
+    return labels[status] ?? status;
+  }
+
+  typeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      VILLA: 'Villa', APPARTEMENT: 'Appt.', STUDIO: 'Studio',
+      T2: 'T2', T3: 'T3', DUPLEX: 'Duplex', COMMERCE: 'Commerce',
+      LOT: 'Lot', TERRAIN_VIERGE: 'Terrain',
+    };
+    return labels[type] ?? type;
+  }
 }

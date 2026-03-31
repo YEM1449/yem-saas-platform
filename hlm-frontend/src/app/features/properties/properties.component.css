@@ -54,3 +54,115 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* ── Property Card Grid ─────────────────────────────────────── */
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.property-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+  overflow: hidden;
+}
+.property-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+  border-color: var(--c-primary, #3b82f6);
+}
+
+/* Status ribbon (top strip) */
+.property-card-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface, #f8fafc);
+}
+.prop-type-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+/* Card body */
+.property-card-body {
+  flex: 1;
+  padding: 14px 14px 10px;
+}
+.prop-ref {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+  margin-bottom: 4px;
+}
+.prop-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--c-text);
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+.prop-meta, .prop-building {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: var(--c-text-secondary);
+  margin-bottom: 4px;
+}
+.prop-building { color: var(--c-text-muted); }
+
+/* Specs chips */
+.prop-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.spec-chip {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--c-surface, #f1f5f9);
+  color: var(--c-text-secondary);
+  border: 1px solid var(--c-border);
+}
+
+/* Price footer */
+.property-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--c-border);
+}
+.prop-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.prop-price small {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--c-text-muted);
+  margin-left: 3px;
+}
+.prop-price-na {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+.prop-arrow { color: var(--c-text-muted); }

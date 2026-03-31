@@ -1,38 +1,168 @@
-<h2>{{ 'prospects.title' | translate }}</h2>
+<!-- ── Page Header ──────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ 'prospects.title' | translate }}</h1>
+    <p class="page-subtitle">
+      {{ totalCount }} contact{{ totalCount !== 1 ? 's' : '' }} dans le pipeline
+    </p>
+  </div>
+  <div class="page-header-actions">
+    <a routerLink="/app/contacts/new" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Nouveau contact
+    </a>
+  </div>
+</div>
 
-@if (loading) {
-  <p>{{ 'common.loading' | translate }}</p>
-}
+<!-- ── Toolbar ──────────────────────────────────────────────── -->
+<div class="pipeline-toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <input class="search-input" type="search" placeholder="Rechercher un contact…"
+           [(ngModel)]="searchQuery" />
+  </div>
 
+  <label class="lost-toggle">
+    <input type="checkbox" [(ngModel)]="showLost" />
+    <span>Afficher perdus ({{ lostCount }})</span>
+  </label>
+</div>
+
+<!-- ── Error ────────────────────────────────────────────────── -->
 @if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="alert alert-error">{{ error }}</div>
 }
 
-@if (!loading && !error && prospects.length === 0) {
-  <p>{{ 'common.noResults' | translate }}</p>
+<!-- ── Loading ──────────────────────────────────────────────── -->
+@if (loading) {
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    {{ 'common.loading' | translate }}
+  </div>
 }
 
-@if (!loading && prospects.length > 0) {
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>{{ 'prospects.status' | translate }}</th>
-        <th>Qualified</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (p of prospects; track p.id) {
-        <tr class="clickable" [routerLink]="['/app/prospects', p.id]">
-          <td>{{ p.fullName }}</td>
-          <td>{{ p.email ?? '—' }}</td>
-          <td>{{ p.phone ?? '—' }}</td>
-          <td>{{ p.status }}</td>
-          <td>{{ p.qualified ? 'Yes' : 'No' }}</td>
-        </tr>
+<!-- ── Pipeline Kanban ──────────────────────────────────────── -->
+@if (!loading && !error) {
+  <div class="pipeline-board">
+    @for (col of PIPELINE_COLUMNS; track col.key) {
+      <!-- Skip REFERRAL and LOST columns unless there are contacts in them -->
+      @if (col.key !== 'REFERRAL' || columnProspects(col.key).length > 0) {
+        <div class="pipeline-col">
+
+          <!-- Column header -->
+          <div class="pipeline-col-header" [style.border-top-color]="col.colorVar">
+            <span class="pipeline-col-title" [style.color]="col.colorVar">{{ col.label }}</span>
+            <span class="pipeline-col-count" [style.background]="col.colorVar">
+              {{ columnProspects(col.key).length }}
+            </span>
+          </div>
+
+          <!-- Cards -->
+          <div class="pipeline-col-body">
+            @if (columnProspects(col.key).length === 0) {
+              <div class="pipeline-empty">Aucun contact</div>
+            }
+            @for (p of columnProspects(col.key); track p.id) {
+              <a class="pipeline-card" [routerLink]="['/app/prospects', p.id]">
+
+                <!-- Avatar + name -->
+                <div class="card-top">
+                  <span class="card-avatar" [style.background]="avatarColor(p)">
+                    {{ initials(p) }}
+                  </span>
+                  <div class="card-identity">
+                    <span class="card-name">{{ p.fullName }}</span>
+                    @if (p.tempClientUntil) {
+                      <span class="card-temp">Acompte jusqu'au {{ p.tempClientUntil | date:'dd/MM' }}</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Contact chips -->
+                <div class="card-chips">
+                  @if (p.email) {
+                    <span class="card-chip card-chip-email" [title]="p.email">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <rect x="1" y="2" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/>
+                        <path d="M1 3l4 3 4-3" stroke="currentColor" stroke-width="1.1"/>
+                      </svg>
+                      {{ p.email }}
+                    </span>
+                  }
+                  @if (p.phone) {
+                    <span class="card-chip card-chip-phone">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 1.5h2l1 2.5-1.5 1c.7 1.4 1.5 2.2 3 3L7.5 7l2.5 1v2C7 10 1 4 2 1.5z"
+                              stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+                      </svg>
+                      {{ p.phone }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Arrow -->
+                <svg class="card-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M4.5 2.5L7.5 6l-3 3.5" stroke="currentColor" stroke-width="1.4"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+              </a>
+            }
+          </div>
+
+        </div>
       }
-    </tbody>
-  </table>
+    }
+
+    <!-- LOST column — shown only when toggled -->
+    @if (showLost && lostCount > 0) {
+      <div class="pipeline-col pipeline-col-lost">
+        <div class="pipeline-col-header" style="border-top-color:#ef4444">
+          <span class="pipeline-col-title" style="color:#ef4444">Perdus</span>
+          <span class="pipeline-col-count" style="background:#ef4444">{{ lostCount }}</span>
+        </div>
+        <div class="pipeline-col-body">
+          @for (p of columnProspects('LOST'); track p.id) {
+            <a class="pipeline-card pipeline-card-lost" [routerLink]="['/app/prospects', p.id]">
+              <div class="card-top">
+                <span class="card-avatar" [style.background]="'#94a3b8'">{{ initials(p) }}</span>
+                <div class="card-identity">
+                  <span class="card-name">{{ p.fullName }}</span>
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- Empty state -->
+  @if (filtered.length === 0 && !searchQuery) {
+    <div class="card" style="margin-top:16px">
+      <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <p class="empty-state-title">Aucun contact dans le pipeline</p>
+        <p class="empty-state-desc">Créez votre premier prospect pour commencer à suivre votre pipeline commercial.</p>
+        <a routerLink="/app/contacts/new" class="btn btn-primary">Nouveau contact</a>
+      </div>
+    </div>
+  }
+  @if (filtered.length === 0 && searchQuery) {
+    <div class="card" style="margin-top:16px">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+      </div>
+    </div>
+  }
 }
