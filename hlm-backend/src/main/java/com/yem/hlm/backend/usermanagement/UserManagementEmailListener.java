@@ -8,9 +8,10 @@ import com.yem.hlm.backend.usermanagement.event.UserInvitedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Sends transactional emails in response to user management domain events.
@@ -35,7 +36,7 @@ public class UserManagementEmailListener {
 
     // ── Invitation email ───────────────────────────────────────────────────────
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onUserInvited(UserInvitedEvent event) {
         userRepository.findById(event.userId).ifPresentOrElse(user -> {
@@ -52,7 +53,7 @@ public class UserManagementEmailListener {
 
     // ── Activation confirmation email ──────────────────────────────────────────
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onUserActivated(UserActivatedEvent event) {
         userRepository.findById(event.userId).ifPresent(user -> {
