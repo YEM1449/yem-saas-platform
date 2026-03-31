@@ -64,9 +64,9 @@ class PropertyServiceTest {
     }
 
     @Test
-    void listAll_noArgs_callsRepositoryWithNoFilters() {
+    void listAll_noArgs_callsRepositoryWithNullFilters() {
         // Given
-        when(propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId))
+        when(propertyRepository.findWithFilters(societeId, null, null, null, null))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -74,15 +74,13 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findBySocieteIdAndDeletedAtIsNull(societeId);
-        verify(propertyRepository, never()).findBySocieteIdAndTypeAndDeletedAtIsNull(any(), any());
-        verify(propertyRepository, never()).findBySocieteIdAndStatusAndDeletedAtIsNull(any(), any());
+        verify(propertyRepository).findWithFilters(societeId, null, null, null, null);
     }
 
     @Test
-    void listAll_withNullParameters_callsRepositoryWithNoFilters() {
+    void listAll_withNullParameters_callsRepositoryWithNullFilters() {
         // Given
-        when(propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId))
+        when(propertyRepository.findWithFilters(societeId, null, null, null, null))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -90,14 +88,14 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findBySocieteIdAndDeletedAtIsNull(societeId);
+        verify(propertyRepository).findWithFilters(societeId, null, null, null, null);
     }
 
     @Test
     void listAll_withTypeOnly_callsRepositoryWithTypeFilter() {
         // Given
         PropertyType type = PropertyType.VILLA;
-        when(propertyRepository.findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type))
+        when(propertyRepository.findWithFilters(societeId, null, null, type, null))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -105,15 +103,14 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type);
-        verify(propertyRepository, never()).findBySocieteIdAndDeletedAtIsNull(any());
+        verify(propertyRepository).findWithFilters(societeId, null, null, type, null);
     }
 
     @Test
     void listAll_withStatusOnly_callsRepositoryWithStatusFilter() {
         // Given
         PropertyStatus status = PropertyStatus.ACTIVE;
-        when(propertyRepository.findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status))
+        when(propertyRepository.findWithFilters(societeId, null, null, null, status))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -121,7 +118,7 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status);
+        verify(propertyRepository).findWithFilters(societeId, null, null, null, status);
     }
 
     @Test
@@ -129,7 +126,7 @@ class PropertyServiceTest {
         // Given
         PropertyType type = PropertyType.VILLA;
         PropertyStatus status = PropertyStatus.ACTIVE;
-        when(propertyRepository.findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status))
+        when(propertyRepository.findWithFilters(societeId, null, null, type, status))
                 .thenReturn(List.of(mockProperty));
 
         // When
@@ -137,7 +134,7 @@ class PropertyServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        verify(propertyRepository).findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status);
+        verify(propertyRepository).findWithFilters(societeId, null, null, type, status);
     }
 
     @Test
