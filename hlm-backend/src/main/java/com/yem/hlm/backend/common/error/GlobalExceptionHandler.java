@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.societe.CrossSocieteAccessException;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
 import com.yem.hlm.backend.contract.service.ContractNotFoundException;
@@ -25,6 +26,7 @@ import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
+import com.yem.hlm.backend.property.service.ImmeubleProjectMismatchException;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.property.service.PropertyReferenceCodeExistsException;
 import com.yem.hlm.backend.commission.service.CommissionRuleNotFoundException;
@@ -161,6 +163,7 @@ public class GlobalExceptionHandler {
             ContactInterestNotFoundException.class,
             ContractNotFoundException.class,
             DepositNotFoundException.class,
+            ImmeubleNotFoundException.class,
             MediaNotFoundException.class,
             NotificationNotFoundException.class,
             PaymentScheduleItemNotFoundException.class,
@@ -495,6 +498,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ErrorCode.INVALID_PERIOD,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ImmeubleProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleImmeubleProjectMismatch(
+            ImmeubleProjectMismatchException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.INVALID_REQUEST,
                 ex.getMessage(),
                 request.getRequestURI()
         );

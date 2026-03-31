@@ -373,7 +373,7 @@ class ProjectControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "KPI Villa desc", null,
-                null, projectId, null
+                null, projectId, null, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)

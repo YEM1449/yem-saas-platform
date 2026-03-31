@@ -55,6 +55,21 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     List<Property> findBySocieteIdAndCityContainingIgnoreCaseAndDeletedAtIsNull(UUID societeId, String city);
 
+    /**
+     * Flexible filter query supporting optional projectId, immeubleId, type, and status.
+     */
+    @Query("SELECT p FROM Property p WHERE p.societeId = :societeId AND p.deletedAt IS NULL " +
+           "AND (:projectId IS NULL OR p.project.id = :projectId) " +
+           "AND (:immeubleId IS NULL OR p.immeuble.id = :immeubleId) " +
+           "AND (:type IS NULL OR p.type = :type) " +
+           "AND (:status IS NULL OR p.status = :status) " +
+           "ORDER BY p.createdAt DESC")
+    List<Property> findWithFilters(@Param("societeId") UUID societeId,
+                                   @Param("projectId") UUID projectId,
+                                   @Param("immeubleId") UUID immeubleId,
+                                   @Param("type") PropertyType type,
+                                   @Param("status") PropertyStatus status);
+
     // ===== Dashboard Aggregation Queries =====
 
     @Query("SELECT p.status, COUNT(p) FROM Property p " +

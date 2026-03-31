@@ -142,7 +142,7 @@ public class PropertyImportService {
                 surfaceArea, landArea,
                 bedrooms, bathrooms, null, null, null, null, null,
                 floor, null, null, null, null, null,
-                projectId, building
+                projectId, null, building
         );
     }
 

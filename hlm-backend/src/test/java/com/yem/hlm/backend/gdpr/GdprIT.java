@@ -268,7 +268,7 @@ class GdprIT extends IntegrationTestBase {
                 new BigDecimal("80"), null,
                 null, null, null, null, null, null,
                 null, 1, null, null, null, null,
-                false, projectId, null);
+                false, projectId, null, null);
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -282,7 +282,7 @@ class GdprIT extends IntegrationTestBase {
                 PropertyStatus.ACTIVE,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", propertyId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

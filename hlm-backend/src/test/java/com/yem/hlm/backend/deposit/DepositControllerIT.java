@@ -398,7 +398,7 @@ class DepositControllerIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
                 3, 2, 2, null, null, null, null, null, null, null, null, null,
-                null, projId, null
+                null, projId, null, null
         );
 
         String json = mvc.perform(post("/api/properties")
@@ -413,7 +413,7 @@ class DepositControllerIT extends IntegrationTestBase {
         // Activate the property (DRAFT → ACTIVE)
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearerToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -439,7 +439,7 @@ class DepositControllerIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("150"), new BigDecimal("300"),
                 2, 1, 1, null, null, null, null, null, null, null, null, null,
-                null, projId, null
+                null, projId, null, null
         );
 
         String json = mvc.perform(post("/api/properties")

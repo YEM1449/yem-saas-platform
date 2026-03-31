@@ -10,6 +10,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../core/models/project.model';
+import { ImmeubleService, Immeuble } from '../immeubles/immeuble.service';
 
 interface CreatePropertyForm {
   projectId: string;
@@ -45,19 +46,27 @@ interface CreatePropertyForm {
   styleUrl: './properties.component.css',
 })
 export class PropertiesComponent implements OnInit {
-  private svc        = inject(PropertyService);
-  private projectSvc = inject(ProjectService);
-  private router     = inject(Router);
-  private auth       = inject(AuthService);
+  private svc          = inject(PropertyService);
+  private projectSvc   = inject(ProjectService);
+  private immeubleSvc  = inject(ImmeubleService);
+  private router       = inject(Router);
+  private auth         = inject(AuthService);
 
   properties: Property[] = [];
   projects: Project[] = [];
+  immeubles: Immeuble[] = [];
   loading = true;
   projectsLoading = false;
   error   = '';
 
   /** Live search */
   searchQuery = '';
+
+  /** Filter state */
+  filterProjectId = '';
+  filterImmeubleId = '';
+  filterType = '';
+  filterStatus = '';
 
   /** CSV import state */
   importLoading = false;
@@ -148,7 +157,12 @@ export class PropertiesComponent implements OnInit {
   loadList(): void {
     this.loading = true;
     this.error   = '';
-    this.svc.list().subscribe({
+    const params: Record<string, string> = {};
+    if (this.filterProjectId) params['projectId'] = this.filterProjectId;
+    if (this.filterImmeubleId) params['immeubleId'] = this.filterImmeubleId;
+    if (this.filterType) params['type'] = this.filterType;
+    if (this.filterStatus) params['status'] = this.filterStatus;
+    this.svc.list(params).subscribe({
       next: (data) => { this.properties = data; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
@@ -158,6 +172,37 @@ export class PropertiesComponent implements OnInit {
         else                          this.error = body?.message ?? `Failed to load properties (${err.status})`;
       },
     });
+  }
+
+  onFilterProjectChange(): void {
+    this.filterImmeubleId = '';
+    if (this.filterProjectId) {
+      this.immeubleSvc.list(this.filterProjectId).subscribe({
+        next: (data) => this.immeubles = data,
+        error: () => this.immeubles = [],
+      });
+    } else {
+      this.immeubles = [];
+    }
+    this.loadList();
+  }
+
+  onFilterChange(): void {
+    this.loadList();
+  }
+
+  resetFilters(): void {
+    this.filterProjectId = '';
+    this.filterImmeubleId = '';
+    this.filterType = '';
+    this.filterStatus = '';
+    this.immeubles = [];
+    this.loadList();
+  }
+
+  get activeFilterCount(): number {
+    return [this.filterProjectId, this.filterImmeubleId, this.filterType, this.filterStatus]
+      .filter(v => !!v).length;
   }
 
   goToDetail(propertyId: string): void {

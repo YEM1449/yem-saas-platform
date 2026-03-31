@@ -132,6 +132,10 @@ export class ContactsComponent implements OnInit {
       this.submitError = 'First name and last name are required.';
       return;
     }
+    if (!this.form.email.trim() && !this.form.phone.trim()) {
+      this.submitError = 'Telephone ou email obligatoire.';
+      return;
+    }
     this.submitting  = true;
     this.submitError = '';
 

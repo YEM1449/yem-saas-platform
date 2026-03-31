@@ -356,7 +356,7 @@ class PaymentScheduleIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("80"), new BigDecimal("100"),
                 2, 1, 0, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -370,7 +370,7 @@ class PaymentScheduleIT extends IntegrationTestBase {
         var update = new PropertyUpdateRequest(
                 null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
         mvc.perform(put("/api/properties/{id}", prop.id())
                         .header("Authorization", adminBearer)

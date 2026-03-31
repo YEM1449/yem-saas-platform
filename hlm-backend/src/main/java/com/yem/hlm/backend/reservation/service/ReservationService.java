@@ -20,9 +20,11 @@ import com.yem.hlm.backend.reservation.api.dto.ReservationResponse;
 import com.yem.hlm.backend.reservation.domain.Reservation;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
+import com.yem.hlm.backend.common.event.PropertyInterestEvent;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class ReservationService {
     private final PropertyCommercialWorkflowService propertyWorkflow;
     private final DepositService depositService;
     private final CommercialAuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -48,7 +51,8 @@ public class ReservationService {
             UserRepository userRepository,
             PropertyCommercialWorkflowService propertyWorkflow,
             DepositService depositService,
-            CommercialAuditService auditService
+            CommercialAuditService auditService,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.reservationRepository = reservationRepository;
         this.contactRepository = contactRepository;
@@ -57,6 +61,7 @@ public class ReservationService {
         this.propertyWorkflow = propertyWorkflow;
         this.depositService = depositService;
         this.auditService = auditService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -106,6 +111,10 @@ public class ReservationService {
 
         auditService.record(societeId, AuditEventType.RESERVATION_CREATED, actorUserId,
                 "RESERVATION", saved.getId(), null);
+
+        // Auto-promote prospect status on reservation
+        eventPublisher.publishEvent(new PropertyInterestEvent(
+                societeId, actorUserId, contact.getId(), req.propertyId(), "RESERVATION"));
 
         return toResponse(saved);
     }

@@ -38,6 +38,7 @@ export interface CreatePropertyRequest {
   notes?: string | null;
   listedForSale?: boolean | null;
   projectId: string;
+  immeubleId?: string | null;
   buildingName?: string | null;
 }
 
@@ -66,7 +67,15 @@ export interface UpdatePropertyRequest {
   isServiced?: boolean | null;
   listedForSale?: boolean | null;
   projectId?: string | null;
+  immeubleId?: string | null;
   buildingName?: string | null;
+}
+
+export interface PropertyListParams {
+  projectId?: string;
+  immeubleId?: string;
+  type?: string;
+  status?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -74,8 +83,13 @@ export class PropertyService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
-  list(): Observable<Property[]> {
-    return this.http.get<Property[]>(`${this.apiUrl}/api/properties`);
+  list(params?: PropertyListParams): Observable<Property[]> {
+    const httpParams: Record<string, string> = {};
+    if (params?.projectId) httpParams['projectId'] = params.projectId;
+    if (params?.immeubleId) httpParams['immeubleId'] = params.immeubleId;
+    if (params?.type) httpParams['type'] = params.type;
+    if (params?.status) httpParams['status'] = params.status;
+    return this.http.get<Property[]>(`${this.apiUrl}/api/properties`, { params: httpParams });
   }
 
   listMedia(propertyId: string): Observable<PropertyMedia[]> {

@@ -78,13 +78,15 @@ public class PropertyController {
      * @param status optional property status filter
      * @return 200 OK with list of PropertyResponse
      */
-    @Operation(summary = "List all non-deleted properties with optional type/status filters")
+    @Operation(summary = "List all non-deleted properties with optional filters")
     @GetMapping
     public List<PropertyResponse> list(
+            @RequestParam(required = false) UUID projectId,
+            @RequestParam(required = false) UUID immeubleId,
             @RequestParam(required = false) PropertyType type,
             @RequestParam(required = false) PropertyStatus status
     ) {
-        return propertyService.listAll(type, status);
+        return propertyService.listAll(projectId, immeubleId, type, status);
     }
 
     /**

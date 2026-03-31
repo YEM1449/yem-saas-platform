@@ -2,6 +2,8 @@ package com.yem.hlm.backend.property;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
+import com.yem.hlm.backend.immeuble.domain.Immeuble;
+import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
 import com.yem.hlm.backend.project.domain.Project;
 import com.yem.hlm.backend.project.domain.ProjectStatus;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
@@ -57,6 +59,7 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProjectRepository projectRepository;
+    @Autowired ImmeubleRepository immeubleRepository;
 
     private Societe societe;
     private User adminUser;
@@ -68,12 +71,13 @@ class PropertyControllerIT extends IntegrationTestBase {
     private String agentBearer;
 
     private UUID projectId;
+    private Project project;
 
     @BeforeEach
     void setupTestData() {
         societe = societeRepository.save(new Societe("Prop Test Societe", "MA"));
 
-        var project = new Project(societe.getId(), "Test Project");
+        project = new Project(societe.getId(), "Test Project");
         project = projectRepository.save(project);
         projectId = project.getId();
 
@@ -159,7 +163,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 new BigDecimal("6000000.00"), PropertyStatus.ACTIVE,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -186,7 +190,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 "Hacked Title", null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -248,7 +252,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, // missing surfaceArea, landArea, bedrooms, bathrooms
                 null, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -268,7 +272,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 new BigDecimal("2000"), // landAreaSqm - OK
                 3, // bedrooms - FORBIDDEN
                 null, null, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -286,7 +290,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -306,7 +310,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
                 "RESIDENTIAL", true, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -327,7 +331,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("35"), null, null, null, null, null, null, null, null, 3,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -346,7 +350,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("65"), null, 2, 1, null, null, null, null, null, 2,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -365,7 +369,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("150"), null, null, null, null, null, null, null, null, 0,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -386,7 +390,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with pool", null,
                 true,      // listedForSale
-                projectId, // projectId
+                projectId, null, // projectId
                 "Villa A"  // buildingName
         );
 
@@ -416,7 +420,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                true, null, "Bâtiment B"
+                true, null, null, "Bâtiment B"
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -444,7 +448,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 PropertyType.APPARTEMENT, "Apartment", "APP-FILTER-001", new BigDecimal("1000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("80"), null, 2, 1, null, null, null, null, 2020, 3, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -478,7 +482,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -504,7 +508,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -552,7 +556,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null,
                 new BigDecimal("350.00"), new BigDecimal("800.00"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with beautiful garden and pool", null,
-                null, otherProjectId, null
+                null, otherProjectId, null, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", otherBearer)
@@ -613,7 +617,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, null, null, null, null, null, null, null, null,
                 null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -630,7 +634,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa without project", null,
-                null, null, null  // projectId is null — @NotNull should reject
+                null, null, null, null  // projectId is null — @NotNull should reject
         );
 
         mvc.perform(post("/api/properties")
@@ -647,7 +651,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with bad project ref", null,
-                null, UUID.randomUUID(), null  // projectId doesn't exist
+                null, UUID.randomUUID(), null, null  // projectId doesn't exist
         );
 
         mvc.perform(post("/api/properties")
@@ -655,6 +659,25 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createProperty_withNonExistentImmeubleId_returns404() throws Exception {
+        var req = new PropertyCreateRequest(
+                PropertyType.VILLA, "Villa Bad Immeuble", "VIL-BAD-IMM-001", new BigDecimal("5000000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
+                "Villa with bad immeuble ref", null,
+                null, projectId, UUID.randomUUID(), null
+        );
+
+        mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message", startsWith("Immeuble not found:")));
     }
 
     // ===== Archived Project Tests =====
@@ -671,7 +694,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Should be rejected", null,
-                null, archivedProjectId, null
+                null, archivedProjectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -701,7 +724,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, archivedProjectId, null
+                null, archivedProjectId, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", villaId)
@@ -710,6 +733,111 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("ARCHIVED_PROJECT"));
+    }
+
+    @Test
+    void updateProperty_withNonExistentImmeubleId_returns404() throws Exception {
+        var createReq = createValidVillaRequest("VIL-UPD-IMM-404");
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, UUID.randomUUID(), null
+        );
+
+        mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message", startsWith("Immeuble not found:")));
+    }
+
+    @Test
+    void updateProperty_reassignProjectWithoutImmeuble_clearsExistingImmeuble() throws Exception {
+        Immeuble immeuble = createImmeuble(project, "Tour A");
+
+        var createReq = new PropertyCreateRequest(
+                PropertyType.APPARTEMENT, "Building Unit", "APP-IMM-001", new BigDecimal("1500000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
+                null, null, null, null,
+                null, projectId, immeuble.getId(), null
+        );
+
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        Project newProject = projectRepository.save(new Project(societe.getId(), "Second Project"));
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, newProject.getId(), null, null
+        );
+
+        String updatedJson = mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(newProject.getId().toString()))
+                .andReturn().getResponse().getContentAsString();
+
+        PropertyResponse updated = objectMapper.readValue(updatedJson, PropertyResponse.class);
+        assertThat(updated.immeubleId()).isNull();
+        assertThat(updated.immeubleName()).isNull();
+    }
+
+    @Test
+    void updateProperty_reassignProjectWithMismatchedImmeuble_returns400() throws Exception {
+        Immeuble immeuble = createImmeuble(project, "Tour A");
+
+        var createReq = new PropertyCreateRequest(
+                PropertyType.APPARTEMENT, "Building Unit", "APP-IMM-002", new BigDecimal("1500000"), "MAD",
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
+                null, null, null, null,
+                null, projectId, immeuble.getId(), null
+        );
+
+        String json = mvc.perform(post("/api/properties")
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
+
+        Project newProject = projectRepository.save(new Project(societe.getId(), "Third Project"));
+        var updateReq = new PropertyUpdateRequest(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, newProject.getId(), immeuble.getId(), null
+        );
+
+        mvc.perform(put("/api/properties/{id}", propertyId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Immeuble " + immeuble.getId() + " does not belong to project " + newProject.getId()));
     }
 
     @Test
@@ -786,7 +914,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, "Rabat", null, null, null, null, null, null, null, null,
                 null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
                 "residential", true, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -797,7 +925,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID lotId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", lotId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -812,7 +940,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 null, null, null, "Kenitra", null, null, null, null, null, null, null, null,
                 null, new BigDecimal("1000"), null, null, null, null, null, null, null, null,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -823,7 +951,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID terrainId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", terrainId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -843,7 +971,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", villaId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -888,8 +1016,12 @@ class PropertyControllerIT extends IntegrationTestBase {
                 "Villa with beautiful garden and pool", // description
                 null,      // notes
                 null,      // listedForSale
-                projectId, // projectId
+                projectId, null, // projectId
                 null       // buildingName
         );
+    }
+
+    private Immeuble createImmeuble(Project targetProject, String nom) {
+        return immeubleRepository.save(new Immeuble(societe.getId(), targetProject, nom));
     }
 }

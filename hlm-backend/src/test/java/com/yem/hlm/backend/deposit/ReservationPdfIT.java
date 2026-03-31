@@ -233,7 +233,7 @@ class ReservationPdfIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
                 3, 2, 2, null, null, null, null, null, null, null, null, null,
-                null, projId, null
+                null, projId, null, null
         );
 
         String propJson = mvc.perform(post("/api/properties")
@@ -247,7 +247,7 @@ class ReservationPdfIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)

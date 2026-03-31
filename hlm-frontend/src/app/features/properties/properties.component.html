@@ -112,6 +112,48 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
   }
 </div>
 
+<!-- ── Filter Bar ──────────────────────────────────────────── -->
+<div class="filter-bar" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+  <select class="form-control form-control-sm" [(ngModel)]="filterProjectId" (ngModelChange)="onFilterProjectChange()"
+          style="max-width: 200px;">
+    <option value="">Tous les projets</option>
+    @for (p of projects; track p.id) {
+      <option [value]="p.id">{{ p.name }}</option>
+    }
+  </select>
+
+  <select class="form-control form-control-sm" [(ngModel)]="filterImmeubleId" (ngModelChange)="onFilterChange()"
+          [disabled]="!filterProjectId" style="max-width: 200px;">
+    <option value="">Tous les immeubles</option>
+    @for (i of immeubles; track i.id) {
+      <option [value]="i.id">{{ i.nom }}</option>
+    }
+  </select>
+
+  <select class="form-control form-control-sm" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()"
+          style="max-width: 180px;">
+    <option value="">Tous les types</option>
+    @for (t of propertyTypes; track t) {
+      <option [value]="t">{{ t }}</option>
+    }
+  </select>
+
+  <select class="form-control form-control-sm" [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()"
+          style="max-width: 160px;">
+    <option value="">Tous les statuts</option>
+    <option value="DRAFT">Draft</option>
+    <option value="ACTIVE">Active</option>
+    <option value="RESERVED">Reserved</option>
+    <option value="SOLD">Sold</option>
+  </select>
+
+  @if (activeFilterCount > 0) {
+    <button class="btn btn-sm btn-outline" (click)="resetFilters()" style="white-space: nowrap;">
+      Reinitialiser ({{ activeFilterCount }})
+    </button>
+  }
+</div>
+
 <!-- ── Feedback ─────────────────────────────────────────────── -->
 @if (error) {
   <div class="alert alert-error">{{ error }}</div>

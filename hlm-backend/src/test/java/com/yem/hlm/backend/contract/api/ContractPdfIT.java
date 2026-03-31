@@ -175,7 +175,7 @@ class ContractPdfIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("150"), new BigDecimal("300"),
                 3, 2, 1, null, null, null, null, null, null, null, null, null,
-                null, projId, null
+                null, projId, null, null
         );
         String propBody = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -191,7 +191,7 @@ class ContractPdfIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(
                                 new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                                         null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                                        null, null, null))))
+                                        null, null, null, null))))
                 .andExpect(status().isOk());
 
         // Contact (buyer) — always use adminBearer

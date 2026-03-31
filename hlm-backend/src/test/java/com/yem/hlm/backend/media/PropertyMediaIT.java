@@ -73,7 +73,7 @@ class PropertyMediaIT extends IntegrationTestBase {
                 new BigDecimal("200"), new BigDecimal("400"),
                 3, 2, null, null, null, null, null, null, null, null,
                 null, null, false,
-                project.getId(), null
+                project.getId(), null, null
         );
 
         String json = mvc.perform(post("/api/properties")

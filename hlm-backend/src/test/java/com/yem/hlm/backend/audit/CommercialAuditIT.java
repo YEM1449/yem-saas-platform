@@ -210,7 +210,7 @@ class CommercialAuditIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("80"), null,
                 2, 1, 0, null, null, null, null, 1, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", bearer)
@@ -226,7 +226,7 @@ class CommercialAuditIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(
                                 new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                                         null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                                        null, null, null))))
+                                        null, null, null, null))))
                 .andExpect(status().isOk());
         return created.id();
     }

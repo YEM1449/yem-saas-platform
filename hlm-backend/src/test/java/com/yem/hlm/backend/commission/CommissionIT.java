@@ -262,7 +262,7 @@ class CommissionIT extends IntegrationTestBase {
                 null, null, null, null,
                 new BigDecimal("90"), null,
                 2, 1, 0, null, null, null, null, 1, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -278,7 +278,7 @@ class CommissionIT extends IntegrationTestBase {
                                 null, null, null, null, PropertyStatus.ACTIVE,
                                 null, null, null, null, null, null, null, null,
                                 null, null, null, null, null, null, null, null, null,
-                                null, null, null))))
+                                null, null, null, null))))
                 .andExpect(status().isOk());
         return prop.id();
     }

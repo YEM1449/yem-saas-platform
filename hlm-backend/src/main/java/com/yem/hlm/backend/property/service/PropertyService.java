@@ -1,5 +1,8 @@
 package com.yem.hlm.backend.property.service;
 
+import com.yem.hlm.backend.immeuble.domain.Immeuble;
+import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
+import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -34,13 +37,16 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final ProjectActiveGuard projectActiveGuard;
     private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
+    private final ImmeubleRepository immeubleRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
                            ProjectActiveGuard projectActiveGuard,
-                           PropertyCommercialWorkflowService propertyCommercialWorkflowService) {
+                           PropertyCommercialWorkflowService propertyCommercialWorkflowService,
+                           ImmeubleRepository immeubleRepository) {
         this.propertyRepository = propertyRepository;
         this.projectActiveGuard = projectActiveGuard;
         this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
+        this.immeubleRepository = immeubleRepository;
     }
 
     @Transactional
@@ -79,22 +85,19 @@ public class PropertyService {
     }
 
     public List<PropertyResponse> listAll() {
-        return listAll(null, null);
+        return listAll(null, null, null, null);
     }
 
     public List<PropertyResponse> listAll(PropertyType type, PropertyStatus status) {
+        return listAll(null, null, type, status);
+    }
+
+    public List<PropertyResponse> listAll(UUID projectId, UUID immeubleId,
+                                           PropertyType type, PropertyStatus status) {
         UUID societeId = SocieteContext.getSocieteId();
 
-        List<Property> properties;
-        if (type != null && status != null) {
-            properties = propertyRepository.findBySocieteIdAndTypeAndStatusAndDeletedAtIsNull(societeId, type, status);
-        } else if (type != null) {
-            properties = propertyRepository.findBySocieteIdAndTypeAndDeletedAtIsNull(societeId, type);
-        } else if (status != null) {
-            properties = propertyRepository.findBySocieteIdAndStatusAndDeletedAtIsNull(societeId, status);
-        } else {
-            properties = propertyRepository.findBySocieteIdAndDeletedAtIsNull(societeId);
-        }
+        List<Property> properties = propertyRepository.findWithFilters(
+                societeId, projectId, immeubleId, type, status);
 
         return properties.stream()
                 .map(PropertyResponse::from)
@@ -247,6 +250,9 @@ public class PropertyService {
         property.setIsServiced(req.isServiced());
         property.setListedForSale(req.listedForSale() != null && req.listedForSale());
         property.setBuildingName(req.buildingName());
+        if (req.immeubleId() != null) {
+            property.setImmeuble(loadImmeubleForProject(req.immeubleId(), property.getProject().getId()));
+        }
     }
 
     private void mapUpdateRequestToEntity(PropertyUpdateRequest req, Property property) {
@@ -273,11 +279,31 @@ public class PropertyService {
         if (req.zoning() != null) property.setZoning(req.zoning());
         if (req.isServiced() != null) property.setIsServiced(req.isServiced());
         if (req.listedForSale() != null) property.setListedForSale(req.listedForSale());
+        UUID previousProjectId = property.getProject().getId();
+        boolean projectChanged = false;
         if (req.projectId() != null) {
             UUID societeId = SocieteContext.getSocieteId();
             var project = projectActiveGuard.requireActive(societeId, req.projectId());
             property.setProject(project);
+            projectChanged = !project.getId().equals(previousProjectId);
         }
         if (req.buildingName() != null) property.setBuildingName(req.buildingName());
+        if (req.immeubleId() != null) {
+            property.setImmeuble(loadImmeubleForProject(req.immeubleId(), property.getProject().getId()));
+        } else if (projectChanged) {
+            property.setImmeuble(null);
+        }
+    }
+
+    private Immeuble loadImmeubleForProject(UUID immeubleId, UUID projectId) {
+        UUID societeId = SocieteContext.getSocieteId();
+        Immeuble immeuble = immeubleRepository.findBySocieteIdAndId(societeId, immeubleId)
+                .orElseThrow(() -> new ImmeubleNotFoundException(immeubleId));
+
+        if (!immeuble.getProject().getId().equals(projectId)) {
+            throw new ImmeubleProjectMismatchException(immeubleId, projectId);
+        }
+
+        return immeuble;
     }
 }

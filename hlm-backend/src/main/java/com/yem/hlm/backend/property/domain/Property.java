@@ -267,11 +267,28 @@ public class Property {
     private String buildingName;
 
     /**
+     * FK to the Immeuble (Building) entity.
+     * Optional — when set, provides structured building hierarchy (Project → Immeuble → Unit).
+     */
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "immeuble_id")
+    private com.yem.hlm.backend.immeuble.domain.Immeuble immeuble;
+
+    /**
      * Convenience accessor — returns the project name for display purposes.
      * Delegates to the mandatory {@link #project} FK.
      */
     public String getProjectName() {
         return project != null ? project.getName() : null;
+    }
+
+    public UUID getImmeubleId() {
+        return immeuble != null ? immeuble.getId() : null;
+    }
+
+    public String getImmeubleName() {
+        return immeuble != null ? immeuble.getNom() : null;
     }
 
     // ===== Lifecycle Fields =====

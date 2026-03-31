@@ -74,7 +74,7 @@ class TlsConfigIT extends IntegrationTestBase {
         // Never throw on 4xx/5xx — return the ResponseEntity so tests can assert on status codes
         restTemplate.setErrorHandler(new ResponseErrorHandler() {
             @Override public boolean hasError(ClientHttpResponse r) { return false; }
-            @Override public void handleError(ClientHttpResponse r) {}
+            @Override public void handleError(java.net.URI url, HttpMethod method, ClientHttpResponse r) {}
         });
     }
 
