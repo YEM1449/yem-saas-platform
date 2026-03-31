@@ -66,13 +66,14 @@ class PropertyMediaIT extends IntegrationTestBase {
 
         // Create a property via the API so it goes through normal lifecycle
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Media Test Villa", "MEDIA-TEST-001", null, new BigDecimal("500000"), "MAD",
+                PropertyType.VILLA, "Media Test Villa", "MEDIA-TEST-001",
+                new BigDecimal("500000"), "MAD",
                 null, null, null, null, null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
                 3, 2, null, null, null, null, null, null, null, null,
                 null, null, false,
-                project.getId(), null
+                project.getId(), null, null
         );
 
         String json = mvc.perform(post("/api/properties")

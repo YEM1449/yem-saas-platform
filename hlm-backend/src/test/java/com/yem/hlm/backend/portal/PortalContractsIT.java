@@ -173,12 +173,13 @@ class PortalContractsIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "PC-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Portal Appt " + ref, ref, null, new BigDecimal("400000"), "MAD",
+                PropertyType.APPARTEMENT, "Portal Appt " + ref, ref,
+                new BigDecimal("400000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("85"), null,
                 2, 1, 0, null, null, null, null, 1, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -194,7 +195,7 @@ class PortalContractsIT extends IntegrationTestBase {
                                 null, null, null, null, PropertyStatus.ACTIVE,
                                 null, null, null, null, null, null, null, null,
                                 null, null, null, null, null, null, null, null, null,
-                                null, null, null))))
+                                null, null, null, null))))
                 .andExpect(status().isOk());
         return prop.id();
     }

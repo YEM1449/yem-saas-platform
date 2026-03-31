@@ -302,12 +302,13 @@ class CommercialDashboardIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId, String bearer) throws Exception {
         String ref = "DASH-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Dash Test Appt " + ref, ref, null, new BigDecimal("450000"), "MAD",
+                PropertyType.APPARTEMENT, "Dash Test Appt " + ref, ref,
+                new BigDecimal("450000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("90"), null,
                 2, 1, 0, null, null, null, null, 1, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", bearer)
@@ -320,7 +321,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
         var update = new PropertyUpdateRequest(
                 null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearer)

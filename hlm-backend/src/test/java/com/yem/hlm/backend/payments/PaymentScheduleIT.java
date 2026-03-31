@@ -350,12 +350,13 @@ class PaymentScheduleIT extends IntegrationTestBase {
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
         String ref = "PAY-PROP-" + (++counter);
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Pay Test Apt " + ref, ref, null, new BigDecimal("500000"), "MAD",
+                PropertyType.VILLA, "Pay Test Apt " + ref, ref,
+                new BigDecimal("500000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("80"), new BigDecimal("100"),
                 2, 1, 0, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -369,7 +370,7 @@ class PaymentScheduleIT extends IntegrationTestBase {
         var update = new PropertyUpdateRequest(
                 null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
         mvc.perform(put("/api/properties/{id}", prop.id())
                         .header("Authorization", adminBearer)

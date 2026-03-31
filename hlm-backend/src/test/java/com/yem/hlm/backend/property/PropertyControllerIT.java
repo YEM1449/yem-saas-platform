@@ -159,7 +159,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 new BigDecimal("6000000.00"), PropertyStatus.ACTIVE,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -186,7 +186,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 "Hacked Title", null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null
+                null, null, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -244,11 +244,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createVilla_missingRequiredFields_returns400() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Incomplete Villa", "VIL-BAD-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "Incomplete Villa", "VIL-BAD-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, // missing surfaceArea, landArea, bedrooms, bathrooms
                 null, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -262,13 +262,13 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createTerrainVierge_withForbiddenFields_returns400() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.TERRAIN_VIERGE, "Undeveloped Land", "TER-BAD-001", null, new BigDecimal("800000"), "MAD",
+                PropertyType.TERRAIN_VIERGE, "Undeveloped Land", "TER-BAD-001", new BigDecimal("800000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("2000"), // surfaceAreaSqm - FORBIDDEN
                 new BigDecimal("2000"), // landAreaSqm - OK
                 3, // bedrooms - FORBIDDEN
                 null, null, null, null, null, null, null, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -282,11 +282,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createAppartement_withAllRequiredFields_returns201() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Modern Apartment", "APP-001", null, new BigDecimal("1500000"), "MAD",
+                PropertyType.APPARTEMENT, "Modern Apartment", "APP-001", new BigDecimal("1500000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("120"), null, 3, 2, null, null, null, null, 2023, 5,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -302,11 +302,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createLot_withAllRequiredFields_returns201() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.LOT, "Serviced Land Plot", "LOT-001", null, new BigDecimal("1200000"), "MAD",
+                PropertyType.LOT, "Serviced Land Plot", "LOT-001", new BigDecimal("1200000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
                 "RESIDENTIAL", true, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -323,11 +323,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createStudio_withRequiredFields_returns201() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.STUDIO, "Studio Agdal", "STU-001", null, new BigDecimal("600000"), "MAD",
+                PropertyType.STUDIO, "Studio Agdal", "STU-001", new BigDecimal("600000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("35"), null, null, null, null, null, null, null, null, 3,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -342,11 +342,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createT2_withRequiredFields_returns201() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.T2, "T2 Agdal", "T2-001", null, new BigDecimal("900000"), "MAD",
+                PropertyType.T2, "T2 Agdal", "T2-001", new BigDecimal("900000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("65"), null, 2, 1, null, null, null, null, null, 2,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -361,11 +361,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createCommerce_withRequiredFields_returns201() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.COMMERCE, "Local Commercial", "COM-001", null, new BigDecimal("2000000"), "MAD",
+                PropertyType.COMMERCE, "Local Commercial", "COM-001", new BigDecimal("2000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("150"), null, null, null, null, null, null, null, null, 0,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -380,13 +380,13 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createProperty_withListedForSaleAndProject_returnsCorrectFields() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Project Villa", "VIL-PROJ-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "Project Villa", "VIL-PROJ-001", new BigDecimal("5000000"), "MAD",
                 new BigDecimal("5.0"), null, "123 Palm Ave", "Casablanca", "Grand Casablanca", "20000",
                 null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with pool", null,
                 true,      // listedForSale
-                projectId, // projectId
+                projectId, null, // projectId
                 "Villa A"  // buildingName
         );
 
@@ -416,7 +416,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                true, null, "Bâtiment B"
+                true, null, null, "Bâtiment B"
         );
 
         mvc.perform(put("/api/properties/{id}", created.id())
@@ -441,10 +441,10 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andExpect(status().isCreated());
 
         var app = new PropertyCreateRequest(
-                PropertyType.APPARTEMENT, "Apartment", "APP-FILTER-001", null, new BigDecimal("1000000"), "MAD",
+                PropertyType.APPARTEMENT, "Apartment", "APP-FILTER-001", new BigDecimal("1000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("80"), null, 2, 1, null, null, null, null, 2020, 3, null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -478,7 +478,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -504,7 +504,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -546,12 +546,13 @@ class PropertyControllerIT extends IntegrationTestBase {
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
         var prop2 = new PropertyCreateRequest(
-                PropertyType.VILLA, "Luxury Villa in Casablanca", "VIL-TENANT-002", null, new BigDecimal("5000000.00"), "MAD",
+                PropertyType.VILLA, "Luxury Villa in Casablanca", "VIL-TENANT-002",
+                new BigDecimal("5000000.00"), "MAD",
                 new BigDecimal("5.0"), null, "123 Palm Avenue", "Casablanca", "Grand Casablanca", "20000",
                 null, null, null, null, null, null,
                 new BigDecimal("350.00"), new BigDecimal("800.00"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with beautiful garden and pool", null,
-                null, otherProjectId, null
+                null, otherProjectId, null, null
         );
         mvc.perform(post("/api/properties")
                         .header("Authorization", otherBearer)
@@ -608,11 +609,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createProperty_invalidData_returns400() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "", "VIL-INVALID-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "", "VIL-INVALID-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, null, null, null, null, null, null, null, null,
                 null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -625,11 +626,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createProperty_withoutProjectId_returns400() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Villa Sans Projet", "VIL-NOPROJ-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "Villa Sans Projet", "VIL-NOPROJ-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa without project", null,
-                null, null, null  // projectId is null — @NotNull should reject
+                null, null, null, null  // projectId is null — @NotNull should reject
         );
 
         mvc.perform(post("/api/properties")
@@ -642,11 +643,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void createProperty_withNonExistentProjectId_returns404() throws Exception {
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Villa Bad Project", "VIL-BADPROJ-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "Villa Bad Project", "VIL-BADPROJ-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Villa with bad project ref", null,
-                null, UUID.randomUUID(), null  // projectId doesn't exist
+                null, UUID.randomUUID(), null, null  // projectId doesn't exist
         );
 
         mvc.perform(post("/api/properties")
@@ -666,11 +667,11 @@ class PropertyControllerIT extends IntegrationTestBase {
         final UUID archivedProjectId = archived.getId();
 
         var req = new PropertyCreateRequest(
-                PropertyType.VILLA, "Villa in Archived Project", "VIL-ARCH-001", null, new BigDecimal("5000000"), "MAD",
+                PropertyType.VILLA, "Villa in Archived Project", "VIL-ARCH-001", new BigDecimal("5000000"), "MAD",
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("350"), new BigDecimal("800"), 5, 4, 2, 3, true, true, 2020, null, null, null,
                 "Should be rejected", null,
-                null, archivedProjectId, null
+                null, archivedProjectId, null, null
         );
 
         mvc.perform(post("/api/properties")
@@ -700,7 +701,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         var updateReq = new PropertyUpdateRequest(
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, archivedProjectId, null
+                null, archivedProjectId, null, null
         );
 
         mvc.perform(put("/api/properties/{id}", villaId)
@@ -781,11 +782,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void updateLot_withForbiddenBedrooms_returns400() throws Exception {
         var lotReq = new PropertyCreateRequest(
-                PropertyType.LOT, "Test Lot", "LOT-UPD-001", null, new BigDecimal("300000"), "MAD",
+                PropertyType.LOT, "Test Lot", "LOT-UPD-001", new BigDecimal("300000"), "MAD",
                 null, null, null, "Rabat", null, null, null, null, null, null, null, null,
                 null, new BigDecimal("500"), null, null, null, null, null, null, null, null,
                 "residential", true, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -796,7 +797,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID lotId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", lotId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -807,11 +808,11 @@ class PropertyControllerIT extends IntegrationTestBase {
     @Test
     void updateTerrainVierge_withForbiddenSurface_returns400() throws Exception {
         var terrainReq = new PropertyCreateRequest(
-                PropertyType.TERRAIN_VIERGE, "Raw Land", "TER-UPD-001", null, new BigDecimal("200000"), "MAD",
+                PropertyType.TERRAIN_VIERGE, "Raw Land", "TER-UPD-001", new BigDecimal("200000"), "MAD",
                 null, null, null, "Kenitra", null, null, null, null, null, null, null, null,
                 null, new BigDecimal("1000"), null, null, null, null, null, null, null, null,
                 null, null, null, null,
-                null, projectId, null
+                null, projectId, null, null
         );
         String json = mvc.perform(post("/api/properties")
                         .header("Authorization", adminBearer)
@@ -822,7 +823,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID terrainId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("150"), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", terrainId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -842,7 +843,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID villaId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
-                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                new BigDecimal("500"), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", villaId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -857,7 +858,8 @@ class PropertyControllerIT extends IntegrationTestBase {
         return new PropertyCreateRequest(
                 PropertyType.VILLA,
                 "Luxury Villa in Casablanca",
-                referenceCode, null, new BigDecimal("5000000.00"),
+                referenceCode,
+                new BigDecimal("5000000.00"),
                 "MAD",
                 new BigDecimal("5.0"), // commissionRate
                 null, // estimatedValue
@@ -886,7 +888,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 "Villa with beautiful garden and pool", // description
                 null,      // notes
                 null,      // listedForSale
-                projectId, // projectId
+                projectId, null, // projectId
                 null       // buildingName
         );
     }

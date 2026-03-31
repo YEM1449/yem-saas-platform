@@ -397,12 +397,13 @@ class ContactControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID projId = UUID.fromString(objectMapper.readTree(projectBody).get("id").asText());
         var propReq = new PropertyCreateRequest(
-                PropertyType.VILLA, "Test Villa " + ref, ref, null, new BigDecimal("1000000"), "MAD",
+                PropertyType.VILLA, "Test Villa " + ref, ref,
+                new BigDecimal("1000000"), "MAD",
                 null, null, null, "Casablanca", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("200"), new BigDecimal("400"),
                 3, 2, 2, null, null, null, null, null, null, null, null, null,
-                null, projId, null
+                null, projId, null, null
         );
 
         String body = mvc.perform(post("/api/properties")
@@ -416,7 +417,7 @@ class ContactControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
         mvc.perform(put("/api/properties/{id}", created.id())
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -484,6 +484,7 @@ public class SocieteService {
     // ── Compatibility helpers (used by old SocieteController until SA-6 rewrites it) ──
 
     /** @deprecated Use {@link #listMembres(UUID)} instead. */
+    @Deprecated
     @Transactional
     public AppUserSocieteDto addUserToSociete(UUID societeId, AddUserRequest req) {
         require(societeId);
@@ -496,6 +497,7 @@ public class SocieteService {
     }
 
     /** @deprecated Use {@link #removeMembre(UUID, UUID, UUID)} instead. */
+    @Deprecated
     @Transactional
     public void removeUserFromSociete(UUID societeId, UUID userId) {
         AppUserSocieteId pk = new AppUserSocieteId(userId, societeId);
