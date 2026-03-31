@@ -8,8 +8,9 @@ import { ProspectService } from './prospect.service';
 import { ContactInterestService } from './contact-interest.service';
 import { DepositService, CreateDepositRequest } from './deposit.service';
 import { PropertyService } from '../properties/property.service';
+import { ReservationService, CreateReservationRequest } from '../reservations/reservation.service';
 import { OutboxService } from '../outbox/outbox.service';
-import { Prospect, PROSPECT_STATUSES } from '../../core/models/prospect.model';
+import { Prospect } from '../../core/models/prospect.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
 import { Deposit } from '../../core/models/deposit.model';
 import { Property } from '../../core/models/property.model';
@@ -28,16 +29,13 @@ export class ProspectDetailComponent implements OnInit {
   private interestSvc = inject(ContactInterestService);
   private depositSvc = inject(DepositService);
   private propertySvc = inject(PropertyService);
+  private reservationSvc = inject(ReservationService);
   private outboxSvc  = inject(OutboxService);
   private route = inject(ActivatedRoute);
 
   prospect: Prospect | null = null;
   loading = true;
   error = '';
-  statusMessage = '';
-  selectedStatus = '';
-  updating = false;
-  statuses = PROSPECT_STATUSES;
 
   interests: ContactInterest[] = [];
   properties: Property[] = [];
@@ -56,6 +54,14 @@ export class ProspectDetailComponent implements OnInit {
   depositNotes = '';
   creatingDeposit = false;
 
+  // Reservation form
+  reservationPropertyId = '';
+  reservationPrice: number | null = null;
+  reservationNotes = '';
+  creatingReservation = false;
+  reservationSuccess = '';
+  reservationError = '';
+
   sendingDepositId: string | null = null;
   messageSendSuccess = '';
   messageSendError   = '';
@@ -65,7 +71,6 @@ export class ProspectDetailComponent implements OnInit {
     this.svc.getById(id).subscribe({
       next: (data) => {
         this.prospect = data;
-        this.selectedStatus = data.status;
         this.loading = false;
         this.loadInterests();
         this.loadDeposits();
@@ -82,28 +87,6 @@ export class ProspectDetailComponent implements OnInit {
           this.error = body.message;
         } else {
           this.error = `Failed to load prospect (${err.status})`;
-        }
-      },
-    });
-  }
-
-  onStatusChange(): void {
-    if (!this.prospect || this.selectedStatus === this.prospect.status) return;
-    this.updating = true;
-    this.statusMessage = '';
-    this.svc.updateStatus(this.prospect.id, this.selectedStatus).subscribe({
-      next: (updated) => {
-        this.prospect = updated;
-        this.selectedStatus = updated.status;
-        this.updating = false;
-        this.statusMessage = 'Status updated.';
-      },
-      error: (err: HttpErrorResponse) => {
-        this.updating = false;
-        const body = err.error as ErrorResponse | null;
-        this.statusMessage = body?.message ?? `Update failed (${err.status})`;
-        if (this.prospect) {
-          this.selectedStatus = this.prospect.status;
         }
       },
     });
@@ -127,7 +110,10 @@ export class ProspectDetailComponent implements OnInit {
   }
 
   loadProperties(): void {
-    this.propertySvc.list().subscribe({
+    // Fetch only ACTIVE properties server-side — avoids loading RESERVED/SOLD
+    // properties that cannot be booked, and eliminates the client-side filter race
+    // condition where a just-reserved property still appears in the dropdown.
+    this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
       next: (data) => (this.properties = data),
       error: () => {},
     });
@@ -143,8 +129,10 @@ export class ProspectDetailComponent implements OnInit {
     return this.properties.filter((p) => !interestedIds.has(p.id));
   }
 
+  // All loaded properties are ACTIVE (server-side filter in loadProperties).
+  // This getter is kept for template readability.
   get activeProperties(): Property[] {
-    return this.properties.filter((p) => p.status === 'ACTIVE');
+    return this.properties;
   }
 
   addInterest(): void {
@@ -240,6 +228,48 @@ export class ProspectDetailComponent implements OnInit {
     });
   }
 
+  createReservation(): void {
+    if (!this.prospect || !this.reservationPropertyId) return;
+    this.creatingReservation = true;
+    this.reservationError = '';
+    this.reservationSuccess = '';
+
+    const req: CreateReservationRequest = {
+      contactId: this.prospect.id,
+      propertyId: this.reservationPropertyId,
+      reservationPrice: this.reservationPrice ?? undefined,
+      notes: this.reservationNotes || undefined,
+    };
+
+    this.reservationSvc.create(req).subscribe({
+      next: () => {
+        this.creatingReservation = false;
+        this.reservationSuccess = 'Réservation créée. Le bien est maintenant en attente.';
+        this.reservationPropertyId = '';
+        this.reservationPrice = null;
+        this.reservationNotes = '';
+        // Reload properties (reserved property disappears from ACTIVE list)
+        this.loadProperties();
+        // Reload prospect — status may have auto-promoted to QUALIFIED_PROSPECT
+        this.svc.getById(this.prospect!.id).subscribe({
+          next: (updated) => { this.prospect = updated; },
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.creatingReservation = false;
+        const body = err.error as ErrorResponse | null;
+        if (err.status === 409) {
+          this.reservationError = 'Ce bien est déjà réservé.';
+          this.loadProperties();
+        } else if (err.status === 404) {
+          this.reservationError = 'Bien ou contact introuvable.';
+        } else {
+          this.reservationError = body?.message ?? `Échec de la réservation (${err.status})`;
+        }
+      },
+    });
+  }
+
   createDeposit(): void {
     if (!this.prospect || !this.depositPropertyId || !this.depositAmount) return;
     this.creatingDeposit = true;
@@ -264,10 +294,7 @@ export class ProspectDetailComponent implements OnInit {
         this.loadProperties();
         // Refresh prospect to reflect status/type change from workflow
         this.svc.getById(this.prospect!.id).subscribe({
-          next: (updated) => {
-            this.prospect = updated;
-            this.selectedStatus = updated.status;
-          },
+          next: (updated) => { this.prospect = updated; },
         });
       },
       error: (err: HttpErrorResponse) => {

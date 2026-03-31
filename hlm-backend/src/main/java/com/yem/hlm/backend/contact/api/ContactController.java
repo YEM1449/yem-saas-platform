@@ -64,12 +64,6 @@ public class ContactController {
         return contactService.update(id, request);
     }
 
-    @PatchMapping("/contacts/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ContactResponse updateStatus(@PathVariable("id") UUID id, @Valid @RequestBody UpdateStatusRequest request) {
-        return contactService.updateStatus(id, request.status());
-    }
-
     /**
      * Qualifies a contact as a QUALIFIED_PROSPECT and enriches ProspectDetail
      * with optional budget / source data. ADMIN/MANAGER only.

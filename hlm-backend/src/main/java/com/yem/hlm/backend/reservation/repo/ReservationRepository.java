@@ -17,6 +17,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
 
     List<Reservation> findAllBySocieteIdOrderByCreatedAtDesc(UUID societeId);
 
+    /** Filter reservations by contact — used by the ProspectDetail page. */
+    List<Reservation> findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(UUID societeId, UUID contactId);
+
     /** True if property has an ACTIVE reservation in the given société. */
     boolean existsBySocieteIdAndPropertyIdAndStatus(UUID societeId, UUID propertyId, ReservationStatus status);
 

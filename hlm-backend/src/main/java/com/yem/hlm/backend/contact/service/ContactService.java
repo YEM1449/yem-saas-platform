@@ -4,7 +4,6 @@ import com.yem.hlm.backend.audit.domain.AuditEventType;
 import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.common.error.ErrorCode;
 import com.yem.hlm.backend.common.event.ContactCreatedEvent;
-import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
 import com.yem.hlm.backend.common.event.PropertyInterestEvent;
 import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
@@ -160,25 +159,6 @@ public class ContactService {
         contact.markUpdatedBy(actorUserId);
 
         Contact saved = contactRepository.save(contact);
-        return toResponse(saved);
-    }
-
-    public ContactResponse updateStatus(UUID contactId, ContactStatus newStatus) {
-        UUID societeId = requireSocieteId();
-        UUID actorUserId = requireUserId();
-        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
-                .orElseThrow(() -> new ContactNotFoundException(contactId));
-
-        ContactStatus current = contact.getStatus();
-        if (!current.canTransitionTo(newStatus)) {
-            throw new InvalidStatusTransitionException(current, newStatus);
-        }
-
-        contact.setStatus(newStatus);
-        contact.markUpdatedBy(actorUserId);
-
-        Contact saved = contactRepository.save(contact);
-        eventPublisher.publishEvent(new ContactStatusChangedEvent(societeId, actorUserId, saved.getId(), current, newStatus));
         return toResponse(saved);
     }
 

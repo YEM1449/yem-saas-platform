@@ -39,10 +39,11 @@ public class ReservationController {
         return reservationService.get(id);
     }
 
-    /** List all reservations for the current tenant. */
+    /** List reservations for the current société; optional {@code ?contactId=} filter. */
     @GetMapping
-    public List<ReservationResponse> list() {
-        return reservationService.list();
+    public List<ReservationResponse> list(
+            @RequestParam(required = false) UUID contactId) {
+        return reservationService.list(contactId);
     }
 
     /** Cancel an ACTIVE reservation — ADMIN/MANAGER only. */

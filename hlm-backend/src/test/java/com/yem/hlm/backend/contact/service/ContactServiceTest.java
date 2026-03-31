@@ -147,35 +147,4 @@ class ContactServiceTest {
                 .isInstanceOf(ContactInterestAlreadyExistsException.class);
     }
 
-    @Test
-    void updateStatus_validTransition_succeeds() {
-        UUID contactId = UUID.randomUUID();
-        Contact contact = mock(Contact.class);
-        when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
-        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
-        when(contactRepository.save(any(Contact.class))).thenReturn(contact);
-        when(contact.getId()).thenReturn(contactId);
-        when(contact.getFirstName()).thenReturn("John");
-        when(contact.getLastName()).thenReturn("Doe");
-        when(contact.getFullName()).thenReturn("John Doe");
-
-        ContactResponse res = service.updateStatus(contactId, ContactStatus.QUALIFIED_PROSPECT);
-
-        verify(contact).setStatus(ContactStatus.QUALIFIED_PROSPECT);
-        assertThat(res).isNotNull();
-    }
-
-    @Test
-    void updateStatus_invalidTransition_throws409() {
-        UUID contactId = UUID.randomUUID();
-        Contact contact = mock(Contact.class);
-        when(contact.getStatus()).thenReturn(ContactStatus.PROSPECT);
-        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
-
-        // PROSPECT → CLIENT is not allowed (must go through QUALIFIED_PROSPECT first)
-        assertThatThrownBy(() -> service.updateStatus(contactId, ContactStatus.CLIENT))
-                .isInstanceOf(InvalidStatusTransitionException.class)
-                .hasMessageContaining("PROSPECT")
-                .hasMessageContaining("CLIENT");
-    }
 }

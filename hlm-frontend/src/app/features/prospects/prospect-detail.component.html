@@ -11,20 +11,10 @@
 @if (!loading && prospect) {
   <h2>{{ prospect.fullName }}</h2>
 
-  <div class="status-control">
-    <label for="status">{{ 'prospects.status' | translate }}:</label>
-    <select id="status" [(ngModel)]="selectedStatus" (change)="onStatusChange()" [disabled]="updating">
-      @for (s of statuses; track s) {
-        <option [value]="s">{{ s }}</option>
-      }
-    </select>
-    @if (updating) {
-      <span class="updating">Updating...</span>
-    }
-    @if (statusMessage) {
-      <span class="status-msg">{{ statusMessage }}</span>
-    }
-  </div>
+  <dl>
+    <dt>{{ 'prospects.status' | translate }}</dt>
+    <dd><span class="badge badge-{{ prospect.status.toLowerCase().replace('_', '-') }}">{{ prospect.status }}</span></dd>
+  </dl>
 
   <dl>
     <dt>Email</dt>
@@ -106,8 +96,49 @@
     </table>
   }
 
-  <!-- Deposit / Reservation Section -->
-  <h3>Réservation / Acompte</h3>
+  <!-- ── Reservation (hold) ─────────────────────────────────────────── -->
+  <h3>Réservation (blocage du bien)</h3>
+
+  @if (reservationError) {
+    <p class="error">{{ reservationError }}</p>
+  }
+  @if (reservationSuccess) {
+    <p class="success">{{ reservationSuccess }}</p>
+  }
+
+  <div class="deposit-form">
+    <div class="form-row">
+      <label for="res-property">Bien immobilier</label>
+      <select id="res-property" [(ngModel)]="reservationPropertyId" [disabled]="creatingReservation">
+        <option value="">-- Sélectionner un bien --</option>
+        @for (p of activeProperties; track p.id) {
+          <option [value]="p.id">{{ p.title }} ({{ p.referenceCode }})</option>
+        }
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="res-price">Prix de réservation (optionnel)</label>
+      <input id="res-price" type="number" min="0" step="0.01"
+             [(ngModel)]="reservationPrice" [disabled]="creatingReservation"
+             placeholder="ex. 5000" />
+    </div>
+    <div class="form-row">
+      <label for="res-notes">Notes</label>
+      <input id="res-notes" type="text" [(ngModel)]="reservationNotes"
+             [disabled]="creatingReservation" placeholder="Optionnel" />
+    </div>
+    <button (click)="createReservation()"
+            [disabled]="!reservationPropertyId || creatingReservation">
+      {{ creatingReservation ? ('common.loading' | translate) : 'Créer la réservation' }}
+    </button>
+    <p class="form-hint">
+      La création d'une réservation bloque le bien et fait automatiquement
+      passer le contact à <strong>Prospect Qualifié</strong> si nécessaire.
+    </p>
+  </div>
+
+  <!-- ── Acompte (deposit) ──────────────────────────────────────────── -->
+  <h3>Acompte</h3>
 
   @if (depositError) {
     <p class="error">{{ depositError }}</p>
