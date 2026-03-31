@@ -18,11 +18,4 @@ export class ProspectService {
   getById(id: string): Observable<Prospect> {
     return this.http.get<Prospect>(`${environment.apiUrl}/api/contacts/${id}`);
   }
-
-  updateStatus(id: string, status: string): Observable<Prospect> {
-    return this.http.patch<Prospect>(
-      `${environment.apiUrl}/api/contacts/${id}/status`,
-      { status }
-    );
-  }
 }

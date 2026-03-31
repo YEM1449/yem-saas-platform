@@ -126,10 +126,18 @@ public class ReservationService {
         return toResponse(r);
     }
 
-    public List<ReservationResponse> list() {
+    /**
+     * Lists reservations for the current société.
+     *
+     * @param contactId optional — when provided, only returns reservations for that contact;
+     *                  used by the ProspectDetail page to show a contact's reservation history.
+     */
+    public List<ReservationResponse> list(UUID contactId) {
         UUID societeId = requireSocieteId();
-        return reservationRepository.findAllBySocieteIdOrderByCreatedAtDesc(societeId)
-                .stream().map(this::toResponse).toList();
+        List<Reservation> rows = (contactId != null)
+                ? reservationRepository.findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
+                : reservationRepository.findAllBySocieteIdOrderByCreatedAtDesc(societeId);
+        return rows.stream().map(this::toResponse).toList();
     }
 
     /**

@@ -37,6 +37,25 @@ export interface ConvertToDepositRequest {
   dueDate?: string;
 }
 
+/** Mirrors the backend DepositResponse record. */
+export interface DepositResponse {
+  id: string;
+  contactId: string;
+  propertyId: string;
+  agentId: string;
+  amount: number;
+  currency: string;
+  depositDate: string | null;
+  reference: string;
+  status: string;
+  notes: string | null;
+  dueDate: string | null;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReservationService {
   private http = inject(HttpClient);
@@ -44,6 +63,12 @@ export class ReservationService {
 
   list(): Observable<Reservation[]> {
     return this.http.get<Reservation[]>(`${this.apiUrl}/api/reservations`);
+  }
+
+  listByContact(contactId: string): Observable<Reservation[]> {
+    return this.http.get<Reservation[]>(`${this.apiUrl}/api/reservations`, {
+      params: { contactId },
+    });
   }
 
   get(id: string): Observable<Reservation> {
@@ -58,7 +83,9 @@ export class ReservationService {
     return this.http.post<Reservation>(`${this.apiUrl}/api/reservations/${id}/cancel`, {});
   }
 
-  convertToDeposit(id: string, req: ConvertToDepositRequest): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/api/reservations/${id}/convert-to-deposit`, req);
+  convertToDeposit(id: string, req: ConvertToDepositRequest): Observable<DepositResponse> {
+    return this.http.post<DepositResponse>(
+      `${this.apiUrl}/api/reservations/${id}/convert-to-deposit`, req
+    );
   }
 }
