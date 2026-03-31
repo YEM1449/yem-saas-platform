@@ -193,37 +193,77 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
   </div>
 }
 
-<!-- ── Data Table ────────────────────────────────────────────── -->
+<!-- ── Property Cards ────────────────────────────────────────── -->
 @if (!loading && filtered.length > 0) {
-  <div class="card">
-    <div class="card-body-flush">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'properties.reference' | translate }}</th>
-            <th>Title</th>
-            <th>{{ 'common.type' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-            <th>{{ 'properties.city' | translate }}</th>
-            <th class="text-right">{{ 'properties.price' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of filtered; track p.id) {
-            <tr class="clickable" (click)="goToDetail(p.id)">
-              <td class="td-mono">{{ p.referenceCode }}</td>
-              <td class="fw-medium">{{ p.title }}</td>
-              <td class="td-muted">{{ p.type | titlecase }}</td>
-              <td>
-                <span [class]="badgeClass(p.status)">{{ p.status }}</span>
-              </td>
-              <td class="td-muted">{{ p.city ?? '—' }}</td>
-              <td class="text-right td-muted">{{ p.price !== null ? (p.price | number:'1.0-0') : '—' }}</td>
-            </tr>
+  <div class="property-grid">
+    @for (p of filtered; track p.id) {
+      <div class="property-card" (click)="goToDetail(p.id)">
+
+        <!-- Status ribbon -->
+        <div class="property-card-ribbon">
+          <span [class]="badgeClass(p.status)">{{ statusLabel(p.status) }}</span>
+          <span class="prop-type-tag">{{ typeLabel(p.type) }}</span>
+        </div>
+
+        <!-- Title + reference -->
+        <div class="property-card-body">
+          <div class="prop-ref">{{ p.referenceCode }}</div>
+          <h3 class="prop-title">{{ p.title }}</h3>
+
+          <!-- Location -->
+          @if (p.city) {
+            <div class="prop-meta">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1a3.5 3.5 0 013.5 3.5C9 7 5.5 10.5 5.5 10.5S2 7 2 4.5A3.5 3.5 0 015.5 1z"
+                      stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="5.5" cy="4.5" r="1.2" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+              {{ p.city }}{{ p.region ? ' · ' + p.region : '' }}
+            </div>
           }
-        </tbody>
-      </table>
-    </div>
+
+          <!-- Building (secondary, only when present) -->
+          @if (p.immeubleName || p.buildingName) {
+            <div class="prop-building">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <rect x="1.5" y="2" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M3.5 4.5h1M6.5 4.5h1M3.5 6.5h1M6.5 6.5h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              {{ p.immeubleName ?? p.buildingName }}
+            </div>
+          }
+
+          <!-- Key specs chips -->
+          <div class="prop-specs">
+            @if (p.surfaceAreaSqm) {
+              <span class="spec-chip">{{ p.surfaceAreaSqm }} m²</span>
+            }
+            @if (p.bedrooms) {
+              <span class="spec-chip">{{ p.bedrooms }} ch.</span>
+            }
+            @if (p.floorNumber !== null && p.floorNumber !== undefined) {
+              <span class="spec-chip">Ét. {{ p.floorNumber }}</span>
+            }
+            @if (p.hasPool) {
+              <span class="spec-chip">Piscine</span>
+            }
+          </div>
+        </div>
+
+        <!-- Price footer -->
+        <div class="property-card-footer">
+          @if (p.price !== null) {
+            <span class="prop-price">{{ p.price | number:'1.0-0' }} <small>{{ p.currency ?? 'MAD' }}</small></span>
+          } @else {
+            <span class="prop-price-na">Prix sur demande</span>
+          }
+          <svg class="prop-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+      </div>
+    }
   </div>
 }
 

@@ -1,32 +1,174 @@
-h2 {
-  margin: 0 0 16px;
+/* ── Toolbar ──────────────────────────────────────────────── */
+.pipeline-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-th {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #555;
-}
-
-.clickable {
+.lost-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--c-text-secondary);
   cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.lost-toggle input { cursor: pointer; }
+
+/* ── Kanban Board ─────────────────────────────────────────── */
+.pipeline-board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  align-items: flex-start;
+  min-height: 60vh;
 }
 
-.clickable:hover {
-  background: #f5f5f5;
+.pipeline-col {
+  flex: 0 0 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface, #f8fafc);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.error {
-  color: #d32f2f;
+/* Column header */
+.pipeline-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 3px solid #64748b;
+  background: var(--c-card, #fff);
+  border-bottom: 1px solid var(--c-border);
 }
+.pipeline-col-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.pipeline-col-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 99px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Column body — scrollable list of cards */
+.pipeline-col-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px;
+  overflow-y: auto;
+  max-height: calc(100vh - 240px);
+}
+
+.pipeline-empty {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ── Prospect Card ─────────────────────────────────────────── */
+.pipeline-card {
+  display: block;
+  text-decoration: none;
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: box-shadow 0.12s, border-color 0.12s, transform 0.1s;
+  position: relative;
+}
+.pipeline-card:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  border-color: var(--c-primary, #3b82f6);
+  transform: translateY(-1px);
+}
+
+/* Avatar + identity row */
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.card-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+}
+.card-identity {
+  flex: 1;
+  min-width: 0;
+}
+.card-name {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-temp {
+  display: block;
+  font-size: 0.6875rem;
+  color: #f59e0b;
+  margin-top: 1px;
+}
+
+/* Contact chips */
+.card-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.card-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Arrow */
+.card-arrow {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: var(--c-text-muted);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.pipeline-card:hover .card-arrow { opacity: 1; }
+
+/* Lost column muted style */
+.pipeline-col-lost { opacity: 0.85; }
+.pipeline-card-lost { opacity: 0.7; }
+.pipeline-card-lost:hover { opacity: 1; }
