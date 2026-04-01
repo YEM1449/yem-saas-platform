@@ -9,8 +9,7 @@ import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -271,20 +270,16 @@ class CommissionIT extends IntegrationTestBase {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse prop = objectMapper.readValue(json, PropertyResponse.class);
-        mvc.perform(put("/api/properties/{id}", prop.id())
+        mvc.perform(patch("/api/properties/{id}/status", prop.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new PropertyUpdateRequest(
-                                null, null, null, null, PropertyStatus.ACTIVE,
-                                null, null, null, null, null, null, null, null,
-                                null, null, null, null, null, null, null, null, null,
-                                null, null, null, null))))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
         return prop.id();
     }
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

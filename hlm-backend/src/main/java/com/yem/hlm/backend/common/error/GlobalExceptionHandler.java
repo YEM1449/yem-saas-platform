@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.immeuble.service.ImmeubleNameExistsException;
 import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.societe.CrossSocieteAccessException;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
@@ -520,6 +521,21 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ImmeubleNameExistsException.class)
+    public ResponseEntity<ErrorResponse> handleImmeubleNameExists(
+            ImmeubleNameExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.IMMEUBLE_NAME_EXISTS,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(ImmeubleProjectMismatchException.class)

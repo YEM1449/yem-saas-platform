@@ -13,8 +13,7 @@ import com.yem.hlm.backend.payments.api.dto.SendScheduleItemRequest;
 import com.yem.hlm.backend.payments.domain.PaymentScheduleStatus;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
@@ -367,22 +366,17 @@ class PaymentScheduleIT extends IntegrationTestBase {
 
         PropertyResponse prop = objectMapper.readValue(json, PropertyResponse.class);
 
-        var update = new PropertyUpdateRequest(
-                null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null
-        );
-        mvc.perform(put("/api/properties/{id}", prop.id())
+        mvc.perform(patch("/api/properties/{id}/status", prop.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(update)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
 
         return prop.id();
     }
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Marie", "Martin", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Marie", "Martin", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

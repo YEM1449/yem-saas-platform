@@ -161,7 +161,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         var updateReq = new PropertyUpdateRequest(
                 "Updated Villa Title", null, null,
-                new BigDecimal("6000000.00"), PropertyStatus.ACTIVE,
+                new BigDecimal("6000000.00"),
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null
@@ -173,8 +173,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Updated Villa Title"))
-                .andExpect(jsonPath("$.price").value(6000000.00))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.price").value(6000000.00));
     }
 
     @Test
@@ -189,7 +188,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
         var updateReq = new PropertyUpdateRequest(
-                "Hacked Title", null, null, null, null, null, null, null, null, null,
+                "Hacked Title", null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null
         );
@@ -419,7 +418,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         assertThat(created.listedForSale()).isFalse();
 
         var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 true, null, null, "Bâtiment B"
         );
@@ -717,7 +716,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         final UUID archivedProjectId = archived.getId();
 
         var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, archivedProjectId, null, null
         );
@@ -742,7 +741,7 @@ class PropertyControllerIT extends IntegrationTestBase {
         UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, UUID.randomUUID(), null
@@ -779,7 +778,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         Project newProject = projectRepository.save(new Project(societe.getId(), "Second Project"));
         var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, newProject.getId(), null, null
@@ -820,7 +819,7 @@ class PropertyControllerIT extends IntegrationTestBase {
 
         Project newProject = projectRepository.save(new Project(societe.getId(), "Third Project"));
         var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, newProject.getId(), immeuble.getId(), null
@@ -919,7 +918,7 @@ class PropertyControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         UUID lotId = objectMapper.readValue(json, PropertyResponse.class).id();
 
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null, null,
+        var updateReq = new PropertyUpdateRequest(null, null, null, null, null, null, null, null, null,
                 null, null, 3, null, null, null, null, null, null, null, null, null, null, null, null, null);
         mvc.perform(put("/api/properties/{id}", lotId)
                         .header("Authorization", adminBearer)

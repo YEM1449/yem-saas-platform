@@ -281,7 +281,7 @@ class ReservationControllerIT extends IntegrationTestBase {
     }
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -47,6 +47,9 @@ public enum ErrorCode {
     // Project errors (409)
     PROJECT_NAME_EXISTS,
 
+    // Immeuble errors (409)
+    IMMEUBLE_NAME_EXISTS,        // 409 — a building with this name already exists in the project
+
     // Project assignment errors (400)
     ARCHIVED_PROJECT,
 

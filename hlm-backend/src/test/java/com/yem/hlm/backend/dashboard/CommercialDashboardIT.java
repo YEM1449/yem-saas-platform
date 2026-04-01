@@ -2,6 +2,7 @@ package com.yem.hlm.backend.dashboard;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yem.hlm.backend.auth.config.CacheConfig;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
@@ -12,8 +13,7 @@ import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +61,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Autowired SocieteRepository societeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProspectDetailRepository prospectDetailRepository;
+    @Autowired CacheManager cacheManager;
 
     private String adminBearer;
     private int refCounter = 0;
@@ -67,6 +69,9 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @BeforeEach
     void setup() {
         adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
+        // Evict dashboard cache to prevent stale @Cacheable results bleeding between @Transactional tests
+        var cache = cacheManager.getCache(CacheConfig.COMMERCIAL_DASHBOARD_CACHE);
+        if (cache != null) cache.clear();
     }
 
     // =========================================================================
@@ -318,21 +323,16 @@ class CommercialDashboardIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
-        var update = new PropertyUpdateRequest(
-                null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null
-        );
-        mvc.perform(put("/api/properties/{id}", created.id())
-                        .header("Authorization", bearer)
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(update)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
         return created.id();
     }
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Test", "Buyer", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

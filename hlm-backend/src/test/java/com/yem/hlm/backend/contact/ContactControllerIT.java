@@ -6,8 +6,7 @@ import com.yem.hlm.backend.contact.api.dto.*;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -61,7 +60,7 @@ class ContactControllerIT extends IntegrationTestBase {
 
     @Test
     void create_withToken_returns201_andProspect() throws Exception {
-        var req = new CreateContactRequest("John", "Doe", "0612", "john@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("John", "Doe", "0612", "john@acme.com", null, null, null, true, null, null);
 
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
@@ -81,7 +80,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void convert_validationError_returns400() throws Exception {
         // Create
-        var createReq = new CreateContactRequest("Alice", "Smith", null, "alice@acme.com", null, null, null, null, null, null);
+        var createReq = new CreateContactRequest("Alice", "Smith", null, "alice@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,7 +101,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void interests_duplicate_returns409() throws Exception {
         // Create
-        var createReq = new CreateContactRequest("Yass", "B", null, "yass@acme.com", null, null, null, null, null, null);
+        var createReq = new CreateContactRequest("Yass", "B", null, "yass@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -146,7 +145,7 @@ class ContactControllerIT extends IntegrationTestBase {
                         .header("Authorization", badBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateContactRequest(
-                                "Unknown", "Societe", null, "unknown@societe.com", null, null, null, null, null, null
+                                "Unknown", "Societe", null, "unknown@societe.com", null, null, null, true, null, null
                         ))))
                 .andExpect(status().is5xxServerError());
     }
@@ -156,7 +155,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void listContacts_tenantIsolation_returnsOnlyOwnContacts() throws Exception {
         // Create contact in tenant A (seeded acme)
-        var reqA = new CreateContactRequest("Alice", "TenantA", null, "alice-a@acme.com", null, null, null, null, null, null);
+        var reqA = new CreateContactRequest("Alice", "TenantA", null, "alice-a@acme.com", null, null, null, true, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -171,7 +170,7 @@ class ContactControllerIT extends IntegrationTestBase {
         String bearerB = "Bearer " + jwtProvider.generate(userB.getId(), tenantB.getId(), UserRole.ROLE_ADMIN);
 
         // Create contact in tenant B
-        var reqB = new CreateContactRequest("Bob", "TenantB", null, "bob-b@iso.com", null, null, null, null, null, null);
+        var reqB = new CreateContactRequest("Bob", "TenantB", null, "bob-b@iso.com", null, null, null, true, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", bearerB)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -195,7 +194,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void getContact_crossTenant_returns404() throws Exception {
         // Create contact in tenant A
-        var reqA = new CreateContactRequest("Cross", "Check", null, "cross@acme.com", null, null, null, null, null, null);
+        var reqA = new CreateContactRequest("Cross", "Check", null, "cross@acme.com", null, null, null, true, null, null);
         String jsonA = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -222,7 +221,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void listContacts_filterByContactType_returnsOnlyProspects() throws Exception {
         // Create a contact (defaults to PROSPECT type)
-        var req = new CreateContactRequest("Filtered", "Prospect", null, "fp@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("Filtered", "Prospect", null, "fp@acme.com", null, null, null, true, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -247,7 +246,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void updateStatus_validTransition_returnsUpdated() throws Exception {
         // Create contact
-        var req = new CreateContactRequest("Status", "Test", null, "status@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("Status", "Test", null, "status@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -268,7 +267,7 @@ class ContactControllerIT extends IntegrationTestBase {
 
     @Test
     void updateStatus_invalidValue_returns400() throws Exception {
-        var req = new CreateContactRequest("Bad", "Status", null, "badstatus@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("Bad", "Status", null, "badstatus@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -288,7 +287,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void updateStatus_crossTenant_returns404() throws Exception {
         // Create contact in tenant A
-        var req = new CreateContactRequest("CrossStatus", "Test", null, "crossstatus@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("CrossStatus", "Test", null, "crossstatus@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -314,7 +313,7 @@ class ContactControllerIT extends IntegrationTestBase {
 
     @Test
     void updateStatus_invalidTransition_returns409() throws Exception {
-        var req = new CreateContactRequest("Machine", "Test", null, "machine@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("Machine", "Test", null, "machine@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -342,7 +341,7 @@ class ContactControllerIT extends IntegrationTestBase {
     @Test
     void listContacts_multipleContactTypes_includesTempClient() throws Exception {
         // Create a PROSPECT contact, then deposit converts it to TEMP_CLIENT
-        var req = new CreateContactRequest("TempClient", "Prospect", null, "tempclient@acme.com", null, null, null, null, null, null);
+        var req = new CreateContactRequest("TempClient", "Prospect", null, "tempclient@acme.com", null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -361,7 +360,7 @@ class ContactControllerIT extends IntegrationTestBase {
         // Filter by PROSPECT only — should NOT include TEMP_CLIENT contacts
         // (the contact is still PROSPECT type at this point since status ≠ type)
         // Now create another contact that stays PROSPECT
-        var req2 = new CreateContactRequest("StillProspect", "Test", null, "stillprospect@acme.com", null, null, null, null, null, null);
+        var req2 = new CreateContactRequest("StillProspect", "Test", null, "stillprospect@acme.com", null, null, null, true, null, null);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -415,13 +414,10 @@ class ContactControllerIT extends IntegrationTestBase {
 
         PropertyResponse created = objectMapper.readValue(body, PropertyResponse.class);
 
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
-        mvc.perform(put("/api/properties/{id}", created.id())
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateReq)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
 
         return created.id();
