@@ -199,7 +199,7 @@ class PropertyServiceTest {
         when(projectActiveGuard.requireActive(societeId, newProjectId)).thenReturn(newProject);
 
         PropertyResponse response = propertyService.update(propertyId, new PropertyUpdateRequest(
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, newProjectId, null, null
@@ -228,7 +228,7 @@ class PropertyServiceTest {
         when(immeubleRepository.findBySocieteIdAndId(societeId, immeubleId)).thenReturn(Optional.of(immeuble));
 
         assertThatThrownBy(() -> propertyService.update(propertyId, new PropertyUpdateRequest(
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, immeubleId, null

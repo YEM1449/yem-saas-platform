@@ -6,7 +6,7 @@ import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
+import com.yem.hlm.backend.property.api.dto.PropertyStatusUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
@@ -325,14 +325,11 @@ class ReservationControllerIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse created = objectMapper.readValue(propJson, PropertyResponse.class);
 
-        // Activate: DRAFT → ACTIVE
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
-        mvc.perform(put("/api/properties/{id}", created.id())
+        // Activate: DRAFT → ACTIVE via the editorial status endpoint
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateReq)))
+                        .content(objectMapper.writeValueAsString(new PropertyStatusUpdateRequest(PropertyStatus.ACTIVE))))
                 .andExpect(status().isOk());
 
         return created.id();

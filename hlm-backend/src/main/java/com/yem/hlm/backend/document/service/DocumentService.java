@@ -55,7 +55,7 @@ public class DocumentService {
             throw new MediaTypeNotAllowedException(contentType);
         }
         String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), contentType);
-        String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : fileKey;
+        String fileName = sanitizeFilename(file.getOriginalFilename(), fileKey);
 
         Document doc = new Document(societeId, entityType, entityId,
                 fileName, fileKey, contentType, file.getSize(), uploadedByUserId);
@@ -85,5 +85,20 @@ public class DocumentService {
     private Document requireDocument(UUID societeId, UUID documentId) {
         return documentRepository.findBySocieteIdAndId(societeId, documentId)
                 .orElseThrow(() -> new DocumentNotFoundException(documentId));
+    }
+
+    /**
+     * Strips path separators, null bytes, and control characters from an uploaded filename.
+     * Prevents HTTP header injection in Content-Disposition and path traversal in logs.
+     */
+    private static String sanitizeFilename(String original, String fallback) {
+        if (original == null || original.isBlank()) return fallback;
+        // Remove path components (both separators)
+        String name = original.replaceAll("[/\\\\]", "_");
+        // Remove null bytes and ASCII control characters (0x00–0x1F, 0x7F)
+        name = name.replaceAll("[\\x00-\\x1F\\x7F]", "");
+        // Trim and fall back to generated key if result is blank
+        name = name.trim();
+        return name.isBlank() ? fallback : name;
     }
 }

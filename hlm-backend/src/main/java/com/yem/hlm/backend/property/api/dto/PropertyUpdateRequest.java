@@ -1,6 +1,5 @@
 package com.yem.hlm.backend.property.api.dto;
 
-import com.yem.hlm.backend.property.domain.PropertyStatus;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -11,7 +10,6 @@ public record PropertyUpdateRequest(
         @Size(max = 5000) String description,
         @Size(max = 5000) String notes,
         BigDecimal price,
-        PropertyStatus status,
         @Size(max = 255) String address,
         @Size(max = 100) String city,
         @Size(max = 100) String region,

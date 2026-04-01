@@ -112,8 +112,10 @@ public class SecurityConfig {
                         // Super-admin société management (legacy path — kept for backward compat)
                         .requestMatchers("/api/societes/**").hasRole("SUPER_ADMIN")
 
-                        // OpenAPI / Swagger UI
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // OpenAPI / Swagger UI — require authentication to prevent schema reconnaissance
+                        // in production. All CRM roles + SUPER_ADMIN can access for development/testing.
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                            .hasAnyRole("ADMIN", "MANAGER", "AGENT", "SUPER_ADMIN")
 
                         // Portal auth — public (no JWT required)
                         .requestMatchers(HttpMethod.POST, "/api/portal/auth/request-link").permitAll()

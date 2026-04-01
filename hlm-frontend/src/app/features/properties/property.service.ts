@@ -47,7 +47,6 @@ export interface UpdatePropertyRequest {
   description?: string | null;
   notes?: string | null;
   price?: number | null;
-  status?: string | null;
   address?: string | null;
   city?: string | null;
   region?: string | null;
@@ -129,6 +128,15 @@ export class PropertyService {
   /** Update an existing property (ADMIN / MANAGER only). */
   update(id: string, req: UpdatePropertyRequest): Observable<Property> {
     return this.http.put<Property>(`${this.apiUrl}/api/properties/${id}`, req);
+  }
+
+  /**
+   * Change editorial status (ADMIN only).
+   * Only DRAFT / ACTIVE / WITHDRAWN / ARCHIVED are accepted.
+   * RESERVED and SOLD are managed by the reservation/contract workflow.
+   */
+  setStatus(id: string, status: string): Observable<Property> {
+    return this.http.patch<Property>(`${this.apiUrl}/api/properties/${id}/status`, { status });
   }
 
   /** Soft-delete a property (ADMIN only). */

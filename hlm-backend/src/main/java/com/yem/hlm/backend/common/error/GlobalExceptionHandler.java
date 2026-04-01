@@ -25,6 +25,7 @@ import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
 import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
+import com.yem.hlm.backend.property.service.InvalidPropertyStatusTransitionException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
 import com.yem.hlm.backend.property.service.ImmeubleProjectMismatchException;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
@@ -320,6 +321,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidStatusTransitionException.class)
     public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
             InvalidStatusTransitionException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_STATUS_TRANSITION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidPropertyStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPropertyStatusTransition(
+            InvalidPropertyStatusTransitionException ex,
             HttpServletRequest request
     ) {
         ErrorResponse error = ErrorResponse.of(

@@ -48,7 +48,8 @@ public class PropertyImportService {
             "text/csv",
             "application/csv",
             "application/vnd.ms-excel",
-            "text/plain"
+            "text/plain",
+            "application/octet-stream"   // browsers that don't know CSV MIME type
     );
 
     private final PropertyService propertyService;
@@ -125,11 +126,30 @@ public class PropertyImportService {
                 ? file.getOriginalFilename().toLowerCase(Locale.ROOT)
                 : "";
 
-        boolean csvFilename = filename.endsWith(".csv");
-        boolean csvContentType = contentType != null && ALLOWED_CSV_CONTENT_TYPES.contains(contentType);
-        if (!csvFilename && !csvContentType) {
+        // Require .csv extension — guards against obviously mis-typed files.
+        // Content-type alone is not checked because browsers report it inconsistently.
+        if (!filename.endsWith(".csv")) {
             throw new MediaTypeNotAllowedException(contentType != null ? contentType : "unknown");
         }
+
+        // Additionally reject files whose content-type is a known non-text binary type.
+        // This stops renamed images/executables that happen to be named .csv.
+        if (contentType != null && isClearlyBinaryContentType(contentType)) {
+            throw new MediaTypeNotAllowedException(contentType);
+        }
+    }
+
+    private static boolean isClearlyBinaryContentType(String contentType) {
+        String ct = contentType.toLowerCase(Locale.ROOT);
+        return ct.startsWith("image/")
+                || ct.startsWith("video/")
+                || ct.startsWith("audio/")
+                || ct.equals("application/zip")
+                || ct.equals("application/x-zip-compressed")
+                || ct.equals("application/x-rar-compressed")
+                || ct.equals("application/pdf")
+                || ct.equals("application/x-msdownload")
+                || ct.equals("application/x-executable");
     }
 
     private PropertyCreateRequest parseRow(CSVRecord record, int rowNum) {

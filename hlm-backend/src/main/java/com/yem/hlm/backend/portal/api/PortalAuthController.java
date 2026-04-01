@@ -8,8 +8,11 @@ import com.yem.hlm.backend.portal.service.PortalAuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Portal Auth", description = "Magic-link portal authentication (public)")
 @RestController
 @RequestMapping("/api/portal/auth")
+@Validated
 public class PortalAuthController {
 
     private final PortalAuthService portalAuthService;
@@ -56,7 +60,7 @@ public class PortalAuthController {
      */
     @GetMapping("/verify")
     public ResponseEntity<PortalTokenVerifyResponse> verify(
-            @RequestParam("token") String token,
+            @RequestParam("token") @NotBlank @Size(max = 128) String token,
             HttpServletResponse response) {
         PortalTokenVerifyResponse verifyResponse = portalAuthService.verifyToken(token);
         applyNoStoreHeaders(response);
