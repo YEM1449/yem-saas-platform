@@ -125,18 +125,10 @@ export class SocieteMembersComponent implements OnInit {
     this.impersonating[m.userId] = true;
     this.error = '';
     this.svc.impersonate(this.societeId, m.userId).subscribe({
-      next: (res) => {
+      next: () => {
         this.impersonating[m.userId] = false;
-        // Save original super admin token for return
-        const currentToken = localStorage.getItem('hlm_access_token');
-        if (currentToken) {
-          localStorage.setItem('hlm_superadmin_original_token', currentToken);
-        }
-        // Set impersonation token as THE active token (auth interceptor reads this key)
-        localStorage.setItem('hlm_access_token', res.token);
-        localStorage.setItem('hlm_impersonation_active', 'true');
-        localStorage.setItem('hlm_impersonation_target', res.targetUserEmail);
-        localStorage.setItem('hlm_impersonation_societe', this.societeId);
+        // Backend sets the impersonation JWT as an httpOnly cookie.
+        // Navigate to CRM — /auth/me will return isImpersonating=true.
         this.router.navigateByUrl('/app/properties');
       },
       error: (err: HttpErrorResponse) => {

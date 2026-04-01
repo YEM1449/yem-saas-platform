@@ -52,9 +52,13 @@ public class CorsConfig {
         config.setAllowedOrigins(origins);
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        // allowCredentials=true is required for the browser to send the httpOnly auth cookie
+        // cross-origin (Angular on :4200 → API on :8080 in dev; same-domain via proxy in prod).
+        // Note: allowCredentials=true is incompatible with wildcard origins ("*") — the
+        // explicit origin list set above satisfies this requirement.
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         config.setExposedHeaders(List.of("Location"));
-        config.setAllowCredentials(false);
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

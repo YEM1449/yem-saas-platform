@@ -66,7 +66,8 @@ export interface InviteUserRequest {
 export interface UpdateMembreRoleRequest { nouveauRole: string; raison?: string; }
 
 export interface ImpersonateResponse {
-  token: string; targetUserId: string; targetSocieteId: string;
+  // token is stripped from the body by the backend (set as httpOnly cookie)
+  targetUserId: string; targetSocieteId: string;
   targetUserEmail: string; targetRole: string; ttlSeconds: number;
 }
 

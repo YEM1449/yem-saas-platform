@@ -64,6 +64,16 @@ public class AuthMeController {
             });
         }
 
+        // Impersonation state — non-null imp claim means this is an impersonation session
+        UUID impersonatedBy = SocieteContext.getImpersonatedBy();
+        if (impersonatedBy != null) {
+            result.put("isImpersonating", true);
+            userRepository.findById(userId).ifPresent(target ->
+                    result.put("impersonationTargetEmail", target.getEmail()));
+        } else {
+            result.put("isImpersonating", false);
+        }
+
         return result;
     }
 

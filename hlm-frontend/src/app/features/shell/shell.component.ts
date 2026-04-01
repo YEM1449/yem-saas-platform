@@ -2,6 +2,7 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { KeepAliveService } from '../../core/keep-alive.service';
+import { SocieteService } from '../superadmin/societes/societe.service';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
@@ -17,6 +18,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   private router = inject(Router);
   private keepAlive = inject(KeepAliveService);
+  private societeSvc = inject(SocieteService);
 
   ngOnInit(): void { this.keepAlive.start(); }
   ngOnDestroy(): void { this.keepAlive.stop(); }
@@ -31,24 +33,29 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   // ── Impersonation ──────────────────────────────────────────────────
+  // isImpersonating is derived from /auth/me (isImpersonating claim in the httpOnly cookie)
   get isImpersonating(): boolean {
-    return localStorage.getItem('hlm_impersonation_active') === 'true';
+    return this.auth.user?.isImpersonating === true;
   }
 
   get impersonationTarget(): string {
-    return localStorage.getItem('hlm_impersonation_target') ?? '';
+    return this.auth.user?.impersonationTargetEmail ?? '';
   }
 
   endImpersonation(): void {
-    const original = localStorage.getItem('hlm_superadmin_original_token');
-    if (original) {
-      localStorage.setItem('hlm_access_token', original);
-    }
-    localStorage.removeItem('hlm_impersonation_active');
-    localStorage.removeItem('hlm_impersonation_target');
-    localStorage.removeItem('hlm_impersonation_societe');
-    localStorage.removeItem('hlm_superadmin_original_token');
-    this.router.navigateByUrl('/superadmin/societes');
+    // Ask the backend to re-issue the original SUPER_ADMIN cookie
+    this.societeSvc.endImpersonation().subscribe({
+      complete: () => {
+        // Clear the cached /auth/me so the next guard re-fetches as SUPER_ADMIN
+        this.auth.clearCachedUser();
+        this.router.navigateByUrl('/superadmin/societes');
+      },
+      error: () => {
+        // Even if the call fails, navigate away (the impersonation cookie will expire)
+        this.auth.clearCachedUser();
+        this.router.navigateByUrl('/superadmin/societes');
+      },
+    });
   }
 
   /** Avatar monogram — first character of the userId (or role label) */

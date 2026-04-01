@@ -481,6 +481,28 @@ public class SocieteService {
                 user.getEmail(), role, IMPERSONATION_TTL_SECONDS);
     }
 
+    /**
+     * Ends an active impersonation session and re-issues the original SUPER_ADMIN JWT.
+     *
+     * @param superAdminId the SUPER_ADMIN's UUID read from the {@code imp} claim of the
+     *                     current impersonation token (via {@code SocieteContext.getImpersonatedBy()})
+     * @return a new full SUPER_ADMIN JWT (to be set as httpOnly cookie by the controller)
+     */
+    @Transactional(readOnly = true)
+    public String endImpersonation(UUID superAdminId) {
+        if (superAdminId == null) {
+            throw new BusinessRuleException(ErrorCode.UNAUTHORIZED,
+                    "No active impersonation session.");
+        }
+        var superAdmin = userRepository.findById(superAdminId)
+                .orElseThrow(() -> new BusinessRuleException(ErrorCode.USER_NOT_FOUND,
+                        "Super admin not found: " + superAdminId));
+        // Re-issue a SUPER_ADMIN-scoped JWT (no sid — platform level)
+        return jwtProvider.generate(superAdminId, null,
+                "ROLE_SUPER_ADMIN",
+                superAdmin.getTokenVersion());
+    }
+
     // ── Compatibility helpers (used by old SocieteController until SA-6 rewrites it) ──
 
     /** @deprecated Use {@link #listMembres(UUID)} instead. */

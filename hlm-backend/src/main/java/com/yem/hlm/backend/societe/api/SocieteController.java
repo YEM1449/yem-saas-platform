@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.societe.api;
 
+import com.yem.hlm.backend.auth.security.CookieTokenHelper;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteService;
 import com.yem.hlm.backend.societe.annotation.RequiresSuperAdmin;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -41,13 +43,16 @@ public class SocieteController {
     private final SocieteService societeService;
     private final InvitationService invitationService;
     private final SocieteLogoService societeLogoService;
+    private final CookieTokenHelper cookieHelper;
 
     public SocieteController(SocieteService societeService,
                              InvitationService invitationService,
-                             SocieteLogoService societeLogoService) {
+                             SocieteLogoService societeLogoService,
+                             CookieTokenHelper cookieHelper) {
         this.societeService = societeService;
         this.invitationService = invitationService;
         this.societeLogoService = societeLogoService;
+        this.cookieHelper = cookieHelper;
     }
 
     // ── List / Read ───────────────────────────────────────────────────────────
@@ -219,14 +224,23 @@ public class SocieteController {
 
     /**
      * Issues a short-lived impersonation JWT for the target user in the given société.
+     * The JWT is set as an httpOnly cookie — it is never returned in the response body.
      * The SUPER_ADMIN must be authenticated; the issued token inherits the target
      * user's role and carries an {@code imp} claim for audit traceability.
      */
     @PostMapping("/{id}/impersonate/{userId}")
     @RequiresSuperAdmin
     public ResponseEntity<ImpersonateResponse> impersonate(@PathVariable UUID id,
-                                                            @PathVariable UUID userId) {
+                                                            @PathVariable UUID userId,
+                                                            HttpServletResponse response) {
         UUID superAdminId = SocieteContext.getUserId();
-        return ResponseEntity.ok(societeService.impersonate(id, userId, superAdminId));
+        ImpersonateResponse res = societeService.impersonate(id, userId, superAdminId);
+        // Set the impersonation JWT as an httpOnly cookie — keep token out of JS reach
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                cookieHelper.buildAuthCookie(res.token(), res.ttlSeconds()).toString());
+        return ResponseEntity.ok(res.withoutToken());
     }
+
 }
+
+// ── End-impersonation endpoint (separate controller to allow access from impersonated session) ─

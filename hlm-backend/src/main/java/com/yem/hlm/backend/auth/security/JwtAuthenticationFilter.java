@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -35,13 +36,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final UserSecurityCacheService userSecurityCacheService;
     private final SecurityAuditLogger securityAuditLogger;
+    private final CookieTokenHelper cookieHelper;
 
     public JwtAuthenticationFilter(JwtProvider jwtProvider,
                                    UserSecurityCacheService userSecurityCacheService,
-                                   SecurityAuditLogger securityAuditLogger) {
-        this.jwtProvider = jwtProvider;
+                                   SecurityAuditLogger securityAuditLogger,
+                                   CookieTokenHelper cookieHelper) {
+        this.jwtProvider              = jwtProvider;
         this.userSecurityCacheService = userSecurityCacheService;
-        this.securityAuditLogger = securityAuditLogger;
+        this.securityAuditLogger      = securityAuditLogger;
+        this.cookieHelper             = cookieHelper;
     }
 
     @Override
@@ -52,8 +56,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         try {
-            // 1) Parse "Authorization: Bearer <token>"
+            // 1) Resolve token: Bearer header first (partial tokens, API clients),
+            //    then fall back to the httpOnly auth cookie (SPA sessions).
             String token = resolveBearerToken(request);
+            if (token == null) {
+                token = cookieHelper.extractFromRequest(request);
+            }
 
             if (token != null && jwtProvider.isValid(token)) {
                 // 2) Partial tokens (issued during multi-société selection) are only
