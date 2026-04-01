@@ -117,7 +117,7 @@ export class TemplateListComponent implements OnInit {
   }
 
   previewPdf(type: TemplateType): void {
-    window.open(this.svc.previewUrl(type), '_blank');
+    window.open(this.svc.previewUrl(type), '_blank', 'noopener,noreferrer');
   }
 
   revert(type: TemplateType): void {

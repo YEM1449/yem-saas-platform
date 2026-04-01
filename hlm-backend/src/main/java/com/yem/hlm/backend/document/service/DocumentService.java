@@ -4,14 +4,20 @@ import com.yem.hlm.backend.document.domain.Document;
 import com.yem.hlm.backend.document.domain.DocumentEntityType;
 import com.yem.hlm.backend.document.repo.DocumentRepository;
 import com.yem.hlm.backend.media.service.MediaStorageService;
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -19,17 +25,35 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final MediaStorageService storageService;
+    private final long maxFileSize;
+    private final Set<String> allowedTypes;
 
-    public DocumentService(DocumentRepository documentRepository, MediaStorageService storageService) {
+    public DocumentService(
+            DocumentRepository documentRepository,
+            MediaStorageService storageService,
+            @Value("${app.documents.max-file-size:10485760}") long maxFileSize,
+            @Value("${app.documents.allowed-types:application/pdf,image/jpeg,image/png,image/webp,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet}")
+            String allowedTypesRaw) {
         this.documentRepository = documentRepository;
         this.storageService = storageService;
+        this.maxFileSize = maxFileSize;
+        this.allowedTypes = Arrays.stream(allowedTypesRaw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toSet());
     }
 
     @Transactional
     public Document upload(UUID societeId, UUID uploadedByUserId,
                            DocumentEntityType entityType, UUID entityId,
                            MultipartFile file) throws IOException {
+        if (file.getSize() > maxFileSize) {
+            throw new MediaTooLargeException(file.getSize(), maxFileSize);
+        }
         String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+        if (!allowedTypes.contains(contentType)) {
+            throw new MediaTypeNotAllowedException(contentType);
+        }
         String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), contentType);
         String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : fileKey;
 

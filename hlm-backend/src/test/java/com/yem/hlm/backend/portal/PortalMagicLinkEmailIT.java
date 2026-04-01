@@ -5,6 +5,7 @@ import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.contact.domain.ProcessingBasis;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
 import jakarta.mail.internet.MimeMessage;
@@ -82,7 +83,7 @@ class PortalMagicLinkEmailIT extends IntegrationTestBase {
 
         // Create the contact that will request a magic link
         var req = new CreateContactRequest("Portal", "Tester", null, "portal-test@example.com",
-                null, null, null, null, null, null);
+                null, null, null, false, null, ProcessingBasis.CONTRACT);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -43,7 +43,7 @@ const TYPE_LABELS: Record<string, string> = {
           </svg>
           {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
         </button>
-        <a [href]="previewHref" target="_blank" class="btn btn-outline">
+        <a [href]="previewHref" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <path d="M1.5 6.5C1.5 6.5 3.5 2.5 6.5 2.5S11.5 6.5 11.5 6.5 9.5 10.5 6.5 10.5 1.5 6.5 1.5 6.5z" stroke="currentColor" stroke-width="1.3"/>
             <circle cx="6.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.3"/>

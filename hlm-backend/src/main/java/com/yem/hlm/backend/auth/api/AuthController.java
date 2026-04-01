@@ -54,6 +54,7 @@ public class AuthController {
     public LoginResponse login(@Valid @RequestBody LoginRequest req,
                                HttpServletResponse response) {
         LoginResponse loginRes = authService.login(req);
+        applyNoStoreHeaders(response);
         if (!loginRes.requiresSocieteSelection()) {
             // Full JWT — set as httpOnly cookie; suppress from response body
             setAuthCookie(response, loginRes.accessToken(), loginRes.expiresIn());
@@ -77,6 +78,7 @@ public class AuthController {
             @Valid @RequestBody SwitchSocieteRequest req,
             HttpServletResponse response) {
         LoginResponse loginRes = authService.switchSociete(authorizationHeader, req);
+        applyNoStoreHeaders(response);
         setAuthCookie(response, loginRes.accessToken(), loginRes.expiresIn());
         return withoutToken(loginRes);
     }
@@ -89,6 +91,7 @@ public class AuthController {
     @Operation(summary = "Logout — clears the auth cookie")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
+        applyNoStoreHeaders(response);
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHelper.buildClearCookie().toString());
         return ResponseEntity.noContent().build();
     }
@@ -111,6 +114,7 @@ public class AuthController {
                                        @Valid @RequestBody ActivationRequest req,
                                        HttpServletResponse response) {
         LoginResponse loginRes = invitationService.activerCompte(token, req);
+        applyNoStoreHeaders(response);
         setAuthCookie(response, loginRes.accessToken(), loginRes.expiresIn());
         return withoutToken(loginRes);
     }
@@ -121,6 +125,11 @@ public class AuthController {
     private void setAuthCookie(HttpServletResponse response, String token, long maxAgeSeconds) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 cookieHelper.buildAuthCookie(token, maxAgeSeconds).toString());
+    }
+
+    private void applyNoStoreHeaders(HttpServletResponse response) {
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store, max-age=0");
+        response.setHeader("Pragma", "no-cache");
     }
 
     /**

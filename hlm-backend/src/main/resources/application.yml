@@ -43,6 +43,10 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+  servlet:
+    multipart:
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:10MB}
 
   # Redis connection (used when app.redis.enabled=true)
   data:
@@ -177,6 +181,7 @@ app:
   portal:
     base-url: ${PORTAL_BASE_URL:http://localhost:4200}
     cleanup-cron: "${PORTAL_CLEANUP_CRON:0 0 3 * * *}"
+    return-magic-link-in-response: ${PORTAL_RETURN_MAGIC_LINK_IN_RESPONSE:false}
 
   payments:
     # Daily cron for marking overdue payment calls (default 06:00)
@@ -213,6 +218,13 @@ app:
       bucket:     ${MEDIA_OBJECT_STORAGE_BUCKET:hlm-media}
       access-key: ${MEDIA_OBJECT_STORAGE_ACCESS_KEY:}
       secret-key: ${MEDIA_OBJECT_STORAGE_SECRET_KEY:}
+
+  documents:
+    max-file-size: ${DOCUMENT_MAX_FILE_SIZE:10485760}
+    allowed-types: ${DOCUMENT_ALLOWED_TYPES:application/pdf,image/jpeg,image/png,image/webp,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet}
+
+  property-import:
+    max-file-size: ${PROPERTY_IMPORT_MAX_FILE_SIZE:2097152}
 
   # GDPR / Law 09-08 data retention
   gdpr:

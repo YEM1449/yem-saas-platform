@@ -2,7 +2,6 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
 import { Project, ProjectKpi } from '../../core/models/project.model';
@@ -28,7 +27,6 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   private svc = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
-  private sanitizer = inject(DomSanitizer);
   auth = inject(AuthService);
 
   project: Project | null = null;
@@ -42,7 +40,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   logoUploading = false;
   docUploading = false;
 
-  logoSrc: SafeUrl | null = null;
+  logoSrc: string | null = null;
   private logoObjectUrl: string | null = null;
 
   get projectId(): string {
@@ -153,7 +151,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       next: (blob) => {
         this.revokeLogo();
         this.logoObjectUrl = URL.createObjectURL(blob);
-        this.logoSrc = this.sanitizer.bypassSecurityTrustUrl(this.logoObjectUrl);
+        this.logoSrc = this.logoObjectUrl;
       },
       error: () => { this.logoSrc = null; },
     });

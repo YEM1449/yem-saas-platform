@@ -31,7 +31,7 @@
     @if (isAdminOrManager) {
       <label class="btn-upload">
         @if (logoUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.uploadLogo' | translate }} }
-        <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
+        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
       </label>
     }
   </section>
@@ -50,7 +50,7 @@
           } @else {
             <span class="doc-icon">📄</span>
           }
-          <a [href]="'/api/documents/' + doc.id + '/download'" target="_blank">{{ doc.fileName }}</a>
+          <a [href]="'/api/documents/' + doc.id + '/download'" target="_blank" rel="noopener noreferrer">{{ doc.fileName }}</a>
           @if (isAdminOrManager) {
             <button (click)="deleteDocument(doc.id)" class="btn-icon-danger">✕</button>
           }
@@ -60,7 +60,7 @@
     @if (isAdminOrManager) {
       <label class="btn-upload">
         @if (docUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.addDocument' | translate }} }
-        <input type="file" (change)="onDocFileSelected($event)" style="display:none" data-testid="doc-upload" />
+        <input type="file" accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,image/jpeg,image/png,image/webp" (change)="onDocFileSelected($event)" style="display:none" data-testid="doc-upload" />
       </label>
     }
   </section>

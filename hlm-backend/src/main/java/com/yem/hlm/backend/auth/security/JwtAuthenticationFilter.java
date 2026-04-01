@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -37,15 +36,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserSecurityCacheService userSecurityCacheService;
     private final SecurityAuditLogger securityAuditLogger;
     private final CookieTokenHelper cookieHelper;
+    private final PortalCookieHelper portalCookieHelper;
 
     public JwtAuthenticationFilter(JwtProvider jwtProvider,
                                    UserSecurityCacheService userSecurityCacheService,
                                    SecurityAuditLogger securityAuditLogger,
-                                   CookieTokenHelper cookieHelper) {
+                                   CookieTokenHelper cookieHelper,
+                                   PortalCookieHelper portalCookieHelper) {
         this.jwtProvider              = jwtProvider;
         this.userSecurityCacheService = userSecurityCacheService;
         this.securityAuditLogger      = securityAuditLogger;
         this.cookieHelper             = cookieHelper;
+        this.portalCookieHelper       = portalCookieHelper;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             //    then fall back to the httpOnly auth cookie (SPA sessions).
             String token = resolveBearerToken(request);
             if (token == null) {
-                token = cookieHelper.extractFromRequest(request);
+                token = resolveCookieToken(request);
             }
 
             if (token != null && jwtProvider.isValid(token)) {
@@ -155,6 +157,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring("Bearer ".length()).trim();
         return token.isEmpty() ? null : token;
+    }
+
+    private String resolveCookieToken(HttpServletRequest request) {
+        if (request.getRequestURI().startsWith("/api/portal/")) {
+            return portalCookieHelper.extractFromRequest(request);
+        }
+        return cookieHelper.extractFromRequest(request);
     }
 
     /**

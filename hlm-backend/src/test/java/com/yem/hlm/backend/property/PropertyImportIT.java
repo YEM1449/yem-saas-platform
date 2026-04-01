@@ -178,4 +178,16 @@ class PropertyImportIT extends IntegrationTestBase {
         mvc.perform(multipart("/api/properties/import").file(file))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void import_nonCsvPayload_returns400() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "import.pdf", "application/pdf", "not-csv".getBytes());
+
+        mvc.perform(multipart("/api/properties/import")
+                        .file(file)
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MEDIA_TYPE_NOT_ALLOWED"));
+    }
 }

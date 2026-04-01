@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { SocieteDetailDto, SocieteStatsDto, SocieteComplianceDto } from './societe.model';
@@ -24,7 +23,6 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
-  private sanitizer = inject(DomSanitizer);
 
   societeId = '';
   detail: SocieteDetailDto | null = null;
@@ -38,7 +36,7 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
   error = '';
   success = '';
 
-  logoSrc: SafeUrl | null = null;
+  logoSrc: string | null = null;
   private logoObjectUrl: string | null = null;
 
   activeTab: Tab = 'info';
@@ -196,7 +194,7 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
       next: (blob) => {
         this.revokeLogo();
         this.logoObjectUrl = URL.createObjectURL(blob);
-        this.logoSrc = this.sanitizer.bypassSecurityTrustUrl(this.logoObjectUrl);
+        this.logoSrc = this.logoObjectUrl;
       },
       error: () => { this.logoSrc = null; },
     });

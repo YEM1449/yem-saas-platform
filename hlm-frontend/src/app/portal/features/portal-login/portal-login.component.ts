@@ -27,6 +27,12 @@ export class PortalLoginComponent {
     // Handle magic-link redirect: /portal/login?token=xxx
     const token = this.route.snapshot.queryParamMap.get('token');
     if (token) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { token: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
       this.step.set('verifying');
       this.verifyToken(token);
     }

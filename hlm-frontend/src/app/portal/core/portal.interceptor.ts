@@ -2,29 +2,24 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
-
-const PORTAL_TOKEN_KEY = 'hlm_portal_token';
+import { PortalSessionStore } from './portal-session.store';
 
 /**
- * Attaches the portal JWT to outgoing requests to /api/portal/**.
- * On 401, clears the portal session and redirects to /portal/login.
+ * Ensures portal requests include credentials so the httpOnly portal cookie is sent.
+ * On 401, clears the cached session flag and redirects to /portal/login.
  */
 export const portalInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const token = localStorage.getItem(PORTAL_TOKEN_KEY);
+  const session = inject(PortalSessionStore);
 
   const isPortalApi   = req.url.includes('/api/portal/');
-  const isPortalAuth  = req.url.includes('/api/portal/auth/');
-
-  const authReq = isPortalApi && !isPortalAuth && token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  const authReq = isPortalApi ? req.clone({ withCredentials: true }) : req;
 
   return next(authReq).pipe(
     tap({
       error: (err) => {
-        if (err.status === 401 && isPortalApi && !isPortalAuth) {
-          localStorage.removeItem(PORTAL_TOKEN_KEY);
+        if (err.status === 401 && isPortalApi) {
+          session.clear();
           void router.navigateByUrl('/portal/login');
         }
       },

@@ -39,7 +39,7 @@ public class ProjectService {
 
     private static final long MAX_LOGO_BYTES = 5 * 1024 * 1024; // 5 MB
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"
+            "image/jpeg", "image/png", "image/gif", "image/webp"
     );
 
     private final ProjectRepository projectRepository;

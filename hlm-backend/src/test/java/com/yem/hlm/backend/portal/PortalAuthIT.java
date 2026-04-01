@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
-import com.yem.hlm.backend.portal.service.PortalJwtProvider;
+import com.yem.hlm.backend.contact.domain.ProcessingBasis;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,15 +12,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * Tests:
  * 1) requestLink_knownContact_returns200AndMagicLinkUrl
- * 2) verifyToken_validToken_returnsPortalJwt
+ * 2) verifyToken_validToken_setsPortalCookie
  * 3) verifyToken_alreadyUsedToken_returns401
  * 4) verifyToken_unknownToken_returns401
  * 5) portalJwt_cannotAccess_crmEndpoint
@@ -45,7 +49,6 @@ class PortalAuthIT extends IntegrationTestBase {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtProvider jwtProvider;
-    @Autowired PortalJwtProvider portalJwtProvider;
 
     private String adminBearer;
 
@@ -55,7 +58,7 @@ class PortalAuthIT extends IntegrationTestBase {
 
         // Create a contact to use as buyer in magic-link requests
         var req = new CreateContactRequest("Portal", "Buyer", null, "portal-buyer@acme.com",
-                null, null, null, null, null, null);
+                null, null, null, false, null, ProcessingBasis.CONTRACT);
         mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -86,17 +89,14 @@ class PortalAuthIT extends IntegrationTestBase {
     // =========================================================================
 
     @Test
-    void verifyToken_validToken_returnsPortalJwt() throws Exception {
+    void verifyToken_validToken_setsPortalCookie() throws Exception {
         String rawToken = requestMagicLink("portal-buyer@acme.com");
 
-        String json = mvc.perform(get("/api/portal/auth/verify")
+        mvc.perform(get("/api/portal/auth/verify")
                         .param("token", rawToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists())
-                .andReturn().getResponse().getContentAsString();
-
-        String accessToken = objectMapper.readTree(json).get("accessToken").asText();
-        assertThat(portalJwtProvider.isValid(accessToken)).isTrue();
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("hlm_portal_auth=")))
+                .andExpect(jsonPath("$.accessToken").value(""));
     }
 
     // =========================================================================
@@ -126,6 +126,15 @@ class PortalAuthIT extends IntegrationTestBase {
         mvc.perform(get("/api/portal/auth/verify").param("token", "not-a-real-token-xyz"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("PORTAL_TOKEN_INVALID"));
+    }
+
+    @Test
+    void requestLink_unknownTenant_returnsGeneric200() throws Exception {
+        mvc.perform(post("/api/portal/auth/request-link")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"portal-buyer@acme.com\",\"societeKey\":\"missing-tenant\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.magicLinkUrl").value(""));
     }
 
     // =========================================================================
@@ -162,9 +171,13 @@ class PortalAuthIT extends IntegrationTestBase {
 
     /** Verifies a raw token and returns the portal JWT string. */
     private String verifyAndGetJwt(String rawToken) throws Exception {
-        String json = mvc.perform(get("/api/portal/auth/verify").param("token", rawToken))
+        MvcResult result = mvc.perform(get("/api/portal/auth/verify").param("token", rawToken))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("accessToken").asText();
+                .andReturn();
+
+        String setCookie = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookie).contains("hlm_portal_auth=");
+        String portalJwt = setCookie.substring(setCookie.indexOf("hlm_portal_auth=") + "hlm_portal_auth=".length());
+        return portalJwt.substring(0, portalJwt.indexOf(';'));
     }
 }

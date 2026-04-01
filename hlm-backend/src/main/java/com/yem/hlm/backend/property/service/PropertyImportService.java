@@ -1,10 +1,13 @@
 package com.yem.hlm.backend.property.service;
 
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse.RowError;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,8 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,11 +44,21 @@ public class PropertyImportService {
             "surfaceArea", "landArea", "bedrooms", "bathrooms",
             "floor", "building", "status"
     };
+    private static final Set<String> ALLOWED_CSV_CONTENT_TYPES = Set.of(
+            "text/csv",
+            "application/csv",
+            "application/vnd.ms-excel",
+            "text/plain"
+    );
 
     private final PropertyService propertyService;
+    private final long maxFileSize;
 
-    public PropertyImportService(PropertyService propertyService) {
+    public PropertyImportService(
+            PropertyService propertyService,
+            @Value("${app.property-import.max-file-size:2097152}") long maxFileSize) {
         this.propertyService = propertyService;
+        this.maxFileSize = maxFileSize;
     }
 
     /**
@@ -54,6 +69,7 @@ public class PropertyImportService {
      */
     @Transactional
     public ImportResultResponse importCsv(MultipartFile file) throws IOException {
+        validateCsvFile(file);
         List<RowError> errors = new ArrayList<>();
         List<PropertyCreateRequest> validRequests = new ArrayList<>();
 
@@ -98,6 +114,23 @@ public class PropertyImportService {
     // =========================================================================
     // Private helpers
     // =========================================================================
+
+    private void validateCsvFile(MultipartFile file) {
+        if (file.getSize() > maxFileSize) {
+            throw new MediaTooLargeException(file.getSize(), maxFileSize);
+        }
+
+        String contentType = file.getContentType();
+        String filename = file.getOriginalFilename() != null
+                ? file.getOriginalFilename().toLowerCase(Locale.ROOT)
+                : "";
+
+        boolean csvFilename = filename.endsWith(".csv");
+        boolean csvContentType = contentType != null && ALLOWED_CSV_CONTENT_TYPES.contains(contentType);
+        if (!csvFilename && !csvContentType) {
+            throw new MediaTypeNotAllowedException(contentType != null ? contentType : "unknown");
+        }
+    }
 
     private PropertyCreateRequest parseRow(CSVRecord record, int rowNum) {
         String referenceCode = requireNonBlank(record, "referenceCode", rowNum);

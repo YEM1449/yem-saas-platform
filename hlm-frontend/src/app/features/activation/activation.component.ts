@@ -41,6 +41,12 @@ export class ActivationComponent implements OnInit {
       this.error = 'Lien d\'activation invalide.';
       return;
     }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { token: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
     this.auth.validateInvitation(this.token).subscribe({
       next: (details) => {
         this.invitation = details;

@@ -29,9 +29,15 @@ public class SecurityConfig {
             SecurityAuditLogger securityAuditLogger,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler,
-            CookieTokenHelper cookieHelper
+            CookieTokenHelper cookieHelper,
+            PortalCookieHelper portalCookieHelper
     ) throws Exception {
-        var jwtFilter = new JwtAuthenticationFilter(jwtProvider, userSecurityCacheService, securityAuditLogger, cookieHelper);
+        var jwtFilter = new JwtAuthenticationFilter(
+                jwtProvider,
+                userSecurityCacheService,
+                securityAuditLogger,
+                cookieHelper,
+                portalCookieHelper);
 
         http
                 .cors(Customizer.withDefaults())
@@ -109,12 +115,10 @@ public class SecurityConfig {
                         // OpenAPI / Swagger UI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                        // Tenant bootstrap
-                        .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
-
                         // Portal auth — public (no JWT required)
                         .requestMatchers(HttpMethod.POST, "/api/portal/auth/request-link").permitAll()
                         .requestMatchers(HttpMethod.GET,  "/api/portal/auth/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/portal/auth/logout").permitAll()
 
                         // Portal data endpoints — ROLE_PORTAL only
                         .requestMatchers("/api/portal/**").hasRole("PORTAL")

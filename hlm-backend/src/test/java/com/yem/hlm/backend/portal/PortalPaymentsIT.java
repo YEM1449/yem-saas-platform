@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.contact.domain.ProcessingBasis;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.portal.service.PortalJwtProvider;
@@ -152,7 +153,8 @@ class PortalPaymentsIT extends IntegrationTestBase {
     // =========================================================================
 
     private UUID createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Portal", "Buyer", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Portal", "Buyer", null, email,
+                null, null, null, false, null, ProcessingBasis.CONTRACT);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

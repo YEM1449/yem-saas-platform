@@ -1,3 +1,14 @@
+# Snyk (https://snyk.io) policy file
+# Keep this policy intentionally strict:
+# - vulnerability ignores should be exceptional, time-bound, and justified
+# - only non-production or generated files should be excluded from Snyk Code
 version: v1.25.0
 ignore: {}
 patch: {}
+exclude:
+  global:
+    - docs/**
+    - .artifacts/**
+    - hlm-backend/target/**
+    - hlm-frontend/dist/**
+    - hlm-frontend/coverage/**

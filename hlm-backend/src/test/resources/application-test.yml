@@ -22,6 +22,8 @@ security:
 app:
   cookie:
     secure: false  # Tests run over plain HTTP; Secure=true would prevent Set-Cookie from being observed
+  portal:
+    return-magic-link-in-response: true
   media:
     storage-dir: ${java.io.tmpdir}/hlm-test-media
     max-file-size: 10485760
