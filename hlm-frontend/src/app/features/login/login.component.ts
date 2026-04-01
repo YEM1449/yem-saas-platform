@@ -23,6 +23,7 @@ export class LoginComponent {
   form: LoginRequest = { email: '', password: '' };
   loading = false;
   error = '';
+  showPassword = false;
 
   // Multi-société selection state
   showSocieteSelection = false;
@@ -35,6 +36,7 @@ export class LoginComponent {
 
     this.auth.login(this.form).subscribe({
       next: (res) => {
+        this.form.password = '';
         if (res.requiresSocieteSelection && res.societes) {
           this.loading = false;
           this.showSocieteSelection = true;
@@ -44,7 +46,7 @@ export class LoginComponent {
           this.resolvePostLogin();
         }
       },
-      error: (err) => this.handleError(err),
+      error: (err) => { this.form.password = ''; this.handleError(err); },
     });
   }
 

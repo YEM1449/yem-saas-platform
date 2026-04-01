@@ -20,7 +20,7 @@ export class AuthService {
   private cachedUser: MeResponse | null = null;
 
   get token(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    return sessionStorage.getItem(TOKEN_KEY);
   }
 
   get isLoggedIn(): boolean {
@@ -36,7 +36,7 @@ export class AuthService {
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
       .pipe(tap((res) => {
         if (!res.requiresSocieteSelection) {
-          localStorage.setItem(TOKEN_KEY, res.accessToken);
+          sessionStorage.setItem(TOKEN_KEY, res.accessToken);
         }
       }));
   }
@@ -48,7 +48,7 @@ export class AuthService {
         { societeId } as SwitchSocieteRequest,
         { headers: { Authorization: `Bearer ${partialToken}` } }
       )
-      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
+      .pipe(tap((res) => sessionStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 
   me(): Observable<MeResponse> {
@@ -61,7 +61,7 @@ export class AuthService {
 
   activateAccount(token: string, req: ActivationRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/invitation/${token}/activer`, req)
-      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
+      .pipe(tap((res) => sessionStorage.setItem(TOKEN_KEY, res.accessToken)));
   }
 
   /**
@@ -111,6 +111,6 @@ export class AuthService {
 
   private clearSession(): void {
     this.cachedUser = null;
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
   }
 }

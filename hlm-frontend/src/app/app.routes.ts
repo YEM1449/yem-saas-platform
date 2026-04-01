@@ -16,8 +16,9 @@ export const routes: Routes = [
       { path: 'properties/:id', loadComponent: () => import('./features/properties/property-detail.component').then(m => m.PropertyDetailComponent) },
       { path: 'contacts', loadComponent: () => import('./features/contacts/contacts.component').then(m => m.ContactsComponent) },
       { path: 'contacts/:id', loadComponent: () => import('./features/contacts/contact-detail.component').then(m => m.ContactDetailComponent) },
-      { path: 'prospects', loadComponent: () => import('./features/prospects/prospects.component').then(m => m.ProspectsComponent) },
-      { path: 'prospects/:id', loadComponent: () => import('./features/prospects/prospect-detail.component').then(m => m.ProspectDetailComponent) },
+      // Legacy /app/prospects routes — redirect to unified contacts page
+      { path: 'prospects', redirectTo: 'contacts', pathMatch: 'full' },
+      { path: 'prospects/:id', redirectTo: 'contacts/:id', pathMatch: 'full' },
       { path: 'notifications', loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'messages', loadComponent: () => import('./features/outbox/outbox.component').then(m => m.OutboxComponent) },
       { path: 'projects', loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },

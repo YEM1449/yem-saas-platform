@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { ContactService } from './contact.service';
@@ -23,6 +23,16 @@ interface PrivacyNotice {
   text: string;
 }
 
+interface PipelineColumn {
+  key: string;
+  label: string;
+  color: string;
+}
+
+const PIPELINE_STATUSES = new Set([
+  'PROSPECT', 'QUALIFIED_PROSPECT', 'CLIENT', 'ACTIVE_CLIENT', 'COMPLETED_CLIENT', 'REFERRAL', 'LOST',
+]);
+
 @Component({
   selector: 'app-contacts',
   standalone: true,
@@ -31,16 +41,20 @@ interface PrivacyNotice {
   styleUrl: './contacts.component.css',
 })
 export class ContactsComponent implements OnInit {
-  private svc  = inject(ContactService);
-  private auth = inject(AuthService);
-  private http = inject(HttpClient);
+  private svc    = inject(ContactService);
+  private auth   = inject(AuthService);
+  private http   = inject(HttpClient);
+  private router = inject(Router);
 
   contacts: Contact[] = [];
   loading = true;
   error   = '';
 
-  /** Live search query */
   searchQuery = '';
+  showLost    = false;
+
+  /** 'list' = address-book table | 'pipeline' = kanban board */
+  viewMode: 'list' | 'pipeline' = 'list';
 
   /** Modal state */
   showModal   = false;
@@ -51,18 +65,28 @@ export class ContactsComponent implements OnInit {
     firstName: '', lastName: '', email: '', phone: '', notes: '',
   };
 
-  /** Privacy notice banner (GDPR Art. 13 / Law 09-08 Art. 5) */
   privacyNotice: PrivacyNotice | null = null;
   privacyBannerVisible = false;
 
-  /** Managers and admins can create contacts */
+  readonly PIPELINE_COLUMNS: PipelineColumn[] = [
+    { key: 'PROSPECT',           label: 'Prospects',      color: '#64748b' },
+    { key: 'QUALIFIED_PROSPECT', label: 'Qualifiés',      color: '#3b82f6' },
+    { key: 'CLIENT',             label: 'Clients',        color: '#8b5cf6' },
+    { key: 'ACTIVE_CLIENT',      label: 'Clients Actifs', color: '#10b981' },
+    { key: 'COMPLETED_CLIENT',   label: 'Complétés',      color: '#059669' },
+    { key: 'REFERRAL',           label: 'Parrains',       color: '#f59e0b' },
+  ];
+
+  // ── Auth ────────────────────────────────────────────────────
+
   get canWrite(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
   }
 
-  /** Contacts filtered by the live search query */
-  get filtered(): Contact[] {
+  // ── Filtered lists ──────────────────────────────────────────
+
+  private get searched(): Contact[] {
     const q = this.searchQuery.toLowerCase().trim();
     if (!q) return this.contacts;
     return this.contacts.filter(c =>
@@ -72,7 +96,62 @@ export class ContactsComponent implements OnInit {
     );
   }
 
+  /** For list view — all contacts matching search */
+  get filteredList(): Contact[] {
+    return this.searched;
+  }
+
+  /** For pipeline view — only pipeline statuses, search applied */
+  get filteredPipeline(): Contact[] {
+    return this.searched.filter(c => {
+      if (!PIPELINE_STATUSES.has(c.status)) return false;
+      if (!this.showLost && c.status === 'LOST') return false;
+      return true;
+    });
+  }
+
+  columnContacts(key: string): Contact[] {
+    return this.filteredPipeline.filter(c => c.status === key);
+  }
+
+  get lostCount(): number {
+    return this.contacts.filter(c => c.status === 'LOST').length;
+  }
+
+  get pipelineTotal(): number {
+    return this.contacts.filter(c => PIPELINE_STATUSES.has(c.status)).length;
+  }
+
+  // ── Avatar helpers ──────────────────────────────────────────
+
+  initials(c: Contact): string {
+    return ((c.firstName?.charAt(0) ?? '') + (c.lastName?.charAt(0) ?? '')).toUpperCase();
+  }
+
+  avatarColor(c: Contact): string {
+    const colors = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+    const code = (c.firstName?.charCodeAt(0) ?? 0) + (c.lastName?.charCodeAt(0) ?? 0);
+    return colors[code % colors.length];
+  }
+
+  // ── View toggle ─────────────────────────────────────────────
+
+  setView(mode: 'list' | 'pipeline'): void {
+    this.viewMode = mode;
+    localStorage.setItem('contacts_view', mode);
+  }
+
+  // ── Badge ───────────────────────────────────────────────────
+
+  badgeClass(value: string): string {
+    return 'badge badge-' + value.toLowerCase().replace(/_/g, '-');
+  }
+
+  // ── Lifecycle ───────────────────────────────────────────────
+
   ngOnInit(): void {
+    const saved = localStorage.getItem('contacts_view');
+    if (saved === 'pipeline' || saved === 'list') this.viewMode = saved;
     this.load();
     this.loadPrivacyNotice();
   }
@@ -85,29 +164,19 @@ export class ContactsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if      (err.status === 401) this.error = 'Session expired. Please log in again.';
-        else if (err.status === 403) this.error = 'Access denied.';
-        else                          this.error = body?.message ?? `Failed to load contacts (${err.status})`;
+        if      (err.status === 401) this.error = 'Session expirée. Veuillez vous reconnecter.';
+        else if (err.status === 403) this.error = 'Accès refusé.';
+        else                          this.error = body?.message ?? `Erreur de chargement (${err.status})`;
       },
     });
   }
 
-  /**
-   * Load privacy notice from backend and show the banner if it has not been dismissed
-   * in the current session (sessionStorage key, per CNIL guidance).
-   */
   private loadPrivacyNotice(): void {
     const dismissed = sessionStorage.getItem('gdpr_notice_dismissed') === 'true';
     if (dismissed) return;
-
     this.http.get<PrivacyNotice>('/api/gdpr/privacy-notice').subscribe({
-      next: (notice) => {
-        this.privacyNotice = notice;
-        this.privacyBannerVisible = true;
-      },
-      error: () => {
-        // Non-blocking — privacy notice load failure does not disrupt the contacts page
-      },
+      next: (notice) => { this.privacyNotice = notice; this.privacyBannerVisible = true; },
+      error: () => {},
     });
   }
 
@@ -115,6 +184,8 @@ export class ContactsComponent implements OnInit {
     sessionStorage.setItem('gdpr_notice_dismissed', 'true');
     this.privacyBannerVisible = false;
   }
+
+  // ── Modal ───────────────────────────────────────────────────
 
   openModal(): void {
     this.form = { firstName: '', lastName: '', email: '', phone: '', notes: '' };
@@ -129,11 +200,11 @@ export class ContactsComponent implements OnInit {
 
   submitCreate(): void {
     if (!this.form.firstName.trim() || !this.form.lastName.trim()) {
-      this.submitError = 'First name and last name are required.';
+      this.submitError = 'Prénom et nom obligatoires.';
       return;
     }
     if (!this.form.email.trim() && !this.form.phone.trim()) {
-      this.submitError = 'Telephone ou email obligatoire.';
+      this.submitError = 'Téléphone ou email obligatoire.';
       return;
     }
     this.submitting  = true;
@@ -151,17 +222,14 @@ export class ContactsComponent implements OnInit {
         this.submitting = false;
         this.contacts   = [created, ...this.contacts];
         this.showModal  = false;
+        // Navigate to detail to complete the prospect workflow
+        this.router.navigate(['/app/contacts', created.id]);
       },
       error: (err: HttpErrorResponse) => {
         this.submitting = false;
         const body = err.error as ErrorResponse | null;
-        this.submitError = body?.message ?? `Failed to create contact (${err.status})`;
+        this.submitError = body?.message ?? `Erreur lors de la création (${err.status})`;
       },
     });
-  }
-
-  /** Build badge CSS class from any status/type string value */
-  badgeClass(value: string): string {
-    return 'badge badge-' + value.toLowerCase().replace(/_/g, '-');
   }
 }
