@@ -4,8 +4,12 @@ import com.yem.hlm.backend.audit.api.dto.AuditEventResponse;
 import com.yem.hlm.backend.audit.service.CommercialAuditService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -30,6 +34,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/audit/commercial")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+@Validated
 public class CommercialAuditController {
 
     private final CommercialAuditService auditService;
@@ -46,9 +51,9 @@ public class CommercialAuditController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
 
-            @RequestParam(required = false) String correlationType,
+            @RequestParam(required = false) @Size(max = 100) String correlationType,
             @RequestParam(required = false) UUID correlationId,
-            @RequestParam(defaultValue = "100") int limit
+            @RequestParam(defaultValue = "100") @Min(1) @Max(500) int limit
     ) {
         UUID societeId = SocieteContext.getSocieteId();
         return auditService.search(societeId, from, to, correlationType, correlationId, limit);

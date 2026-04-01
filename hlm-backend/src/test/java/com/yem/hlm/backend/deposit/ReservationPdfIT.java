@@ -12,8 +12,7 @@ import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.deposit.repo.DepositRepository;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -206,7 +205,7 @@ class ReservationPdfIT extends IntegrationTestBase {
     }
 
     private ContactResponse createContact(String bearer, String email) throws Exception {
-        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Jean", "Dupont", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -245,13 +244,10 @@ class ReservationPdfIT extends IntegrationTestBase {
 
         PropertyResponse created = objectMapper.readValue(propJson, PropertyResponse.class);
 
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
-        mvc.perform(put("/api/properties/{id}", created.id())
-                        .header("Authorization", bearer)
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateReq)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
 
         return created.id();
@@ -263,7 +259,7 @@ class ReservationPdfIT extends IntegrationTestBase {
      */
     private UUID createDepositForAgent(User agent, String contactEmail) throws Exception {
         // Create contact via admin API
-        var cReq = new CreateContactRequest("Jean", "Dupont", null, contactEmail, null, null, null, null, null, null);
+        var cReq = new CreateContactRequest("Jean", "Dupont", null, contactEmail, null, null, null, true, null, null);
         String contactJson = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

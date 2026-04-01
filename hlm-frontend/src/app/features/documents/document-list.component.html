@@ -9,7 +9,7 @@
     <input type="text" [(ngModel)]="description" [placeholder]="'common.notes' | translate" class="desc-input form-control" />
     <label class="btn btn-secondary upload-btn" [class.uploading]="uploading">
       @if (uploading) { {{ 'common.saving' | translate }} } @else { {{ 'documents.upload' | translate }} }
-      <input type="file" (change)="onFileSelected($event)" [disabled]="uploading" style="display:none" />
+      <input type="file" accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" [disabled]="uploading" style="display:none" />
     </label>
   </div>
   @if (uploadError) { <div class="alert alert-error">{{ uploadError }}</div> }

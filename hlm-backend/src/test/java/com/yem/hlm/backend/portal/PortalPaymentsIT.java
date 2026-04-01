@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
+import com.yem.hlm.backend.contact.domain.ProcessingBasis;
 import com.yem.hlm.backend.contract.api.dto.ContractResponse;
 import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.portal.service.PortalJwtProvider;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
@@ -152,7 +152,8 @@ class PortalPaymentsIT extends IntegrationTestBase {
     // =========================================================================
 
     private UUID createContact(String email) throws Exception {
-        var req = new CreateContactRequest("Portal", "Buyer", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("Portal", "Buyer", null, email,
+                null, null, null, false, null, ProcessingBasis.CONTRACT);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -191,14 +192,10 @@ class PortalPaymentsIT extends IntegrationTestBase {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         PropertyResponse prop = objectMapper.readValue(json, PropertyResponse.class);
-        mvc.perform(put("/api/properties/{id}", prop.id())
+        mvc.perform(patch("/api/properties/{id}/status", prop.id())
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new PropertyUpdateRequest(
-                                null, null, null, null, PropertyStatus.ACTIVE,
-                                null, null, null, null, null, null, null, null,
-                                null, null, null, null, null, null, null, null, null,
-                                null, null, null, null))))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
         return prop.id();
     }

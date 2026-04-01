@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.project.service;
 
+import com.yem.hlm.backend.contact.service.CrossTenantAccessException;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.media.service.MediaStorageService;
 import com.yem.hlm.backend.media.service.MediaTooLargeException;
@@ -39,7 +40,7 @@ public class ProjectService {
 
     private static final long MAX_LOGO_BYTES = 5 * 1024 * 1024; // 5 MB
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"
+            "image/jpeg", "image/png", "image/gif", "image/webp"
     );
 
     private final ProjectRepository projectRepository;
@@ -58,7 +59,7 @@ public class ProjectService {
     @Transactional
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse create(ProjectCreateRequest request) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         if (projectRepository.existsBySocieteIdAndName(societeId, request.name())) {
             throw new ProjectNameAlreadyExistsException(request.name());
@@ -76,7 +77,7 @@ public class ProjectService {
      */
     @Cacheable(value = CacheConfig.PROJECTS_CACHE, key = "'all:' + T(com.yem.hlm.backend.societe.SocieteContext).getSocieteId()")
     public List<ProjectResponse> listAll() {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         return projectRepository.findBySocieteIdOrderByNameAsc(societeId)
                 .stream()
                 .map(ProjectResponse::from)
@@ -88,7 +89,7 @@ public class ProjectService {
      */
     @Cacheable(value = CacheConfig.PROJECTS_CACHE, key = "'active:' + T(com.yem.hlm.backend.societe.SocieteContext).getSocieteId()")
     public List<ProjectResponse> listActive() {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         return projectRepository.findBySocieteIdAndStatusOrderByNameAsc(societeId, ProjectStatus.ACTIVE)
                 .stream()
                 .map(ProjectResponse::from)
@@ -101,7 +102,7 @@ public class ProjectService {
      * @throws ProjectNotFoundException if project not found or belongs to another société
      */
     public ProjectResponse getById(UUID projectId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
         return ProjectResponse.from(project);
@@ -113,7 +114,7 @@ public class ProjectService {
     @Transactional
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse update(UUID projectId, ProjectUpdateRequest request) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
@@ -137,7 +138,7 @@ public class ProjectService {
     @Transactional
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public void archive(UUID projectId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
         project.setStatus(ProjectStatus.ARCHIVED);
@@ -148,7 +149,7 @@ public class ProjectService {
      * Computes aggregated KPIs for a single project.
      */
     public ProjectKpiDTO getKpis(UUID projectId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
@@ -206,7 +207,7 @@ public class ProjectService {
     @Transactional
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse uploadLogo(UUID projectId, MultipartFile file) throws IOException {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
         validateImageFile(file);
@@ -221,7 +222,7 @@ public class ProjectService {
     }
 
     public InputStream downloadLogo(UUID projectId) throws IOException {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
         if (project.getLogoFileKey() == null) {
@@ -231,7 +232,7 @@ public class ProjectService {
     }
 
     public String getLogoContentType(UUID projectId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         return projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .map(Project::getLogoContentType)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
@@ -240,7 +241,7 @@ public class ProjectService {
     @Transactional
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public void deleteLogo(UUID projectId) throws IOException {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         Project project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
         if (project.getLogoFileKey() != null) {
@@ -267,5 +268,17 @@ public class ProjectService {
         if (value instanceof BigDecimal bd) return bd;
         if (value instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
         return BigDecimal.ZERO;
+    }
+
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossTenantAccessException("Missing société context");
+        return id;
+    }
+
+    private UUID requireUserId() {
+        UUID id = SocieteContext.getUserId();
+        if (id == null) throw new CrossTenantAccessException("Missing user context");
+        return id;
     }
 }

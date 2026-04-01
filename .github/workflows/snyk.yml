@@ -5,28 +5,39 @@ on:
     paths:
       - "hlm-backend/**"
       - "hlm-frontend/**"
+      - "docker-compose*.yml"
+      - "hlm-backend/Dockerfile"
+      - "hlm-frontend/Dockerfile"
       - ".snyk"
       - ".github/workflows/snyk.yml"
   pull_request:
     paths:
       - "hlm-backend/**"
       - "hlm-frontend/**"
+      - "docker-compose*.yml"
+      - "hlm-backend/Dockerfile"
+      - "hlm-frontend/Dockerfile"
       - ".snyk"
       - ".github/workflows/snyk.yml"
   schedule:
-    # Weekly scan every Monday at 07:00 UTC — catches new CVEs between code changes
     - cron: "0 7 * * 1"
   workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  SNYK_CLI_VERSION: "v1.1303.2"
+  SNYK_OSS_SEVERITY_THRESHOLD: ${{ vars.SNYK_OSS_SEVERITY_THRESHOLD || 'high' }}
+  SNYK_CODE_SEVERITY_THRESHOLD: ${{ vars.SNYK_CODE_SEVERITY_THRESHOLD || 'high' }}
+  SNYK_CONTAINER_SEVERITY_THRESHOLD: ${{ vars.SNYK_CONTAINER_SEVERITY_THRESHOLD || 'high' }}
+
 concurrency:
   group: snyk-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-
   check-token:
     name: Check Snyk token configured
     runs-on: ubuntu-latest
@@ -38,22 +49,49 @@ jobs:
           TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           if [ -n "$TOKEN" ]; then
-            echo "configured=true"  >> "$GITHUB_OUTPUT"
+            echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
 
   open-source:
-    name: Open Source Dependency Scan
+    name: Snyk Open Source - ${{ matrix.name }}
     needs: check-token
     if: ${{ needs.check-token.outputs.configured == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: backend
+            name: Backend Maven
+            manifest: hlm-backend/pom.xml
+            package_manager: maven
+            project_name: hlm-backend-open-source
+            include_dev_dependencies: "false"
+            project_environment: "backend,internal,saas,hosted"
+            project_lifecycle: "production"
+            project_business_criticality: "critical"
+            project_tags: "repo=yem-saas-platform,component=backend,scanner=open-source,manifest=pom.xml"
+          - id: frontend
+            name: Frontend npm
+            manifest: hlm-frontend/package.json
+            package_manager: npm
+            project_name: hlm-frontend-open-source
+            include_dev_dependencies: "true"
+            project_environment: "frontend,external,saas,hosted"
+            project_lifecycle: "production"
+            project_business_criticality: "high"
+            project_tags: "repo=yem-saas-platform,component=frontend,scanner=open-source,manifest=package.json"
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      SNYK_ORG: ${{ secrets.SNYK_ORG }}
-
+      SNYK_ORG: ${{ secrets.SNYK_ORG || vars.SNYK_ORG || '' }}
+      SNYK_OSS_FAIL_ON: ${{ vars.SNYK_OSS_FAIL_ON || '' }}
+      SNYK_TARGET_REF: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,48 +111,142 @@ jobs:
           cache-dependency-path: hlm-frontend/package-lock.json
 
       - name: Install frontend dependencies
+        if: matrix.id == 'frontend'
         working-directory: hlm-frontend
         run: npm ci
 
-      - name: Install Snyk CLI (major pinned)
-        run: npm install --global snyk@1
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@v1.0.0
+        with:
+          snyk-version: ${{ env.SNYK_CLI_VERSION }}
 
-      - name: Snyk test - Backend (Maven)
-        run: |
-          ORG_ARG=""
-          if [ -n "${SNYK_ORG}" ]; then
-            ORG_ARG="--org=${SNYK_ORG}"
-          fi
-          snyk test ${ORG_ARG} --file=hlm-backend/pom.xml --package-manager=maven --severity-threshold=high
+      - name: Show Snyk CLI version
+        run: snyk --version
 
-      - name: Snyk test - Frontend (npm)
+      - name: Run Snyk Open Source test
+        id: scan
+        continue-on-error: true
+        shell: bash
         run: |
-          ORG_ARG=""
-          if [ -n "${SNYK_ORG}" ]; then
-            ORG_ARG="--org=${SNYK_ORG}"
-          fi
-          snyk test ${ORG_ARG} --file=hlm-frontend/package.json --package-manager=npm --severity-threshold=high
+          set +e
+          out_dir=".artifacts/snyk/open-source/${{ matrix.id }}"
+          mkdir -p "${out_dir}"
 
-      - name: Monitor backend snapshot in Snyk
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          ORG_ARG=""
-          if [ -n "${SNYK_ORG}" ]; then
-            ORG_ARG="--org=${SNYK_ORG}"
-          fi
-          snyk monitor ${ORG_ARG} --file=hlm-backend/pom.xml --package-manager=maven
+          command=(
+            snyk
+            test
+            --file="${{ matrix.manifest }}"
+            --package-manager="${{ matrix.package_manager }}"
+            --policy-path=.snyk
+            --project-name="${{ matrix.project_name }}"
+            --target-reference="${SNYK_TARGET_REF}"
+            --severity-threshold="${SNYK_OSS_SEVERITY_THRESHOLD}"
+            --json-file-output="${out_dir}/results.json"
+            --sarif-file-output="${out_dir}/results.sarif"
+          )
 
-      - name: Monitor frontend snapshot in Snyk
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          ORG_ARG=""
           if [ -n "${SNYK_ORG}" ]; then
-            ORG_ARG="--org=${SNYK_ORG}"
+            command+=(--org="${SNYK_ORG}")
           fi
-          snyk monitor ${ORG_ARG} --file=hlm-frontend/package.json --package-manager=npm
+
+          if [ -n "${SNYK_OSS_FAIL_ON}" ]; then
+            command+=(--fail-on="${SNYK_OSS_FAIL_ON}")
+          fi
+
+          if [ "${{ matrix.include_dev_dependencies }}" = "true" ]; then
+            command+=(--dev --strict-out-of-sync=true --prune-repeated-subdependencies)
+          fi
+
+          "${command[@]}"
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Detect generated scan files
+        id: files
+        shell: bash
+        run: |
+          base=".artifacts/snyk/open-source/${{ matrix.id }}"
+          if [ -f "${base}/results.json" ]; then
+            echo "json=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "json=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f "${base}/results.sarif" ]; then
+            echo "sarif=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sarif=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload Open Source scan artifact
+        if: always() && steps.files.outputs.json == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-open-source-${{ matrix.id }}
+          path: .artifacts/snyk/open-source/${{ matrix.id }}/results.json
+          if-no-files-found: warn
+
+      - name: Upload Open Source SARIF to GitHub Security
+        if: always() && steps.files.outputs.sarif == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: .artifacts/snyk/open-source/${{ matrix.id }}/results.sarif
+          category: snyk-open-source-${{ matrix.id }}
+
+      - name: Publish Open Source snapshot to Snyk
+        if: (steps.scan.outputs.exit_code == '0' || steps.scan.outputs.exit_code == '1') && (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        continue-on-error: true
+        shell: bash
+        run: |
+          command=(
+            snyk
+            monitor
+            --file="${{ matrix.manifest }}"
+            --package-manager="${{ matrix.package_manager }}"
+            --policy-path=.snyk
+            --project-name="${{ matrix.project_name }}"
+            --target-reference="${SNYK_TARGET_REF}"
+            --project-environment="${{ matrix.project_environment }}"
+            --project-lifecycle="${{ matrix.project_lifecycle }}"
+            --project-business-criticality="${{ matrix.project_business_criticality }}"
+            --project-tags="${{ matrix.project_tags }}"
+          )
+
+          if [ -n "${SNYK_ORG}" ]; then
+            command+=(--org="${SNYK_ORG}")
+          fi
+
+          if [ "${{ matrix.include_dev_dependencies }}" = "true" ]; then
+            command+=(--dev --strict-out-of-sync=true --prune-repeated-subdependencies)
+          fi
+
+          "${command[@]}"
+
+      - name: Fail on Snyk Open Source result
+        if: steps.scan.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          case "${{ steps.scan.outputs.exit_code }}" in
+            1)
+              echo "Snyk Open Source found vulnerabilities at or above ${SNYK_OSS_SEVERITY_THRESHOLD}."
+              exit 1
+              ;;
+            2)
+              echo "Snyk Open Source scan failed to execute cleanly."
+              exit 2
+              ;;
+            3)
+              echo "Snyk Open Source did not detect a supported project for ${{ matrix.manifest }}."
+              exit 3
+              ;;
+            *)
+              echo "Unexpected Snyk Open Source exit code: ${{ steps.scan.outputs.exit_code }}"
+              exit 1
+              ;;
+          esac
 
   code:
-    name: Snyk Code Scan
+    name: Snyk Code
     needs: check-token
     if: ${{ needs.check-token.outputs.configured == 'true' }}
     runs-on: ubuntu-latest
@@ -122,38 +254,289 @@ jobs:
     permissions:
       contents: read
       security-events: write
-
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      SNYK_ORG: ${{ secrets.SNYK_ORG }}
-
+      SNYK_ORG: ${{ secrets.SNYK_ORG || vars.SNYK_ORG || '' }}
+      SNYK_TARGET_REF: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
-        uses: actions/setup-node@v4
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@v1.0.0
         with:
-          node-version: "20"
+          snyk-version: ${{ env.SNYK_CLI_VERSION }}
 
-      - name: Install Snyk CLI (major pinned)
-        run: npm install --global snyk@1
+      - name: Show Snyk CLI version
+        run: snyk --version
 
-      - name: Run Snyk Code and export SARIF
+      - name: Run Snyk Code scan
+        id: scan
+        continue-on-error: true
+        shell: bash
         run: |
-          ORG_ARG=""
-          if [ -n "${SNYK_ORG}" ]; then
-            ORG_ARG="--org=${SNYK_ORG}"
-          fi
-          snyk code test ${ORG_ARG} --sarif-file-output=snyk-code.sarif
+          set +e
+          out_dir=".artifacts/snyk/code"
+          mkdir -p "${out_dir}"
 
-      - name: Upload SARIF to GitHub Security
+          command=(
+            snyk
+            code
+            test
+            .
+            --severity-threshold="${SNYK_CODE_SEVERITY_THRESHOLD}"
+            --json-file-output="${out_dir}/results.json"
+            --sarif-file-output="${out_dir}/results.sarif"
+          )
+
+          if [ -n "${SNYK_ORG}" ]; then
+            command+=(--org="${SNYK_ORG}")
+          fi
+
+          if [ "${{ github.event_name }}" = "schedule" ] || { [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; }; then
+            command+=(
+              --report
+              --project-name="yem-saas-platform-code"
+              --target-name="${{ github.repository }}"
+              --target-reference="${SNYK_TARGET_REF}"
+              --remote-repo-url="https://github.com/${{ github.repository }}"
+            )
+          fi
+
+          "${command[@]}"
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Detect generated scan files
+        id: files
+        shell: bash
+        run: |
+          base=".artifacts/snyk/code"
+          if [ -f "${base}/results.json" ]; then
+            echo "json=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "json=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f "${base}/results.sarif" ]; then
+            echo "sarif=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sarif=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload Snyk Code scan artifact
+        if: always() && steps.files.outputs.json == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-code
+          path: .artifacts/snyk/code/results.json
+          if-no-files-found: warn
+
+      - name: Upload Snyk Code SARIF to GitHub Security
+        if: always() && steps.files.outputs.sarif == 'true'
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: snyk-code.sarif
+          sarif_file: .artifacts/snyk/code/results.sarif
+          category: snyk-code
+
+      - name: Fail on Snyk Code result
+        if: steps.scan.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          case "${{ steps.scan.outputs.exit_code }}" in
+            1)
+              echo "Snyk Code found issues at or above ${SNYK_CODE_SEVERITY_THRESHOLD}."
+              exit 1
+              ;;
+            2)
+              echo "Snyk Code scan failed to execute cleanly."
+              exit 2
+              ;;
+            3)
+              echo "Snyk Code did not detect supported source to scan."
+              exit 3
+              ;;
+            *)
+              echo "Unexpected Snyk Code exit code: ${{ steps.scan.outputs.exit_code }}"
+              exit 1
+              ;;
+          esac
+
+  container:
+    name: Snyk Container - ${{ matrix.name }}
+    needs: check-token
+    if: ${{ needs.check-token.outputs.configured == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: backend
+            name: Backend image
+            image_name: local/hlm-backend-snyk
+            build_context: hlm-backend
+            dockerfile: hlm-backend/Dockerfile
+            project_name: hlm-backend-container
+            project_environment: "backend,internal,saas,hosted"
+            project_lifecycle: "production"
+            project_business_criticality: "critical"
+            project_tags: "repo=yem-saas-platform,component=backend,scanner=container,dockerfile=hlm-backend/Dockerfile"
+          - id: frontend
+            name: Frontend image
+            image_name: local/hlm-frontend-snyk
+            build_context: hlm-frontend
+            dockerfile: hlm-frontend/Dockerfile
+            project_name: hlm-frontend-container
+            project_environment: "frontend,external,saas,hosted"
+            project_lifecycle: "production"
+            project_business_criticality: "high"
+            project_tags: "repo=yem-saas-platform,component=frontend,scanner=container,dockerfile=hlm-frontend/Dockerfile"
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_ORG: ${{ secrets.SNYK_ORG || vars.SNYK_ORG || '' }}
+      SNYK_CONTAINER_FAIL_ON: ${{ vars.SNYK_CONTAINER_FAIL_ON || '' }}
+      SNYK_TARGET_REF: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@v1.0.0
+        with:
+          snyk-version: ${{ env.SNYK_CLI_VERSION }}
+
+      - name: Show Snyk CLI version
+        run: snyk --version
+
+      - name: Build container image
+        shell: bash
+        run: |
+          docker build \
+            --tag "${{ matrix.image_name }}:${{ github.sha }}" \
+            --file "${{ matrix.dockerfile }}" \
+            "${{ matrix.build_context }}"
+
+      - name: Run Snyk Container scan
+        id: scan
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          out_dir=".artifacts/snyk/container/${{ matrix.id }}"
+          mkdir -p "${out_dir}"
+
+          command=(
+            snyk
+            container
+            test
+            "${{ matrix.image_name }}:${{ github.sha }}"
+            --file="${{ matrix.dockerfile }}"
+            --policy-path=.snyk
+            --project-name="${{ matrix.project_name }}"
+            --target-reference="${SNYK_TARGET_REF}"
+            --severity-threshold="${SNYK_CONTAINER_SEVERITY_THRESHOLD}"
+            --json-file-output="${out_dir}/results.json"
+            --sarif-file-output="${out_dir}/results.sarif"
+          )
+
+          if [ -n "${SNYK_ORG}" ]; then
+            command+=(--org="${SNYK_ORG}")
+          fi
+
+          if [ -n "${SNYK_CONTAINER_FAIL_ON}" ]; then
+            command+=(--fail-on="${SNYK_CONTAINER_FAIL_ON}")
+          fi
+
+          "${command[@]}"
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Detect generated scan files
+        id: files
+        shell: bash
+        run: |
+          base=".artifacts/snyk/container/${{ matrix.id }}"
+          if [ -f "${base}/results.json" ]; then
+            echo "json=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "json=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f "${base}/results.sarif" ]; then
+            echo "sarif=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sarif=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload Snyk Container scan artifact
+        if: always() && steps.files.outputs.json == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-container-${{ matrix.id }}
+          path: .artifacts/snyk/container/${{ matrix.id }}/results.json
+          if-no-files-found: warn
+
+      - name: Upload Snyk Container SARIF to GitHub Security
+        if: always() && steps.files.outputs.sarif == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: .artifacts/snyk/container/${{ matrix.id }}/results.sarif
+          category: snyk-container-${{ matrix.id }}
+
+      - name: Publish container snapshot to Snyk
+        if: (steps.scan.outputs.exit_code == '0' || steps.scan.outputs.exit_code == '1') && (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        continue-on-error: true
+        shell: bash
+        run: |
+          command=(
+            snyk
+            container
+            monitor
+            "${{ matrix.image_name }}:${{ github.sha }}"
+            --file="${{ matrix.dockerfile }}"
+            --policy-path=.snyk
+            --project-name="${{ matrix.project_name }}"
+            --project-environment="${{ matrix.project_environment }}"
+            --project-lifecycle="${{ matrix.project_lifecycle }}"
+            --project-business-criticality="${{ matrix.project_business_criticality }}"
+            --project-tags="${{ matrix.project_tags }}"
+          )
+
+          if [ -n "${SNYK_ORG}" ]; then
+            command+=(--org="${SNYK_ORG}")
+          fi
+
+          "${command[@]}"
+
+      - name: Fail on Snyk Container result
+        if: steps.scan.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          case "${{ steps.scan.outputs.exit_code }}" in
+            1)
+              echo "Snyk Container found vulnerabilities at or above ${SNYK_CONTAINER_SEVERITY_THRESHOLD}."
+              exit 1
+              ;;
+            2)
+              echo "Snyk Container scan failed to execute cleanly."
+              exit 2
+              ;;
+            3)
+              echo "Snyk Container did not detect a supported image for ${{ matrix.image_name }}."
+              exit 3
+              ;;
+            *)
+              echo "Unexpected Snyk Container exit code: ${{ steps.scan.outputs.exit_code }}"
+              exit 1
+              ;;
+          esac
 
   missing-token:
-    name: Snyk Configuration Check
+    name: Snyk configuration check
     needs: check-token
     if: ${{ needs.check-token.outputs.configured == 'false' }}
     runs-on: ubuntu-latest

@@ -1,5 +1,8 @@
 package com.yem.hlm.backend.contact.api.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Size;
+
 import java.math.BigDecimal;
 
 /**
@@ -7,9 +10,9 @@ import java.math.BigDecimal;
  * All fields are optional — they enrich the ProspectDetail record if provided.
  */
 public record ConvertToProspectRequest(
-        BigDecimal budgetMin,
-        BigDecimal budgetMax,
+        @DecimalMin("0.00") BigDecimal budgetMin,
+        @DecimalMin("0.00") BigDecimal budgetMax,
         /** Lead source (e.g. "WEBSITE", "REFERRAL", "SOCIAL_MEDIA"). */
-        String source,
-        String notes
+        @Size(max = 100) String source,
+        @Size(max = 5000) String notes
 ) {}

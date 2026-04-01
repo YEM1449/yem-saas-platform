@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -147,7 +148,7 @@ class AccountLockoutIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctPasswordBody(email, password)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+                .andExpect(header().exists("Set-Cookie"));
     }
 
     @Test
@@ -168,7 +169,7 @@ class AccountLockoutIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctPasswordBody(email, password)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+                .andExpect(header().exists("Set-Cookie"));
 
         // Verify counter was reset in DB
         User afterLogin = userRepository.findByEmail(email).orElseThrow();

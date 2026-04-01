@@ -40,6 +40,8 @@ import java.util.HexFormat;
 public class PortalAuthService {
 
     private static final long TOKEN_TTL_HOURS = 48;
+    private static final String GENERIC_LINK_RESPONSE =
+            "If the account exists, a magic link has been sent.";
     private final SecureRandom secureRandom = new SecureRandom();
 
     private final SocieteRepository societeRepository;
@@ -52,6 +54,9 @@ public class PortalAuthService {
     /** Base URL used to build the magic-link. Override via {@code app.portal.base-url}. */
     @Value("${app.portal.base-url:http://localhost:4200}")
     private String portalBaseUrl;
+
+    @Value("${app.portal.return-magic-link-in-response:false}")
+    private boolean returnMagicLinkInResponse;
 
     public PortalAuthService(SocieteRepository societeRepository,
                              ContactRepository contactRepository,
@@ -84,15 +89,18 @@ public class PortalAuthService {
      * @return response with magic-link URL
      */
     public MagicLinkResponse requestLink(String email, String societeKey) {
-        rateLimiterService.checkPortalLink(email.trim().toLowerCase());
+        String normalizedEmail = email.trim().toLowerCase();
+        rateLimiterService.checkPortalLink(normalizedEmail);
 
-        Societe societe = societeRepository.findByKey(societeKey)
-                .orElseThrow(() -> new PortalTokenInvalidException("Unknown tenant or email"));
+        Societe societe = societeRepository.findByKey(societeKey).orElse(null);
+        if (societe == null) {
+            return new MagicLinkResponse(GENERIC_LINK_RESPONSE, "");
+        }
 
-        var contactOpt = contactRepository.findBySocieteIdAndEmailIgnoreCase(societe.getId(), email);
+        var contactOpt = contactRepository.findBySocieteIdAndEmailIgnoreCase(societe.getId(), normalizedEmail);
         if (contactOpt.isEmpty()) {
             // Unknown email — return generic 200 to prevent user enumeration
-            return new MagicLinkResponse("Magic link sent to " + email, "");
+            return new MagicLinkResponse(GENERIC_LINK_RESPONSE, "");
         }
         Contact contact = contactOpt.get();
 
@@ -142,7 +150,9 @@ public class PortalAuthService {
             // The raw URL is still returned in the response body for dev/test.
         }
 
-        return new MagicLinkResponse("Magic link sent to " + email, magicLinkUrl);
+        return new MagicLinkResponse(
+                GENERIC_LINK_RESPONSE,
+                returnMagicLinkInResponse ? magicLinkUrl : "");
     }
 
     // =========================================================================
@@ -175,6 +185,10 @@ public class PortalAuthService {
                 portalToken.getSocieteId());
 
         return new PortalTokenVerifyResponse(jwt);
+    }
+
+    public long portalSessionTtlSeconds() {
+        return PortalJwtProvider.ttlSeconds();
     }
 
     // =========================================================================

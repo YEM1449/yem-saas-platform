@@ -12,7 +12,6 @@ import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
@@ -292,15 +291,10 @@ class ContractControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
         // DRAFT → ACTIVE
-        var updateReq = new PropertyUpdateRequest(
-                null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null
-        );
-        mvc.perform(put("/api/properties/{id}", created.id())
-                        .header("Authorization", bearer)
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
+                        .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateReq)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
 
         return created.id();
@@ -308,7 +302,7 @@ class ContractControllerIT extends IntegrationTestBase {
 
     /** Create a contact in the default tenant; returns the ContactResponse. */
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

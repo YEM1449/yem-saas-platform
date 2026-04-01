@@ -67,7 +67,7 @@ class ContactServiceIT extends IntegrationTestBase {
                 null,
                 null,
                 null,
-                null,
+                true,
                 null,
                 null
         ));
@@ -89,7 +89,7 @@ class ContactServiceIT extends IntegrationTestBase {
                 null,
                 null,
                 null,
-                null,
+                true,
                 null,
                 null
         ));
@@ -123,7 +123,7 @@ class ContactServiceIT extends IntegrationTestBase {
                 null,
                 null,
                 null,
-                null,
+                true,
                 null,
                 null
         ));
@@ -155,7 +155,7 @@ class ContactServiceIT extends IntegrationTestBase {
                 null,
                 null,
                 null,
-                null,
+                true,
                 null,
                 null
         ));
@@ -183,9 +183,9 @@ class ContactServiceIT extends IntegrationTestBase {
 
     @Test
     void listContacts_filtersByQueryAndStatus() {
-        contactService.create(new CreateContactRequest("Abou Hamza", "Louz", null, "john1@example.com", null, null, null, null, null, null));
-        contactService.create(new CreateContactRequest("Boubker", "Hamzaoui", null, "bob@example.com", null, null, null, null, null, null));
-        contactService.create(new CreateContactRequest("hamza", "Igaman", null, "john2@example.com", null, null, null, null, null, null));
+        contactService.create(new CreateContactRequest("Abou Hamza", "Louz", null, "john1@example.com", null, null, null, true, null, null));
+        contactService.create(new CreateContactRequest("Boubker", "Hamzaoui", null, "bob@example.com", null, null, null, true, null, null));
+        contactService.create(new CreateContactRequest("hamza", "Igaman", null, "john2@example.com", null, null, null, true, null, null));
 
         var page = contactService.list(null, ContactStatus.PROSPECT, "hamza", PageRequest.of(0, 10));  // null = no type filter
         assertThat(page.getTotalElements()).isEqualTo(3); // Abou Hamza Louz, Boubker Hamzaoui, hamza Igaman

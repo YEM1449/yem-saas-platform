@@ -6,11 +6,13 @@ import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.property.api.dto.PropertyStatusUpdateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
+import com.yem.hlm.backend.societe.CrossSocieteAccessException;
 import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,8 +53,8 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse create(PropertyCreateRequest request) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID userId = SocieteContext.getUserId();
+        UUID societeId = requireSocieteId();
+        UUID userId = requireUserId();
 
         // Validate reference code uniqueness
         if (propertyRepository.existsBySocieteIdAndReferenceCode(societeId, request.referenceCode())) {
@@ -76,7 +78,7 @@ public class PropertyService {
     }
 
     public PropertyResponse getById(UUID propertyId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var property = propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -94,7 +96,7 @@ public class PropertyService {
 
     public List<PropertyResponse> listAll(UUID projectId, UUID immeubleId,
                                            PropertyType type, PropertyStatus status) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         List<Property> properties = propertyRepository.findWithFilters(
                 societeId, projectId, immeubleId, type, status);
@@ -106,8 +108,8 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse update(UUID propertyId, PropertyUpdateRequest request) {
-        UUID societeId = SocieteContext.getSocieteId();
-        UUID userId = SocieteContext.getUserId();
+        UUID societeId = requireSocieteId();
+        UUID userId = requireUserId();
 
         var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -126,7 +128,7 @@ public class PropertyService {
 
     @Transactional
     public void softDelete(UUID propertyId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -135,9 +137,47 @@ public class PropertyService {
         propertyRepository.save(property);
     }
 
+    /**
+     * Changes the editorial status of a property.
+     * <p>
+     * Only non-commercial statuses may be set here: DRAFT, ACTIVE, WITHDRAWN, ARCHIVED.
+     * RESERVED and SOLD are exclusively managed by the commercial workflow
+     * (reservation/deposit/contract services) and are rejected with
+     * {@link InvalidPropertyStatusTransitionException}.
+     */
+    @Transactional
+    public PropertyResponse updateEditorialStatus(UUID propertyId, PropertyStatusUpdateRequest req) {
+        PropertyStatus requested = req.status();
+        if (requested == PropertyStatus.RESERVED || requested == PropertyStatus.SOLD) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Status " + requested + " can only be set by the commercial workflow " +
+                    "(reservation / deposit / contract). Use the reservation or contract endpoints.");
+        }
+
+        UUID societeId = requireSocieteId();
+        UUID userId = requireUserId();
+
+        var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+
+        // Guard: RESERVED and SOLD properties are under commercial lock —
+        // do not allow editorial re-classification while a commercial event is active.
+        if (property.getStatus() == PropertyStatus.RESERVED
+                || property.getStatus() == PropertyStatus.SOLD) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Property is currently " + property.getStatus()
+                    + " — cancel the reservation or contract before changing the editorial status.");
+        }
+
+        property.setStatus(requested);
+        property.markUpdatedBy(userId);
+        property = propertyRepository.save(property);
+        return PropertyResponse.from(property);
+    }
+
     @Transactional
     public void markAsReserved(UUID propertyId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -147,7 +187,7 @@ public class PropertyService {
 
     @Transactional
     public void markAsSold(UUID propertyId, LocalDateTime soldAt) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
 
         var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException(propertyId));
@@ -260,7 +300,6 @@ public class PropertyService {
         if (req.description() != null) property.setDescription(req.description());
         if (req.notes() != null) property.setNotes(req.notes());
         if (req.price() != null) property.setPrice(req.price());
-        if (req.status() != null) property.setStatus(req.status());
         if (req.address() != null) property.setAddress(req.address());
         if (req.city() != null) property.setCity(req.city());
         if (req.region() != null) property.setRegion(req.region());
@@ -282,7 +321,7 @@ public class PropertyService {
         UUID previousProjectId = property.getProject().getId();
         boolean projectChanged = false;
         if (req.projectId() != null) {
-            UUID societeId = SocieteContext.getSocieteId();
+            UUID societeId = requireSocieteId();
             var project = projectActiveGuard.requireActive(societeId, req.projectId());
             property.setProject(project);
             projectChanged = !project.getId().equals(previousProjectId);
@@ -296,7 +335,7 @@ public class PropertyService {
     }
 
     private Immeuble loadImmeubleForProject(UUID immeubleId, UUID projectId) {
-        UUID societeId = SocieteContext.getSocieteId();
+        UUID societeId = requireSocieteId();
         Immeuble immeuble = immeubleRepository.findBySocieteIdAndId(societeId, immeubleId)
                 .orElseThrow(() -> new ImmeubleNotFoundException(immeubleId));
 
@@ -305,5 +344,17 @@ public class PropertyService {
         }
 
         return immeuble;
+    }
+
+    private UUID requireSocieteId() {
+        UUID id = SocieteContext.getSocieteId();
+        if (id == null) throw new CrossSocieteAccessException("Missing société context");
+        return id;
+    }
+
+    private UUID requireUserId() {
+        UUID id = SocieteContext.getUserId();
+        if (id == null) throw new CrossSocieteAccessException("Missing user context");
+        return id;
     }
 }

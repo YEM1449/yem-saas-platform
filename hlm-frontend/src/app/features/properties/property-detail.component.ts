@@ -49,8 +49,11 @@ export class PropertyDetailComponent implements OnInit {
     return this.auth.user?.role === 'ROLE_ADMIN';
   }
 
-  /** Statuses reachable by manual admin action.
-   *  RESERVED and SOLD are set automatically by reservations/deposits/contracts. */
+  /**
+   * Statuses reachable by manual admin editorial action.
+   * RESERVED and SOLD are set exclusively by the reservation/contract workflow —
+   * they do NOT appear here. To release a RESERVED property, cancel the reservation.
+   */
   get allowedStatusTransitions(): { value: string; label: string }[] {
     if (!this.property) return [];
     const current = this.property.status;
@@ -59,7 +62,7 @@ export class PropertyDetailComponent implements OnInit {
                    { value: 'ARCHIVED',   label: 'Archiver' }],
       ACTIVE:     [{ value: 'DRAFT',      label: 'Repasser en brouillon' },
                    { value: 'WITHDRAWN',  label: 'Retirer du marché' }],
-      RESERVED:   [{ value: 'ACTIVE',     label: 'Libérer (Actif)' }],
+      RESERVED:   [],
       WITHDRAWN:  [{ value: 'ACTIVE',     label: 'Re-publier (Actif)' },
                    { value: 'ARCHIVED',   label: 'Archiver' }],
       SOLD:       [],
@@ -74,7 +77,7 @@ export class PropertyDetailComponent implements OnInit {
     this.statusError = '';
     this.statusSuccess = '';
 
-    this.svc.update(this.property.id, { status: newStatus }).subscribe({
+    this.svc.setStatus(this.property.id, newStatus).subscribe({
       next: (updated) => {
         this.property = updated;
         this.statusChanging = false;

@@ -11,7 +11,6 @@ import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.deposit.domain.DepositStatus;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
@@ -360,7 +359,7 @@ class DepositControllerIT extends IntegrationTestBase {
     // ===== Helpers =====
 
     private ContactResponse createContact(String email) throws Exception {
-        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("John", "Doe", null, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -411,13 +410,10 @@ class DepositControllerIT extends IntegrationTestBase {
         PropertyResponse created = objectMapper.readValue(json, PropertyResponse.class);
 
         // Activate the property (DRAFT → ACTIVE)
-        var updateReq = new PropertyUpdateRequest(null, null, null, null, PropertyStatus.ACTIVE,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
-        mvc.perform(put("/api/properties/{id}", created.id())
+        mvc.perform(patch("/api/properties/{id}/status", created.id())
                         .header("Authorization", bearerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateReq)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
 
         return created.id();

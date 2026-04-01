@@ -270,7 +270,7 @@ class RbacIT extends IntegrationTestBase {
     // ===== Helpers =====
 
     private String contactJson() {
-        return "{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"email\":\"jane" + UUID.randomUUID().toString().substring(0, 6) + "@test.com\"}";
+        return "{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"email\":\"jane" + UUID.randomUUID().toString().substring(0, 6) + "@test.com\",\"consentGiven\":true}";
     }
 
     private String createContactAs(String bearer) throws Exception {

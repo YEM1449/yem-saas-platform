@@ -1,5 +1,10 @@
 # Security Reference
 
+## Latest Audit
+
+- [Security Audit Report - 2026-04-01](./SECURITY_AUDIT_2026-04-01.md)
+- [Snyk Security Configuration Guide](./SNYK_CONFIGURATION.md)
+
 Spring Security · JWT · PostgreSQL RLS · Row-Level Isolation
 
 ---

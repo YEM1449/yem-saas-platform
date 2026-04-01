@@ -331,7 +331,7 @@ class SocieteControllerIT extends IntegrationTestBase {
                         existingSociete.getId(), memberUser.getId())
                         .header("Authorization", superAdminBearer))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(header().exists("Set-Cookie"))
                 .andExpect(jsonPath("$.targetUserId").value(memberUser.getId().toString()))
                 .andExpect(jsonPath("$.targetRole").value("ROLE_AGENT"))
                 .andExpect(jsonPath("$.ttlSeconds").value(SocieteService.IMPERSONATION_TTL_SECONDS));

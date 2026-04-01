@@ -67,4 +67,8 @@ public class PortalJwtProvider {
             return false;
         }
     }
+
+    public static long ttlSeconds() {
+        return TTL_SECONDS;
+    }
 }

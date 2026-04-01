@@ -3,6 +3,7 @@ package com.yem.hlm.backend.property.api;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.property.api.dto.PropertyStatusUpdateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
@@ -107,11 +108,22 @@ public class PropertyController {
     }
 
     /**
+     * Change the editorial status of a property (DRAFT / ACTIVE / WITHDRAWN / ARCHIVED).
+     * RESERVED and SOLD are rejected — use the reservation/contract workflow instead.
+     * Requires ADMIN role only (status changes are a privileged editorial action).
+     */
+    @Operation(summary = "Change editorial status (ADMIN only) — RESERVED/SOLD forbidden here")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public PropertyResponse updateStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody PropertyStatusUpdateRequest request) {
+        return propertyService.updateEditorialStatus(id, request);
+    }
+
+    /**
      * Soft delete a property.
      * Requires ADMIN role only.
-     *
-     * @param id the property ID
-     * @return 204 NO_CONTENT, or 404 NOT_FOUND
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

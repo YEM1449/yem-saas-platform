@@ -69,7 +69,7 @@ export class DocumentListComponent implements OnInit {
   }
 
   download(doc: DocumentResponse): void {
-    window.open(this.svc.downloadUrl(doc.id), '_blank');
+    window.open(this.svc.downloadUrl(doc.id), '_blank', 'noopener,noreferrer');
   }
 
   deleteDoc(doc: DocumentResponse): void {

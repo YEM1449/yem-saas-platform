@@ -163,6 +163,26 @@ public class ContactService {
     }
 
     /**
+     * Updates a contact's status following the allowed state machine transitions.
+     * @throws InvalidStatusTransitionException if the requested transition is not permitted
+     */
+    @Transactional
+    public ContactResponse updateStatus(UUID contactId, ContactStatus newStatus) {
+        UUID societeId = requireSocieteId();
+        UUID actorUserId = requireUserId();
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+
+        ContactStatus current = contact.getStatus();
+        if (!current.canTransitionTo(newStatus)) {
+            throw new InvalidStatusTransitionException(current, newStatus);
+        }
+        contact.setStatus(newStatus);
+        contact.markUpdatedBy(actorUserId);
+        return toResponse(contactRepository.save(contact));
+    }
+
+    /**
      * Qualifies a contact as a prospect: sets status to QUALIFIED_PROSPECT
      * and upserts ProspectDetail with the supplied budget/source enrichment.
      */

@@ -168,7 +168,7 @@ class TokenRevocationIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"login-test@rev.test\",\"password\":\"TestPass123!\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+                .andExpect(header().exists("Set-Cookie"));
 
         // 2) Admin disables user
         mvc.perform(patch(ADMIN_USERS + "/{id}/enabled", target.getId())

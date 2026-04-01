@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.immeuble.service.ImmeubleNameExistsException;
 import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.societe.CrossSocieteAccessException;
 import com.yem.hlm.backend.contract.service.ContractDepositMismatchException;
@@ -25,6 +26,7 @@ import com.yem.hlm.backend.project.service.ArchivedProjectAssignmentException;
 import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
+import com.yem.hlm.backend.property.service.InvalidPropertyStatusTransitionException;
 import com.yem.hlm.backend.property.service.InvalidPropertyTypeException;
 import com.yem.hlm.backend.property.service.ImmeubleProjectMismatchException;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
@@ -333,6 +335,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(InvalidPropertyStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPropertyStatusTransition(
+            InvalidPropertyStatusTransitionException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_STATUS_TRANSITION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     // ========== 400 Bad Request ==========
 
     @ExceptionHandler(InvalidDepositRequestException.class)
@@ -503,6 +521,21 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ImmeubleNameExistsException.class)
+    public ResponseEntity<ErrorResponse> handleImmeubleNameExists(
+            ImmeubleNameExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.IMMEUBLE_NAME_EXISTS,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(ImmeubleProjectMismatchException.class)

@@ -68,7 +68,7 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new CreateContactRequest(
                                 "Isolée", "Contact", null, "iso@alpha.test",
-                                null, null, null, null, null, null))))
+                                null, null, null, true, null, null))))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
@@ -88,7 +88,7 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new CreateContactRequest(
                                 "Alpha", "Only", null, "alpha-only@alpha.test",
-                                null, null, null, null, null, null))))
+                                null, null, null, true, null, null))))
                 .andExpect(status().isCreated());
 
         // Societe B list must be empty (no contacts created for B)
@@ -164,7 +164,7 @@ class CrossSocieteIsolationIT extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new CreateContactRequest(
                                 "Timeline", "Alpha", null, "timeline@alpha.test",
-                                null, null, null, null, null, null))))
+                                null, null, null, true, null, null))))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 

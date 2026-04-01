@@ -14,8 +14,7 @@ import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.project.api.dto.ProjectCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-import com.yem.hlm.backend.property.api.dto.PropertyUpdateRequest;
-import com.yem.hlm.backend.property.domain.PropertyStatus;
+
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.societe.domain.Societe;
@@ -236,7 +235,7 @@ class GdprIT extends IntegrationTestBase {
 
     private UUID createContact(String email) throws Exception {
         var req = new CreateContactRequest("GDPR", "Test", "0600000000", email,
-                null, null, null, null, null, null);
+                null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -278,15 +277,10 @@ class GdprIT extends IntegrationTestBase {
         UUID propertyId = objectMapper.readValue(json, PropertyResponse.class).id();
 
         // Activate the property
-        var update = new PropertyUpdateRequest(null, null, null, null,
-                PropertyStatus.ACTIVE,
-                null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null);
-        mvc.perform(put("/api/properties/{id}", propertyId)
+        mvc.perform(patch("/api/properties/{id}/status", propertyId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(update)))
+                        .content("{\"status\":\"ACTIVE\"}"))
                 .andExpect(status().isOk());
         return propertyId;
     }

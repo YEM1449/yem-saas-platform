@@ -279,7 +279,7 @@ class OutboxIT extends IntegrationTestBase {
 
     /** Creates a contact for the seed tenant via the API. */
     private ContactResponse createContact(String email, String phone) throws Exception {
-        var req = new CreateContactRequest("John", "Outbox", phone, email, null, null, null, null, null, null);
+        var req = new CreateContactRequest("John", "Outbox", phone, email, null, null, null, true, null, null);
         String json = mvc.perform(post("/api/contacts")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)

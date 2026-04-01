@@ -9,16 +9,20 @@ import com.yem.hlm.backend.contact.service.ContactTimelineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Contacts", description = "Contact lifecycle management — prospects, clients, interests")
+@Validated
 @RestController
 @RequestMapping("/api")
 public class ContactController {
@@ -62,6 +66,14 @@ public class ContactController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateContactRequest request) {
         return contactService.update(id, request);
+    }
+
+    @Operation(summary = "Transition a contact's status (ADMIN/MANAGER only)")
+    @PatchMapping("/contacts/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactResponse updateStatus(@PathVariable("id") UUID id,
+                                        @Valid @RequestBody UpdateContactStatusRequest request) {
+        return contactService.updateStatus(id, request.status());
     }
 
     /**
@@ -116,7 +128,7 @@ public class ContactController {
     @GetMapping("/contacts/{id}/timeline")
     public List<TimelineEventResponse> getTimeline(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit) {
         return timelineService.getTimeline(id, limit);
     }
 }

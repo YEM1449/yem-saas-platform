@@ -41,7 +41,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
         "server.ssl.key-alias=hlm-dev",
         "server.ssl.key-store-type=PKCS12",
         "management.health.defaults.enabled=false",
-        "management.health.ping.enabled=true"
+        "management.health.ping.enabled=true",
+        "app.tls.http-redirect-port=-1"
 })
 class TlsConfigIT extends IntegrationTestBase {
 

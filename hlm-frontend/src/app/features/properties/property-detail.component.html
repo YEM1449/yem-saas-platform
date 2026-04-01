@@ -284,11 +284,11 @@
               @for (m of media; track m.id) {
                 <li class="media-card">
                   @if (isImage(m.contentType)) {
-                    <a [href]="downloadUrl(m.id)" target="_blank" class="media-thumb-link">
+                    <a [href]="downloadUrl(m.id)" target="_blank" rel="noopener noreferrer" class="media-thumb-link">
                       <img [src]="downloadUrl(m.id)" [alt]="m.originalFilename" class="media-thumb" />
                     </a>
                   } @else {
-                    <a [href]="downloadUrl(m.id)" target="_blank" class="media-doc">
+                    <a [href]="downloadUrl(m.id)" target="_blank" rel="noopener noreferrer" class="media-doc">
                       <span class="media-doc-icon">PDF</span>
                     </a>
                   }
