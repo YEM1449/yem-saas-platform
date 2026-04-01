@@ -73,10 +73,11 @@ public class PropertyMediaService {
         }
 
         int sortOrder = mediaRepository.nextSortOrder(societeId, propertyId);
-        // Use the streaming overload to avoid loading the entire file into the JVM heap.
-        // MultipartFile.getInputStream() returns the underlying stream; getSize() provides
-        // the exact content-length required by S3-compatible PUT requests.
-        String fileKey = storageService.store(file.getInputStream(), file.getSize(), file.getOriginalFilename(), contentType);
+        // Use the byte-array overload so the SDK can compute the real SHA-256 payload hash.
+        // RequestBody.fromInputStream() sends UNSIGNED-PAYLOAD which many S3-compatible
+        // providers (MinIO, Cloudflare R2, OVH, ...) reject with 403 Access Denied.
+        // At the configured 10 MB max, loading the bytes into heap is fine.
+        String fileKey = storageService.store(file.getBytes(), file.getOriginalFilename(), contentType);
 
         PropertyMedia media = new PropertyMedia(
                 societeId, propertyId, fileKey,

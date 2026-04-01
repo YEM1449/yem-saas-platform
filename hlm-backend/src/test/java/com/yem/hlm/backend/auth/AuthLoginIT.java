@@ -14,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.containsString;
 
 /**
  * Integration test for POST /auth/login.
@@ -37,7 +38,7 @@ class AuthLoginIT extends IntegrationTestBase {
     @Autowired JwtProvider jwtProvider;
 
     @Test
-    void login_ok_returnsValidJwtWithCorrectClaims() throws Exception {
+    void login_ok_setsHttpOnlyCookieWithValidJwtAndSuppressesTokenFromBody() throws Exception {
         String body = """
             {
 
@@ -53,20 +54,35 @@ class AuthLoginIT extends IntegrationTestBase {
                                 .content(body))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                // Token must NOT appear in the JSON body — it is in the httpOnly cookie
+                .andExpect(jsonPath("$.accessToken").value(""))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").isNumber())
+                // httpOnly auth cookie must be present
+                .andExpect(header().string("Set-Cookie", containsString("hlm_auth=")))
+                .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
                 .andReturn();
 
-        // Extract the token from the JSON response
-        String json = result.getResponse().getContentAsString();
-        String token = com.jayway.jsonpath.JsonPath.read(json, "$.accessToken");
+        // Extract the JWT from the Set-Cookie header and validate its claims
+        String setCookie = result.getResponse().getHeader("Set-Cookie");
+        assertThat(setCookie).isNotNull();
+        String token = extractCookieValue(setCookie, "hlm_auth");
 
-        // Validate the JWT is real and contains correct claims
         assertThat(jwtProvider.isValid(token)).isTrue();
         assertThat(jwtProvider.extractSocieteId(token)).isEqualTo(SEEDED_SOCIETE_ID);
         assertThat(jwtProvider.extractUserId(token)).isEqualTo(SEEDED_USER_ID);
         assertThat(jwtProvider.extractRoles(token)).contains("ROLE_ADMIN");
+    }
+
+    /** Extracts a named cookie value from a raw {@code Set-Cookie} header string. */
+    private static String extractCookieValue(String setCookieHeader, String cookieName) {
+        for (String part : setCookieHeader.split(";")) {
+            part = part.trim();
+            if (part.startsWith(cookieName + "=")) {
+                return part.substring((cookieName + "=").length());
+            }
+        }
+        throw new AssertionError("Cookie '" + cookieName + "' not found in Set-Cookie: " + setCookieHeader);
     }
 
     @Test

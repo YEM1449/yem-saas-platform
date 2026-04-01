@@ -1,10 +1,206 @@
-/* Contacts component — delta styles only.
-   All layout, buttons, badges, modal, table and form styles
-   come from the global design system (styles.css). */
+/* ── View toggle ────────────────────────────────────────────── */
+.view-toggle {
+  display: inline-flex;
+  background: var(--c-surface, #f1f5f9);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-muted, #64748b);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.view-btn.active {
+  background: #fff;
+  color: var(--c-text, #1e293b);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.view-btn:hover:not(.active) { background: rgba(0,0,0,.04); }
 
-.contact-name {
+/* ── List view: avatar + name cell ─────────────────────────── */
+.contact-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 500;
 }
+.contact-avatar-sm {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Pipeline toolbar extras ────────────────────────────────── */
+.lost-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--c-text-secondary, #64748b);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.lost-toggle input { cursor: pointer; }
+
+/* ── Kanban Board ───────────────────────────────────────────── */
+.pipeline-board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  align-items: flex-start;
+  min-height: 60vh;
+}
+
+.pipeline-col {
+  flex: 0 0 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pipeline-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 3px solid #64748b;
+  background: var(--c-card, #fff);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+.pipeline-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.pipeline-col-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 99px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.pipeline-col-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px;
+  overflow-y: auto;
+  max-height: calc(100vh - 240px);
+}
+
+.pipeline-empty {
+  font-size: 12px;
+  color: var(--c-text-muted, #94a3b8);
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ── Pipeline card ──────────────────────────────────────────── */
+.pipeline-card {
+  display: block;
+  text-decoration: none;
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: box-shadow .12s, border-color .12s, transform .1s;
+  position: relative;
+}
+.pipeline-card:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  border-color: var(--c-primary, #3b82f6);
+  transform: translateY(-1px);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.card-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.card-identity { flex: 1; min-width: 0; }
+.card-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-temp {
+  display: block;
+  font-size: 11px;
+  color: #f59e0b;
+  margin-top: 1px;
+}
+
+.card-chips { display: flex; flex-direction: column; gap: 3px; }
+.card-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--c-text-muted, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-arrow {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: var(--c-text-muted, #94a3b8);
+  opacity: 0;
+  transition: opacity .12s;
+}
+.pipeline-card:hover .card-arrow { opacity: 1; }
+
+.pipeline-col-lost { opacity: 0.85; }
+.pipeline-card-lost { opacity: 0.7; }
+.pipeline-card-lost:hover { opacity: 1; }
 
 /* ── GDPR Privacy Notice Banner ─────────────────────────────── */
 .privacy-banner {
@@ -15,19 +211,13 @@
   margin-bottom: 16px;
   font-size: 13px;
 }
-
 .privacy-banner-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
 }
-
-.privacy-banner-title {
-  font-weight: 600;
-  color: #92400e;
-}
-
+.privacy-banner-title { font-weight: 600; color: #92400e; }
 .privacy-banner-dismiss {
   background: none;
   border: none;
@@ -37,18 +227,13 @@
   padding: 2px 6px;
   border-radius: 4px;
 }
-
-.privacy-banner-dismiss:hover {
-  background: rgba(245, 158, 11, 0.15);
-}
-
+.privacy-banner-dismiss:hover { background: rgba(245,158,11,.15); }
 .privacy-banner-details summary {
   cursor: pointer;
   color: #b45309;
   font-size: 12px;
   margin-bottom: 4px;
 }
-
 .privacy-banner-text {
   white-space: pre-wrap;
   font-family: inherit;
@@ -61,9 +246,4 @@
   max-height: 200px;
   overflow-y: auto;
 }
-
-.privacy-banner-version {
-  color: #9ca3af;
-  font-size: 11px;
-  margin: 4px 0 0;
-}
+.privacy-banner-version { color: #9ca3af; font-size: 11px; margin: 4px 0 0; }

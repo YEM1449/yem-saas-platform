@@ -27,6 +27,8 @@ export interface MeResponse {
   platformRole?: string;
   langueInterface?: string;
   societeLogoUrl?: string;
+  isImpersonating?: boolean;
+  impersonationTargetEmail?: string;
 }
 
 export interface InvitationDetails {

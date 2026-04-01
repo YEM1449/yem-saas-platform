@@ -41,7 +41,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_no_authorization_header() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger());
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger(), mock(CookieTokenHelper.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -68,7 +68,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_authorization_header_is_not_bearer() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger());
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger(), mock(CookieTokenHelper.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Basic abc123");
@@ -95,7 +95,7 @@ class JwtAuthenticationFilterTest {
     void should_pass_through_when_token_is_invalid() throws ServletException, IOException {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger());
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, mock(UserSecurityCacheService.class), new com.yem.hlm.backend.auth.service.SecurityAuditLogger(), mock(CookieTokenHelper.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer invalid.token.here");
@@ -128,7 +128,7 @@ class JwtAuthenticationFilterTest {
         // Arrange
         JwtProvider jwtProvider = mock(JwtProvider.class);
         UserSecurityCacheService cacheService = mock(UserSecurityCacheService.class);
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, cacheService, new com.yem.hlm.backend.auth.service.SecurityAuditLogger());
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtProvider, cacheService, new com.yem.hlm.backend.auth.service.SecurityAuditLogger(), mock(CookieTokenHelper.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer good.token");

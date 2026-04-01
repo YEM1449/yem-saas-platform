@@ -104,6 +104,36 @@
   box-shadow: var(--focus-ring, 0 0 0 3px rgba(37,99,235,.2));
 }
 
+/* ── Password visibility toggle ──────────────────────────────── */
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrap input {
+  width: 100%;
+  padding-right: 40px; /* room for the eye button */
+}
+
+.btn-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--c-text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color var(--tr, 150ms ease);
+  line-height: 0;
+}
+.btn-eye:hover { color: var(--c-text-secondary, #475569); }
+.btn-eye:focus-visible { outline: 2px solid var(--c-primary, #2563eb); outline-offset: 1px; }
+
 /* ── Submit button ────────────────────────────────────────────── */
 .btn-login {
   display: flex;

@@ -75,7 +75,13 @@ export class SocieteService {
   }
 
   impersonate(id: string, userId: string): Observable<ImpersonateResponse> {
-    return this.http.post<ImpersonateResponse>(`${this.base}/${id}/impersonate/${userId}`, {});
+    return this.http.post<ImpersonateResponse>(`${this.base}/${id}/impersonate/${userId}`, {},
+      { withCredentials: true });
+  }
+
+  endImpersonation(): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/api/end-impersonation`, null,
+      { withCredentials: true });
   }
 
   uploadLogo(id: string, file: File): Observable<void> {

@@ -8,7 +8,6 @@ import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, Activati
 
 export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
-const TOKEN_KEY = 'hlm_access_token';
 const SUPPORTED_LANGS = ['fr', 'en', 'ar'];
 
 @Injectable({ providedIn: 'root' })
@@ -19,49 +18,56 @@ export class AuthService {
 
   private cachedUser: MeResponse | null = null;
 
-  get token(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  get isLoggedIn(): boolean {
-    return !!this.token;
-  }
-
   get user(): MeResponse | null {
     return this.cachedUser;
   }
 
+  /**
+   * Authenticate with email + password.
+   * On success the backend sets the httpOnly auth cookie — no token is stored in JS.
+   * For multi-société users a short-lived partial token is returned in the body
+   * so the client can call switchSociete().
+   */
   login(req: LoginRequest): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/auth/login`, req)
-      .pipe(tap((res) => {
-        if (!res.requiresSocieteSelection) {
-          localStorage.setItem(TOKEN_KEY, res.accessToken);
-        }
-      }));
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, req, {
+      withCredentials: true,
+    });
   }
 
+  /**
+   * Exchange a partial token for a full société-scoped JWT.
+   * The partial token is passed as Bearer in the Authorization header (service level).
+   * On success the backend sets the httpOnly auth cookie.
+   */
   switchSociete(partialToken: string, societeId: string): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(
-        `${environment.apiUrl}/auth/switch-societe`,
-        { societeId } as SwitchSocieteRequest,
-        { headers: { Authorization: `Bearer ${partialToken}` } }
-      )
-      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
+    return this.http.post<LoginResponse>(
+      `${environment.apiUrl}/auth/switch-societe`,
+      { societeId } as SwitchSocieteRequest,
+      {
+        headers: { Authorization: `Bearer ${partialToken}` },
+        withCredentials: true,
+      }
+    );
   }
 
   me(): Observable<MeResponse> {
-    return this.http.get<MeResponse>(`${environment.apiUrl}/auth/me`);
+    return this.http.get<MeResponse>(`${environment.apiUrl}/auth/me`, { withCredentials: true });
   }
 
   validateInvitation(token: string): Observable<InvitationDetails> {
     return this.http.get<InvitationDetails>(`${environment.apiUrl}/auth/invitation/${token}`);
   }
 
+  /**
+   * Activate an account via invitation link.
+   * On success the backend sets the httpOnly auth cookie.
+   */
   activateAccount(token: string, req: ActivationRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/invitation/${token}/activer`, req)
-      .pipe(tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)));
+    return this.http.post<LoginResponse>(
+      `${environment.apiUrl}/auth/invitation/${token}/activer`,
+      req,
+      { withCredentials: true }
+    );
   }
 
   /**
@@ -69,17 +75,17 @@ export class AuthService {
    * Caches the result so subsequent guard checks don't re-fetch.
    * Also applies the user's saved language preference if available.
    *
+   * With httpOnly cookies there is no JS-readable token — session validity
+   * is determined solely by the server response to /auth/me.
+   *
    * Returns:
-   * - 'valid'   — token verified by backend
+   * - 'valid'   — cookie verified by backend
    * - 'invalid' — 401/403 from backend → session cleared
-   * - 'unknown' — network/5xx error → token kept, user stays in app
+   * - 'unknown' — network/5xx error → keep user in app
    */
   verifySession(): Observable<SessionStatus> {
     if (this.cachedUser) {
       return of('valid');
-    }
-    if (!this.token) {
-      return of('invalid');
     }
     return this.me().pipe(
       tap((user) => {
@@ -98,19 +104,33 @@ export class AuthService {
           this.clearSession();
           return of('invalid' as SessionStatus);
         }
-        // Network error / 5xx — keep token, don't force logout
+        // Network error / 5xx — keep session, don't force logout
         return of('unknown' as SessionStatus);
       })
     );
   }
 
+  /**
+   * Log out: ask the backend to clear the httpOnly cookie (Max-Age=0),
+   * then discard the cached user and navigate to the login page.
+   */
   logout(): void {
+    this.http
+      .post(`${environment.apiUrl}/auth/logout`, null, { withCredentials: true })
+      .subscribe({ complete: () => this.finishLogout(), error: () => this.finishLogout() });
+  }
+
+  private finishLogout(): void {
     this.clearSession();
     this.router.navigateByUrl('/login');
   }
 
+  /** Clears the cached /auth/me response. Call after impersonation changes to force re-fetch. */
+  clearCachedUser(): void {
+    this.cachedUser = null;
+  }
+
   private clearSession(): void {
     this.cachedUser = null;
-    localStorage.removeItem(TOKEN_KEY);
   }
 }

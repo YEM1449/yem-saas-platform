@@ -28,9 +28,10 @@ public class SecurityConfig {
             UserSecurityCacheService userSecurityCacheService,
             SecurityAuditLogger securityAuditLogger,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
-            CustomAccessDeniedHandler accessDeniedHandler
+            CustomAccessDeniedHandler accessDeniedHandler,
+            CookieTokenHelper cookieHelper
     ) throws Exception {
-        var jwtFilter = new JwtAuthenticationFilter(jwtProvider, userSecurityCacheService, securityAuditLogger);
+        var jwtFilter = new JwtAuthenticationFilter(jwtProvider, userSecurityCacheService, securityAuditLogger, cookieHelper);
 
         http
                 .cors(Customizer.withDefaults())
@@ -85,6 +86,8 @@ public class SecurityConfig {
 
                         // PUBLIC CRM endpoints
                         .requestMatchers("/auth/login").permitAll()
+                        // Logout clears the cookie — safe to permit all (clearing a non-existent cookie is harmless)
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
                         // Société switch — token validated internally by AuthService
