@@ -41,8 +41,8 @@ test.describe('Contacts', () => {
     await page.getByPlaceholder('jean.dupont@example.com').fill(email);
     await page.click('[data-testid="save-button"]');
 
-    // Wait for modal to close (success path closes it) then assert row is visible
-    await expect(page.locator('.modal-backdrop')).toBeHidden({ timeout: 8000 });
-    await expect(page.locator(`text=Test-${ts}`)).toBeVisible({ timeout: 8000 });
+    // After creation the app navigates to the contact detail page — verify that
+    await page.waitForURL(/\/app\/contacts\/[^/]+$/, { timeout: 10000 });
+    await expect(page.getByRole('heading', { name: `E2E Test-${ts}`, exact: false })).toBeVisible({ timeout: 8000 });
   });
 });

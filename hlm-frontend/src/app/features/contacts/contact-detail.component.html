@@ -1,7 +1,7 @@
-<p><a routerLink="/app/contacts">&larr; {{ 'common.back' | translate }}</a></p>
+<p><a routerLink="/app/contacts">&larr; Retour aux contacts</a></p>
 
 @if (loading) {
-  <p>{{ 'common.loading' | translate }}</p>
+  <p>Chargement…</p>
 }
 
 @if (error) {
@@ -9,60 +9,404 @@
 }
 
 @if (!loading && contact) {
-  <h2>{{ contact.fullName }}</h2>
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab === 'details'" (click)="selectTab('details')">
-      Fiche
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="selectTab('timeline')">
-      Historique
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'documents'" (click)="selectTab('documents')">
-      {{ 'contacts.documents' | translate }}
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
-      {{ 'contacts.tasks' | translate }}
-    </button>
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <div class="contact-header">
+    <div class="contact-title-row">
+      <h2>{{ contact.fullName }}</h2>
+      <span class="badge" [class]="statusClass(contact.status)">
+        {{ statusLabel(contact.status) }}
+      </span>
+      <span class="badge type-badge" [class]="typeClass(contact.contactType)">
+        {{ contact.contactType }}
+      </span>
+    </div>
+
+    @if (isTempClientExpired()) {
+      <div class="alert alert-warning">
+        Attention : la période client temporaire est expirée. Le contact doit être converti ou relancé.
+      </div>
+    }
+
+    @if (contact.tempClientUntil && !isTempClientExpired()) {
+      <div class="alert alert-info">
+        Client temporaire jusqu'au {{ contact.tempClientUntil | date:'dd/MM/yyyy' }}.
+      </div>
+    }
+
+    <!-- Status transition buttons -->
+    @if (allowedTransitions.length > 0) {
+      <div class="transition-bar">
+        <span class="transition-label">Changer le statut :</span>
+        @for (s of allowedTransitions; track s) {
+          <button class="btn btn-sm btn-outline"
+                  [disabled]="updatingStatus"
+                  (click)="transitionTo(s)">
+            → {{ statusLabel(s) }}
+          </button>
+        }
+        @if (statusError) {
+          <span class="inline-error">{{ statusError }}</span>
+        }
+      </div>
+    }
+
+    <!-- Qualify to prospect button (only when not yet qualified) -->
+    @if (!contact.qualified) {
+      <div class="transition-bar">
+        <button class="btn btn-sm btn-primary" (click)="toggleQualifyForm()">
+          {{ showQualifyForm ? 'Annuler' : 'Qualifier comme prospect' }}
+        </button>
+      </div>
+    }
   </div>
 
+  <!-- ── Qualify form ──────────────────────────────────────────────────────── -->
+  @if (showQualifyForm) {
+    <div class="card qualify-form">
+      <h3 class="card-title">Qualifier le prospect</h3>
+
+      @if (qualifyError) {
+        <p class="error">{{ qualifyError }}</p>
+      }
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Source</label>
+          <input type="text" [(ngModel)]="qualifySource" placeholder="Ex : Site web, Référence…" maxlength="100" />
+        </div>
+        <div class="field">
+          <label>Budget min (MAD)</label>
+          <input type="number" [(ngModel)]="qualifyBudgetMin" min="0" placeholder="0" />
+        </div>
+        <div class="field">
+          <label>Budget max (MAD)</label>
+          <input type="number" [(ngModel)]="qualifyBudgetMax" min="0" placeholder="0" />
+        </div>
+        <div class="field field-full">
+          <label>Notes</label>
+          <textarea [(ngModel)]="qualifyNotes" rows="3" maxlength="5000" placeholder="Informations complémentaires…"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" [disabled]="qualifying" (click)="qualify()">
+          {{ qualifying ? 'Qualification…' : 'Valider' }}
+        </button>
+        <button class="btn btn-outline" (click)="toggleQualifyForm()">Annuler</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Tabs ─────────────────────────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'details'"      (click)="selectTab('details')">Fiche</button>
+    <button class="tab-btn" [class.active]="activeTab === 'interests'"    (click)="selectTab('interests')">Intérêts</button>
+    <button class="tab-btn" [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">Réservations</button>
+    <button class="tab-btn" [class.active]="activeTab === 'deposits'"     (click)="selectTab('deposits')">Acomptes</button>
+    <button class="tab-btn" [class.active]="activeTab === 'timeline'"     (click)="selectTab('timeline')">Historique</button>
+    <button class="tab-btn" [class.active]="activeTab === 'documents'"    (click)="selectTab('documents')">Documents</button>
+    <button class="tab-btn" [class.active]="activeTab === 'tasks'"        (click)="selectTab('tasks')">Tâches</button>
+  </div>
+
+  <!-- ═══════════════════════════ DETAILS ════════════════════════════════════ -->
   @if (activeTab === 'details') {
     <dl>
-      <dt>{{ 'common.type' | translate }}</dt>
-      <dd>{{ contact.contactType }}</dd>
-
-      <dt>{{ 'common.status' | translate }}</dt>
-      <dd>{{ contact.status }}</dd>
-
-      <dt>{{ 'common.yes' | translate }}</dt>
-      <dd>{{ contact.qualified ? ('common.yes' | translate) : ('common.no' | translate) }}</dd>
-
-      <dt>{{ 'common.email' | translate }}</dt>
-      <dd>{{ contact.email ?? '—' }}</dd>
-
-      <dt>{{ 'common.phone' | translate }}</dt>
-      <dd>{{ contact.phone ?? '—' }}</dd>
-
-      <dt>{{ 'contacts.nationalId' | translate }}</dt>
-      <dd>{{ contact.nationalId ?? '—' }}</dd>
-
-      <dt>{{ 'common.address' | translate }}</dt>
-      <dd>{{ contact.address ?? '—' }}</dd>
-
-      <dt>{{ 'common.notes' | translate }}</dt>
-      <dd>{{ contact.notes ?? '—' }}</dd>
-
-      <dt>{{ 'common.date' | translate }}</dt>
-      <dd>{{ contact.createdAt }}</dd>
-
-      <dt>{{ 'common.date' | translate }}</dt>
-      <dd>{{ contact.updatedAt }}</dd>
+      <dt>Prénom</dt>       <dd>{{ contact.firstName }}</dd>
+      <dt>Nom</dt>          <dd>{{ contact.lastName }}</dd>
+      <dt>Email</dt>        <dd>{{ contact.email ?? '—' }}</dd>
+      <dt>Téléphone</dt>    <dd>{{ contact.phone ?? '—' }}</dd>
+      <dt>CIN / Passeport</dt> <dd>{{ contact.nationalId ?? '—' }}</dd>
+      <dt>Adresse</dt>      <dd>{{ contact.address ?? '—' }}</dd>
+      <dt>Notes</dt>        <dd>{{ contact.notes ?? '—' }}</dd>
+      <dt>Qualifié</dt>     <dd>{{ contact.qualified ? 'Oui' : 'Non' }}</dd>
+      <dt>Consentement</dt> <dd>{{ contact.consentGiven ? 'Donné' : 'Non donné' }}</dd>
+      <dt>Base légale</dt>  <dd>{{ contact.processingBasis ?? '—' }}</dd>
+      <dt>Créé le</dt>      <dd>{{ contact.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+      <dt>Modifié le</dt>   <dd>{{ contact.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
     </dl>
   }
 
+  <!-- ═══════════════════════════ INTERESTS ══════════════════════════════════ -->
+  @if (activeTab === 'interests') {
+
+    <!-- Add interest form -->
+    <div class="card">
+      <h3 class="card-title">Ajouter un intérêt</h3>
+
+      @if (interestError) {
+        <p class="error">{{ interestError }}</p>
+      }
+
+      @if (propertiesLoading) {
+        <p class="muted">Chargement des biens…</p>
+      }
+
+      @if (!propertiesLoading && availableForInterest.length === 0) {
+        <p class="muted">Aucun bien disponible à associer.</p>
+      }
+
+      @if (!propertiesLoading && availableForInterest.length > 0) {
+        <div class="inline-form">
+          <select [(ngModel)]="selectedPropertyId">
+            <option value="">— Sélectionner un bien —</option>
+            @for (p of availableForInterest; track p.id) {
+              <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
+            }
+          </select>
+          <button class="btn btn-primary"
+                  [disabled]="!selectedPropertyId || addingInterest"
+                  (click)="addInterest()">
+            {{ addingInterest ? 'Ajout…' : 'Ajouter' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Interests list -->
+    @if (interestsLoading) {
+      <p class="muted">Chargement…</p>
+    }
+
+    @if (!interestsLoading && interests.length === 0 && interestsLoaded) {
+      <p class="empty">Aucun intérêt enregistré.</p>
+    }
+
+    @if (!interestsLoading && interests.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Statut intérêt</th>
+            <th>Ajouté le</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (i of interests; track i.propertyId) {
+            <tr>
+              <td>{{ propertyLabel(i.propertyId) }}</td>
+              <td>{{ i.interestStatus }}</td>
+              <td>{{ i.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <button class="btn btn-sm btn-danger"
+                        [disabled]="removingPropertyId === i.propertyId"
+                        (click)="removeInterest(i.propertyId)">
+                  Retirer
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+
+  <!-- ═══════════════════════════ RESERVATIONS ═══════════════════════════════ -->
+  @if (activeTab === 'reservations') {
+
+    <!-- Create reservation form -->
+    <div class="card">
+      <h3 class="card-title">Nouvelle réservation</h3>
+
+      @if (reservationError) {
+        <p class="error">{{ reservationError }}</p>
+      }
+      @if (reservationSuccess) {
+        <p class="success">{{ reservationSuccess }}</p>
+      }
+
+      @if (propertiesLoading) {
+        <p class="muted">Chargement des biens…</p>
+      }
+
+      @if (!propertiesLoading) {
+        <div class="form-grid">
+          <div class="field">
+            <label>Bien <span class="required">*</span></label>
+            <select [(ngModel)]="reservationPropertyId">
+              <option value="">— Sélectionner un bien —</option>
+              @for (p of properties; track p.id) {
+                <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Prix de réservation (MAD)</label>
+            <input type="number" [(ngModel)]="reservationPrice" min="0" placeholder="0" />
+          </div>
+          <div class="field field-full">
+            <label>Notes</label>
+            <textarea [(ngModel)]="reservationNotes" rows="2" maxlength="2000" placeholder="Remarques…"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary"
+                  [disabled]="!reservationPropertyId || creatingReservation"
+                  (click)="createReservation()">
+            {{ creatingReservation ? 'Création…' : 'Réserver le bien' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Reservations list -->
+    @if (reservationsLoading) {
+      <p class="muted">Chargement…</p>
+    }
+
+    @if (!reservationsLoading && reservations.length === 0 && reservationsLoaded) {
+      <p class="empty">Aucune réservation enregistrée.</p>
+    }
+
+    @if (!reservationsLoading && reservations.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Prix</th>
+            <th>Date</th>
+            <th>Expiration</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of reservations; track r.id) {
+            <tr>
+              <td>{{ propertyLabel(r.propertyId) }}</td>
+              <td>{{ r.reservationPrice != null ? (r.reservationPrice | number:'1.0-0') + ' MAD' : '—' }}</td>
+              <td>{{ r.reservationDate | date:'dd/MM/yyyy' }}</td>
+              <td>{{ r.expiryDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [class]="reservationStatusClass(r.status)">{{ r.status }}</span>
+              </td>
+              <td class="action-cell">
+                @if (r.status === 'ACTIVE') {
+                  <button class="btn btn-sm btn-outline" (click)="cancelReservation(r.id)">Annuler</button>
+                  <button class="btn btn-sm btn-primary" (click)="convertReservationToDeposit(r)">
+                    → Acompte
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+
+  <!-- ═══════════════════════════ DEPOSITS ═══════════════════════════════════ -->
+  @if (activeTab === 'deposits') {
+
+    <!-- Create deposit form -->
+    <div class="card">
+      <h3 class="card-title">Nouvel acompte</h3>
+
+      @if (depositError) {
+        <p class="error">{{ depositError }}</p>
+      }
+      @if (depositSuccess) {
+        <p class="success">{{ depositSuccess }}</p>
+      }
+
+      @if (propertiesLoading) {
+        <p class="muted">Chargement des biens…</p>
+      }
+
+      @if (!propertiesLoading) {
+        <div class="form-grid">
+          <div class="field">
+            <label>Bien <span class="required">*</span></label>
+            <select [(ngModel)]="depositPropertyId">
+              <option value="">— Sélectionner un bien —</option>
+              @for (p of properties; track p.id) {
+                <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Montant (MAD) <span class="required">*</span></label>
+            <input type="number" [(ngModel)]="depositAmount" min="0" placeholder="0" />
+          </div>
+          <div class="field field-full">
+            <label>Notes</label>
+            <textarea [(ngModel)]="depositNotes" rows="2" maxlength="2000" placeholder="Remarques…"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary"
+                  [disabled]="!depositPropertyId || !depositAmount || creatingDeposit"
+                  (click)="createDeposit()">
+            {{ creatingDeposit ? 'Création…' : 'Enregistrer l\'acompte' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Deposits list -->
+    @if (depositsLoading) {
+      <p class="muted">Chargement…</p>
+    }
+
+    @if (!depositsLoading && deposits.length === 0 && depositsLoaded) {
+      <p class="empty">Aucun acompte enregistré.</p>
+    }
+
+    @if (!depositsLoading && deposits.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Bien</th>
+            <th>Montant</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of deposits; track d.id) {
+            <tr>
+              <td><code>{{ d.reference }}</code></td>
+              <td>{{ propertyLabel(d.propertyId) }}</td>
+              <td>{{ d.amount | number:'1.0-0' }} {{ d.currency }}</td>
+              <td>{{ d.depositDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [class]="depositStatusClass(d.status)">{{ d.status }}</span>
+              </td>
+              <td class="action-cell">
+                @if (d.status === 'PENDING') {
+                  <button class="btn btn-sm btn-primary"
+                          [disabled]="actionDepositId === d.id"
+                          (click)="confirmDeposit(d)">
+                    Confirmer
+                  </button>
+                  <button class="btn btn-sm btn-danger"
+                          [disabled]="actionDepositId === d.id"
+                          (click)="cancelDeposit(d)">
+                    Annuler
+                  </button>
+                }
+                @if (d.status === 'CONFIRMED') {
+                  <button class="btn btn-sm btn-outline" (click)="downloadPdf(d)">
+                    PDF
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+
+  <!-- ═══════════════════════════ TIMELINE ═══════════════════════════════════ -->
   @if (activeTab === 'timeline') {
     @if (timelineLoading) {
-      <p>{{ 'common.loading' | translate }}</p>
+      <p class="muted">Chargement…</p>
     }
     @if (timelineError) {
       <p class="error">{{ timelineError }}</p>
@@ -85,11 +429,14 @@
     }
   }
 
+  <!-- ═══════════════════════════ DOCUMENTS ══════════════════════════════════ -->
   @if (activeTab === 'documents') {
     <app-document-list entityType="CONTACT" [entityId]="contact.id" />
   }
 
+  <!-- ═══════════════════════════ TASKS ══════════════════════════════════════ -->
   @if (activeTab === 'tasks') {
     <app-contact-tasks [contactId]="contact.id" />
   }
+
 }
