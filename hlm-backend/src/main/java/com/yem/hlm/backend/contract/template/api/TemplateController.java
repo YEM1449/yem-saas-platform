@@ -80,7 +80,7 @@ public class TemplateController {
      * Renders a preview PDF using the stored custom template (or built-in if none).
      * The preview uses an empty/placeholder model — suitable for layout checks.
      */
-    @PostMapping("/{type}/preview")
+    @GetMapping("/{type}/preview")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<byte[]> preview(@PathVariable TemplateType type) {
         UUID societeId = SocieteContext.getSocieteId();

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { PropertyService } from './property.service';
@@ -12,7 +13,7 @@ import { DocumentListComponent } from '../documents/document-list.component';
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, DocumentListComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, TranslateModule],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })
@@ -33,6 +34,10 @@ export class PropertyDetailComponent implements OnInit {
   uploadError = '';
   deleteError = '';
 
+  statusChanging = false;
+  statusError = '';
+  statusSuccess = '';
+
   private propertyId = '';
 
   get canManageMedia(): boolean {
@@ -42,6 +47,46 @@ export class PropertyDetailComponent implements OnInit {
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';
+  }
+
+  /** Statuses reachable by manual admin action.
+   *  RESERVED and SOLD are set automatically by reservations/deposits/contracts. */
+  get allowedStatusTransitions(): { value: string; label: string }[] {
+    if (!this.property) return [];
+    const current = this.property.status;
+    const all: Record<string, { value: string; label: string }[]> = {
+      DRAFT:      [{ value: 'ACTIVE',     label: 'Publier (Actif)' },
+                   { value: 'ARCHIVED',   label: 'Archiver' }],
+      ACTIVE:     [{ value: 'DRAFT',      label: 'Repasser en brouillon' },
+                   { value: 'WITHDRAWN',  label: 'Retirer du marché' }],
+      RESERVED:   [{ value: 'ACTIVE',     label: 'Libérer (Actif)' }],
+      WITHDRAWN:  [{ value: 'ACTIVE',     label: 'Re-publier (Actif)' },
+                   { value: 'ARCHIVED',   label: 'Archiver' }],
+      SOLD:       [],
+      ARCHIVED:   [{ value: 'DRAFT',      label: 'Remettre en brouillon' }],
+    };
+    return all[current] ?? [];
+  }
+
+  changeStatus(newStatus: string): void {
+    if (!this.property || !newStatus || this.statusChanging) return;
+    this.statusChanging = true;
+    this.statusError = '';
+    this.statusSuccess = '';
+
+    this.svc.update(this.property.id, { status: newStatus }).subscribe({
+      next: (updated) => {
+        this.property = updated;
+        this.statusChanging = false;
+        this.statusSuccess = `Statut mis à jour : ${newStatus}`;
+        setTimeout(() => { this.statusSuccess = ''; }, 3000);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.statusChanging = false;
+        const body = err.error as ErrorResponse | null;
+        this.statusError = body?.message ?? `Erreur lors du changement de statut (${err.status})`;
+      },
+    });
   }
 
   ngOnInit(): void {
@@ -117,5 +162,22 @@ export class PropertyDetailComponent implements OnInit {
 
   isImage(contentType: string): boolean {
     return contentType.startsWith('image/');
+  }
+
+  statusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      DRAFT: 'Brouillon', ACTIVE: 'Actif', RESERVED: 'Réservé',
+      SOLD: 'Vendu', WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
+    };
+    return labels[status] ?? status;
+  }
+
+  typeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      VILLA: 'Villa', APPARTEMENT: 'Appartement', STUDIO: 'Studio',
+      T2: 'T2', T3: 'T3', DUPLEX: 'Duplex', COMMERCE: 'Commerce',
+      LOCAL: 'Local commercial', TERRAIN: 'Terrain',
+    };
+    return labels[type] ?? type;
   }
 }

@@ -1,106 +1,318 @@
-<p><a routerLink="/app/properties">&larr; {{ 'common.back' | translate }}</a></p>
+<!-- ── Back ──────────────────────────────────────────────────── -->
+<a routerLink="/app/properties" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M9 2L5 7l4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  Retour aux biens
+</a>
 
 @if (loading) {
-  <p>{{ 'common.loading' | translate }}</p>
+  <div class="loading-wrap" style="margin-top:40px">
+    <div class="spinner"></div>
+    {{ 'common.loading' | translate }}
+  </div>
 }
 
-@if (error) {
-  <p class="error">{{ error }}</p>
+@if (error && !loading) {
+  <div class="alert alert-error" style="margin-top:16px">{{ error }}</div>
 }
 
 @if (!loading && property) {
-  <h2>{{ property.title }}</h2>
 
-  <dl>
-    <dt>{{ 'common.reference' | translate }}</dt>
-    <dd>{{ property.referenceCode }}</dd>
-
-    <dt>{{ 'common.type' | translate }}</dt>
-    <dd>{{ property.type }}</dd>
-
-    <dt>{{ 'common.status' | translate }}</dt>
-    <dd>
-      <span class="badge" [class]="'badge-' + property.status.toLowerCase()">
-        {{ property.status }}
-      </span>
-    </dd>
-
-    <dt>{{ 'properties.price' | translate }}</dt>
-    <dd>{{ property.price | number:'1.0-0' }} {{ property.currency }}</dd>
-
-    @if (property.surfaceAreaSqm) {
-      <dt>{{ 'properties.surface' | translate }}</dt>
-      <dd>{{ property.surfaceAreaSqm }} m²</dd>
-    }
-
-    @if (property.bedrooms) {
-      <dt>{{ 'properties.bedrooms' | translate }}</dt>
-      <dd>{{ property.bedrooms }}</dd>
-    }
-
-    @if (property.city) {
-      <dt>{{ 'properties.city' | translate }}</dt>
-      <dd>{{ property.city }}</dd>
-    }
-
-    @if (property.projectName) {
-      <dt>{{ 'common.project' | translate }}</dt>
-      <dd>{{ property.projectName }}</dd>
-    }
-  </dl>
-
-  <!-- Media gallery -->
-  <section class="media-section">
-    <div class="media-header">
-      <h3>Médias</h3>
-      @if (canManageMedia) {
-        <label class="btn-upload" [class.disabled]="uploadLoading">
-          @if (uploadLoading) { Envoi… } @else { + Ajouter }
-          <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
-                 (change)="onFileSelected($event)" [disabled]="uploadLoading" hidden />
-        </label>
+  <!-- ── Page Header ──────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <div class="page-header-ref">{{ property.referenceCode }}</div>
+      <h1 class="page-title">{{ property.title }}</h1>
+      <p class="page-subtitle">
+        <span class="badge" [class]="'badge-' + property.status.toLowerCase()">
+          {{ statusLabel(property.status) }}
+        </span>
+        <span class="type-chip">{{ typeLabel(property.type) }}</span>
+        @if (property.listedForSale) {
+          <span class="sale-chip">En vente</span>
+        }
+      </p>
+    </div>
+    <div class="page-header-actions">
+      @if (canManageMedia && allowedStatusTransitions.length > 0) {
+        <div class="status-action-wrap">
+          <select class="form-control form-control-sm"
+                  [disabled]="statusChanging"
+                  (change)="changeStatus($any($event.target).value)">
+            <option value="">Changer le statut…</option>
+            @for (t of allowedStatusTransitions; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+          @if (statusChanging) { <span class="status-saving">…</span> }
+        </div>
       }
     </div>
+  </div>
 
-    @if (uploadError) {
-      <p class="error">{{ uploadError }}</p>
-    }
-    @if (deleteError) {
-      <p class="error">{{ deleteError }}</p>
-    }
+  @if (statusSuccess) {
+    <div class="alert alert-success" style="margin-bottom:16px">✓ {{ statusSuccess }}</div>
+  }
+  @if (statusError) {
+    <div class="alert alert-error" style="margin-bottom:16px">{{ statusError }}</div>
+  }
 
-    @if (mediaLoading) {
-      <p>{{ 'common.loading' | translate }}</p>
-    }
+  <!-- ── Two-column detail layout ────────────────────────────── -->
+  <div class="detail-layout">
 
-    @if (!mediaLoading && media.length === 0) {
-      <p class="empty">Aucun média attaché.</p>
-    }
+    <!-- ── LEFT — Property details ────────────────────────── -->
+    <div class="detail-col-left">
 
-    @if (!mediaLoading && media.length > 0) {
-      <ul class="media-grid">
-        @for (m of media; track m.id) {
-          <li class="media-card">
-            @if (isImage(m.contentType)) {
-              <a [href]="downloadUrl(m.id)" target="_blank" class="media-thumb-link">
-                <img [src]="downloadUrl(m.id)" [alt]="m.originalFilename" class="media-thumb" />
-              </a>
-            } @else {
-              <a [href]="downloadUrl(m.id)" target="_blank" class="media-doc">
-                <span class="media-doc-icon">PDF</span>
-              </a>
-            }
-            <div class="media-name">{{ m.originalFilename }}</div>
-            <div class="media-meta">{{ m.sizeBytes | number }} octets</div>
-            @if (isAdmin) {
-              <button class="btn-delete" (click)="deleteMedia(m.id)">{{ 'common.delete' | translate }}</button>
-            }
-          </li>
+      <!-- Key metrics strip -->
+      <div class="metrics-strip">
+        @if (property.price !== null) {
+          <div class="metric">
+            <div class="metric-value">{{ property.price | number:'1.0-0' }}</div>
+            <div class="metric-label">{{ property.currency ?? 'MAD' }}</div>
+          </div>
         }
-      </ul>
-    }
-  </section>
+        @if (property.surfaceAreaSqm) {
+          <div class="metric">
+            <div class="metric-value">{{ property.surfaceAreaSqm }}</div>
+            <div class="metric-label">m² habitables</div>
+          </div>
+        }
+        @if (property.landAreaSqm) {
+          <div class="metric">
+            <div class="metric-value">{{ property.landAreaSqm }}</div>
+            <div class="metric-label">m² terrain</div>
+          </div>
+        }
+        @if (property.bedrooms) {
+          <div class="metric">
+            <div class="metric-value">{{ property.bedrooms }}</div>
+            <div class="metric-label">Chambres</div>
+          </div>
+        }
+        @if (property.bathrooms) {
+          <div class="metric">
+            <div class="metric-value">{{ property.bathrooms }}</div>
+            <div class="metric-label">SDB</div>
+          </div>
+        }
+      </div>
 
-  <!-- Documents -->
-  <app-document-list entityType="PROPERTY" [entityId]="property.id" />
+      <!-- Identification card -->
+      <div class="card">
+        <div class="card-header">Identification</div>
+        <div class="card-body">
+          <dl class="info-dl">
+            <dt>Référence</dt>
+            <dd>{{ property.referenceCode }}</dd>
+
+            <dt>Type</dt>
+            <dd>{{ typeLabel(property.type) }}</dd>
+
+            @if (property.projectName) {
+              <dt>Projet</dt>
+              <dd>{{ property.projectName }}</dd>
+            }
+
+            @if (property.immeubleName) {
+              <dt>Immeuble</dt>
+              <dd>{{ property.immeubleName }}</dd>
+            } @else if (property.buildingName) {
+              <dt>Bâtiment</dt>
+              <dd>{{ property.buildingName }}</dd>
+            }
+
+            @if (property.floorNumber !== null && property.floorNumber !== undefined) {
+              <dt>Étage</dt>
+              <dd>{{ property.floorNumber }}{{ property.floors ? ' / ' + property.floors : '' }}</dd>
+            }
+
+            @if (property.parkingSpaces) {
+              <dt>Parking</dt>
+              <dd>{{ property.parkingSpaces }} place{{ property.parkingSpaces > 1 ? 's' : '' }}</dd>
+            }
+
+            @if (property.buildingYear) {
+              <dt>Année construction</dt>
+              <dd>{{ property.buildingYear }}</dd>
+            }
+
+            <dt>Piscine</dt>
+            <dd>{{ property.hasPool ? 'Oui' : 'Non' }}</dd>
+
+            <dt>Jardin</dt>
+            <dd>{{ property.hasGarden ? 'Oui' : 'Non' }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Location card -->
+      @if (property.address || property.city || property.region || property.postalCode) {
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">Localisation</div>
+          <div class="card-body">
+            <dl class="info-dl">
+              @if (property.address) {
+                <dt>Adresse</dt>
+                <dd>{{ property.address }}</dd>
+              }
+              @if (property.city) {
+                <dt>Ville</dt>
+                <dd>{{ property.city }}</dd>
+              }
+              @if (property.region) {
+                <dt>Région</dt>
+                <dd>{{ property.region }}</dd>
+              }
+              @if (property.postalCode) {
+                <dt>Code postal</dt>
+                <dd>{{ property.postalCode }}</dd>
+              }
+            </dl>
+          </div>
+        </div>
+      }
+
+      <!-- Legal card -->
+      @if (property.titleDeedNumber || property.cadastralReference || property.legalStatus || property.zoning || property.ownerName) {
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">Informations juridiques</div>
+          <div class="card-body">
+            <dl class="info-dl">
+              @if (property.titleDeedNumber) {
+                <dt>Titre foncier</dt>
+                <dd>{{ property.titleDeedNumber }}</dd>
+              }
+              @if (property.cadastralReference) {
+                <dt>Réf. cadastrale</dt>
+                <dd>{{ property.cadastralReference }}</dd>
+              }
+              @if (property.legalStatus) {
+                <dt>Statut juridique</dt>
+                <dd>{{ property.legalStatus }}</dd>
+              }
+              @if (property.zoning) {
+                <dt>Zonage</dt>
+                <dd>{{ property.zoning }}</dd>
+              }
+              @if (property.ownerName) {
+                <dt>Propriétaire</dt>
+                <dd>{{ property.ownerName }}</dd>
+              }
+            </dl>
+          </div>
+        </div>
+      }
+
+      <!-- Description / Notes -->
+      @if (property.description || property.notes) {
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">Description &amp; notes</div>
+          <div class="card-body">
+            @if (property.description) {
+              <p class="prop-description">{{ property.description }}</p>
+            }
+            @if (property.notes) {
+              <p class="prop-notes">{{ property.notes }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Timeline -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">Historique</div>
+        <div class="card-body">
+          <dl class="info-dl">
+            <dt>Créé le</dt>
+            <dd>{{ property.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+            @if (property.updatedAt) {
+              <dt>Modifié le</dt>
+              <dd>{{ property.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+            }
+            @if (property.publishedAt) {
+              <dt>Publié le</dt>
+              <dd>{{ property.publishedAt | date:'dd/MM/yyyy' }}</dd>
+            }
+            @if (property.reservedAt) {
+              <dt>Réservé le</dt>
+              <dd>{{ property.reservedAt | date:'dd/MM/yyyy' }}</dd>
+            }
+            @if (property.soldAt) {
+              <dt>Vendu le</dt>
+              <dd>{{ property.soldAt | date:'dd/MM/yyyy' }}</dd>
+            }
+          </dl>
+        </div>
+      </div>
+
+    </div><!-- end left column -->
+
+    <!-- ── RIGHT — Media & Documents ──────────────────────── -->
+    <div class="detail-col-right">
+
+      <!-- Media gallery card -->
+      <div class="card">
+        <div class="card-header">
+          <span>Médias</span>
+          @if (media.length > 0) {
+            <span class="card-header-count">{{ media.length }}</span>
+          }
+          @if (canManageMedia) {
+            <label class="btn-upload" [class.disabled]="uploadLoading" style="margin-left:auto">
+              @if (uploadLoading) { Envoi… } @else { + Ajouter }
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
+                     (change)="onFileSelected($event)" [disabled]="uploadLoading" hidden />
+            </label>
+          }
+        </div>
+        <div class="card-body">
+          @if (uploadError) {
+            <div class="alert alert-error" style="margin-bottom:10px">{{ uploadError }}</div>
+          }
+          @if (deleteError) {
+            <div class="alert alert-error" style="margin-bottom:10px">{{ deleteError }}</div>
+          }
+          @if (mediaLoading) {
+            <div class="loading-wrap loading-sm"><div class="spinner spinner-sm"></div></div>
+          }
+          @if (!mediaLoading && media.length === 0) {
+            <p class="text-muted">Aucun média attaché.</p>
+          }
+          @if (!mediaLoading && media.length > 0) {
+            <ul class="media-grid">
+              @for (m of media; track m.id) {
+                <li class="media-card">
+                  @if (isImage(m.contentType)) {
+                    <a [href]="downloadUrl(m.id)" target="_blank" class="media-thumb-link">
+                      <img [src]="downloadUrl(m.id)" [alt]="m.originalFilename" class="media-thumb" />
+                    </a>
+                  } @else {
+                    <a [href]="downloadUrl(m.id)" target="_blank" class="media-doc">
+                      <span class="media-doc-icon">PDF</span>
+                    </a>
+                  }
+                  <div class="media-name">{{ m.originalFilename }}</div>
+                  <div class="media-meta">{{ m.sizeBytes | number }} octets</div>
+                  @if (isAdmin) {
+                    <button class="btn-delete" (click)="deleteMedia(m.id)">{{ 'common.delete' | translate }}</button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <!-- Documents card -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">Documents</div>
+        <div class="card-body">
+          <app-document-list entityType="PROPERTY" [entityId]="property.id" />
+        </div>
+      </div>
+
+    </div><!-- end right column -->
+  </div><!-- end detail-layout -->
+
 }
