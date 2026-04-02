@@ -1,73 +1,481 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { ContactService } from './contact.service';
+import { ContactService, ConvertToProspectRequest } from './contact.service';
 import { Contact, TimelineEvent } from '../../core/models/contact.model';
+import { ContactInterest } from '../../core/models/contact-interest.model';
+import { Deposit } from '../../core/models/deposit.model';
+import { Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
+import { DepositService, CreateDepositRequest } from '../prospects/deposit.service';
+import { PropertyService } from '../properties/property.service';
+import { Reservation, ReservationService, CreateReservationRequest } from '../reservations/reservation.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { ContactTasksComponent } from '../tasks/contact-tasks.component';
+
+type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'timeline' | 'documents' | 'tasks';
 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, DocumentListComponent, ContactTasksComponent, TranslateModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, DocumentListComponent, ContactTasksComponent],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })
 export class ContactDetailComponent implements OnInit {
-  private svc = inject(ContactService);
-  private route = inject(ActivatedRoute);
+  private svc          = inject(ContactService);
+  private depositSvc   = inject(DepositService);
+  private propertySvc  = inject(PropertyService);
+  private reservSvc    = inject(ReservationService);
+  private route        = inject(ActivatedRoute);
 
   contact: Contact | null = null;
   loading = true;
   error = '';
+  contactId = '';
 
-  activeTab: 'details' | 'timeline' | 'documents' | 'tasks' = 'details';
+  activeTab: TabId = 'details';
+
+  // ── Qualify form ───────────────────────────────────────────────────────────
+  showQualifyForm = false;
+  qualifySource = '';
+  qualifyBudgetMin: number | null = null;
+  qualifyBudgetMax: number | null = null;
+  qualifyNotes = '';
+  qualifying = false;
+  qualifyError = '';
+
+  // ── Status transition ──────────────────────────────────────────────────────
+  updatingStatus = false;
+  statusError = '';
+
+  // ── Interests ──────────────────────────────────────────────────────────────
+  interests: ContactInterest[] = [];
+  interestsLoading = false;
+  interestError = '';
+  interestsLoaded = false;
+
+  // ── Properties (shared across interests / reservation / deposit forms) ─────
+  properties: Property[] = [];
+  propertiesLoading = false;
+  propertiesError = '';
+  propertiesLoaded = false;
+
+  // ── Add interest form ──────────────────────────────────────────────────────
+  selectedPropertyId = '';
+  addingInterest = false;
+  removingPropertyId = '';
+
+  // ── Reservations ───────────────────────────────────────────────────────────
+  reservations: Reservation[] = [];
+  reservationsLoading = false;
+  reservationsLoaded = false;
+  reservationError = '';
+  reservationSuccess = '';
+  reservationPropertyId = '';
+  reservationPrice: number | null = null;
+  reservationNotes = '';
+  creatingReservation = false;
+
+  // ── Deposits ───────────────────────────────────────────────────────────────
+  deposits: Deposit[] = [];
+  depositsLoading = false;
+  depositsLoaded = false;
+  depositError = '';
+  depositSuccess = '';
+  depositPropertyId = '';
+  depositAmount: number | null = null;
+  depositNotes = '';
+  creatingDeposit = false;
+  actionDepositId: string | null = null;
+
+  // ── Timeline ───────────────────────────────────────────────────────────────
   timeline: TimelineEvent[] = [];
   timelineLoading = false;
   timelineError = '';
   timelineLoaded = false;
 
-  private contactId = '';
+  // ── Status machine helper ──────────────────────────────────────────────────
+  readonly STATUS_LABELS: Record<string, string> = {
+    PROSPECT:           'Prospect',
+    QUALIFIED_PROSPECT: 'Prospect qualifié',
+    CLIENT:             'Client',
+    ACTIVE_CLIENT:      'Client actif',
+    COMPLETED_CLIENT:   'Client finalisé',
+    REFERRAL:           'Référent',
+    LOST:               'Perdu',
+  };
+
+  readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    PROSPECT:           ['QUALIFIED_PROSPECT', 'LOST'],
+    QUALIFIED_PROSPECT: ['PROSPECT', 'CLIENT', 'LOST'],
+    CLIENT:             ['ACTIVE_CLIENT', 'COMPLETED_CLIENT', 'LOST'],
+    ACTIVE_CLIENT:      ['COMPLETED_CLIENT', 'LOST'],
+    COMPLETED_CLIENT:   ['REFERRAL'],
+    REFERRAL:           [],
+    LOST:               ['PROSPECT'],
+  };
 
   ngOnInit(): void {
     this.contactId = this.route.snapshot.paramMap.get('id')!;
+    this.loadContact();
+  }
+
+  private loadContact(): void {
+    this.loading = true;
+    this.error = '';
     this.svc.getById(this.contactId).subscribe({
-      next: (data) => {
-        this.contact = data;
-        this.loading = false;
-      },
+      next: (data) => { this.contact = data; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if (err.status === 404) {
-          this.error = 'Contact not found.';
-        } else if (err.status === 401) {
-          this.error = 'Session expired. Please log in again.';
-        } else if (body?.message) {
-          this.error = body.message;
+        if (err.status === 404) this.error = 'Contact introuvable.';
+        else if (err.status === 401) this.error = 'Session expirée.';
+        else this.error = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  selectTab(tab: TabId): void {
+    this.activeTab = tab;
+    switch (tab) {
+      case 'interests':
+        if (!this.interestsLoaded) this.loadInterests();
+        if (!this.propertiesLoaded) this.loadProperties();
+        break;
+      case 'reservations':
+        if (!this.reservationsLoaded) this.loadReservations();
+        if (!this.propertiesLoaded) this.loadProperties();
+        break;
+      case 'deposits':
+        if (!this.depositsLoaded) this.loadDeposits();
+        if (!this.propertiesLoaded) this.loadProperties();
+        break;
+      case 'timeline':
+        if (!this.timelineLoaded) this.loadTimeline();
+        break;
+    }
+  }
+
+  // ── Qualify / convert to prospect ─────────────────────────────────────────
+
+  toggleQualifyForm(): void {
+    this.showQualifyForm = !this.showQualifyForm;
+    this.qualifyError = '';
+  }
+
+  qualify(): void {
+    if (!this.contact) return;
+    this.qualifying = true;
+    this.qualifyError = '';
+    const req: ConvertToProspectRequest = {
+      source:    this.qualifySource   || null,
+      notes:     this.qualifyNotes    || null,
+      budgetMin: this.qualifyBudgetMin,
+      budgetMax: this.qualifyBudgetMax,
+    };
+    this.svc.convertToProspect(this.contactId, req).subscribe({
+      next: (updated) => {
+        this.contact = updated;
+        this.qualifying = false;
+        this.showQualifyForm = false;
+        this.qualifySource = '';
+        this.qualifyNotes = '';
+        this.qualifyBudgetMin = null;
+        this.qualifyBudgetMax = null;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.qualifying = false;
+        const body = err.error as ErrorResponse | null;
+        this.qualifyError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  // ── Status transition ──────────────────────────────────────────────────────
+
+  transitionTo(status: string): void {
+    if (!this.contact) return;
+    this.updatingStatus = true;
+    this.statusError = '';
+    this.svc.updateStatus(this.contactId, status).subscribe({
+      next: (updated) => { this.contact = updated; this.updatingStatus = false; },
+      error: (err: HttpErrorResponse) => {
+        this.updatingStatus = false;
+        const body = err.error as ErrorResponse | null;
+        this.statusError = body?.message ?? `Impossible de changer le statut (${err.status})`;
+      },
+    });
+  }
+
+  get allowedTransitions(): string[] {
+    return this.contact ? (this.ALLOWED_TRANSITIONS[this.contact.status] ?? []) : [];
+  }
+
+  // ── Interests ──────────────────────────────────────────────────────────────
+
+  private loadInterests(): void {
+    this.interestsLoading = true;
+    this.interestError = '';
+    this.svc.listInterests(this.contactId).subscribe({
+      next: (data) => { this.interests = data; this.interestsLoading = false; this.interestsLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.interestsLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.interestError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  private loadProperties(): void {
+    this.propertiesLoading = true;
+    this.propertiesError = '';
+    this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
+      next: (data) => { this.properties = data; this.propertiesLoading = false; this.propertiesLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.propertiesLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.propertiesError = body?.message ?? `Impossible de charger les biens (${err.status})`;
+      },
+    });
+  }
+
+  get availableForInterest(): Property[] {
+    const taken = new Set(this.interests.map((i) => i.propertyId));
+    return this.properties.filter((p) => !taken.has(p.id));
+  }
+
+  propertyLabel(id: string): string {
+    const p = this.properties.find((pr) => pr.id === id);
+    return p ? `${p.title} — ${p.referenceCode}` : id;
+  }
+
+  addInterest(): void {
+    if (!this.selectedPropertyId) return;
+    this.addingInterest = true;
+    this.interestError = '';
+    this.svc.addInterest(this.contactId, this.selectedPropertyId).subscribe({
+      next: () => {
+        this.addingInterest = false;
+        this.selectedPropertyId = '';
+        this.loadInterests();
+        // Refresh contact — auto-promotion may have changed status
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.addingInterest = false;
+        const body = err.error as ErrorResponse | null;
+        this.interestError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  removeInterest(propertyId: string): void {
+    this.removingPropertyId = propertyId;
+    this.svc.removeInterest(this.contactId, propertyId).subscribe({
+      next: () => { this.removingPropertyId = ''; this.loadInterests(); },
+      error: (err: HttpErrorResponse) => {
+        this.removingPropertyId = '';
+        const body = err.error as ErrorResponse | null;
+        this.interestError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  // ── Reservations ───────────────────────────────────────────────────────────
+
+  private loadReservations(): void {
+    this.reservationsLoading = true;
+    this.reservationError = '';
+    this.reservSvc.listByContact(this.contactId).subscribe({
+      next: (data) => { this.reservations = data; this.reservationsLoading = false; this.reservationsLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.reservationsLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  createReservation(): void {
+    if (!this.reservationPropertyId) return;
+    this.creatingReservation = true;
+    this.reservationError = '';
+    this.reservationSuccess = '';
+    const req: CreateReservationRequest = {
+      contactId:  this.contactId,
+      propertyId: this.reservationPropertyId,
+      reservationPrice: this.reservationPrice ?? undefined,
+      notes: this.reservationNotes || undefined,
+    };
+    this.reservSvc.create(req).subscribe({
+      next: () => {
+        this.creatingReservation = false;
+        this.reservationSuccess = 'Réservation créée. Le bien est en attente.';
+        this.reservationPropertyId = '';
+        this.reservationPrice = null;
+        this.reservationNotes = '';
+        this.loadReservations();
+        this.propertiesLoaded = false;
+        this.loadProperties();
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.creatingReservation = false;
+        const body = err.error as ErrorResponse | null;
+        if (err.status === 409) {
+          this.reservationError = 'Ce bien est déjà réservé.';
+          this.propertiesLoaded = false;
+          this.loadProperties();
         } else {
-          this.error = `Failed to load contact (${err.status})`;
+          this.reservationError = body?.message ?? `Erreur (${err.status})`;
         }
       },
     });
   }
 
-  selectTab(tab: 'details' | 'timeline' | 'documents' | 'tasks'): void {
-    this.activeTab = tab;
-    if (tab === 'timeline' && !this.timelineLoaded) {
-      this.loadTimeline();
-    }
+  cancelReservation(id: string): void {
+    this.reservSvc.cancel(id).subscribe({
+      next: () => {
+        this.loadReservations();
+        this.propertiesLoaded = false;
+        this.loadProperties();
+      },
+      error: (err: HttpErrorResponse) => {
+        const body = err.error as ErrorResponse | null;
+        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
   }
 
-  categoryLabel(category: string): string {
-    return category === 'AUDIT' ? 'Audit'
-      : category === 'MESSAGE' ? 'Message'
-      : category === 'NOTIFICATION' ? 'Notification'
-      : 'Événement';
+  convertReservationToDeposit(r: Reservation): void {
+    if (!r.reservationPrice) {
+      this.reservationError = 'Veuillez saisir un montant avant de convertir.';
+      return;
+    }
+    this.reservSvc.convertToDeposit(r.id, {
+      amount: r.reservationPrice,
+      currency: 'MAD',
+    }).subscribe({
+      next: () => {
+        this.loadReservations();
+        this.depositsLoaded = false;
+        this.loadDeposits();
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        const body = err.error as ErrorResponse | null;
+        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
   }
+
+  // ── Deposits ───────────────────────────────────────────────────────────────
+
+  private loadDeposits(): void {
+    this.depositsLoading = true;
+    this.depositError = '';
+    this.depositSvc.listByContact(this.contactId).subscribe({
+      next: (data) => { this.deposits = data; this.depositsLoading = false; this.depositsLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.depositsLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.depositError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  createDeposit(): void {
+    if (!this.depositPropertyId || !this.depositAmount) return;
+    this.creatingDeposit = true;
+    this.depositError = '';
+    this.depositSuccess = '';
+    const req: CreateDepositRequest = {
+      contactId:  this.contactId,
+      propertyId: this.depositPropertyId,
+      amount:     this.depositAmount,
+      notes:      this.depositNotes || undefined,
+    };
+    this.depositSvc.create(req).subscribe({
+      next: () => {
+        this.creatingDeposit = false;
+        this.depositSuccess = 'Acompte créé avec succès.';
+        this.depositPropertyId = '';
+        this.depositAmount = null;
+        this.depositNotes = '';
+        this.loadDeposits();
+        this.propertiesLoaded = false;
+        this.loadProperties();
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.creatingDeposit = false;
+        const body = err.error as ErrorResponse | null;
+        if (err.status === 409) {
+          this.depositError = 'Ce bien est déjà réservé ou un acompte existe.';
+          this.propertiesLoaded = false;
+          this.loadProperties();
+        } else {
+          this.depositError = body?.message ?? `Erreur (${err.status})`;
+        }
+      },
+    });
+  }
+
+  confirmDeposit(d: Deposit): void {
+    this.actionDepositId = d.id;
+    this.depositError = '';
+    this.depositSvc.confirm(d.id).subscribe({
+      next: () => {
+        this.actionDepositId = null;
+        this.loadDeposits();
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.actionDepositId = null;
+        const body = err.error as ErrorResponse | null;
+        this.depositError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  cancelDeposit(d: Deposit): void {
+    this.actionDepositId = d.id;
+    this.depositError = '';
+    this.depositSvc.cancel(d.id).subscribe({
+      next: () => {
+        this.actionDepositId = null;
+        this.loadDeposits();
+        this.propertiesLoaded = false;
+        this.loadProperties();
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.actionDepositId = null;
+        const body = err.error as ErrorResponse | null;
+        this.depositError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  downloadPdf(d: Deposit): void {
+    this.depositSvc.downloadReservationPdf(d.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reservation_${d.reference}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => { this.depositError = 'Échec du téléchargement PDF.'; },
+    });
+  }
+
+  // ── Timeline ───────────────────────────────────────────────────────────────
 
   private loadTimeline(): void {
     this.timelineLoading = true;
@@ -80,8 +488,71 @@ export class ContactDetailComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.timelineLoading = false;
-        this.timelineError = `Failed to load timeline (${err.status})`;
+        this.timelineError = `Erreur (${err.status})`;
       },
     });
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  statusLabel(s: string): string {
+    return this.STATUS_LABELS[s] ?? s;
+  }
+
+  statusClass(s: string): string {
+    const map: Record<string, string> = {
+      PROSPECT:           'badge-prospect',
+      QUALIFIED_PROSPECT: 'badge-qualified',
+      CLIENT:             'badge-client',
+      ACTIVE_CLIENT:      'badge-active-client',
+      COMPLETED_CLIENT:   'badge-completed',
+      REFERRAL:           'badge-referral',
+      LOST:               'badge-lost',
+    };
+    return map[s] ?? '';
+  }
+
+  typeClass(t: string): string {
+    const map: Record<string, string> = {
+      PROSPECT:    'type-prospect',
+      TEMP_CLIENT: 'type-temp',
+      CLIENT:      'type-client',
+    };
+    return map[t] ?? '';
+  }
+
+  depositStatusClass(s: string): string {
+    const map: Record<string, string> = {
+      PENDING:   'ds-pending',
+      CONFIRMED: 'ds-confirmed',
+      CANCELLED: 'ds-cancelled',
+      EXPIRED:   'ds-expired',
+    };
+    return map[s] ?? '';
+  }
+
+  reservationStatusClass(s: string): string {
+    const map: Record<string, string> = {
+      ACTIVE:               'rs-active',
+      EXPIRED:              'rs-expired',
+      CANCELLED:            'rs-cancelled',
+      CONVERTED_TO_DEPOSIT: 'rs-converted',
+    };
+    return map[s] ?? '';
+  }
+
+  categoryLabel(c: string): string {
+    const map: Record<string, string> = {
+      AUDIT:         'Audit',
+      MESSAGE:       'Message',
+      NOTIFICATION:  'Notif.',
+      STATUS_CHANGE: 'Statut',
+    };
+    return map[c] ?? c;
+  }
+
+  isTempClientExpired(): boolean {
+    if (!this.contact?.tempClientUntil) return false;
+    return new Date(this.contact.tempClientUntil) < new Date();
   }
 }
