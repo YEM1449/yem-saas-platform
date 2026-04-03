@@ -1,7 +1,9 @@
 package com.yem.hlm.backend.vente.api;
 
 import com.yem.hlm.backend.media.service.MediaStorageService;
+import com.yem.hlm.backend.portal.api.dto.MagicLinkResponse;
 import com.yem.hlm.backend.vente.api.dto.*;
+import com.yem.hlm.backend.vente.service.VenteInviteService;
 import com.yem.hlm.backend.vente.service.VenteService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,11 +30,15 @@ import java.util.UUID;
 public class VenteController {
 
     private final VenteService venteService;
+    private final VenteInviteService venteInviteService;
     private final MediaStorageService mediaStorage;
 
-    public VenteController(VenteService venteService, MediaStorageService mediaStorage) {
-        this.venteService  = venteService;
-        this.mediaStorage  = mediaStorage;
+    public VenteController(VenteService venteService,
+                           VenteInviteService venteInviteService,
+                           MediaStorageService mediaStorage) {
+        this.venteService       = venteService;
+        this.venteInviteService = venteInviteService;
+        this.mediaStorage       = mediaStorage;
     }
 
     // =========================================================================
@@ -102,6 +108,17 @@ public class VenteController {
     @GetMapping("/{id}/documents")
     public List<VenteDocumentResponse> listDocuments(@PathVariable UUID id) {
         return venteService.findDocuments(id);
+    }
+
+    // =========================================================================
+    // Portal invitation
+    // =========================================================================
+
+    /** Sends a portal magic-link email to the buyer of the given vente. */
+    @PostMapping("/{id}/portal/invite")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public MagicLinkResponse inviteBuyer(@PathVariable UUID id) {
+        return venteInviteService.inviteBuyer(id);
     }
 
     @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

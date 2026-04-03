@@ -251,7 +251,7 @@ public class VenteService {
                 .orElseThrow(() -> new VenteNotFoundException(venteId));
     }
 
-    VenteResponse toResponse(Vente v) {
+    public VenteResponse toResponse(Vente v) {
         List<EcheanceResponse> echeances = v.getEcheances().stream()
                 .map(this::toEcheanceResponse).toList();
         List<VenteDocumentResponse> docs = v.getDocuments().stream()
