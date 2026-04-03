@@ -127,6 +127,10 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     ).subscribe({ next: (docs) => this.documents = docs, error: () => {} });
   }
 
+  heroInitials(name: string): string {
+    return name.split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
+  }
+
   startEdit(): void {
     if (!this.project) return;
     this.editForm = { name: this.project.name, description: this.project.description ?? '' };

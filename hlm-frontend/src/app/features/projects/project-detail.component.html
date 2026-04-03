@@ -19,9 +19,7 @@
       @if (project.logoUrl && logoSrc) {
         <img [src]="logoSrc" alt="Logo projet" class="hero-logo-img" />
       } @else {
-        <div class="hero-logo-initials">
-          {{ project.name.split(' ').slice(0,2).map(w => w[0]?.toUpperCase() ?? '').join('') }}
-        </div>
+        <div class="hero-logo-initials">{{ heroInitials(project.name) }}</div>
       }
       @if (isAdminOrManager) {
         <label class="hero-logo-upload" title="{{ 'projects.uploadLogo' | translate }}">
