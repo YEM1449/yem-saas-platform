@@ -41,6 +41,8 @@ import com.yem.hlm.backend.payments.service.PaymentScheduleItemNotFoundException
 import com.yem.hlm.backend.reservation.service.InvalidReservationStateException;
 import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservationException;
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
+import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
+import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
@@ -172,7 +174,9 @@ public class GlobalExceptionHandler {
             ProjectNotFoundException.class,
             PropertyNotFoundException.class,
             ReservationNotFoundException.class,
-            UserNotFoundException.class
+            UserNotFoundException.class,
+            VenteNotFoundException.class,
+            VenteEcheanceNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,
