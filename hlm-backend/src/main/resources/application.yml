@@ -175,11 +175,11 @@ app:
 
   # Frontend base URL — used for invitation links in emails
   frontend:
-    base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+    base-url: ${FRONTEND_BASE_URL:https://yem-hlm.youssouf-mehdi.workers.dev}
 
   # Portal client-facing configuration
   portal:
-    base-url: ${PORTAL_BASE_URL:http://localhost:4200}
+    base-url: ${PORTAL_BASE_URL:https://yem-hlm.youssouf-mehdi.workers.dev}
     cleanup-cron: "${PORTAL_CLEANUP_CRON:0 0 3 * * *}"
     return-magic-link-in-response: ${PORTAL_RETURN_MAGIC_LINK_IN_RESPONSE:false}
 

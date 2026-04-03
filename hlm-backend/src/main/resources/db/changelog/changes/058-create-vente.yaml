@@ -1,0 +1,335 @@
+databaseChangeLog:
+  - changeSet:
+      id: "058-create-vente"
+      author: "yem"
+      comment: >
+        Vente (sale) pipeline tables.
+        Adds three tables to track the post-reservation commercial lifecycle:
+        (a) vente         — master sale record, one per property sold, linked to reservation
+        (b) vente_echeance — payment milestones (échéancier) for a vente
+        (c) vente_document — scanned/uploaded documents attached to a vente
+        All tables carry societe_id for multi-société isolation and are protected by RLS
+        (enable-row-level-security added to the existing policy set in changeset 051).
+      changes:
+
+        # ── (a) vente ────────────────────────────────────────────────────────────
+        - createTable:
+            tableName: vente
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: agent_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              # Optional back-link to the reservation this vente originated from
+              - column:
+                  name: reservation_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: statut
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: prix_vente
+                  type: numeric(15,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_compromis
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_acte_notarie
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_livraison_prevue
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_livraison_reelle
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: notes
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: vente
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_vente_societe
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: vente
+            baseColumnNames: property_id
+            referencedTableName: property
+            referencedColumnNames: id
+            constraintName: fk_vente_property
+
+        - addForeignKeyConstraint:
+            baseTableName: vente
+            baseColumnNames: contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_vente_contact
+
+        - addForeignKeyConstraint:
+            baseTableName: vente
+            baseColumnNames: agent_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_vente_agent
+
+        - addForeignKeyConstraint:
+            baseTableName: vente
+            baseColumnNames: reservation_id
+            referencedTableName: property_reservation
+            referencedColumnNames: id
+            constraintName: fk_vente_reservation
+
+        - sql:
+            sql: |
+              CREATE INDEX idx_vente_societe_id       ON vente (societe_id, id);
+              CREATE INDEX idx_vente_societe_statut   ON vente (societe_id, statut);
+              CREATE INDEX idx_vente_societe_property ON vente (societe_id, property_id);
+              CREATE INDEX idx_vente_societe_contact  ON vente (societe_id, contact_id);
+              CREATE INDEX idx_vente_societe_agent    ON vente (societe_id, agent_id);
+
+              ALTER TABLE vente ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY vente_isolation ON vente
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
+
+        # ── (b) vente_echeance ───────────────────────────────────────────────────
+        - createTable:
+            tableName: vente_echeance
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: libelle
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: montant
+                  type: numeric(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_echeance
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: statut
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_paiement
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: notes
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: vente_echeance
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_vech_societe
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: vente_echeance
+            baseColumnNames: vente_id
+            referencedTableName: vente
+            referencedColumnNames: id
+            constraintName: fk_vech_vente
+            onDelete: CASCADE
+
+        - sql:
+            sql: |
+              CREATE INDEX idx_vech_vente_id   ON vente_echeance (vente_id);
+              CREATE INDEX idx_vech_societe_id ON vente_echeance (societe_id);
+
+              ALTER TABLE vente_echeance ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY vente_echeance_isolation ON vente_echeance
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
+
+        # ── (c) vente_document ───────────────────────────────────────────────────
+        - createTable:
+            tableName: vente_document
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: nom_fichier
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: storage_key
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: taille_octets
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: uploaded_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: vente_document
+            baseColumnNames: societe_id
+            referencedTableName: societe
+            referencedColumnNames: id
+            constraintName: fk_vdoc_societe
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: vente_document
+            baseColumnNames: vente_id
+            referencedTableName: vente
+            referencedColumnNames: id
+            constraintName: fk_vdoc_vente
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: vente_document
+            baseColumnNames: uploaded_by
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_vdoc_uploaded_by
+
+        - sql:
+            sql: |
+              CREATE INDEX idx_vdoc_vente_id   ON vente_document (vente_id);
+              CREATE INDEX idx_vdoc_societe_id ON vente_document (societe_id);
+
+              ALTER TABLE vente_document ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY vente_document_isolation ON vente_document
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
