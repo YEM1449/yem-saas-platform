@@ -251,6 +251,61 @@ class AdminUserControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
+    // ===== /suggest — accessible to all CRM roles =====
+
+    @Test
+    void suggest_asAdmin_returns200() throws Exception {
+        mvc.perform(get(BASE + "/suggest")
+                        .header("Authorization", adminBearerA))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void suggest_asManager_returns200() throws Exception {
+        mvc.perform(get(BASE + "/suggest")
+                        .header("Authorization", managerBearerA))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void suggest_asAgent_returns200() throws Exception {
+        mvc.perform(get(BASE + "/suggest")
+                        .header("Authorization", agentBearerA))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void suggest_noToken_returns401() throws Exception {
+        mvc.perform(get(BASE + "/suggest"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void suggest_nameSearch_returnsMatchingUser() throws Exception {
+        // Create a user with a known name via API (also sets up AppUserSociete)
+        createUserViaApi(adminBearerA, "alice." + uid + "@suggest.test");
+
+        mvc.perform(get(BASE + "/suggest")
+                        .param("q", uid) // uid is unique per test — guaranteed to match
+                        .header("Authorization", adminBearerA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].email").value("alice." + uid + "@suggest.test"));
+    }
+
+    @Test
+    void suggest_isolatedBySociete_doesNotLeakAcrossSocietes() throws Exception {
+        // Create a user in societe A
+        createUserViaApi(adminBearerA, "leaktest." + uid + "@societe-a.test");
+
+        // Societe B admin should not see it
+        var result = mvc.perform(get(BASE + "/suggest")
+                        .param("q", "leaktest." + uid)
+                        .header("Authorization", adminBearerB))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(result).doesNotContain("leaktest." + uid);
+    }
+
     // ===== Helpers =====
 
     private String createUserJson(String email) {

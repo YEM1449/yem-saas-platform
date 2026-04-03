@@ -55,6 +55,29 @@ public class AdminUserService {
                 .toList();
     }
 
+    /**
+     * Lightweight suggest — accessible to ADMIN, MANAGER and AGENT.
+     * Returns id + displayName + email so the frontend can show a name-based
+     * typeahead without ever exposing UUIDs to the user.
+     */
+    @Transactional(readOnly = true)
+    public List<UserSuggestResponse> suggest(String q) {
+        UUID societeId = requireSocieteId();
+        return userRepository.suggestBySociete(societeId, q)
+                .stream()
+                .map(u -> new UserSuggestResponse(u.getId(), buildDisplayName(u), u.getEmail()))
+                .toList();
+    }
+
+    private static String buildDisplayName(com.yem.hlm.backend.user.domain.User u) {
+        String prenom = u.getPrenom();
+        String nom    = u.getNomFamille();
+        if (prenom != null && !prenom.isBlank() && nom != null && !nom.isBlank()) return prenom + " " + nom;
+        if (prenom != null && !prenom.isBlank()) return prenom;
+        if (nom    != null && !nom.isBlank())    return nom;
+        return u.getEmail();
+    }
+
     @Transactional
     public UserResponse create(CreateUserRequest request) {
         UUID societeId = requireSocieteId();

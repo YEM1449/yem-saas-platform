@@ -1,4 +1,4 @@
-export type DocumentEntityType = 'CONTACT' | 'CONTRACT' | 'DEPOSIT' | 'PROPERTY' | 'RESERVATION';
+export type DocumentEntityType = 'CONTACT' | 'CONTRACT' | 'DEPOSIT' | 'PROPERTY' | 'RESERVATION' | 'PROJECT';
 
 export interface DocumentResponse {
   id: string;

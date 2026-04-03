@@ -326,3 +326,26 @@ code {
   border-radius: 4px;
   font-size: 0.85rem;
 }
+
+/* Expandable reservation document panel */
+.doc-panel-row td { padding: 0 !important; border-top: none !important; }
+
+.doc-panel {
+  background: #f8fafc;
+  border-top: 2px solid #e0e7ff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 20px;
+}
+
+.doc-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.doc-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}

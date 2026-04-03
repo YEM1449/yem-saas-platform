@@ -1,0 +1,33 @@
+<div class="picker-wrap">
+  <div class="picker-input-row">
+    <input class="picker-input"
+           type="text"
+           [placeholder]="placeholder"
+           [(ngModel)]="query"
+           (input)="onInput()"
+           (blur)="closeDropdown()"
+           [disabled]="disabled"
+           autocomplete="off" />
+    @if (selectedId && !disabled) {
+      <button class="picker-clear" type="button" (click)="clear()" title="Effacer">✕</button>
+    }
+    @if (loading) {
+      <span class="picker-spinner"></span>
+    }
+  </div>
+
+  @if (showDropdown && suggestions.length > 0) {
+    <ul class="picker-dropdown" role="listbox">
+      @for (c of suggestions; track c.id) {
+        <li class="picker-option"
+            role="option"
+            (mousedown)="select(c)">
+          <span class="picker-option-name">{{ c.displayName }}</span>
+          @if (hint(c)) {
+            <span class="picker-option-sub">{{ hint(c) }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

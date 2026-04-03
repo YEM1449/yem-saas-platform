@@ -2,7 +2,10 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">{{ 'projects.title' | translate }}</h1>
-    <p class="page-subtitle">Manage your real-estate development projects</p>
+    <p class="page-subtitle">
+      {{ activeCount }} actif{{ activeCount !== 1 ? 's' : '' }}
+      @if (archivedCount > 0) { · {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }} }
+    </p>
   </div>
   @if (canWrite) {
     <div class="page-header-actions">
@@ -13,6 +16,30 @@
         {{ 'projects.create' | translate }}
       </button>
     </div>
+  }
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <input class="search-input" type="search" placeholder="Rechercher un projet…"
+           [(ngModel)]="searchQuery" />
+  </div>
+
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus">
+    <option value="">Tous les statuts</option>
+    <option value="ACTIVE">Actifs</option>
+    <option value="ARCHIVED">Archivés</option>
+  </select>
+
+  @if (!loading) {
+    <span class="stat-chip">{{ filtered.length }} projet{{ filtered.length !== 1 ? 's' : '' }}</span>
   }
 </div>
 
@@ -35,7 +62,7 @@
     <div class="empty-state">
       <div class="empty-state-icon">🏗️</div>
       <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
-      <p class="empty-state-desc">Create your first project to start grouping properties.</p>
+      <p class="empty-state-desc">Créez votre premier projet pour regrouper vos biens immobiliers.</p>
       @if (canWrite) {
         <button class="btn btn-primary" (click)="openModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -48,29 +75,63 @@
   </div>
 }
 
-<!-- ── Data Table ────────────────────────────────────────────── -->
-@if (!loading && projects.length > 0) {
+@if (!loading && projects.length > 0 && filtered.length === 0) {
   <div class="card">
-    <div class="card-body-flush">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>{{ 'projects.name' | translate }}</th>
-            <th>{{ 'common.description' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of projects; track p.id) {
-            <tr class="clickable" [routerLink]="['/app/projects', p.id]">
-              <td>{{ p.name }}</td>
-              <td class="td-muted">{{ p.description ?? '—' }}</td>
-              <td>{{ p.status }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <p class="empty-state-title">Aucun projet trouvé</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">Effacer les filtres</button>
     </div>
+  </div>
+}
+
+<!-- ── Project Card Grid ─────────────────────────────────────── -->
+@if (!loading && filtered.length > 0) {
+  <div class="project-grid">
+    @for (p of filtered; track p.id) {
+      <a class="project-card" [routerLink]="['/app/projects', p.id]"
+         [class.project-card-archived]="p.status === 'ARCHIVED'">
+
+        <!-- Card header: logo/initials + name + status badge -->
+        <div class="project-card-header">
+          @if (p.logoUrl) {
+            <img class="project-logo" [src]="p.logoUrl" [alt]="p.name" />
+          } @else {
+            <div class="project-initials">{{ projectInitials(p.name) }}</div>
+          }
+          <div class="project-card-meta">
+            <span class="project-card-name">{{ p.name }}</span>
+            @if (p.description) {
+              <span class="project-card-desc">{{ p.description }}</span>
+            }
+          </div>
+          <span class="project-status-badge" [class.badge-archived]="p.status === 'ARCHIVED'">
+            {{ p.status === 'ACTIVE' ? 'Actif' : 'Archivé' }}
+          </span>
+        </div>
+
+        <!-- Card footer: dates -->
+        <div class="project-card-footer">
+          <span class="project-card-age">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M5.5 3v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            Créé il y a {{ daysSince(p.createdAt) }}j
+          </span>
+          @if (p.updatedAt !== p.createdAt) {
+            <span class="project-card-updated">
+              Mis à jour il y a {{ daysSince(p.updatedAt) }}j
+            </span>
+          }
+          <svg class="project-card-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M4.5 2.5L7.5 6l-3 3.5" stroke="currentColor" stroke-width="1.4"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+      </a>
+    }
   </div>
 }
 

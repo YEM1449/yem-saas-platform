@@ -78,6 +78,8 @@ export class ContactDetailComponent implements OnInit {
   reservationPropertyId = '';
   reservationPrice: number | null = null;
   reservationNotes = '';
+  /** IDs of reservation rows whose document panel is expanded. */
+  expandedReservationDocs = new Set<string>();
   creatingReservation = false;
 
   // ── Deposits ───────────────────────────────────────────────────────────────
@@ -529,6 +531,15 @@ export class ContactDetailComponent implements OnInit {
       EXPIRED:   'ds-expired',
     };
     return map[s] ?? '';
+  }
+
+  toggleReservationDocs(id: string): void {
+    if (this.expandedReservationDocs.has(id)) this.expandedReservationDocs.delete(id);
+    else this.expandedReservationDocs.add(id);
+  }
+
+  isReservationDocExpanded(id: string): boolean {
+    return this.expandedReservationDocs.has(id);
   }
 
   reservationStatusClass(s: string): string {

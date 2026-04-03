@@ -44,6 +44,27 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     List<User> searchBySociete(@Param("societeId") UUID societeId, @Param("q") String q);
 
     /**
+     * Suggest endpoint search — searches by email, prenom, or nomFamille (case-insensitive).
+     * Used by the typeahead picker so any CRM role can find colleagues by name without
+     * seeing raw UUIDs.  Only returns active members of the given société.
+     */
+    @Query("""
+            SELECT u FROM User u
+            JOIN com.yem.hlm.backend.societe.domain.AppUserSociete aus
+              ON aus.id.userId = u.id
+            WHERE aus.id.societeId = :societeId
+              AND aus.actif = true
+              AND (:q IS NULL
+                   OR lower(u.email) LIKE lower(concat('%', cast(:q as string), '%'))
+                   OR (u.prenom IS NOT NULL
+                       AND lower(u.prenom) LIKE lower(concat('%', cast(:q as string), '%')))
+                   OR (u.nomFamille IS NOT NULL
+                       AND lower(u.nomFamille) LIKE lower(concat('%', cast(:q as string), '%'))))
+            ORDER BY u.nomFamille ASC, u.prenom ASC
+            """)
+    List<User> suggestBySociete(@Param("societeId") UUID societeId, @Param("q") String q);
+
+    /**
      * Returns enabled users who are members of the given société and whose
      * membership role maps to any of the given UserRoles.
      * Used by the prospect follow-up reminder scheduler.

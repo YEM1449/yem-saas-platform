@@ -24,12 +24,36 @@ export class ProjectsComponent implements OnInit {
   loading = true;
   error   = '';
 
+  searchQuery  = '';
+  filterStatus = '';
+
   /** Modal state */
   showModal   = false;
   submitting  = false;
   submitError = '';
 
   form = { name: '', description: '' };
+
+  get filtered(): Project[] {
+    let list = this.projects;
+    if (this.filterStatus) list = list.filter(p => p.status === this.filterStatus);
+    const q = this.searchQuery.toLowerCase().trim();
+    if (q) list = list.filter(p =>
+      p.name.toLowerCase().includes(q) || (p.description ?? '').toLowerCase().includes(q)
+    );
+    return list;
+  }
+
+  get activeCount(): number  { return this.projects.filter(p => p.status === 'ACTIVE').length; }
+  get archivedCount(): number { return this.projects.filter(p => p.status === 'ARCHIVED').length; }
+
+  projectInitials(name: string): string {
+    return name.split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
+  }
+
+  daysSince(dateStr: string): number {
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
+  }
 
   get canWrite(): boolean {
     const r = this.auth.user?.role;

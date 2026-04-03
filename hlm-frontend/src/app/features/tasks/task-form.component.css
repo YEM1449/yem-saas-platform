@@ -78,3 +78,24 @@ input:focus, textarea:focus {
 }
 
 .error { color: #ef4444; font-size: 0.875rem; margin-bottom: 0.5rem; }
+
+select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: #fff;
+}
+
+select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-top: 2px;
+}

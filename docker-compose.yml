@@ -112,7 +112,8 @@ services:
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN:  ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM:        ${TWILIO_FROM:-}
-      # Portal
+      # Frontend & Portal base URLs (used in invitation/magic-link emails)
+      FRONTEND_BASE_URL:  ${FRONTEND_BASE_URL:-http://localhost}
       PORTAL_BASE_URL:    ${PORTAL_BASE_URL:-http://localhost}
       # GDPR
       GDPR_RETENTION_DAYS:  ${GDPR_RETENTION_DAYS:-1825}

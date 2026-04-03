@@ -8,12 +8,13 @@
 
   <label>
     {{ 'tasks.titleLabel' | translate }} <span class="required">*</span>
-    <input data-testid="task-title" type="text" [(ngModel)]="title" placeholder="Ex: Rappeler le client" maxlength="300" />
+    <input data-testid="task-title" type="text" [(ngModel)]="title"
+           placeholder="Ex: Rappeler le client" maxlength="300" />
   </label>
 
   <label>
     Description
-    <textarea [(ngModel)]="description" rows="3" placeholder="Détails optionnels..."></textarea>
+    <textarea [(ngModel)]="description" rows="3" placeholder="Détails optionnels…"></textarea>
   </label>
 
   <label>
@@ -21,20 +22,43 @@
     <input type="datetime-local" [(ngModel)]="dueDate" />
   </label>
 
+  <!-- Assignee — name typeahead, UUID never shown -->
   <label>
-    {{ 'tasks.assignee' | translate }} (UUID)
-    <input type="text" [(ngModel)]="assigneeId" placeholder="UUID de l'assigné" />
+    {{ 'tasks.assignee' | translate }}
+    <app-user-picker
+      placeholder="Rechercher un collaborateur…"
+      [initialId]="assigneeId"
+      [disabled]="submitting"
+      (userSelected)="onUserSelected($event)" />
+    <span class="field-hint">Laissez vide pour vous assigner la tâche automatiquement.</span>
   </label>
 
   @if (!isEdit) {
+    <!-- Contact — name/email/phone typeahead -->
     <label>
-      ID Contact lié (UUID)
-      <input type="text" [(ngModel)]="contactId" placeholder="UUID du contact (optionnel)" />
+      Contact lié
+      <app-contact-picker
+        placeholder="Rechercher par nom, email ou téléphone…"
+        [initialId]="contactId"
+        [disabled]="submitting"
+        (contactSelected)="onContactSelected($event)" />
+      <span class="field-hint">Optionnel — lie la tâche à un contact.</span>
     </label>
 
+    <!-- Property — dropdown, no UUID shown -->
     <label>
-      ID Propriété liée (UUID)
-      <input type="text" [(ngModel)]="propertyId" placeholder="UUID de la propriété (optionnel)" />
+      Bien immobilier lié
+      @if (propertiesLoading) {
+        <span class="field-hint">Chargement des biens…</span>
+      } @else {
+        <select [(ngModel)]="propertyId" [disabled]="submitting">
+          <option value="">— Aucun bien (optionnel) —</option>
+          @for (p of properties; track p.id) {
+            <option [value]="p.id">{{ p.title }} · {{ p.referenceCode }}</option>
+          }
+        </select>
+      }
+      <span class="field-hint">Optionnel — lie la tâche à un bien immobilier.</span>
     </label>
   }
 
