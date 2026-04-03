@@ -65,6 +65,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 | Resource | Backend path | Notes |
 |---|---|---|
 | Admin user CRUD | `/api/users` | Was `/api/admin/users` — moved to avoid SUPER_ADMIN-only security block |
+| **User typeahead** | `GET /api/users/suggest?q=` | Returns `[{id, displayName, email}]`; accessible to ADMIN, MANAGER, AGENT (method-level `@PreAuthorize` overrides class-level ADMIN-only) |
 | Company members | `/api/mon-espace/utilisateurs` | Active path for HR/membership; MANAGER can read, ADMIN can write |
 | **Immeubles** | `/api/immeubles` | **Building CRUD; optional `?projectId=` filter** |
 | Properties | `/api/properties` | Now supports `?projectId=&immeubleId=&type=&status=` filters |
@@ -171,6 +172,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 5 complete:
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
 - Task 20: Production readiness — Wave 4 hardening complete ✅
 - Wave 5: After-deploy bug fixes ✅ (Immeuble entity, property filters, prospect auto-promotion, email AFTER_COMMIT, phone-or-email validation)
+- Wave 6: UX hardening ✅ (no UUID exposure via pickers, reservation docs everywhere, pipeline KPI bar, project list card grid, project detail hero+KPIs+progress bars, `FRONTEND_BASE_URL` docker fix)
 
 ### Wave 4 — Production Hardening (complete)
 

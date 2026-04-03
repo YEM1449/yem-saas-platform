@@ -166,6 +166,34 @@
      ════════════════════════════════════════════════════════════ -->
 @if (!loading && viewMode === 'pipeline') {
 
+  <!-- KPI Summary Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-item">
+      <span class="kpi-value">{{ kpiProspects }}</span>
+      <span class="kpi-label">Prospects</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value kpi-blue">{{ kpiActive }}</span>
+      <span class="kpi-label">Clients actifs</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value kpi-green">{{ kpiCompleted }}</span>
+      <span class="kpi-label">Ventes réalisées</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value kpi-rate">{{ kpiConversionRate }}%</span>
+      <span class="kpi-label">Taux de conversion</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value kpi-muted">{{ lostCount }}</span>
+      <span class="kpi-label">Perdus</span>
+    </div>
+  </div>
+
   <div class="pipeline-board">
     @for (col of PIPELINE_COLUMNS; track col.key) {
       @if (col.key !== 'REFERRAL' || columnContacts(col.key).length > 0) {
@@ -183,7 +211,8 @@
               <div class="pipeline-empty">Aucun contact</div>
             }
             @for (c of columnContacts(col.key); track c.id) {
-              <a class="pipeline-card" [routerLink]="['/app/contacts', c.id]">
+              <a class="pipeline-card" [class.pipeline-card-completed]="col.key === 'COMPLETED_CLIENT'"
+                 [routerLink]="['/app/contacts', c.id]">
 
                 <div class="card-top">
                   <span class="card-avatar" [style.background]="avatarColor(c)">{{ initials(c) }}</span>
@@ -193,6 +222,14 @@
                       <span class="card-temp">Acompte jusqu'au {{ c.tempClientUntil | date:'dd/MM' }}</span>
                     }
                   </div>
+                  @if (col.key === 'COMPLETED_CLIENT') {
+                    <svg class="card-sold-badge" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         title="Vente réalisée">
+                      <circle cx="8" cy="8" r="7" fill="#059669"/>
+                      <path d="M5 8.5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round"/>
+                    </svg>
+                  }
                 </div>
 
                 <div class="card-chips">
@@ -212,6 +249,15 @@
                               stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
                       </svg>
                       {{ c.phone }}
+                    </span>
+                  }
+                  @if (col.key !== 'COMPLETED_CLIENT') {
+                    <span class="card-chip card-chip-days">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.1"/>
+                        <path d="M5 3v2.5l1.5 1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                      </svg>
+                      {{ daysSince(c.createdAt) }}j dans le pipeline
                     </span>
                   }
                 </div>

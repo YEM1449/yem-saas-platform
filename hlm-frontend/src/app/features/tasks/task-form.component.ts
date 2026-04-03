@@ -5,12 +5,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, CreateTaskRequest, UpdateTaskRequest } from './task.model';
+import { PropertyService } from '../properties/property.service';
+import { Property } from '../../core/models/property.model';
+import { UserPickerComponent } from '../../shared/pickers/user-picker.component';
+import { ContactPickerComponent } from '../../shared/pickers/contact-picker.component';
 import { ErrorResponse } from '../../core/models/error-response.model';
 
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, UserPickerComponent, ContactPickerComponent],
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.css',
 })
@@ -22,6 +26,7 @@ export class TaskFormComponent implements OnInit {
   @Output() cancelled = new EventEmitter<void>();
 
   private svc = inject(TaskService);
+  private propertySvc = inject(PropertyService);
 
   title = '';
   description = '';
@@ -29,6 +34,11 @@ export class TaskFormComponent implements OnInit {
   assigneeId = '';
   contactId = '';
   propertyId = '';
+
+  // Property dropdown (no UUID exposure)
+  properties: Property[] = [];
+  propertiesLoading = false;
+
   submitting = false;
   error = '';
 
@@ -48,6 +58,26 @@ export class TaskFormComponent implements OnInit {
       this.contactId  = this.prefillContactId  ?? '';
       this.propertyId = this.prefillPropertyId ?? '';
     }
+
+    if (!this.isEdit) {
+      this.loadProperties();
+    }
+  }
+
+  private loadProperties(): void {
+    this.propertiesLoading = true;
+    this.propertySvc.list().subscribe({
+      next: ps => { this.properties = ps; this.propertiesLoading = false; },
+      error: () => { this.propertiesLoading = false; },
+    });
+  }
+
+  onUserSelected(id: string | null): void {
+    this.assigneeId = id ?? '';
+  }
+
+  onContactSelected(id: string | null): void {
+    this.contactId = id ?? '';
   }
 
   submit(): void {
@@ -63,7 +93,7 @@ export class TaskFormComponent implements OnInit {
         title:       this.title.trim(),
         description: this.description.trim() || undefined,
         dueDate:     this.dueDate || undefined,
-        assigneeId:  this.assigneeId.trim() || undefined,
+        assigneeId:  this.assigneeId || undefined,
       };
       this.svc.update(this.task!.id, req).subscribe({
         next: (t) => { this.submitting = false; this.saved.emit(t); },
@@ -74,9 +104,9 @@ export class TaskFormComponent implements OnInit {
         title:       this.title.trim(),
         description: this.description.trim() || undefined,
         dueDate:     this.dueDate || undefined,
-        assigneeId:  this.assigneeId.trim() || undefined,
-        contactId:   this.contactId.trim()  || undefined,
-        propertyId:  this.propertyId.trim() || undefined,
+        assigneeId:  this.assigneeId || undefined,
+        contactId:   this.contactId  || undefined,
+        propertyId:  this.propertyId || undefined,
       };
       this.svc.create(req).subscribe({
         next: (t) => { this.submitting = false; this.saved.emit(t); },

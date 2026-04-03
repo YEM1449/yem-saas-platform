@@ -40,6 +40,17 @@ public class AdminUserController {
         return adminUserService.list(q);
     }
 
+    /**
+     * Typeahead suggest — accessible to ADMIN, MANAGER and AGENT.
+     * Returns only {id, displayName, email} so any CRM user can search for
+     * colleagues when assigning tasks without ever seeing or handling UUIDs.
+     */
+    @GetMapping("/suggest")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public List<UserSuggestResponse> suggest(@RequestParam(required = false) String q) {
+        return adminUserService.suggest(q);
+    }
+
     /** Creates a new user in the current société. Returns 201 with the created user. */
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {

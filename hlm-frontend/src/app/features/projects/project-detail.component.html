@@ -1,106 +1,177 @@
+<!-- ── Loading / Error ───────────────────────────────────────── -->
 @if (loadingProject) {
-  <p>{{ 'common.loading' | translate }}</p>
+  <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
 }
-
 @if (projectError) {
-  <p class="error">{{ projectError }}</p>
+  <div class="alert alert-error">{{ projectError }}</div>
 }
 
+<!-- ═══════════════════════════════════════════════════════════
+     PROJECT DETAIL
+     ═══════════════════════════════════════════════════════════ -->
 @if (!loadingProject && project) {
-  <h2>{{ project.name }}</h2>
-  <p><strong>{{ 'common.status' | translate }}:</strong> {{ project.status }}</p>
-  @if (project.description) {
-    <p>{{ project.description }}</p>
-  }
 
-  <!-- Logo section -->
-  <section class="logo-section">
-    <h3>{{ 'projects.logo' | translate }}</h3>
-    @if (project.logoUrl) {
-      @if (logoSrc) {
-        <img [src]="logoSrc" alt="Logo projet" class="project-logo" />
+  <!-- ── Hero / Header ────────────────────────────────────────── -->
+  <div class="project-hero">
+
+    <!-- Logo -->
+    <div class="project-hero-logo">
+      @if (project.logoUrl && logoSrc) {
+        <img [src]="logoSrc" alt="Logo projet" class="hero-logo-img" />
       } @else {
-        <span class="muted">{{ 'common.loading' | translate }}</span>
+        <div class="hero-logo-initials">{{ heroInitials(project.name) }}</div>
       }
       @if (isAdminOrManager) {
-        <button (click)="deleteLogo()" class="btn-danger">{{ 'projects.deleteLogo' | translate }}</button>
+        <label class="hero-logo-upload" title="{{ 'projects.uploadLogo' | translate }}">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v7M3 5l3-4 3 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 10h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp"
+                 (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
+        </label>
       }
-    } @else {
-      <p class="muted">Aucun logo configuré.</p>
-    }
-    @if (isAdminOrManager) {
-      <label class="btn-upload">
-        @if (logoUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.uploadLogo' | translate }} }
-        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onLogoFileSelected($event)" style="display:none" data-testid="logo-upload" />
-      </label>
-    }
-  </section>
+    </div>
 
-  <!-- Documents section -->
-  <section class="documents-section">
-    <h3>{{ 'projects.documents' | translate }}</h3>
-    @if (documents.length === 0) {
-      <p class="muted">{{ 'common.noResults' | translate }}</p>
-    }
-    <ul class="doc-list">
-      @for (doc of documents; track doc.id) {
-        <li class="doc-item">
-          @if (isImage(doc.contentType)) {
-            <img [src]="'/api/documents/' + doc.id + '/download'" class="doc-thumb" alt="aperçu" />
-          } @else {
-            <span class="doc-icon">📄</span>
+    <!-- Name + status -->
+    <div class="project-hero-info">
+      @if (!editing) {
+        <div class="hero-title-row">
+          <h1 class="hero-title">{{ project.name }}</h1>
+          <span class="hero-status-badge" [class.badge-archived]="project.status === 'ARCHIVED'">
+            {{ project.status === 'ACTIVE' ? 'Actif' : 'Archivé' }}
+          </span>
+        </div>
+        @if (project.description) {
+          <p class="hero-desc">{{ project.description }}</p>
+        }
+        <p class="hero-meta">
+          Créé le {{ project.createdAt | date:'dd/MM/yyyy' }}
+          @if (project.updatedAt !== project.createdAt) {
+            · Mis à jour le {{ project.updatedAt | date:'dd/MM/yyyy' }}
           }
-          <a [href]="'/api/documents/' + doc.id + '/download'" target="_blank" rel="noopener noreferrer">{{ doc.fileName }}</a>
-          @if (isAdminOrManager) {
-            <button (click)="deleteDocument(doc.id)" class="btn-icon-danger">✕</button>
-          }
-        </li>
-      }
-    </ul>
-    @if (isAdminOrManager) {
-      <label class="btn-upload">
-        @if (docUploading) { {{ 'common.upload' | translate }} } @else { {{ 'projects.addDocument' | translate }} }
-        <input type="file" accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,image/jpeg,image/png,image/webp" (change)="onDocFileSelected($event)" style="display:none" data-testid="doc-upload" />
-      </label>
-    }
-  </section>
-
-  <h3>KPIs</h3>
-
-  @if (loadingKpi) {
-    <p>{{ 'common.loading' | translate }}</p>
-  }
-
-  @if (kpiError) {
-    <p class="error">{{ kpiError }}</p>
-  }
-
-  @if (!loadingKpi && kpi) {
-    <div class="kpi-grid">
-      @for (entry of kpiEntries; track entry.label) {
-        <div class="kpi-card">
-          <span class="kpi-label">{{ entry.label }}</span>
-          <span class="kpi-value">{{ entry.value }}</span>
+        </p>
+      } @else {
+        <!-- Inline edit form -->
+        <div class="edit-form">
+          @if (editError) { <div class="alert alert-error" style="margin-bottom:8px">{{ editError }}</div> }
+          <input class="form-control" type="text" [(ngModel)]="editForm.name"
+                 placeholder="Nom du projet" [disabled]="editSaving" style="margin-bottom:8px" />
+          <textarea class="form-control" rows="2" [(ngModel)]="editForm.description"
+                    placeholder="Description (optionnel)" [disabled]="editSaving"></textarea>
+          <div class="edit-form-actions">
+            <button class="btn btn-sm btn-secondary" (click)="cancelEdit()" [disabled]="editSaving">Annuler</button>
+            <button class="btn btn-sm btn-primary" (click)="saveEdit()" [disabled]="editSaving">
+              @if (editSaving) { Sauvegarde… } @else { Sauvegarder }
+            </button>
+          </div>
         </div>
       }
     </div>
 
-    @if (typeEntries.length > 0) {
-      <h4>Properties by Type</h4>
-      <ul>
-        @for (entry of typeEntries; track entry.label) {
-          <li>{{ entry.label }}: {{ entry.value }}</li>
+    <!-- Hero actions -->
+    @if (isAdminOrManager && !editing) {
+      <div class="project-hero-actions">
+        <button class="btn btn-sm btn-secondary" (click)="startEdit()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z" stroke="currentColor" stroke-width="1.3"
+                  stroke-linejoin="round"/>
+          </svg>
+          Modifier
+        </button>
+        @if (project.status === 'ACTIVE') {
+          <button class="btn btn-sm btn-ghost" (click)="archiveProject()" [disabled]="archiving">
+            @if (archiving) { Archivage… } @else { Archiver }
+          </button>
         }
-      </ul>
+        @if (project.logoUrl) {
+          <button class="btn btn-sm btn-ghost btn-danger-ghost" (click)="deleteLogo()">Suppr. logo</button>
+        }
+      </div>
     }
 
+  </div><!-- /project-hero -->
+
+  <!-- ── KPI Cards ─────────────────────────────────────────────── -->
+  @if (loadingKpi) {
+    <div class="loading-wrap" style="padding:12px"><div class="spinner spinner-sm"></div>Chargement des KPIs…</div>
+  }
+  @if (kpiError) {
+    <div class="alert alert-error" style="margin-bottom:16px">{{ kpiError }}</div>
+  }
+  @if (!loadingKpi && kpi) {
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-num">{{ kpi.totalProperties }}</span>
+        <span class="kpi-lbl">Biens au total</span>
+      </div>
+      <div class="kpi-card kpi-card-blue">
+        <span class="kpi-num">{{ kpi.depositsCount }}</span>
+        <span class="kpi-lbl">Acomptes</span>
+      </div>
+      <div class="kpi-card kpi-card-green">
+        <span class="kpi-num">{{ kpi.salesCount }}</span>
+        <span class="kpi-lbl">Ventes confirmées</span>
+      </div>
+      <div class="kpi-card kpi-card-purple">
+        <span class="kpi-num">{{ kpi.salesTotalAmount | number:'1.0-0' }}</span>
+        <span class="kpi-lbl">CA ventes (MAD)</span>
+      </div>
+      <div class="kpi-card kpi-card-amber">
+        <span class="kpi-num">{{ kpi.depositsTotalAmount | number:'1.0-0' }}</span>
+        <span class="kpi-lbl">Montant acomptes (MAD)</span>
+      </div>
+    </div>
+
+    <!-- Property status breakdown progress bars -->
     @if (statusEntries.length > 0) {
-      <h4>Properties by Status</h4>
-      <ul>
-        @for (entry of statusEntries; track entry.label) {
-          <li>{{ entry.label }}: {{ entry.value }}</li>
-        }
-      </ul>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-body">
+          <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par statut</h3>
+          <div class="breakdown-list">
+            @for (entry of statusEntries; track entry.label) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ statusLabel(entry.label) }}</span>
+                <div class="breakdown-bar-wrap">
+                  <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
+                       [style.background]="statusColor(entry.label)"></div>
+                </div>
+                <span class="breakdown-count">{{ entry.value }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Property type breakdown -->
+    @if (typeEntries.length > 0) {
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-body">
+          <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par type</h3>
+          <div class="breakdown-list">
+            @for (entry of typeEntries; track entry.label) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ entry.label }}</span>
+                <div class="breakdown-bar-wrap">
+                  <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
+                       style="background:#6366f1"></div>
+                </div>
+                <span class="breakdown-count">{{ entry.value }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     }
   }
+
+  <!-- ── Documents ─────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title" style="margin-bottom:12px">{{ 'projects.documents' | translate }}</h3>
+      <app-document-list entityType="PROJECT" [entityId]="projectId" />
+    </div>
+  </div>
+
 }

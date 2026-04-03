@@ -35,11 +35,9 @@
     <div class="empty-state">
       <div class="empty-state-icon">🔖</div>
       <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
-      <p class="empty-state-desc">
-        @if (filterStatus) {
-          <button class="btn btn-secondary btn-sm" style="margin-left:8px" (click)="filterStatus=''">{{ 'common.filter' | translate }}</button>
-        }
-      </p>
+      @if (filterStatus) {
+        <button class="btn btn-secondary btn-sm" (click)="filterStatus=''">{{ 'common.filter' | translate }}</button>
+      }
     </div>
   </div>
 }
@@ -51,22 +49,29 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>{{ 'reservations.property' | translate }}</th>
             <th>{{ 'reservations.contact' | translate }}</th>
+            <th>{{ 'reservations.property' | translate }}</th>
             <th class="text-right">{{ 'reservations.amount' | translate }}</th>
             <th>{{ 'reservations.status' | translate }}</th>
             <th>{{ 'common.date' | translate }}</th>
             <th>{{ 'reservations.expiresAt' | translate }}</th>
-            @if (canWrite) { <th class="text-right">{{ 'common.actions' | translate }}</th> }
+            <th class="text-right">{{ 'common.actions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @for (r of filtered; track r.id) {
+            <!-- Main row -->
             <tr [class.row-warning]="isExpiringSoon(r)">
-              <td class="td-mono">{{ r.id.substring(0, 8).toUpperCase() }}</td>
-              <td class="td-mono">{{ r.propertyId.substring(0, 8).toUpperCase() }}</td>
-              <td class="td-mono">{{ r.contactId.substring(0, 8).toUpperCase() }}</td>
+              <td>
+                <a class="link-cell" [routerLink]="['/app/contacts', r.contactId]">
+                  {{ contactName(r.contactId) }}
+                </a>
+              </td>
+              <td>
+                <a class="link-cell" [routerLink]="['/app/properties', r.propertyId]">
+                  {{ propertyName(r.propertyId) }}
+                </a>
+              </td>
               <td class="text-right">
                 @if (r.reservationPrice) {
                   {{ r.reservationPrice | number:'1.0-0' }}
@@ -77,26 +82,51 @@
               <td>
                 <span [class]="badgeClass(r.status)">{{ r.status }}</span>
                 @if (isExpiringSoon(r)) {
-                  <span class="badge badge-warning" style="margin-left:4px">⚠</span>
+                  <span class="badge badge-warning" style="margin-left:4px">⚠ Expire bientôt</span>
                 }
               </td>
               <td class="td-muted">{{ r.reservationDate | date:'dd/MM/yyyy' }}</td>
               <td class="td-muted">{{ r.expiryDate | date:'dd/MM/yyyy HH:mm' }}</td>
-              @if (canWrite) {
-                <td class="td-actions">
-                  <div class="row-actions">
-                    <a class="btn btn-sm btn-secondary"
-                       [routerLink]="['/app/contacts', r.contactId]">{{ 'common.name' | translate }}</a>
-                    <a class="btn btn-sm btn-ghost"
-                       [routerLink]="['/app/properties', r.propertyId]">{{ 'reservations.property' | translate }}</a>
-                    @if (r.status === 'ACTIVE') {
-                      <button class="btn btn-sm btn-danger"
-                              (click)="cancel(r)">{{ 'reservations.cancel' | translate }}</button>
-                    }
+              <td class="td-actions">
+                <div class="row-actions">
+                  <!-- Toggle document panel -->
+                  <button class="btn btn-sm"
+                          [class.btn-secondary]="!isDocExpanded(r.id)"
+                          [class.btn-primary]="isDocExpanded(r.id)"
+                          (click)="toggleDocs(r.id)"
+                          title="Documents de réservation">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-right:3px">
+                      <rect x="2" y="1" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                      <path d="M4 4h4M4 6.5h4M4 9h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                    </svg>
+                    Docs
+                  </button>
+                  @if (canWrite && r.status === 'ACTIVE') {
+                    <button class="btn btn-sm btn-danger"
+                            (click)="cancel(r)">{{ 'reservations.cancel' | translate }}</button>
+                  }
+                </div>
+              </td>
+            </tr>
+
+            <!-- Expandable document panel -->
+            @if (isDocExpanded(r.id)) {
+              <tr class="doc-panel-row">
+                <td colspan="7">
+                  <div class="doc-panel">
+                    <div class="doc-panel-header">
+                      <span class="doc-panel-title">
+                        Documents — {{ contactName(r.contactId) }} · {{ propertyName(r.propertyId) }}
+                      </span>
+                      <button class="btn btn-sm btn-ghost" (click)="toggleDocs(r.id)">✕ Fermer</button>
+                    </div>
+                    <app-document-list
+                      entityType="RESERVATION"
+                      [entityId]="r.id" />
                   </div>
                 </td>
-              }
-            </tr>
+              </tr>
+            }
           }
         </tbody>
       </table>

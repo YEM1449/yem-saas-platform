@@ -122,6 +122,30 @@ export class ContactsComponent implements OnInit {
     return this.contacts.filter(c => PIPELINE_STATUSES.has(c.status)).length;
   }
 
+  get kpiProspects(): number {
+    return this.contacts.filter(c => c.status === 'PROSPECT' || c.status === 'QUALIFIED_PROSPECT').length;
+  }
+
+  get kpiActive(): number {
+    return this.contacts.filter(c => c.status === 'CLIENT' || c.status === 'ACTIVE_CLIENT').length;
+  }
+
+  get kpiCompleted(): number {
+    return this.contacts.filter(c => c.status === 'COMPLETED_CLIENT').length;
+  }
+
+  get kpiConversionRate(): number {
+    const eligible = this.contacts.filter(
+      c => PIPELINE_STATUSES.has(c.status) && c.status !== 'REFERRAL'
+    ).length;
+    if (eligible === 0) return 0;
+    return Math.round(this.kpiCompleted / eligible * 100);
+  }
+
+  daysSince(dateStr: string): number {
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
+  }
+
   // ── Avatar helpers ──────────────────────────────────────────
 
   initials(c: Contact): string {

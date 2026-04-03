@@ -283,6 +283,11 @@
                 <span class="badge" [class]="reservationStatusClass(r.status)">{{ r.status }}</span>
               </td>
               <td class="action-cell">
+                <button class="btn btn-sm"
+                        [class.btn-outline]="!isReservationDocExpanded(r.id)"
+                        [class.btn-primary]="isReservationDocExpanded(r.id)"
+                        (click)="toggleReservationDocs(r.id)"
+                        title="Documents de réservation">Docs</button>
                 @if (r.status === 'ACTIVE') {
                   <button class="btn btn-sm btn-outline" (click)="cancelReservation(r.id)">Annuler</button>
                   <button class="btn btn-sm btn-primary" (click)="convertReservationToDeposit(r)">
@@ -291,6 +296,19 @@
                 }
               </td>
             </tr>
+            @if (isReservationDocExpanded(r.id)) {
+              <tr class="doc-panel-row">
+                <td colspan="6">
+                  <div class="doc-panel">
+                    <div class="doc-panel-header">
+                      <span class="doc-panel-title">Documents — {{ propertyLabel(r.propertyId) }}</span>
+                      <button class="btn btn-sm btn-ghost" (click)="toggleReservationDocs(r.id)">✕ Fermer</button>
+                    </div>
+                    <app-document-list entityType="RESERVATION" [entityId]="r.id" />
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
