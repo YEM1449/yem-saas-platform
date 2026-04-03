@@ -77,7 +77,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **057**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **059**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -115,8 +115,10 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 052 | ShedLock table for distributed scheduler locking |
 | 053–055 | Project/société logo fields, contract templates |
 | 056 | Immeuble (Building) table + property.immeuble_id FK |
+| 057 | Schema hardening — reservation FK, RLS on immeuble, optimistic lock version |
+| 058 | Vente pipeline — vente, vente_echeance, vente_document tables + RLS |
 
-Next available changeset: **057**
+Next available changeset: **059**
 
 ## CI Pipeline Map
 
@@ -173,6 +175,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 5 complete:
 - Task 20: Production readiness — Wave 4 hardening complete ✅
 - Wave 5: After-deploy bug fixes ✅ (Immeuble entity, property filters, prospect auto-promotion, email AFTER_COMMIT, phone-or-email validation)
 - Wave 6: UX hardening ✅ (no UUID exposure via pickers, reservation docs everywhere, pipeline KPI bar, project list card grid, project detail hero+KPIs+progress bars, `FRONTEND_BASE_URL` docker fix)
+- Wave 7: Sales Pipeline + Buyer Portal ✅ (Vente entity/service/API on changeset 058, portal `/api/portal/ventes` endpoints, CRM vente list/detail UI, portal ventes tab, buyer magic-link invite `POST /api/ventes/{id}/portal/invite`)
 
 ### Wave 4 — Production Hardening (complete)
 
