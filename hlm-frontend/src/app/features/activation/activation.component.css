@@ -1,13 +1,300 @@
-.field-checkbox {
+/* ── Shell layout ────────────────────────────────────────────── */
+.activation-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--c-surface, #f8fafc);
+}
+
+/* ── Left branding panel ─────────────────────────────────────── */
+.activation-brand {
+  display: none;
+  width: 420px;
+  flex-shrink: 0;
+  background: linear-gradient(155deg, #4f46e5 0%, #6366f1 40%, #818cf8 100%);
+  padding: 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.activation-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
+}
+
+@media (min-width: 900px) {
+  .activation-brand { display: flex; align-items: center; justify-content: center; }
+}
+
+.brand-inner {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.brand-logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 12px;
 }
 
-.field-checkbox input[type="checkbox"] {
-  width: auto;
+.brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
 }
 
-.field-checkbox label {
+.brand-quote {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
+  padding-left: 16px;
+  border-left: 3px solid rgba(255,255,255,0.35);
+  font-style: italic;
+}
+
+.brand-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand-features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.9);
+}
+
+/* ── Right form panel ────────────────────────────────────────── */
+.activation-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.activation-card {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* ── State: loading ──────────────────────────────────────────── */
+.state-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 32px;
+  text-align: center;
+}
+
+.state-loading-text {
+  font-size: 15px;
+  color: var(--c-text-secondary, #475569);
+  margin: 0;
+}
+
+/* ── State icon ──────────────────────────────────────────────── */
+.state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.state-icon-error {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.state-icon-success {
+  background: #f0fdf4;
+  color: #10b981;
+}
+
+.state-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.state-desc {
+  font-size: 14px;
+  color: var(--c-text-secondary, #475569);
+  margin: 0 0 24px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── State: invalid ──────────────────────────────────────────── */
+.state-invalid,
+.state-success {
+  padding: 48px 32px;
+  text-align: center;
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 16px;
+}
+
+/* ── State: success progress bar ────────────────────────────── */
+.success-progress {
+  height: 4px;
+  background: #d1fae5;
+  border-radius: 2px;
+  margin-top: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.success-progress::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #10b981;
+  border-radius: 2px;
+  animation: progress-fill 2s ease forwards;
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* ── Form section ────────────────────────────────────────────── */
+.form-header {
+  margin-bottom: 28px;
+}
+
+.form-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--c-text, #1e293b);
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.form-subtitle {
+  font-size: 14px;
+  color: var(--c-text-secondary, #475569);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.role-chip {
+  display: inline-block;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-left: 6px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-alert {
+  margin-bottom: 16px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--c-text-muted, #94a3b8);
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+/* ── CGU checkbox ────────────────────────────────────────────── */
+.cgu-group {
+  padding: 12px 14px;
+  background: var(--c-surface, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 8px;
+}
+
+.cgu-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.cgu-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--c-primary, #6366f1);
+  cursor: pointer;
+}
+
+.cgu-text {
+  font-size: 13px;
+  color: var(--c-text-secondary, #475569);
+  line-height: 1.5;
+}
+
+.cgu-link {
+  color: var(--c-primary, #6366f1);
+  text-decoration: underline;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-full { width: 100%; justify-content: center; }
+.btn-lg   { padding: 12px 20px; font-size: 15px; }
+
+/* ── Spinner overrides ───────────────────────────────────────── */
+.spinner-lg {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.spinner-white {
+  border-color: rgba(255,255,255,0.3);
+  border-top-color: #fff;
+}
+
+/* ── Footer note ─────────────────────────────────────────────── */
+.form-footer-note {
+  font-size: 12px;
+  color: var(--c-text-muted, #94a3b8);
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .activation-form-panel { padding: 24px 16px; align-items: flex-start; }
+  .form-title { font-size: 1.3rem; }
 }

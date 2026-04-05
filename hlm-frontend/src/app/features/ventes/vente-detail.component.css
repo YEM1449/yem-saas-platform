@@ -1,0 +1,131 @@
+/* ── Detail grid (2 cols on wide) ────────────────────────────── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 720px) {
+  .detail-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Definition list ─────────────────────────────────────────── */
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.detail-list dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.detail-list dd {
+  font-size: 14px;
+  color: var(--c-text, #1e293b);
+  margin: 0;
+}
+
+/* ── Card body ───────────────────────────────────────────────── */
+.card-body { padding: 16px 20px; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text, #1e293b);
+  margin: 0;
+}
+
+/* ── Portal section ──────────────────────────────────────────── */
+.portal-desc {
+  font-size: 13px;
+  color: var(--c-text-secondary, #475569);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+/* ── Échéancier form ─────────────────────────────────────────── */
+.echeance-form {
+  border-top: 1px solid var(--c-border, #e2e8f0);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+
+/* ── Doc list ────────────────────────────────────────────────── */
+.doc-list { list-style: none; padding: 0; margin: 0; }
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.doc-item:last-child { border-bottom: none; }
+
+.doc-icon { color: var(--c-text-muted, #94a3b8); flex-shrink: 0; }
+
+.doc-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--c-text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-date {
+  font-size: 11px;
+  color: var(--c-text-muted, #94a3b8);
+  white-space: nowrap;
+}
+
+/* ── Helpers ─────────────────────────────────────────────────── */
+.mb-20 { margin-bottom: 20px; }
+.mb-10 { margin-bottom: 10px; }
+.mt-8  { margin-top: 8px; }
+.border-top { border-top: 1px solid var(--c-border, #e2e8f0); }
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}

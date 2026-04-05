@@ -1,0 +1,99 @@
+<!-- ══ Advance Pipeline Dialog ══════════════════════════════════ -->
+<div class="modal-backdrop" (click)="cancel()">
+  <div class="modal dialog-advance" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+
+    <div class="modal-header">
+      <h2 class="modal-title">
+        @if (cancelMode) {
+          Annuler la vente
+        } @else {
+          Avancer vers "{{ nextLabel }}"
+        }
+      </h2>
+      <button class="modal-close" (click)="cancel()" [disabled]="saving" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Context label -->
+      <div class="dialog-context">
+        <span class="dialog-context-label">Statut actuel</span>
+        <span class="dialog-context-value">{{ currentLabel }}</span>
+        @if (!cancelMode && nextStatut) {
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dialog-arrow">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="dialog-context-value dialog-context-next">{{ nextLabel }}</span>
+        }
+        @if (cancelMode) {
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dialog-arrow">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="dialog-context-value dialog-context-cancel">Annulé</span>
+        }
+      </div>
+
+      <!-- Date field — only when required by target statut -->
+      @if (targetNeedsDate) {
+        <div class="form-group">
+          <label class="form-label required">{{ targetDateLabel }}</label>
+          <input
+            class="form-control"
+            type="date"
+            [(ngModel)]="dateTransition"
+            [disabled]="saving"
+          />
+        </div>
+      }
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label class="form-label">Notes (optionnel)</label>
+        <textarea
+          class="form-control"
+          rows="2"
+          [(ngModel)]="notes"
+          [disabled]="saving"
+          placeholder="Remarques sur cette étape…"
+        ></textarea>
+      </div>
+
+      <!-- Cancel mode toggle -->
+      @if (!isTerminal && !cancelMode) {
+        <button class="btn-cancel-toggle" type="button" (click)="cancelMode = true">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M4 4l5 5M9 4L4 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Annuler la vente à la place
+        </button>
+      }
+      @if (cancelMode) {
+        <button class="btn-cancel-toggle" type="button" (click)="cancelMode = false">
+          ← Retour à l'avancement normal
+        </button>
+      }
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving">Annuler</button>
+      <button
+        class="btn"
+        [class.btn-danger]="cancelMode"
+        [class.btn-primary]="!cancelMode"
+        (click)="confirm()"
+        [disabled]="saving || (targetNeedsDate && !dateTransition)"
+      >
+        @if (saving) {
+          Enregistrement…
+        } @else if (cancelMode) {
+          Confirmer l'annulation
+        } @else {
+          Confirmer → {{ nextLabel }}
+        }
+      </button>
+    </div>
+
+  </div>
+</div>

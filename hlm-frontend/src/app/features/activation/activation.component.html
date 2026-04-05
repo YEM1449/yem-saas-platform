@@ -1,74 +1,177 @@
-<div class="login-container">
+<!-- ── Activation Page ─────────────────────────────────────────── -->
+<div class="activation-shell">
 
-  <!-- Loading -->
-  @if (state === 'loading') {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
-  }
-
-  <!-- Invalid / expired token -->
-  @if (state === 'invalid') {
-    <h2>{{ 'activation.tokenInvalid' | translate }}</h2>
-    <p class="alert alert-error">{{ error }}</p>
-    <a href="/login" class="btn btn-secondary">{{ 'common.back' | translate }}</a>
-  }
-
-  <!-- Success -->
-  @if (state === 'done') {
-    <h2>{{ 'activation.success' | translate }}</h2>
-  }
-
-  <!-- Activation form -->
-  @if (state === 'form' && invitation) {
-    <h1>{{ 'activation.title' | translate }}</h1>
-    <p>
-      {{ invitation.prenom }} — {{ invitation.societeNom }} — {{ invitation.role }}
-    </p>
-
-    <form (ngSubmit)="onSubmit()" #activationForm="ngForm">
-      <div class="form-group">
-        <label class="form-label" for="motDePasse">{{ 'activation.password' | translate }}</label>
-        <input
-          class="form-control"
-          id="motDePasse"
-          name="motDePasse"
-          type="password"
-          [(ngModel)]="form.motDePasse"
-          required
-          minlength="12"
-          [placeholder]="'activation.password' | translate"
-        />
+  <!-- Left panel: branding -->
+  <aside class="activation-brand" aria-hidden="true">
+    <div class="brand-inner">
+      <div class="brand-logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="10" fill="white" fill-opacity="0.15"/>
+          <path d="M20 8L32 16v16H8V16L20 8z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
+          <rect x="15" y="22" width="10" height="10" rx="1" fill="white" fill-opacity="0.9"/>
+        </svg>
+        <span class="brand-name">HLM CRM</span>
       </div>
+      <blockquote class="brand-quote">
+        "Bienvenue dans votre espace de travail immobilier."
+      </blockquote>
+      <ul class="brand-features">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+            <path d="M5 8l2.5 2.5L11 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Gestion de biens et projets immobiliers
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+            <path d="M5 8l2.5 2.5L11 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Pipeline commercial de A à Z
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+            <path d="M5 8l2.5 2.5L11 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Portail acquéreur intégré
+        </li>
+      </ul>
+    </div>
+  </aside>
 
-      <div class="form-group">
-        <label class="form-label" for="confirmationMotDePasse">{{ 'activation.confirmPassword' | translate }}</label>
-        <input
-          class="form-control"
-          id="confirmationMotDePasse"
-          name="confirmationMotDePasse"
-          type="password"
-          [(ngModel)]="form.confirmationMotDePasse"
-          required
-        />
-      </div>
+  <!-- Right panel: form -->
+  <main class="activation-form-panel">
+    <div class="activation-card">
 
-      <div class="form-group form-field-checkbox">
-        <input
-          id="cgu"
-          name="consentementCgu"
-          type="checkbox"
-          [(ngModel)]="form.consentementCgu"
-        />
-        <label for="cgu">CGU v{{ form.consentementCguVersion }}</label>
-      </div>
-
-      @if (error) {
-        <div class="alert alert-error">{{ error }}</div>
+      <!-- ── Loading ──────────────────────────────────────────── -->
+      @if (state === 'loading') {
+        <div class="state-loading">
+          <div class="spinner spinner-lg"></div>
+          <p class="state-loading-text">Vérification de votre lien…</p>
+        </div>
       }
 
-      <button class="btn btn-primary" type="submit" [disabled]="submitting || activationForm.invalid">
-        @if (submitting) { {{ 'activation.submitting' | translate }} } @else { {{ 'activation.submit' | translate }} }
-      </button>
-    </form>
-  }
+      <!-- ── Invalid / Expired ─────────────────────────────────  -->
+      @if (state === 'invalid') {
+        <div class="state-invalid">
+          <div class="state-icon state-icon-error">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 9l10 10M19 9L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h1 class="state-title">Lien invalide</h1>
+          <p class="state-desc">{{ error }}</p>
+          <a href="/login" class="btn btn-primary btn-full">Retour à la connexion</a>
+        </div>
+      }
+
+      <!-- ── Success ───────────────────────────────────────────  -->
+      @if (state === 'done') {
+        <div class="state-success">
+          <div class="state-icon state-icon-success">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 14l4.5 4.5L20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h1 class="state-title">Compte activé !</h1>
+          <p class="state-desc">Votre compte est prêt. Vous allez être redirigé vers la page de connexion…</p>
+          <div class="success-progress"></div>
+        </div>
+      }
+
+      <!-- ── Activation Form ───────────────────────────────────  -->
+      @if (state === 'form' && invitation) {
+        <div class="form-header">
+          <h1 class="form-title">Activez votre compte</h1>
+          <p class="form-subtitle">
+            Bienvenue, <strong>{{ invitation.prenom }}</strong>&nbsp;—
+            {{ invitation.societeNom }}
+            <span class="role-chip">{{ invitation.role }}</span>
+          </p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #activationForm="ngForm" novalidate>
+          @if (error) {
+            <div class="alert alert-error form-alert">{{ error }}</div>
+          }
+
+          <div class="form-group">
+            <label class="form-label required" for="motDePasse">Mot de passe</label>
+            <input
+              class="form-control"
+              id="motDePasse"
+              name="motDePasse"
+              type="password"
+              [(ngModel)]="form.motDePasse"
+              required
+              minlength="12"
+              [disabled]="submitting"
+              placeholder="Minimum 12 caractères"
+              autocomplete="new-password"
+            />
+            <p class="form-hint">
+              Au moins 12 caractères, avec majuscule, minuscule, chiffre et caractère spécial.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required" for="confirmationMotDePasse">Confirmer le mot de passe</label>
+            <input
+              class="form-control"
+              id="confirmationMotDePasse"
+              name="confirmationMotDePasse"
+              type="password"
+              [(ngModel)]="form.confirmationMotDePasse"
+              required
+              [disabled]="submitting"
+              placeholder="Ressaisissez votre mot de passe"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <div class="form-group cgu-group">
+            <label class="cgu-label">
+              <input
+                id="cgu"
+                name="consentementCgu"
+                type="checkbox"
+                [(ngModel)]="form.consentementCgu"
+                [disabled]="submitting"
+                class="cgu-checkbox"
+              />
+              <span class="cgu-text">
+                J'accepte les
+                <a href="/cgu" target="_blank" rel="noopener" class="cgu-link">conditions générales d'utilisation</a>
+                (v{{ form.consentementCguVersion }})
+              </span>
+            </label>
+          </div>
+
+          <button
+            class="btn btn-primary btn-full btn-lg"
+            type="submit"
+            [disabled]="submitting || activationForm.invalid || !form.consentementCgu"
+            data-testid="activation-submit"
+          >
+            @if (submitting) {
+              <span class="spinner spinner-sm spinner-white"></span>
+              Activation en cours…
+            } @else {
+              Activer mon compte
+            }
+          </button>
+
+          <p class="form-footer-note">
+            Ce lien expire dans {{ invitation.expireDans }}.
+          </p>
+        </form>
+      }
+
+    </div>
+  </main>
 
 </div>

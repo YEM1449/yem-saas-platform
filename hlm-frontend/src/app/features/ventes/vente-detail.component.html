@@ -1,0 +1,228 @@
+<!-- ── Vente Detail ────────────────────────────────────────────── -->
+
+<!-- Loading / error -->
+@if (!vente()) {
+  <div class="loading-wrap">
+    @if (error()) {
+      <div class="alert alert-error">{{ error() }}</div>
+    } @else {
+      <div class="spinner"></div>
+      Chargement…
+    }
+  </div>
+}
+
+@if (vente(); as v) {
+  <!-- ── Page Header ──────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        Vente
+        <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
+      </h1>
+      <p class="page-subtitle">
+        Créée le {{ v.createdAt | date:'dd/MM/yyyy' }}
+        @if (v.reservationId) { · issue d'une réservation }
+      </p>
+    </div>
+    @if (canWrite && !isTerminal(v.statut)) {
+      <div class="page-header-actions">
+        <button class="btn btn-primary" (click)="openAdvanceDialog()" data-testid="advance-pipeline">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M3 6.5h7M7.5 3.5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Avancer le pipeline
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- ── Pipeline Stepper ────────────────────────────────────── -->
+  <div class="card mb-20">
+    <div class="card-body">
+      <app-pipeline-stepper [statut]="v.statut"></app-pipeline-stepper>
+    </div>
+  </div>
+
+  <!-- ── Info + Portal row ───────────────────────────────────── -->
+  <div class="detail-grid">
+
+    <!-- Info card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Informations</h2>
+      </div>
+      <div class="card-body">
+        <dl class="detail-list">
+          <dt>Prix de vente</dt>
+          <dd>{{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}</dd>
+
+          <dt>Date compromis</dt>
+          <dd>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</dd>
+
+          <dt>Date acte notarié</dt>
+          <dd>{{ (v.dateActeNotarie | date:'dd/MM/yyyy') || '—' }}</dd>
+
+          <dt>Livraison prévue</dt>
+          <dd>{{ (v.dateLivraisonPrevue | date:'dd/MM/yyyy') || '—' }}</dd>
+
+          <dt>Livraison réelle</dt>
+          <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
+
+          @if (v.notes) {
+            <dt>Notes</dt>
+            <dd>{{ v.notes }}</dd>
+          }
+        </dl>
+      </div>
+    </div>
+
+    <!-- Portal invite card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Portail acquéreur</h2>
+      </div>
+      <div class="card-body">
+        @if (inviteMsg()) {
+          <div class="alert alert-success mb-10">{{ inviteMsg() }}</div>
+        }
+        @if (inviteError()) {
+          <div class="alert alert-error mb-10">{{ inviteError() }}</div>
+        }
+        <p class="portal-desc">
+          Envoyez un lien d'accès sécurisé à l'acquéreur pour qu'il puisse
+          consulter l'avancement de sa vente et ses échéances.
+        </p>
+        @if (canWrite) {
+          <button class="btn btn-secondary" (click)="inviteBuyer(v.id)" [disabled]="inviting()">
+            @if (inviting()) {
+              <span class="spinner spinner-sm"></span> Envoi…
+            } @else {
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M1 2.5l5.5 4.5L12 2.5M1 2.5h11v9H1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+              </svg>
+              Inviter l'acquéreur
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Échéancier ──────────────────────────────────────────── -->
+  <div class="card mb-20">
+    <div class="card-header">
+      <h2 class="card-title">Échéancier</h2>
+      @if (canWrite) {
+        <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm">
+          + Ajouter
+        </button>
+      }
+    </div>
+
+    @if (showEcheanceForm) {
+      <div class="echeance-form card-body border-top">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Libellé</label>
+            <input class="form-control" type="text" [(ngModel)]="ech.libelle"
+                   placeholder="Ex : Acompte 30%" data-testid="ech-libelle"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Montant (MAD)</label>
+            <input class="form-control" type="number" [(ngModel)]="ech.montant"
+                   placeholder="0" data-testid="ech-montant"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Date d'échéance</label>
+            <input class="form-control" type="date" [(ngModel)]="ech.dateEcheance" data-testid="ech-date"/>
+          </div>
+        </div>
+        @if (echError()) {
+          <div class="alert alert-error mt-8">{{ echError() }}</div>
+        }
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showEcheanceForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm" (click)="addEcheance(v.id)" data-testid="ech-submit">Enregistrer</button>
+        </div>
+      </div>
+    }
+
+    @if (v.echeances.length === 0 && !showEcheanceForm) {
+      <div class="empty-state card-body">
+        <p class="empty-state-title">Aucune échéance enregistrée</p>
+      </div>
+    }
+
+    @if (v.echeances.length > 0) {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Libellé</th>
+              <th>Montant</th>
+              <th>Échéance</th>
+              <th>Statut</th>
+              <th>Paiement</th>
+              @if (canWrite) { <th></th> }
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of v.echeances; track e.id) {
+              <tr>
+                <td>{{ e.libelle }}</td>
+                <td>{{ e.montant | number:'1.0-0' }} MAD</td>
+                <td>{{ e.dateEcheance | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="badge" [class]="echClass(e.statut)">{{ echLabel(e.statut) }}</span>
+                </td>
+                <td>{{ (e.datePaiement | date:'dd/MM/yyyy') || '—' }}</td>
+                @if (canWrite) {
+                  <td>
+                    @if (e.statut !== 'PAYEE') {
+                      <button class="btn btn-sm btn-secondary" (click)="markPaid(v.id, e.id)">
+                        Marquer payée
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ── Documents ──────────────────────────────────────────── -->
+  @if (v.documents.length > 0) {
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Documents</h2>
+      </div>
+      <ul class="doc-list card-body">
+        @for (d of v.documents; track d.id) {
+          <li class="doc-item">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="doc-icon">
+              <rect x="2" y="1" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M4 5h5M4 7.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            <span class="doc-name">{{ d.nomFichier }}</span>
+            <span class="doc-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- ── Advance Pipeline Dialog ──────────────────────────────── -->
+  @if (showAdvanceDialog) {
+    <app-advance-pipeline-dialog
+      [currentStatut]="v.statut"
+      [saving]="savingStatut"
+      (confirmed)="saveStatut(v.id, $event)"
+      (cancelled)="closeAdvanceDialog()"
+    ></app-advance-pipeline-dialog>
+  }
+}

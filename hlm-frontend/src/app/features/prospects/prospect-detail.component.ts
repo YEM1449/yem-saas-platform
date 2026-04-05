@@ -4,12 +4,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 import { ProspectService } from './prospect.service';
 import { ContactInterestService } from './contact-interest.service';
 import { DepositService, CreateDepositRequest } from './deposit.service';
 import { PropertyService } from '../properties/property.service';
 import { ReservationService, CreateReservationRequest } from '../reservations/reservation.service';
 import { OutboxService } from '../outbox/outbox.service';
+import { VenteService } from '../ventes/vente.service';
 import { Prospect } from '../../core/models/prospect.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
 import { Deposit } from '../../core/models/deposit.model';
@@ -31,6 +33,8 @@ export class ProspectDetailComponent implements OnInit {
   private propertySvc = inject(PropertyService);
   private reservationSvc = inject(ReservationService);
   private outboxSvc  = inject(OutboxService);
+  private venteSvc   = inject(VenteService);
+  private router     = inject(Router);
   private route = inject(ActivatedRoute);
 
   prospect: Prospect | null = null;
@@ -69,6 +73,10 @@ export class ProspectDetailComponent implements OnInit {
   sendingDepositId: string | null = null;
   messageSendSuccess = '';
   messageSendError   = '';
+
+  // Vente conversion
+  convertingDepositId: string | null = null;
+  convertError = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -286,6 +294,25 @@ export class ProspectDetailComponent implements OnInit {
         } else {
           this.reservationError = body?.message ?? `Échec de la réservation (${err.status})`;
         }
+      },
+    });
+  }
+
+  convertToVente(d: Deposit): void {
+    this.convertingDepositId = d.id;
+    this.convertError = '';
+    this.venteSvc.create({
+      contactId:  d.contactId,
+      propertyId: d.propertyId,
+    }).subscribe({
+      next: (vente) => {
+        this.convertingDepositId = null;
+        void this.router.navigateByUrl(`/app/ventes/${vente.id}`);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.convertingDepositId = null;
+        const body = err.error as ErrorResponse | null;
+        this.convertError = body?.message ?? `Erreur lors de la conversion (${err.status})`;
       },
     });
   }

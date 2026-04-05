@@ -43,6 +43,7 @@ import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservatio
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
+import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
@@ -286,6 +287,21 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.PROPERTY_NOT_AVAILABLE_FOR_RESERVATION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidVenteTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidVenteTransition(
+            InvalidVenteTransitionException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.INVALID_STATUS_TRANSITION,
                 ex.getMessage(),
                 request.getRequestURI()
         );
