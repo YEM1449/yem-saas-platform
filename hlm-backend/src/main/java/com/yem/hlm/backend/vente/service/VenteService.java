@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -159,6 +160,7 @@ public class VenteService {
         UUID societeId = societeCtx.requireSocieteId();
         Vente vente = requireVente(societeId, id);
 
+        validateTransition(vente.getStatut(), request.statut());
         vente.setStatut(request.statut());
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
 
@@ -249,6 +251,30 @@ public class VenteService {
     private Vente requireVente(UUID societeId, UUID venteId) {
         return venteRepository.findBySocieteIdAndId(societeId, venteId)
                 .orElseThrow(() -> new VenteNotFoundException(venteId));
+    }
+
+    /**
+     * Validates that the requested statut transition is permitted.
+     *
+     * <pre>
+     * COMPROMIS  → FINANCEMENT, ANNULE
+     * FINANCEMENT → ACTE_NOTARIE, ANNULE
+     * ACTE_NOTARIE → LIVRE, ANNULE
+     * LIVRE      → (terminal)
+     * ANNULE     → (terminal)
+     * </pre>
+     */
+    private void validateTransition(VenteStatut from, VenteStatut to) {
+        if (from == to) return; // idempotent — no-op
+        Set<VenteStatut> allowed = switch (from) {
+            case COMPROMIS    -> Set.of(VenteStatut.FINANCEMENT,  VenteStatut.ANNULE);
+            case FINANCEMENT  -> Set.of(VenteStatut.ACTE_NOTARIE, VenteStatut.ANNULE);
+            case ACTE_NOTARIE -> Set.of(VenteStatut.LIVRE,        VenteStatut.ANNULE);
+            case LIVRE, ANNULE -> Set.of(); // terminal states
+        };
+        if (!allowed.contains(to)) {
+            throw new InvalidVenteTransitionException(from, to);
+        }
     }
 
     public VenteResponse toResponse(Vente v) {

@@ -1,0 +1,92 @@
+/* ── Dialog sizing ───────────────────────────────────────────── */
+.dialog-advance {
+  max-width: 440px;
+}
+
+/* ── Context row ─────────────────────────────────────────────── */
+.dialog-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--c-surface, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.dialog-context-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 2px;
+}
+
+.dialog-context-value {
+  font-weight: 600;
+  color: var(--c-text, #1e293b);
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.dialog-context-next {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.dialog-context-cancel {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dialog-arrow {
+  color: var(--c-text-muted, #94a3b8);
+  flex-shrink: 0;
+}
+
+/* ── Cancel toggle button ────────────────────────────────────── */
+.btn-cancel-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--c-text-muted, #94a3b8);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-cancel-toggle:hover {
+  color: #ef4444;
+}
+
+/* ── Danger button ───────────────────────────────────────────── */
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background .15s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

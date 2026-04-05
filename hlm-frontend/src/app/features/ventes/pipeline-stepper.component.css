@@ -1,0 +1,151 @@
+/* ── Stepper wrapper ─────────────────────────────────────────── */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.stepper-vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ── Step ────────────────────────────────────────────────────── */
+.stepper-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 0;
+  position: relative;
+}
+
+.stepper-vertical .stepper-step {
+  flex: unset;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding-bottom: 20px;
+}
+
+/* ── Circle ──────────────────────────────────────────────────── */
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--c-border, #e2e8f0);
+  background: var(--c-card, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .2s, border-color .2s;
+  z-index: 1;
+}
+
+.step-done .step-circle {
+  background: var(--c-primary, #6366f1);
+  border-color: var(--c-primary, #6366f1);
+  color: #fff;
+}
+
+.step-active .step-circle {
+  border-color: var(--c-primary, #6366f1);
+  background: #ede9fe;
+  color: var(--c-primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.step-pending .step-circle {
+  border-color: var(--c-border, #e2e8f0);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+.step-num {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── Label ───────────────────────────────────────────────────── */
+.step-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-muted, #94a3b8);
+  margin-top: 6px;
+  text-align: center;
+  white-space: nowrap;
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.step-active .step-label {
+  color: var(--c-primary, #6366f1);
+  font-weight: 600;
+}
+
+.step-done .step-label {
+  color: var(--c-text-secondary, #475569);
+}
+
+.stepper-vertical .step-label {
+  position: static;
+  transform: none;
+  margin-top: 0;
+  margin-left: 10px;
+  line-height: 28px;
+}
+
+/* ── Connector ───────────────────────────────────────────────── */
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--c-border, #e2e8f0);
+  margin: 0 2px;
+  align-self: center;
+  margin-top: -20px; /* offset for the label */
+  transition: background .2s;
+}
+
+.connector-done {
+  background: var(--c-primary, #6366f1);
+}
+
+.stepper-vertical .step-connector {
+  width: 2px;
+  height: 24px;
+  flex: unset;
+  margin: 2px 13px;
+  align-self: auto;
+  margin-top: 0;
+}
+
+/* ── Cancelled state ─────────────────────────────────────────── */
+.stepper-cancelled {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stepper-cancelled-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Stepper needs room for labels ───────────────────────────── */
+.stepper {
+  padding-bottom: 28px;
+}
+
+.stepper-vertical {
+  padding-bottom: 0;
+}

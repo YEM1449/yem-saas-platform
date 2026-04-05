@@ -369,6 +369,40 @@
         </div>
       }
 
+      <!-- ── Conversion banner for CONFIRMED deposits ──────────── -->
+      @for (d of deposits; track d.id) {
+        @if (d.status === 'CONFIRMED') {
+          <div class="vente-conversion-banner" style="margin-top:12px">
+            <div class="vcb-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 10.5l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="vcb-body">
+              <p class="vcb-title">Acompte confirmé — Prêt pour la vente</p>
+              <p class="vcb-desc">
+                L'acompte <strong>{{ d.reference }}</strong> pour
+                <strong>{{ propertyTitle(d.propertyId) }}</strong>
+                est confirmé. Créez la vente pour poursuivre le pipeline commercial.
+              </p>
+              @if (convertError) {
+                <p class="vcb-error">{{ convertError }}</p>
+              }
+            </div>
+            <button
+              class="btn btn-primary vcb-btn"
+              (click)="convertToVente(d)"
+              [disabled]="convertingDepositId === d.id"
+              data-testid="convert-to-vente"
+            >
+              @if (convertingDepositId === d.id) { Création… }
+              @else { Créer la vente → }
+            </button>
+          </div>
+        }
+      }
+
     </div><!-- end right column -->
   </div><!-- end detail-layout -->
 
