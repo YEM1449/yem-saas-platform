@@ -37,7 +37,7 @@ test.describe('Activation page', () => {
   });
 
   test('valid invitation shows activation form', async ({ page }) => {
-    // Step 1: login as admin and invite a new user via API
+    // Step 1: verify the invite and reinvite API calls succeed (integration smoke)
     await loginAsAdmin(page);
 
     const ts = Date.now();
@@ -45,7 +45,7 @@ test.describe('Activation page', () => {
 
     const inviteRes = await page.request.post('/api/mon-espace/utilisateurs', {
       data: {
-        prenom: 'E2E',
+        prenom: 'E2EPrenom',
         nomFamille: `Activation-${ts}`,
         email,
         role: 'AGENT',
@@ -54,20 +54,53 @@ test.describe('Activation page', () => {
     expect(inviteRes.status()).toBe(201);
     const membre = await inviteRes.json() as { id: string };
 
-    // Step 2: use reinviter to generate a fresh invitation token (still sent via noop mailer).
-    // We can't read the token from the response, so we verify the form renders
-    // by intercepting the GET /auth/invitation/:token network call.
-    // Instead, test the form is rendered when a real token is supplied:
-    // Here we validate the reinviter call succeeds — an E2E integration smoke.
     const reinviteRes = await page.request.post(
       `/api/mon-espace/utilisateurs/${membre.id}/reinviter`
     );
     expect(reinviteRes.status()).toBe(200);
 
-    // The token is sent by email (noop in CI).  We can't retrieve it from the
-    // API response, so we validate that the activation route *would* show the
-    // form for a real token by checking the invalid-token path is the only
-    // remaining failure mode. Full form rendering is covered by the unit tests.
+    // Step 2: assert the activation form renders for a valid token.
+    // The token is sent by email (noop in CI) so we cannot retrieve it from the
+    // API response.  Instead, mock the token-validation endpoint to return a
+    // valid InvitationDetails payload, then navigate to the activation URL.
+    // This proves the UI branch that handles a good backend response is wired
+    // correctly — a broken form would still fail here even if the API calls above pass.
+    const MOCK_TOKEN = 'e2e-mock-valid-token-abc123';
+
+    await page.route(`**/auth/invitation/${MOCK_TOKEN}`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          prenom: 'E2EPrenom',
+          email,
+          societeNom: 'ACME Immobilier',
+          role: 'AGENT',
+          expireDans: '47h',
+        }),
+      });
+    });
+
+    await page.goto(`/activation?token=${MOCK_TOKEN}`);
+
+    // Form state — not loading or invalid
+    await expect(page.locator('[data-testid="activation-submit"]')).toBeVisible({ timeout: 10000 });
+
+    // Invitation details rendered in the subtitle
+    await expect(page.locator('.form-subtitle')).toContainText('E2EPrenom');
+    await expect(page.locator('.form-subtitle')).toContainText('ACME Immobilier');
+    await expect(page.locator('.role-chip')).toContainText('AGENT');
+
+    // CGU checkbox and password fields present
+    await expect(page.locator('#motDePasse')).toBeVisible();
+    await expect(page.locator('#confirmationMotDePasse')).toBeVisible();
+    await expect(page.locator('#cgu')).toBeVisible();
+
+    // Submit button is disabled until form is valid (passwords empty, CGU unchecked)
+    await expect(page.locator('[data-testid="activation-submit"]')).toBeDisabled();
+
+    // Expiry note shown at bottom of form
+    await expect(page.locator('.form-footer-note')).toContainText('47h');
   });
 
   test('back-to-login link navigates to login page', async ({ page }) => {
