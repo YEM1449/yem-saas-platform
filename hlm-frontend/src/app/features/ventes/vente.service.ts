@@ -32,6 +32,7 @@ export interface Vente {
   societeId: string;
   propertyId: string;
   contactId: string;
+  contactFullName: string;
   agentId: string;
   reservationId: string | null;
   statut: VenteStatut;
@@ -82,6 +83,16 @@ export class VenteService {
 
   list(): Observable<Vente[]> {
     return this.http.get<Vente[]>('/api/ventes');
+  }
+
+  listByContact(contactId: string): Observable<Vente[]> {
+    return this.http.get<Vente[]>('/api/ventes', { params: { contactId } });
+  }
+
+  uploadDocument(venteId: string, file: File): Observable<VenteDocument> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<VenteDocument>(`/api/ventes/${venteId}/documents`, form);
   }
 
   get(id: string): Observable<Vente> {

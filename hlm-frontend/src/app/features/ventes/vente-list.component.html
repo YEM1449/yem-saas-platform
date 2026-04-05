@@ -64,6 +64,7 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th>Acquéreur</th>
           <th>Statut</th>
           <th>Prix de vente</th>
           <th>Date compromis</th>
@@ -74,6 +75,11 @@
       <tbody>
         @for (v of filtered; track v.id) {
           <tr>
+            <td>
+              <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
+                {{ v.contactFullName || '—' }}
+              </a>
+            </td>
             <td>
               <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
             </td>

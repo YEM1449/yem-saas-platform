@@ -54,6 +54,13 @@
       </div>
       <div class="card-body">
         <dl class="detail-list">
+          <dt>Acquéreur</dt>
+          <dd>
+            <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
+              {{ v.contactFullName || v.contactId }}
+            </a>
+          </dd>
+
           <dt>Prix de vente</dt>
           <dd>{{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}</dd>
 
@@ -196,11 +203,28 @@
   </div>
 
   <!-- ── Documents ──────────────────────────────────────────── -->
-  @if (v.documents.length > 0) {
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Documents</h2>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Documents</h2>
+      @if (canWrite) {
+        <label class="btn btn-sm btn-secondary" style="cursor:pointer">
+          @if (docUploading()) {
+            <span class="spinner spinner-sm"></span> Téléversement…
+          } @else {
+            + Ajouter
+          }
+          <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
+        </label>
+      }
+    </div>
+    @if (docError()) {
+      <div class="alert alert-error" style="margin:8px 16px">{{ docError() }}</div>
+    }
+    @if (v.documents.length === 0) {
+      <div class="empty-state card-body">
+        <p class="empty-state-title">Aucun document</p>
       </div>
+    } @else {
       <ul class="doc-list card-body">
         @for (d of v.documents; track d.id) {
           <li class="doc-item">
@@ -213,8 +237,8 @@
           </li>
         }
       </ul>
-    </div>
-  }
+    }
+  </div>
 
   <!-- ── Advance Pipeline Dialog ──────────────────────────────── -->
   @if (showAdvanceDialog) {

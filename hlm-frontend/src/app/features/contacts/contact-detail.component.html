@@ -104,6 +104,7 @@
     <button class="tab-btn" [class.active]="activeTab === 'interests'"    (click)="selectTab('interests')">Intérêts</button>
     <button class="tab-btn" [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">Réservations</button>
     <button class="tab-btn" [class.active]="activeTab === 'deposits'"     (click)="selectTab('deposits')">Acomptes</button>
+    <button class="tab-btn" [class.active]="activeTab === 'ventes'"       (click)="selectTab('ventes')">Ventes</button>
     <button class="tab-btn" [class.active]="activeTab === 'timeline'"     (click)="selectTab('timeline')">Historique</button>
     <button class="tab-btn" [class.active]="activeTab === 'documents'"    (click)="selectTab('documents')">Documents</button>
     <button class="tab-btn" [class.active]="activeTab === 'tasks'"        (click)="selectTab('tasks')">Tâches</button>
@@ -418,6 +419,47 @@
           }
         </tbody>
       </table>
+    }
+  }
+
+  <!-- ═══════════════════════════ VENTES ════════════════════════════════════ -->
+  @if (activeTab === 'ventes') {
+    @if (ventesLoading) { <p class="muted">Chargement…</p> }
+    @if (ventesError) { <p class="error">{{ ventesError }}</p> }
+    @if (!ventesLoading && ventesLoaded && ventes.length === 0) {
+      <p class="empty">Aucune vente associée à ce contact.</p>
+    }
+    @if (ventes.length > 0) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Statut</th>
+              <th>Prix de vente</th>
+              <th>Date compromis</th>
+              <th>Créée le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of ventes; track v.id) {
+              <tr>
+                <td>
+                  <span class="badge" [class]="venteStatutClass(v.statut)">{{ venteStatutLabel(v.statut) }}</span>
+                </td>
+                <td class="td-num">
+                  {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}
+                </td>
+                <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
+                <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">Détail</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   }
 

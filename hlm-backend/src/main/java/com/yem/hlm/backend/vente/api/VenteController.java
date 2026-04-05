@@ -53,7 +53,8 @@ public class VenteController {
     }
 
     @GetMapping
-    public List<VenteResponse> list() {
+    public List<VenteResponse> list(@RequestParam(required = false) UUID contactId) {
+        if (contactId != null) return venteService.findByContactId(contactId);
         return venteService.findAll();
     }
 
