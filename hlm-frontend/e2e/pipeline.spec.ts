@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+// In CI the Angular build uses apiUrl='http://localhost:8080' (environment.ci.ts),
+// but page.request uses playwright's baseURL ('http://localhost:4200') which is the
+// Python SPA static server — it only handles GET.  API write/read calls must go
+// directly to the backend.
+const API_BASE = process.env['PLAYWRIGHT_API_BASE'] ?? '';
+
 // ── Auth helper ────────────────────────────────────────────────────────────
 
 async function loginAsAdmin(page: import('@playwright/test').Page): Promise<void> {
@@ -19,14 +25,14 @@ async function createTestVente(
   const ts = Date.now();
 
   // 1. Project (property requires projectId)
-  const projRes = await page.request.post('/api/projects', {
+  const projRes = await page.request.post(`${API_BASE}/api/projects`, {
     data: { name: `E2E Pipeline Project ${ts}`, description: null },
   });
   expect(projRes.status()).toBe(201);
   const proj = await projRes.json() as { id: string };
 
   // 2. Property (APPARTEMENT — minimal required fields)
-  const propRes = await page.request.post('/api/properties', {
+  const propRes = await page.request.post(`${API_BASE}/api/properties`, {
     data: {
       type: 'APPARTEMENT',
       title: `E2E Apt ${ts}`,
@@ -43,7 +49,7 @@ async function createTestVente(
   const prop = await propRes.json() as { id: string };
 
   // 3. Contact
-  const contRes = await page.request.post('/api/contacts', {
+  const contRes = await page.request.post(`${API_BASE}/api/contacts`, {
     data: {
       prenom: 'E2E',
       nomFamille: `Pipeline-${ts}`,
@@ -54,7 +60,7 @@ async function createTestVente(
   const cont = await contRes.json() as { id: string };
 
   // 4. Vente
-  const venteRes = await page.request.post('/api/ventes', {
+  const venteRes = await page.request.post(`${API_BASE}/api/ventes`, {
     data: { contactId: cont.id, propertyId: prop.id },
   });
   expect(venteRes.status()).toBe(201);
@@ -168,13 +174,13 @@ test.describe('Vente pipeline', () => {
     const vente = await createTestVente(page);
 
     // Force-advance to FINANCEMENT via API (skipping UI for speed)
-    const advRes = await page.request.patch(`/api/ventes/${vente.id}/statut`, {
+    const advRes = await page.request.patch(`${API_BASE}/api/ventes/${vente.id}/statut`, {
       data: { statut: 'FINANCEMENT', notes: 'E2E setup' },
     });
     expect(advRes.status()).toBe(200);
 
     // Force an illegal transition via API (FINANCEMENT → LIVRE skips ACTE_NOTARIE)
-    const badRes = await page.request.patch(`/api/ventes/${vente.id}/statut`, {
+    const badRes = await page.request.patch(`${API_BASE}/api/ventes/${vente.id}/statut`, {
       data: { statut: 'LIVRE' },
     });
     expect(badRes.status()).toBe(409);
