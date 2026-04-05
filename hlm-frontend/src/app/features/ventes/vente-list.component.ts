@@ -10,57 +10,8 @@ import { AuthService } from '../../core/auth/auth.service';
   selector: 'app-vente-list',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe, TranslateModule],
-  template: `
-    <div class="page-container">
-      <div class="page-header">
-        <h1 class="page-title">Ventes</h1>
-        <button *ngIf="canWrite" class="btn btn-primary" (click)="showCreate = true"
-                data-testid="create-vente">
-          + Nouvelle vente
-        </button>
-      </div>
-
-      <div class="filter-bar">
-        <select [(ngModel)]="filterStatut" class="form-control" style="width:200px">
-          <option value="">Tous les statuts</option>
-          <option *ngFor="let s of statuts" [value]="s">{{ statutLabel(s) }}</option>
-        </select>
-      </div>
-
-      <div *ngIf="loading()" class="loading">Chargement…</div>
-      <div *ngIf="error()" class="alert alert-error">{{ error() }}</div>
-
-      <div *ngIf="!loading()" class="table-container">
-        <table class="data-table" *ngIf="filtered.length; else empty">
-          <thead>
-            <tr>
-              <th>Bien</th>
-              <th>Contact</th>
-              <th>Statut</th>
-              <th>Prix de vente</th>
-              <th>Date compromis</th>
-              <th>Créé le</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let v of filtered">
-              <td>{{ v.propertyId }}</td>
-              <td>{{ v.contactId }}</td>
-              <td><span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span></td>
-              <td>{{ v.prixVente | number:'1.0-0' }} MAD</td>
-              <td>{{ v.dateCompromis | date:'dd/MM/yyyy' }}</td>
-              <td>{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
-              <td><a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-outline">Détail</a></td>
-            </tr>
-          </tbody>
-        </table>
-        <ng-template #empty>
-          <div class="empty-state">Aucune vente enregistrée.</div>
-        </ng-template>
-      </div>
-    </div>
-  `,
+  templateUrl: './vente-list.component.html',
+  styleUrl: './vente-list.component.css',
 })
 export class VenteListComponent implements OnInit {
   private svc  = inject(VenteService);
@@ -72,7 +23,7 @@ export class VenteListComponent implements OnInit {
   showCreate = false;
   filterStatut = '';
 
-  statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
+  readonly statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
 
   get canWrite(): boolean {
     const r = this.auth.user?.role;
@@ -81,7 +32,7 @@ export class VenteListComponent implements OnInit {
 
   get filtered(): Vente[] {
     if (!this.filterStatut) return this.ventes();
-    return this.ventes().filter(v => v.statut === this.filterStatut);
+    return this.ventes().filter(v => v.statut === this.filterStatut as VenteStatut);
   }
 
   ngOnInit(): void {

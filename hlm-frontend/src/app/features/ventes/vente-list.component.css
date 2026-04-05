@@ -1,0 +1,9 @@
+.td-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.td-muted {
+  color: var(--c-text-muted, #94a3b8);
+  font-size: 13px;
+}

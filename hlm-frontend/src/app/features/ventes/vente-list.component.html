@@ -1,0 +1,95 @@
+<!-- ── Vente List ──────────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Ventes</h1>
+    <p class="page-subtitle">
+      @if (!loading()) {
+        {{ filtered.length }} vente{{ filtered.length !== 1 ? 's' : '' }}
+      }
+    </p>
+  </div>
+  @if (canWrite) {
+    <div class="page-header-actions">
+      <button class="btn btn-primary" (click)="showCreate = true"
+              data-testid="create-vente">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Nouvelle vente
+      </button>
+    </div>
+  }
+</div>
+
+<!-- ── Toolbar ────────────────────────────────────────────────── -->
+<div class="toolbar">
+  <select [(ngModel)]="filterStatut" class="form-control" style="width:200px;height:34px">
+    <option value="">Tous les statuts</option>
+    @for (s of statuts; track s) {
+      <option [value]="s">{{ statutLabel(s) }}</option>
+    }
+  </select>
+</div>
+
+@if (loading()) {
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Chargement…
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (!loading() && filtered.length === 0) {
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🏠</div>
+      <p class="empty-state-title">
+        @if (filterStatut) { Aucune vente avec ce statut }
+        @else { Aucune vente enregistrée }
+      </p>
+      @if (canWrite && !filterStatut) {
+        <button class="btn btn-primary" (click)="showCreate = true">
+          Créer la première vente
+        </button>
+      }
+    </div>
+  </div>
+}
+
+@if (!loading() && filtered.length > 0) {
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Statut</th>
+          <th>Prix de vente</th>
+          <th>Date compromis</th>
+          <th>Créée le</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (v of filtered; track v.id) {
+          <tr>
+            <td>
+              <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
+            </td>
+            <td class="td-num">
+              {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}
+            </td>
+            <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
+            <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">
+                Détail
+              </a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
