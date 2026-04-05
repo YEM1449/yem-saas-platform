@@ -211,6 +211,11 @@ app:
     # S3-compatible object storage — activated when enabled=true
     # Works with OVH, Scaleway, Hetzner, Cloudflare R2, MinIO, and AWS S3.
     # Leave endpoint blank for AWS S3 (SDK auto-resolves). Set for all other providers.
+    #
+    # ⚠️  Cloudflare R2 — CRITICAL: EU-jurisdicted buckets MUST use the EU endpoint.
+    # Using the global endpoint (account-id.r2.cloudflarestorage.com) on an EU bucket
+    # results in HTTP 403 Forbidden on all PUT/GET operations.
+    # Set: MEDIA_OBJECT_STORAGE_ENDPOINT=https://<account-id>.eu.r2.cloudflarestorage.com
     object-storage:
       enabled:    ${MEDIA_OBJECT_STORAGE_ENABLED:false}
       endpoint:   ${MEDIA_OBJECT_STORAGE_ENDPOINT:}

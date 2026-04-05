@@ -50,9 +50,9 @@ Every domain entity has `societe_id UUID NOT NULL`. Isolation enforced at:
 
 Base package: `com.yem.hlm.backend`
 
-### Current Modules (24)
+### Current Modules (25)
 
-audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, **immeuble**, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, user, usermanagement
+audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, **immeuble**, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, user, usermanagement, **vente**
 
 ### Frontend Surfaces
 
@@ -73,6 +73,10 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 | Documents | `/api/documents` | Cross-entity attachments |
 | Super-admin societes | `/api/admin/societes` | SUPER_ADMIN only |
 | Portal auth | `/api/portal/auth/**` | Magic-link flow; ROLE_PORTAL token; contactId as principal |
+| **Ventes** | `/api/ventes` | Full sale pipeline CRUD; `PATCH /{id}/statut` enforces state machine |
+| **Portal ventes** | `/api/portal/ventes` | Buyer read-only view; ROLE_PORTAL; returns vente + echeances + docs |
+| **Vente portal invite** | `POST /api/ventes/{id}/portal/invite` | Sends magic-link email to buyer; ADMIN/MANAGER only |
+| **Invitation flow** | `GET /auth/invitation/{token}` + `POST /auth/invitation/{token}/activer` | Validate + activate account; both in `permitAll()`; JWT set as httpOnly cookie |
 
 ## Critical Rules
 
@@ -169,13 +173,42 @@ When adding a new service method or repository query:
 
 ## Current Backlog
 
-See `tasks/IMPLEMENTATION_PLAN.md` — Wave 5 complete:
+See `tasks/IMPLEMENTATION_PLAN.md` — Wave 8 complete:
 - Tasks 01–15: Security audit fixes + CI/CD ✅
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
 - Task 20: Production readiness — Wave 4 hardening complete ✅
 - Wave 5: After-deploy bug fixes ✅ (Immeuble entity, property filters, prospect auto-promotion, email AFTER_COMMIT, phone-or-email validation)
 - Wave 6: UX hardening ✅ (no UUID exposure via pickers, reservation docs everywhere, pipeline KPI bar, project list card grid, project detail hero+KPIs+progress bars, `FRONTEND_BASE_URL` docker fix)
 - Wave 7: Sales Pipeline + Buyer Portal ✅ (Vente entity/service/API on changeset 058, portal `/api/portal/ventes` endpoints, CRM vente list/detail UI, portal ventes tab, buyer magic-link invite `POST /api/ventes/{id}/portal/invite`)
+- Wave 8: Pipeline UX + Activation redesign ✅ (items below)
+
+### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
+
+| Item | Files |
+|---|---|
+| Activation page premium redesign — split layout, 4 states (loading/form/error/done), role chip, expiry note | `activation.component.html`, `activation.component.css` |
+| Backend VenteStatut state machine — transition guard `validateTransition()` | `VenteService.java:validateTransition()`, `InvalidVenteTransitionException.java`, `GlobalExceptionHandler.java` |
+| `PipelineStepperComponent` — horizontal/vertical, 4 steps, ANNULE pill | `features/ventes/pipeline-stepper.component.ts/.css` |
+| `AdvancePipelineDialogComponent` — context-sensitive forms per target statut, cancel mode | `features/ventes/advance-pipeline-dialog.component.ts/.html/.css` |
+| Vente detail rewrite — templateUrl/styleUrl, stepper at top, advance dialog, invite card | `features/ventes/vente-detail.component.ts/.html/.css` |
+| Deposit → Vente conversion banner — on prospect-detail for CONFIRMED deposits | `features/prospects/prospect-detail.component.html/.ts/.css` |
+| Portal ventes upgrade — `PipelineStepperComponent`, `@if`/`@for`, paid/remaining totals | `portal/features/portal-ventes/portal-ventes.component.ts/.html/.css` |
+| R2 EU endpoint comment in `application.yml` | `application.yml` |
+
+### Vente State Machine (as-implemented)
+```
+COMPROMIS ──→ FINANCEMENT ──→ ACTE_NOTARIE ──→ LIVRE
+    │               │               │
+    └───────────────┴───────────────┴──→ ANNULE (terminal)
+LIVRE → (terminal)
+```
+`VenteService.validateTransition()` enforces this. Invalid transitions → HTTP 409 `INVALID_STATUS_TRANSITION`.
+
+### Infrastructure Notes (Production)
+- **R2 EU endpoint**: `MEDIA_OBJECT_STORAGE_ENDPOINT=https://<account-id>.eu.r2.cloudflarestorage.com` — using the global endpoint on an EU bucket causes 403
+- **Frontend URL**: `FRONTEND_BASE_URL=https://yem-hlm.youssouf-mehdi.workers.dev` (default already set in application.yml)
+- **Portal URL**: `PORTAL_BASE_URL=https://yem-hlm.youssouf-mehdi.workers.dev` (default already set)
+- **Activation flow**: `GET /auth/invitation/{token}` (validate) → `POST /auth/invitation/{token}/activer` (activate); JWT set as httpOnly cookie; both already in `permitAll()`
 
 ### Wave 4 — Production Hardening (complete)
 
