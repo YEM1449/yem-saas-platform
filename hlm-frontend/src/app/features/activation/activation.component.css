@@ -298,3 +298,64 @@
   .activation-form-panel { padding: 24px 16px; align-items: flex-start; }
   .form-title { font-size: 1.3rem; }
 }
+
+/* ── Password strength meter ─────────────────────────────────── */
+.strength-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.strength-segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--c-border, #e2e8f0);
+  transition: background .2s;
+}
+.strength-weak   .strength-segment.active { background: #ef4444; }
+.strength-fair   .strength-segment.active { background: #f59e0b; }
+.strength-good   .strength-segment.active { background: #3b82f6; }
+.strength-strong .strength-segment.active { background: #10b981; }
+.strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 56px;
+  text-align: right;
+}
+.strength-label.strength-weak   { color: #ef4444; }
+.strength-label.strength-fair   { color: #f59e0b; }
+.strength-label.strength-good   { color: #3b82f6; }
+.strength-label.strength-strong { color: #10b981; }
+
+/* ── Password requirements checklist ─────────────────────────── */
+.password-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+}
+.password-requirements li {
+  font-size: 11px;
+  color: var(--c-text-muted, #94a3b8);
+  padding-left: 16px;
+  position: relative;
+}
+.password-requirements li::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+}
+.password-requirements li.req-ok {
+  color: #10b981;
+}
+.password-requirements li.req-ok::before {
+  content: '✓';
+}
