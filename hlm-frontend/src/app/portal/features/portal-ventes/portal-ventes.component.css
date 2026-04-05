@@ -1,0 +1,126 @@
+/* ── Section header ──────────────────────────────────────────── */
+.portal-section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+  margin: 0 0 20px;
+}
+
+/* ── Vente card ──────────────────────────────────────────────── */
+.portal-vente-card {
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.portal-card-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.portal-card-section:last-child { border-bottom: none; }
+
+.portal-card-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-secondary, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 14px;
+}
+
+/* ── Summary grid ────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--c-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-value {
+  font-size: 15px;
+  color: var(--c-text, #1e293b);
+}
+
+/* ── Échéancier table ────────────────────────────────────────── */
+.ech-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+
+.portal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.portal-table th { font-size: 11px; font-weight: 600; color: var(--c-text-muted, #94a3b8); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+.portal-table td { padding: 9px 8px; border-bottom: 1px solid var(--c-border, #e2e8f0); color: var(--c-text-secondary, #475569); }
+.portal-table tr:last-child td { border-bottom: none; }
+.td-num { font-variant-numeric: tabular-nums; }
+
+.row-paid td { color: var(--c-text-muted, #94a3b8); }
+.row-late td { color: #dc2626; }
+
+/* ── Totals ──────────────────────────────────────────────────── */
+.ech-totals {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.ech-total-item {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ech-paid      { color: #10b981; }
+.ech-remaining { color: var(--c-text-secondary, #475569); }
+
+/* ── Documents ───────────────────────────────────────────────── */
+.portal-doc-list { list-style: none; padding: 0; margin: 0; }
+
+.portal-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+  font-size: 13px;
+}
+
+.portal-doc-item:last-child { border-bottom: none; }
+.doc-icon { color: var(--c-text-muted, #94a3b8); flex-shrink: 0; }
+.doc-name { flex: 1; color: var(--c-text, #1e293b); }
+.doc-date { color: var(--c-text-muted, #94a3b8); font-size: 11px; white-space: nowrap; }
+
+/* ── Notes ───────────────────────────────────────────────────── */
+.portal-notes {
+  font-size: 13px;
+  color: var(--c-text-secondary, #475569);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Loading / empty ─────────────────────────────────────────── */
+.portal-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  color: var(--c-text-muted, #94a3b8);
+  font-size: 14px;
+}
+
+.portal-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--c-text-muted, #94a3b8);
+  font-size: 14px;
+}
