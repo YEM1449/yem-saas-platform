@@ -4,17 +4,6 @@ import { test, expect } from '@playwright/test';
 // API write/read calls must go directly to the backend at port 8080.
 const API_BASE = process.env['PLAYWRIGHT_API_BASE'] ?? '';
 
-// ── Auth helper ────────────────────────────────────────────────────────────
-
-async function loginAsAdmin(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/login');
-  await page.waitForSelector('[data-testid="email"]', { timeout: 30000 });
-  await page.fill('[data-testid="email"]', 'admin@acme.com');
-  await page.fill('[data-testid="password"]', 'Admin123!Secure');
-  await page.click('[data-testid="login-button"]');
-  await page.waitForURL(/.*\/app/, { timeout: 15000 });
-}
-
 // ── Test data helper ───────────────────────────────────────────────────────
 
 async function createVenteWithContact(
@@ -47,9 +36,10 @@ async function createVenteWithContact(
   const contactEmail = `portal-buyer-${ts}@example.com`;
   const contRes = await page.request.post(`${API_BASE}/api/contacts`, {
     data: {
-      prenom: 'PortalBuyer',
-      nomFamille: `E2E-${ts}`,
+      firstName: 'PortalBuyer',
+      lastName: `E2E-${ts}`,
       email: contactEmail,
+      processingBasis: 'CONTRACT',
     },
   });
   expect(contRes.status()).toBe(201);
@@ -210,8 +200,9 @@ test.describe('Buyer Portal', () => {
     // Pipeline stepper component rendered
     await expect(page.locator('app-pipeline-stepper')).toBeVisible({ timeout: 8000 });
 
-    // Financial summary visible
-    await expect(page.locator('.summary-value')).toContainText('1 500 000');
+    // Financial summary visible — the price appears somewhere in the vente card
+    // (.summary-value matches multiple elements; check the card container instead)
+    await expect(page.locator('.portal-vente-card')).toContainText('1 500 000');
   });
 
   test('portal ventes shows echeances when present', async ({ page }) => {
@@ -263,8 +254,6 @@ test.describe('Buyer Portal', () => {
   // ── Portal invite API (integration smoke) ─────────────────────────────
 
   test('admin can invite buyer to portal via vente', async ({ page }) => {
-    await loginAsAdmin(page);
-
     const { venteId } = await createVenteWithContact(page);
 
     // POST /api/ventes/{id}/portal/invite should return 200
@@ -275,7 +264,6 @@ test.describe('Buyer Portal', () => {
   });
 
   test('admin invite appears on vente detail page', async ({ page }) => {
-    await loginAsAdmin(page);
     const { venteId } = await createVenteWithContact(page);
 
     await page.goto(`/app/ventes/${venteId}`);

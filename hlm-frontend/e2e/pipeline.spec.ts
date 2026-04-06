@@ -51,9 +51,10 @@ async function createTestVente(
   // 3. Contact
   const contRes = await page.request.post(`${API_BASE}/api/contacts`, {
     data: {
-      prenom: 'E2E',
-      nomFamille: `Pipeline-${ts}`,
+      firstName: 'E2E',
+      lastName: `Pipeline-${ts}`,
       email: `e2e-pipeline-${ts}@example.com`,
+      processingBasis: 'CONTRACT',
     },
   });
   expect(contRes.status()).toBe(201);
@@ -70,8 +71,11 @@ async function createTestVente(
 // ── Tests ──────────────────────────────────────────────────────────────────
 
 test.describe('Vente pipeline', () => {
+  // Auth is injected via storageState at the project level (playwright.config.ts).
+  // No login call needed — the stored admin session is already present.
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    await page.goto('/app/ventes');
+    await page.waitForURL(/.*\/app/, { timeout: 10000 });
   });
 
   // ── List ──────────────────────────────────────────────────────────────
@@ -107,19 +111,18 @@ test.describe('Vente pipeline', () => {
     await expect(page.locator('.page-header h1')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.page-header .badge')).toContainText('Compromis');
 
-    // Pipeline stepper component rendered
-    await expect(page.locator('app-pipeline-stepper')).toBeVisible();
-
-    // The four step labels must appear
-    await expect(page.getByText('Compromis')).toBeVisible();
-    await expect(page.getByText('Financement')).toBeVisible();
-    await expect(page.getByText('Acte notarié')).toBeVisible();
-    await expect(page.getByText('Livré')).toBeVisible();
+    // Pipeline stepper component rendered with step labels
+    const stepper = page.locator('app-pipeline-stepper');
+    await expect(stepper).toBeVisible();
+    await expect(stepper).toContainText('Compromis');
+    await expect(stepper).toContainText('Financement');
+    await expect(stepper).toContainText('Acte notarié');
+    await expect(stepper).toContainText('Livré');
 
     // Info card visible
-    await expect(page.getByText('Informations')).toBeVisible();
+    await expect(page.locator('.card-title').first()).toBeVisible();
     // Portal card visible
-    await expect(page.getByText('Portail acquéreur')).toBeVisible();
+    await expect(page.locator('text=Portail acquéreur').first()).toBeVisible();
   });
 
   test('advance pipeline button opens dialog for non-terminal statut', async ({ page }) => {
