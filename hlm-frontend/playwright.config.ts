@@ -52,6 +52,11 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // project-wizard.spec.ts: does its own login per test
+    {
+      name: 'project-wizard-tests',
+      testMatch: /project-wizard\.spec\.ts/,
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

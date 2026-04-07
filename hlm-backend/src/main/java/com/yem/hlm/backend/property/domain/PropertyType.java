@@ -46,7 +46,10 @@ public enum PropertyType {
     LOT,
 
     /** Undeveloped land (terrain vierge). */
-    TERRAIN_VIERGE;
+    TERRAIN_VIERGE,
+
+    /** Parking space or underground parking bay. */
+    PARKING;
 
     /**
      * Returns the logical category this type belongs to.
@@ -57,6 +60,7 @@ public enum PropertyType {
             case APPARTEMENT, DUPLEX, STUDIO, T2, T3 -> PropertyCategory.APARTMENT;
             case COMMERCE -> PropertyCategory.COMMERCE;
             case LOT, TERRAIN_VIERGE -> PropertyCategory.LAND;
+            case PARKING -> PropertyCategory.PARKING;
         };
     }
 }

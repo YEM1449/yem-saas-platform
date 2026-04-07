@@ -44,6 +44,8 @@ import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
+import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
@@ -177,7 +179,8 @@ public class GlobalExceptionHandler {
             ReservationNotFoundException.class,
             UserNotFoundException.class,
             VenteNotFoundException.class,
-            VenteEcheanceNotFoundException.class
+            VenteEcheanceNotFoundException.class,
+            TrancheNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,
@@ -293,9 +296,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    @ExceptionHandler(InvalidVenteTransitionException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidVenteTransition(
-            InvalidVenteTransitionException ex,
+    @ExceptionHandler({InvalidVenteTransitionException.class, InvalidTrancheTransitionException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
+            RuntimeException ex,
             HttpServletRequest request
     ) {
         ErrorResponse error = ErrorResponse.of(

@@ -1,0 +1,514 @@
+<div class="wizard-shell">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="wizard-header">
+    <a class="back-link" routerLink="/app/projects">← Projets</a>
+    <h1 class="wizard-title">Nouveau programme immobilier</h1>
+  </div>
+
+  <!-- ── Progress bar ────────────────────────────────────────────────────── -->
+  <div class="wizard-progress-wrap">
+    <div class="wizard-progress-bar">
+      <div class="wizard-progress-fill"
+           [style.width.%]="(currentStep / TOTAL_STEPS) * 100"></div>
+    </div>
+    <div class="step-indicators">
+      @for (s of [1,2,3,4,5]; track s) {
+        <div class="step-indicator-item"
+             [class.active]="currentStep === s"
+             [class.done]="currentStep > s">
+          <div class="step-circle">{{ currentStep > s ? '✓' : s }}</div>
+          <div class="step-label">
+            @switch (s) {
+              @case (1) { Projet }
+              @case (2) { Tranches }
+              @case (3) { Bâtiments }
+              @case (4) { Lots }
+              @case (5) { Validation }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Step panels ─────────────────────────────────────────────────────── -->
+  <div class="wizard-body">
+
+    <!-- ════════════════════ STEP 1: Project info ════════════════════ -->
+    @if (currentStep === 1) {
+      <div class="step-panel">
+        <div class="step-intro">
+          <h2>Informations du programme</h2>
+          <p>Renseignez les informations générales de votre programme immobilier.</p>
+        </div>
+        <form [formGroup]="step1" class="form-grid">
+          <div class="field field-full required">
+            <label>Nom du programme *</label>
+            <input formControlName="projectNom"
+                   data-testid="wizard-project-nom"
+                   placeholder="Ex : Résidence Les Oliviers" />
+            @if (step1.get('projectNom')?.invalid && step1.get('projectNom')?.touched) {
+              <span class="field-error">Nom requis</span>
+            }
+          </div>
+          <div class="field field-full">
+            <label>Description</label>
+            <textarea formControlName="projectDescription" rows="3"
+                      placeholder="Description du programme…"></textarea>
+          </div>
+          <div class="field">
+            <label>Adresse</label>
+            <input formControlName="projectAdresse" placeholder="12 avenue des Pins" />
+          </div>
+          <div class="field required">
+            <label>Ville *</label>
+            <input formControlName="projectVille"
+                   data-testid="wizard-project-ville"
+                   placeholder="Marseille" />
+            @if (step1.get('projectVille')?.invalid && step1.get('projectVille')?.touched) {
+              <span class="field-error">Ville requise</span>
+            }
+          </div>
+          <div class="field field-sm">
+            <label>Code postal</label>
+            <input formControlName="projectCodePostal" placeholder="13000" />
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- ════════════════════ STEP 2: Tranches ════════════════════ -->
+    @if (currentStep === 2) {
+      <div class="step-panel">
+        <div class="step-intro">
+          <h2>Tranches de livraison</h2>
+        </div>
+
+        <div class="domain-explainer">
+          <span class="explainer-icon">ℹ</span>
+          <div>
+            <strong>Qu'est-ce qu'une tranche ?</strong>
+            <p>
+              Une tranche regroupe les bâtiments construits et livrés ensemble à une date
+              précise. La date de livraison de chaque tranche est inscrite dans les contrats
+              de réservation des acquéreurs. Un programme simple n'a qu'une seule tranche.
+            </p>
+          </div>
+        </div>
+
+        <!-- Timeline visual -->
+        <div class="tranche-timeline">
+          @for (t of tranches.controls; track $index; let ti = $index) {
+            <div class="timeline-item">
+              <div class="timeline-dot">{{ ti + 1 }}</div>
+              <div class="timeline-content">
+                <div class="timeline-nom">{{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}</div>
+                <div class="timeline-date">
+                  {{ t.get('dateLivraisonPrevue')?.value || 'Date à définir' }}
+                </div>
+              </div>
+              @if (ti < tranches.length - 1) {
+                <div class="timeline-arrow">→</div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Tranche cards -->
+        <div class="section-header">
+          <h3>Tranches ({{ tranches.length }})</h3>
+          <button type="button" class="btn btn-sm btn-outline"
+                  data-testid="wizard-add-tranche"
+                  (click)="addTranche()"
+                  [disabled]="tranches.length >= 5">
+            + Ajouter une tranche
+          </button>
+        </div>
+
+        <form [formGroup]="step2">
+          <div formArrayName="tranches" class="tranche-cards">
+            @for (t of tranches.controls; track $index; let ti = $index) {
+              <div [formGroupName]="ti" class="tranche-card">
+                <div class="tranche-card-header">
+                  <span class="badge badge-tranche">Tranche {{ ti + 1 }}</span>
+                  @if (tranches.length > 1) {
+                    <button type="button" class="btn-icon-remove"
+                            (click)="removeTranche(ti)">✕</button>
+                  }
+                </div>
+                <div class="form-row">
+                  <div class="field">
+                    <label>Nom de la tranche (optionnel)</label>
+                    <input formControlName="nom"
+                           [placeholder]="'Ex : Tranche ' + (ti+1) + ' — Le Jasmin'" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="field required">
+                    <label>📅 Date de livraison prévue *</label>
+                    <input type="date" formControlName="dateLivraisonPrevue"
+                           [attr.data-testid]="'wizard-tranche-' + ti + '-livraison'" />
+                    <span class="field-hint">Mentionnée dans les contrats de réservation</span>
+                    @if (t.get('dateLivraisonPrevue')?.invalid && t.get('dateLivraisonPrevue')?.touched) {
+                      <span class="field-error">Date de livraison requise</span>
+                    }
+                  </div>
+                  <div class="field">
+                    <label>Date début des travaux</label>
+                    <input type="date" formControlName="dateDebutTravaux" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Référence permis de construire</label>
+                  <input formControlName="permisConstruireRef"
+                         placeholder="PC 13055 25 00123" />
+                </div>
+              </div>
+            }
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- ════════════════════ STEP 3: Buildings ════════════════════ -->
+    @if (currentStep === 3) {
+      <div class="step-panel">
+        <div class="step-intro">
+          <h2>Configuration des bâtiments</h2>
+          <p>Définissez la nomenclature commune, puis ajoutez les bâtiments de chaque tranche.</p>
+        </div>
+
+        <!-- Naming config -->
+        <form [formGroup]="step3">
+          <div class="config-box">
+            <h3 class="config-box-title">Nomenclature (commune à tous les bâtiments)</h3>
+
+            <div class="naming-options">
+              @for (opt of NAMING_OPTIONS; track opt.value) {
+                <label class="radio-card">
+                  <input type="radio" formControlName="buildingNaming" [value]="opt.value" />
+                  <div class="radio-card-body">
+                    <span class="radio-label">{{ opt.label }}</span>
+                    <span class="radio-hint">{{ opt.hint }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Préfixe bâtiment</label>
+                <input formControlName="buildingPrefix" placeholder="Bâtiment" />
+              </div>
+              <div class="field" [class.field-hidden]="step3.get('unitRefPattern')?.value !== 'SEQUENTIAL'">
+                <label>Préfixe des lots</label>
+                <input formControlName="unitPrefix" placeholder="APT-" />
+              </div>
+            </div>
+
+            <div class="ref-options">
+              <label class="field-label">Référence des lots</label>
+              @for (p of REF_PATTERNS; track p.value) {
+                <label class="radio-card-sm">
+                  <input type="radio" formControlName="unitRefPattern" [value]="p.value" />
+                  <div>
+                    <span class="radio-label">{{ p.label }}</span>
+                    <span class="radio-hint">{{ p.hint }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+        </form>
+
+        <!-- Buildings per tranche -->
+        @for (t of tranches.controls; track $index; let ti = $index) {
+          <div class="tranche-buildings-section">
+            <div class="tranche-section-header">
+              <h3>
+                {{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}
+                @if (t.get('dateLivraisonPrevue')?.value) {
+                  <span class="badge-date">Livraison : {{ t.get('dateLivraisonPrevue')?.value }}</span>
+                }
+              </h3>
+              <button type="button" class="btn btn-sm btn-outline"
+                      [attr.data-testid]="'wizard-add-building-' + ti"
+                      (click)="addBuilding(ti)"
+                      [disabled]="totalBuildingCount >= 26">
+                + Ajouter un bâtiment
+              </button>
+            </div>
+
+            @if (getTrancheBuildings(ti).length === 0) {
+              <div class="empty-state-sm">
+                <p>Aucun bâtiment — cliquez sur « Ajouter un bâtiment » ci-dessus.</p>
+              </div>
+            }
+
+            <div class="building-cards">
+              @for (b of getTrancheBuildings(ti).controls; track $index; let bi = $index) {
+                <div [formGroup]="$any(b)" class="building-card">
+                  <div class="building-card-header">
+                    <span class="badge badge-building">
+                      {{ step3.get('buildingPrefix')?.value }}
+                      {{ getBuildingLabel(b.get('buildingOrder')?.value, b.get('customName')?.value) }}
+                    </span>
+                    <button type="button" class="btn-icon-remove"
+                            (click)="removeBuilding(ti, bi)">✕</button>
+                  </div>
+
+                  @if (step3.get('buildingNaming')?.value === 'CUSTOM') {
+                    <div class="field">
+                      <label>Nom personnalisé</label>
+                      <input formControlName="customName" placeholder="Ex : Le Jasmin" />
+                    </div>
+                  }
+
+                  <div class="form-row">
+                    <div class="field">
+                      <label>Nombre d'étages (R+?)</label>
+                      <div class="stepper">
+                        <button type="button"
+                                (click)="b.get('floorCount')?.setValue(Math.max(1,(b.get('floorCount')?.value??1)-1))">−</button>
+                        <span class="stepper-value">R+{{ b.get('floorCount')?.value }}</span>
+                        <button type="button"
+                                (click)="b.get('floorCount')?.setValue(Math.min(30,(b.get('floorCount')?.value??1)+1))">+</button>
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <label>Rez-de-chaussée</label>
+                      <label class="toggle">
+                        <input type="checkbox" formControlName="hasRdc" />
+                        <span>{{ b.get('hasRdc')?.value ? 'Oui' : 'Non' }}</span>
+                      </label>
+                    </div>
+
+                    @if (b.get('hasRdc')?.value) {
+                      <div class="field">
+                        <label>Type RDC</label>
+                        <select formControlName="rdcType">
+                          <option value="COMMERCE">Local commercial</option>
+                          <option value="APPARTEMENT">Appartement</option>
+                          <option value="MIXTE">Mixte</option>
+                          <option value="NONE">Aucun lot</option>
+                        </select>
+                      </div>
+                      @if (b.get('rdcType')?.value !== 'NONE') {
+                        <div class="field field-sm">
+                          <label>Nb lots RDC</label>
+                          <input type="number" formControlName="rdcUnitCount" min="1" max="10" />
+                        </div>
+                      }
+                    }
+                  </div>
+
+                  <div class="form-row">
+                    <div class="field">
+                      <label>Parking</label>
+                      <label class="toggle">
+                        <input type="checkbox" formControlName="hasParking" />
+                        <span>{{ b.get('hasParking')?.value ? 'Avec parking' : 'Sans parking' }}</span>
+                      </label>
+                    </div>
+                    @if (b.get('hasParking')?.value) {
+                      <div class="field field-sm">
+                        <label>Nb de places</label>
+                        <input type="number" formControlName="parkingCount" min="1" />
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ════════════════════ STEP 4: Unit types per floor ════════════════════ -->
+    @if (currentStep === 4) {
+      <div class="step-panel">
+        <div class="step-intro">
+          <h2>Types de lots par étage</h2>
+          <p>Pour chaque bâtiment, configurez le type et les caractéristiques de chaque étage.</p>
+        </div>
+
+        @for (t of tranches.controls; track $index; let ti = $index) {
+          <div class="tranche-floors-section">
+            <h3 class="tranche-section-title">
+              {{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}
+              @if (t.get('dateLivraisonPrevue')?.value) {
+                <span class="badge-date">Livraison : {{ t.get('dateLivraisonPrevue')?.value }}</span>
+              }
+            </h3>
+
+            @for (b of getTrancheBuildings(ti).controls; track $index; let bi = $index) {
+              <div class="building-floors-card">
+                <h4 class="building-floor-title">
+                  {{ step3.get('buildingPrefix')?.value }}
+                  {{ getBuildingLabel(b.get('buildingOrder')?.value, b.get('customName')?.value) }}
+                  <span class="floors-count">(R+{{ b.get('floorCount')?.value }})</span>
+                </h4>
+
+                @if (b.get('hasParking')?.value && (b.get('parkingCount')?.value ?? 0) > 0) {
+                  <div class="floor-row floor-parking">
+                    <span class="floor-label">Sous-sol</span>
+                    <span class="floor-type-badge">PARKING</span>
+                    <span class="floor-count-label">{{ b.get('parkingCount')?.value }} places</span>
+                  </div>
+                }
+
+                @for (f of getFloors(ti, bi).controls; track $index; let fi = $index) {
+                  <div [formGroup]="$any(f)" class="floor-row">
+                    <span class="floor-label">{{ getFloorLabel(f.get('floorNumber')?.value) }}</span>
+
+                    <select formControlName="propertyType" class="floor-type-select">
+                      @for (pt of PROPERTY_TYPES; track pt.value) {
+                        <option [value]="pt.value">{{ pt.label }}</option>
+                      }
+                    </select>
+
+                    <div class="floor-unit-count">
+                      <button type="button"
+                              (click)="f.get('unitCount')?.setValue(Math.max(1,(f.get('unitCount')?.value??1)-1))">−</button>
+                      <span>{{ f.get('unitCount')?.value }} lot{{ (f.get('unitCount')?.value??1) > 1 ? 's' : '' }}</span>
+                      <button type="button"
+                              (click)="f.get('unitCount')?.setValue(Math.min(20,(f.get('unitCount')?.value??1)+1))">+</button>
+                    </div>
+
+                    <div class="floor-fields">
+                      <input type="number" formControlName="surfaceMin"
+                             class="field-sm-input" placeholder="m² min" min="1" />
+                      <input type="number" formControlName="prixBase"
+                             class="field-sm-input" placeholder="Prix" min="0" />
+                      <select formControlName="orientation" class="orientation-select">
+                        @for (o of ORIENTATIONS; track o) {
+                          <option [value]="o">{{ o }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ════════════════════ STEP 5: Review & confirm ════════════════════ -->
+    @if (currentStep === 5) {
+      <div class="step-panel">
+        <div class="step-intro">
+          <h2>Validation — Récapitulatif</h2>
+          <p>Vérifiez la configuration avant de lancer la génération.</p>
+        </div>
+
+        <!-- Tranche timeline table -->
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                @for (t of preview.tranches; track t.numero) {
+                  <th>
+                    <div class="preview-th-nom">{{ t.nom }}</div>
+                    @if (t.date) {
+                      <div class="preview-th-date">Livraison : {{ t.date }}</div>
+                    }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                @for (t of preview.tranches; track t.numero) {
+                  <td>
+                    @for (b of t.buildings; track b.nom) {
+                      <div class="preview-building">
+                        <strong>{{ b.nom }}</strong>
+                        <span class="preview-count">{{ b.unitCount }} lot{{ b.unitCount !== 1 ? 's' : '' }}</span>
+                      </div>
+                    }
+                  </td>
+                }
+              </tr>
+              <tr class="preview-totals-row">
+                @for (t of preview.tranches; track t.numero) {
+                  <td class="preview-tranche-total">{{ t.unitCount }} lots</td>
+                }
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Global totals -->
+        <div class="preview-totals-grid">
+          <div class="total-chip">
+            <span class="total-chip-value">{{ preview.totals.trancheCount }}</span>
+            <span class="total-chip-label">tranche{{ preview.totals.trancheCount !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-value">{{ preview.totals.buildingCount }}</span>
+            <span class="total-chip-label">bâtiment{{ preview.totals.buildingCount !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-value">{{ preview.totals.unitCount }}</span>
+            <span class="total-chip-label">lots au total</span>
+          </div>
+          @if (preview.totals.estimatedValue > 0) {
+            <div class="total-chip total-chip-value-est">
+              <span class="total-chip-value">{{ preview.totals.estimatedValue | number:'1.0-0' }} MAD</span>
+              <span class="total-chip-label">valeur estimée</span>
+            </div>
+          }
+        </div>
+
+        <!-- By type -->
+        <div class="type-breakdown">
+          @for (entry of typeEntries(preview.totals.byType); track entry[0]) {
+            <div class="type-chip">
+              <span class="type-count">{{ entry[1] }}</span>
+              <span class="type-label">{{ entry[0] }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Error banner -->
+        @if (error) {
+          <div class="alert alert-error" data-testid="wizard-error">{{ error }}</div>
+        }
+      </div>
+    }
+
+  </div><!-- /.wizard-body -->
+
+  <!-- ── Footer navigation ─────────────────────────────────────────────────── -->
+  <div class="wizard-footer">
+    <button type="button" class="btn btn-ghost"
+            (click)="prev()"
+            [disabled]="currentStep === 1">
+      ← Précédent
+    </button>
+
+    <div class="wizard-footer-right">
+      @if (currentStep < TOTAL_STEPS) {
+        <button type="button" class="btn btn-primary"
+                data-testid="wizard-next"
+                (click)="next()"
+                [disabled]="!canGoNext()">
+          Suivant →
+        </button>
+      } @else {
+        <button type="button" class="btn btn-success"
+                data-testid="wizard-generate"
+                (click)="generate()"
+                [disabled]="submitting">
+          {{ submitting ? 'Génération en cours…' : 'Générer le programme' }}
+        </button>
+      }
+    </div>
+  </div>
+
+</div><!-- /.wizard-shell -->

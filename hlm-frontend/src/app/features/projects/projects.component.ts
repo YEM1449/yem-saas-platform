@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
@@ -17,8 +17,9 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './projects.component.css',
 })
 export class ProjectsComponent implements OnInit {
-  private svc  = inject(ProjectService);
-  private auth = inject(AuthService);
+  private svc    = inject(ProjectService);
+  private auth   = inject(AuthService);
+  private router = inject(Router);
 
   projects: Project[] = [];
   loading = true;
@@ -80,9 +81,8 @@ export class ProjectsComponent implements OnInit {
   }
 
   openModal(): void {
-    this.form        = { name: '', description: '' };
-    this.submitError = '';
-    this.showModal   = true;
+    // Navigate to the 5-step wizard for creating programmes with tranches
+    this.router.navigate(['/app/projects/new']);
   }
 
   closeModal(): void {

@@ -1,0 +1,326 @@
+databaseChangeLog:
+  - changeSet:
+      id: "059-create-tranche-and-generation"
+      author: "yem"
+      comment: >
+        Tranche (phased delivery group) support + bulk project generation.
+        A tranche groups one or more buildings (Immeubles) delivered together
+        at a specific date. This changeset:
+          (a) tranche         — phased delivery group entity
+          (b) immeuble.tranche_id — FK linking buildings to a tranche
+          (c) property.tranche_id — FK linking units to a tranche
+          (d) property.orientation — cardinal orientation of a unit
+          (e) project.adresse / ville / code_postal — project location fields
+          (f) project_generation_config — stores JSONB wizard config per project
+          (g) project_generation_log — audit log for bulk generation runs
+        RLS policies applied to all new tables.
+      changes:
+
+        # ── (e) Project location fields ────────────────────────────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: adresse
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: ville
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: code_postal
+                  type: varchar(20)
+                  constraints:
+                    nullable: true
+
+        # ── (a) tranche table ──────────────────────────────────────────────────
+        - createTable:
+            tableName: tranche
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tranche_societe
+                    references: societe(id)
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tranche_project
+                    references: project(id)
+              - column:
+                  name: numero
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: nom
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: statut
+                  type: varchar(30)
+                  defaultValue: EN_PREPARATION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_livraison_prevue
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_livraison_eff
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: date_debut_travaux
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: permis_construire_ref
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: notes
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: tranche
+            columnNames: project_id, numero
+            constraintName: uk_tranche_project_numero
+
+        # ── (b) immeuble.tranche_id ────────────────────────────────────────────
+        - addColumn:
+            tableName: immeuble
+            columns:
+              - column:
+                  name: tranche_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_immeuble_tranche
+                    references: tranche(id)
+
+        # ── (c) property.tranche_id ────────────────────────────────────────────
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: tranche_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_property_tranche
+                    references: tranche(id)
+
+        # ── (d) property.orientation ───────────────────────────────────────────
+        - addColumn:
+            tableName: property
+            columns:
+              - column:
+                  name: orientation
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+
+        # ── (f) project_generation_config ──────────────────────────────────────
+        # Stores the full wizard configuration as JSONB for later retrieval
+        - createTable:
+            tableName: project_generation_config
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+                    foreignKeyName: fk_gen_config_project
+                    references: project(id)
+              - column:
+                  name: config_json
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # ── (g) project_generation_log ─────────────────────────────────────────
+        - createTable:
+            tableName: project_generation_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: generated_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: generated_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tranches_count
+                  type: integer
+                  defaultValueNumeric: 0
+              - column:
+                  name: buildings_count
+                  type: integer
+                  defaultValueNumeric: 0
+              - column:
+                  name: units_count
+                  type: integer
+                  defaultValueNumeric: 0
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: SUCCESS
+              - column:
+                  name: error_message
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: summary
+                  type: jsonb
+                  constraints:
+                    nullable: true
+
+        # ── Indexes ────────────────────────────────────────────────────────────
+        - createIndex:
+            tableName: tranche
+            indexName: idx_tranche_project
+            columns:
+              - column:
+                  name: project_id
+
+        - createIndex:
+            tableName: tranche
+            indexName: idx_tranche_societe
+            columns:
+              - column:
+                  name: societe_id
+
+        - createIndex:
+            tableName: tranche
+            indexName: idx_tranche_statut
+            columns:
+              - column:
+                  name: statut
+
+        - createIndex:
+            tableName: immeuble
+            indexName: idx_immeuble_tranche
+            columns:
+              - column:
+                  name: tranche_id
+
+        - createIndex:
+            tableName: property
+            indexName: idx_property_tranche
+            columns:
+              - column:
+                  name: tranche_id
+
+        - createIndex:
+            tableName: project_generation_log
+            indexName: idx_gen_log_project
+            columns:
+              - column:
+                  name: project_id
+
+        # ── RLS for tranche ────────────────────────────────────────────────────
+        - sql:
+            sql: >-
+              ALTER TABLE tranche ENABLE ROW LEVEL SECURITY;
+
+              CREATE POLICY p_societe_isolation ON tranche
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
+
+              ALTER TABLE project_generation_config ENABLE ROW LEVEL SECURITY;
+
+              CREATE POLICY p_societe_isolation ON project_generation_config
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
+
+              ALTER TABLE project_generation_log ENABLE ROW LEVEL SECURITY;
+
+              CREATE POLICY p_societe_isolation ON project_generation_log
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );

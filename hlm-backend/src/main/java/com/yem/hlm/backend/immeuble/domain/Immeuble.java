@@ -38,6 +38,11 @@ public class Immeuble {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    /** Tranche this building belongs to (optional for legacy buildings). */
+    @Setter
+    @Column(name = "tranche_id")
+    private UUID trancheId;
+
     @Setter
     @Column(name = "nom", nullable = false, length = 255)
     private String nom;
