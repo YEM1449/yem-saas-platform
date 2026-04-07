@@ -10,7 +10,7 @@
   </div>
   @if (canWrite) {
     <div class="page-header-actions">
-      <button class="btn btn-primary" (click)="showCreate = true"
+      <button class="btn btn-primary" (click)="openCreate()"
               data-testid="create-vente">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -51,7 +51,7 @@
         @else { Aucune vente enregistrée }
       </p>
       @if (canWrite && !filterStatut) {
-        <button class="btn btn-primary" (click)="showCreate = true">
+        <button class="btn btn-primary" (click)="openCreate()">
           Créer la première vente
         </button>
       }
@@ -97,5 +97,68 @@
         }
       </tbody>
     </table>
+  </div>
+}
+
+<!-- ── Create vente dialog ─────────────────────────────────────────────── -->
+@if (showCreate) {
+  <div class="modal-backdrop" (click)="cancelCreate()">
+    <div class="modal-box dialog-create" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Nouvelle vente</h2>
+        <button class="modal-close" (click)="cancelCreate()" aria-label="Fermer">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (createError) {
+          <p class="alert alert-error" style="margin-bottom:12px">{{ createError }}</p>
+        }
+        <div class="form-group">
+          <label class="form-label">Acquéreur <span class="required">*</span></label>
+          <select class="form-control" [(ngModel)]="createContactId" data-testid="create-contact">
+            <option value="">— Sélectionner un contact —</option>
+            @for (c of contacts; track c.id) {
+              <option [value]="c.id">{{ c.fullName }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bien immobilier <span class="required">*</span></label>
+          <select class="form-control" [(ngModel)]="createPropertyId" data-testid="create-property">
+            <option value="">— Sélectionner un bien —</option>
+            @for (p of properties; track p.id) {
+              <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prix de vente (MAD)</label>
+          <input class="form-control" type="number" min="0"
+                 [(ngModel)]="createPrixVente" placeholder="Ex: 1 500 000"
+                 data-testid="create-prix-vente" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date de compromis</label>
+          <input class="form-control" type="date"
+                 [(ngModel)]="createDateCompromis"
+                 data-testid="create-date-compromis" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" rows="3" maxlength="2000"
+                    [(ngModel)]="createNotes" placeholder="Remarques…"
+                    data-testid="create-notes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelCreate()"
+                data-testid="create-cancel">Annuler</button>
+        <button class="btn btn-primary"
+                [disabled]="!createContactId || !createPropertyId || creating"
+                (click)="submitCreate()"
+                data-testid="create-submit">
+          {{ creating ? 'Création…' : 'Créer la vente' }}
+        </button>
+      </div>
+    </div>
   </div>
 }

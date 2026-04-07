@@ -413,6 +413,11 @@
                   <button class="btn btn-sm btn-outline" (click)="downloadPdf(d)">
                     PDF
                   </button>
+                  <button class="btn btn-sm btn-primary"
+                          [disabled]="convertingDepositId === d.id"
+                          (click)="convertDepositToVente(d)">
+                    {{ convertingDepositId === d.id ? '…' : 'Convertir en vente' }}
+                  </button>
                 }
               </td>
             </tr>

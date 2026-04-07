@@ -3,8 +3,13 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { VenteService, Vente, VenteStatut } from './vente.service';
+import { VenteService, Vente, VenteStatut, CreateVenteRequest } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ContactService } from '../contacts/contact.service';
+import { Contact } from '../../core/models/contact.model';
+import { PropertyService } from '../properties/property.service';
+import { Property } from '../../core/models/property.model';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-vente-list',
@@ -14,14 +19,27 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './vente-list.component.css',
 })
 export class VenteListComponent implements OnInit {
-  private svc  = inject(VenteService);
-  private auth = inject(AuthService);
+  private svc         = inject(VenteService);
+  private auth        = inject(AuthService);
+  private contactSvc  = inject(ContactService);
+  private propertySvc = inject(PropertyService);
 
   ventes  = signal<Vente[]>([]);
   loading = signal(true);
   error   = signal('');
   showCreate = false;
   filterStatut = '';
+
+  // ── Create form state ──────────────────────────────────────────────────────
+  contacts: Contact[] = [];
+  properties: Property[] = [];
+  createContactId  = '';
+  createPropertyId = '';
+  createPrixVente: number | null = null;
+  createDateCompromis = '';
+  createNotes = '';
+  creating = false;
+  createError = '';
 
   readonly statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
 
@@ -62,5 +80,56 @@ export class VenteListComponent implements OnInit {
       ANNULE:       'badge-error',
     };
     return classes[s] ?? '';
+  }
+
+  // ── Create dialog ──────────────────────────────────────────────────────────
+
+  openCreate(): void {
+    this.showCreate = true;
+    this.createError = '';
+    this.createContactId  = '';
+    this.createPropertyId = '';
+    this.createPrixVente  = null;
+    this.createDateCompromis = '';
+    this.createNotes = '';
+    if (this.contacts.length === 0) {
+      this.contactSvc.list().subscribe({
+        next: (page) => { this.contacts = page.content; },
+      });
+    }
+    if (this.properties.length === 0) {
+      this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
+        next: (data) => { this.properties = data; },
+      });
+    }
+  }
+
+  cancelCreate(): void {
+    this.showCreate = false;
+    this.createError = '';
+  }
+
+  submitCreate(): void {
+    if (!this.createContactId || !this.createPropertyId) return;
+    this.creating = true;
+    this.createError = '';
+    const req: CreateVenteRequest = {
+      contactId:        this.createContactId,
+      propertyId:       this.createPropertyId,
+      prixVente:        this.createPrixVente ?? null,
+      dateCompromis:    this.createDateCompromis || null,
+      notes:            this.createNotes || null,
+    };
+    this.svc.create(req).subscribe({
+      next: (v) => {
+        this.creating = false;
+        this.showCreate = false;
+        this.ventes.update(list => [v, ...list]);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.creating = false;
+        this.createError = (err.error as { message?: string })?.message ?? `Erreur (${err.status})`;
+      },
+    });
   }
 }

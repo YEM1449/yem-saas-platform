@@ -95,6 +95,7 @@ export class ContactDetailComponent implements OnInit {
   depositNotes = '';
   creatingDeposit = false;
   actionDepositId: string | null = null;
+  convertingDepositId: string | null = null;
 
   // ── Ventes ─────────────────────────────────────────────────────────────────
   ventes: Vente[] = [];
@@ -485,6 +486,24 @@ export class ContactDetailComponent implements OnInit {
         URL.revokeObjectURL(url);
       },
       error: () => { this.depositError = 'Échec du téléchargement PDF.'; },
+    });
+  }
+
+  convertDepositToVente(d: Deposit): void {
+    this.convertingDepositId = d.id;
+    this.depositError = '';
+    this.venteSvc.create({ contactId: d.contactId, propertyId: d.propertyId }).subscribe({
+      next: () => {
+        this.convertingDepositId = null;
+        this.depositSuccess = 'Vente créée avec succès. Voir l\'onglet Ventes.';
+        this.ventesLoaded = false;
+        this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.convertingDepositId = null;
+        const body = err.error as { message?: string } | null;
+        this.depositError = body?.message ?? `Erreur (${err.status})`;
+      },
     });
   }
 
