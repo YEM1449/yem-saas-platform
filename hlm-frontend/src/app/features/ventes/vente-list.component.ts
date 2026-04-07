@@ -92,8 +92,9 @@ export class VenteListComponent implements OnInit {
     this.createPrixVente  = null;
     this.createDateCompromis = '';
     this.createNotes = '';
+    // P2: size=500 to avoid pagination truncating contacts beyond page 1 (default size=20)
     if (this.contacts.length === 0) {
-      this.contactSvc.list().subscribe({
+      this.contactSvc.list({ size: 500 }).subscribe({
         next: (page) => { this.contacts = page.content; },
       });
     }
@@ -125,6 +126,8 @@ export class VenteListComponent implements OnInit {
         this.creating = false;
         this.showCreate = false;
         this.ventes.update(list => [v, ...list]);
+        // P1: invalidate property cache — the sold property is no longer ACTIVE
+        this.properties = [];
       },
       error: (err: HttpErrorResponse) => {
         this.creating = false;

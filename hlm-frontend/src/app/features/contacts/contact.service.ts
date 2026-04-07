@@ -31,8 +31,11 @@ export class ContactService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
-  list(): Observable<ContactPage> {
-    return this.http.get<ContactPage>(`${this.apiUrl}/api/contacts`);
+  list(params?: { q?: string; size?: number }): Observable<ContactPage> {
+    const p: Record<string, string> = {};
+    if (params?.q)    p['q']    = params.q;
+    if (params?.size) p['size'] = String(params.size);
+    return this.http.get<ContactPage>(`${this.apiUrl}/api/contacts`, { params: p });
   }
 
   getById(id: string): Observable<Contact> {
