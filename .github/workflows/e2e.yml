@@ -125,6 +125,12 @@ jobs:
           exit 1
 
       - name: Run E2E tests
+        # PLAYWRIGHT_API_BASE: page.request uses playwright's baseURL (port 4200 /
+        # Python SPA server) which only serves GET.  API write calls in tests must
+        # go directly to the backend at port 8080.  Angular itself already uses
+        # environment.ci.ts (apiUrl='http://localhost:8080') for its own HTTP calls.
+        env:
+          PLAYWRIGHT_API_BASE: http://localhost:8080
         run: cd hlm-frontend && npx playwright test
 
       - name: Dump backend logs on failure

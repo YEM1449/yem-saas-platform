@@ -33,6 +33,25 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // activation.spec.ts does its own login where needed; no shared storageState required
+    {
+      name: 'activation-tests',
+      testMatch: /activation\.spec\.ts/,
+    },
+    // pipeline.spec.ts uses storageState so beforeEach skips repeated logins
+    {
+      name: 'pipeline-tests',
+      testMatch: /pipeline\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
+    // portal.spec.ts: 2 tests need admin auth, rest mock portal endpoints
+    {
+      name: 'portal-tests',
+      testMatch: /portal\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

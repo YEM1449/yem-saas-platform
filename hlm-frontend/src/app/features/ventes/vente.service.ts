@@ -1,6 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+const BASE = `${environment.apiUrl}/api/ventes`;
 
 export type VenteStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
 export type EcheanceStatut = 'EN_ATTENTE' | 'PAYEE' | 'EN_RETARD';
@@ -32,6 +35,7 @@ export interface Vente {
   societeId: string;
   propertyId: string;
   contactId: string;
+  contactFullName: string;
   agentId: string;
   reservationId: string | null;
   statut: VenteStatut;
@@ -81,30 +85,40 @@ export class VenteService {
   private http = inject(HttpClient);
 
   list(): Observable<Vente[]> {
-    return this.http.get<Vente[]>('/api/ventes');
+    return this.http.get<Vente[]>(BASE);
+  }
+
+  listByContact(contactId: string): Observable<Vente[]> {
+    return this.http.get<Vente[]>(BASE, { params: { contactId } });
+  }
+
+  uploadDocument(venteId: string, file: File): Observable<VenteDocument> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<VenteDocument>(`${BASE}/${venteId}/documents`, form);
   }
 
   get(id: string): Observable<Vente> {
-    return this.http.get<Vente>(`/api/ventes/${id}`);
+    return this.http.get<Vente>(`${BASE}/${id}`);
   }
 
   create(req: CreateVenteRequest): Observable<Vente> {
-    return this.http.post<Vente>('/api/ventes', req);
+    return this.http.post<Vente>(BASE, req);
   }
 
   updateStatut(id: string, req: UpdateVenteStatutRequest): Observable<Vente> {
-    return this.http.patch<Vente>(`/api/ventes/${id}/statut`, req);
+    return this.http.patch<Vente>(`${BASE}/${id}/statut`, req);
   }
 
   addEcheance(venteId: string, req: CreateEcheanceRequest): Observable<Echeance> {
-    return this.http.post<Echeance>(`/api/ventes/${venteId}/echeances`, req);
+    return this.http.post<Echeance>(`${BASE}/${venteId}/echeances`, req);
   }
 
   updateEcheanceStatut(venteId: string, echeanceId: string, req: UpdateEcheanceStatutRequest): Observable<Echeance> {
-    return this.http.patch<Echeance>(`/api/ventes/${venteId}/echeances/${echeanceId}/statut`, req);
+    return this.http.patch<Echeance>(`${BASE}/${venteId}/echeances/${echeanceId}/statut`, req);
   }
 
   inviteBuyer(venteId: string): Observable<{ message: string; magicLinkUrl: string }> {
-    return this.http.post<{ message: string; magicLinkUrl: string }>(`/api/ventes/${venteId}/portal/invite`, {});
+    return this.http.post<{ message: string; magicLinkUrl: string }>(`${BASE}/${venteId}/portal/invite`, {});
   }
 }

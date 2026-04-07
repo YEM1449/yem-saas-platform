@@ -113,9 +113,24 @@
               placeholder="Minimum 12 caractères"
               autocomplete="new-password"
             />
-            <p class="form-hint">
-              Au moins 12 caractères, avec majuscule, minuscule, chiffre et caractère spécial.
-            </p>
+            @if (form.motDePasse) {
+              <div class="strength-bar-wrap">
+                <div class="strength-bar" [class]="passwordStrengthClass">
+                  <div class="strength-segment" [class.active]="passwordStrength >= 1"></div>
+                  <div class="strength-segment" [class.active]="passwordStrength >= 2"></div>
+                  <div class="strength-segment" [class.active]="passwordStrength >= 3"></div>
+                  <div class="strength-segment" [class.active]="passwordStrength >= 4"></div>
+                </div>
+                <span class="strength-label" [class]="passwordStrengthClass">{{ passwordStrengthLabel }}</span>
+              </div>
+            }
+            <ul class="password-requirements">
+              <li [class.req-ok]="pwHasLength">12 caractères minimum</li>
+              <li [class.req-ok]="pwHasUpper">Une lettre majuscule</li>
+              <li [class.req-ok]="pwHasLower">Une lettre minuscule</li>
+              <li [class.req-ok]="pwHasDigit">Un chiffre</li>
+              <li [class.req-ok]="pwHasSpecial">Un caractère spécial</li>
+            </ul>
           </div>
 
           <div class="form-group">

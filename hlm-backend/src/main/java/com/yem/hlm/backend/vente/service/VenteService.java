@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.vente.service;
 
 import com.yem.hlm.backend.contact.domain.Contact;
+import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.service.ContactNotFoundException;
 import com.yem.hlm.backend.property.domain.Property;
@@ -27,6 +28,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+// Pipeline progression order for status advancement (never downgrade, never touch LOST/REFERRAL)
+// PROSPECT=0, QUALIFIED_PROSPECT=1, CLIENT=2, ACTIVE_CLIENT=3, COMPLETED_CLIENT=4
 
 /**
  * Core business logic for the Vente (sale) pipeline.
@@ -129,6 +133,10 @@ public class VenteService {
         propertyWorkflow.sell(property, LocalDateTime.now());
         propertyRepository.save(property);
 
+        // Advance contact to ACTIVE_CLIENT (sale underway)
+        advanceContactStatus(contact, ContactStatus.ACTIVE_CLIENT);
+        contactRepository.save(contact);
+
         Vente vente = new Vente(societeId, property.getId(), contact, agent);
         vente.setReservationId(reservationId);
         vente.setPrixVente(request.prixVente());
@@ -143,6 +151,13 @@ public class VenteService {
     public List<VenteResponse> findAll() {
         UUID societeId = societeCtx.requireSocieteId();
         return venteRepository.findAllBySocieteIdOrderByCreatedAtDesc(societeId)
+                .stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<VenteResponse> findByContactId(UUID contactId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        return venteRepository.findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
                 .stream().map(this::toResponse).toList();
     }
 
@@ -171,6 +186,13 @@ public class VenteService {
                 case LIVRE        -> vente.setDateLivraisonReelle(request.dateTransition());
                 default           -> { /* no specific date field for other statuts */ }
             }
+        }
+
+        // Advance contact to COMPLETED_CLIENT when sale is delivered
+        if (request.statut() == VenteStatut.LIVRE) {
+            Contact contact = vente.getContact();
+            advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
+            contactRepository.save(contact);
         }
 
         return toResponse(venteRepository.save(vente));
@@ -254,6 +276,31 @@ public class VenteService {
     }
 
     /**
+     * Advances a contact's status in the pipeline progression without downgrading.
+     * LOST and REFERRAL contacts are not modified (their status is deliberate).
+     *
+     * <p>Progression order: PROSPECT(0) → QUALIFIED_PROSPECT(1) → CLIENT(2)
+     *                       → ACTIVE_CLIENT(3) → COMPLETED_CLIENT(4)
+     */
+    private static final List<ContactStatus> PIPELINE_PROGRESSION = List.of(
+            ContactStatus.PROSPECT, ContactStatus.QUALIFIED_PROSPECT,
+            ContactStatus.CLIENT, ContactStatus.ACTIVE_CLIENT,
+            ContactStatus.COMPLETED_CLIENT);
+
+    private void advanceContactStatus(Contact contact, ContactStatus target) {
+        ContactStatus current = contact.getStatus();
+        // Never touch LOST or REFERRAL contacts — their statuses are deliberate
+        if (current == ContactStatus.LOST || current == ContactStatus.REFERRAL) return;
+
+        int currentIdx = PIPELINE_PROGRESSION.indexOf(current);
+        int targetIdx  = PIPELINE_PROGRESSION.indexOf(target);
+        // Only advance — never downgrade
+        if (targetIdx > currentIdx) {
+            contact.setStatus(target);
+        }
+    }
+
+    /**
      * Validates that the requested statut transition is permitted.
      *
      * <pre>
@@ -284,7 +331,7 @@ public class VenteService {
                 .map(this::toDocumentResponse).toList();
         return new VenteResponse(
                 v.getId(), v.getSocieteId(), v.getPropertyId(),
-                v.getContact().getId(), v.getAgent().getId(),
+                v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
                 v.getReservationId(), v.getStatut(), v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),

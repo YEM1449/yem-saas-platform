@@ -1,3 +1,10 @@
+/* Host must be display:contents so Playwright can compute visibility from
+   the fixed modal-backdrop child (fixed children don't contribute to the
+   host's bounding box, causing toBeVisible() to report 'hidden'). */
+:host {
+  display: contents;
+}
+
 /* ── Dialog sizing ───────────────────────────────────────────── */
 .dialog-advance {
   max-width: 440px;

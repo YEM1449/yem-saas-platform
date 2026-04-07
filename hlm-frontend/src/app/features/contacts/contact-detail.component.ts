@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,15 +13,16 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 import { DepositService, CreateDepositRequest } from '../prospects/deposit.service';
 import { PropertyService } from '../properties/property.service';
 import { Reservation, ReservationService, CreateReservationRequest } from '../reservations/reservation.service';
+import { VenteService, Vente } from '../ventes/vente.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { ContactTasksComponent } from '../tasks/contact-tasks.component';
 
-type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'timeline' | 'documents' | 'tasks';
+type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 'timeline' | 'documents' | 'tasks';
 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, DocumentListComponent, ContactTasksComponent],
+  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })
@@ -30,6 +31,7 @@ export class ContactDetailComponent implements OnInit {
   private depositSvc   = inject(DepositService);
   private propertySvc  = inject(PropertyService);
   private reservSvc    = inject(ReservationService);
+  private venteSvc     = inject(VenteService);
   private route        = inject(ActivatedRoute);
 
   contact: Contact | null = null;
@@ -94,6 +96,12 @@ export class ContactDetailComponent implements OnInit {
   creatingDeposit = false;
   actionDepositId: string | null = null;
 
+  // ── Ventes ─────────────────────────────────────────────────────────────────
+  ventes: Vente[] = [];
+  ventesLoading = false;
+  ventesLoaded = false;
+  ventesError = '';
+
   // ── Timeline ───────────────────────────────────────────────────────────────
   timeline: TimelineEvent[] = [];
   timelineLoading = false;
@@ -155,6 +163,9 @@ export class ContactDetailComponent implements OnInit {
       case 'deposits':
         if (!this.depositsLoaded) this.loadDeposits();
         if (!this.propertiesLoaded) this.loadProperties();
+        break;
+      case 'ventes':
+        if (!this.ventesLoaded) this.loadVentes();
         break;
       case 'timeline':
         if (!this.timelineLoaded) this.loadTimeline();
@@ -475,6 +486,43 @@ export class ContactDetailComponent implements OnInit {
       },
       error: () => { this.depositError = 'Échec du téléchargement PDF.'; },
     });
+  }
+
+  // ── Ventes ─────────────────────────────────────────────────────────────────
+
+  private loadVentes(): void {
+    this.ventesLoading = true;
+    this.ventesError = '';
+    this.venteSvc.listByContact(this.contactId).subscribe({
+      next: (data) => { this.ventes = data; this.ventesLoading = false; this.ventesLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.ventesLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.ventesError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  venteStatutLabel(s: string): string {
+    const labels: Record<string, string> = {
+      COMPROMIS:    'Compromis',
+      FINANCEMENT:  'Financement',
+      ACTE_NOTARIE: 'Acte notarié',
+      LIVRE:        'Livré',
+      ANNULE:       'Annulé',
+    };
+    return labels[s] ?? s;
+  }
+
+  venteStatutClass(s: string): string {
+    const classes: Record<string, string> = {
+      COMPROMIS:    'badge-info',
+      FINANCEMENT:  'badge-warning',
+      ACTE_NOTARIE: 'badge-primary',
+      LIVRE:        'badge-success',
+      ANNULE:       'badge-error',
+    };
+    return classes[s] ?? '';
   }
 
   // ── Timeline ───────────────────────────────────────────────────────────────

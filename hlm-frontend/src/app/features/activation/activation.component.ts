@@ -34,6 +34,26 @@ export class ActivationComponent implements OnInit {
   };
   submitting = false;
 
+  get pwHasLength():  boolean { return this.form.motDePasse.length >= 12; }
+  get pwHasUpper():   boolean { return /[A-Z]/.test(this.form.motDePasse); }
+  get pwHasLower():   boolean { return /[a-z]/.test(this.form.motDePasse); }
+  get pwHasDigit():   boolean { return /[0-9]/.test(this.form.motDePasse); }
+  get pwHasSpecial(): boolean { return /[^a-zA-Z0-9]/.test(this.form.motDePasse); }
+
+  get passwordStrength(): 0 | 1 | 2 | 3 | 4 {
+    const score = [this.pwHasLength, this.pwHasUpper, this.pwHasLower,
+                   this.pwHasDigit, this.pwHasSpecial].filter(Boolean).length;
+    return Math.min(4, score) as 0 | 1 | 2 | 3 | 4;
+  }
+
+  get passwordStrengthLabel(): string {
+    return ['', 'Faible', 'Moyen', 'Fort', 'Très fort'][this.passwordStrength];
+  }
+
+  get passwordStrengthClass(): string {
+    return ['', 'strength-weak', 'strength-fair', 'strength-good', 'strength-strong'][this.passwordStrength];
+  }
+
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
     if (!this.token) {

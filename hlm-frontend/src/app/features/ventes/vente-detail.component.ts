@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {
   VenteService, Vente, VenteStatut, EcheanceStatut,
@@ -16,7 +16,7 @@ import { AdvancePipelineDialogComponent } from './advance-pipeline-dialog.compon
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, DecimalPipe, TranslateModule,
-    PipelineStepperComponent, AdvancePipelineDialogComponent,
+    RouterLink, PipelineStepperComponent, AdvancePipelineDialogComponent,
   ],
   templateUrl: './vente-detail.component.html',
   styleUrl: './vente-detail.component.css',
@@ -36,6 +36,8 @@ export class VenteDetailComponent implements OnInit {
   showEcheanceForm  = false;
   showAdvanceDialog = false;
   savingStatut      = false;
+  docUploading      = signal(false);
+  docError          = signal('');
 
   ech: CreateEcheanceRequest = { libelle: '', montant: 0, dateEcheance: '' };
 
@@ -99,6 +101,19 @@ export class VenteDetailComponent implements OnInit {
       next:  () => { this.inviting.set(false); this.inviteMsg.set('Invitation envoyée avec succès.'); },
       error: () => { this.inviting.set(false); this.inviteError.set('Erreur lors de l\'envoi.'); },
     });
+  }
+
+  onDocFileSelected(event: Event, venteId: string): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.docUploading.set(true);
+    this.docError.set('');
+    this.svc.uploadDocument(venteId, file).subscribe({
+      next: () => { this.docUploading.set(false); this.reload(venteId); },
+      error: () => { this.docUploading.set(false); this.docError.set('Échec du téléversement.'); },
+    });
+    input.value = '';
   }
 
   isTerminal(s: VenteStatut): boolean {

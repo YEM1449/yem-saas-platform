@@ -173,7 +173,7 @@ When adding a new service method or repository query:
 
 ## Current Backlog
 
-See `tasks/IMPLEMENTATION_PLAN.md` — Wave 8 complete:
+See `tasks/IMPLEMENTATION_PLAN.md` — Wave 9 complete:
 - Tasks 01–15: Security audit fixes + CI/CD ✅
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
 - Task 20: Production readiness — Wave 4 hardening complete ✅
@@ -181,6 +181,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 8 complete:
 - Wave 6: UX hardening ✅ (no UUID exposure via pickers, reservation docs everywhere, pipeline KPI bar, project list card grid, project detail hero+KPIs+progress bars, `FRONTEND_BASE_URL` docker fix)
 - Wave 7: Sales Pipeline + Buyer Portal ✅ (Vente entity/service/API on changeset 058, portal `/api/portal/ventes` endpoints, CRM vente list/detail UI, portal ventes tab, buyer magic-link invite `POST /api/ventes/{id}/portal/invite`)
 - Wave 8: Pipeline UX + Activation redesign ✅ (items below)
+- Wave 9: Contact status lifecycle + Dashboard homepage ✅ (items below)
 
 ### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
 
@@ -194,6 +195,22 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 8 complete:
 | Deposit → Vente conversion banner — on prospect-detail for CONFIRMED deposits | `features/prospects/prospect-detail.component.html/.ts/.css` |
 | Portal ventes upgrade — `PipelineStepperComponent`, `@if`/`@for`, paid/remaining totals | `portal/features/portal-ventes/portal-ventes.component.ts/.html/.css` |
 | R2 EU endpoint comment in `application.yml` | `application.yml` |
+
+### Wave 9 — Contact Lifecycle + Dashboard Homepage (complete, 2026-04-05)
+
+| Item | Files |
+|---|---|
+| Backend: `VenteService.create()` auto-advances contact to `ACTIVE_CLIENT` on vente creation | `VenteService.java` |
+| Backend: `VenteService.updateStatut()` auto-advances contact to `COMPLETED_CLIENT` on LIVRE | `VenteService.java` |
+| Backend: `VenteResponse` enriched with `contactFullName` (denormalised for UI) | `VenteResponse.java`, `VenteService.java:toResponse()` |
+| Backend: `GET /api/ventes?contactId=` filter — `VenteService.findByContactId()` | `VenteController.java`, `VenteService.java` |
+| Frontend: `vente.service.ts` — added `contactFullName` to `Vente` interface, `listByContact()`, `uploadDocument()` | `vente.service.ts` |
+| Frontend: Vente list — added Acquéreur column with link to contact detail | `vente-list.component.html` |
+| Frontend: Vente detail — Acquéreur link in info card, document upload UI with file input | `vente-detail.component.ts/.html` |
+| Frontend: Contact detail — Ventes tab (lazy-loaded via `listByContact()`) | `contact-detail.component.ts/.html` |
+| Frontend: `HomeDashboardComponent` — KPI row, shortcut grid, recent ventes table, link to commercial dashboard | `home-dashboard.component.ts` |
+| Frontend: Default CRM route changed `/app` → `dashboard` (was `properties`) | `app.routes.ts` |
+| Frontend: Default portal route changed `contracts` → `ventes` | `app.routes.ts` |
 
 ### Vente State Machine (as-implemented)
 ```

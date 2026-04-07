@@ -13,6 +13,8 @@ public record VenteResponse(
         UUID societeId,
         UUID propertyId,
         UUID contactId,
+        /** Denormalised contact full name for UI display. */
+        String contactFullName,
         UUID agentId,
         UUID reservationId,
         VenteStatut statut,
