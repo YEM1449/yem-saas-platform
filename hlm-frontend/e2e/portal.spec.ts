@@ -62,10 +62,10 @@ test.describe('Buyer Portal', () => {
 
   test('portal login page renders', async ({ page }) => {
     await page.goto('/portal/login');
-    await expect(page.locator('h1')).toContainText('Client Portal', { timeout: 8000 });
+    await expect(page.getByTestId('portal-login-title')).toContainText('Client Portal', { timeout: 8000 });
     await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('#societeKey')).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    await expect(page.getByTestId('portal-request-form').locator('button[type="submit"]')).toBeVisible();
   });
 
   test('sending magic link shows sent confirmation', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Buyer Portal', () => {
     await page.goto('/portal/login');
     await page.fill('#societeKey', 'acme');
     await page.fill('#email', 'buyer@example.com');
-    await page.click('button[type="submit"]');
+    await page.getByTestId('portal-request-form').locator('button[type="submit"]').click();
 
     // After sending, shows the "check your inbox" confirmation
     const successAlert = page.getByTestId('portal-success-message');

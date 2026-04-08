@@ -19,7 +19,7 @@ test.describe('Contacts', () => {
 
   test('contacts page loads and shows list', async ({ page }) => {
     await page.goto('/app/contacts');
-    await expect(page.locator('h2, h1')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByTestId('contacts-page-title')).toBeVisible({ timeout: 8000 });
   });
 
   test('navigate to contacts page from sidebar', async ({ page }) => {

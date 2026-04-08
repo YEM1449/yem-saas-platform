@@ -19,7 +19,7 @@ test.describe('Tasks', () => {
 
   test('tasks page is accessible at /app/tasks', async ({ page }) => {
     await page.goto('/app/tasks');
-    await expect(page.locator('h2')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByTestId('tasks-page-title')).toBeVisible({ timeout: 8000 });
   });
 
   test('tasks link appears in sidebar navigation', async ({ page }) => {
@@ -41,9 +41,16 @@ test.describe('Tasks', () => {
   test('status filter works on tasks page', async ({ page }) => {
     await page.goto('/app/tasks');
     await expect(page.locator('[data-testid="status-filter"]')).toBeVisible({ timeout: 8000 });
+    const filteredTasksRequest = page.waitForResponse((response) =>
+      response.request().method() === 'GET' &&
+      response.url().includes('/api/tasks') &&
+      response.url().includes('status=OPEN') &&
+      response.status() === 200
+    );
     await page.selectOption('[data-testid="status-filter"]', 'OPEN');
-    await page.waitForTimeout(500);
-    // Page should still be on tasks (filter applied without error)
-    await expect(page.locator('h2')).toBeVisible();
+    await filteredTasksRequest;
+    // Page should still be on tasks after the filtered reload completes
+    await expect(page.getByTestId('tasks-page-title')).toBeVisible();
+    await expect(page.locator('[data-testid="status-filter"]')).toHaveValue('OPEN');
   });
 });
