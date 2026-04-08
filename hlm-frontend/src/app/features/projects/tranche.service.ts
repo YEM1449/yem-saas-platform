@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 // ── Domain types ──────────────────────────────────────────────────────────────
 
@@ -116,26 +117,27 @@ export interface ProjectGenerationResponse {
 @Injectable({ providedIn: 'root' })
 export class TrancheService {
   private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/api/projects`;
 
   /** Bulk-generate a project with all tranches, buildings and units. */
   generate(request: ProjectGenerationRequest): Observable<ProjectGenerationResponse> {
-    return this.http.post<ProjectGenerationResponse>('/api/projects/generate', request);
+    return this.http.post<ProjectGenerationResponse>(`${this.base}/generate`, request);
   }
 
   /** List tranches for a project (with KPI aggregates). */
   listByProject(projectId: string): Observable<Tranche[]> {
-    return this.http.get<Tranche[]>(`/api/projects/${projectId}/tranches`);
+    return this.http.get<Tranche[]>(`${this.base}/${projectId}/tranches`);
   }
 
   /** Get a single tranche. */
   getById(projectId: string, trancheId: string): Observable<Tranche> {
-    return this.http.get<Tranche>(`/api/projects/${projectId}/tranches/${trancheId}`);
+    return this.http.get<Tranche>(`${this.base}/${projectId}/tranches/${trancheId}`);
   }
 
   /** Advance the tranche statut. */
   advanceStatut(projectId: string, trancheId: string, statut: TrancheStatut): Observable<Tranche> {
     return this.http.patch<Tranche>(
-      `/api/projects/${projectId}/tranches/${trancheId}/statut`,
+      `${this.base}/${projectId}/tranches/${trancheId}/statut`,
       { statut }
     );
   }
