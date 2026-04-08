@@ -50,9 +50,9 @@ Every domain entity has `societe_id UUID NOT NULL`. Isolation enforced at:
 
 Base package: `com.yem.hlm.backend`
 
-### Current Modules (25)
+### Current Modules (26)
 
-audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, **immeuble**, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, user, usermanagement, **vente**
+audit, auth, commission, common, contact, contract, dashboard, deposit, document, gdpr, **immeuble**, media, notification, outbox, payments, portal, project, property, reminder, reservation, societe, task, **tranche**, user, usermanagement, **vente**
 
 ### Frontend Surfaces
 
@@ -81,7 +81,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **059**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **060**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -121,8 +121,9 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 056 | Immeuble (Building) table + property.immeuble_id FK |
 | 057 | Schema hardening — reservation FK, RLS on immeuble, optimistic lock version |
 | 058 | Vente pipeline — vente, vente_echeance, vente_document tables + RLS |
+| 059 | Tranche + generation — tranche table, immeuble.tranche_id, property.tranche_id + orientation, project location fields (adresse/ville/code_postal), project_generation_config (JSONB), project_generation_log |
 
-Next available changeset: **059**
+Next available changeset: **060**
 
 ## CI Pipeline Map
 
@@ -173,7 +174,7 @@ When adding a new service method or repository query:
 
 ## Current Backlog
 
-See `tasks/IMPLEMENTATION_PLAN.md` — Wave 9 complete:
+See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Tasks 01–15: Security audit fixes + CI/CD ✅
 - Tasks 16–19: Frontend tasks/documents/usermgmt + E2E ✅
 - Task 20: Production readiness — Wave 4 hardening complete ✅
@@ -182,6 +183,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 9 complete:
 - Wave 7: Sales Pipeline + Buyer Portal ✅ (Vente entity/service/API on changeset 058, portal `/api/portal/ventes` endpoints, CRM vente list/detail UI, portal ventes tab, buyer magic-link invite `POST /api/ventes/{id}/portal/invite`)
 - Wave 8: Pipeline UX + Activation redesign ✅ (items below)
 - Wave 9: Contact status lifecycle + Dashboard homepage ✅ (items below)
+- Wave 10: Tranche + Bulk Project Generation ✅ (items below)
 
 ### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
 
@@ -211,6 +213,40 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 9 complete:
 | Frontend: `HomeDashboardComponent` — KPI row, shortcut grid, recent ventes table, link to commercial dashboard | `home-dashboard.component.ts` |
 | Frontend: Default CRM route changed `/app` → `dashboard` (was `properties`) | `app.routes.ts` |
 | Frontend: Default portal route changed `contracts` → `ventes` | `app.routes.ts` |
+
+### Wave 10 — Tranche + Bulk Project Generation (complete, 2026-04-07)
+
+| Item | Files |
+|---|---|
+| DB: `tranche` table (phased delivery group), `project_generation_config` (JSONB wizard config), `project_generation_log` (audit) | `059-create-tranche-and-generation.yaml` |
+| DB: `immeuble.tranche_id` FK, `property.tranche_id` + `property.orientation`, `project.adresse/ville/code_postal` | changeset 059 |
+| Backend: `Tranche` entity + `TrancheStatut` enum (EN_PREPARATION → EN_COMMERCIALISATION → EN_TRAVAUX → ACHEVEE → LIVREE) | `tranche/domain/Tranche.java`, `TrancheStatut.java` |
+| Backend: `PropertyType.PARKING` + `PropertyCategory.PARKING` added | `property/domain/PropertyType.java`, `PropertyCategory.java` |
+| Backend: `ProjectGenerationService` — single-TX generation of Project + Tranches + Immeubles + Properties | `tranche/service/ProjectGenerationService.java` |
+| Backend: `TrancheService` — CRUD + forward-only statut transition (InvalidTrancheTransitionException → 409) | `tranche/service/TrancheService.java` |
+| Backend: `POST /api/projects/generate` (ADMIN/MANAGER), `GET /api/projects/{id}/tranches`, `GET /{id}/tranches/{tid}`, `PATCH /{id}/tranches/{tid}/statut` | `tranche/api/TrancheController.java` |
+| Backend: `GlobalExceptionHandler` updated — `TrancheNotFoundException` (404), `InvalidTrancheTransitionException` (409) | `GlobalExceptionHandler.java` |
+| Backend IT: `ProjectGenerationIT` — auth, validation, happy path (units count), parking, tranche statut lifecycle | `tranche/ProjectGenerationIT.java` |
+| Frontend: `TrancheService` — `generate()`, `listByProject()`, `getById()`, `advanceStatut()` | `features/projects/tranche.service.ts` |
+| Frontend: 5-step `ProjectCreateWizardComponent` (project info → tranches → buildings → lots → validation) | `features/projects/project-create-wizard/` |
+| Frontend: `/app/projects/new` route wired; "Créer un projet" button now navigates to wizard | `app.routes.ts`, `projects.component.ts` |
+| E2E: `project-wizard.spec.ts` — wizard navigation, step validation, full happy-path, duplicate name error | `e2e/project-wizard.spec.ts` |
+
+### Tranche State Machine (as-implemented)
+```
+EN_PREPARATION → EN_COMMERCIALISATION → EN_TRAVAUX → ACHEVEE → LIVREE
+```
+`TrancheService.validateTransition()` enforces sequential forward-only steps.
+Invalid transitions → HTTP 409 `INVALID_STATUS_TRANSITION`.
+
+### Property Hierarchy (as-implemented, Wave 10)
+```
+Société
+  └── Project (adresse, ville, code_postal added)
+        └── Tranche (phased delivery group — has dateLivraisonPrevue)
+              └── Immeuble (building — tranche_id FK)
+                    └── Property (unit — tranche_id + orientation FKs)
+```
 
 ### Vente State Machine (as-implemented)
 ```

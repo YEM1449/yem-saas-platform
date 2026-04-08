@@ -37,7 +37,7 @@
     <div class="project-hero-info">
       @if (!editing) {
         <div class="hero-title-row">
-          <h1 class="hero-title">{{ project.name }}</h1>
+          <h1 class="hero-title" data-testid="project-detail-title">{{ project.name }}</h1>
           <span class="hero-status-badge" [class.badge-archived]="project.status === 'ARCHIVED'">
             {{ project.status === 'ACTIVE' ? 'Actif' : 'Archivé' }}
           </span>

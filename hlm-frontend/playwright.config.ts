@@ -52,6 +52,13 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // project-wizard.spec.ts: uses shared admin storageState to avoid extra logins
+    {
+      name: 'project-wizard-tests',
+      testMatch: /project-wizard\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

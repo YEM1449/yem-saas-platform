@@ -55,6 +55,18 @@ public class Project {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /** Optional street address for this project. */
+    @Setter @Column(name = "adresse", length = 500)
+    private String adresse;
+
+    /** City where the project is located. */
+    @Setter @Column(name = "ville", length = 100)
+    private String ville;
+
+    /** Postal code. */
+    @Setter @Column(name = "code_postal", length = 20)
+    private String codePostal;
+
     /** Cover image / logo for the project (stored via MediaStorageService). */
     @Setter @Column(name = "logo_file_key", length = 500)
     private String logoFileKey;

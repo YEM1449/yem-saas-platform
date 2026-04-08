@@ -16,12 +16,13 @@
 3. If not found → silently succeed (don't reveal email existence)
 4. Generate token: 32-byte SecureRandom → URL-safe base64
 5. Store SHA-256 hex of token in portal_token table (TTL 48h)
-6. Send email with link: {PORTAL_BASE_URL}/portal/verify?token={raw-token}
+6. Send email with link: {PORTAL_BASE_URL}/portal/login?token={raw-token}
 7. Buyer clicks link → GET /api/portal/auth/verify?token={raw-token}
 8. Hash the token → SHA-256 hex → look up in portal_token
 9. Validate: not expired, not used
 10. Mark token as used (one-time)
-11. Return portal JWT {sub=contactId, roles=["ROLE_PORTAL"], TTL=2h}
+11. Set httpOnly cookie `hlm_portal_auth` (path `/api/portal`, TTL 2h)
+12. Return `{ accessToken: "" }` so the browser never needs the raw portal JWT
 ```
 
 ### Why SHA-256 hash in the DB?
@@ -36,10 +37,20 @@ Only the SHA-256 hash is stored. If the database is compromised, attackers canno
 |-------|-------|
 | `sub` | contactId (UUID) — NOT userId |
 | `roles` | `["ROLE_PORTAL"]` |
-| `tid` | tenantId |
+| `sid` | societeId |
 | _(no `tv`)_ | — portal principals are contacts, not `app_user` rows |
 
 TTL: 2 hours (longer than CRM tokens for better UX — buyers may not check email immediately).
+
+## Frontend Session Model
+
+- Buyers land on `/portal/login`.
+- If a `token` query parameter is present, `PortalLoginComponent` strips it from the URL and calls `GET /api/portal/auth/verify`.
+- The backend sets `hlm_portal_auth` as an httpOnly cookie scoped to `/api/portal`.
+- The frontend does not store a portal JWT in `localStorage`.
+- `PortalSessionStore` only tracks whether the session has already been validated in this SPA runtime.
+- `portalInterceptor` adds `withCredentials: true` to portal API requests so the cookie is sent.
+- `portalGuard` validates the session via backend tenant-info lookup when needed.
 
 ---
 
@@ -104,6 +115,7 @@ Cross-contact access returns 404, not 403. This prevents information leakage abo
 | `portal/auth/service/PortalAuthService.java` | Magic link generation and verification |
 | `portal/auth/service/PortalJwtProvider.java` | Portal JWT generation |
 | `portal/auth/api/PortalAuthController.java` | Request-link and verify endpoints |
+| `auth/security/PortalCookieHelper.java` | Issue and clear the httpOnly portal auth cookie |
 | `portal/contract/service/PortalContractService.java` | Contact-scoped contract queries |
 | `auth/security/JwtAuthenticationFilter.java` | `isPortalToken()` bypass |
 
@@ -113,6 +125,7 @@ Cross-contact access returns 404, not 403. This prevents information leakage abo
 
 1. Open `PortalAuthService.java` and trace the magic link generation.
 2. Find where the SHA-256 hash is computed and stored.
-3. Open `JwtAuthenticationFilter.java` and find `isPortalToken()`.
-4. In a test, call `PortalJwtProvider.generate(randomContactId, tenantId)` to create a portal bearer token.
-5. Call `GET /api/portal/contracts` with this token — verify it returns an empty array (no contracts for this contact), not 401 or 403.
+3. Open `PortalAuthController.java` and confirm that verify sets an httpOnly cookie and returns an empty `accessToken`.
+4. Open `JwtAuthenticationFilter.java` and find `isPortalToken()`.
+5. In a backend test, call `PortalJwtProvider.generate(randomContactId, societeId)` and send it as either a bearer token or the `hlm_portal_auth` cookie.
+6. Call `GET /api/portal/contracts` with this session and verify it returns an empty array for an unrelated contact, not data leakage.

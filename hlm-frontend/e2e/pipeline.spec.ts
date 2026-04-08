@@ -81,7 +81,8 @@ test.describe('Vente pipeline', () => {
   // ── List ──────────────────────────────────────────────────────────────
 
   test('ventes list page renders', async ({ page }) => {
-    await page.goto('/app/ventes');
+    // beforeEach already navigated to /app/ventes; wait for content to hydrate
+    await page.waitForLoadState('networkidle');
     await expect(page.locator('h1')).toContainText('Ventes', { timeout: 8000 });
     // Statut filter select is present
     await expect(page.locator('select')).toBeVisible();
@@ -90,7 +91,8 @@ test.describe('Vente pipeline', () => {
   });
 
   test('statut filter dropdown lists all statuts', async ({ page }) => {
-    await page.goto('/app/ventes');
+    // beforeEach already navigated to /app/ventes
+    await page.waitForLoadState('networkidle');
     await page.waitForSelector('select', { timeout: 8000 });
     const options = await page.locator('select option').allTextContents();
     expect(options).toContain('Tous les statuts');

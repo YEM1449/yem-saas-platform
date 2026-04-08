@@ -1,10 +1,10 @@
-<div class="portal-login-page">
+<div class="portal-login-page" data-testid="portal-login-page">
   <div class="portal-login-card">
-    <h1 class="portal-login-title">Client Portal</h1>
+    <h1 class="portal-login-title" data-testid="portal-login-title">Client Portal</h1>
 
     @if (step() === 'request') {
       <p class="portal-login-subtitle">Enter your email to receive a secure access link.</p>
-      <form (ngSubmit)="requestLink()" #loginForm="ngForm">
+      <form (ngSubmit)="requestLink()" #loginForm="ngForm" data-testid="portal-request-form">
         <div class="portal-form-group">
           <label for="societeKey">Organisation</label>
           <input id="societeKey" type="text" [(ngModel)]="societeKey" name="societeKey"
@@ -22,7 +22,7 @@
     }
 
     @if (step() === 'sent') {
-      <div class="portal-alert portal-alert-success">
+      <div class="portal-alert portal-alert-success" data-testid="portal-success-message">
         <strong>Check your inbox!</strong> A secure access link has been sent to
         <strong>{{ email }}</strong>. The link expires in 48 hours.
       </div>
@@ -32,11 +32,11 @@
     }
 
     @if (step() === 'verifying') {
-      <p class="portal-login-subtitle">Verifying your access link…</p>
+      <p class="portal-login-subtitle" data-testid="portal-verifying-message">Verifying your access link…</p>
     }
 
     @if (step() === 'error') {
-      <div class="portal-alert portal-alert-error">{{ error() }}</div>
+      <div class="portal-alert portal-alert-error" data-testid="portal-error-message">{{ error() }}</div>
       <button class="portal-btn-secondary" (click)="step.set('request')">
         Try again
       </button>

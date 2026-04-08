@@ -2,89 +2,237 @@
 
 ## Learning Objectives
 
-- Describe the Spring Security filter chain order
-- Trace a request through the filters from arrival to controller
-- Explain what `RequestCorrelationFilter` and `JwtAuthenticationFilter` each do
+- Trace a request from ingress to controller through the platform’s custom filters
+- Understand the difference between correlation, authentication, and authorization
+- Explain how bearer tokens and cookies are resolved in one security chain
+- Identify the cleanup points that prevent context leakage across reused threads
 
----
+## Big Picture
 
-## Filter Order
+Every request passes through two important custom layers before controller code matters:
 
-Two custom filters are inserted before `UsernamePasswordAuthenticationFilter`:
+1. request correlation
+2. JWT authentication
 
-```
-1. RequestCorrelationFilter    (runs first — sets X-Correlation-ID in MDC)
-2. JwtAuthenticationFilter     (validates JWT, sets TenantContext + SecurityContext)
-3. UsernamePasswordAuthenticationFilter  (Spring default, not used for API)
-4. ... other Spring Security filters ...
-5. Controller
-```
+Then Spring Security applies authorization rules.
 
----
+This means the rough lifecycle is:
 
-## RequestCorrelationFilter
-
-`common/filter/RequestCorrelationFilter.java`
-
-1. Reads `X-Correlation-ID` header from the request.
-2. If absent, generates a UUID v4.
-3. Stores the ID in `MDC.put("correlationId", id)` — available in all log statements for the duration of the request.
-4. Writes `X-Correlation-ID: {id}` to the response header — clients can use this to correlate request and response for debugging.
-5. In the `finally` block: `MDC.remove("correlationId")`.
-
----
-
-## JwtAuthenticationFilter
-
-`auth/security/JwtAuthenticationFilter.java`
-
-1. Reads `Authorization: Bearer <token>` header.
-2. If absent → no JWT authentication set; Spring continues (will fail at URL rule check).
-3. Calls `jwtProvider.isValid(token)`.
-4. On valid: extracts `tid`, `sub`, `roles`, `tv` from claims.
-5. Checks if `ROLE_PORTAL` is in roles:
-   - **Portal token** → skip `UserSecurityCacheService`; set contactId as principal.
-   - **CRM token** → load `UserSecurityInfo` from cache; check enabled and token version.
-6. Sets `TenantContext.set(tenantId, userId)`.
-7. Sets `SecurityContextHolder` with `JwtAuthenticationToken`.
-8. Calls `chain.doFilter(request, response)`.
-9. `finally`: `TenantContext.clear()`.
-
----
-
-## URL Rule Evaluation
-
-After the filter chain, Spring Security evaluates the URL pattern rules from `SecurityConfig`:
-
-```
-OPTIONS /**                       → permitAll (CORS preflight, skips JWT check)
-POST /auth/login                  → permitAll
-GET  /actuator/health             → permitAll
-POST /api/portal/auth/request-link → permitAll
-GET  /api/portal/auth/verify       → permitAll
-/api/portal/**                    → hasRole('PORTAL')
-/api/**                           → hasAnyRole('ADMIN','MANAGER','AGENT')
-anyRequest                        → authenticated
+```text
+HTTP request
+  -> RequestCorrelationFilter
+  -> Spring Security chain
+     -> JwtAuthenticationFilter
+     -> authorization rules
+  -> controller
+  -> response
 ```
 
-Rules are evaluated in order. The first matching rule wins.
+## Step 1 — RequestCorrelationFilter
 
----
+Code:
 
-## Source Files
+- [RequestCorrelationFilter.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/common/filter/RequestCorrelationFilter.java)
 
-| File | Purpose |
-|------|---------|
-| `common/filter/RequestCorrelationFilter.java` | Correlation ID injection |
-| `auth/security/JwtAuthenticationFilter.java` | JWT parsing and TenantContext setup |
-| `auth/security/SecurityConfig.java` | Filter registration and URL rules |
+What it does:
 
----
+1. reads `X-Request-Id`
+2. generates one if absent
+3. stores it in MDC as `requestId`
+4. echoes it back on the response
+5. clears MDC keys in `finally`
 
-## Exercise
+Why this matters:
 
-1. Open `SecurityConfig.java` and find `securityFilterChain(HttpSecurity http)`.
-2. Identify the two `http.addFilterBefore(...)` calls.
-3. Verify the order: `RequestCorrelationFilter` is added before `JwtAuthenticationFilter` which is before `UsernamePasswordAuthenticationFilter`.
-4. Make a request with `curl -v http://localhost:8080/actuator/health` (no token).
-5. Observe the `X-Correlation-ID` header in the response — this is set by `RequestCorrelationFilter`.
+- every log line for a request can be grouped
+- callers can report a request ID when debugging production failures
+- auth failures still get a request ID because this filter runs very early
+
+Important correction for older notes:
+
+- the live header is `X-Request-Id`
+- not `X-Correlation-ID`
+
+## Step 2 — JwtAuthenticationFilter
+
+Code:
+
+- [JwtAuthenticationFilter.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java)
+
+What it does:
+
+1. resolve a token
+2. validate signature and expiry
+3. reject partial tokens outside the switch flow
+4. derive authorities
+5. apply CRM or portal-specific logic
+6. populate `SocieteContext`
+7. populate `SecurityContextHolder`
+8. clear `SocieteContext` in `finally`
+
+This filter is where the platform bridges from raw JWT claims into Spring Security and société-scoped application context.
+
+## Token Resolution Order
+
+This detail matters because the platform supports multiple clients and auth transports.
+
+Resolution order inside `JwtAuthenticationFilter`:
+
+1. `Authorization: Bearer <token>`
+2. fallback cookie resolution
+
+Cookie resolution is route-aware:
+
+- `/api/portal/**` uses `PortalCookieHelper`
+- other app routes use the CRM cookie helper
+
+Why this is good:
+
+- browser portal sessions can be cookie-based
+- API clients can still use bearer tokens
+- partial tokens remain header-driven
+
+## CRM Branch Vs Portal Branch
+
+### CRM branch
+
+If the token is a CRM token:
+
+- `sub` is treated as `app_user.id`
+- `tv` is checked through `UserSecurityCacheService`
+- `sid` becomes the active société scope
+- impersonation metadata is applied when present
+
+### Portal branch
+
+If `ROLE_PORTAL` is present:
+
+- `sub` is treated as `contact.id`
+- no `UserSecurityCacheService` lookup is performed
+- `sid` still becomes société scope
+- `SocieteContext.userId` is set to the buyer contact ID
+
+This split is essential because buyer portal principals are not CRM users.
+
+## Partial Tokens In The Filter
+
+Partial tokens are intentionally narrow.
+
+If a request carries a partial token and is not going to `POST /auth/switch-societe`, the filter does not authenticate it as a normal user session.
+
+That protects the system from accidentally treating “authenticated but not yet scoped” users as fully active CRM principals.
+
+## Step 3 — Authorization Rules
+
+Once authentication state is set, Spring Security evaluates URL rules from:
+
+- [SecurityConfig.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/SecurityConfig.java)
+
+Important public routes:
+
+- `POST /auth/login`
+- `POST /auth/logout`
+- `POST /auth/switch-societe`
+- `/auth/invitation/**`
+- `GET /actuator/health`
+- `POST /api/portal/auth/request-link`
+- `GET /api/portal/auth/verify`
+- `POST /api/portal/auth/logout`
+
+Important protected route families:
+
+- `/api/admin/**` -> `SUPER_ADMIN`
+- `/api/portal/**` -> `PORTAL`
+- `/api/**` -> CRM roles
+
+Then controller-level `@PreAuthorize` may tighten access further.
+
+## Security Headers In The Chain
+
+`SecurityConfig` also attaches browser-security headers:
+
+- Content-Security-Policy
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- referrer policy
+- permissions policy
+- optional HSTS when TLS is enabled
+
+These are not “filters” in the same mental sense as auth, but they are part of the same request/response security pipeline and matter for production behavior.
+
+## Cleanup Behavior
+
+Two cleanups are especially important:
+
+### MDC cleanup
+
+`RequestCorrelationFilter` removes:
+
+- `requestId`
+- `societeId`
+
+### Société context cleanup
+
+`JwtAuthenticationFilter` clears `SocieteContext`
+
+Without these `finally` blocks, a pooled servlet thread could leak one request’s identity or société scope into the next request. That would be catastrophic in a shared SaaS runtime.
+
+## Mental Model For Debugging
+
+When a request fails, ask these questions in order:
+
+1. Did it enter with a request ID?
+2. Did the filter resolve a token from header or cookie?
+3. Was the JWT structurally valid?
+4. Was it treated as CRM, partial, portal, or SUPER_ADMIN?
+5. Did URL-level authorization reject it?
+6. Did method-level `@PreAuthorize` reject it?
+7. Did service-level business rules reject it?
+
+That order prevents a lot of wasted debugging effort.
+
+## Common Mistakes
+
+### Mistake 1: assuming no bearer token means unauthenticated
+
+Cookie-based portal sessions prove that is not always true.
+
+### Mistake 2: using the wrong request ID header name
+
+Use `X-Request-Id`, not `X-Correlation-ID`.
+
+### Mistake 3: forgetting filter cleanup
+
+If you add request-scoped context and do not clear it in `finally`, you risk cross-request leakage.
+
+### Mistake 4: thinking URL rules are evaluated before auth
+
+Authentication happens first, then authorization rules decide what the authenticated principal may access.
+
+## Source Files To Study
+
+| File | Why it matters |
+| --- | --- |
+| [RequestCorrelationFilter.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/common/filter/RequestCorrelationFilter.java) | request ID lifecycle |
+| [JwtAuthenticationFilter.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/JwtAuthenticationFilter.java) | token resolution and auth context |
+| [SecurityConfig.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/SecurityConfig.java) | filter insertion and authorization rules |
+| [PortalCookieHelper.java](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/auth/security/PortalCookieHelper.java) | portal cookie transport |
+
+## Exercises
+
+### Exercise 1 — Trace one unauthenticated request
+
+1. Call `GET /actuator/health`.
+2. Confirm it succeeds without JWT auth.
+3. Confirm the response still includes `X-Request-Id`.
+
+### Exercise 2 — Trace one portal request
+
+1. Open `JwtAuthenticationFilter`.
+2. Follow the cookie-resolution branch for `/api/portal/**`.
+3. Explain why the portal branch skips `UserSecurityCacheService`.
+
+### Exercise 3 — Explain cleanup guarantees
+
+1. Find both `finally` blocks in the correlation and JWT filters.
+2. Describe what would break if either one were removed.

@@ -1,4 +1,4 @@
-<h2>{{ 'tasks.title' | translate }}</h2>
+<h2 data-testid="tasks-page-title">{{ 'tasks.title' | translate }}</h2>
 
 <div class="toolbar">
   <select data-testid="status-filter" [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
@@ -17,15 +17,15 @@
 }
 
 @if (loading) {
-  <p>{{ 'common.loading' | translate }}</p>
+  <p data-testid="tasks-loading-state">{{ 'common.loading' | translate }}</p>
 }
 
 @if (!loading && tasks.length === 0) {
-  <p class="empty">{{ 'tasks.noTasks' | translate }}</p>
+  <p class="empty" data-testid="tasks-empty-state">{{ 'tasks.noTasks' | translate }}</p>
 }
 
 @if (!loading && tasks.length > 0) {
-  <table>
+  <table data-testid="tasks-table">
     <thead>
       <tr>
         <th>{{ 'tasks.titleLabel' | translate }}</th>

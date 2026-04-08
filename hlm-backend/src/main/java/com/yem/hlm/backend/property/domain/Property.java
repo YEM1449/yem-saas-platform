@@ -276,6 +276,22 @@ public class Property {
     private com.yem.hlm.backend.immeuble.domain.Immeuble immeuble;
 
     /**
+     * Tranche (phased delivery group) this unit belongs to.
+     * Set during bulk generation; optional for manually-created properties.
+     */
+    @Setter
+    @Column(name = "tranche_id")
+    private UUID trancheId;
+
+    /**
+     * Cardinal orientation of the unit (e.g. SUD, NORD, SUD-EST).
+     * Optional — used for search/filter and buyer-facing display.
+     */
+    @Setter
+    @Column(name = "orientation", length = 50)
+    private String orientation;
+
+    /**
      * Convenience accessor — returns the project name for display purposes.
      * Delegates to the mandatory {@link #project} FK.
      */

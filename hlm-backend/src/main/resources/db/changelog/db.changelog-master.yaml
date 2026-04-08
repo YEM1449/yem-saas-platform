@@ -117,3 +117,5 @@ databaseChangeLog:
       file: db/changelog/changes/057-schema-hardening.yaml
   - include:
       file: db/changelog/changes/058-create-vente.yaml
+  - include:
+      file: db/changelog/changes/059-create-tranche-and-generation.yaml

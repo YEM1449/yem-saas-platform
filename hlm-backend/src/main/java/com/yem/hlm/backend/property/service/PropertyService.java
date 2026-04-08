@@ -238,6 +238,7 @@ public class PropertyService {
                     throw new InvalidPropertyTypeException("Bedrooms/bathrooms/building_year/surface_area not applicable to TERRAIN_VIERGE");
                 }
             }
+            case PARKING -> { /* no type-specific required fields — reference code and price are sufficient */ }
         }
     }
 
@@ -253,7 +254,7 @@ public class PropertyService {
                     throw new InvalidPropertyTypeException("Bedrooms/bathrooms/building_year/surface_area not applicable to TERRAIN_VIERGE");
                 }
             }
-            default -> { /* all other types: partial updates on physical fields are allowed */ }
+            default -> { /* PARKING and other types: partial updates on physical fields are allowed */ }
         }
     }
 

@@ -33,18 +33,28 @@ cd hlm-frontend
 npm run build
 ```
 
+## CI-style E2E
+
+The default local Playwright flow uses `ng serve`, but GitHub Actions runs E2E against the static `ci` build:
+
+```bash
+cd hlm-frontend
+npx ng build --configuration=ci
+CI=1 PLAYWRIGHT_API_BASE=http://localhost:8080 npx playwright test
+```
+
 ## Auth Notes
 
-Current local-storage keys:
+Current client-side auth/session state:
 
 - CRM token -> `hlm_access_token`
-- Portal token -> `hlm_portal_token`
+- Portal session -> `hlm_portal_auth` httpOnly cookie plus in-memory `PortalSessionStore`
 
 Current backend contract notes:
 
 - CRM login is `email + password`
 - invitation activation logs the user in
-- portal login is magic-link based
+- portal login is magic-link based and verified through `/portal/login?token=...`
 - backend supports a multi-societe selection step after login when needed
 
 ## Current Feature Inventory

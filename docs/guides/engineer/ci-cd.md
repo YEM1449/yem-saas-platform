@@ -1,215 +1,184 @@
 # CI/CD Guide — Engineer Guide
 
-This guide describes the GitHub Actions workflows, what each workflow does, how to interpret failures, and how to extend the pipeline.
-
-## Table of Contents
-
-1. [Workflow Overview](#workflow-overview)
-2. [Backend CI](#backend-ci)
-3. [Frontend CI](#frontend-ci)
-4. [Docker Build and Smoke Test](#docker-build-and-smoke-test)
-5. [Workflow Triggers](#workflow-triggers)
-6. [Interpreting CI Failures](#interpreting-ci-failures)
-7. [Extending the Pipeline](#extending-the-pipeline)
-
----
+This guide describes the active GitHub Actions workflows, how the pipeline is structured, and how to reproduce the important failure classes locally.
 
 ## Workflow Overview
 
 All workflows live in `.github/workflows/`:
 
 | File | Purpose |
-|------|---------|
-| `backend-ci.yml` | Java unit tests + integration tests (Testcontainers) |
-| `frontend-ci.yml` | Angular build + lint + unit tests |
-| `docker-build.yml` | Docker Compose build + health smoke test |
+| --- | --- |
+| `backend-ci.yml` | Java unit and integration tests |
+| `frontend-ci.yml` | Angular build, lint, and unit tests |
+| `e2e.yml` | Full-stack Playwright E2E against the static CI frontend build |
+| `docker-build.yml` | Docker image build plus compose smoke validation |
+| `secret-scan.yml` / `snyk.yml` | Security scanning |
 
----
+The E2E workflow is intentionally separate from frontend unit tests because it exercises a different runtime shape:
+
+- Angular is built with `--configuration=ci`
+- the build output is served statically on `http://localhost:4200`
+- Playwright calls backend write APIs directly through `PLAYWRIGHT_API_BASE=http://localhost:8080`
+- no `ng serve` proxy is present in CI
 
 ## Backend CI
 
 **File:** `.github/workflows/backend-ci.yml`
 
-**Triggers:** Push or pull request to `main` and any `Epic/*` branch.
+### What it does
 
-### Steps
+1. Checks out the repository.
+2. Sets up Java 21.
+3. Restores Maven cache.
+4. Runs backend tests with Maven.
 
-1. **Checkout** — `actions/checkout@v4`
-2. **Set up Java 21** — `actions/setup-java@v4` with Temurin distribution
-3. **Cache Maven dependencies** — `~/.m2/repository` keyed on `pom.xml` hash
-4. **Run unit tests** — `./mvnw test`
-5. **Run integration tests** — `./mvnw failsafe:integration-test`
+### Notes
 
-Integration tests use Testcontainers which requires Docker. GitHub Actions runners have Docker available by default on `ubuntu-latest`.
-
-### Environment Variables
-
-The `application-test.yml` profile provides a hardcoded test JWT secret, so no secrets need to be passed to the CI environment for unit or integration tests.
-
-### Test Reports
-
-Surefire and Failsafe generate XML reports in `hlm-backend/target/surefire-reports/` and `hlm-backend/target/failsafe-reports/`. These are automatically uploaded as GitHub Actions artifacts if you add an `actions/upload-artifact` step.
-
----
+- Integration tests rely on Docker/Testcontainers.
+- `application-test.yml` already provides test-safe defaults, so no production secrets are required for routine CI execution.
 
 ## Frontend CI
 
 **File:** `.github/workflows/frontend-ci.yml`
 
-**Triggers:** Push or pull request to `main` and any `Epic/*` branch.
+### What it does
 
-### Steps
+1. Checks out the repository.
+2. Sets up Node.js 22 with npm cache.
+3. Installs frontend dependencies with `npm ci`.
+4. Runs the Angular build.
+5. Runs Karma/Jasmine unit tests.
 
-1. **Checkout** — `actions/checkout@v4`
-2. **Set up Node.js 20** — `actions/setup-node@v4` with npm cache
-3. **Install dependencies** — `npm ci` (deterministic install from `package-lock.json`)
-4. **Build** — `npm run build` (production build with AOT)
-5. **Unit tests** — `npm test -- --watch=false --browsers=ChromeHeadless`
+### Common failure classes
 
-### Angular CLI Version Alignment
+- Angular or TypeScript compilation errors
+- missing standalone component imports
+- dependency/version drift between Angular packages and Angular CLI
 
-The `@angular/cli` devDependency version must match the Angular framework version (both 19.x). A mismatch causes build failures like:
+## E2E CI
 
-```
-Error: The Angular CLI requires a minimum Node.js version of v18.19...
-```
+**File:** `.github/workflows/e2e.yml`
 
-Verify alignment:
+### What it does
+
+1. Checks out the repository.
+2. Creates a minimal `.env` for CI, including:
+   - a valid `JWT_SECRET`
+   - `CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200`
+3. Starts infrastructure containers with Docker Compose.
+4. Waits for PostgreSQL and Redis health.
+5. Starts the backend container and waits for actuator health.
+6. Sets up Node.js 22 and installs frontend dependencies.
+7. Installs Playwright Chromium.
+8. Builds Angular with `npx ng build --configuration=ci`.
+9. Serves `dist/frontend/browser` on port `4200` with a Python SPA server.
+10. Runs Playwright with:
+
 ```bash
-cat hlm-frontend/package.json | grep '"@angular'
+CI=1 PLAYWRIGHT_API_BASE=http://localhost:8080 npx playwright test
 ```
 
-Both `@angular/core` and `@angular/cli` should have the same major version.
+11. Uploads `hlm-frontend/playwright-report/` on failure.
 
----
+### Why CI uses a static frontend build
+
+This catches classes of bugs that `ng serve` can hide:
+
+- missing dependence on the dev proxy
+- incorrect direct API base URLs
+- CORS gaps for `localhost:4200`
+- route refresh and SPA fallback issues
+- brittle E2E selectors that only fail once the real rendered DOM stabilizes
+
+### Local reproduction of CI E2E
+
+Use this when a Playwright suite passes under `ng serve` but fails in GitHub Actions:
+
+```bash
+docker compose up -d postgres redis minio hlm-backend
+cd hlm-frontend
+npx ng build --configuration=ci
+python3 /tmp/spa_server_4200.py   # or any equivalent SPA static server on :4200
+CI=1 PLAYWRIGHT_API_BASE=http://localhost:8080 npx playwright test
+```
+
+The important detail is that Playwright must target the static build on `:4200`, not the Angular dev server.
 
 ## Docker Build and Smoke Test
 
 **File:** `.github/workflows/docker-build.yml`
 
-**Triggers:** Push to `main`.
+### What it does
 
-### Steps
-
-1. **Checkout** — `actions/checkout@v4`
-2. **Create `.env`** — Writes a minimal `.env` with `JWT_SECRET` from GitHub Secrets
-3. **Build all images** — `docker compose build`
-4. **Start stack** — `docker compose up -d`
-5. **Wait for backend** — Poll `GET /actuator/health` with retries (10 s intervals, 60 s timeout)
-6. **Smoke test** — Assert `{"status":"UP"}` response
-7. **Tear down** — `docker compose down -v`
-
-### Required GitHub Secret
-
-| Secret | Value |
-|--------|-------|
-| `JWT_SECRET` | A 32+ character string for the CI environment |
-
-Set this in: Repository → Settings → Secrets and variables → Actions → New repository secret.
-
----
-
-## Workflow Triggers
-
-| Workflow | Push to main | PR to main | Push to Epic/* | Manual |
-|----------|-------------|-----------|---------------|--------|
-| `backend-ci.yml` | Yes | Yes | Yes | No |
-| `frontend-ci.yml` | Yes | Yes | Yes | No |
-| `docker-build.yml` | Yes | No | No | No |
-
-To add a manual trigger, add `workflow_dispatch:` to the `on:` section of any workflow.
-
----
+1. Checks out the repository.
+2. Creates a minimal `.env`.
+3. Builds Docker images.
+4. Starts the stack with Docker Compose.
+5. Waits for backend health.
+6. Verifies `GET /actuator/health` returns `{"status":"UP"}`.
 
 ## Interpreting CI Failures
 
-### Backend unit test failure
+### Backend CI failure
 
+Look for the first failing test class or stack trace. Reproduce with the narrowest possible Maven invocation.
+
+Examples:
+
+```bash
+cd hlm-backend
+./mvnw test -Dtest=PasswordEncoderTest
+./mvnw failsafe:integration-test -Dit.test=PortalAuthIT
 ```
-[ERROR] Tests run: 41, Failures: 1, Errors: 0, Skipped: 0
-```
 
-1. Click the failing step in GitHub Actions UI.
-2. Look for the `FAILED` line and the exception stack trace.
-3. Run locally to reproduce: `./mvnw test -Dtest=FailingTest`.
+### Frontend CI failure
 
-### Backend integration test failure
+Look for:
+
+- TypeScript compile errors
+- template diagnostics
+- missing standalone imports
+- dependency version conflicts in `package-lock.json`
+
+### E2E CI failure
+
+Start by deciding whether the failure is a runtime-path issue or a test-selector issue.
 
 Common causes:
-- **Constructor arity mismatch** — If you added a field to a constructor, update all callers including test data builders.
-- **Liquibase checksum mismatch** — Never edit an applied changeset.
-- **Foreign key violation in test data** — Ensure parent entities are created before children.
-- **Testcontainers Docker unavailable** — Run `docker info` to verify Docker is running.
 
-### Frontend build failure
+- `page.request` accidentally targets `http://localhost:4200` instead of the backend.
+  - Symptom: HTML or 501/404-style responses from the static server.
+  - Fix: use `PLAYWRIGHT_API_BASE=http://localhost:8080` for direct API setup calls.
+- The test depends on the `ng serve` proxy.
+  - Symptom: works locally, fails only in CI mode.
+  - Fix: reproduce with `CI=1` and the static build.
+- Missing CORS allowance for `http://localhost:4200` or `http://127.0.0.1:4200`.
+  - Symptom: browser-side network errors during login or API fetches.
+- Brittle locator unions under Playwright strict mode.
+  - Symptom: `strict mode violation` where a selector like `'a, b, c'` matches more than one element.
+  - Fix: add a dedicated `data-testid` and assert against a single-purpose locator.
 
-Common causes:
-- **`@angular/cli` version mismatch** — Both `@angular/core` and `@angular/cli` must be the same major version (19.x).
-- **TypeScript type error** — Check the error line number and fix the type annotation.
-- **Missing import** — Standalone components must import every Angular directive they use.
+Concrete example from the portal suite:
 
-### Docker smoke test failure
+- `e2e/portal.spec.ts` previously asserted `.portal-alert-error, .state-invalid, .portal-login-page`
+- in CI mode both the page shell and the error alert were present
+- Playwright correctly failed because `toBeVisible()` expects one resolved element
+- the fix was to add a dedicated `data-testid` for the error alert and target that element only
 
-```
-curl: (7) Failed to connect to localhost port 8080
-```
+### Docker smoke failure
 
-1. Check backend logs: `docker compose logs hlm-backend`.
-2. Common causes:
-   - `JWT_SECRET` not set or too short.
-   - Database not yet healthy when backend starts.
-   - Port 8080 already in use on the CI runner.
+If the backend never becomes healthy:
 
----
+1. Check `docker compose logs hlm-backend`.
+2. Verify `JWT_SECRET` is present and long enough.
+3. Verify database and Redis are healthy before backend startup.
 
 ## Extending the Pipeline
 
-### Add a linting step (backend)
+Keep these rules in mind when adding new checks:
 
-Add after the unit test step in `backend-ci.yml`:
-
-```yaml
-- name: Run Checkstyle
-  run: ./mvnw checkstyle:check
-```
-
-### Add test coverage reporting
-
-```yaml
-- name: Run tests with coverage
-  run: ./mvnw verify -Pcoverage
-
-- name: Upload coverage to Codecov
-  uses: codecov/codecov-action@v4
-  with:
-    files: target/site/jacoco/jacoco.xml
-```
-
-### Add Docker Hub push (on release)
-
-```yaml
-- name: Log in to Docker Hub
-  uses: docker/login-action@v3
-  with:
-    username: ${{ secrets.DOCKERHUB_USERNAME }}
-    password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-- name: Build and push backend image
-  uses: docker/build-push-action@v5
-  with:
-    context: ./hlm-backend
-    push: true
-    tags: your-org/hlm-backend:latest
-```
-
-### Add a staging deployment step
-
-After the smoke test succeeds, trigger a deployment to staging:
-
-```yaml
-- name: Deploy to staging
-  if: github.ref == 'refs/heads/main'
-  run: |
-    # SSH to staging server and pull new image
-    ssh staging "cd /opt/hlm && docker compose pull && docker compose up -d"
-```
+- Put build-time correctness in `frontend-ci.yml` or `backend-ci.yml`.
+- Put browser/runtime/full-stack behavior in `e2e.yml`.
+- Keep E2E selectors stable with `data-testid`.
+- If a test needs direct backend setup in CI, use `PLAYWRIGHT_API_BASE`, not the frontend base URL.
+- Prefer reproducing failures locally in the same mode as CI before changing workflow logic.

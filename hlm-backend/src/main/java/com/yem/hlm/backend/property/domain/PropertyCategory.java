@@ -15,5 +15,6 @@ public enum PropertyCategory {
     VILLA,
     APARTMENT,
     LAND,
-    COMMERCE
+    COMMERCE,
+    PARKING
 }

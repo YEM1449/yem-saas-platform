@@ -33,7 +33,7 @@ The application has three separate route trees, each with its own auth guard and
 | `AuthGuard` | `/app/*` | Checks `hlm_access_token` in localStorage; redirects to `/login` if absent |
 | `AdminGuard` | Admin-only sections within CRM | Checks JWT `roles` claim contains `ROLE_ADMIN` |
 | `SuperAdminGuard` | `/superadmin/*` | Checks JWT `roles` claim contains `ROLE_SUPER_ADMIN` |
-| `PortalGuard` | `/portal/*` (except `/portal/login`) | Checks `hlm_portal_token` in localStorage |
+| `PortalGuard` | `/portal/*` (except `/portal/login`) | Calls `PortalAuthService.validateSession()` and redirects to `/portal/login` when the httpOnly portal session cookie is missing or invalid |
 
 Functional guards use the pattern:
 
@@ -50,14 +50,15 @@ Two interceptors are registered in `app.config.ts`. They must not interfere with
 | Interceptor | Token Source | Applied to |
 |---|---|---|
 | CRM Interceptor | `localStorage.getItem('hlm_access_token')` | `/auth/**` and `/api/**` (non-portal) |
-| Portal Interceptor | `localStorage.getItem('hlm_portal_token')` | `/api/portal/**` only |
+| Portal Interceptor | `withCredentials: true` | `/api/portal/**` only |
 
 ### Token Storage
 
 | Key | Purpose |
 |---|---|
 | `hlm_access_token` | CRM and SUPER_ADMIN JWT |
-| `hlm_portal_token` | Buyer portal JWT (issued after magic-link verification) |
+| `hlm_portal_auth` | Buyer portal JWT stored as an httpOnly cookie scoped to `/api/portal` |
+| `PortalSessionStore` | In-memory frontend flag indicating a validated portal session in the current SPA runtime |
 
 ---
 
@@ -130,7 +131,8 @@ cd hlm-frontend && npx playwright test
 
 Requirements:
 - Backend must be running (Docker Compose or local `./mvnw spring-boot:run`)
-- Playwright config (`playwright.config.ts`) starts `ng serve` on port 4200 via `webServer` and proxies `/api` to Docker backend on port 8080
+- Local default: `playwright.config.ts` starts `ng serve` on port 4200 via `webServer` and uses the Angular dev proxy
+- CI mode: Angular is built with `--configuration=ci`, served statically on port 4200, and Playwright setup calls target the backend with `PLAYWRIGHT_API_BASE=http://localhost:8080`
 
 ### Playwright Worker Configuration
 
@@ -227,9 +229,21 @@ await page.click('button:has-text("Créer"), button[type="submit"]');
 await page.click('[data-testid="save-button"]');
 ```
 
-### Playwright comma-selector is a CSS union
+### Playwright comma-selector is a CSS union, and strict mode still applies
 
-The Playwright selector `'selector-a, selector-b'` is treated as a CSS union and returns the first element in DOM order that matches either selector — not the first matching `selector-a`.
+The Playwright selector `'selector-a, selector-b'` matches **all** elements that satisfy either branch. Any single-element action or assertion such as `click()`, `fill()`, or `toBeVisible()` must still resolve to exactly one element.
+
+That means a union like:
+
+```typescript
+page.locator('.portal-alert-error, .portal-login-page')
+```
+
+will fail with a strict-mode violation if both elements are present. Prefer a dedicated `data-testid`:
+
+```typescript
+await expect(page.getByTestId('portal-error-message')).toBeVisible();
+```
 
 ### data-testid Map
 
@@ -302,5 +316,5 @@ If the `@angular/cli` minor version is upgraded (e.g., 19.2 → 19.3), all `@ang
 | Tasks | GET/POST | `/api/tasks` | Default GET filtered by current user's assigneeId |
 | Documents | GET/POST | `/api/documents` | Multipart form upload |
 | Societes (super) | GET/POST/PUT | `/api/admin/societes` | SUPER_ADMIN only |
-| Portal auth | POST | `/api/portal/auth/magic-link` | Public; sends magic-link email |
-| Portal verify | POST | `/api/portal/auth/verify` | Validates token; returns portal JWT |
+| Portal auth | POST | `/api/portal/auth/request-link` | Public; sends magic-link email |
+| Portal verify | GET | `/api/portal/auth/verify?token=...` | Validates token, sets `hlm_portal_auth` cookie, returns empty `accessToken` payload |

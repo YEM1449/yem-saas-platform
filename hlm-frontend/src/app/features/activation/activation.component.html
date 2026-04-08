@@ -47,7 +47,7 @@
 
       <!-- ── Loading ──────────────────────────────────────────── -->
       @if (state === 'loading') {
-        <div class="state-loading">
+        <div class="state-loading" data-testid="activation-loading-state">
           <div class="spinner spinner-lg"></div>
           <p class="state-loading-text">Vérification de votre lien…</p>
         </div>
@@ -55,7 +55,7 @@
 
       <!-- ── Invalid / Expired ─────────────────────────────────  -->
       @if (state === 'invalid') {
-        <div class="state-invalid">
+        <div class="state-invalid" data-testid="activation-invalid-state">
           <div class="state-icon state-icon-error">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
               <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="2"/>
@@ -70,7 +70,7 @@
 
       <!-- ── Success ───────────────────────────────────────────  -->
       @if (state === 'done') {
-        <div class="state-success">
+        <div class="state-success" data-testid="activation-success-state">
           <div class="state-icon state-icon-success">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
               <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="2"/>
@@ -85,7 +85,7 @@
 
       <!-- ── Activation Form ───────────────────────────────────  -->
       @if (state === 'form' && invitation) {
-        <div class="form-header">
+        <div class="form-header" data-testid="activation-form-state">
           <h1 class="form-title">Activez votre compte</h1>
           <p class="form-subtitle">
             Bienvenue, <strong>{{ invitation.prenom }}</strong>&nbsp;—
