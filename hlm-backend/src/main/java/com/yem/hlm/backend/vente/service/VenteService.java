@@ -141,10 +141,6 @@ public class VenteService {
                 throw new IllegalArgumentException(
                         "contactId and propertyId are required when not converting a reservation");
             }
-            if (request.prixVente() == null || request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException(
-                        "prixVente est obligatoire et doit être positif pour une vente directe");
-            }
             contact  = contactRepository.findBySocieteIdAndId(societeId, request.contactId())
                     .orElseThrow(() -> new ContactNotFoundException(request.contactId()));
             property = propertyRepository
@@ -153,7 +149,15 @@ public class VenteService {
             UUID agentId = request.agentId() != null ? request.agentId() : actorId;
             agent = userRepository.findById(agentId)
                     .orElseThrow(() -> new UserNotFoundException(agentId));
-            finalPrice = request.prixVente();
+            // Use provided price; fall back to property catalogue price when omitted.
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+                finalPrice = request.prixVente();
+            } else if (property.getPrice() != null && property.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                finalPrice = property.getPrice();
+            } else {
+                throw new IllegalArgumentException(
+                        "prixVente est obligatoire : le bien n'a pas de prix catalogue défini");
+            }
         }
 
         // Mark property as SOLD
