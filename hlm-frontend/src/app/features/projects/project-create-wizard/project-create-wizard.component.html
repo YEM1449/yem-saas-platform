@@ -37,7 +37,7 @@
 
     <!-- ════════════════════ STEP 1: Project info ════════════════════ -->
     @if (currentStep === 1) {
-      <div class="step-panel">
+      <div class="step-panel" data-testid="wizard-step-1">
         <div class="step-intro">
           <h2>Informations du programme</h2>
           <p>Renseignez les informations générales de votre programme immobilier.</p>
@@ -80,7 +80,7 @@
 
     <!-- ════════════════════ STEP 2: Tranches ════════════════════ -->
     @if (currentStep === 2) {
-      <div class="step-panel">
+      <div class="step-panel" data-testid="wizard-step-2">
         <div class="step-intro">
           <h2>Tranches de livraison</h2>
         </div>
@@ -173,7 +173,7 @@
 
     <!-- ════════════════════ STEP 3: Buildings ════════════════════ -->
     @if (currentStep === 3) {
-      <div class="step-panel">
+      <div class="step-panel" data-testid="wizard-step-3">
         <div class="step-intro">
           <h2>Configuration des bâtiments</h2>
           <p>Définissez la nomenclature commune, puis ajoutez les bâtiments de chaque tranche.</p>
@@ -329,7 +329,7 @@
 
     <!-- ════════════════════ STEP 4: Unit types per floor ════════════════════ -->
     @if (currentStep === 4) {
-      <div class="step-panel">
+      <div class="step-panel" data-testid="wizard-step-4">
         <div class="step-intro">
           <h2>Types de lots par étage</h2>
           <p>Pour chaque bâtiment, configurez le type et les caractéristiques de chaque étage.</p>
@@ -400,7 +400,7 @@
 
     <!-- ════════════════════ STEP 5: Review & confirm ════════════════════ -->
     @if (currentStep === 5) {
-      <div class="step-panel">
+      <div class="step-panel" data-testid="wizard-step-5">
         <div class="step-intro">
           <h2>Validation — Récapitulatif</h2>
           <p>Vérifiez la configuration avant de lancer la génération.</p>
@@ -454,7 +454,7 @@
             <span class="total-chip-label">bâtiment{{ preview.totals.buildingCount !== 1 ? 's' : '' }}</span>
           </div>
           <div class="total-chip">
-            <span class="total-chip-value">{{ preview.totals.unitCount }}</span>
+            <span class="total-chip-value" data-testid="wizard-total-units">{{ preview.totals.unitCount }}</span>
             <span class="total-chip-label">lots au total</span>
           </div>
           @if (preview.totals.estimatedValue > 0) {
