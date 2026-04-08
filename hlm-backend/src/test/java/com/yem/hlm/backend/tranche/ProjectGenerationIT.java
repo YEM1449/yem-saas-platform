@@ -115,7 +115,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
     @Test
     void generate_singleTrancheOneBuildingFourFloors_createsExpectedUnits() throws Exception {
         // 1 tranche, 1 building (R+4, no RDC), 4 floors × 2 appartements = 8 units
-        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, "SUD");
+        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, "SUD", null, null, null, null, null);
         BuildingConfig building = new BuildingConfig(0, null, 4, false, "NONE", 0, false, 0,
                 List.of(floor, floor, floor, floor));
         TrancheConfig tranche = new TrancheConfig(1, null,
@@ -157,7 +157,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
 
     @Test
     void generate_twoTranchesWithBuildings_bothTranchesCreated() throws Exception {
-        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, null);
+        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, null, null, null, null, null, null);
         BuildingConfig b1 = new BuildingConfig(0, null, 3, false, "NONE", 0, false, 0, List.of(floor, floor, floor));
         BuildingConfig b2 = new BuildingConfig(1, null, 2, false, "NONE", 0, false, 0, List.of(floor, floor));
 
@@ -192,7 +192,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
 
     @Test
     void generate_withParking_createsParking() throws Exception {
-        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, null);
+        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 2, null, null, null, null, null, null, null, null, null);
         BuildingConfig b = new BuildingConfig(0, null, 2, false, "NONE", 0, true, 5,
                 List.of(floor, floor));
         TrancheConfig t = new TrancheConfig(1, null, LocalDate.of(2027, 1, 1),
@@ -263,7 +263,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
     // ─────────────────────────────────────────────────────────────────────────
 
     private String generate2TranchesProject() throws Exception {
-        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 1, null, null, null, null);
+        FloorConfig floor = new FloorConfig(1, "APPARTEMENT", 1, null, null, null, null, null, null, null, null, null);
         BuildingConfig b = new BuildingConfig(0, null, 2, false, "NONE", 0, false, 0, List.of(floor, floor));
         TrancheConfig t1 = new TrancheConfig(1, null, LocalDate.of(2026, 6, 30), null, null, List.of(b));
         BuildingConfig b2 = new BuildingConfig(1, null, 2, false, "NONE", 0, false, 0, List.of(floor));
