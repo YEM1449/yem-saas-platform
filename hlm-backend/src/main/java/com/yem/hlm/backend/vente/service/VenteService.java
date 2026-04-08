@@ -24,6 +24,7 @@ import com.yem.hlm.backend.vente.repo.VenteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -95,9 +96,10 @@ public class VenteService {
         Property property;
         User agent;
         UUID reservationId = null;
+        BigDecimal finalPrice;
 
         if (request.reservationId() != null) {
-            // Convert from reservation
+            // ── Convert from reservation ──────────────────────────────────────
             Reservation reservation = reservationRepository
                     .findBySocieteIdAndId(societeId, request.reservationId())
                     .orElseThrow(() -> new ReservationNotFoundException(request.reservationId()));
@@ -113,11 +115,35 @@ public class VenteService {
             reservation.setStatus(ReservationStatus.CONVERTED_TO_DEPOSIT);
             reservationRepository.save(reservation);
 
+            // Price calculation: property price − advance already paid − optional reduction.
+            // If an explicit prixVente is provided it takes precedence (override mode).
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+                finalPrice = request.prixVente();
+            } else {
+                BigDecimal basePrice  = property.getPrice() != null
+                        ? property.getPrice() : BigDecimal.ZERO;
+                BigDecimal advance    = reservation.getReservationPrice() != null
+                        ? reservation.getReservationPrice() : BigDecimal.ZERO;
+                BigDecimal reduction  = request.reduction() != null
+                        ? request.reduction() : BigDecimal.ZERO;
+                finalPrice = basePrice.subtract(advance).subtract(reduction);
+                if (finalPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalArgumentException(
+                            "Prix de vente calculé invalide : prix du bien (" + basePrice
+                            + ") − avance (" + advance + ") − réduction (" + reduction
+                            + ") ≤ 0. Veuillez saisir un prix ou ajuster la réduction.");
+                }
+            }
+
         } else {
-            // Direct creation — contact and property are mandatory
+            // ── Direct creation — contact and property are mandatory ───────────
             if (request.contactId() == null || request.propertyId() == null) {
                 throw new IllegalArgumentException(
                         "contactId and propertyId are required when not converting a reservation");
+            }
+            if (request.prixVente() == null || request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException(
+                        "prixVente est obligatoire et doit être positif pour une vente directe");
             }
             contact  = contactRepository.findBySocieteIdAndId(societeId, request.contactId())
                     .orElseThrow(() -> new ContactNotFoundException(request.contactId()));
@@ -127,6 +153,7 @@ public class VenteService {
             UUID agentId = request.agentId() != null ? request.agentId() : actorId;
             agent = userRepository.findById(agentId)
                     .orElseThrow(() -> new UserNotFoundException(agentId));
+            finalPrice = request.prixVente();
         }
 
         // Mark property as SOLD
@@ -139,7 +166,7 @@ public class VenteService {
 
         Vente vente = new Vente(societeId, property.getId(), contact, agent);
         vente.setReservationId(reservationId);
-        vente.setPrixVente(request.prixVente());
+        vente.setPrixVente(finalPrice);
         vente.setDateCompromis(request.dateCompromis());
         vente.setDateLivraisonPrevue(request.dateLivraisonPrevue());
         vente.setNotes(request.notes());

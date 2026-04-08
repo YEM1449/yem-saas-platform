@@ -22,8 +22,8 @@
             @switch (s) {
               @case (1) { Projet }
               @case (2) { Tranches }
-              @case (3) { Bâtiments }
-              @case (4) { Lots }
+              @case (3) { @if (isVillaProject) { Villas } @else { Bâtiments } }
+              @case (4) { @if (isVillaProject) { Config. } @else { Lots } }
               @case (5) { Validation }
             }
           </div>
@@ -43,6 +43,26 @@
           <p>Renseignez les informations générales de votre programme immobilier.</p>
         </div>
         <form [formGroup]="step1" class="form-grid">
+
+          <!-- Project type picker -->
+          <div class="field field-full required" style="margin-bottom:24px">
+            <label style="font-weight:600;margin-bottom:10px;display:block">Type de programme *</label>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              @for (pt of PROJECT_TYPES; track pt.value) {
+                <label class="radio-card"
+                       [style.border-color]="step1.get('projectType')?.value === pt.value ? 'var(--color-primary,#2563eb)' : ''"
+                       [style.background]="step1.get('projectType')?.value === pt.value ? 'var(--color-primary-light,#eff6ff)' : ''"
+                       style="flex:1;min-width:200px;cursor:pointer;padding:14px 16px;border:2px solid #e2e8f0;border-radius:8px;display:flex;align-items:flex-start;gap:10px">
+                  <input type="radio" formControlName="projectType" [value]="pt.value" style="margin-top:2px" />
+                  <div>
+                    <div style="font-weight:600;font-size:14px">{{ pt.label }}</div>
+                    <div style="font-size:12px;color:#64748b;margin-top:2px">{{ pt.hint }}</div>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+
           <div class="field field-full required">
             <label>Nom du programme *</label>
             <input formControlName="projectNom"
@@ -171,12 +191,17 @@
       </div>
     }
 
-    <!-- ════════════════════ STEP 3: Buildings ════════════════════ -->
+    <!-- ════════════════════ STEP 3: Buildings / Villas ════════════════════ -->
     @if (currentStep === 3) {
       <div class="step-panel" data-testid="wizard-step-3">
         <div class="step-intro">
-          <h2>Configuration des bâtiments</h2>
-          <p>Définissez la nomenclature commune, puis ajoutez les bâtiments de chaque tranche.</p>
+          @if (isVillaProject) {
+            <h2>Configuration des villas</h2>
+            <p>Définissez la nomenclature et ajoutez les groupes de villas par tranche.</p>
+          } @else {
+            <h2>Configuration des bâtiments</h2>
+            <p>Définissez la nomenclature commune, puis ajoutez les bâtiments de chaque tranche.</p>
+          }
         </div>
 
         <!-- Naming config -->
@@ -198,12 +223,14 @@
 
             <div class="form-row">
               <div class="field">
-                <label>Préfixe bâtiment</label>
-                <input formControlName="buildingPrefix" placeholder="Bâtiment" />
+                <label>{{ isVillaProject ? 'Préfixe villa' : 'Préfixe bâtiment' }}</label>
+                <input formControlName="buildingPrefix"
+                       [placeholder]="isVillaProject ? 'Villa' : 'Bâtiment'" />
               </div>
               <div class="field" [class.field-hidden]="step3.get('unitRefPattern')?.value !== 'SEQUENTIAL'">
                 <label>Préfixe des lots</label>
-                <input formControlName="unitPrefix" placeholder="APT-" />
+                <input formControlName="unitPrefix"
+                       [placeholder]="isVillaProject ? 'VILLA-' : 'APT-'" />
               </div>
             </div>
 
@@ -222,7 +249,7 @@
           </div>
         </form>
 
-        <!-- Buildings per tranche -->
+        <!-- Buildings / Villa groups per tranche -->
         @for (t of tranches.controls; track $index; let ti = $index) {
           <div class="tranche-buildings-section">
             <div class="tranche-section-header">
@@ -236,13 +263,13 @@
                       [attr.data-testid]="'wizard-add-building-' + ti"
                       (click)="addBuilding(ti)"
                       [disabled]="totalBuildingCount >= 26">
-                + Ajouter un bâtiment
+                {{ isVillaProject ? '+ Ajouter un groupe de villas' : '+ Ajouter un bâtiment' }}
               </button>
             </div>
 
             @if (getTrancheBuildings(ti).length === 0) {
               <div class="empty-state-sm">
-                <p>Aucun bâtiment — cliquez sur « Ajouter un bâtiment » ci-dessus.</p>
+                <p>{{ isVillaProject ? 'Aucun groupe de villas — cliquez ci-dessus.' : 'Aucun bâtiment — cliquez ci-dessus.' }}</p>
               </div>
             }
 
@@ -261,64 +288,81 @@
                   @if (step3.get('buildingNaming')?.value === 'CUSTOM') {
                     <div class="field">
                       <label>Nom personnalisé</label>
-                      <input formControlName="customName" placeholder="Ex : Le Jasmin" />
+                      <input formControlName="customName"
+                             [placeholder]="isVillaProject ? 'Ex : Domaine Sud' : 'Ex : Le Jasmin'" />
                     </div>
                   }
 
-                  <div class="form-row">
-                    <div class="field">
-                      <label>Nombre d'étages (R+?)</label>
-                      <div class="stepper">
-                        <button type="button"
-                                (click)="b.get('floorCount')?.setValue(Math.max(1,(b.get('floorCount')?.value??1)-1))">−</button>
-                        <span class="stepper-value">R+{{ b.get('floorCount')?.value }}</span>
-                        <button type="button"
-                                (click)="b.get('floorCount')?.setValue(Math.min(30,(b.get('floorCount')?.value??1)+1))">+</button>
-                      </div>
-                    </div>
-
-                    <div class="field">
-                      <label>Rez-de-chaussée</label>
-                      <label class="toggle">
-                        <input type="checkbox" formControlName="hasRdc" />
-                        <span>{{ b.get('hasRdc')?.value ? 'Oui' : 'Non' }}</span>
-                      </label>
-                    </div>
-
-                    @if (b.get('hasRdc')?.value) {
+                  @if (!isVillaProject) {
+                    <div class="form-row">
                       <div class="field">
-                        <label>Type RDC</label>
-                        <select formControlName="rdcType">
-                          <option value="COMMERCE">Local commercial</option>
-                          <option value="APPARTEMENT">Appartement</option>
-                          <option value="MIXTE">Mixte</option>
-                          <option value="NONE">Aucun lot</option>
-                        </select>
+                        <label>Nombre d'étages (R+?)</label>
+                        <div class="stepper">
+                          <button type="button"
+                                  (click)="b.get('floorCount')?.setValue(Math.max(1,(b.get('floorCount')?.value??1)-1))">−</button>
+                          <span class="stepper-value">R+{{ b.get('floorCount')?.value }}</span>
+                          <button type="button"
+                                  (click)="b.get('floorCount')?.setValue(Math.min(30,(b.get('floorCount')?.value??1)+1))">+</button>
+                        </div>
                       </div>
-                      @if (b.get('rdcType')?.value !== 'NONE') {
+
+                      <div class="field">
+                        <label>Rez-de-chaussée</label>
+                        <label class="toggle">
+                          <input type="checkbox" formControlName="hasRdc" />
+                          <span>{{ b.get('hasRdc')?.value ? 'Oui' : 'Non' }}</span>
+                        </label>
+                      </div>
+
+                      @if (b.get('hasRdc')?.value) {
+                        <div class="field">
+                          <label>Type RDC</label>
+                          <select formControlName="rdcType">
+                            <option value="COMMERCE">Local commercial</option>
+                            <option value="APPARTEMENT">Appartement</option>
+                            <option value="MIXTE">Mixte</option>
+                            <option value="NONE">Aucun lot</option>
+                          </select>
+                        </div>
+                        @if (b.get('rdcType')?.value !== 'NONE') {
+                          <div class="field field-sm">
+                            <label>Nb lots RDC</label>
+                            <input type="number" formControlName="rdcUnitCount" min="1" max="10" />
+                          </div>
+                        }
+                      }
+                    </div>
+
+                    <div class="form-row">
+                      <div class="field">
+                        <label>Parking</label>
+                        <label class="toggle">
+                          <input type="checkbox" formControlName="hasParking" />
+                          <span>{{ b.get('hasParking')?.value ? 'Avec parking' : 'Sans parking' }}</span>
+                        </label>
+                      </div>
+                      @if (b.get('hasParking')?.value) {
                         <div class="field field-sm">
-                          <label>Nb lots RDC</label>
-                          <input type="number" formControlName="rdcUnitCount" min="1" max="10" />
+                          <label>Nb de places</label>
+                          <input type="number" formControlName="parkingCount" min="1" />
                         </div>
                       }
-                    }
-                  </div>
-
-                  <div class="form-row">
-                    <div class="field">
-                      <label>Parking</label>
-                      <label class="toggle">
-                        <input type="checkbox" formControlName="hasParking" />
-                        <span>{{ b.get('hasParking')?.value ? 'Avec parking' : 'Sans parking' }}</span>
-                      </label>
                     </div>
-                    @if (b.get('hasParking')?.value) {
-                      <div class="field field-sm">
-                        <label>Nb de places</label>
-                        <input type="number" formControlName="parkingCount" min="1" />
+                  } @else {
+                    <!-- Villa mode: just the count in this group -->
+                    <div class="form-row">
+                      <div class="field">
+                        <label>Nombre de villas dans ce groupe</label>
+                        <div class="stepper">
+                          <button type="button"
+                                  (click)="b.get('rdcUnitCount')?.setValue(Math.max(1,(b.get('rdcUnitCount')?.value??1)-1))">−</button>
+                          <span class="stepper-value">{{ b.get('rdcUnitCount')?.value }} villa{{ (b.get('rdcUnitCount')?.value??1) > 1 ? 's' : '' }}</span>
+                          <button type="button"
+                                  (click)="b.get('rdcUnitCount')?.setValue(Math.min(20,(b.get('rdcUnitCount')?.value??1)+1))">+</button>
+                        </div>
                       </div>
-                    }
-                  </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -331,8 +375,13 @@
     @if (currentStep === 4) {
       <div class="step-panel" data-testid="wizard-step-4">
         <div class="step-intro">
-          <h2>Types de lots par étage</h2>
-          <p>Pour chaque bâtiment, configurez le type et les caractéristiques de chaque étage.</p>
+          @if (isVillaProject) {
+            <h2>Configuration des villas</h2>
+            <p>Pour chaque groupe de villas, définissez la surface, le terrain, le prix et les options.</p>
+          } @else {
+            <h2>Types de lots par étage</h2>
+            <p>Pour chaque bâtiment, configurez le type et les caractéristiques de chaque étage.</p>
+          }
         </div>
 
         @for (t of tranches.controls; track $index; let ti = $index) {
@@ -349,10 +398,12 @@
                 <h4 class="building-floor-title">
                   {{ step3.get('buildingPrefix')?.value }}
                   {{ getBuildingLabel(b.get('buildingOrder')?.value, b.get('customName')?.value) }}
-                  <span class="floors-count">(R+{{ b.get('floorCount')?.value }})</span>
+                  @if (!isVillaProject) {
+                    <span class="floors-count">(R+{{ b.get('floorCount')?.value }})</span>
+                  }
                 </h4>
 
-                @if (b.get('hasParking')?.value && (b.get('parkingCount')?.value ?? 0) > 0) {
+                @if (!isVillaProject && b.get('hasParking')?.value && (b.get('parkingCount')?.value ?? 0) > 0) {
                   <div class="floor-row floor-parking">
                     <span class="floor-label">Sous-sol</span>
                     <span class="floor-type-badge">PARKING</span>
@@ -361,34 +412,69 @@
                 }
 
                 @for (f of getFloors(ti, bi).controls; track $index; let fi = $index) {
-                  <div [formGroup]="$any(f)" class="floor-row">
-                    <span class="floor-label">{{ getFloorLabel(f.get('floorNumber')?.value) }}</span>
+                  <div [formGroup]="$any(f)" class="floor-row" [style.flex-wrap]="isVillaProject ? 'wrap' : 'nowrap'">
+                    @if (!isVillaProject) {
+                      <span class="floor-label">{{ getFloorLabel(f.get('floorNumber')?.value) }}</span>
+                    }
 
-                    <select formControlName="propertyType" class="floor-type-select">
-                      @for (pt of PROPERTY_TYPES; track pt.value) {
-                        <option [value]="pt.value">{{ pt.label }}</option>
-                      }
-                    </select>
+                    @if (!isVillaProject) {
+                      <select formControlName="propertyType" class="floor-type-select">
+                        @for (pt of PROPERTY_TYPES; track pt.value) {
+                          <option [value]="pt.value">{{ pt.label }}</option>
+                        }
+                      </select>
+                    }
 
                     <div class="floor-unit-count">
                       <button type="button"
                               (click)="f.get('unitCount')?.setValue(Math.max(1,(f.get('unitCount')?.value??1)-1))">−</button>
-                      <span>{{ f.get('unitCount')?.value }} lot{{ (f.get('unitCount')?.value??1) > 1 ? 's' : '' }}</span>
+                      <span>{{ f.get('unitCount')?.value }} {{ isVillaProject ? 'villa' : 'lot' }}{{ (f.get('unitCount')?.value??1) > 1 ? 's' : '' }}</span>
                       <button type="button"
                               (click)="f.get('unitCount')?.setValue(Math.min(20,(f.get('unitCount')?.value??1)+1))">+</button>
                     </div>
 
                     <div class="floor-fields">
                       <input type="number" formControlName="surfaceMin"
-                             class="field-sm-input" placeholder="m² min" min="1" />
+                             class="field-sm-input" [placeholder]="isVillaProject ? 'Surface habitable m²' : 'm² min'" min="1" />
+                      @if (isVillaProject) {
+                        <input type="number" formControlName="landAreaSqm"
+                               class="field-sm-input" placeholder="Terrain m²" min="1" />
+                      }
                       <input type="number" formControlName="prixBase"
-                             class="field-sm-input" placeholder="Prix" min="0" />
-                      <select formControlName="orientation" class="orientation-select">
-                        @for (o of ORIENTATIONS; track o) {
-                          <option [value]="o">{{ o }}</option>
-                        }
-                      </select>
+                             class="field-sm-input" placeholder="Prix MAD" min="0" />
+                      @if (!isVillaProject) {
+                        <select formControlName="orientation" class="orientation-select">
+                          @for (o of ORIENTATIONS; track o) {
+                            <option [value]="o">{{ o }}</option>
+                          }
+                        </select>
+                      }
                     </div>
+
+                    @if (isVillaProject) {
+                      <!-- Villa-specific options -->
+                      <div style="display:flex;gap:16px;align-items:center;width:100%;margin-top:8px;flex-wrap:wrap">
+                        <div style="display:flex;gap:8px">
+                          <input type="number" formControlName="bedrooms"
+                                 class="field-sm-input" placeholder="Chambres" min="1" style="width:90px" />
+                          <input type="number" formControlName="bathrooms"
+                                 class="field-sm-input" placeholder="SDB" min="1" style="width:70px" />
+                        </div>
+                        <label class="toggle-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                          <input type="checkbox" formControlName="hasPool" />
+                          Piscine
+                        </label>
+                        <label class="toggle-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                          <input type="checkbox" formControlName="hasGarden" />
+                          Jardin
+                        </label>
+                        <select formControlName="orientation" class="orientation-select" style="width:120px">
+                          @for (o of ORIENTATIONS; track o) {
+                            <option [value]="o">{{ o }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
                   </div>
                 }
               </div>

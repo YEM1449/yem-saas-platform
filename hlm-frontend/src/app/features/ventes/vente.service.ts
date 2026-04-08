@@ -57,6 +57,8 @@ export interface CreateVenteRequest {
   propertyId?: string | null;
   agentId?: string | null;
   prixVente?: number | null;
+  /** Optional commercial discount (only meaningful when converting from reservation). */
+  reduction?: number | null;
   dateCompromis?: string | null;
   dateLivraisonPrevue?: string | null;
   notes?: string | null;
