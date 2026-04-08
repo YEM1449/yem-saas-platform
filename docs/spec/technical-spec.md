@@ -28,7 +28,7 @@ This document summarizes how the current system is implemented and operated.
 | Language | TypeScript 5 |
 | Styles | CSS/SCSS |
 | Tests | Karma/Jasmine, Playwright E2E |
-| Serving | Angular dev server locally, Nginx in containerized production |
+| Serving | Angular dev server locally, static build on `:4200` in CI, Nginx in containerized production |
 
 ## 2. Repository Structure
 
@@ -69,6 +69,8 @@ Important groups:
 
 - `POST /api/portal/auth/request-link`
 - `GET /api/portal/auth/verify`
+- verification sets the `hlm_portal_auth` httpOnly cookie for `/api/portal`
+- frontend keeps only an in-memory authenticated flag; it does not persist the portal JWT in browser storage
 - separate `ROLE_PORTAL` token path
 
 ### Context propagation
@@ -167,13 +169,13 @@ The Angular application is organized around:
 
 - route-based surfaces for CRM, super-admin, and portal
 - guards for authenticated, admin, and super-admin access
-- interceptors for CRM and portal bearer tokens
+- a bearer-token interceptor for CRM and a credential-forwarding interceptor for portal APIs
 - standalone components with feature-oriented structure
 
-Current token storage:
+Current session transport:
 
 - CRM token -> `hlm_access_token`
-- Portal token -> `hlm_portal_token`
+- Portal session -> `hlm_portal_auth` httpOnly cookie plus `PortalSessionStore`
 
 ## 11. CI/CD and Verification
 
@@ -183,8 +185,13 @@ The repository includes GitHub Actions workflows for:
 - frontend tests and build
 - Docker image builds
 - compose smoke validation
-- Playwright E2E
+- Playwright E2E against the static `ci` Angular build on port `4200`
 - security scanning
+
+Important E2E implementation detail:
+
+- Playwright setup calls that create backend data use `PLAYWRIGHT_API_BASE=http://localhost:8080`
+- this avoids sending `page.request` writes to the static frontend server, which serves only frontend assets
 
 ## 12. Deployment Model
 

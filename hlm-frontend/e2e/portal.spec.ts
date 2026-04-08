@@ -84,9 +84,10 @@ test.describe('Buyer Portal', () => {
     await page.click('button[type="submit"]');
 
     // After sending, shows the "check your inbox" confirmation
-    await expect(page.locator('.portal-alert-success')).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('.portal-alert-success')).toContainText('Check your inbox');
-    await expect(page.locator('.portal-alert-success')).toContainText('buyer@example.com');
+    const successAlert = page.getByTestId('portal-success-message');
+    await expect(successAlert).toBeVisible({ timeout: 8000 });
+    await expect(successAlert).toContainText('Check your inbox');
+    await expect(successAlert).toContainText('buyer@example.com');
 
     // "Send another link" button lets user retry
     await expect(page.locator('button:has-text("Send another link")')).toBeVisible();
@@ -106,9 +107,12 @@ test.describe('Buyer Portal', () => {
     await page.goto('/portal/login?token=bad-invalid-token-xyz');
 
     // Should show error state after verification fails
-    await expect(
-      page.locator('.portal-alert-error, .state-invalid, .portal-login-page')
-    ).toBeVisible({ timeout: 10000 });
+    // The login shell stays mounted while the error alert is rendered, so
+    // target the dedicated alert instead of a CSS union that can match more
+    // than one element under Playwright strict mode.
+    const errorAlert = page.getByTestId('portal-error-message');
+    await expect(errorAlert).toBeVisible({ timeout: 10000 });
+    await expect(errorAlert).toContainText('invalid or has expired');
   });
 
   // ── Auth guard ─────────────────────────────────────────────────────────
