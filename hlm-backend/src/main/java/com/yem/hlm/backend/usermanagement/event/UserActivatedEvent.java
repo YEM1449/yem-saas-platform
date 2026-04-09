@@ -9,7 +9,7 @@ public class UserActivatedEvent extends DomainEvent {
     public final String cguVersion;
 
     public UserActivatedEvent(UUID userId, UUID societeId, String cguVersion) {
-        super(societeId, null);
+        super(societeId, userId); // actor = the user activating their own account (unauthenticated flow)
         this.userId = userId;
         this.cguVersion = cguVersion;
     }
