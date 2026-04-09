@@ -45,20 +45,38 @@
       <span class="field-hint">Optionnel — lie la tâche à un contact.</span>
     </label>
 
-    <!-- Property — dropdown, no UUID shown -->
+    <!-- Property — inline typeahead (avoids loading the full list) -->
     <label>
       Bien immobilier lié
-      @if (propertiesLoading) {
-        <span class="field-hint">Chargement des biens…</span>
-      } @else {
-        <select [(ngModel)]="propertyId" [disabled]="submitting">
-          <option value="">— Aucun bien (optionnel) —</option>
-          @for (p of properties; track p.id) {
-            <option [value]="p.id">{{ p.title }} · {{ p.referenceCode }}</option>
-          }
-        </select>
-      }
-      <span class="field-hint">Optionnel — lie la tâche à un bien immobilier.</span>
+      <div style="position:relative">
+        <input type="text"
+               [(ngModel)]="propertyQuery"
+               (ngModelChange)="onPropertyInput()"
+               (blur)="closePropertyDrop()"
+               [disabled]="submitting"
+               placeholder="Taper pour rechercher un bien…"
+               autocomplete="off" />
+        @if (propertyLoading) {
+          <span class="field-hint">Recherche…</span>
+        }
+        @if (propertyQuery && !propertyId) {
+          <button type="button" class="btn-ghost-sm" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:12px;"
+                  (click)="clearProperty()">✕</button>
+        }
+        @if (propertyShowDrop && propertySuggestions.length > 0) {
+          <ul class="picker-dropdown" style="position:absolute;z-index:200;background:#fff;border:1px solid #ddd;border-radius:6px;padding:4px 0;list-style:none;margin:0;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+            @for (p of propertySuggestions; track p.id) {
+              <li (mousedown)="selectProperty(p)"
+                  style="padding:7px 12px;cursor:pointer;font-size:13px;"
+                  class="picker-item">
+                <strong>{{ p.title }}</strong>
+                <span style="color:#888;margin-left:6px;font-size:11px">{{ p.referenceCode }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <span class="field-hint">Optionnel — tapez au moins 2 caractères pour chercher.</span>
     </label>
   }
 

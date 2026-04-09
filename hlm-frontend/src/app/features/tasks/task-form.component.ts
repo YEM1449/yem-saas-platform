@@ -1,15 +1,18 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, CreateTaskRequest, UpdateTaskRequest } from './task.model';
-import { PropertyService } from '../properties/property.service';
-import { Property } from '../../core/models/property.model';
 import { UserPickerComponent } from '../../shared/pickers/user-picker.component';
 import { ContactPickerComponent } from '../../shared/pickers/contact-picker.component';
 import { ErrorResponse } from '../../core/models/error-response.model';
+import { environment } from '../../../environments/environment';
+
+interface PropertySuggestion { id: string; title: string; referenceCode: string; }
 
 @Component({
   selector: 'app-task-form',
@@ -25,8 +28,8 @@ export class TaskFormComponent implements OnInit {
   @Output() saved = new EventEmitter<Task>();
   @Output() cancelled = new EventEmitter<void>();
 
-  private svc = inject(TaskService);
-  private propertySvc = inject(PropertyService);
+  private svc  = inject(TaskService);
+  private http = inject(HttpClient);
 
   title = '';
   description = '';
@@ -35,16 +38,18 @@ export class TaskFormComponent implements OnInit {
   contactId = '';
   propertyId = '';
 
-  // Property dropdown (no UUID exposure)
-  properties: Property[] = [];
-  propertiesLoading = false;
+  // ── Property typeahead (replaces full-list dropdown for performance) ───────
+  propertyQuery        = '';
+  propertySuggestions: PropertySuggestion[] = [];
+  propertyLoading      = false;
+  propertyShowDrop     = false;
+  selectedPropertyName = '';
+  private propSearch$  = new Subject<string>();
 
   submitting = false;
   error = '';
 
-  get isEdit(): boolean {
-    return !!this.task;
-  }
+  get isEdit(): boolean { return !!this.task; }
 
   ngOnInit(): void {
     if (this.task) {
@@ -57,19 +62,70 @@ export class TaskFormComponent implements OnInit {
     } else {
       this.contactId  = this.prefillContactId  ?? '';
       this.propertyId = this.prefillPropertyId ?? '';
+      if (this.propertyId) this.resolvePropertyName(this.propertyId);
     }
 
     if (!this.isEdit) {
-      this.loadProperties();
+      // Debounced typeahead — only fires when user types ≥ 2 characters
+      this.propSearch$.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.trim().length < 2) { this.propertySuggestions = []; return of([]); }
+          this.propertyLoading = true;
+          return this.http.get<PropertySuggestion[]>(
+            `${environment.apiUrl}/api/properties`,
+            { params: { status: 'ACTIVE' } }
+          );
+        }),
+      ).subscribe({
+        next: ps => {
+          const q = this.propertyQuery.toLowerCase();
+          this.propertySuggestions = (ps as PropertySuggestion[])
+            .filter(p => p.title.toLowerCase().includes(q) || p.referenceCode.toLowerCase().includes(q))
+            .slice(0, 15);
+          this.propertyLoading  = false;
+          this.propertyShowDrop = this.propertySuggestions.length > 0;
+        },
+        error: () => { this.propertyLoading = false; },
+      });
     }
   }
 
-  private loadProperties(): void {
-    this.propertiesLoading = true;
-    this.propertySvc.list().subscribe({
-      next: ps => { this.properties = ps; this.propertiesLoading = false; },
-      error: () => { this.propertiesLoading = false; },
-    });
+  onPropertyInput(): void {
+    if (!this.propertyQuery.trim()) { this.clearProperty(); return; }
+    this.propSearch$.next(this.propertyQuery);
+  }
+
+  selectProperty(p: PropertySuggestion): void {
+    this.propertyId          = p.id;
+    this.selectedPropertyName = `${p.title} · ${p.referenceCode}`;
+    this.propertyQuery        = this.selectedPropertyName;
+    this.propertyShowDrop     = false;
+    this.propertySuggestions  = [];
+  }
+
+  clearProperty(): void {
+    this.propertyId           = '';
+    this.selectedPropertyName = '';
+    this.propertyQuery        = '';
+    this.propertySuggestions  = [];
+    this.propertyShowDrop     = false;
+  }
+
+  closePropertyDrop(): void {
+    setTimeout(() => { this.propertyShowDrop = false; }, 150);
+  }
+
+  private resolvePropertyName(id: string): void {
+    this.http.get<PropertySuggestion>(`${environment.apiUrl}/api/properties/${id}`)
+      .subscribe({
+        next: p => {
+          this.selectedPropertyName = `${p.title} · ${p.referenceCode}`;
+          this.propertyQuery        = this.selectedPropertyName;
+        },
+        error: () => {},
+      });
   }
 
   onUserSelected(id: string | null): void {

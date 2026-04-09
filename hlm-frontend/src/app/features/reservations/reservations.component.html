@@ -43,6 +43,88 @@
 }
 
 <!-- Data table -->
+<!-- ── Convert to Vente modal ──────────────────────────────────────────────── -->
+@if (showConvertModal && convertingResv) {
+  <div class="modal-backdrop" (click)="closeConvertModal()">
+    <div class="modal-box dialog-create" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Convertir en vente</h2>
+        <button class="modal-close" (click)="closeConvertModal()" aria-label="Fermer">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Summary card -->
+        <div class="info-card" style="background:var(--surface-secondary,#f5f7fa);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.6">
+          <div><strong>Contact :</strong> {{ contactName(convertingResv.contactId) }}</div>
+          <div><strong>Bien :</strong> {{ propertyName(convertingResv.propertyId) }}</div>
+          @if (propertyPrices.get(convertingResv.propertyId)) {
+            <div><strong>Prix du bien :</strong> {{ propertyPrices.get(convertingResv.propertyId) | number:'1.0-0' }} MAD</div>
+          }
+          @if (convertingResv.reservationPrice) {
+            <div><strong>Avance versée :</strong> − {{ convertingResv.reservationPrice | number:'1.0-0' }} MAD</div>
+          }
+        </div>
+
+        @if (convertError) {
+          <p class="alert alert-error" style="margin-bottom:12px">{{ convertError }}</p>
+        }
+
+        <!-- Reduction -->
+        <div class="form-group">
+          <label class="form-label">Réduction commerciale (MAD) <span style="color:var(--text-muted);font-weight:400">— optionnel</span></label>
+          <input class="form-control" type="number" min="0"
+                 [(ngModel)]="convertReduction"
+                 placeholder="Ex : 50 000"
+                 data-testid="convert-reduction" />
+        </div>
+
+        <!-- Calculated price preview -->
+        @if (estimatedConversionPrice() !== null) {
+          <div class="form-group">
+            <div [class]="(estimatedConversionPrice()! > 0) ? 'price-preview price-preview--ok' : 'price-preview price-preview--error'"
+                 style="border-radius:6px;padding:10px 14px;font-size:14px;font-weight:600;margin-top:4px;">
+              Prix de vente calculé :
+              @if (estimatedConversionPrice()! > 0) {
+                {{ estimatedConversionPrice() | number:'1.0-0' }} MAD
+              } @else {
+                Invalide (réduction trop élevée)
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Date compromis -->
+        <div class="form-group">
+          <label class="form-label">Date de compromis</label>
+          <input class="form-control" type="date"
+                 [(ngModel)]="convertDateCompromis"
+                 data-testid="convert-date-compromis" />
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" rows="3"
+                    [(ngModel)]="convertNotes"
+                    placeholder="Remarques optionnelles…"
+                    data-testid="convert-notes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeConvertModal()" [disabled]="converting">
+          Annuler
+        </button>
+        <button class="btn btn-primary"
+                [disabled]="converting || (estimatedConversionPrice() !== null && estimatedConversionPrice()! <= 0)"
+                (click)="submitConvertToVente()"
+                data-testid="convert-submit">
+          {{ converting ? 'Conversion…' : 'Créer la vente' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 @if (!loading && filtered.length > 0) {
   <div class="card">
     <div class="card-body-flush">
@@ -102,6 +184,11 @@
                     Docs
                   </button>
                   @if (canWrite && r.status === 'ACTIVE') {
+                    <button class="btn btn-sm btn-primary"
+                            (click)="openConvertToVente(r)"
+                            title="Transformer en vente">
+                      Convertir en vente
+                    </button>
                     <button class="btn btn-sm btn-danger"
                             (click)="cancel(r)">{{ 'reservations.cancel' | translate }}</button>
                   }

@@ -33,9 +33,12 @@ export class VenteListComponent implements OnInit {
   // ── Create form state ──────────────────────────────────────────────────────
   contacts: Contact[] = [];
   properties: Property[] = [];
-  createContactId  = '';
-  createPropertyId = '';
+  createContactId   = '';
+  createPropertyId  = '';
   createPrixVente: number | null = null;
+  createReduction: number | null = null;
+  /** Price suggested from the selected property (display only). */
+  suggestedPrice: number | null = null;
   createDateCompromis = '';
   createNotes = '';
   creating = false;
@@ -86,10 +89,12 @@ export class VenteListComponent implements OnInit {
 
   openCreate(): void {
     this.showCreate = true;
-    this.createError = '';
+    this.createError      = '';
     this.createContactId  = '';
     this.createPropertyId = '';
     this.createPrixVente  = null;
+    this.createReduction  = null;
+    this.suggestedPrice   = null;
     this.createDateCompromis = '';
     this.createNotes = '';
     // P2: size=500 to avoid pagination truncating contacts beyond page 1 (default size=20)
@@ -110,16 +115,31 @@ export class VenteListComponent implements OnInit {
     this.createError = '';
   }
 
+  /** When the user picks a property, pre-fill the price from the property catalogue. */
+  onPropertyChange(): void {
+    const prop = this.properties.find(p => p.id === this.createPropertyId);
+    if (prop?.price) {
+      this.suggestedPrice  = prop.price;
+      this.createPrixVente = prop.price;
+    } else {
+      this.suggestedPrice  = null;
+    }
+  }
+
   submitCreate(): void {
     if (!this.createContactId || !this.createPropertyId) return;
+    if (!this.createPrixVente || this.createPrixVente <= 0) {
+      this.createError = 'Le prix de vente est obligatoire et doit être positif.';
+      return;
+    }
     this.creating = true;
     this.createError = '';
     const req: CreateVenteRequest = {
-      contactId:        this.createContactId,
-      propertyId:       this.createPropertyId,
-      prixVente:        this.createPrixVente ?? null,
-      dateCompromis:    this.createDateCompromis || null,
-      notes:            this.createNotes || null,
+      contactId:     this.createContactId,
+      propertyId:    this.createPropertyId,
+      prixVente:     this.createPrixVente,
+      dateCompromis: this.createDateCompromis || null,
+      notes:         this.createNotes || null,
     };
     this.svc.create(req).subscribe({
       next: (v) => {

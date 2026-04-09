@@ -127,7 +127,9 @@ public class ProjectGenerationService {
                     for (int p = 1; p <= bCfg.parkingCount(); p++) {
                         String ref = (req.parkingPrefix() + label + String.format("%02d", p)).toUpperCase();
                         Property parking = buildUnit(societeId, project, PropertyType.PARKING,
-                                ref, "Place " + ref, -1, null, null, null, tranche.getId(), immeuble, userId);
+                                ref, "Place " + ref, -1, null, null, null,
+                                null, null, null, null, null,
+                                tranche.getId(), immeuble, userId);
                         propertyRepo.save(parking);
                         unitsByType.merge("PARKING", 1, (a, b) -> a + b);
                         buildingUnitCount++;
@@ -135,7 +137,7 @@ public class ProjectGenerationService {
                     }
                 }
 
-                // Upper floors
+                // Upper floors (or villa rows)
                 for (FloorConfig fCfg : bCfg.floors()) {
                     PropertyType pType = resolvePropertyType(fCfg.propertyType());
                     for (int u = 1; u <= fCfg.unitCount(); u++) {
@@ -146,6 +148,8 @@ public class ProjectGenerationService {
                         Property unit = buildUnit(societeId, project, pType,
                                 ref, resolveTitle(pType, ref), fCfg.floorNumber(),
                                 fCfg.surfaceMin(), fCfg.prixBase(), fCfg.orientation(),
+                                fCfg.landAreaSqm(), fCfg.bedrooms(), fCfg.bathrooms(),
+                                fCfg.hasPool(), fCfg.hasGarden(),
                                 tranche.getId(), immeuble, userId);
                         propertyRepo.save(unit);
                         unitsByType.merge(fCfg.propertyType(), 1, (a, b) -> a + b);
@@ -197,6 +201,8 @@ public class ProjectGenerationService {
     private Property buildUnit(UUID societeId, Project project, PropertyType type,
                                 String ref, String title, int floorNumber,
                                 BigDecimal surface, BigDecimal prix, String orientation,
+                                BigDecimal landAreaSqm, Integer bedrooms, Integer bathrooms,
+                                Boolean hasPool, Boolean hasGarden,
                                 UUID trancheId, Immeuble immeuble, UUID userId) {
         var p = new Property(societeId, project, type, userId);
         p.setReferenceCode(ref.toUpperCase());
@@ -205,6 +211,11 @@ public class ProjectGenerationService {
         p.setSurfaceAreaSqm(surface);
         p.setPrice(prix != null ? prix : BigDecimal.ZERO);
         p.setOrientation(orientation);
+        if (landAreaSqm != null) p.setLandAreaSqm(landAreaSqm);
+        if (bedrooms    != null) p.setBedrooms(bedrooms);
+        if (bathrooms   != null) p.setBathrooms(bathrooms);
+        if (hasPool   != null)   p.setHasPool(hasPool);
+        if (hasGarden != null)   p.setHasGarden(hasGarden);
         p.setTrancheId(trancheId);
         p.setImmeuble(immeuble);
         return p;
@@ -219,6 +230,7 @@ public class ProjectGenerationService {
             case T2          -> "T2 " + ref;
             case T3          -> "T3 " + ref;
             case PARKING     -> "Place de parking " + ref;
+            case VILLA       -> "Villa " + ref;
             default          -> ref;
         };
     }

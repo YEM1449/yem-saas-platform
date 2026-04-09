@@ -30,6 +30,13 @@ export class ProjectCreateWizardComponent {
   // expose Math to template
   readonly Math = Math;
 
+  readonly PROJECT_TYPES = [
+    { value: 'IMMEUBLES', label: 'Projet Immeubles',
+      hint: 'Appartements, Duplex, Commerces — plusieurs bâtiments par tranche' },
+    { value: 'VILLAS',    label: 'Projet Villas',
+      hint: 'Maisons individuelles avec terrain, option piscine / jardin' },
+  ];
+
   readonly PROPERTY_TYPES = [
     { value: 'APPARTEMENT', label: 'Appartement' },
     { value: 'STUDIO',      label: 'Studio' },
@@ -37,7 +44,12 @@ export class ProjectCreateWizardComponent {
     { value: 'T3',          label: 'T3' },
     { value: 'DUPLEX',      label: 'Duplex' },
     { value: 'COMMERCE',    label: 'Local commercial' },
+    { value: 'VILLA',       label: 'Villa' },
   ];
+
+  get isVillaProject(): boolean {
+    return this.step1.get('projectType')?.value === 'VILLAS';
+  }
 
   readonly ORIENTATIONS = [
     'SUD', 'NORD', 'EST', 'OUEST',
@@ -66,6 +78,7 @@ export class ProjectCreateWizardComponent {
 
   // ── Step 1: Project info ───────────────────────────────────────────────────
   step1 = this.fb.group({
+    projectType:        ['IMMEUBLES', Validators.required],
     projectNom:         ['', Validators.required],
     projectDescription: [''],
     projectAdresse:     [''],
@@ -165,19 +178,25 @@ export class ProjectCreateWizardComponent {
 
   /** Called when moving Step 3 → Step 4: auto-populate floor forms. */
   buildFloorForms(): void {
+    const isVilla = this.isVillaProject;
     this.tranches.controls.forEach((t, ti) => {
       (t.get('buildings') as FormArray).controls.forEach((b, bi) => {
         const floorsArray = this.getFloors(ti, bi);
         floorsArray.clear();
-        const floorCount = b.get('floorCount')?.value ?? 5;
-        const hasRdc     = b.get('hasRdc')?.value;
-        const rdcType    = b.get('rdcType')?.value;
-        const rdcCount   = b.get('rdcUnitCount')?.value ?? 1;
-        if (hasRdc && rdcType && rdcType !== 'NONE') {
-          floorsArray.push(this.createFloorGroup(0, rdcType === 'MIXTE' ? 'COMMERCE' : rdcType, rdcCount));
-        }
-        for (let f = 1; f <= floorCount; f++) {
-          floorsArray.push(this.createFloorGroup(f, 'APPARTEMENT', 4));
+        if (isVilla) {
+          // One "row" per building representing identical villas
+          floorsArray.push(this.createFloorGroup(0, 'VILLA', b.get('rdcUnitCount')?.value ?? 1));
+        } else {
+          const floorCount = b.get('floorCount')?.value ?? 5;
+          const hasRdc     = b.get('hasRdc')?.value;
+          const rdcType    = b.get('rdcType')?.value;
+          const rdcCount   = b.get('rdcUnitCount')?.value ?? 1;
+          if (hasRdc && rdcType && rdcType !== 'NONE') {
+            floorsArray.push(this.createFloorGroup(0, rdcType === 'MIXTE' ? 'COMMERCE' : rdcType, rdcCount));
+          }
+          for (let f = 1; f <= floorCount; f++) {
+            floorsArray.push(this.createFloorGroup(f, 'APPARTEMENT', 4));
+          }
         }
       });
     });
@@ -192,6 +211,11 @@ export class ProjectCreateWizardComponent {
       surfaceMax:   [null as number | null],
       prixBase:     [null as number | null],
       orientation:  ['SUD'],
+      landAreaSqm:  [null as number | null],
+      bedrooms:     [null as number | null],
+      bathrooms:    [null as number | null],
+      hasPool:      [false],
+      hasGarden:    [false],
     });
   }
 
@@ -343,6 +367,11 @@ export class ProjectCreateWizardComponent {
             surfaceMax:   f.get('surfaceMax')?.value,
             prixBase:     f.get('prixBase')?.value,
             orientation:  f.get('orientation')?.value,
+            landAreaSqm:  f.get('landAreaSqm')?.value ?? null,
+            bedrooms:     f.get('bedrooms')?.value   ?? null,
+            bathrooms:    f.get('bathrooms')?.value  ?? null,
+            hasPool:      f.get('hasPool')?.value    ?? false,
+            hasGarden:    f.get('hasGarden')?.value  ?? false,
           })),
         })),
       })),
