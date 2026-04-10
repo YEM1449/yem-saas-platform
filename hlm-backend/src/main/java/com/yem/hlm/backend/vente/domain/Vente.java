@@ -57,6 +57,14 @@ public class Vente {
     @JoinColumn(name = "agent_id", nullable = false, foreignKey = @ForeignKey(name = "fk_vente_agent"))
     private User agent;
 
+    /**
+     * Human-readable unique reference (e.g. VTE-2026-1F3-00001).
+     * Generated once on creation by {@link com.yem.hlm.backend.vente.service.VenteRefGenerator}; never mutable.
+     */
+    @Setter
+    @Column(name = "vente_ref", nullable = false, length = 25, updatable = false)
+    private String venteRef;
+
     /** Back-link to the reservation this vente originated from (null if created directly). */
     @Setter
     @Column(name = "reservation_id")

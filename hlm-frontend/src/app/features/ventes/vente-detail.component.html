@@ -16,10 +16,11 @@
   <!-- ── Page Header ──────────────────────────────────────────── -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">
-        Vente
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h1 class="page-title" style="margin:0">Vente</h1>
+        <span class="ref-badge-lg">{{ v.venteRef }}</span>
         <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
-      </h1>
+      </div>
       <p class="page-subtitle">
         Créée le {{ v.createdAt | date:'dd/MM/yyyy' }}
         @if (v.reservationId) { · issue d'une réservation }

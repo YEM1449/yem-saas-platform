@@ -127,3 +127,5 @@ databaseChangeLog:
       file: db/changelog/changes/062-kpi-snapshot.yaml
   - include:
       file: db/changelog/changes/063-vente-contract-status.yaml
+  - include:
+      file: db/changelog/changes/064-vente-ref.yaml

@@ -32,6 +32,8 @@ export interface VenteDocument {
 
 export interface Vente {
   id: string;
+  /** Human-readable unique reference, e.g. VTE-2026-ABC-00001. */
+  venteRef: string;
   societeId: string;
   propertyId: string;
   contactId: string;

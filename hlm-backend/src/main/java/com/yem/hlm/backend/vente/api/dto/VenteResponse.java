@@ -11,6 +11,8 @@ import java.util.UUID;
 
 public record VenteResponse(
         UUID id,
+        /** Human-readable unique reference, e.g. VTE-2026-ABC-00001. */
+        String venteRef,
         UUID societeId,
         UUID propertyId,
         UUID contactId,

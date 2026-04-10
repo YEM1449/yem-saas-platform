@@ -24,26 +24,21 @@ export class VenteCreateComponent implements OnInit {
   loading      = signal(false);
 
   // Form fields
-  prixVente:       number | null = null;
-  reduction:       number | null = null;
-  dateCompromis    = '';
+  prixVente:          number | null = null;
+  dateCompromis       = '';
   dateLivraisonPrevue = '';
-  notes            = '';
+  notes               = '';
 
-  creating  = signal(false);
+  creating    = signal(false);
   createError = signal('');
 
   get reservationId(): string | null {
     return this.route.snapshot.queryParamMap.get('reservationId');
   }
 
-  get effectivePrice(): number | null {
-    const p = this.prefill();
-    if (!p) return this.prixVente;
-    // When converting from reservation: start from suggested, subtract extra reduction
-    const base = p.suggestedPrixVente ?? p.propertyPrice ?? 0;
-    const red  = this.reduction ?? 0;
-    return base - red;
+  /** True when the form can be submitted. */
+  get canSubmit(): boolean {
+    return (this.prixVente ?? 0) >= 0 && this.prixVente !== null;
   }
 
   ngOnInit(): void {
@@ -54,7 +49,8 @@ export class VenteCreateComponent implements OnInit {
     this.reservationSvc.getVentePrefill(resId).subscribe({
       next: (data) => {
         this.prefill.set(data);
-        this.prixVente = data.suggestedPrixVente;
+        // Pre-fill with suggested price (propertyPrice − advance); user can override
+        this.prixVente = data.suggestedPrixVente ?? data.propertyPrice ?? null;
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -71,27 +67,33 @@ export class VenteCreateComponent implements OnInit {
     this.createError.set('');
     const p = this.prefill();
 
-    if (p) {
-      // From reservation path — price is computed server-side, but we can pass override
-      const req: CreateVenteRequest = {
-        reservationId: p.reservationId,
-        reduction:     this.reduction ?? undefined,
-        dateCompromis: this.dateCompromis || null,
-        dateLivraisonPrevue: this.dateLivraisonPrevue || null,
-        notes:         this.notes || null,
-      };
-      this.creating.set(true);
-      this.venteSvc.create(req).subscribe({
-        next: (v) => this.router.navigate(['/app/ventes', v.id]),
-        error: (err: HttpErrorResponse) => {
-          this.creating.set(false);
-          this.createError.set(
-            (err.error as { message?: string })?.message ?? `Erreur (${err.status})`
-          );
-        },
-      });
-    } else {
+    if (!p) {
       this.createError.set('Aucune réservation liée — utilisez le formulaire de la liste des ventes.');
+      return;
     }
+
+    if (this.prixVente === null) {
+      this.createError.set('Le prix de vente est obligatoire.');
+      return;
+    }
+
+    const req: CreateVenteRequest = {
+      reservationId:      p.reservationId,
+      prixVente:          this.prixVente,
+      dateCompromis:      this.dateCompromis || null,
+      dateLivraisonPrevue: this.dateLivraisonPrevue || null,
+      notes:              this.notes || null,
+    };
+
+    this.creating.set(true);
+    this.venteSvc.create(req).subscribe({
+      next: (v) => this.router.navigate(['/app/ventes', v.id]),
+      error: (err: HttpErrorResponse) => {
+        this.creating.set(false);
+        this.createError.set(
+          (err.error as { message?: string })?.message ?? `Erreur (${err.status})`
+        );
+      },
+    });
   }
 }

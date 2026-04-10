@@ -1,3 +1,11 @@
+.ref-badge-lg {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+  font-family: monospace;
+  letter-spacing: 0.03em;
+}
+
 /* ── Detail grid (2 cols on wide) ────────────────────────────── */
 .detail-grid {
   display: grid;
