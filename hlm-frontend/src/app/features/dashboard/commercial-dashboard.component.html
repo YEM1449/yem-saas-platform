@@ -38,59 +38,164 @@
 
     <!-- KPI cards -->
     <section class="kpi-section">
+
       <div class="kpi-card accent-green">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiRevenue' | translate }}</span>
-        <span class="kpi-value">{{ formatAmount(summary.salesTotalAmount) }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M3 16l4-5 3 3 3-5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiRevenue' | translate }}</div>
+          <div class="kpi-value">{{ formatAmount(summary.salesTotalAmount) }}</div>
+        </div>
       </div>
+
       <div class="kpi-card accent-green">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiSales' | translate }}</span>
-        <span class="kpi-value">{{ summary.salesCount }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M14 2H6a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiSales' | translate }}</div>
+          <div class="kpi-value">{{ summary.salesCount }}</div>
+        </div>
       </div>
+
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiAvgSale' | translate }}</span>
-        <span class="kpi-value">{{ formatAmount(summary.avgSaleValue) }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7.5 12.5c0 1.1.9 2 2 2H11a1.5 1.5 0 000-3H9a1.5 1.5 0 010-3h1.5a2 2 0 012 2M10 5.5V7m0 9v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiAvgSale' | translate }}</div>
+          <div class="kpi-value">{{ formatAmount(summary.avgSaleValue) }}</div>
+        </div>
       </div>
+
+      <div class="kpi-card accent-purple">
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/>
+            <rect x="8" y="7" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.7"/>
+            <rect x="14" y="3" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.7"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">CA Pipeline actif</div>
+          <div class="kpi-value">{{ formatAmount(summary.caActivePipeline) }}</div>
+          <div class="kpi-sub">Ventes non livrées</div>
+        </div>
+      </div>
+
+      <div class="kpi-card {{ (summary.tauxAbsorption ?? 0) >= 70 ? 'accent-green' : (summary.tauxAbsorption ?? 0) >= 40 ? 'accent-orange' : 'accent-red' }}">
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Taux d'absorption</div>
+          <div class="kpi-value">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
+          <div class="kpi-sub">{{ summary.stockCommercialise }} biens commercialisés</div>
+        </div>
+      </div>
+
       <div class="kpi-card accent-blue">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiDepositsAmount' | translate }}</span>
-        <span class="kpi-value">{{ formatAmount(summary.depositsTotalAmount) }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2l2.5 5H17l-4 3.5 1.5 5.5L10 13l-4.5 3L7 11 3 7.5h4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiDepositsAmount' | translate }}</div>
+          <div class="kpi-value">{{ formatAmount(summary.depositsTotalAmount) }}</div>
+        </div>
       </div>
+
       <div class="kpi-card accent-blue">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiDeposits' | translate }}</span>
-        <span class="kpi-value">{{ summary.depositsCount }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M7 10l3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiDeposits' | translate }}</div>
+          <div class="kpi-value">{{ summary.depositsCount }}</div>
+        </div>
       </div>
+
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiActiveReservations' | translate }}</span>
-        <span class="kpi-value">{{ summary.activeReservationsCount }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M13 2v4M7 2v4M3 9h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiActiveReservations' | translate }}</div>
+          <div class="kpi-value">{{ summary.activeReservationsCount }}</div>
+        </div>
       </div>
+
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiConversionRate' | translate }}</span>
-        <span class="kpi-value">{{ formatPct(summary.conversionDepositToSaleRate) }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M2 10h4M14 10h4M10 2v4M10 14v4M4.9 4.9l2.8 2.8M12.3 12.3l2.8 2.8M15.1 4.9l-2.8 2.8M7.7 12.3l-2.8 2.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiConversionRate' | translate }}</div>
+          <div class="kpi-value">{{ formatPct(summary.conversionDepositToSaleRate) }}</div>
+        </div>
       </div>
+
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiAvgDaysToSale' | translate }}</span>
-        <span class="kpi-value">{{ summary.avgDaysDepositToSale !== null ? (summary.avgDaysDepositToSale + ' d') : '—' }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiAvgDaysToSale' | translate }}</div>
+          <div class="kpi-value">{{ summary.avgDaysDepositToSale !== null ? (summary.avgDaysDepositToSale + ' j') : '—' }}</div>
+        </div>
       </div>
+
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHolds' | translate }}</span>
-        <span class="kpi-value">{{ summary.propertyHoldsCount }}</span>
+        <div class="kpi-icon">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M3 9.5L10 3l7 6.5V18H13v-4.5h-4V18H3V9.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHolds' | translate }}</div>
+          <div class="kpi-value">{{ summary.propertyHoldsCount }}</div>
+        </div>
       </div>
+
       @if (summary.propertyHoldsExpiringSoon > 0) {
         <div class="kpi-card accent-warning">
-          <span class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHoldsExpiring' | translate }}</span>
-          <span class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</span>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2.5a6 6 0 016 6v3.5l1.5 2h-15L4 12V8.5a6 6 0 016-6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+              <path d="M8 15.5a2 2 0 004 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">{{ 'dashboard.commercial.kpiPropertyHoldsExpiring' | translate }}</div>
+            <div class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</div>
+          </div>
         </div>
       }
-      <!-- New real-estate KPIs -->
-      <div class="kpi-card accent-purple">
-        <span class="kpi-label">CA Pipeline actif</span>
-        <span class="kpi-value">{{ formatAmount(summary.caActivePipeline) }}</span>
-        <span class="kpi-sub">Ventes non livrées</span>
-      </div>
-      <div class="kpi-card {{ (summary.tauxAbsorption ?? 0) >= 70 ? 'accent-green' : (summary.tauxAbsorption ?? 0) >= 40 ? 'accent-orange' : 'accent-red' }}">
-        <span class="kpi-label">Taux d'absorption</span>
-        <span class="kpi-value">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</span>
-        <span class="kpi-sub">{{ summary.stockCommercialise }} biens commercialisés</span>
-      </div>
+
     </section>
 
     <!-- Pipeline funnel (ventes par statut) -->

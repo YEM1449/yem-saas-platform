@@ -16,7 +16,10 @@
   <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
 }
 @if (error()) {
-  <div class="alert alert-error">{{ error() }}</div>
+  <div class="alert alert-error" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-secondary" (click)="reload()">Réessayer</button>
+  </div>
 }
 
 @if (snap(); as s) {

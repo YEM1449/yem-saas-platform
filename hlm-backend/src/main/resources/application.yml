@@ -1,4 +1,10 @@
 spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
   autoconfigure:
     exclude:
       # Exclude Redis auto-configuration globally. LettuceConnectionFactory is provided
