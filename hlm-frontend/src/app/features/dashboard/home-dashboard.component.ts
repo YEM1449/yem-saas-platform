@@ -26,6 +26,16 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  reload(): void {
+    this.error.set('');
+    this.loading.set(true);
+    this.load();
+  }
+
+  private load(): void {
     this.svc.getSnapshot().subscribe({
       next:  s  => { this.snap.set(s); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger le tableau de bord.'); this.loading.set(false); },
