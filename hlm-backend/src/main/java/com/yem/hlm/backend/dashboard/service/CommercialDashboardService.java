@@ -20,6 +20,8 @@ import com.yem.hlm.backend.project.service.ProjectNotFoundException;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.InvalidPeriodException;
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.vente.domain.VenteStatut;
+import com.yem.hlm.backend.vente.repo.VenteRepository;
 import com.yem.hlm.backend.user.repo.UserRepository;
 import com.yem.hlm.backend.user.service.UserNotFoundException;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -70,6 +72,9 @@ public class CommercialDashboardService {
     /** Log a warning when summary generation exceeds this threshold (ms). */
     private static final long SLOW_QUERY_THRESHOLD_MS = 300;
 
+    private static final List<VenteStatut> TERMINAL_STATUTS =
+            List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
+
     private final SaleContractRepository contractRepository;
     private final DepositRepository      depositRepository;
     private final PropertyRepository     propertyRepository;
@@ -77,6 +82,7 @@ public class CommercialDashboardService {
     private final UserRepository         userRepository;
     private final ContactRepository      contactRepository;
     private final ReservationRepository  reservationRepository;
+    private final VenteRepository        venteRepository;
     private final MeterRegistry          meterRegistry;
     private final Timer                  summaryTimer;
 
@@ -88,6 +94,7 @@ public class CommercialDashboardService {
             UserRepository userRepository,
             ContactRepository contactRepository,
             ReservationRepository reservationRepository,
+            VenteRepository venteRepository,
             MeterRegistry meterRegistry) {
         this.contractRepository  = contractRepository;
         this.depositRepository   = depositRepository;
@@ -96,6 +103,7 @@ public class CommercialDashboardService {
         this.userRepository      = userRepository;
         this.contactRepository   = contactRepository;
         this.reservationRepository = reservationRepository;
+        this.venteRepository     = venteRepository;
         this.meterRegistry       = meterRegistry;
         this.summaryTimer = Timer.builder("commercial_dashboard_summary_duration")
                 .description("Time to compute a fresh commercial dashboard summary (cache misses only)")
@@ -294,6 +302,28 @@ public class CommercialDashboardService {
         long propertyHoldsExpiringSoon = reservationRepository
                 .countExpiringBefore(societeId, now48, now48.plusHours(48));
 
+        // 17 ─ Ventes par statut (active pipeline, non-terminal) ───────────────
+        Map<String, Long> ventesParStatut = new java.util.LinkedHashMap<>();
+        venteRepository.countByStatut(societeId, TERMINAL_STATUTS)
+                .forEach(r -> ventesParStatut.put(r[0].toString(), (Long) r[1]));
+
+        // 18 ─ CA pipeline actif ────────────────────────────────────────────────
+        BigDecimal caActivePipeline = venteRepository.sumPrixVente(societeId, TERMINAL_STATUTS);
+        if (caActivePipeline == null) caActivePipeline = BigDecimal.ZERO;
+
+        // 19 ─ Taux d'absorption + stock commercialisé ─────────────────────────
+        long biensActifs   = inventoryByStatus.getOrDefault("ACTIVE",   0L);
+        long biensReserves = inventoryByStatus.getOrDefault("RESERVED", 0L);
+        long biensVendus   = inventoryByStatus.getOrDefault("SOLD",     0L);
+        long stockCommercialise = biensActifs + biensReserves + biensVendus;
+        BigDecimal tauxAbsorption = null;
+        if (stockCommercialise > 0) {
+            tauxAbsorption = BigDecimal.valueOf(biensVendus)
+                    .divide(BigDecimal.valueOf(stockCommercialise), 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(1, RoundingMode.HALF_UP);
+        }
+
         return new CommercialDashboardSummaryDTO(
                 from, to,
                 LocalDateTime.now(),          // asOf
@@ -307,7 +337,9 @@ public class CommercialDashboardService {
                 conversionRate, avgDaysDepositToSale,
                 avgDiscountPercent, maxDiscountPercent, discountByAgent,
                 prospectsBySource,
-                propertyHoldsCount, propertyHoldsExpiringSoon
+                propertyHoldsCount, propertyHoldsExpiringSoon,
+                ventesParStatut, caActivePipeline,
+                tauxAbsorption, stockCommercialise
         );
     }
 

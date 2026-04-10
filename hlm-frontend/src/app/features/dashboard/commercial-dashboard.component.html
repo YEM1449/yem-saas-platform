@@ -80,7 +80,37 @@
           <span class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</span>
         </div>
       }
+      <!-- New real-estate KPIs -->
+      <div class="kpi-card accent-purple">
+        <span class="kpi-label">CA Pipeline actif</span>
+        <span class="kpi-value">{{ formatAmount(summary.caActivePipeline) }}</span>
+        <span class="kpi-sub">Ventes non livrées</span>
+      </div>
+      <div class="kpi-card {{ (summary.tauxAbsorption ?? 0) >= 70 ? 'accent-green' : (summary.tauxAbsorption ?? 0) >= 40 ? 'accent-orange' : 'accent-red' }}">
+        <span class="kpi-label">Taux d'absorption</span>
+        <span class="kpi-value">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</span>
+        <span class="kpi-sub">{{ summary.stockCommercialise }} biens commercialisés</span>
+      </div>
     </section>
+
+    <!-- Pipeline funnel (ventes par statut) -->
+    @if (pipelineEntries.length > 0) {
+      <section class="pipeline-section">
+        <h4 class="section-heading">Pipeline ventes actif</h4>
+        <div class="pipeline-rows">
+          @for (e of pipelineEntries; track e.statut) {
+            <div class="pl-row">
+              <div class="pl-label">{{ statutLabel(e.statut) }}</div>
+              <div class="pl-bar-wrap">
+                <div class="pl-bar" [style.width]="(e.count / totalActivePipeline * 100) + '%'"
+                     [style.background]="statutColor(e.statut)"></div>
+              </div>
+              <div class="pl-count">{{ e.count }}</div>
+            </div>
+          }
+        </div>
+      </section>
+    }
 
     <!-- Charts row 1: daily timelines -->
     <section class="charts-row">

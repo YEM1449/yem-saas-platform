@@ -66,6 +66,14 @@ export interface CommercialDashboardSummary {
   propertyHoldsCount: number;
   /** ACTIVE property holds expiring within the next 48 h. */
   propertyHoldsExpiringSoon: number;
+  /** Active pipeline: statut → count (COMPROMIS, FINANCEMENT, ACTE_NOTARIE). */
+  ventesParStatut: Record<string, number>;
+  /** Total prixVente of non-terminal ventes (committed CA). */
+  caActivePipeline: number;
+  /** Taux d'absorption = SOLD / (SOLD+ACTIVE+RESERVED) ×100. Null when no stock. */
+  tauxAbsorption: number | null;
+  /** Count of ACTIVE + RESERVED + SOLD properties. */
+  stockCommercialise: number;
 }
 
 export interface SalesTableRow {

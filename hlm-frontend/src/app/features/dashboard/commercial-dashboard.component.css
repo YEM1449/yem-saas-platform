@@ -70,9 +70,17 @@
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
-.kpi-card.accent-green  { border-left: 4px solid #43a047; }
-.kpi-card.accent-blue   { border-left: 4px solid #1976d2; }
-.kpi-card.accent-orange { border-left: 4px solid #e65100; }
+.kpi-card.accent-green   { border-left: 4px solid #43a047; }
+.kpi-card.accent-blue    { border-left: 4px solid #1976d2; }
+.kpi-card.accent-orange  { border-left: 4px solid #e65100; }
+.kpi-card.accent-purple  { border-left: 4px solid #7c3aed; }
+.kpi-card.accent-red     { border-left: 4px solid #ef4444; }
+.kpi-card.accent-warning { border-left: 4px solid #f59e0b; }
+.kpi-sub {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-top: 0.2rem;
+}
 .kpi-label {
   font-size: 0.75rem;
   color: #777;
@@ -184,3 +192,62 @@
 .loading { color: #888; font-style: italic; }
 .error   { color: #c62828; }
 .no-data { color: #999; font-size: 0.88rem; }
+
+/* ── Loading spinner ── */
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #888;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Pipeline funnel ── */
+.pipeline-section {
+  margin-bottom: 1.5rem;
+}
+.section-heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+.pipeline-rows { display: flex; flex-direction: column; gap: 8px; }
+.pl-row { display: flex; align-items: center; gap: 10px; }
+.pl-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  width: 120px;
+  flex-shrink: 0;
+}
+.pl-bar-wrap {
+  flex: 1;
+  background: #f3f4f6;
+  border-radius: 4px;
+  height: 10px;
+  overflow: hidden;
+}
+.pl-bar {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 4px;
+  transition: width 0.3s;
+}
+.pl-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  width: 28px;
+  text-align: right;
+  color: #111827;
+}
