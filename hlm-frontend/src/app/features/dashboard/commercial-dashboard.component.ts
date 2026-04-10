@@ -77,6 +77,39 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
     return Object.entries(this.summary.inventoryByType).map(([k, v]) => ({ label: k, value: v }));
   }
 
+  get pipelineEntries(): { statut: string; count: number }[] {
+    if (!this.summary?.ventesParStatut) return [];
+    return Object.entries(this.summary.ventesParStatut)
+      .map(([statut, count]) => ({ statut, count: Number(count) }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  get totalActivePipeline(): number {
+    return this.pipelineEntries.reduce((s, e) => s + e.count, 0);
+  }
+
+  statutLabel(s: string): string {
+    const map: Record<string, string> = {
+      COMPROMIS:     'Compromis',
+      FINANCEMENT:   'Financement',
+      ACTE_NOTARIE:  'Acte notarié',
+      LIVRE:         'Livré',
+      ANNULE:        'Annulé',
+    };
+    return map[s] ?? s;
+  }
+
+  statutColor(s: string): string {
+    const map: Record<string, string> = {
+      COMPROMIS:    '#42a5f5',
+      FINANCEMENT:  '#66bb6a',
+      ACTE_NOTARIE: '#ab47bc',
+      LIVRE:        '#26c6da',
+      ANNULE:       '#ef5350',
+    };
+    return map[s] ?? '#bdbdbd';
+  }
+
   ngOnInit(): void {
     if (this.isAdminOrManager) {
       this.projSvc.list(true).subscribe({ next: p => (this.projects = p) });

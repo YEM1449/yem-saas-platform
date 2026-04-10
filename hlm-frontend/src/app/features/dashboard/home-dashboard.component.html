@@ -1,0 +1,363 @@
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HOME DASHBOARD — role-adaptive snapshot
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Bonjour 👋</h1>
+    <p class="page-subtitle">Votre tableau de bord en temps réel</p>
+  </div>
+  @if (snap(); as s) {
+    <span class="as-of">Mis à jour {{ s.asOf | date:'HH:mm' }}</span>
+  }
+</div>
+
+@if (loading()) {
+  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+}
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (snap(); as s) {
+
+  <!-- ── Row 1: Top KPI cards ──────────────────────────────────────────── -->
+  <div class="kpi-grid">
+
+    <!-- Pipeline CA -->
+    <div class="kpi-card kpi-primary">
+      <div class="kpi-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M3 16l4-5 3 3 3-5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ formatAmount(s.caActivePipeline) }}</div>
+        <div class="kpi-label">CA pipeline actif</div>
+        <div class="kpi-sub">{{ s.activeVentesCount }} vente{{ s.activeVentesCount !== 1 ? 's' : '' }} en cours</div>
+      </div>
+    </div>
+
+    <!-- Taux d'absorption (real-estate core KPI) -->
+    <div class="kpi-card kpi-absorption">
+      <div class="kpi-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">
+          @if (s.tauxAbsorption != null) {
+            {{ s.tauxAbsorption | number:'1.0-1' }}%
+          } @else {
+            —
+          }
+        </div>
+        <div class="kpi-label">Taux d'absorption</div>
+        <div class="absorption-bar-wrap">
+          <div class="absorption-bar">
+            <div class="absorption-fill {{ absorptionClass(s.tauxAbsorption) }}"
+                 [style.width]="absorptionWidth(s.tauxAbsorption)"></div>
+          </div>
+        </div>
+        <div class="kpi-sub">{{ s.biensVendusCount }} vendus / {{ s.stockCommercialise }} commercialisés</div>
+      </div>
+    </div>
+
+    <!-- Prospects actifs -->
+    <div class="kpi-card kpi-prospects">
+      <div class="kpi-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 18c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ s.activeProspectsCount }}</div>
+        <div class="kpi-label">Prospects actifs</div>
+        <div class="kpi-sub">
+          @if (s.activeReservationsCount > 0) {
+            {{ s.activeReservationsCount }} réservation{{ s.activeReservationsCount !== 1 ? 's' : '' }}
+            @if (s.reservationsExpirantBientot > 0) {
+              · <span class="text-warning">{{ s.reservationsExpirantBientot }} expirent bientôt</span>
+            }
+          } @else {
+            Aucune réservation active
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Tâches (agent: personnel; admin: société) -->
+    <div class="kpi-card {{ s.overdueTasksCount > 0 ? 'kpi-alert' : 'kpi-tasks' }}">
+      <div class="kpi-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 9l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ s.openTasksCount }}</div>
+        <div class="kpi-label">Tâches ouvertes</div>
+        <div class="kpi-sub">
+          @if (s.overdueTasksCount > 0) {
+            <span class="text-danger">{{ s.overdueTasksCount }} en retard</span>
+          }
+          @if (isAgent && s.tasksDueTodayCount > 0) {
+            &nbsp;· {{ s.tasksDueTodayCount }} aujourd'hui
+          }
+          @if (s.overdueTasksCount === 0 && s.tasksDueTodayCount === 0) {
+            Tout est à jour ✓
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Row 2: Inventory breakdown + Pipeline funnel ──────────────────── -->
+  <div class="widgets-grid">
+
+    <!-- Inventory widget -->
+    <div class="widget">
+      <div class="widget-header">
+        <span class="widget-title">Stock immobilier</span>
+        <a routerLink="/app/properties" class="widget-link">Voir tout →</a>
+      </div>
+      <div class="inventory-grid">
+        <div class="inv-cell inv-draft">
+          <div class="inv-value">{{ s.biensDraftCount }}</div>
+          <div class="inv-label">Brouillon</div>
+        </div>
+        <div class="inv-cell inv-active">
+          <div class="inv-value">{{ s.biensActifsCount }}</div>
+          <div class="inv-label">Disponible</div>
+        </div>
+        <div class="inv-cell inv-reserved">
+          <div class="inv-value">{{ s.biensReservesCount }}</div>
+          <div class="inv-label">Réservé</div>
+        </div>
+        <div class="inv-cell inv-sold">
+          <div class="inv-value">{{ s.biensVendusCount }}</div>
+          <div class="inv-label">Vendu</div>
+        </div>
+      </div>
+      @if (s.tauxAbsorption != null) {
+        <div class="absorption-section">
+          <div class="absorption-label-row">
+            <span>Taux d'absorption</span>
+            <strong [class]="absorptionClass(s.tauxAbsorption) === 'bar-success' ? 'text-success' : absorptionClass(s.tauxAbsorption) === 'bar-warning' ? 'text-warning' : 'text-danger'">
+              {{ s.tauxAbsorption | number:'1.0-1' }}%
+            </strong>
+          </div>
+          <div class="absorption-bar">
+            <div class="absorption-fill {{ absorptionClass(s.tauxAbsorption) }}"
+                 [style.width]="absorptionWidth(s.tauxAbsorption)"></div>
+          </div>
+          <div class="absorption-hint">
+            @if (s.tauxAbsorption >= 70) {
+              Très bonne commercialisation
+            } @else if (s.tauxAbsorption >= 40) {
+              Commercialisation en cours
+            } @else {
+              Stock important disponible
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Pipeline funnel widget -->
+    <div class="widget">
+      <div class="widget-header">
+        <span class="widget-title">Pipeline ventes</span>
+        <a routerLink="/app/ventes" class="widget-link">Voir tout →</a>
+      </div>
+      @if (s.activeVentesCount === 0) {
+        <div class="widget-empty">Aucune vente active</div>
+      } @else {
+        <div class="pipeline-funnel">
+          @for (entry of pipelineEntries(s.ventesParStatut); track entry.statut) {
+            <div class="funnel-row">
+              <div class="funnel-label">{{ statutLabel(entry.statut) }}</div>
+              <div class="funnel-bar-wrap">
+                <div class="funnel-bar"
+                     [style.width]="(entry.count / s.activeVentesCount * 100) + '%'"
+                     [style.background]="statutColor(entry.statut)"></div>
+              </div>
+              <div class="funnel-count">{{ entry.count }}</div>
+            </div>
+          }
+        </div>
+        <div class="pipeline-total">
+          CA total pipeline : <strong>{{ formatAmount(s.caActivePipeline) }}</strong>
+        </div>
+      }
+      <div class="widget-actions">
+        @if (isAdminOrManager) {
+          <a routerLink="/app/dashboard/commercial" class="btn btn-sm btn-secondary">
+            Tableau de bord complet
+          </a>
+        }
+        <a routerLink="/app/ventes" class="btn btn-sm btn-primary">Nouvelle vente</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Row 3: Recent ventes + Urgent tasks (agent only) ──────────────── -->
+  <div class="widgets-grid">
+
+    <!-- Recent ventes -->
+    <div class="widget widget-tall">
+      <div class="widget-header">
+        <span class="widget-title">Ventes récentes</span>
+        <a routerLink="/app/ventes" class="widget-link">Tout voir →</a>
+      </div>
+      @if (s.recentVentes.length === 0) {
+        <div class="widget-empty">Aucune vente enregistrée</div>
+      } @else {
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Acquéreur</th>
+              <th>Statut</th>
+              <th class="text-right">Prix</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of s.recentVentes; track v.id) {
+              <tr>
+                <td>
+                  <a [routerLink]="['/app/ventes', v.id]" class="link-cell">
+                    {{ v.contactFullName || '—' }}
+                  </a>
+                </td>
+                <td>
+                  <span class="badge {{ statutClass(v.statut) }}">{{ statutLabel(v.statut) }}</span>
+                </td>
+                <td class="text-right td-num">{{ formatAmount(v.prixVente) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Urgent tasks (meaningful for agents; for admin shows open task count) -->
+    <div class="widget widget-tall">
+      <div class="widget-header">
+        <span class="widget-title">
+          @if (isAgent) { Tâches urgentes } @else { Tâches — vue globale }
+        </span>
+        <a routerLink="/app/tasks" class="widget-link">Gérer →</a>
+      </div>
+      @if (isAgent) {
+        @if (s.urgentTasks.length === 0) {
+          <div class="widget-empty">
+            @if (s.openTasksCount === 0) {
+              Aucune tâche en cours ✓
+            } @else {
+              {{ s.openTasksCount }} tâche{{ s.openTasksCount !== 1 ? 's' : '' }} planifiée{{ s.openTasksCount !== 1 ? 's' : '' }}
+            }
+          </div>
+        } @else {
+          <div class="task-list">
+            @for (t of s.urgentTasks; track t.id) {
+              <div class="task-row {{ isOverdue(t.dueDate) ? 'task-overdue' : 'task-today' }}">
+                <div class="task-indicator"></div>
+                <div class="task-content">
+                  <div class="task-title">{{ t.title }}</div>
+                  <div class="task-meta">
+                    @if (isOverdue(t.dueDate)) {
+                      <span class="text-danger">En retard · </span>
+                    }
+                    {{ t.dueDate | date:'dd/MM HH:mm' }}
+                  </div>
+                </div>
+                <a [routerLink]="['/app/tasks', t.id]" class="btn btn-sm btn-ghost">→</a>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <!-- Admin/Manager: compact summary stats -->
+        <div class="admin-task-stats">
+          <div class="ats-row">
+            <span class="ats-label">Tâches ouvertes</span>
+            <span class="ats-value">{{ s.openTasksCount }}</span>
+          </div>
+          <div class="ats-row {{ s.overdueTasksCount > 0 ? 'ats-alert' : '' }}">
+            <span class="ats-label">En retard</span>
+            <span class="ats-value {{ s.overdueTasksCount > 0 ? 'text-danger' : '' }}">
+              {{ s.overdueTasksCount }}
+            </span>
+          </div>
+        </div>
+        <div class="widget-actions">
+          <a routerLink="/app/tasks" class="btn btn-sm btn-secondary">Voir les tâches</a>
+        </div>
+      }
+    </div>
+
+  </div>
+
+  <!-- ── Row 4: Quick access ────────────────────────────────────────────── -->
+  <div class="section-label">Accès rapides</div>
+  <div class="shortcuts">
+    <a routerLink="/app/contacts" class="sc sc-contacts">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M3 18c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Contacts
+    </a>
+    <a routerLink="/app/properties" class="sc sc-properties">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M3 9.5L10 3l7 6.5V18H13v-4.5h-4V18H3V9.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      Biens
+    </a>
+    <a routerLink="/app/reservations" class="sc sc-reservations">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M13 2v4M7 2v4M3 9h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Réservations
+    </a>
+    <a routerLink="/app/ventes" class="sc sc-ventes">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M3 16l4-4 3 3 3-5 4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Ventes
+    </a>
+    <a routerLink="/app/projects" class="sc sc-projects">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="2" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="11" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      Projets
+    </a>
+    <a routerLink="/app/tasks" class="sc sc-tasks">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 9l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      Tâches
+    </a>
+    @if (isAdminOrManager) {
+      <a routerLink="/app/dashboard/commercial" class="sc sc-dashboard">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="11" width="3" height="6" rx="1" fill="currentColor"/>
+          <rect x="8" y="7" width="3" height="10" rx="1" fill="currentColor"/>
+          <rect x="13" y="3" width="3" height="14" rx="1" fill="currentColor"/>
+        </svg>
+        Analytics
+      </a>
+    }
+  </div>
+
+}

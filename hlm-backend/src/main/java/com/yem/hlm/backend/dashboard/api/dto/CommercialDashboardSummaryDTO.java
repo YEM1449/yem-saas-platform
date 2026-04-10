@@ -110,5 +110,31 @@ public record CommercialDashboardSummaryDTO(
         /** Count of ACTIVE property_reservation records for this tenant. */
         long propertyHoldsCount,
         /** Count of ACTIVE property_reservation records expiring within 48 h. */
-        long propertyHoldsExpiringSoon
+        long propertyHoldsExpiringSoon,
+
+        // ── Sales pipeline by statut (non-terminal ventes) ───────────────────
+        /**
+         * Active vente pipeline breakdown: statut → count.
+         * Statuts: COMPROMIS, FINANCEMENT, ACTE_NOTARIE.
+         */
+        Map<String, Long> ventesParStatut,
+
+        /**
+         * Total prixVente for the active (non-terminal) pipeline.
+         * Represents committed CA not yet livré.
+         */
+        BigDecimal caActivePipeline,
+
+        // ── Real-estate absorption metrics ───────────────────────────────────
+        /**
+         * Taux d'absorption = SOLD / (SOLD + ACTIVE + RESERVED) × 100.
+         * Null when no marketable stock exists.
+         */
+        BigDecimal tauxAbsorption,
+
+        /**
+         * Count of ACTIVE + RESERVED + SOLD properties (commercialised stock).
+         * Denominator for the absorption rate.
+         */
+        long stockCommercialise
 ) {}

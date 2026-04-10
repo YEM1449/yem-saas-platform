@@ -43,6 +43,12 @@ public class CacheConfig {
     public static final String RECEIVABLES_DASHBOARD_CACHE = "receivablesDashboard";
 
     /**
+     * Home dashboard snapshot — role-scoped per (societeId, actorId, role).
+     * TTL: 30 s. Max 1 000 entries.
+     */
+    public static final String HOME_DASHBOARD_CACHE = "homeDashboard";
+
+    /**
      * Projects cache — societe-scoped project lists.
      * TTL: 60 s. Max 1 000 entries.
      */
@@ -83,6 +89,13 @@ public class CacheConfig {
         manager.registerCustomCache(RECEIVABLES_DASHBOARD_CACHE,
                 Caffeine.newBuilder()
                         .maximumSize(200)
+                        .expireAfterWrite(30, TimeUnit.SECONDS)
+                        .build());
+
+        // Home dashboard snapshot — 30 s TTL, up to 1 000 entries (per societeId+actor+role)
+        manager.registerCustomCache(HOME_DASHBOARD_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(1_000)
                         .expireAfterWrite(30, TimeUnit.SECONDS)
                         .build());
 
