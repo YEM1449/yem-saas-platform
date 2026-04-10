@@ -162,6 +162,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    /**
+     * Handle invalid business arguments (e.g., computed vente price is negative).
+     * Returns 400 so the frontend can display the server message directly.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ErrorCode.VALIDATION_ERROR,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("Illegal argument on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     // ========== 404 Not Found ==========
 
     @ExceptionHandler({

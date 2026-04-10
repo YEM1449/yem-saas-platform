@@ -100,33 +100,33 @@
         </div>
         <div class="card-body">
 
-          <!-- Reduction -->
+          <!-- Prix de vente -->
           <div class="form-group">
             <label class="form-label">
-              Réduction commerciale (MAD)
-              <span class="form-hint">optionnel</span>
+              Prix de vente (MAD) <span class="required">*</span>
             </label>
+            @if (prefill(); as p) {
+              @if (p.propertyPrice) {
+                <div class="field-hint" style="margin-bottom:4px;color:var(--color-muted,#6b7280);font-size:12px">
+                  Prix catalogue : {{ p.propertyPrice | number:'1.0-0' }} MAD
+                  @if (p.reservationPrice) {
+                    · Avance déjà versée : {{ p.reservationPrice | number:'1.0-0' }} MAD
+                  }
+                </div>
+              }
+            }
             <input class="form-control" type="number" min="0"
-                   [(ngModel)]="reduction" name="reduction"
-                   placeholder="Ex : 50 000"
-                   data-testid="vente-create-reduction" />
+                   [(ngModel)]="prixVente" name="prixVente"
+                   placeholder="Ex : 950 000"
+                   data-testid="vente-create-prix-vente" />
+            @if (prixVente !== null && prixVente < 0) {
+              <span class="form-error">Le prix ne peut pas être négatif.</span>
+            }
           </div>
-
-          <!-- Computed price preview -->
-          @if (effectivePrice !== null && effectivePrice > 0) {
-            <div class="price-preview">
-              Prix de vente final : <strong>{{ effectivePrice | number:'1.0-0' }} MAD</strong>
-            </div>
-          }
-          @if (effectivePrice !== null && effectivePrice <= 0) {
-            <div class="price-preview price-preview--error">
-              Prix invalide — réduction trop élevée
-            </div>
-          }
 
           <!-- Date compromis -->
           <div class="form-group">
-            <label class="form-label">Date de compromis</label>
+            <label class="form-label">Date de compromis <span class="form-hint">optionnel</span></label>
             <input class="form-control" type="date"
                    [(ngModel)]="dateCompromis" name="dateCompromis"
                    data-testid="vente-create-date-compromis" />
@@ -163,7 +163,7 @@
       <a class="btn btn-secondary" routerLink="/app/reservations">Annuler</a>
       <button class="btn btn-primary"
               type="submit"
-              [disabled]="creating() || (effectivePrice !== null && effectivePrice <= 0)"
+              [disabled]="creating() || !canSubmit"
               data-testid="vente-create-submit">
         {{ creating() ? 'Création…' : 'Créer la vente' }}
       </button>

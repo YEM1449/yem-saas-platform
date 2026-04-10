@@ -59,6 +59,7 @@ public class VenteService {
     private final SocieteContextHelper societeCtx;
     private final DateCoherenceValidator dateCoherence;
     private final ApplicationEventPublisher eventPublisher;
+    private final VenteRefGenerator refGenerator;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -71,7 +72,8 @@ public class VenteService {
             PropertyCommercialWorkflowService propertyWorkflow,
             SocieteContextHelper societeCtx,
             DateCoherenceValidator dateCoherence,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            VenteRefGenerator refGenerator) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -83,6 +85,7 @@ public class VenteService {
         this.societeCtx          = societeCtx;
         this.dateCoherence       = dateCoherence;
         this.eventPublisher      = eventPublisher;
+        this.refGenerator        = refGenerator;
     }
 
     // =========================================================================
@@ -138,11 +141,11 @@ public class VenteService {
                 BigDecimal reduction  = request.reduction() != null
                         ? request.reduction() : BigDecimal.ZERO;
                 finalPrice = basePrice.subtract(advance).subtract(reduction);
-                if (finalPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
                     throw new IllegalArgumentException(
                             "Prix de vente calculé invalide : prix du bien (" + basePrice
                             + ") − avance (" + advance + ") − réduction (" + reduction
-                            + ") ≤ 0. Veuillez saisir un prix ou ajuster la réduction.");
+                            + ") est négatif. Veuillez ajuster la réduction.");
                 }
             }
 
@@ -188,6 +191,7 @@ public class VenteService {
         contactRepository.save(contact);
 
         Vente vente = new Vente(societeId, property.getId(), contact, agent);
+        vente.setVenteRef(refGenerator.generate(societeId));
         vente.setReservationId(reservationId);
         vente.setPrixVente(finalPrice);
         vente.setDateCompromis(request.dateCompromis());
@@ -448,7 +452,7 @@ public class VenteService {
         List<VenteDocumentResponse> docs = v.getDocuments().stream()
                 .map(this::toDocumentResponse).toList();
         return new VenteResponse(
-                v.getId(), v.getSocieteId(), v.getPropertyId(),
+                v.getId(), v.getVenteRef(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
                 v.getReservationId(), v.getStatut(), v.getContractStatus(), v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),

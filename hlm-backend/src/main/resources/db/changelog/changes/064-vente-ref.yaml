@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: "064-vente-ref-counter"
+      author: "yem"
+      comment: "Create vente_ref_counter table for per-société sequential vente reference generation"
+      changes:
+        - createTable:
+            tableName: vente_ref_counter
+            remarks: "Atomic per-société sequence counter for human-readable vente references."
+            columns:
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_vente_ref_counter
+                    nullable: false
+              - column:
+                  name: last_seq
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: "064-vente-ref-column"
+      author: "yem"
+      comment: "Add vente_ref column to vente table; backfill existing rows; add unique + index"
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: vente_ref
+                  type: varchar(25)
+                  remarks: "Human-readable reference, e.g. VTE-2026-ABC-00001. Generated on insert."
+
+        - sql:
+            comment: "Backfill existing ventes with placeholder refs"
+            sql: |
+              UPDATE vente v
+              SET vente_ref = sub.vente_ref
+              FROM (
+                SELECT id,
+                  CONCAT(
+                    'VTE-',
+                    EXTRACT(YEAR FROM created_at)::TEXT,
+                    '-SYS-',
+                    LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::TEXT, 5, '0')
+                  ) AS vente_ref
+                FROM vente
+                WHERE vente_ref IS NULL
+              ) sub
+              WHERE v.id = sub.id;
+
+        - addNotNullConstraint:
+            tableName: vente
+            columnName: vente_ref
+            columnDataType: varchar(25)
+
+        - addUniqueConstraint:
+            tableName: vente
+            columnNames: vente_ref
+            constraintName: uq_vente_ref
+
+        - createIndex:
+            tableName: vente
+            indexName: idx_vente_societe_ref
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: vente_ref

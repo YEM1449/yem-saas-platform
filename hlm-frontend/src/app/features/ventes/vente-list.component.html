@@ -64,6 +64,7 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th>Référence</th>
           <th>Acquéreur</th>
           <th>Statut</th>
           <th>Prix de vente</th>
@@ -75,6 +76,9 @@
       <tbody>
         @for (v of filtered; track v.id) {
           <tr>
+            <td>
+              <span class="ref-badge">{{ v.venteRef }}</span>
+            </td>
             <td>
               <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
                 {{ v.contactFullName || '—' }}
