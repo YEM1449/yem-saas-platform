@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.vente.api.dto;
 
+import com.yem.hlm.backend.vente.domain.ContractStatus;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ public record VenteResponse(
         UUID agentId,
         UUID reservationId,
         VenteStatut statut,
+        ContractStatus contractStatus,
         BigDecimal prixVente,
         LocalDate dateCompromis,
         LocalDate dateActeNotarie,

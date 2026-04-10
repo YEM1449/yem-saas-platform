@@ -131,6 +131,7 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th>Réf.</th>
             <th>{{ 'reservations.contact' | translate }}</th>
             <th>{{ 'reservations.property' | translate }}</th>
             <th class="text-right">{{ 'reservations.amount' | translate }}</th>
@@ -144,6 +145,18 @@
           @for (r of filtered; track r.id) {
             <!-- Main row -->
             <tr [class.row-warning]="isExpiringSoon(r)">
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <a class="ref-badge" [routerLink]="['/app/reservations', r.id]"
+                     title="Voir le détail">{{ r.reservationRef }}</a>
+                  <button class="btn btn-ghost btn-sm"
+                          style="padding:2px 6px;font-size:11px"
+                          [title]="copiedRef === r.reservationRef ? 'Copié !' : 'Copier'"
+                          (click)="copyRef(r.reservationRef)">
+                    @if (copiedRef === r.reservationRef) { ✓ } @else { ⎘ }
+                  </button>
+                </div>
+              </td>
               <td>
                 <a class="link-cell" [routerLink]="['/app/contacts', r.contactId]">
                   {{ contactName(r.contactId) }}
@@ -199,7 +212,7 @@
             <!-- Expandable document panel -->
             @if (isDocExpanded(r.id)) {
               <tr class="doc-panel-row">
-                <td colspan="7">
+                <td colspan="8">
                   <div class="doc-panel">
                     <div class="doc-panel-header">
                       <span class="doc-panel-title">

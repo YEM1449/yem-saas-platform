@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: "063-vente-contract-status"
+      author: "yem"
+      comment: "Add contract_status column to vente table for contract generation guard"
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: contract_status
+                  type: varchar(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+                  remarks: "PENDING | GENERATED | SIGNED — guards the Signer action"

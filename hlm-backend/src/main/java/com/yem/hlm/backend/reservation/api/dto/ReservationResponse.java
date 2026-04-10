@@ -10,6 +10,7 @@ import java.util.UUID;
 public record ReservationResponse(
         UUID id,
         UUID societeId,
+        String reservationRef,
         UUID contactId,
         UUID propertyId,
         UUID reservedByUserId,

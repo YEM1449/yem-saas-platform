@@ -109,7 +109,7 @@
                 <td class="cell-truncate">{{ msg.recipient }}</td>
                 <td class="cell-truncate">{{ msg.subject ?? '—' }}</td>
                 <td>{{ msg.sentAt ? (msg.sentAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
-                <td>{{ msg.retriesCount }}</td>
+                <td>{{ msg.retriesCount + 1 }}</td>
               </tr>
             }
           </tbody>

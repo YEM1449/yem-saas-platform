@@ -122,6 +122,22 @@ public class VenteController {
         return venteInviteService.inviteBuyer(id);
     }
 
+    /** Generate the sale contract PDF and transition contractStatus → GENERATED. */
+    @PostMapping("/{id}/contract/generate")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse generateContract(@PathVariable UUID id) {
+        return venteService.generateContract(id);
+    }
+
+    /** Sign the contract — requires contractStatus == GENERATED. */
+    @PostMapping("/{id}/contract/sign")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse signContract(@PathVariable UUID id) {
+        return venteService.signContract(id);
+    }
+
     @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")

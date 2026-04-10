@@ -91,6 +91,16 @@ public class Vente {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    /**
+     * Tracks the contract document lifecycle.
+     * PENDING → GENERATED (after PDF creation) → SIGNED.
+     * The "Signer" action is blocked unless contractStatus == GENERATED.
+     */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contract_status", nullable = false, length = 20)
+    private ContractStatus contractStatus = ContractStatus.PENDING;
+
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("dateEcheance ASC")
     private List<VenteEcheance> echeances = new ArrayList<>();

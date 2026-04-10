@@ -14,6 +14,8 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
 
     Optional<Vente> findBySocieteIdAndId(UUID societeId, UUID id);
 
+    Optional<Vente> findBySocieteIdAndReservationId(UUID societeId, UUID reservationId);
+
     List<Vente> findAllBySocieteIdOrderByCreatedAtDesc(UUID societeId);
 
     List<Vente> findAllBySocieteIdAndStatutOrderByCreatedAtDesc(UUID societeId, VenteStatut statut);
@@ -84,4 +86,22 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Vente> findRecentForAgent(@Param("societeId") UUID societeId,
                                    @Param("agentId") UUID agentId,
                                    org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Returns the number of days between reservation date and vente creation for each
+     * vente linked to a reservation, within the given tranche. Used for délai moyen KPI.
+     * Result rows: [daysBetween (Long)].
+     */
+    @Query(value = """
+            SELECT EXTRACT(DAY FROM (v.created_at - r.reservation_date::timestamp))
+            FROM vente v
+            JOIN property p ON p.id = v.property_id
+            JOIN property_reservation r ON r.id = v.reservation_id
+            WHERE v.societe_id  = :societeId
+              AND p.tranche_id  = :trancheId
+              AND v.reservation_id IS NOT NULL
+            """, nativeQuery = true)
+    List<Object[]> findReservationToVenteDaysBySocieteAndTrancheId(
+            @Param("societeId") UUID societeId,
+            @Param("trancheId") UUID trancheId);
 }

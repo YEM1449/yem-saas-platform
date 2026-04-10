@@ -44,3 +44,20 @@
   font-weight: 600;
   color: #374151;
 }
+
+/* Reservation reference badge — navigation link */
+.ref-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-primary, #6366f1);
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.ref-badge:hover { background: #e0e7ff; }
+.ref-copied { margin-left: 4px; color: #16a34a; }

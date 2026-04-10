@@ -119,3 +119,11 @@ databaseChangeLog:
       file: db/changelog/changes/058-create-vente.yaml
   - include:
       file: db/changelog/changes/059-create-tranche-and-generation.yaml
+  - include:
+      file: db/changelog/changes/060-reservation-ref.yaml
+  - include:
+      file: db/changelog/changes/061-task-indexes-and-performance.yaml
+  - include:
+      file: db/changelog/changes/062-kpi-snapshot.yaml
+  - include:
+      file: db/changelog/changes/063-vente-contract-status.yaml

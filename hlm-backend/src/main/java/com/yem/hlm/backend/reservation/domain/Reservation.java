@@ -71,6 +71,13 @@ public class Reservation {
     @Column(name = "notes")
     private String notes;
 
+    /**
+     * Human-readable unique reference (e.g. RES-2026-1F3-00042).
+     * Generated once on creation by {@link ReservationRefGenerator}; never mutable.
+     */
+    @Column(name = "reservation_ref", nullable = false, length = 25, updatable = false)
+    private String reservationRef;
+
     /** Set when this reservation is converted to a deposit. */
     @Setter
     @Column(name = "converted_deposit_id")
@@ -98,11 +105,13 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Reservation(UUID societeId, Contact contact, UUID propertyId, User reservedByUser) {
+    public Reservation(UUID societeId, Contact contact, UUID propertyId, User reservedByUser,
+                       String reservationRef) {
         this.societeId       = societeId;
         this.contact         = contact;
         this.propertyId      = propertyId;
         this.reservedByUser  = reservedByUser;
+        this.reservationRef  = reservationRef;
         this.reservationDate = LocalDate.now();
         this.status          = ReservationStatus.ACTIVE;
     }

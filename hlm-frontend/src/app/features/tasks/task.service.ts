@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Task, TaskPage, CreateTaskRequest, UpdateTaskRequest, TaskStatus } from './task.model';
+import { DueTask } from '../../core/notification-polling.service';
 
 /**
  * HTTP client for the Tasks API (`/api/tasks`).
@@ -48,5 +49,9 @@ export class TaskService {
 
   byProperty(propertyId: string): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.base}/by-property/${propertyId}`);
+  }
+
+  dueNow(): Observable<DueTask[]> {
+    return this.http.get<DueTask[]>(`${this.base}/due-now`);
   }
 }

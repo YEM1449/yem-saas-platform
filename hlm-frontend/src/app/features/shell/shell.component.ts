@@ -6,11 +6,13 @@ import { SocieteService } from '../superadmin/societes/societe.service';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
+import { NotificationPollingService } from '../../core/notification-polling.service';
+import { NotificationToastComponent } from '../../core/components/notification-toast.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, LanguageSwitcherComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, TranslateModule, LanguageSwitcherComponent, NotificationToastComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
@@ -19,9 +21,17 @@ export class ShellComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private keepAlive = inject(KeepAliveService);
   private societeSvc = inject(SocieteService);
+  private polling = inject(NotificationPollingService);
 
-  ngOnInit(): void { this.keepAlive.start(); }
-  ngOnDestroy(): void { this.keepAlive.stop(); }
+  ngOnInit(): void {
+    this.keepAlive.start();
+    this.polling.start();
+  }
+
+  ngOnDestroy(): void {
+    this.keepAlive.stop();
+    this.polling.stop();
+  }
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';

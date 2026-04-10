@@ -12,6 +12,8 @@ import com.yem.hlm.backend.reservation.domain.Reservation;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
+import com.yem.hlm.backend.common.event.EcheanceChangedEvent;
+import com.yem.hlm.backend.common.event.SaleFinalizedEvent;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
@@ -21,6 +23,7 @@ import com.yem.hlm.backend.vente.domain.*;
 import com.yem.hlm.backend.vente.repo.VenteDocumentRepository;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import com.yem.hlm.backend.vente.repo.VenteRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +57,8 @@ public class VenteService {
     private final ReservationRepository reservationRepository;
     private final PropertyCommercialWorkflowService propertyWorkflow;
     private final SocieteContextHelper societeCtx;
+    private final DateCoherenceValidator dateCoherence;
+    private final ApplicationEventPublisher eventPublisher;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -64,7 +69,9 @@ public class VenteService {
             UserRepository userRepository,
             ReservationRepository reservationRepository,
             PropertyCommercialWorkflowService propertyWorkflow,
-            SocieteContextHelper societeCtx) {
+            SocieteContextHelper societeCtx,
+            DateCoherenceValidator dateCoherence,
+            ApplicationEventPublisher eventPublisher) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -74,6 +81,8 @@ public class VenteService {
         this.reservationRepository = reservationRepository;
         this.propertyWorkflow    = propertyWorkflow;
         this.societeCtx          = societeCtx;
+        this.dateCoherence       = dateCoherence;
+        this.eventPublisher      = eventPublisher;
     }
 
     // =========================================================================
@@ -97,6 +106,7 @@ public class VenteService {
         User agent;
         UUID reservationId = null;
         BigDecimal finalPrice;
+        java.time.LocalDate dateReservation = null;
 
         if (request.reservationId() != null) {
             // ── Convert from reservation ──────────────────────────────────────
@@ -109,7 +119,8 @@ public class VenteService {
                     .findBySocieteIdAndIdAndDeletedAtIsNull(societeId, reservation.getPropertyId())
                     .orElseThrow(() -> new PropertyNotFoundException(reservation.getPropertyId()));
             agent    = reservation.getReservedByUser();
-            reservationId = reservation.getId();
+            reservationId   = reservation.getId();
+            dateReservation = reservation.getReservationDate();
 
             // Mark reservation as closed
             reservation.setStatus(ReservationStatus.CONVERTED_TO_DEPOSIT);
@@ -159,6 +170,14 @@ public class VenteService {
                         "prixVente est obligatoire : le bien n'a pas de prix catalogue défini");
             }
         }
+
+        // Validate date coherence before persisting
+        dateCoherence.validateVenteDates(
+                dateReservation,
+                request.dateCompromis(),
+                null,
+                request.dateLivraisonPrevue()
+        );
 
         // Mark property as SOLD
         propertyWorkflow.sell(property, LocalDateTime.now());
@@ -224,6 +243,13 @@ public class VenteService {
             Contact contact = vente.getContact();
             advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
             contactRepository.save(contact);
+
+            // Publish KPI recomputation event after commit
+            UUID trancheId = propertyRepository
+                    .findBySocieteIdAndId(societeId, vente.getPropertyId())
+                    .map(p -> p.getTrancheId()).orElse(null);
+            eventPublisher.publishEvent(
+                    new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
         }
 
         return toResponse(venteRepository.save(vente));
@@ -237,6 +263,8 @@ public class VenteService {
         UUID societeId = societeCtx.requireSocieteId();
         Vente vente = requireVente(societeId, venteId);
 
+        dateCoherence.validateEcheanceDates(vente.getDateCompromis(), request.dateEcheance(), null);
+
         var echeance = new VenteEcheance(
                 societeId, vente,
                 request.libelle(),
@@ -244,7 +272,14 @@ public class VenteService {
                 request.dateEcheance());
         echeance.setNotes(request.notes());
 
-        return toEcheanceResponse(echeanceRepository.save(echeance));
+        EcheanceResponse saved = toEcheanceResponse(echeanceRepository.save(echeance));
+
+        UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                .map(p -> p.getTrancheId()).orElse(null);
+        eventPublisher.publishEvent(
+                new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
+
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -265,10 +300,62 @@ public class VenteService {
 
         echeance.setStatut(request.statut());
         if (request.datePaiement() != null) {
+            dateCoherence.validateEcheanceDates(null, echeance.getDateEcheance(), request.datePaiement());
             echeance.setDatePaiement(request.datePaiement());
         }
 
-        return toEcheanceResponse(echeanceRepository.save(echeance));
+        EcheanceResponse saved = toEcheanceResponse(echeanceRepository.save(echeance));
+
+        Vente vente = requireVente(societeId, venteId);
+        UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                .map(p -> p.getTrancheId()).orElse(null);
+        eventPublisher.publishEvent(
+                new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
+
+        return saved;
+    }
+
+    // =========================================================================
+    // Contract generation / signing
+    // =========================================================================
+
+    /**
+     * Generates a contract document for the given vente and transitions
+     * {@code contractStatus} to {@link com.yem.hlm.backend.vente.domain.ContractStatus#GENERATED}.
+     *
+     * <p>PDF generation is a placeholder — a real implementation would call a template engine
+     * (e.g., Thymeleaf + openhtmltopdf) and store the result via {@code VenteDocumentService}.
+     *
+     * @return updated VenteResponse with contractStatus = GENERATED
+     */
+    public VenteResponse generateContract(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente    = requireVente(societeId, venteId);
+
+        if (vente.getContractStatus() == com.yem.hlm.backend.vente.domain.ContractStatus.SIGNED) {
+            throw new InvalidVenteTransitionException(vente.getStatut(), vente.getStatut());
+        }
+
+        // TODO: invoke PDF template engine and store document via addDocument()
+        // For now we mark the status so the UI unlocks the Sign button.
+        vente.setContractStatus(com.yem.hlm.backend.vente.domain.ContractStatus.GENERATED);
+        return toResponse(venteRepository.save(vente));
+    }
+
+    /**
+     * Marks the vente contract as SIGNED.
+     * Requires {@code contractStatus == GENERATED}; throws {@link ContractNotGeneratedException} otherwise.
+     */
+    public VenteResponse signContract(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente    = requireVente(societeId, venteId);
+
+        if (vente.getContractStatus() != com.yem.hlm.backend.vente.domain.ContractStatus.GENERATED) {
+            throw new ContractNotGeneratedException(venteId);
+        }
+
+        vente.setContractStatus(com.yem.hlm.backend.vente.domain.ContractStatus.SIGNED);
+        return toResponse(venteRepository.save(vente));
     }
 
     // =========================================================================
@@ -363,7 +450,7 @@ public class VenteService {
         return new VenteResponse(
                 v.getId(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
-                v.getReservationId(), v.getStatut(), v.getPrixVente(),
+                v.getReservationId(), v.getStatut(), v.getContractStatus(), v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
                 v.getNotes(), echeances, docs,
