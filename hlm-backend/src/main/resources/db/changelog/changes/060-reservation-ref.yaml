@@ -36,16 +36,22 @@ databaseChangeLog:
                   remarks: "Human-readable reference, e.g. RES-2026-ABC-00001. Generated on insert."
 
         - sql:
-            comment: "Backfill existing reservations with placeholder refs"
+            comment: "Backfill existing reservations with placeholder refs (CTE to avoid window-function-in-UPDATE restriction)"
             sql: |
-              UPDATE property_reservation
-              SET reservation_ref = CONCAT(
-                'RES-',
-                EXTRACT(YEAR FROM created_at)::TEXT,
-                '-SYS-',
-                LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::TEXT, 5, '0')
-              )
-              WHERE reservation_ref IS NULL;
+              UPDATE property_reservation pr
+              SET reservation_ref = sub.reservation_ref
+              FROM (
+                SELECT id,
+                  CONCAT(
+                    'RES-',
+                    EXTRACT(YEAR FROM created_at)::TEXT,
+                    '-SYS-',
+                    LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::TEXT, 5, '0')
+                  ) AS reservation_ref
+                FROM property_reservation
+                WHERE reservation_ref IS NULL
+              ) sub
+              WHERE pr.id = sub.id;
 
         - addNotNullConstraint:
             tableName: property_reservation
