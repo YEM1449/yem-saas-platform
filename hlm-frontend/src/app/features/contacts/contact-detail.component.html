@@ -213,6 +213,9 @@
       @if (reservationError) {
         <p class="error">{{ reservationError }}</p>
       }
+      @if (convertReservationError) {
+        <p class="error">{{ convertReservationError }}</p>
+      }
       @if (reservationSuccess) {
         <p class="success">{{ reservationSuccess }}</p>
       }
@@ -291,8 +294,14 @@
                         title="Documents de réservation">Docs</button>
                 @if (r.status === 'ACTIVE') {
                   <button class="btn btn-sm btn-outline" (click)="cancelReservation(r.id)">Annuler</button>
-                  <button class="btn btn-sm btn-primary" (click)="convertReservationToDeposit(r)">
+                  <button class="btn btn-sm btn-secondary" (click)="convertReservationToDeposit(r)">
                     → Acompte
+                  </button>
+                  <button class="btn btn-sm btn-primary"
+                          [disabled]="convertingReservationId === r.id"
+                          (click)="convertReservationToVente(r)"
+                          title="Convertir directement en vente">
+                    {{ convertingReservationId === r.id ? '…' : '→ Vente' }}
                   </button>
                 }
               </td>

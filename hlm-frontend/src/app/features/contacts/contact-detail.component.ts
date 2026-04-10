@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
@@ -33,6 +33,7 @@ export class ContactDetailComponent implements OnInit {
   private reservSvc    = inject(ReservationService);
   private venteSvc     = inject(VenteService);
   private route        = inject(ActivatedRoute);
+  private router       = inject(Router);
 
   contact: Contact | null = null;
   loading = true;
@@ -83,6 +84,9 @@ export class ContactDetailComponent implements OnInit {
   /** IDs of reservation rows whose document panel is expanded. */
   expandedReservationDocs = new Set<string>();
   creatingReservation = false;
+  /** Reservation → Vente direct conversion. */
+  convertingReservationId: string | null = null;
+  convertReservationError = '';
 
   // ── Deposits ───────────────────────────────────────────────────────────────
   deposits: Deposit[] = [];
@@ -383,6 +387,22 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
         this.reservationError = body?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
+  convertReservationToVente(r: Reservation): void {
+    this.convertingReservationId = r.id;
+    this.convertReservationError = '';
+    this.venteSvc.create({ reservationId: r.id }).subscribe({
+      next: vente => {
+        this.convertingReservationId = null;
+        this.router.navigate(['/app/ventes', vente.id]);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.convertingReservationId = null;
+        const body = err.error as ErrorResponse | null;
+        this.convertReservationError = body?.message ?? `Erreur (${err.status})`;
       },
     });
   }
