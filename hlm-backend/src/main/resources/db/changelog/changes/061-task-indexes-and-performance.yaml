@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: "061-task-indexes-and-performance"
+      author: "yem"
+      comment: "Performance indexes for task queries — composite index on (societe_id, assigned_to, status) and partial index on due tasks"
+      changes:
+        - createIndex:
+            tableName: task
+            indexName: idx_task_societe_assignee_status
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: assignee_id
+              - column:
+                  name: status
+
+        - sql:
+            comment: "Partial index on open/in-progress tasks with a due date (for due-now polling)"
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_task_due_open
+                ON task (societe_id, due_date)
+                WHERE status NOT IN ('DONE', 'CANCELED') AND due_date IS NOT NULL;

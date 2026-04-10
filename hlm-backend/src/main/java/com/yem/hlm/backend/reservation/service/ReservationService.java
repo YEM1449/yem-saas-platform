@@ -16,18 +16,23 @@ import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.reservation.api.dto.ConvertReservationToDepositRequest;
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
+import com.yem.hlm.backend.reservation.api.dto.ReservationDetailResponse;
 import com.yem.hlm.backend.reservation.api.dto.ReservationResponse;
+import com.yem.hlm.backend.reservation.api.dto.VentePrefillResponse;
 import com.yem.hlm.backend.reservation.domain.Reservation;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.common.event.PropertyInterestEvent;
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.tranche.repo.TrancheRepository;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import com.yem.hlm.backend.vente.repo.VenteRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +48,9 @@ public class ReservationService {
     private final DepositService depositService;
     private final CommercialAuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReservationRefGenerator refGenerator;
+    private final VenteRepository venteRepository;
+    private final TrancheRepository trancheRepository;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -52,7 +60,10 @@ public class ReservationService {
             PropertyCommercialWorkflowService propertyWorkflow,
             DepositService depositService,
             CommercialAuditService auditService,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            ReservationRefGenerator refGenerator,
+            VenteRepository venteRepository,
+            TrancheRepository trancheRepository
     ) {
         this.reservationRepository = reservationRepository;
         this.contactRepository = contactRepository;
@@ -62,6 +73,9 @@ public class ReservationService {
         this.depositService = depositService;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.refGenerator = refGenerator;
+        this.venteRepository = venteRepository;
+        this.trancheRepository = trancheRepository;
     }
 
     /**
@@ -98,7 +112,8 @@ public class ReservationService {
                 ? req.expiryDate()
                 : LocalDateTime.now().plusDays(7);
 
-        Reservation reservation = new Reservation(societeId, contact, req.propertyId(), agent);
+        String ref = refGenerator.generate(societeId);
+        Reservation reservation = new Reservation(societeId, contact, req.propertyId(), agent, ref);
         reservation.setReservationPrice(req.reservationPrice());
         reservation.setExpiryDate(expiry);
         reservation.setNotes(req.notes());
@@ -124,6 +139,91 @@ public class ReservationService {
         Reservation r = reservationRepository.findBySocieteIdAndId(societeId, id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
         return toResponse(r);
+    }
+
+    /** Returns an enriched reservation detail with contact, property, and linked vente info. */
+    public ReservationDetailResponse getDetail(UUID id) {
+        UUID societeId = requireSocieteId();
+        Reservation r = reservationRepository.findBySocieteIdAndId(societeId, id)
+                .orElseThrow(() -> new ReservationNotFoundException(id));
+
+        var contact  = r.getContact();
+        var property = propertyRepository.findBySocieteIdAndId(societeId, r.getPropertyId()).orElse(null);
+
+        String trancheNom = null;
+        if (property != null && property.getTrancheId() != null) {
+            trancheNom = trancheRepository.findBySocieteIdAndId(societeId, property.getTrancheId())
+                    .map(t -> t.getNom()).orElse(null);
+        }
+
+        UUID linkedVenteId = venteRepository.findBySocieteIdAndReservationId(societeId, id)
+                .map(v -> v.getId()).orElse(null);
+
+        return new ReservationDetailResponse(
+                r.getId(), r.getSocieteId(), r.getReservationRef(), r.getStatus(),
+                r.getReservationDate(), r.getExpiryDate(), r.getReservationPrice(), r.getNotes(),
+                r.getConvertedDepositId(), r.getCreatedAt(), r.getUpdatedAt(),
+                // Contact summary
+                contact.getId(), contact.getFullName(), contact.getPhone(), contact.getEmail(),
+                // Property summary
+                property != null ? property.getId() : null,
+                property != null ? property.getTitle() : null,
+                property != null ? property.getReferenceCode() : null,
+                property != null ? property.getPrice() : null,
+                property != null ? property.getProjectName() : null,
+                trancheNom,
+                property != null ? property.getImmeubleName() : null,
+                // Linked vente
+                linkedVenteId
+        );
+    }
+
+    /**
+     * Returns prefill data for the "Create Vente from Reservation" form.
+     * Only ACTIVE reservations can be used for prefill.
+     */
+    public VentePrefillResponse getVentePrefill(UUID id) {
+        UUID societeId = requireSocieteId();
+        Reservation r = reservationRepository.findBySocieteIdAndId(societeId, id)
+                .orElseThrow(() -> new ReservationNotFoundException(id));
+
+        if (r.getStatus() != ReservationStatus.ACTIVE) {
+            throw new InvalidReservationStateException(
+                    "Only ACTIVE reservations can be used for vente prefill (current: " + r.getStatus() + ")");
+        }
+
+        var contact  = r.getContact();
+        var property = propertyRepository.findBySocieteIdAndId(societeId, r.getPropertyId()).orElse(null);
+
+        String trancheNom = null;
+        if (property != null && property.getTrancheId() != null) {
+            trancheNom = trancheRepository.findBySocieteIdAndId(societeId, property.getTrancheId())
+                    .map(t -> t.getNom()).orElse(null);
+        }
+
+        BigDecimal propertyPrice    = (property != null) ? property.getPrice() : null;
+        BigDecimal reservationPrice = r.getReservationPrice();
+        BigDecimal suggested = null;
+        if (propertyPrice != null) {
+            suggested = (reservationPrice != null)
+                    ? propertyPrice.subtract(reservationPrice)
+                    : propertyPrice;
+        }
+
+        return new VentePrefillResponse(
+                r.getId(),
+                r.getReservationRef(),
+                reservationPrice,
+                contact.getId(),
+                contact.getFullName(),
+                property != null ? property.getId() : null,
+                property != null ? property.getTitle() : null,
+                property != null ? property.getReferenceCode() : null,
+                propertyPrice,
+                property != null ? property.getProjectName() : null,
+                trancheNom,
+                suggested
+        );
     }
 
     /**
@@ -288,6 +388,7 @@ public class ReservationService {
         return new ReservationResponse(
                 r.getId(),
                 r.getSocieteId(),
+                r.getReservationRef(),
                 r.getContact().getId(),
                 r.getPropertyId(),
                 r.getReservedByUser().getId(),

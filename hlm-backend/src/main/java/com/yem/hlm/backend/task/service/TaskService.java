@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.task.service;
 
 import com.yem.hlm.backend.task.api.dto.CreateTaskRequest;
+import com.yem.hlm.backend.task.api.dto.DueTaskDto;
 import com.yem.hlm.backend.task.api.dto.TaskResponse;
 import com.yem.hlm.backend.task.api.dto.UpdateTaskRequest;
 import com.yem.hlm.backend.task.domain.Task;
@@ -82,6 +83,20 @@ public class TaskService {
     public void delete(UUID societeId, UUID taskId) {
         Task task = requireTask(societeId, taskId);
         taskRepository.delete(task);
+    }
+
+    /**
+     * Returns tasks that are overdue or due within the next 24 hours for the given assignee.
+     * Used by the frontend notification polling service.
+     */
+    public List<DueTaskDto> listDueNow(UUID societeId, UUID assigneeId) {
+        LocalDateTime horizon = LocalDateTime.now().plusHours(24);
+        return taskRepository
+                .findUrgent(societeId, assigneeId, horizon,
+                        org.springframework.data.domain.PageRequest.of(0, 50))
+                .stream()
+                .map(DueTaskDto::from)
+                .toList();
     }
 
     private Task requireTask(UUID societeId, UUID taskId) {

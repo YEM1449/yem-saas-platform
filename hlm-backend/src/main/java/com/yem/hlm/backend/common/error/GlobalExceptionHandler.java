@@ -5,6 +5,7 @@ import com.yem.hlm.backend.auth.service.LoginRateLimitedException;
 import com.yem.hlm.backend.auth.service.UnauthorizedException;
 import com.yem.hlm.backend.common.ratelimit.RateLimitExceededException;
 import com.yem.hlm.backend.contact.service.*;
+import com.yem.hlm.backend.contact.service.ClientIncompleteException;
 import com.yem.hlm.backend.immeuble.service.ImmeubleNameExistsException;
 import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.societe.CrossSocieteAccessException;
@@ -44,6 +45,8 @@ import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
+import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
@@ -59,7 +62,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -849,6 +851,65 @@ public class GlobalExceptionHandler {
         );
         log.warn("Business rule violation on {}: {} — {}", request.getRequestURI(), ex.getErrorCode(), ex.getMessage());
         return ResponseEntity.status(status).body(error);
+    }
+
+    // ========== Contract generation errors (409) ==========
+
+    @ExceptionHandler(ContractNotGeneratedException.class)
+    public ResponseEntity<ErrorResponse> handleContractNotGenerated(
+            ContractNotGeneratedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.CONTRACT_NOT_GENERATED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Date coherence errors (422) ==========
+
+    @ExceptionHandler(DateCoherenceException.class)
+    public ResponseEntity<ErrorResponse> handleDateCoherence(
+            DateCoherenceException ex,
+            HttpServletRequest request
+    ) {
+        List<com.yem.hlm.backend.common.error.FieldError> fieldErrors = ex.getViolations().stream()
+                .map(v -> new com.yem.hlm.backend.common.error.FieldError(v.field(), v.message()))
+                .toList();
+        ErrorResponse error = ErrorResponse.withFieldErrors(
+                422,
+                "Unprocessable Entity",
+                ErrorCode.DATE_COHERENCE_VIOLATION,
+                "Incohérence de dates dans le dossier vente",
+                request.getRequestURI(),
+                fieldErrors
+        );
+        return ResponseEntity.status(422).body(error);
+    }
+
+    // ========== Client completeness errors (422) ==========
+
+    @ExceptionHandler(ClientIncompleteException.class)
+    public ResponseEntity<ErrorResponse> handleClientIncomplete(
+            ClientIncompleteException ex,
+            HttpServletRequest request
+    ) {
+        List<com.yem.hlm.backend.common.error.FieldError> fieldErrors = ex.getMissingFields().stream()
+                .map(f -> new com.yem.hlm.backend.common.error.FieldError(f, "Ce champ est requis pour cette étape"))
+                .toList();
+        ErrorResponse error = ErrorResponse.withFieldErrors(
+                422,
+                "Unprocessable Entity",
+                ErrorCode.CLIENT_INCOMPLETE,
+                "Le dossier client est incomplet. Champs manquants : " + ex.getMissingFields(),
+                request.getRequestURI(),
+                fieldErrors
+        );
+        return ResponseEntity.status(422).body(error);
     }
 
     // ========== 500 Internal Server Error ==========

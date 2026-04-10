@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: "060-reservation-ref-counter"
+      author: "yem"
+      comment: "Create reservation_ref_counter table for per-société sequential ref generation"
+      changes:
+        - createTable:
+            tableName: reservation_ref_counter
+            remarks: "Atomic per-société sequence counter for human-readable reservation references."
+            columns:
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_res_ref_counter
+                    nullable: false
+              - column:
+                  name: last_seq
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: "060-reservation-ref-column"
+      author: "yem"
+      comment: "Add reservation_ref column to property_reservation; backfill existing rows; add unique + index"
+      changes:
+        - addColumn:
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: reservation_ref
+                  type: varchar(25)
+                  remarks: "Human-readable reference, e.g. RES-2026-ABC-00001. Generated on insert."
+
+        - sql:
+            comment: "Backfill existing reservations with placeholder refs (CTE to avoid window-function-in-UPDATE restriction)"
+            sql: |
+              UPDATE property_reservation pr
+              SET reservation_ref = sub.reservation_ref
+              FROM (
+                SELECT id,
+                  CONCAT(
+                    'RES-',
+                    EXTRACT(YEAR FROM created_at)::TEXT,
+                    '-SYS-',
+                    LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::TEXT, 5, '0')
+                  ) AS reservation_ref
+                FROM property_reservation
+                WHERE reservation_ref IS NULL
+              ) sub
+              WHERE pr.id = sub.id;
+
+        - addNotNullConstraint:
+            tableName: property_reservation
+            columnName: reservation_ref
+            columnDataType: varchar(25)
+
+        - addUniqueConstraint:
+            tableName: property_reservation
+            columnNames: reservation_ref
+            constraintName: uq_reservation_ref
+
+        - createIndex:
+            tableName: property_reservation
+            indexName: idx_preser_societe_ref
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: reservation_ref

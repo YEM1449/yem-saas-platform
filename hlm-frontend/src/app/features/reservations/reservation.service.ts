@@ -8,6 +8,7 @@ export type ReservationStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'CONVERTED_
 export interface Reservation {
   id: string;
   societeId: string;
+  reservationRef: string;
   contactId: string;
   propertyId: string;
   reservedByUserId: string;
@@ -35,6 +36,52 @@ export interface ConvertToDepositRequest {
   depositDate?: string;
   reference?: string;
   dueDate?: string;
+}
+
+/** Mirrors ReservationDetailResponse from the backend. */
+export interface ReservationDetail {
+  id: string;
+  societeId: string;
+  reservationRef: string;
+  status: ReservationStatus;
+  reservationDate: string;
+  expiryDate: string;
+  reservationPrice: number | null;
+  notes: string | null;
+  convertedDepositId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Contact
+  contactId: string;
+  contactFullName: string;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  // Property
+  propertyId: string | null;
+  propertyTitle: string | null;
+  propertyReferenceCode: string | null;
+  propertyPrice: number | null;
+  projectNom: string | null;
+  trancheNom: string | null;
+  immeubleNom: string | null;
+  // Linked vente
+  linkedVenteId: string | null;
+}
+
+/** Mirrors VentePrefillResponse from the backend. */
+export interface VentePrefillData {
+  reservationId: string;
+  reservationRef: string;
+  reservationPrice: number | null;
+  contactId: string;
+  contactFullName: string;
+  propertyId: string | null;
+  propertyTitle: string | null;
+  propertyReferenceCode: string | null;
+  propertyPrice: number | null;
+  projectNom: string | null;
+  trancheNom: string | null;
+  suggestedPrixVente: number | null;
 }
 
 /** Mirrors the backend DepositResponse record. */
@@ -73,6 +120,14 @@ export class ReservationService {
 
   get(id: string): Observable<Reservation> {
     return this.http.get<Reservation>(`${this.apiUrl}/api/reservations/${id}`);
+  }
+
+  getDetail(id: string): Observable<ReservationDetail> {
+    return this.http.get<ReservationDetail>(`${this.apiUrl}/api/reservations/${id}/detail`);
+  }
+
+  getVentePrefill(id: string): Observable<VentePrefillData> {
+    return this.http.get<VentePrefillData>(`${this.apiUrl}/api/reservations/${id}/vente-prefill`);
   }
 
   create(req: CreateReservationRequest): Observable<Reservation> {

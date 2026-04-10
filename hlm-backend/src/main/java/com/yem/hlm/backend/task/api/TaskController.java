@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.task.api;
 
 import com.yem.hlm.backend.task.api.dto.CreateTaskRequest;
+import com.yem.hlm.backend.task.api.dto.DueTaskDto;
 import com.yem.hlm.backend.task.api.dto.TaskResponse;
 import com.yem.hlm.backend.task.api.dto.UpdateTaskRequest;
 import com.yem.hlm.backend.task.domain.TaskStatus;
@@ -98,5 +99,16 @@ public class TaskController {
     @GetMapping("/by-property/{propertyId}")
     public List<TaskResponse> byProperty(@PathVariable UUID propertyId) {
         return taskService.listByProperty(societeContextHelper.requireSocieteId(), propertyId);
+    }
+
+    /**
+     * Returns tasks overdue or due within the next 24 h for the current user.
+     * Used by the frontend notification polling service (polls every 60 s).
+     */
+    @GetMapping("/due-now")
+    public List<DueTaskDto> dueNow() {
+        UUID societeId = societeContextHelper.requireSocieteId();
+        UUID userId    = societeContextHelper.requireUserId();
+        return taskService.listDueNow(societeId, userId);
     }
 }

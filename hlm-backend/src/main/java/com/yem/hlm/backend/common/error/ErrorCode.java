@@ -143,6 +143,15 @@ public enum ErrorCode {
     // Document errors (404)
     DOCUMENT_NOT_FOUND,         // 404 — document not found in société
 
+    // Contact completeness errors (422)
+    CLIENT_INCOMPLETE,          // 422 — contact is missing required fields for the requested pipeline stage
+
+    // Date coherence errors (422)
+    DATE_COHERENCE_VIOLATION,   // 422 — date sequence rule violated (e.g. reservation > compromis)
+
+    // Contract generation errors (409)
+    CONTRACT_NOT_GENERATED,     // 409 — contract must be generated before signing
+
     // Server errors (500)
     INTERNAL_ERROR
 }

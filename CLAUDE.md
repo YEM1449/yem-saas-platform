@@ -122,8 +122,12 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 057 | Schema hardening — reservation FK, RLS on immeuble, optimistic lock version |
 | 058 | Vente pipeline — vente, vente_echeance, vente_document tables + RLS |
 | 059 | Tranche + generation — tranche table, immeuble.tranche_id, property.tranche_id + orientation, project location fields (adresse/ville/code_postal), project_generation_config (JSONB), project_generation_log |
+| 060 | Reservation ref counter — reservation_ref_counter table, reservation_ref column on property_reservation |
+| 061 | Task indexes — composite index (societe_id, assignee_id, status), partial index on due_date for open tasks |
+| 062 | KPI snapshot — kpi_snapshot table with RLS, unique(societe_id, tranche_id) |
+| 063 | Vente contract status — contract_status column on vente table |
 
-Next available changeset: **060**
+Next available changeset: **064**
 
 ## CI Pipeline Map
 
@@ -184,6 +188,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Wave 8: Pipeline UX + Activation redesign ✅ (items below)
 - Wave 9: Contact status lifecycle + Dashboard homepage ✅ (items below)
 - Wave 10: Tranche + Bulk Project Generation ✅ (items below)
+- Wave 11: UX + Performance Sprint (F1–F10) ✅ (items below)
 
 ### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
 
@@ -231,6 +236,21 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 | Frontend: 5-step `ProjectCreateWizardComponent` (project info → tranches → buildings → lots → validation) | `features/projects/project-create-wizard/` |
 | Frontend: `/app/projects/new` route wired; "Créer un projet" button now navigates to wizard | `app.routes.ts`, `projects.component.ts` |
 | E2E: `project-wizard.spec.ts` — wizard navigation, step validation, full happy-path, duplicate name error | `e2e/project-wizard.spec.ts` |
+
+### Wave 11 — UX + Performance Sprint (complete, 2026-04-10)
+
+| Item | Files |
+|---|---|
+| F5: Reservation unique ref (RES-YEAR-CODE-SEQ05) | `changeset 060`, `ReservationRefGenerator`, `Reservation.reservationRef`, `ReservationResponse.reservationRef` |
+| F1: Contact validation groups (RESERVATION/VENTE stages) | `ContactValidationStage`, `ContactCompletenessService.validateForStage()`, `ClientIncompleteException` |
+| F4: Date coherence enforcement | `DateCoherenceValidator`, `DateCoherenceException`, wired in `VenteService.create()`, `addEcheance()`, `updateEcheanceStatut()` |
+| F8: Task DB indexes + due-now endpoint | `changeset 061`, `GET /api/tasks/due-now` → `DueTaskDto` |
+| F10: Outbox attempt counter starts at 1 | `outbox.component.html` — `retriesCount + 1` |
+| F3: KPI auto-update via Spring events | `KpiSnapshot`, `KpiSnapshotRepository`, `SaleFinalizedEvent`, `EcheanceChangedEvent`, `KpiComputationService`, `GET /api/kpis/tranche/{id}`, `changeset 062` |
+| F2: Contract generation guard before signing | `ContractStatus` enum, `changeset 063`, `VenteService.generateContract()` / `signContract()`, `ContractNotGeneratedException`, `POST /api/ventes/{id}/contract/generate` + `sign` |
+| F6: Reservation detail page | `ReservationDetailResponse`, `GET /api/reservations/{id}/detail`, `ReservationDetailComponent`, route `/app/reservations/:id` |
+| F7: Create sale from reservation | `VentePrefillResponse`, `GET /api/reservations/{id}/vente-prefill`, `VenteCreateComponent`, route `/app/ventes/new?reservationId=` |
+| F9: Persistent task due notifications | `NotificationPollingService` (60s interval, `GET /api/tasks/due-now`), `NotificationToastComponent` (max 3, amber border, "Marquer fait") mounted in `ShellComponent` |
 
 ### Tranche State Machine (as-implemented)
 ```

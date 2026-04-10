@@ -3,7 +3,9 @@ package com.yem.hlm.backend.reservation.api;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.reservation.api.dto.ConvertReservationToDepositRequest;
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
+import com.yem.hlm.backend.reservation.api.dto.ReservationDetailResponse;
 import com.yem.hlm.backend.reservation.api.dto.ReservationResponse;
+import com.yem.hlm.backend.reservation.api.dto.VentePrefillResponse;
 import com.yem.hlm.backend.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,6 +39,18 @@ public class ReservationController {
     @GetMapping("/{id}")
     public ReservationResponse get(@PathVariable UUID id) {
         return reservationService.get(id);
+    }
+
+    /** Enriched reservation detail — includes contact, property, and linked vente info. */
+    @GetMapping("/{id}/detail")
+    public ReservationDetailResponse getDetail(@PathVariable UUID id) {
+        return reservationService.getDetail(id);
+    }
+
+    /** Prefill data for the "Create Vente from Reservation" form — ACTIVE reservations only. */
+    @GetMapping("/{id}/vente-prefill")
+    public VentePrefillResponse getVentePrefill(@PathVariable UUID id) {
+        return reservationService.getVentePrefill(id);
     }
 
     /** List reservations for the current société; optional {@code ?contactId=} filter. */

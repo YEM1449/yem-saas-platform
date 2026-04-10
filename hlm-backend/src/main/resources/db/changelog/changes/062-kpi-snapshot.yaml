@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: "062-kpi-snapshot"
+      author: "yem"
+      comment: "KPI snapshot table — stores latest computed commercial KPIs per tranche"
+      changes:
+        - createTable:
+            tableName: kpi_snapshot
+            remarks: "Latest computed KPI values per (societe_id, tranche_id). One row per pair; upserted after each triggering event."
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_kpi_snapshot
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tranche_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: taux_commercialisation
+                  type: numeric(5,2)
+                  remarks: "% of units sold or reserved"
+              - column:
+                  name: montant_encaisse
+                  type: numeric(15,2)
+                  remarks: "Total amount received from PAID echeances"
+              - column:
+                  name: taux_recouvrement
+                  type: numeric(5,2)
+                  remarks: "montant_encaisse / total_du * 100"
+              - column:
+                  name: solde_restant
+                  type: numeric(15,2)
+                  remarks: "Total unpaid echeances"
+              - column:
+                  name: delai_moyen_vente_jours
+                  type: int
+                  remarks: "Average days from reservation to vente creation"
+              - column:
+                  name: computed_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: kpi_snapshot
+            columnNames: societe_id, tranche_id
+            constraintName: uq_kpi_snapshot_societe_tranche
+
+        - createIndex:
+            tableName: kpi_snapshot
+            indexName: idx_kpi_snapshot_societe_tranche
+            columns:
+              - column:
+                  name: societe_id
+              - column:
+                  name: tranche_id
+
+        - sql:
+            comment: "Enable RLS on kpi_snapshot"
+            sql: |
+              ALTER TABLE kpi_snapshot ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY kpi_snapshot_isolation ON kpi_snapshot
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );

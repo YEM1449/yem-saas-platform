@@ -1,0 +1,172 @@
+<!-- Back nav -->
+<div class="back-nav">
+  @if (prefill(); as p) {
+    <a class="back-link" [routerLink]="['/app/reservations', p.reservationId]">
+      ← Retour à la réservation {{ p.reservationRef }}
+    </a>
+  } @else {
+    <a class="back-link" routerLink="/app/ventes">← Ventes</a>
+  }
+</div>
+
+<div class="page-header">
+  <h1 class="page-title">Créer une vente</h1>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+}
+
+<!-- Prefill error -->
+@if (prefillError()) {
+  <div class="alert alert-error">{{ prefillError() }}</div>
+}
+
+@if (!loading() && !prefillError()) {
+  <form (ngSubmit)="submit()" #f="ngForm">
+    <div class="create-grid">
+
+      <!-- ── Read-only context (from reservation) ──────────────────── -->
+      @if (prefill(); as p) {
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Réservation source</h3>
+            <span class="badge badge-success">ACTIVE</span>
+          </div>
+          <div class="card-body">
+            <dl class="detail-list">
+              <dt>Référence</dt>
+              <dd class="mono">{{ p.reservationRef }}</dd>
+              @if (p.reservationPrice) {
+                <dt>Avance versée</dt>
+                <dd>{{ p.reservationPrice | number:'1.0-0' }} MAD</dd>
+              }
+            </dl>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Client</h3>
+          </div>
+          <div class="card-body">
+            <dl class="detail-list">
+              <dt>Nom</dt>
+              <dd>{{ p.contactFullName }}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Bien</h3>
+          </div>
+          <div class="card-body">
+            <dl class="detail-list">
+              @if (p.propertyReferenceCode) {
+                <dt>Référence</dt>
+                <dd>{{ p.propertyReferenceCode }}</dd>
+              }
+              @if (p.propertyTitle) {
+                <dt>Désignation</dt>
+                <dd>{{ p.propertyTitle }}</dd>
+              }
+              @if (p.projectNom) {
+                <dt>Projet</dt>
+                <dd>{{ p.projectNom }}</dd>
+              }
+              @if (p.trancheNom) {
+                <dt>Tranche</dt>
+                <dd>{{ p.trancheNom }}</dd>
+              }
+              @if (p.propertyPrice) {
+                <dt>Prix catalogue</dt>
+                <dd>{{ p.propertyPrice | number:'1.0-0' }} MAD</dd>
+              }
+              @if (p.suggestedPrixVente !== null) {
+                <dt>Prix suggéré</dt>
+                <dd class="suggested-price">{{ p.suggestedPrixVente | number:'1.0-0' }} MAD</dd>
+              }
+            </dl>
+          </div>
+        </div>
+      }
+
+      <!-- ── Editable sale fields ────────────────────────────────────── -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Conditions de vente</h3>
+        </div>
+        <div class="card-body">
+
+          <!-- Reduction -->
+          <div class="form-group">
+            <label class="form-label">
+              Réduction commerciale (MAD)
+              <span class="form-hint">optionnel</span>
+            </label>
+            <input class="form-control" type="number" min="0"
+                   [(ngModel)]="reduction" name="reduction"
+                   placeholder="Ex : 50 000"
+                   data-testid="vente-create-reduction" />
+          </div>
+
+          <!-- Computed price preview -->
+          @if (effectivePrice !== null && effectivePrice > 0) {
+            <div class="price-preview">
+              Prix de vente final : <strong>{{ effectivePrice | number:'1.0-0' }} MAD</strong>
+            </div>
+          }
+          @if (effectivePrice !== null && effectivePrice <= 0) {
+            <div class="price-preview price-preview--error">
+              Prix invalide — réduction trop élevée
+            </div>
+          }
+
+          <!-- Date compromis -->
+          <div class="form-group">
+            <label class="form-label">Date de compromis</label>
+            <input class="form-control" type="date"
+                   [(ngModel)]="dateCompromis" name="dateCompromis"
+                   data-testid="vente-create-date-compromis" />
+          </div>
+
+          <!-- Date livraison prévue -->
+          <div class="form-group">
+            <label class="form-label">Date de livraison prévue <span class="form-hint">optionnel</span></label>
+            <input class="form-control" type="date"
+                   [(ngModel)]="dateLivraisonPrevue" name="dateLivraisonPrevue"
+                   data-testid="vente-create-livraison" />
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label class="form-label">Notes <span class="form-hint">optionnel</span></label>
+            <textarea class="form-control" rows="3"
+                      [(ngModel)]="notes" name="notes"
+                      placeholder="Remarques, conditions particulières…"
+                      data-testid="vente-create-notes"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /create-grid -->
+
+    <!-- Form actions -->
+    @if (createError()) {
+      <div class="alert alert-error">{{ createError() }}</div>
+    }
+
+    <div class="form-actions">
+      <a class="btn btn-secondary" routerLink="/app/reservations">Annuler</a>
+      <button class="btn btn-primary"
+              type="submit"
+              [disabled]="creating() || (effectivePrice !== null && effectivePrice <= 0)"
+              data-testid="vente-create-submit">
+        {{ creating() ? 'Création…' : 'Créer la vente' }}
+      </button>
+    </div>
+  </form>
+}

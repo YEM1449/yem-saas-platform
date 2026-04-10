@@ -229,4 +229,22 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
             ORDER BY p.project.name ASC, p.immeuble.nom ASC
             """)
     List<Object[]> inventoryByImmeubleAndStatus(@Param("societeId") UUID societeId);
+
+    // =========================================================================
+    // KPI — per-tranche counts (used by KpiComputationService)
+    // =========================================================================
+
+    long countBySocieteIdAndTrancheIdAndDeletedAtIsNull(UUID societeId, UUID trancheId);
+
+    @Query("""
+            SELECT COUNT(p) FROM Property p
+            WHERE p.societeId  = :societeId
+              AND p.trancheId  = :trancheId
+              AND p.status    IN :statuses
+              AND p.deletedAt IS NULL
+            """)
+    long countBySocieteIdAndTrancheIdAndStatusIn(
+            @Param("societeId")  UUID societeId,
+            @Param("trancheId")  UUID trancheId,
+            @Param("statuses")   java.util.List<com.yem.hlm.backend.property.domain.PropertyStatus> statuses);
 }

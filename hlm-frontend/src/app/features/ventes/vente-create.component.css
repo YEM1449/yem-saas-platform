@@ -1,0 +1,102 @@
+/* ── Back nav ──────────────────────────────────────────────────── */
+.back-nav { margin-bottom: 16px; }
+.back-link {
+  font-size: 13px;
+  color: var(--c-text-muted, #94a3b8);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--c-primary, #3b82f6); }
+
+/* ── Page header ───────────────────────────────────────────────── */
+.page-header { margin-bottom: 20px; }
+.page-title  { font-size: 20px; font-weight: 700; margin: 0; }
+
+/* ── Grid ──────────────────────────────────────────────────────── */
+.create-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 720px) {
+  .create-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Card ──────────────────────────────────────────────────────── */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text, #1e293b);
+  margin: 0;
+}
+
+.card-body { padding: 16px 20px; }
+
+/* ── Definition list ───────────────────────────────────────────── */
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.detail-list dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.detail-list dd {
+  font-size: 14px;
+  color: var(--c-text, #1e293b);
+  margin: 0;
+}
+
+.mono { font-family: 'Courier New', monospace; font-weight: 600; }
+
+.suggested-price {
+  color: var(--c-primary, #3b82f6);
+  font-weight: 700;
+}
+
+/* ── Form ──────────────────────────────────────────────────────── */
+.form-group   { margin-bottom: 14px; }
+.form-hint    { color: var(--c-text-muted, #94a3b8); font-weight: 400; font-size: 12px; margin-left: 4px; }
+
+/* ── Price preview ─────────────────────────────────────────────── */
+.price-preview {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  color: var(--c-text, #1e293b);
+}
+
+.price-preview--error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* ── Actions ───────────────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}

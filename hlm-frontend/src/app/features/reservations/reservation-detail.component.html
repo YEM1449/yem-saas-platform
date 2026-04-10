@@ -1,0 +1,220 @@
+<!-- Back nav -->
+<div class="back-nav">
+  <a class="back-link" routerLink="/app/reservations">
+    ← Réservations
+  </a>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (detail(); as d) {
+  <!-- ── Page header ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <span class="ref-badge-lg">{{ d.reservationRef }}</span>
+      <span [class]="badgeClass(d.status)" style="margin-left:10px">{{ d.status }}</span>
+    </div>
+    <div class="header-actions">
+      @if (canWrite && d.status === 'ACTIVE' && !d.linkedVenteId) {
+        <button class="btn btn-primary"
+                (click)="goConvertToVente()"
+                title="Créer une vente à partir de cette réservation">
+          Convertir en Vente →
+        </button>
+        <button class="btn btn-danger btn-sm"
+                [disabled]="cancelling()"
+                (click)="cancelReservation()">
+          {{ cancelling() ? 'Annulation…' : 'Annuler la réservation' }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (cancelError()) {
+    <div class="alert alert-error">{{ cancelError() }}</div>
+  }
+
+  <!-- ── Vente liée ──────────────────────────────────────────────── -->
+  @if (d.linkedVenteId) {
+    <div class="card mb-16">
+      <div class="card-body" style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1">
+          <p style="margin:0;font-weight:600;font-size:14px">Vente associée</p>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--c-text-muted)">Cette réservation a été convertie en vente.</p>
+        </div>
+        <a class="btn btn-secondary btn-sm" [routerLink]="['/app/ventes', d.linkedVenteId]">
+          Voir la vente →
+        </a>
+      </div>
+    </div>
+  }
+
+  <!-- ── Detail grid ─────────────────────────────────────────────── -->
+  <div class="detail-grid">
+
+    <!-- Contact card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Client</h3>
+        <a class="btn btn-ghost btn-sm" [routerLink]="['/app/contacts', d.contactId]">
+          Voir le contact →
+        </a>
+      </div>
+      <div class="card-body">
+        <dl class="detail-list">
+          <dt>Nom</dt>
+          <dd>{{ d.contactFullName }}</dd>
+          @if (d.contactPhone) {
+            <dt>Téléphone</dt>
+            <dd>{{ d.contactPhone }}</dd>
+          }
+          @if (d.contactEmail) {
+            <dt>Email</dt>
+            <dd>{{ d.contactEmail }}</dd>
+          }
+        </dl>
+      </div>
+    </div>
+
+    <!-- Property card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Bien</h3>
+        @if (d.propertyId) {
+          <a class="btn btn-ghost btn-sm" [routerLink]="['/app/properties', d.propertyId]">
+            Voir le bien →
+          </a>
+        }
+      </div>
+      <div class="card-body">
+        @if (d.propertyId) {
+          <dl class="detail-list">
+            @if (d.propertyReferenceCode) {
+              <dt>Référence</dt>
+              <dd>{{ d.propertyReferenceCode }}</dd>
+            }
+            @if (d.propertyTitle) {
+              <dt>Désignation</dt>
+              <dd>{{ d.propertyTitle }}</dd>
+            }
+            @if (d.projectNom) {
+              <dt>Projet</dt>
+              <dd>{{ d.projectNom }}</dd>
+            }
+            @if (d.trancheNom) {
+              <dt>Tranche</dt>
+              <dd>{{ d.trancheNom }}</dd>
+            }
+            @if (d.immeubleNom) {
+              <dt>Immeuble</dt>
+              <dd>{{ d.immeubleNom }}</dd>
+            }
+            @if (d.propertyPrice) {
+              <dt>Prix du bien</dt>
+              <dd>{{ d.propertyPrice | number:'1.0-0' }} MAD</dd>
+            }
+          </dl>
+        } @else {
+          <p class="td-muted" style="margin:0">Bien introuvable</p>
+        }
+      </div>
+    </div>
+
+    <!-- Reservation info card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Réservation</h3>
+      </div>
+      <div class="card-body">
+        <dl class="detail-list">
+          <dt>Statut</dt>
+          <dd><span [class]="badgeClass(d.status)">{{ d.status }}</span></dd>
+          <dt>Date</dt>
+          <dd>{{ d.reservationDate | date:'dd/MM/yyyy' }}</dd>
+          <dt>Expiration</dt>
+          <dd>{{ d.expiryDate | date:'dd/MM/yyyy HH:mm' }}</dd>
+          @if (d.reservationPrice) {
+            <dt>Avance</dt>
+            <dd>{{ d.reservationPrice | number:'1.0-0' }} MAD</dd>
+          }
+          @if (d.convertedDepositId) {
+            <dt>Dépôt lié</dt>
+            <dd>
+              <a class="link-cell" [routerLink]="['/app/deposits', d.convertedDepositId]">
+                Voir le dépôt
+              </a>
+            </dd>
+          }
+          <dt>Créé le</dt>
+          <dd>{{ d.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Notes card -->
+    @if (d.notes) {
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Notes</h3>
+        </div>
+        <div class="card-body">
+          <p class="notes-text">{{ d.notes }}</p>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- ── Timeline ────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Chronologie</h3>
+    </div>
+    <div class="card-body">
+      <ol class="timeline">
+        <li class="timeline-item timeline-item--done">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <span class="timeline-label">Réservation créée</span>
+            <span class="timeline-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </li>
+        @if (d.linkedVenteId) {
+          <li class="timeline-item timeline-item--done">
+            <div class="timeline-dot timeline-dot--vente"></div>
+            <div class="timeline-content">
+              <span class="timeline-label">Convertie en vente</span>
+              <a class="link-cell timeline-date" [routerLink]="['/app/ventes', d.linkedVenteId]">
+                Voir la vente →
+              </a>
+            </div>
+          </li>
+        } @else if (d.status === 'ACTIVE') {
+          <li class="timeline-item timeline-item--pending">
+            <div class="timeline-dot timeline-dot--pending"></div>
+            <div class="timeline-content">
+              <span class="timeline-label">En attente de conversion</span>
+              <span class="timeline-date">Expire le {{ d.expiryDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </li>
+        } @else {
+          <li class="timeline-item timeline-item--closed">
+            <div class="timeline-dot timeline-dot--closed"></div>
+            <div class="timeline-content">
+              <span class="timeline-label">{{ d.status === 'CANCELLED' ? 'Annulée' : 'Expirée' }}</span>
+            </div>
+          </li>
+        }
+      </ol>
+    </div>
+  </div>
+}

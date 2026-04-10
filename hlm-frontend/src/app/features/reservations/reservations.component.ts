@@ -197,4 +197,13 @@ export class ReservationsComponent implements OnInit {
     const diff = new Date(r.expiryDate).getTime() - Date.now();
     return diff > 0 && diff < 48 * 60 * 60 * 1000;
   }
+
+  copiedRef: string | null = null;
+
+  copyRef(ref: string): void {
+    navigator.clipboard.writeText(ref).then(() => {
+      this.copiedRef = ref;
+      setTimeout(() => { this.copiedRef = null; }, 2000);
+    });
+  }
 }
