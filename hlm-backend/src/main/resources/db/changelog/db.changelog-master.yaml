@@ -129,3 +129,5 @@ databaseChangeLog:
       file: db/changelog/changes/063-vente-contract-status.yaml
   - include:
       file: db/changelog/changes/064-vente-ref.yaml
+  - include:
+      file: db/changelog/changes/065-project-professional-fields.yaml

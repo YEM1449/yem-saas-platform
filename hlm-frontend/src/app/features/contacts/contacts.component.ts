@@ -53,8 +53,8 @@ export class ContactsComponent implements OnInit {
   searchQuery = '';
   showLost    = false;
 
-  /** 'list' = address-book table | 'pipeline' = kanban board */
-  viewMode: 'list' | 'pipeline' = 'list';
+  /** 'list' = table | 'cards' = contact card grid | 'pipeline' = kanban board */
+  viewMode: 'list' | 'cards' | 'pipeline' = 'list';
 
   /** Modal state */
   showModal   = false;
@@ -160,7 +160,7 @@ export class ContactsComponent implements OnInit {
 
   // ── View toggle ─────────────────────────────────────────────
 
-  setView(mode: 'list' | 'pipeline'): void {
+  setView(mode: 'list' | 'cards' | 'pipeline'): void {
     this.viewMode = mode;
     localStorage.setItem('contacts_view', mode);
   }
@@ -175,7 +175,7 @@ export class ContactsComponent implements OnInit {
 
   ngOnInit(): void {
     const saved = localStorage.getItem('contacts_view');
-    if (saved === 'pipeline' || saved === 'list') this.viewMode = saved;
+    if (saved === 'pipeline' || saved === 'list' || saved === 'cards') this.viewMode = saved;
     this.load();
     this.loadPrivacyNotice();
   }

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -21,6 +23,13 @@ public record ProjectGenerationRequest(
         @Size(max = 500)  String projectAdresse,
         @NotBlank @Size(max = 100) String projectVille,
         @Size(max = 20)   String projectCodePostal,
+
+        // ── Optional professional fields ───────────────────────────────────
+        @Size(max = 200) String maitreOuvrage,
+        LocalDate dateOuvertureCommercialisation,
+        BigDecimal tvaTaux,
+        BigDecimal surfaceTerrainM2,
+        BigDecimal prixMoyenM2Cible,
 
         // ── Building naming (shared across ALL tranches) ───────────────────
         /** LETTRE (A,B,C…) | CHIFFRE (1,2,3…) | CUSTOM */

@@ -84,6 +84,12 @@ export class ProjectCreateWizardComponent {
     projectAdresse:     [''],
     projectVille:       ['', Validators.required],
     projectCodePostal:  [''],
+    // Professional fields
+    maitreOuvrage:                    [''],
+    dateOuvertureCommercialisation:   [''],
+    tvaTaux:                          [null as number | null],
+    surfaceTerrainM2:                 [null as number | null],
+    prixMoyenM2Cible:                 [null as number | null],
   });
 
   // ── Step 2: Tranches ───────────────────────────────────────────────────────
@@ -336,6 +342,11 @@ export class ProjectCreateWizardComponent {
       projectAdresse:     s1.projectAdresse || null,
       projectVille:       s1.projectVille,
       projectCodePostal:  s1.projectCodePostal || null,
+      maitreOuvrage:                  s1.maitreOuvrage || null,
+      dateOuvertureCommercialisation: s1.dateOuvertureCommercialisation || null,
+      tvaTaux:                        s1.tvaTaux ?? null,
+      surfaceTerrainM2:               s1.surfaceTerrainM2 ?? null,
+      prixMoyenM2Cible:               s1.prixMoyenM2Cible ?? null,
       buildingNaming:     s3.buildingNaming,
       buildingPrefix:     s3.buildingPrefix,
       unitRefPattern:     s3.unitRefPattern,

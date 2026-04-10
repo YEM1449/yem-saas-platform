@@ -87,6 +87,11 @@ public class ProjectGenerationService {
         project.setAdresse(req.projectAdresse());
         project.setVille(req.projectVille());
         project.setCodePostal(req.projectCodePostal());
+        project.setMaitreOuvrage(req.maitreOuvrage());
+        project.setDateOuvertureCommercialisation(req.dateOuvertureCommercialisation());
+        project.setTvaTaux(req.tvaTaux());
+        project.setSurfaceTerrainM2(req.surfaceTerrainM2());
+        project.setPrixMoyenM2Cible(req.prixMoyenM2Cible());
         project = projectRepo.saveAndFlush(project);
 
         // 3. Generate tranches → buildings → units

@@ -3,6 +3,8 @@ package com.yem.hlm.backend.project.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -76,6 +78,26 @@ public class Project {
 
     @Setter @Column(name = "logo_original_filename", length = 255)
     private String logoOriginalFilename;
+
+    /** Maître d'ouvrage (project owner / developer name). */
+    @Setter @Column(name = "maitre_ouvrage", length = 200)
+    private String maitreOuvrage;
+
+    /** Date d'ouverture commercialisation. */
+    @Setter @Column(name = "date_ouverture_commercialisation")
+    private LocalDate dateOuvertureCommercialisation;
+
+    /** TVA applicable au projet (%). */
+    @Setter @Column(name = "tva_taux", precision = 5, scale = 2)
+    private BigDecimal tvaTaux;
+
+    /** Surface totale du terrain (m²). */
+    @Setter @Column(name = "surface_terrain_m2", precision = 12, scale = 2)
+    private BigDecimal surfaceTerrainM2;
+
+    /** Prix moyen au m² cible (MAD/m²). */
+    @Setter @Column(name = "prix_moyen_m2_cible", precision = 12, scale = 2)
+    private BigDecimal prixMoyenM2Cible;
 
     @PrePersist
     void onCreate() {
