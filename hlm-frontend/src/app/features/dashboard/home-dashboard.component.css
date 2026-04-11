@@ -873,3 +873,30 @@
 .text-warning { color: #f59e0b; }
 .text-danger  { color: #ef4444; }
 .text-muted   { color: var(--text-muted, #9ca3af); }
+
+/* ── Owner KPI section ──────────────────────────────────────────────────── */
+.owner-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.owner-kpi-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;transition:box-shadow .15s ease}
+.owner-kpi-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.owner-kpi-label{font-size:11px;font-weight:600;color:var(--text-muted,#6b7280);text-transform:uppercase;letter-spacing:.3px}
+.owner-kpi-value{font-size:24px;font-weight:700;color:var(--text,#111827);line-height:1.1}
+.owner-kpi-value.owner-kpi-good{color:#10b981}
+.owner-kpi-value.owner-kpi-warn{color:#f59e0b}
+.owner-kpi-value.owner-kpi-bad{color:#ef4444}
+.owner-kpi-empty{color:var(--text-muted,#9ca3af);font-weight:500}
+.owner-kpi-hint{font-size:11px;color:var(--text-muted,#6b7280)}
+.leaderboard-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:10px;overflow:hidden}
+.leaderboard-head{padding:12px 16px;border-bottom:1px solid var(--border,#e5e7eb);background:linear-gradient(90deg,#fef3c7 0%,#fff 100%)}
+.leaderboard-title{font-size:13px;font-weight:700;color:#92400e}
+.leaderboard-table{width:100%;border-collapse:collapse}
+.leaderboard-table th,.leaderboard-table td{padding:10px 16px;text-align:left;font-size:13px}
+.leaderboard-table th{font-weight:600;color:var(--text-muted,#6b7280);text-transform:uppercase;font-size:11px;letter-spacing:.3px;border-bottom:1px solid var(--border,#e5e7eb)}
+.leaderboard-table tbody tr{border-bottom:1px solid var(--border,#f3f4f6)}
+.leaderboard-table tbody tr:last-child{border-bottom:none}
+.leaderboard-table tbody tr:nth-child(1) .lb-rank::before{content:"🥇 "}
+.leaderboard-table tbody tr:nth-child(2) .lb-rank::before{content:"🥈 "}
+.leaderboard-table tbody tr:nth-child(3) .lb-rank::before{content:"🥉 "}
+.lb-rank{width:60px;font-weight:600;color:var(--text-muted,#6b7280)}
+.lb-name{font-weight:600;color:var(--text,#111827)}
+.lb-ventes{width:80px;color:var(--text-muted,#6b7280)}
+.lb-ca{text-align:right;font-weight:600;color:#10b981;font-variant-numeric:tabular-nums}

@@ -35,4 +35,19 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
     long countExpiringBefore(@Param("societeId") UUID societeId,
                              @Param("now") LocalDateTime now,
                              @Param("horizon") LocalDateTime horizon);
+
+    /**
+     * Count reservations created in [from, to). Used by the home dashboard
+     * conversion-rate KPI (ventes 30d / reservations 30d).
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Reservation r
+            WHERE r.societeId = :societeId
+              AND r.createdAt >= :from
+              AND r.createdAt <  :to
+            """)
+    long countCreatedInPeriod(@Param("societeId") UUID societeId,
+                              @Param("from") LocalDateTime from,
+                              @Param("to") LocalDateTime to);
 }

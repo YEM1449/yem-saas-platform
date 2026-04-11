@@ -205,6 +205,55 @@ public class HomeDashboardService {
                     .toList();
         }
 
+        // ── 11. Owner KPIs (cancellation rate, avg ticket, conversion, encaissé, leaderboard) ──
+        LocalDateTime ninetyDaysAgo = now.minusDays(90);
+        LocalDateTime thirtyDaysAgo = now.minusDays(30);
+
+        long ventes90d  = venteRepo.countCreatedInPeriod(societeId, ninetyDaysAgo, now);
+        long annule90d  = venteRepo.countByStatutInPeriod(societeId, VenteStatut.ANNULE, ninetyDaysAgo, now);
+        BigDecimal cancellationRate90d = ventes90d > 0
+                ? BigDecimal.valueOf(annule90d)
+                        .divide(BigDecimal.valueOf(ventes90d), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP)
+                : null;
+
+        BigDecimal avgTicketLivre = venteRepo.avgPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        if (avgTicketLivre == null) avgTicketLivre = BigDecimal.ZERO;
+
+        long ventes30d       = venteRepo.countCreatedInPeriod(societeId, thirtyDaysAgo, now);
+        long reservations30d = reservationRepo.countCreatedInPeriod(societeId, thirtyDaysAgo, now);
+        BigDecimal conversionRate30d = reservations30d > 0
+                ? BigDecimal.valueOf(ventes30d)
+                        .divide(BigDecimal.valueOf(reservations30d), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP)
+                : null;
+
+        BigDecimal encaisseMois = echeanceRepo.sumPaidInPeriod(
+                societeId,
+                currentMonth.atDay(1),
+                currentMonth.plusMonths(1).atDay(1));
+        if (encaisseMois == null) encaisseMois = BigDecimal.ZERO;
+
+        List<HomeDashboardDTO.AgentLeaderboardRow> topAgents = List.of();
+        if (!isAgent) {
+            List<Object[]> rawAgents = venteRepo.topAgentsByCA(societeId, ninetyDaysAgo, now, PageRequest.of(0, 5));
+            topAgents = rawAgents.stream()
+                    .map(r -> {
+                        String prenom    = r[1] != null ? r[1].toString() : "";
+                        String nomFamille = r[2] != null ? r[2].toString() : "";
+                        String fullName  = (prenom + " " + nomFamille).trim();
+                        if (fullName.isEmpty()) fullName = "—";
+                        return new HomeDashboardDTO.AgentLeaderboardRow(
+                                (UUID) r[0],
+                                fullName,
+                                (BigDecimal) r[3],
+                                ((Number) r[4]).longValue());
+                    })
+                    .toList();
+        }
+
         return new HomeDashboardDTO(
                 now,
                 activeVentesCount, caActivePipeline, ventesParStatut,
@@ -215,6 +264,7 @@ public class HomeDashboardService {
                 activeProspectsCount, activeReservationsCount, expirant,
                 ventesStalleesCount,
                 openTasks, overdueTasks, todayTasks,
+                cancellationRate90d, avgTicketLivre, conversionRate30d, encaisseMois, topAgents,
                 recentVentes, urgentTasks
         );
     }

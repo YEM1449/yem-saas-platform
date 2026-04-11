@@ -62,8 +62,8 @@ export class TasksComponent implements OnInit {
       next: (page) => {
         if (seq !== this.loadSeq) return; // Superseded by onSaved or a newer load
         this.tasks = page.content;
-        this.totalPages = page.page.totalPages;
-        this.totalElements = page.page.totalElements;
+        this.totalPages = page.totalPages;
+        this.totalElements = page.totalElements;
         this.loading = false;
       },
       error: (err: HttpErrorResponse) => {

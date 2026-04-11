@@ -34,9 +34,22 @@ export interface HomeDashboard {
   openTasksCount: number;
   overdueTasksCount: number;
   tasksDueTodayCount: number;
+  // Owner KPIs
+  cancellationRate90d: number | null;
+  avgTicketLivre: number;
+  conversionRate30d: number | null;
+  encaisseMoisCourant: number;
+  topAgents: AgentLeaderboardRow[];
   // Widgets
   recentVentes: RecentVenteRow[];
   urgentTasks: UrgentTaskRow[];
+}
+
+export interface AgentLeaderboardRow {
+  agentId: string;
+  agentName: string;
+  totalCA: number;
+  ventesCount: number;
 }
 
 export interface RecentVenteRow {

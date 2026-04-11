@@ -24,7 +24,20 @@
 </div>
 
 @if (loading()) {
-  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+  <div class="skeleton-stack" data-testid="dashboard-loading-state" aria-label="Chargement du tableau de bord…">
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+  </div>
 }
 @if (error()) {
   <div class="alert alert-error" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -295,6 +308,91 @@
         </div>
 
       </div>
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
+       SECTION 3.5 — OWNER KPIs (admin/manager only)
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager) {
+    <div class="section-row">
+      <div class="section-head">
+        <span class="section-label">Indicateurs propriétaire (90 jours)</span>
+      </div>
+      <div class="owner-kpi-grid">
+
+        <div class="owner-kpi-card">
+          <div class="owner-kpi-label">Taux d'annulation</div>
+          <div class="owner-kpi-value"
+               [class.owner-kpi-warn]="(s.cancellationRate90d ?? 0) >= 10"
+               [class.owner-kpi-bad]="(s.cancellationRate90d ?? 0) >= 20">
+            @if (s.cancellationRate90d != null) {
+              {{ s.cancellationRate90d }}%
+            } @else {
+              <span class="owner-kpi-empty">—</span>
+            }
+          </div>
+          <div class="owner-kpi-hint">Ventes annulées sur ventes créées</div>
+        </div>
+
+        <div class="owner-kpi-card">
+          <div class="owner-kpi-label">Ticket moyen (livré)</div>
+          <div class="owner-kpi-value">
+            {{ formatAmount(s.avgTicketLivre) }}
+          </div>
+          <div class="owner-kpi-hint">Prix moyen des ventes finalisées</div>
+        </div>
+
+        <div class="owner-kpi-card">
+          <div class="owner-kpi-label">Conversion réservation → vente</div>
+          <div class="owner-kpi-value"
+               [class.owner-kpi-good]="(s.conversionRate30d ?? 0) >= 50">
+            @if (s.conversionRate30d != null) {
+              {{ s.conversionRate30d }}%
+            } @else {
+              <span class="owner-kpi-empty">—</span>
+            }
+          </div>
+          <div class="owner-kpi-hint">Sur les 30 derniers jours</div>
+        </div>
+
+        <div class="owner-kpi-card">
+          <div class="owner-kpi-label">Encaissé ce mois</div>
+          <div class="owner-kpi-value owner-kpi-good">
+            {{ formatAmount(s.encaisseMoisCourant) }}
+          </div>
+          <div class="owner-kpi-hint">Échéances payées du mois en cours</div>
+        </div>
+
+      </div>
+
+      @if (s.topAgents.length > 0) {
+        <div class="leaderboard-card">
+          <div class="leaderboard-head">
+            <span class="leaderboard-title">🏆 Top agents — 90 derniers jours</span>
+          </div>
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th class="lb-rank">#</th>
+                <th class="lb-name">Agent</th>
+                <th class="lb-ventes">Ventes</th>
+                <th class="lb-ca">CA signé</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of s.topAgents; track a.agentId; let i = $index) {
+                <tr>
+                  <td class="lb-rank">{{ i + 1 }}</td>
+                  <td class="lb-name">{{ a.agentName }}</td>
+                  <td class="lb-ventes">{{ a.ventesCount }}</td>
+                  <td class="lb-ca">{{ formatAmount(a.totalCA) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   }
 

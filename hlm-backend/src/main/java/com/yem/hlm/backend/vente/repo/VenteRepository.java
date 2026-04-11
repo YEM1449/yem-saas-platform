@@ -156,4 +156,59 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Object[]> findReservationToVenteDaysBySocieteAndTrancheId(
             @Param("societeId") UUID societeId,
             @Param("trancheId") UUID trancheId);
+
+    /** Count ventes created in [from, to) optionally filtered by statut (for cancellation rate). */
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+            """)
+    long countCreatedInPeriod(@Param("societeId") UUID societeId,
+                              @Param("from") java.time.LocalDateTime from,
+                              @Param("to") java.time.LocalDateTime to);
+
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut    = :statut
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+            """)
+    long countByStatutInPeriod(@Param("societeId") UUID societeId,
+                               @Param("statut") VenteStatut statut,
+                               @Param("from") java.time.LocalDateTime from,
+                               @Param("to") java.time.LocalDateTime to);
+
+    /** Average prixVente for a given statut (e.g. average ticket size for LIVRE). */
+    @Query("""
+            SELECT COALESCE(AVG(v.prixVente), 0)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut    = :statut
+            """)
+    java.math.BigDecimal avgPrixVenteByStatut(@Param("societeId") UUID societeId,
+                                              @Param("statut") VenteStatut statut);
+
+    /**
+     * Top agents by signed CA in [from, to). Excludes ANNULE.
+     * Result rows: [agentId UUID, prenom String, nomFamille String, totalCA BigDecimal, ventesCount Long].
+     */
+    @Query("""
+            SELECT v.agent.id, v.agent.prenom, v.agent.nomFamille,
+                   COALESCE(SUM(v.prixVente), 0), COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+              AND v.statut <> com.yem.hlm.backend.vente.domain.VenteStatut.ANNULE
+            GROUP BY v.agent.id, v.agent.prenom, v.agent.nomFamille
+            ORDER BY SUM(v.prixVente) DESC
+            """)
+    List<Object[]> topAgentsByCA(@Param("societeId") UUID societeId,
+                                 @Param("from") java.time.LocalDateTime from,
+                                 @Param("to") java.time.LocalDateTime to,
+                                 org.springframework.data.domain.Pageable pageable);
 }

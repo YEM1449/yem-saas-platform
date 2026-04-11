@@ -17,11 +17,26 @@
 }
 
 @if (loading) {
-  <p data-testid="tasks-loading-state">{{ 'common.loading' | translate }}</p>
+  <div class="skeleton-stack" data-testid="tasks-loading-state" aria-label="Chargement…">
+    @for (i of [1,2,3,4,5]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
+  </div>
 }
 
 @if (!loading && tasks.length === 0) {
-  <p class="empty" data-testid="tasks-empty-state">{{ 'tasks.noTasks' | translate }}</p>
+  <div class="empty-state" data-testid="tasks-empty-state">
+    <div class="empty-state-icon">📋</div>
+    <p class="empty-state-title">{{ 'tasks.noTasks' | translate }}</p>
+    <p class="empty-state-desc">
+      Créez votre première tâche pour suivre vos rendez-vous, relances et actions commerciales.
+    </p>
+    <div class="empty-state-actions">
+      <button class="btn btn-primary" data-testid="empty-new-task-btn" (click)="openCreate()">
+        + {{ 'tasks.create' | translate }}
+      </button>
+    </div>
+  </div>
 }
 
 @if (!loading && tasks.length > 0) {
