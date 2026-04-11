@@ -24,7 +24,20 @@
 </div>
 
 @if (loading()) {
-  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+  <div class="skeleton-stack" data-testid="dashboard-loading-state" aria-label="Chargement du tableau de bord…">
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+  </div>
 }
 @if (error()) {
   <div class="alert alert-error" style="display:flex;align-items:center;justify-content:space-between;gap:12px">

@@ -383,12 +383,16 @@ select.form-control   { cursor: pointer; }
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
+  background: var(--c-surface);
+  border: 1px dashed var(--c-border);
+  border-radius: var(--r-lg);
 }
 .empty-state-icon  { font-size: 2.5rem; margin-bottom: 16px; opacity: .45; }
 .empty-state-title { font-size: 1rem; font-weight: 600; color: var(--c-text-secondary); margin: 0 0 8px; }
-.empty-state-desc  { font-size: 0.875rem; color: var(--c-text-muted); margin: 0 0 20px; max-width: 300px; }
+.empty-state-desc  { font-size: 0.875rem; color: var(--c-text-muted); margin: 0 0 20px; max-width: 360px; line-height: 1.55; }
+.empty-state-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
-/* ── 12. Loading Spinner ───────────────────────────────────────── */
+/* ── 12. Loading Spinner + Skeletons ───────────────────────────── */
 .loading-wrap {
   display: flex;
   align-items: center;
@@ -407,6 +411,42 @@ select.form-control   { cursor: pointer; }
   border-radius: 50%;
   animation: spin 600ms linear infinite;
   flex-shrink: 0;
+}
+
+/* Skeleton loader primitives — use instead of bare "Chargement..." text.
+   .skeleton is the base shimmering block; the helper classes set sensible
+   default sizes for common shapes. Compose them in component templates. */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size: 800px 100%;
+  border-radius: var(--r-sm);
+  animation: shimmer 1.4s linear infinite;
+}
+.skeleton-text   { height: 12px; margin: 6px 0; }
+.skeleton-text-lg{ height: 18px; margin: 8px 0; }
+.skeleton-line   { height: 14px; margin: 8px 0; }
+.skeleton-row    { height: 48px; border-radius: var(--r-md); margin-bottom: 8px; }
+.skeleton-card   { height: 110px; border-radius: var(--r-lg); }
+.skeleton-circle { width: 36px; height: 36px; border-radius: 50%; }
+.skeleton-w-25 { width: 25%; }
+.skeleton-w-50 { width: 50%; }
+.skeleton-w-75 { width: 75%; }
+.skeleton-w-90 { width: 90%; }
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 4px 0;
+}
+.skeleton-stack { display: flex; flex-direction: column; gap: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--c-border); }
 }
 
 /* ── 13. Modal ─────────────────────────────────────────────────── */
