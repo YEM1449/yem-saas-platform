@@ -37,25 +37,25 @@ spring:
     default-schema: public
   mail:
     host: ${EMAIL_HOST:}
-    port: ${EMAIL_PORT:465}
+    # Port 587 (STARTTLS) is the preferred default — port 465 (implicit SSL)
+    # is commonly blocked outbound in container/cloud networks.
+    port: ${EMAIL_PORT:587}
     username: ${EMAIL_USER:}
     password: ${EMAIL_PASSWORD:}
     properties:
       mail:
         smtp:
           auth: true
+          # STARTTLS on port 587. Override via EMAIL_SSL_ENABLE=true + EMAIL_PORT=465
+          # for providers that still require implicit SSL.
           ssl:
-            enable: true
+            enable: ${EMAIL_SSL_ENABLE:false}
           starttls:
-            enable: false
-            required: false
-          socketFactory:
-            port: 465
-            class: javax.net.ssl.SSLSocketFactory
-            fallback: false
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+            enable: ${EMAIL_STARTTLS_ENABLE:true}
+            required: ${EMAIL_STARTTLS_REQUIRED:true}
+          connectiontimeout: ${EMAIL_CONNECT_TIMEOUT_MS:10000}
+          timeout: ${EMAIL_READ_TIMEOUT_MS:10000}
+          writetimeout: ${EMAIL_WRITE_TIMEOUT_MS:10000}
   servlet:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE:10MB}
@@ -175,7 +175,7 @@ app:
   # SMTP email provider (optional — NoopEmailSender used when EMAIL_HOST is not set)
   email:
     host: ${EMAIL_HOST:}
-    port: ${EMAIL_PORT:465}
+    port: ${EMAIL_PORT:587}
     username: ${EMAIL_USER:}
     password: ${EMAIL_PASSWORD:}
     from: ${EMAIL_FROM:noreply@example.com}
