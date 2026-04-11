@@ -1,16 +1,31 @@
 <!-- Back nav -->
 <div class="back-nav">
-  @if (prefill(); as p) {
-    <a class="back-link" [routerLink]="['/app/reservations', p.reservationId]">
-      ← Retour à la réservation {{ p.reservationRef }}
-    </a>
-  } @else {
-    <a class="back-link" routerLink="/app/ventes">← Ventes</a>
-  }
+  <a class="back-link" [routerLink]="backUrl">
+    ← Retour à la réservation@if (prefill(); as p) { {{ p.reservationRef }}}
+  </a>
 </div>
 
-<div class="page-header">
-  <h1 class="page-title">Créer une vente</h1>
+<!-- ── Page header ──────────────────────────────────────────────────────── -->
+<div class="vc-header">
+  <div class="vc-header-left">
+    <div class="vc-header-icon">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path d="M3 17l5-6 4 4 4-7 5 4" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="vc-title">Démarrer la pipeline de vente</h1>
+      @if (prefill(); as p) {
+        <p class="vc-subtitle">
+          Conversion de la réservation <strong>{{ p.reservationRef }}</strong>
+          &middot; <span class="vc-client">{{ p.contactFullName }}</span>
+        </p>
+      } @else {
+        <p class="vc-subtitle">Nouvelle vente</p>
+      }
+    </div>
+  </div>
 </div>
 
 <!-- Loading -->
@@ -24,149 +39,229 @@
 }
 
 @if (!loading() && !prefillError()) {
-  <form (ngSubmit)="submit()" #f="ngForm">
-    <div class="create-grid">
 
-      <!-- ── Read-only context (from reservation) ──────────────────── -->
-      @if (prefill(); as p) {
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Réservation source</h3>
-            <span class="badge badge-success">ACTIVE</span>
-          </div>
-          <div class="card-body">
-            <dl class="detail-list">
-              <dt>Référence</dt>
-              <dd class="mono">{{ p.reservationRef }}</dd>
-              @if (p.reservationPrice) {
-                <dt>Avance versée</dt>
-                <dd>{{ p.reservationPrice | number:'1.0-0' }} MAD</dd>
-              }
-            </dl>
-          </div>
+  <!-- ── Pipeline entry indicator ──────────────────────────────────────── -->
+  <div class="pipeline-entry-bar">
+    <span class="peb-label">Point d'entrée dans la pipeline :</span>
+    <div class="peb-stages">
+      @for (stage of PIPELINE_STAGES; track stage.key; let i = $index) {
+        <div class="peb-stage {{ stage.key === 'COMPROMIS' ? 'peb-active' : 'peb-upcoming' }}">
+          <div class="peb-dot" [style.background]="stage.key === 'COMPROMIS' ? stage.color : '#e5e7eb'"></div>
+          <span class="peb-stage-label">{{ stage.label }}</span>
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Client</h3>
-          </div>
-          <div class="card-body">
-            <dl class="detail-list">
-              <dt>Nom</dt>
-              <dd>{{ p.contactFullName }}</dd>
-            </dl>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Bien</h3>
-          </div>
-          <div class="card-body">
-            <dl class="detail-list">
-              @if (p.propertyReferenceCode) {
-                <dt>Référence</dt>
-                <dd>{{ p.propertyReferenceCode }}</dd>
-              }
-              @if (p.propertyTitle) {
-                <dt>Désignation</dt>
-                <dd>{{ p.propertyTitle }}</dd>
-              }
-              @if (p.projectNom) {
-                <dt>Projet</dt>
-                <dd>{{ p.projectNom }}</dd>
-              }
-              @if (p.trancheNom) {
-                <dt>Tranche</dt>
-                <dd>{{ p.trancheNom }}</dd>
-              }
-              @if (p.propertyPrice) {
-                <dt>Prix catalogue</dt>
-                <dd>{{ p.propertyPrice | number:'1.0-0' }} MAD</dd>
-              }
-              @if (p.suggestedPrixVente !== null) {
-                <dt>Prix suggéré</dt>
-                <dd class="suggested-price">{{ p.suggestedPrixVente | number:'1.0-0' }} MAD</dd>
-              }
-            </dl>
-          </div>
-        </div>
+        @if (i < PIPELINE_STAGES.length - 1) {
+          <div class="peb-arrow">→</div>
+        }
       }
+    </div>
+  </div>
 
-      <!-- ── Editable sale fields ────────────────────────────────────── -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Conditions de vente</h3>
-        </div>
-        <div class="card-body">
+  <form (ngSubmit)="submit()" #f="ngForm">
+    <div class="vc-layout">
 
-          <!-- Prix de vente -->
-          <div class="form-group">
-            <label class="form-label">
-              Prix de vente (MAD) <span class="required">*</span>
-            </label>
-            @if (prefill(); as p) {
-              @if (p.propertyPrice) {
-                <div class="field-hint" style="margin-bottom:4px;color:var(--color-muted,#6b7280);font-size:12px">
-                  Prix catalogue : {{ p.propertyPrice | number:'1.0-0' }} MAD
-                  @if (p.reservationPrice) {
-                    · Avance déjà versée : {{ p.reservationPrice | number:'1.0-0' }} MAD
-                  }
+      <!-- ══════════════════════════════════════════════════════
+           LEFT — Read-only context (locked from reservation)
+           ══════════════════════════════════════════════════════ -->
+      <div class="vc-context-col">
+
+        @if (prefill(); as p) {
+
+          <!-- Reservation source -->
+          <div class="ctx-card ctx-card--reservation">
+            <div class="ctx-card-header">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <rect x="1.5" y="2.5" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M1.5 6h12M10 1v2.5M5 1v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span>Réservation source</span>
+              <span class="ctx-badge ctx-badge--ref">{{ p.reservationRef }}</span>
+            </div>
+            <div class="ctx-body">
+              <div class="ctx-row">
+                <span class="ctx-lbl">Statut</span>
+                <span class="badge badge-success">ACTIVE</span>
+              </div>
+              @if (p.reservationPrice) {
+                <div class="ctx-row">
+                  <span class="ctx-lbl">Avance versée</span>
+                  <strong class="ctx-val-accent">{{ p.reservationPrice | number:'1.0-0' }} MAD</strong>
                 </div>
               }
-            }
-            <input class="form-control" type="number" min="0"
-                   [(ngModel)]="prixVente" name="prixVente"
-                   placeholder="Ex : 950 000"
-                   data-testid="vente-create-prix-vente" />
-            @if (prixVente !== null && prixVente < 0) {
-              <span class="form-error">Le prix ne peut pas être négatif.</span>
-            }
+            </div>
           </div>
 
-          <!-- Date compromis -->
-          <div class="form-group">
-            <label class="form-label">Date de compromis <span class="form-hint">optionnel</span></label>
-            <input class="form-control" type="date"
-                   [(ngModel)]="dateCompromis" name="dateCompromis"
-                   data-testid="vente-create-date-compromis" />
+          <!-- Client -->
+          <div class="ctx-card">
+            <div class="ctx-card-header">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <circle cx="7.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M2 14c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span>Acquéreur</span>
+            </div>
+            <div class="ctx-body">
+              <div class="ctx-client-name">{{ p.contactFullName }}</div>
+              <a class="ctx-link" [routerLink]="['/app/contacts', p.contactId]">
+                Voir le contact →
+              </a>
+            </div>
           </div>
 
-          <!-- Date livraison prévue -->
-          <div class="form-group">
-            <label class="form-label">Date de livraison prévue <span class="form-hint">optionnel</span></label>
-            <input class="form-control" type="date"
-                   [(ngModel)]="dateLivraisonPrevue" name="dateLivraisonPrevue"
-                   data-testid="vente-create-livraison" />
+          <!-- Property -->
+          <div class="ctx-card">
+            <div class="ctx-card-header">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M1.5 7.5L7.5 2l6 5.5V14H10V10H5v4H1.5V7.5z"
+                      stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              </svg>
+              <span>Bien immobilier</span>
+              @if (p.propertyReferenceCode) {
+                <span class="ctx-badge ctx-badge--ref">{{ p.propertyReferenceCode }}</span>
+              }
+            </div>
+            <div class="ctx-body">
+              @if (p.propertyTitle) {
+                <div class="ctx-prop-name">{{ p.propertyTitle }}</div>
+              }
+              <div class="ctx-prop-meta">
+                @if (p.projectNom)   { <span>{{ p.projectNom }}</span> }
+                @if (p.trancheNom)  { <span class="ctx-sep">·</span><span>{{ p.trancheNom }}</span> }
+                @if (p.immeubleNom) { <span class="ctx-sep">·</span><span>{{ p.immeubleNom }}</span> }
+              </div>
+              @if (p.propertyPrice) {
+                <div class="ctx-row" style="margin-top:10px">
+                  <span class="ctx-lbl">Prix catalogue</span>
+                  <strong>{{ p.propertyPrice | number:'1.0-0' }} MAD</strong>
+                </div>
+              }
+            </div>
           </div>
 
-          <!-- Notes -->
-          <div class="form-group">
-            <label class="form-label">Notes <span class="form-hint">optionnel</span></label>
-            <textarea class="form-control" rows="3"
-                      [(ngModel)]="notes" name="notes"
-                      placeholder="Remarques, conditions particulières…"
-                      data-testid="vente-create-notes"></textarea>
-          </div>
+          <!-- Price breakdown -->
+          @if (p.propertyPrice) {
+            <div class="price-breakdown">
+              <div class="pb-title">Décomposition du prix</div>
+              <div class="pb-row">
+                <span class="pb-lbl">Prix catalogue</span>
+                <span class="pb-val">{{ p.propertyPrice | number:'1.0-0' }} MAD</span>
+              </div>
+              @if (p.reservationPrice) {
+                <div class="pb-row pb-row--deduct">
+                  <span class="pb-lbl">− Avance versée</span>
+                  <span class="pb-val pb-val--deduct">{{ p.reservationPrice | number:'1.0-0' }} MAD</span>
+                </div>
+              }
+              <div class="pb-separator"></div>
+              <div class="pb-row pb-row--total">
+                <span class="pb-lbl">Prix suggéré</span>
+                <span class="pb-val pb-val--total">
+                  {{ p.suggestedPrixVente ?? p.propertyPrice | number:'1.0-0' }} MAD
+                </span>
+              </div>
+            </div>
+          }
 
-        </div>
+        }
       </div>
 
-    </div><!-- /create-grid -->
+      <!-- ══════════════════════════════════════════════════════
+           RIGHT — Editable sale terms
+           ══════════════════════════════════════════════════════ -->
+      <div class="vc-form-col">
 
-    <!-- Form actions -->
+        <div class="form-section-title">Conditions de vente</div>
+
+        <!-- Prix de vente -->
+        <div class="form-group">
+          <label class="form-label">
+            Prix de vente final (MAD) <span class="required">*</span>
+          </label>
+          <input class="form-control form-control--lg" type="number" min="1"
+                 [(ngModel)]="prixVente" name="prixVente"
+                 placeholder="Ex : 850 000"
+                 data-testid="vente-create-prix-vente" />
+          @if (prixVente !== null && prixVente <= 0) {
+            <span class="form-error">Le prix doit être supérieur à 0.</span>
+          }
+          @if (remainingBalance !== null && prefill()?.reservationPrice) {
+            <div class="balance-hint">
+              Solde restant dû par l'acquéreur :
+              <strong>{{ remainingBalance | number:'1.0-0' }} MAD</strong>
+            </div>
+          }
+        </div>
+
+        <!-- Date de compromis -->
+        <div class="form-group">
+          <label class="form-label">
+            Date de compromis <span class="form-hint">optionnel</span>
+          </label>
+          <input class="form-control" type="date"
+                 [(ngModel)]="dateCompromis" name="dateCompromis"
+                 data-testid="vente-create-date-compromis" />
+          <span class="form-field-hint">Date de signature du compromis de vente</span>
+        </div>
+
+        <!-- Date de livraison prévue -->
+        <div class="form-group">
+          <label class="form-label">
+            Date de livraison prévue <span class="form-hint">optionnel</span>
+          </label>
+          <input class="form-control" type="date"
+                 [(ngModel)]="dateLivraisonPrevue" name="dateLivraisonPrevue"
+                 data-testid="vente-create-livraison" />
+          <span class="form-field-hint">Date prévisionnelle de remise des clés</span>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">
+            Notes <span class="form-hint">optionnel</span>
+          </label>
+          <textarea class="form-control" rows="3"
+                    [(ngModel)]="notes" name="notes"
+                    placeholder="Conditions particulières, observations…"
+                    data-testid="vente-create-notes"></textarea>
+        </div>
+
+        <!-- What happens next -->
+        <div class="next-steps">
+          <div class="ns-title">Ce qui se passera après la création</div>
+          <ul class="ns-list">
+            <li>La vente sera créée au statut <strong>Compromis</strong></li>
+            <li>La réservation sera marquée comme convertie</li>
+            <li>Le bien sera marqué comme <strong>Vendu</strong></li>
+            <li>Le contact passera en statut <strong>Client actif</strong></li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div><!-- /vc-layout -->
+
+    <!-- Error -->
     @if (createError()) {
-      <div class="alert alert-error">{{ createError() }}</div>
+      <div class="alert alert-error" style="margin-bottom:16px">{{ createError() }}</div>
     }
 
-    <div class="form-actions">
-      <a class="btn btn-secondary" routerLink="/app/reservations">Annuler</a>
-      <button class="btn btn-primary"
+    <!-- Actions -->
+    <div class="vc-actions">
+      <a class="btn btn-secondary" [routerLink]="backUrl">Annuler</a>
+      <button class="btn btn-primary btn-launch"
               type="submit"
               [disabled]="creating() || !canSubmit"
               data-testid="vente-create-submit">
-        {{ creating() ? 'Création…' : 'Créer la vente' }}
+        @if (creating()) {
+          <span class="btn-spinner"></span> Création en cours…
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right:6px">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Démarrer la pipeline de vente
+        }
       </button>
     </div>
+
   </form>
 }

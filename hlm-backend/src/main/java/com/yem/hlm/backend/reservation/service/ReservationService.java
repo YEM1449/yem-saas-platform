@@ -222,6 +222,7 @@ public class ReservationService {
                 propertyPrice,
                 property != null ? property.getProjectName() : null,
                 trancheNom,
+                property != null ? property.getImmeubleName() : null,
                 suggested
         );
     }

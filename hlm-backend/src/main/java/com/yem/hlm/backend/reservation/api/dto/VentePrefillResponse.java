@@ -24,6 +24,7 @@ public record VentePrefillResponse(
         BigDecimal propertyPrice,
         String projectNom,
         String trancheNom,
+        String immeubleNom,
 
         /** Suggested sale price = propertyPrice − reservationPrice. */
         BigDecimal suggestedPrixVente

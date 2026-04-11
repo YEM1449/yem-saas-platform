@@ -1,5 +1,7 @@
 package com.yem.hlm.backend.property.api;
 
+import com.yem.hlm.backend.property.api.dto.BulkStatusRequest;
+import com.yem.hlm.backend.property.api.dto.BulkStatusResult;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
@@ -119,6 +121,18 @@ public class PropertyController {
             @PathVariable UUID id,
             @Valid @RequestBody PropertyStatusUpdateRequest request) {
         return propertyService.updateEditorialStatus(id, request);
+    }
+
+    /**
+     * Apply a single editorial status to a batch of properties.
+     * RESERVED and SOLD are forbidden — use the commercial workflow.
+     * Properties that are already RESERVED/SOLD are silently skipped.
+     */
+    @Operation(summary = "Bulk editorial status update (ADMIN/MANAGER)")
+    @PatchMapping("/bulk-status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public BulkStatusResult bulkUpdateStatus(@Valid @RequestBody BulkStatusRequest request) {
+        return propertyService.bulkUpdateEditorialStatus(request);
     }
 
     /**

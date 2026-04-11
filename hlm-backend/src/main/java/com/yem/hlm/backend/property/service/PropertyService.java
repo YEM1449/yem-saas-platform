@@ -4,6 +4,8 @@ import com.yem.hlm.backend.immeuble.domain.Immeuble;
 import com.yem.hlm.backend.immeuble.repo.ImmeubleRepository;
 import com.yem.hlm.backend.immeuble.service.ImmeubleNotFoundException;
 import com.yem.hlm.backend.project.service.ProjectActiveGuard;
+import com.yem.hlm.backend.property.api.dto.BulkStatusRequest;
+import com.yem.hlm.backend.property.api.dto.BulkStatusResult;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyStatusUpdateRequest;
@@ -173,6 +175,44 @@ public class PropertyService {
         property.markUpdatedBy(userId);
         property = propertyRepository.save(property);
         return PropertyResponse.from(property);
+    }
+
+    /**
+     * Applies a single editorial status to multiple properties in one transaction.
+     * Properties that are RESERVED or SOLD, or not found in the société, are silently skipped
+     * (returned in {@code skipped}) rather than failing the whole batch.
+     * RESERVED and SOLD may not be set here — use the commercial workflow endpoints.
+     */
+    @Transactional
+    public BulkStatusResult bulkUpdateEditorialStatus(BulkStatusRequest req) {
+        if (req.status() == PropertyStatus.RESERVED || req.status() == PropertyStatus.SOLD) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Status " + req.status() + " cannot be set via the bulk endpoint — " +
+                    "use the commercial workflow (reservation/contract).");
+        }
+
+        UUID societeId = requireSocieteId();
+        UUID userId    = requireUserId();
+        int updated = 0, skipped = 0;
+
+        for (UUID id : req.ids()) {
+            var opt = propertyRepository.findBySocieteIdAndId(societeId, id);
+            if (opt.isEmpty()) { skipped++; continue; }
+
+            var property = opt.get();
+            if (property.getStatus() == PropertyStatus.RESERVED
+                    || property.getStatus() == PropertyStatus.SOLD) {
+                skipped++;
+                continue;
+            }
+
+            property.setStatus(req.status());
+            property.markUpdatedBy(userId);
+            propertyRepository.save(property);
+            updated++;
+        }
+
+        return new BulkStatusResult(updated, skipped);
     }
 
     @Transactional

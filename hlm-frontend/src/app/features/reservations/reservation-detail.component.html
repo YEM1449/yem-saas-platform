@@ -24,11 +24,6 @@
     </div>
     <div class="header-actions">
       @if (canWrite && d.status === 'ACTIVE' && !d.linkedVenteId) {
-        <button class="btn btn-primary"
-                (click)="goConvertToVente()"
-                title="Créer une vente à partir de cette réservation">
-          Convertir en Vente →
-        </button>
         <button class="btn btn-danger btn-sm"
                 [disabled]="cancelling()"
                 (click)="cancelReservation()">
@@ -44,17 +39,49 @@
 
   <!-- ── Vente liée ──────────────────────────────────────────────── -->
   @if (d.linkedVenteId) {
-    <div class="card mb-16">
-      <div class="card-body" style="display:flex;align-items:center;gap:14px">
-        <span style="font-size:20px">📄</span>
-        <div style="flex:1">
-          <p style="margin:0;font-weight:600;font-size:14px">Vente associée</p>
-          <p style="margin:4px 0 0;font-size:13px;color:var(--c-text-muted)">Cette réservation a été convertie en vente.</p>
-        </div>
-        <a class="btn btn-secondary btn-sm" [routerLink]="['/app/ventes', d.linkedVenteId]">
-          Voir la vente →
-        </a>
+    <div class="linked-vente-card">
+      <div class="lvc-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M3 15l4.5-5.5 3.5 3 3.5-6 4 3.5" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
+      <div class="lvc-body">
+        <p class="lvc-title">Pipeline de vente démarrée</p>
+        <p class="lvc-sub">Cette réservation a été convertie en vente active.</p>
+      </div>
+      <a class="btn btn-primary btn-sm" [routerLink]="['/app/ventes', d.linkedVenteId]">
+        Voir la vente →
+      </a>
+    </div>
+  }
+
+  <!-- ── Pipeline launch CTA (ACTIVE, not yet converted) ──────────── -->
+  @if (canWrite && d.status === 'ACTIVE' && !d.linkedVenteId) {
+    <div class="convert-banner">
+      <div class="convert-banner-left">
+        <div class="convert-banner-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M3 17l5-6 4 4 4-7 5 4" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <p class="convert-banner-title">Prêt à démarrer la vente ?</p>
+          <p class="convert-banner-sub">
+            Convertissez cette réservation en vente et lancez la pipeline commerciale
+            (Compromis → Financement → Acte notarié → Livraison).
+          </p>
+        </div>
+      </div>
+      <button class="btn btn-primary convert-banner-cta"
+              (click)="goConvertToVente()">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" style="margin-right:5px">
+          <path d="M2.5 7.5h10M9 4l3.5 3.5L9 11" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Démarrer la pipeline de vente
+      </button>
     </div>
   }
 

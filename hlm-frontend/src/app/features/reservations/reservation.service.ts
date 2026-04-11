@@ -81,6 +81,7 @@ export interface VentePrefillData {
   propertyPrice: number | null;
   projectNom: string | null;
   trancheNom: string | null;
+  immeubleNom: string | null;
   suggestedPrixVente: number | null;
 }
 
