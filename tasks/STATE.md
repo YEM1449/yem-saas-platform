@@ -11,11 +11,13 @@ Resumable state for the 5-task implementation request:
 
 | # | Commit | Status | Branch |
 |---|---|---|---|
-| A | Tasks page Page<T> fix + reservation→sale verify | pending | Epic/ProjectCreationUpgrade-TrancheImplementation |
-| B | Dashboard KPI expansion (backend+frontend) | pending | same |
-| C | Contract template drag-drop builder | pending | same |
-| D | UI/UX polish pass (design tokens + top pages) | pending | same |
-| E | Tests + docs + CLAUDE.md updates | pending | same |
+| A | Tasks page Page<T> fix + reservation→sale verify | done (4237c78) | Epic/ProjectCreationUpgrade-TrancheImplementation |
+| B | Dashboard KPI expansion (backend+frontend) | done (39c3366) | same |
+| C | Contract template drag-drop builder | done (40fe1e0) | same |
+| D | UI/UX polish pass (skeleton loaders + empty states) | done (75de0d7) | same |
+| E | Docs + CLAUDE.md Wave 12 + memory updates | done | same |
+
+All 5 commits landed on `Epic/ProjectCreationUpgrade-TrancheImplementation` (not pushed). See `CLAUDE.md` §Wave 12 for the full item table.
 
 ## Findings
 

@@ -191,6 +191,7 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Wave 9: Contact status lifecycle + Dashboard homepage ✅ (items below)
 - Wave 10: Tranche + Bulk Project Generation ✅ (items below)
 - Wave 11: UX + Performance Sprint (F1–F10) ✅ (items below)
+- Wave 12: Owner KPIs + Template builder + UI polish ✅ (items below)
 
 ### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
 
@@ -253,6 +254,17 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 | F6: Reservation detail page | `ReservationDetailResponse`, `GET /api/reservations/{id}/detail`, `ReservationDetailComponent`, route `/app/reservations/:id` |
 | F7: Create sale from reservation | `VentePrefillResponse`, `GET /api/reservations/{id}/vente-prefill`, `VenteCreateComponent`, route `/app/ventes/new?reservationId=` |
 | F9: Persistent task due notifications | `NotificationPollingService` (60s interval, `GET /api/tasks/due-now`), `NotificationToastComponent` (max 3, amber border, "Marquer fait") mounted in `ShellComponent` |
+
+### Wave 12 — Multi-task Sprint: Owner KPIs + Template Builder + UI Polish (complete, 2026-04-11)
+
+Four distinct user asks delivered as four commits on `Epic/ProjectCreationUpgrade-TrancheImplementation`:
+
+| Commit | Scope | Files |
+|---|---|---|
+| A (4237c78) | Tasks page stuck-loading fix + reservation→sale verify | `hlm-frontend/src/app/core/models/page-response.model.ts` (flattened to match Spring `Page<T>` JSON shape — `content/number/size/totalElements/totalPages`), `hlm-frontend/src/app/features/tasks/task.model.ts` (flat `TaskPage`), `tasks.component.ts:65-66` and `admin-users.component.ts:63-64` updated from `page.page.totalPages` → `page.totalPages`. Reservation→sale button already wired via Wave 11 F7 — smoke-verified only. |
+| B (39c3366) | Dashboard owner KPIs — cancellation rate 90d, avg ticket LIVRE, conversion rate 30d, encaissé mois courant, top-5 agent leaderboard | Backend repo queries: `VenteRepository.countCreatedInPeriod/countByStatutInPeriod/avgPrixVenteByStatut/topAgentsByCA`, `VenteEcheanceRepository.sumPaidInPeriod`, `ReservationRepository.countCreatedInPeriod`. DTO: `HomeDashboardDTO` + `AgentLeaderboardRow` record. Service: `HomeDashboardService` section 11 (ADMIN/MANAGER only for leaderboard). Frontend: `home-dashboard.component.html` SECTION 3.5 — 4 KPI cards + leaderboard card with podium `::before` emoji. |
+| C (40fe1e0) | Contract template drag-drop variable builder | `hlm-frontend/src/app/features/templates/template-editor.component.ts` rewrite — 4 variable groups (societe/property/buyer/contract, grouped palette with icons), drag-drop via HTML5 `dataTransfer`/`caretPositionFromPoint` with `setRangeText` caret insertion, live `${model.*}` counter, search filter, toast flash. Backing textarea keeps Thymeleaf `${model.varName}` tokens intact for server-side rendering. |
+| D (75de0d7) | UI/UX polish pass — skeleton loaders + empty-state refresh | `hlm-frontend/src/styles.css` — `.skeleton` primitives (shimmer keyframe + `prefers-reduced-motion`), `.skeleton-grid`/`.skeleton-stack` layout helpers, refreshed `.empty-state` with dashed border + `.empty-state-actions` row. Applied to `tasks.component.html` (5-row skeleton stack, full empty state with CTA) and `home-dashboard.component.html` (skeleton-grid matching KPI layout). Budget bump: `angular.json` `anyComponentStyle` → 20kB error (from 16kB) to accommodate the expanded dashboard CSS. |
 
 ### Tranche State Machine (as-implemented)
 ```
