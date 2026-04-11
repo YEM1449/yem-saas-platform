@@ -72,6 +72,24 @@ public record HomeDashboardDTO(
         long overdueTasksCount,
         long tasksDueTodayCount,
 
+        // ── Owner KPIs (real-estate-specific) ─────────────────────────────────
+        /**
+         * Cancellation rate over the last 90 days = ANNULE / total ventes (created),
+         * expressed as a percentage with 1-decimal precision. Null if no ventes.
+         */
+        BigDecimal cancellationRate90d,
+        /** Average ticket = AVG(prixVente) over LIVRE ventes. */
+        BigDecimal avgTicketLivre,
+        /**
+         * Conversion rate over the last 30 days = ventes created / reservations created,
+         * percentage with 1 decimal. Null if no reservations.
+         */
+        BigDecimal conversionRate30d,
+        /** Sum of PAID échéances whose due date falls in current calendar month. */
+        BigDecimal encaisseMoisCourant,
+        /** Top 5 agents by signed CA (last 90 days). Empty for AGENT role. */
+        List<AgentLeaderboardRow> topAgents,
+
         // ── Widgets ───────────────────────────────────────────────────────────
         /** Up to 5 recent ventes for the widget. */
         List<RecentVenteRow> recentVentes,
@@ -96,5 +114,12 @@ public record HomeDashboardDTO(
             LocalDateTime dueDate,
             /** null if no linked contact */
             java.util.UUID contactId
+    ) {}
+
+    public record AgentLeaderboardRow(
+            java.util.UUID agentId,
+            String agentName,
+            BigDecimal totalCA,
+            long ventesCount
     ) {}
 }
