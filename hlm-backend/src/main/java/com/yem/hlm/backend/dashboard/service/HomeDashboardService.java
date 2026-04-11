@@ -13,6 +13,7 @@ import com.yem.hlm.backend.task.domain.TaskStatus;
 import com.yem.hlm.backend.task.repo.TaskRepository;
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
+import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import com.yem.hlm.backend.vente.repo.VenteRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,18 +49,23 @@ public class HomeDashboardService {
     /** Terminal statuts excluded from "active pipeline" queries. */
     private static final List<VenteStatut> TERMINAL = List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
 
-    private final VenteRepository       venteRepo;
-    private final TaskRepository        taskRepo;
-    private final ContactRepository     contactRepo;
-    private final PropertyRepository    propertyRepo;
-    private final ReservationRepository reservationRepo;
+    private static final List<VenteStatut> ANNULE_ONLY = List.of(VenteStatut.ANNULE);
+
+    private final VenteRepository         venteRepo;
+    private final VenteEcheanceRepository echeanceRepo;
+    private final TaskRepository          taskRepo;
+    private final ContactRepository       contactRepo;
+    private final PropertyRepository      propertyRepo;
+    private final ReservationRepository   reservationRepo;
 
     public HomeDashboardService(VenteRepository venteRepo,
+                                VenteEcheanceRepository echeanceRepo,
                                 TaskRepository taskRepo,
                                 ContactRepository contactRepo,
                                 PropertyRepository propertyRepo,
                                 ReservationRepository reservationRepo) {
         this.venteRepo       = venteRepo;
+        this.echeanceRepo    = echeanceRepo;
         this.taskRepo        = taskRepo;
         this.contactRepo     = contactRepo;
         this.propertyRepo    = propertyRepo;
@@ -110,15 +117,51 @@ public class HomeDashboardService {
                     .setScale(1, RoundingMode.HALF_UP);
         }
 
-        // ── 3. Prospects actifs (tenant-wide) ─────────────────────────────────
+        // ── 3. CA mensuel (trend) + CA Livré + Ventes stallées ───────────────
+        YearMonth currentMonth  = YearMonth.from(now.toLocalDate());
+        YearMonth previousMonth = currentMonth.minusMonths(1);
+        LocalDateTime moisFrom  = currentMonth.atDay(1).atStartOfDay();
+        LocalDateTime moisTo    = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
+        LocalDateTime prevFrom  = previousMonth.atDay(1).atStartOfDay();
+        LocalDateTime prevTo    = previousMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        BigDecimal caSigneMoisCourant, caSigneMoisPrecedent;
+        if (isAgent) {
+            caSigneMoisCourant  = venteRepo.sumPrixVenteInPeriodForAgent(societeId, actorId, moisFrom, moisTo, ANNULE_ONLY);
+            caSigneMoisPrecedent = venteRepo.sumPrixVenteInPeriodForAgent(societeId, actorId, prevFrom, prevTo, ANNULE_ONLY);
+        } else {
+            caSigneMoisCourant  = venteRepo.sumPrixVenteInPeriod(societeId, moisFrom, moisTo, ANNULE_ONLY);
+            caSigneMoisPrecedent = venteRepo.sumPrixVenteInPeriod(societeId, prevFrom, prevTo, ANNULE_ONLY);
+        }
+        if (caSigneMoisCourant  == null) caSigneMoisCourant  = BigDecimal.ZERO;
+        if (caSigneMoisPrecedent == null) caSigneMoisPrecedent = BigDecimal.ZERO;
+
+        BigDecimal caLivre = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        if (caLivre == null) caLivre = BigDecimal.ZERO;
+
+        long ventesStalleesCount = isAgent ? 0L :
+                venteRepo.countStalledVentes(societeId,
+                        List.of(VenteStatut.COMPROMIS, VenteStatut.FINANCEMENT),
+                        now.minusDays(30));
+
+        // ── 4. Écheancier pulse ───────────────────────────────────────────────
+        LocalDate today  = now.toLocalDate();
+        LocalDate in30   = today.plusDays(30);
+        BigDecimal echeancesA30Jours  = echeanceRepo.sumMontantDueInPeriod(societeId, today, in30);
+        BigDecimal echeancesEnRetard  = echeanceRepo.sumMontantOverdue(societeId, today);
+        long echeancesEnRetardCount   = echeanceRepo.countOverdue(societeId, today);
+        if (echeancesA30Jours == null) echeancesA30Jours = BigDecimal.ZERO;
+        if (echeancesEnRetard == null) echeancesEnRetard = BigDecimal.ZERO;
+
+        // ── 6. Prospects actifs (tenant-wide) ─────────────────────────────────
         long activeProspectsCount = contactRepo.countActiveProspects(
                 societeId, List.of(ContactStatus.PROSPECT, ContactStatus.QUALIFIED_PROSPECT));
 
-        // ── 4. Réservations actives ───────────────────────────────────────────
+        // ── 7. Réservations actives ───────────────────────────────────────────
         long activeReservationsCount = reservationRepo.countBySocieteIdAndStatus(societeId, ReservationStatus.ACTIVE);
         long expirant = reservationRepo.countExpiringBefore(societeId, now, now.plusHours(48));
 
-        // ── 5. Tâches ─────────────────────────────────────────────────────────
+        // ── 8. Tâches ─────────────────────────────────────────────────────────
         long openTasks, overdueTasks, todayTasks;
         if (isAgent) {
             openTasks    = taskRepo.countOpenByAssignee(societeId, actorId);
@@ -132,7 +175,7 @@ public class HomeDashboardService {
             todayTasks   = 0L; // societe-wide today count not needed for admin (expensive without index gain)
         }
 
-        // ── 6. Recent ventes widget (last 5) ──────────────────────────────────
+        // ── 9. Recent ventes widget (last 5) ──────────────────────────────────
         List<Vente> rawVentes;
         if (isAgent) {
             rawVentes = venteRepo.findRecentForAgent(societeId, actorId, PageRequest.of(0, 5));
@@ -143,13 +186,14 @@ public class HomeDashboardService {
         List<HomeDashboardDTO.RecentVenteRow> recentVentes = rawVentes.stream()
                 .map(v -> new HomeDashboardDTO.RecentVenteRow(
                         v.getId(),
+                        v.getVenteRef(),
                         v.getContact() != null ? v.getContact().getFullName() : null,
                         v.getStatut().name(),
                         v.getPrixVente(),
                         v.getCreatedAt()))
                 .toList();
 
-        // ── 7. Urgent tasks widget (overdue + today, up to 8) ─────────────────
+        // ── 10. Urgent tasks widget (overdue + today, up to 8) ────────────────
         List<HomeDashboardDTO.UrgentTaskRow> urgentTasks = List.of();
         if (isAgent) {
             LocalDateTime horizon = now.toLocalDate().atStartOfDay().plusDays(1);
@@ -164,9 +208,12 @@ public class HomeDashboardService {
         return new HomeDashboardDTO(
                 now,
                 activeVentesCount, caActivePipeline, ventesParStatut,
+                caSigneMoisCourant, caSigneMoisPrecedent, caLivre,
+                echeancesA30Jours, echeancesEnRetard, echeancesEnRetardCount,
                 biensDraft, biensActifs, biensReserves, biensVendus, tauxAbsorption,
                 marketable,
                 activeProspectsCount, activeReservationsCount, expirant,
+                ventesStalleesCount,
                 openTasks, overdueTasks, todayTasks,
                 recentVentes, urgentTasks
         );

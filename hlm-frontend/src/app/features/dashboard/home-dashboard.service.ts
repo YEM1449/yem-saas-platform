@@ -9,6 +9,14 @@ export interface HomeDashboard {
   activeVentesCount: number;
   caActivePipeline: number;
   ventesParStatut: Record<string, number>;
+  // Tendance mensuelle
+  caSigneMoisCourant: number;
+  caSigneMoisPrecedent: number;
+  caLivre: number;
+  // Échéancier pulse
+  echeancesA30JoursMontant: number;
+  echeancesEnRetardMontant: number;
+  echeancesEnRetardCount: number;
   // Inventory
   biensDraftCount: number;
   biensActifsCount: number;
@@ -20,6 +28,8 @@ export interface HomeDashboard {
   activeProspectsCount: number;
   activeReservationsCount: number;
   reservationsExpirantBientot: number;
+  // Alertes
+  ventesStalleesCount: number;
   // Tâches
   openTasksCount: number;
   overdueTasksCount: number;
@@ -31,6 +41,7 @@ export interface HomeDashboard {
 
 export interface RecentVenteRow {
   id: string;
+  venteRef: string | null;
   contactFullName: string | null;
   statut: string;
   prixVente: number | null;

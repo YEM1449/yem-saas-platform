@@ -15,6 +15,41 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
 
     List<VenteEcheance> findAllByVente_IdOrderByDateEcheanceAsc(UUID venteId);
 
+    /** Sum of unpaid échéances with due date in [from, to) — for upcoming 30-day cash forecast. */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.dateEcheance >= :from
+              AND e.dateEcheance < :to
+            """)
+    java.math.BigDecimal sumMontantDueInPeriod(@Param("societeId") UUID societeId,
+                                               @Param("from") java.time.LocalDate from,
+                                               @Param("to") java.time.LocalDate to);
+
+    /** Sum of unpaid échéances with due date before today (overdue). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.dateEcheance < :today
+            """)
+    java.math.BigDecimal sumMontantOverdue(@Param("societeId") UUID societeId,
+                                           @Param("today") java.time.LocalDate today);
+
+    /** Count unpaid échéances with due date before today (overdue). */
+    @Query("""
+            SELECT COUNT(e)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.dateEcheance < :today
+            """)
+    long countOverdue(@Param("societeId") UUID societeId,
+                      @Param("today") java.time.LocalDate today);
+
     /**
      * Returns all écheances for ventes whose property belongs to the given tranche.
      * Used by KpiComputationService to compute payment KPIs at tranche granularity.
