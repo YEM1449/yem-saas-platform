@@ -55,12 +55,54 @@
   pointer-events: none;
 }
 
+/* ── Toolbar right side ────────────────────────────────────── */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── View toggle ───────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--c-border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--c-card, #fff);
+  border: none;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+.view-btn:hover {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+.view-btn--active {
+  background: var(--c-primary, #3b82f6);
+  color: #fff;
+}
+.view-btn--active:hover {
+  background: var(--c-primary, #3b82f6);
+  color: #fff;
+}
+.view-toggle .view-btn:not(:last-child) {
+  border-right: 1px solid var(--c-border);
+}
+
 /* ── Property Card Grid ─────────────────────────────────────── */
 .property-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 80px; /* space for bulk bar */
 }
 
 .property-card {
@@ -72,10 +114,43 @@
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
   overflow: hidden;
+  position: relative;
 }
 .property-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,.08);
   transform: translateY(-1px);
+  border-color: var(--c-primary, #3b82f6);
+}
+.property-card--selected {
+  border-color: var(--c-primary, #3b82f6) !important;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.15) !important;
+}
+
+/* ── Card checkbox overlay ──────────────────────────────────── */
+.card-checkbox-wrap {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 4px;
+}
+.card-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--c-border);
+  background: var(--c-card, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, background 0.12s;
+  cursor: pointer;
+}
+.card-checkbox:hover {
+  border-color: var(--c-primary, #3b82f6);
+}
+.card-checkbox--checked {
+  background: var(--c-primary, #3b82f6);
   border-color: var(--c-primary, #3b82f6);
 }
 
@@ -84,7 +159,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px 8px;
+  padding: 10px 14px 8px 32px; /* left padding for checkbox */
   border-bottom: 1px solid var(--c-border);
   background: var(--c-surface, #f8fafc);
 }
@@ -166,3 +241,301 @@
   font-style: italic;
 }
 .prop-arrow { color: var(--c-text-muted); }
+
+/* ── Property List View ─────────────────────────────────────── */
+.property-list-wrap {
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 80px; /* space for bulk bar */
+}
+
+.property-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.property-list-table thead tr {
+  background: var(--c-surface, #f8fafc);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.property-list-table th {
+  padding: 10px 14px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Column widths */
+.col-check  { width: 40px; text-align: center; padding: 10px 6px 10px 14px !important; }
+.col-ref    { width: 140px; }
+.col-title  { min-width: 180px; }
+.col-project { width: 160px; }
+.col-specs  { width: 130px; }
+.col-status { width: 110px; }
+.col-price  { width: 130px; text-align: right; }
+.col-action { width: 36px; text-align: center; }
+
+/* List rows */
+.property-list-row {
+  border-bottom: 1px solid var(--c-border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.property-list-row:last-child { border-bottom: none; }
+.property-list-row:hover {
+  background: var(--c-surface, #f8fafc);
+}
+.property-list-row--selected {
+  background: rgba(59, 130, 246, 0.04) !important;
+}
+.property-list-row--selected:hover {
+  background: rgba(59, 130, 246, 0.07) !important;
+}
+
+.property-list-table td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  color: var(--c-text);
+}
+
+.col-check td { padding: 11px 6px 11px 14px; text-align: center; }
+
+/* List checkbox (header + row) */
+.list-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--c-border);
+  background: var(--c-card, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.list-checkbox:hover { border-color: var(--c-primary, #3b82f6); }
+.list-checkbox--checked {
+  background: var(--c-primary, #3b82f6);
+  border-color: var(--c-primary, #3b82f6);
+}
+.list-checkbox--indeterminate {
+  background: var(--c-primary, #3b82f6);
+  border-color: var(--c-primary, #3b82f6);
+}
+
+/* Reference + type tag */
+.list-ref {
+  display: block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  color: var(--c-text);
+  font-weight: 500;
+}
+.list-type-tag {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+/* Title + location */
+.list-title {
+  display: block;
+  font-weight: 500;
+  color: var(--c-text);
+  line-height: 1.3;
+}
+.list-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  margin-top: 3px;
+}
+
+/* Project / immeuble */
+.list-project {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--c-text-secondary);
+}
+.list-immeuble {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+/* Specs inline */
+.list-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--c-text-secondary);
+}
+
+/* Price column */
+.col-price td, .col-price th {
+  text-align: right;
+}
+.list-price {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--c-text);
+}
+.list-currency {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+  margin-left: 3px;
+}
+.list-price-na {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+/* ── Bulk Action Bar (floating) ─────────────────────────────── */
+.bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none;
+}
+.bulk-bar-inner {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--c-text, #0f172a);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.15);
+  white-space: nowrap;
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+  max-width: calc(100vw - 48px);
+}
+
+.bulk-count {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.875rem;
+  opacity: 0.85;
+  padding-right: 4px;
+  border-right: 1px solid rgba(255,255,255,.15);
+  margin-right: 2px;
+}
+.bulk-count-badge {
+  min-width: 22px;
+  height: 22px;
+  background: var(--c-primary, #3b82f6);
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 6px;
+}
+.bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s, background 0.12s;
+}
+.bulk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bulk-btn--active {
+  background: #10b981;
+  color: #fff;
+}
+.bulk-btn--active:hover:not(:disabled) { background: #059669; }
+
+.bulk-btn--withdraw {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.9);
+}
+.bulk-btn--withdraw:hover:not(:disabled) { background: rgba(255,255,255,.2); }
+
+.bulk-btn--archive {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.75);
+}
+.bulk-btn--archive:hover:not(:disabled) { background: rgba(255,255,255,.15); }
+
+/* Spinner in bulk bar */
+.bulk-spinner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  opacity: 0.8;
+}
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+/* Result + error feedback */
+.bulk-result {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: #6ee7b7;
+}
+.bulk-skipped {
+  color: rgba(255,255,255,.5);
+}
+.bulk-error {
+  font-size: 0.8125rem;
+  color: #fca5a5;
+}
+
+/* Cancel button */
+.bulk-cancel {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.1);
+  border: none;
+  border-radius: 6px;
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  transition: background 0.12s;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+.bulk-cancel:hover:not(:disabled) { background: rgba(255,255,255,.2); color: #fff; }
+.bulk-cancel:disabled { opacity: 0.4; cursor: not-allowed; }

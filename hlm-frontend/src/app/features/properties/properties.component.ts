@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,7 +24,6 @@ interface CreatePropertyForm {
   address: string;
   description: string;
   status: string;
-  // Type-specific fields
   surfaceAreaSqm: number | null;
   landAreaSqm: number | null;
   bedrooms: number | null;
@@ -41,42 +40,46 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, DecimalPipe],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })
 export class PropertiesComponent implements OnInit {
-  private svc          = inject(PropertyService);
-  private projectSvc   = inject(ProjectService);
-  private immeubleSvc  = inject(ImmeubleService);
-  private router       = inject(Router);
-  private auth         = inject(AuthService);
+  private svc         = inject(PropertyService);
+  private projectSvc  = inject(ProjectService);
+  private immeubleSvc = inject(ImmeubleService);
+  private router      = inject(Router);
+  private auth        = inject(AuthService);
 
-  properties: Property[] = [];
-  projects: Project[] = [];
-  immeubles: Immeuble[] = [];
-  loading = true;
+  properties: Property[]  = [];
+  projects: Project[]     = [];
+  immeubles: Immeuble[]   = [];
+  loading        = true;
   projectsLoading = false;
-  error   = '';
+  error          = '';
 
-  /** Live search */
-  searchQuery = '';
-
-  /** Filter state */
-  filterProjectId = '';
+  searchQuery    = '';
+  filterProjectId  = '';
   filterImmeubleId = '';
-  filterType = '';
-  filterStatus = '';
+  filterType       = '';
+  filterStatus     = '';
 
-  /** CSV import state */
-  importLoading = false;
+  importLoading  = false;
   importResult: ImportResult | null = null;
-  importError = '';
+  importError    = '';
 
-  /** Manual create modal state */
   showModal   = false;
   submitting  = false;
   submitError = '';
+
+  // ── View mode ───────────────────────────────────────────────────────────
+  viewMode: 'cards' | 'list' = 'cards';
+
+  // ── Multi-select ────────────────────────────────────────────────────────
+  selectedIds   = new Set<string>();
+  bulkLoading   = false;
+  bulkError     = '';
+  bulkResult: { updated: number; skipped: number } | null = null;
 
   readonly propertyTypes = [
     'VILLA', 'APPARTEMENT', 'STUDIO', 'T2', 'T3',
@@ -97,58 +100,104 @@ export class PropertiesComponent implements OnInit {
     description: '', status: 'DRAFT',
   };
 
-  /** Returns whether the selected type requires surfaceAreaSqm */
-  get needsSurface(): boolean {
-    return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX','COMMERCE'].includes(this.form.type);
-  }
-
-  /** Returns whether the selected type requires landAreaSqm */
-  get needsLand(): boolean {
-    return ['VILLA','LOT','TERRAIN_VIERGE'].includes(this.form.type);
-  }
-
-  /** Returns whether the selected type requires bedrooms / bathrooms */
-  get needsBedrooms(): boolean {
-    return ['VILLA','APPARTEMENT','T2','T3','DUPLEX'].includes(this.form.type);
-  }
-
-  /** Returns whether the selected type requires floorNumber (which floor the unit is on) */
-  get needsFloorNumber(): boolean {
-    return ['APPARTEMENT','STUDIO','T2','T3'].includes(this.form.type);
-  }
-
-  /** Returns whether the selected type requires floors (total number of floors, e.g. DUPLEX) */
-  get needsTotalFloors(): boolean {
-    return this.form.type === 'DUPLEX';
-  }
+  get needsSurface(): boolean  { return ['VILLA','APPARTEMENT','STUDIO','T2','T3','DUPLEX','COMMERCE'].includes(this.form.type); }
+  get needsLand(): boolean     { return ['VILLA','LOT','TERRAIN_VIERGE'].includes(this.form.type); }
+  get needsBedrooms(): boolean { return ['VILLA','APPARTEMENT','T2','T3','DUPLEX'].includes(this.form.type); }
+  get needsFloorNumber(): boolean { return ['APPARTEMENT','STUDIO','T2','T3'].includes(this.form.type); }
+  get needsTotalFloors(): boolean { return this.form.type === 'DUPLEX'; }
 
   get canImport(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
   }
-
-  /** Alias for readability in template */
   get canCreate(): boolean { return this.canImport; }
 
   get filtered(): Property[] {
     const q = this.searchQuery.toLowerCase().trim();
     if (!q) return this.properties;
     return this.properties.filter(p =>
-      (p.title          ?? '').toLowerCase().includes(q) ||
-      p.referenceCode.toLowerCase().includes(q)           ||
-      (p.city           ?? '').toLowerCase().includes(q)  ||
+      (p.title ?? '').toLowerCase().includes(q) ||
+      p.referenceCode.toLowerCase().includes(q)  ||
+      (p.city  ?? '').toLowerCase().includes(q)  ||
       p.type.toLowerCase().includes(q)
     );
   }
 
+  // ── Selection helpers ────────────────────────────────────────────────────
+  get selectedCount(): number { return this.selectedIds.size; }
+
+  get isAllSelected(): boolean {
+    return this.filtered.length > 0 && this.filtered.every(p => this.selectedIds.has(p.id));
+  }
+
+  get isSomeSelected(): boolean {
+    return this.selectedIds.size > 0 && !this.isAllSelected;
+  }
+
+  isSelected(id: string): boolean { return this.selectedIds.has(id); }
+
+  toggleSelect(id: string, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedIds.has(id)) this.selectedIds.delete(id);
+    else                          this.selectedIds.add(id);
+    this.bulkResult = null;
+    this.bulkError  = '';
+  }
+
+  toggleAll(): void {
+    if (this.isAllSelected) {
+      this.selectedIds.clear();
+    } else {
+      this.filtered.forEach(p => this.selectedIds.add(p.id));
+    }
+    this.bulkResult = null;
+    this.bulkError  = '';
+  }
+
+  clearSelection(): void {
+    this.selectedIds.clear();
+    this.bulkResult = null;
+    this.bulkError  = '';
+  }
+
+  // ── View toggle ──────────────────────────────────────────────────────────
+  setView(mode: 'cards' | 'list'): void {
+    this.viewMode = mode;
+    localStorage.setItem('properties_view_mode', mode);
+    this.selectedIds.clear();
+  }
+
+  // ── Bulk action ──────────────────────────────────────────────────────────
+  bulkAction(status: string): void {
+    if (this.selectedIds.size === 0 || this.bulkLoading) return;
+    this.bulkLoading = true;
+    this.bulkError   = '';
+    this.bulkResult  = null;
+
+    this.svc.bulkSetStatus([...this.selectedIds], status).subscribe({
+      next: (result) => {
+        this.bulkLoading = false;
+        this.bulkResult  = result;
+        this.selectedIds.clear();
+        this.loadList();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.bulkLoading = false;
+        this.bulkError = (err.error as ErrorResponse)?.message ?? `Erreur (${err.status})`;
+      },
+    });
+  }
+
   ngOnInit(): void {
+    const saved = localStorage.getItem('properties_view_mode');
+    if (saved === 'list' || saved === 'cards') this.viewMode = saved;
     this.loadList();
     this.loadProjects();
   }
 
   loadProjects(): void {
     this.projectsLoading = true;
-    this.projectSvc.list(true).subscribe({  // activeOnly=true — archived projects excluded
+    this.projectSvc.list(true).subscribe({
       next: (data) => { this.projects = data; this.projectsLoading = false; },
       error: () => { this.projectsLoading = false; },
     });
@@ -158,18 +207,18 @@ export class PropertiesComponent implements OnInit {
     this.loading = true;
     this.error   = '';
     const params: Record<string, string> = {};
-    if (this.filterProjectId) params['projectId'] = this.filterProjectId;
-    if (this.filterImmeubleId) params['immeubleId'] = this.filterImmeubleId;
-    if (this.filterType) params['type'] = this.filterType;
-    if (this.filterStatus) params['status'] = this.filterStatus;
+    if (this.filterProjectId)  params['projectId']  = this.filterProjectId;
+    if (this.filterImmeubleId) params['immeubleId']  = this.filterImmeubleId;
+    if (this.filterType)       params['type']        = this.filterType;
+    if (this.filterStatus)     params['status']      = this.filterStatus;
     this.svc.list(params).subscribe({
       next: (data) => { this.properties = data; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if      (err.status === 401) this.error = 'Session expired. Please log in again.';
-        else if (err.status === 403) this.error = 'Access denied.';
-        else                          this.error = body?.message ?? `Failed to load properties (${err.status})`;
+        if      (err.status === 401) this.error = 'Session expirée. Veuillez vous reconnecter.';
+        else if (err.status === 403) this.error = 'Accès refusé.';
+        else                         this.error = body?.message ?? `Erreur (${err.status})`;
       },
     });
   }
@@ -187,9 +236,7 @@ export class PropertiesComponent implements OnInit {
     this.loadList();
   }
 
-  onFilterChange(): void {
-    this.loadList();
-  }
+  onFilterChange(): void { this.loadList(); }
 
   resetFilters(): void {
     this.filterProjectId = '';
@@ -209,7 +256,7 @@ export class PropertiesComponent implements OnInit {
     this.router.navigate(['/app/properties', propertyId]);
   }
 
-  /* ── CSV Import ─────────────────────────────────────────────── */
+  /* ── CSV Import ──────────────────────────────────────────────────────── */
   onImportFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file  = input.files?.[0];
@@ -241,7 +288,7 @@ export class PropertiesComponent implements OnInit {
     });
   }
 
-  /* ── Manual Create ──────────────────────────────────────────── */
+  /* ── Manual Create ───────────────────────────────────────────────────── */
   openModal(): void {
     this.form = {
       projectId: '', type: '', referenceCode: '', title: '',
@@ -255,71 +302,56 @@ export class PropertiesComponent implements OnInit {
     this.showModal   = true;
   }
 
-  closeModal(): void {
-    if (this.submitting) return;
-    this.showModal = false;
-  }
+  closeModal(): void { if (!this.submitting) this.showModal = false; }
 
   submitCreate(): void {
-    if (!this.form.projectId) {
-      this.submitError = 'Le projet est obligatoire.';
-      return;
-    }
+    if (!this.form.projectId) { this.submitError = 'Le projet est obligatoire.'; return; }
     if (!this.form.type || !this.form.referenceCode.trim() || !this.form.title.trim()) {
-      this.submitError = 'Le type, le code de reference et le titre sont obligatoires.';
-      return;
+      this.submitError = 'Le type, le code de référence et le titre sont obligatoires.'; return;
     }
-    if (this.form.price === null || this.form.price === undefined) {
-      this.submitError = 'Le prix est obligatoire.';
-      return;
-    }
-    // Type-specific required field validation
+    if (this.form.price === null) { this.submitError = 'Le prix est obligatoire.'; return; }
     if (this.needsSurface && !this.form.surfaceAreaSqm) {
-      this.submitError = 'La surface (m²) est obligatoire pour ce type de bien.';
-      return;
+      this.submitError = 'La surface (m²) est obligatoire pour ce type de bien.'; return;
     }
     if (this.needsLand && !this.form.landAreaSqm) {
-      this.submitError = 'La superficie du terrain est obligatoire pour ce type de bien.';
-      return;
+      this.submitError = 'La superficie du terrain est obligatoire pour ce type de bien.'; return;
     }
     if (this.needsBedrooms && (!this.form.bedrooms || !this.form.bathrooms)) {
-      this.submitError = 'Le nombre de chambres et de salles de bain est obligatoire pour ce type de bien.';
-      return;
+      this.submitError = 'Le nombre de chambres et de salles de bain est obligatoire.'; return;
     }
     if (this.needsFloorNumber && this.form.floorNumber === null) {
-      this.submitError = "Le numero d'etage est obligatoire pour ce type de bien.";
-      return;
+      this.submitError = "Le numéro d'étage est obligatoire pour ce type de bien."; return;
     }
     if (this.needsTotalFloors && this.form.floors === null) {
-      this.submitError = "Le nombre total d'etages est obligatoire pour un duplex.";
-      return;
+      this.submitError = "Le nombre total d'étages est obligatoire pour un duplex."; return;
     }
+
     this.submitting  = true;
     this.submitError = '';
 
     this.svc.create({
-      projectId:      this.form.projectId,
-      type:           this.form.type,
-      referenceCode:  this.form.referenceCode.trim(),
-      title:          this.form.title.trim(),
-      description:    this.form.description.trim() || null,
-      price:          this.form.price!,
-      currency:       this.form.currency || 'MAD',
-      city:           this.form.city.trim() || null,
-      region:         this.form.region.trim() || null,
-      address:        this.form.address.trim() || null,
+      projectId: this.form.projectId,
+      type: this.form.type,
+      referenceCode: this.form.referenceCode.trim(),
+      title: this.form.title.trim(),
+      description: this.form.description.trim() || null,
+      price: this.form.price!,
+      currency: this.form.currency || 'MAD',
+      city: this.form.city.trim() || null,
+      region: this.form.region.trim() || null,
+      address: this.form.address.trim() || null,
       surfaceAreaSqm: this.form.surfaceAreaSqm,
-      landAreaSqm:    this.form.landAreaSqm,
-      bedrooms:       this.form.bedrooms,
-      bathrooms:      this.form.bathrooms,
-      floorNumber:    this.form.floorNumber,
-      floors:         this.form.floors,
-      parkingSpaces:  this.form.parkingSpaces,
-      hasPool:        this.form.hasPool || null,
-      hasGarden:      this.form.hasGarden || null,
-      buildingYear:   this.form.buildingYear,
-      buildingName:   this.form.buildingName.trim() || null,
-      listedForSale:  this.form.status === 'ACTIVE',
+      landAreaSqm: this.form.landAreaSqm,
+      bedrooms: this.form.bedrooms,
+      bathrooms: this.form.bathrooms,
+      floorNumber: this.form.floorNumber,
+      floors: this.form.floors,
+      parkingSpaces: this.form.parkingSpaces,
+      hasPool: this.form.hasPool || null,
+      hasGarden: this.form.hasGarden || null,
+      buildingYear: this.form.buildingYear,
+      buildingName: this.form.buildingName.trim() || null,
+      listedForSale: this.form.status === 'ACTIVE',
     }).subscribe({
       next: (created) => {
         this.submitting = false;
@@ -329,14 +361,13 @@ export class PropertiesComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.submitting  = false;
         const body = err.error as ErrorResponse | null;
-        this.submitError = body?.message ?? `Failed to create property (${err.status})`;
+        this.submitError = body?.message ?? `Erreur (${err.status})`;
       },
     });
   }
 
-  badgeClass(status: string): string {
-    return 'badge badge-' + status.toLowerCase();
-  }
+  /* ── Display helpers ─────────────────────────────────────────────────── */
+  badgeClass(status: string): string { return 'badge badge-' + status.toLowerCase(); }
 
   statusLabel(status: string): string {
     const labels: Record<string, string> = {
@@ -351,7 +382,7 @@ export class PropertiesComponent implements OnInit {
     const labels: Record<string, string> = {
       VILLA: 'Villa', APPARTEMENT: 'Appt.', STUDIO: 'Studio',
       T2: 'T2', T3: 'T3', DUPLEX: 'Duplex', COMMERCE: 'Commerce',
-      LOT: 'Lot', TERRAIN_VIERGE: 'Terrain',
+      LOT: 'Lot', TERRAIN_VIERGE: 'Terrain', PARKING: 'Parking',
     };
     return labels[type] ?? type;
   }

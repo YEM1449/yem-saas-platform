@@ -143,4 +143,15 @@ export class PropertyService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/api/properties/${id}`);
   }
+
+  /**
+   * Apply a single editorial status to multiple properties at once.
+   * RESERVED/SOLD cannot be set here. Properties already in those statuses are skipped.
+   */
+  bulkSetStatus(ids: string[], status: string): Observable<{ updated: number; skipped: number }> {
+    return this.http.patch<{ updated: number; skipped: number }>(
+      `${this.apiUrl}/api/properties/bulk-status`,
+      { ids, status }
+    );
+  }
 }
