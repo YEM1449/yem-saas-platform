@@ -124,6 +124,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
         ProjectGenerationRequest req = new ProjectGenerationRequest(
                 "Résidence Test " + uid,
                 null, null, "Marseille", null,
+                null, null, null, null, null,  // professional fields (all optional)
                 "LETTRE", "Bâtiment", "BUILDING_FLOOR_UNIT",
                 null, "RDC", false, "P", false,
                 List.of(tranche));
@@ -168,6 +169,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
 
         ProjectGenerationRequest req = new ProjectGenerationRequest(
                 "Résidence 2T " + uid, null, null, "Casablanca", null,
+                null, null, null, null, null,  // professional fields (all optional)
                 "LETTRE", "Bâtiment", "BUILDING_FLOOR_UNIT",
                 null, "RDC", false, "P", false,
                 List.of(t1, t2));
@@ -200,6 +202,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
 
         ProjectGenerationRequest req = new ProjectGenerationRequest(
                 "Résidence Parking " + uid, null, null, "Agadir", null,
+                null, null, null, null, null,  // professional fields (all optional)
                 "LETTRE", "Bâtiment", "BUILDING_FLOOR_UNIT",
                 null, "RDC", true, "P", true, List.of(t));
 
@@ -271,6 +274,7 @@ class ProjectGenerationIT extends IntegrationTestBase {
 
         ProjectGenerationRequest req = new ProjectGenerationRequest(
                 "Gen2T-" + uid, null, null, "Rabat", null,
+                null, null, null, null, null,  // professional fields (all optional)
                 "LETTRE", "Bâtiment", "BUILDING_FLOOR_UNIT",
                 null, "RDC", false, "P", false, List.of(t1, t2));
 

@@ -76,6 +76,58 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                                                @Param("agentId") UUID agentId,
                                                @Param("excluded") List<VenteStatut> excluded);
 
+    /** CA signed for ventes created in a time window (for monthly trend). */
+    @Query("""
+            SELECT COALESCE(SUM(v.prixVente), 0)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+              AND v.statut NOT IN :excluded
+            """)
+    java.math.BigDecimal sumPrixVenteInPeriod(@Param("societeId") UUID societeId,
+                                              @Param("from") java.time.LocalDateTime from,
+                                              @Param("to") java.time.LocalDateTime to,
+                                              @Param("excluded") List<VenteStatut> excluded);
+
+    /** Same, scoped to one agent. */
+    @Query("""
+            SELECT COALESCE(SUM(v.prixVente), 0)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.agent.id  = :agentId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+              AND v.statut NOT IN :excluded
+            """)
+    java.math.BigDecimal sumPrixVenteInPeriodForAgent(@Param("societeId") UUID societeId,
+                                                      @Param("agentId") UUID agentId,
+                                                      @Param("from") java.time.LocalDateTime from,
+                                                      @Param("to") java.time.LocalDateTime to,
+                                                      @Param("excluded") List<VenteStatut> excluded);
+
+    /** CA for ventes with a specific statut (e.g. LIVRE for total realized CA). */
+    @Query("""
+            SELECT COALESCE(SUM(v.prixVente), 0)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut = :statut
+            """)
+    java.math.BigDecimal sumPrixVenteByStatut(@Param("societeId") UUID societeId,
+                                              @Param("statut") VenteStatut statut);
+
+    /** Count ventes stuck in early pipeline stages since before :before (admin stalled alert). */
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut IN :statuts
+              AND v.createdAt < :before
+            """)
+    long countStalledVentes(@Param("societeId") UUID societeId,
+                             @Param("statuts") List<VenteStatut> statuts,
+                             @Param("before") java.time.LocalDateTime before);
+
     /** Recent ventes for agent (home widget). */
     @Query("""
             SELECT v FROM Vente v

@@ -52,6 +52,8 @@ public class AuthMeController {
             userRepository.findById(userId).ifPresent(user -> {
                 result.put("langueInterface", user.getLangueInterface());
                 result.put("platformRole", user.getPlatformRole());
+                result.put("prenom", user.getPrenom());
+                result.put("email", user.getEmail());
             });
         }
 

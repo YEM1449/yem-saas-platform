@@ -126,8 +126,10 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 061 | Task indexes — composite index (societe_id, assignee_id, status), partial index on due_date for open tasks |
 | 062 | KPI snapshot — kpi_snapshot table with RLS, unique(societe_id, tranche_id) |
 | 063 | Vente contract status — contract_status column on vente table |
+| 064 | Vente ref counter — vente_ref_counter table, vente_ref column on vente table |
+| 065 | Project professional fields — maitre_ouvrage, date_ouverture_commercialisation, tva_taux, surface_terrain_m2, prix_moyen_m2_cible |
 
-Next available changeset: **064**
+Next available changeset: **066**
 
 ## CI Pipeline Map
 

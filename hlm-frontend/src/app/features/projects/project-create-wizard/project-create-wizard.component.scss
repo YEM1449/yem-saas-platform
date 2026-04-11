@@ -112,11 +112,18 @@
   gap: 16px;
 }
 .field { display: flex; flex-direction: column; gap: 4px; }
-.field-full { grid-column: 1 / -1; }
-.field-sm   { max-width: 140px; }
+.field-full  { grid-column: 1 / -1; }
+.field-half  { grid-column: span 1; }
+.field-third { grid-column: span 1; }
+.field-sm    { max-width: 140px; }
 .field-hidden { visibility: hidden; pointer-events: none; }
 .field.required label::after { content: ' *'; color: #ef4444; }
 .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* On wide screens thirds sit in a 3-col sub-grid */
+@media (min-width: 700px) {
+  .field-third { grid-column: span 1; }
+}
 
 label {
   font-size: 12px;
@@ -375,6 +382,54 @@ textarea { resize: vertical; font-family: inherit; }
 
 /* ── Empty state ───────────────────────────────────────────────────────────── */
 .empty-state-sm { padding: 20px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+/* ── Section divider label ─────────────────────────────────────────────────── */
+.section-divider-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ── Preview project summary card ──────────────────────────────────────────── */
+.preview-project-card {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.preview-project-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 8px;
+}
+.preview-project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+.preview-project-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.preview-kpi-chip {
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
 
 /* ── Preview table ─────────────────────────────────────────────────────────── */
 .preview-table-wrap { overflow-x: auto; margin-bottom: 24px; }

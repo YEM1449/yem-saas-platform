@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Role-aware home dashboard snapshot.
+ * Role-aware home dashboard snapshot — enriched for real-estate consultants.
  *
  * <p>The payload is identical in structure for all roles; the data content is scoped:
  * <ul>
@@ -14,7 +14,7 @@ import java.util.Map;
  *   <li>AGENT — personal scope: only their own ventes/tasks.</li>
  * </ul>
  *
- * <p>Designed for fast load (≤ 10 aggregate queries, cached 30 s).
+ * <p>Designed for fast load (≤ 16 aggregate queries, cached 30 s).
  */
 public record HomeDashboardDTO(
 
@@ -27,6 +27,22 @@ public record HomeDashboardDTO(
         BigDecimal caActivePipeline,
         /** Pipeline breakdown: statut → count. */
         Map<String, Long> ventesParStatut,
+
+        // ── CA mensuel (trend indicator) ──────────────────────────────────────
+        /** Sum of prixVente for ventes created this calendar month (non-ANNULE). */
+        BigDecimal caSigneMoisCourant,
+        /** Sum of prixVente for ventes created last calendar month (non-ANNULE). */
+        BigDecimal caSigneMoisPrecedent,
+        /** Total CA from LIVRE (delivered) ventes — realized revenue. */
+        BigDecimal caLivre,
+
+        // ── Écheancier pulse ──────────────────────────────────────────────────
+        /** Sum of unpaid échéances due in the next 30 days. */
+        BigDecimal echeancesA30JoursMontant,
+        /** Sum of unpaid échéances whose due date has passed. */
+        BigDecimal echeancesEnRetardMontant,
+        /** Count of overdue unpaid échéances. */
+        long echeancesEnRetardCount,
 
         // ── Inventory snapshot ────────────────────────────────────────────────
         long biensDraftCount,
@@ -47,6 +63,10 @@ public record HomeDashboardDTO(
         long activeReservationsCount,
         long reservationsExpirantBientot,
 
+        // ── Alertes opérationnelles ───────────────────────────────────────────
+        /** Ventes stuck in COMPROMIS or FINANCEMENT for more than 30 days. */
+        long ventesStalleesCount,
+
         // ── Tâches ────────────────────────────────────────────────────────────
         long openTasksCount,
         long overdueTasksCount,
@@ -62,6 +82,7 @@ public record HomeDashboardDTO(
 
     public record RecentVenteRow(
             java.util.UUID id,
+            String venteRef,
             String contactFullName,
             String statut,
             BigDecimal prixVente,

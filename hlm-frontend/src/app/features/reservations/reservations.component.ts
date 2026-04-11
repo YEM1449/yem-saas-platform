@@ -7,7 +7,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ReservationService, Reservation } from './reservation.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { AuthService } from '../../core/auth/auth.service';
-import { VenteService } from '../ventes/vente.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -18,11 +17,10 @@ import { environment } from '../../../environments/environment';
   styleUrl: './reservations.component.css',
 })
 export class ReservationsComponent implements OnInit {
-  private svc      = inject(ReservationService);
-  private venteSvc = inject(VenteService);
-  private auth     = inject(AuthService);
-  private router   = inject(Router);
-  private http     = inject(HttpClient);
+  private svc    = inject(ReservationService);
+  private auth   = inject(AuthService);
+  private router = inject(Router);
+  private http   = inject(HttpClient);
 
   reservations: Reservation[] = [];
   loading = false;
@@ -39,18 +37,7 @@ export class ReservationsComponent implements OnInit {
   /** Name lookup maps to avoid UUID display. */
   contactNames  = new Map<string, string>();
   propertyNames = new Map<string, string>();
-  /** Price lookup by propertyId — used in conversion price preview. */
-  propertyPrices = new Map<string, number>();
   namesLoading = false;
-
-  // ── Convert to Vente modal ────────────────────────────────────────────────
-  showConvertModal    = false;
-  convertingResv: Reservation | null = null;
-  convertReduction: number | null = null;
-  convertDateCompromis = '';
-  convertNotes        = '';
-  converting          = false;
-  convertError        = '';
 
   get canWrite(): boolean {
     const r = this.auth.user?.role;
@@ -95,70 +82,19 @@ export class ReservationsComponent implements OnInit {
       error: () => { this.namesLoading = false; },
     });
 
-    // Load properties (also capture price for conversion preview)
-    this.http.get<Array<{ id: string; title: string; referenceCode: string; price: number | null }>>(
+    // Load properties
+    this.http.get<Array<{ id: string; title: string; referenceCode: string }>>(
       `${environment.apiUrl}/api/properties`
     ).subscribe({
       next: ps => ps.forEach(p => {
         this.propertyNames.set(p.id, `${p.title} · ${p.referenceCode}`);
-        if (p.price != null) this.propertyPrices.set(p.id, p.price);
       }),
       error: () => {},
     });
   }
 
-  /** Estimated conversion price = property price − advance − reduction. */
-  estimatedConversionPrice(): number | null {
-    if (!this.convertingResv) return null;
-    const base    = this.propertyPrices.get(this.convertingResv.propertyId) ?? null;
-    if (base == null) return null;
-    const advance = this.convertingResv.reservationPrice ?? 0;
-    const reduc   = this.convertReduction ?? 0;
-    return base - advance - reduc;
-  }
-
   openConvertToVente(r: Reservation): void {
-    this.convertingResv     = r;
-    this.convertReduction   = null;
-    this.convertDateCompromis = new Date().toISOString().substring(0, 10);
-    this.convertNotes       = '';
-    this.convertError       = '';
-    this.showConvertModal   = true;
-  }
-
-  closeConvertModal(): void {
-    this.showConvertModal = false;
-    this.convertingResv   = null;
-    this.convertError     = '';
-  }
-
-  submitConvertToVente(): void {
-    if (!this.convertingResv) return;
-    const estimated = this.estimatedConversionPrice();
-    if (estimated !== null && estimated <= 0) {
-      this.convertError = 'Le prix calculé est nul ou négatif. Veuillez ajuster la réduction.';
-      return;
-    }
-    this.converting   = true;
-    this.convertError = '';
-    this.venteSvc.create({
-      reservationId:   this.convertingResv.id,
-      reduction:       this.convertReduction ?? undefined,
-      dateCompromis:   this.convertDateCompromis || undefined,
-      notes:           this.convertNotes || undefined,
-    }).subscribe({
-      next: vente => {
-        this.converting       = false;
-        this.showConvertModal  = false;
-        this.actionSuccess     = `Vente créée avec succès. Prix : ${vente.prixVente?.toLocaleString('fr-FR')} MAD`;
-        this.load(); // refresh list — reservation status now CONVERTED_TO_DEPOSIT
-        this.router.navigate(['/app/ventes', vente.id]);
-      },
-      error: err => {
-        this.converting   = false;
-        this.convertError = err?.error?.message ?? 'Erreur lors de la conversion.';
-      },
-    });
+    this.router.navigate(['/app/ventes/new'], { queryParams: { reservationId: r.id } });
   }
 
   contactName(id: string): string {

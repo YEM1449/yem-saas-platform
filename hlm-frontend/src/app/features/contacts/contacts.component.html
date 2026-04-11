@@ -3,7 +3,7 @@
   <div>
     <h1 class="page-title" data-testid="contacts-page-title">Contacts</h1>
     <p class="page-subtitle">
-      @if (viewMode === 'list') {
+      @if (viewMode === 'list' || viewMode === 'cards') {
         {{ contacts.length }} contact{{ contacts.length !== 1 ? 's' : '' }}
       } @else {
         {{ pipelineTotal }} contact{{ pipelineTotal !== 1 ? 's' : '' }} dans le pipeline
@@ -21,6 +21,15 @@
           <rect x="1.5" y="9.5" width="11" height="1.5" rx=".75" fill="currentColor"/>
         </svg>
         Liste
+      </button>
+      <button class="view-btn" [class.active]="viewMode === 'cards'" (click)="setView('cards')" title="Vue cartes">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
+          <rect x="7.5" y="1" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
+          <rect x="1" y="7.5" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
+          <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
+        </svg>
+        Cartes
       </button>
       <button class="view-btn" [class.active]="viewMode === 'pipeline'" (click)="setView('pipeline')" title="Vue pipeline">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -157,6 +166,80 @@
           </tbody>
         </table>
       </div>
+    </div>
+  }
+}
+
+<!-- ════════════════════════════════════════════════════════════
+     CARDS VIEW
+     ════════════════════════════════════════════════════════════ -->
+@if (!loading && viewMode === 'cards') {
+
+  @if (contacts.length === 0 && !error) {
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <p class="empty-state-title">Aucun contact</p>
+        <p class="empty-state-desc">Ajoutez votre premier contact pour démarrer votre pipeline commercial.</p>
+        @if (canWrite) {
+          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (contacts.length > 0 && filteredList.length === 0) {
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+      </div>
+    </div>
+  }
+
+  @if (filteredList.length > 0) {
+    <div class="contact-card-grid">
+      @for (c of filteredList; track c.id) {
+        <a class="contact-card" [routerLink]="['/app/contacts', c.id]">
+          <div class="contact-card-top">
+            <span class="contact-card-avatar" [style.background]="avatarColor(c)">{{ initials(c) }}</span>
+            <div class="contact-card-identity">
+              <span class="contact-card-name">{{ c.fullName }}</span>
+              <span [class]="badgeClass(c.status)" style="font-size:10px">
+                {{ c.status.replace('_', ' ') | lowercase | titlecase }}
+              </span>
+            </div>
+          </div>
+          <div class="contact-card-details">
+            @if (c.email) {
+              <span class="contact-card-detail">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <rect x="1" y="2.5" width="9" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/>
+                  <path d="M1 3.5l4.5 3 4.5-3" stroke="currentColor" stroke-width="1.1"/>
+                </svg>
+                {{ c.email }}
+              </span>
+            }
+            @if (c.phone) {
+              <span class="contact-card-detail">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path d="M2 1.5h2l1 2.5L3.5 5C4.3 6.5 5.2 7.4 6.5 8.1L7.5 7l2.5 1v2C7 10.5 1 4.5 2 1.5z"
+                        stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+                </svg>
+                {{ c.phone }}
+              </span>
+            }
+            @if (!c.email && !c.phone) {
+              <span class="contact-card-detail contact-card-detail-muted">Aucune coordonnée</span>
+            }
+          </div>
+          <div class="contact-card-footer">
+            <span class="contact-card-days">{{ daysSince(c.createdAt) }}j</span>
+            <span [class]="badgeClass(c.contactType)" style="font-size:10px">{{ c.contactType | lowercase }}</span>
+          </div>
+        </a>
+      }
     </div>
   }
 }

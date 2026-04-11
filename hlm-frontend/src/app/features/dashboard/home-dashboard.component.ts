@@ -19,15 +19,21 @@ export class HomeDashboardComponent implements OnInit {
   loading = signal(true);
   error   = signal('');
 
+  readonly today = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   get role(): string { return this.auth.user?.role ?? ''; }
   get isAgent(): boolean { return this.role === 'ROLE_AGENT'; }
   get isAdminOrManager(): boolean {
     return this.role === 'ROLE_ADMIN' || this.role === 'ROLE_MANAGER';
   }
-
-  ngOnInit(): void {
-    this.load();
+  get userName(): string {
+    const u = this.auth.user;
+    return u?.prenom ?? u?.email?.split('@')[0] ?? '';
   }
+
+  ngOnInit(): void { this.load(); }
 
   reload(): void {
     this.error.set('');
@@ -41,6 +47,8 @@ export class HomeDashboardComponent implements OnInit {
       error: () => { this.error.set('Impossible de charger le tableau de bord.'); this.loading.set(false); },
     });
   }
+
+  // ── Statut labels/colors ────────────────────────────────────────────────────
 
   readonly STATUT_LABELS: Record<string, string> = {
     COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
@@ -60,7 +68,7 @@ export class HomeDashboardComponent implements OnInit {
       COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning',
       ACTE_NOTARIE: 'badge-primary', LIVRE: 'badge-success', ANNULE: 'badge-error',
     };
-    return m[s] ?? '';
+    return 'badge ' + (m[s] ?? '');
   }
 
   pipelineEntries(v: Record<string, number>): { statut: string; count: number }[] {
@@ -68,6 +76,8 @@ export class HomeDashboardComponent implements OnInit {
       .filter(s => v[s] != null)
       .map(s => ({ statut: s, count: v[s] }));
   }
+
+  // ── Absorption helpers ──────────────────────────────────────────────────────
 
   absorptionWidth(r: number | null): string {
     if (r == null) return '0%';
@@ -81,12 +91,49 @@ export class HomeDashboardComponent implements OnInit {
     return 'bar-danger';
   }
 
-  isOverdue(d: string): boolean { return new Date(d) < new Date(); }
+  absorptionLabel(r: number | null): string {
+    if (r == null) return '';
+    if (r >= 70) return 'Forte commercialisation';
+    if (r >= 40) return 'Commercialisation active';
+    return 'Stock disponible important';
+  }
+
+  // ── Monthly trend ──────────────────────────────────────────────────────────
+
+  /** Returns percentage change current vs previous month (null if no previous). */
+  moisTrend(current: number, previous: number): number | null {
+    if (previous === 0) return null;
+    return Math.round((current - previous) / previous * 100);
+  }
+
+  isTrendUp(current: number, previous: number): boolean {
+    return current > previous;
+  }
+
+  // ── Formatting helpers ─────────────────────────────────────────────────────
 
   formatAmount(n: number | null | undefined): string {
-    if (n == null) return '—';
+    if (n == null || n === 0) return '—';
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.', ',') + ' M MAD';
     if (n >= 1_000)     return (n / 1_000).toFixed(0) + ' K MAD';
     return n.toLocaleString('fr-FR') + ' MAD';
+  }
+
+  formatAmountShort(n: number | null | undefined): string {
+    if (n == null || n === 0) return '0';
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.', ',') + ' M';
+    if (n >= 1_000)     return (n / 1_000).toFixed(0) + ' K';
+    return n.toLocaleString('fr-FR');
+  }
+
+  isOverdue(d: string): boolean { return new Date(d) < new Date(); }
+
+  // ── Alert counts ───────────────────────────────────────────────────────────
+
+  totalAlerts(s: HomeDashboard): number {
+    return (s.overdueTasksCount > 0 ? 1 : 0)
+         + (s.reservationsExpirantBientot > 0 ? 1 : 0)
+         + (s.echeancesEnRetardCount > 0 ? 1 : 0)
+         + (s.ventesStalleesCount > 0 ? 1 : 0);
   }
 }

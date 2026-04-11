@@ -1,0 +1,57 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 065-project-professional-fields
+      author: yem
+      comment: "Add real-estate professional fields to project table: maître d'ouvrage, TVA, surface terrain, date ouverture commercialisation, prix moyen m2 cible"
+      changes:
+
+        # ── Maître d'ouvrage (project owner / developer) ──────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: maitre_ouvrage
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: true
+
+        # ── Date d'ouverture commercialisation ────────────────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: date_ouverture_commercialisation
+                  type: DATE
+                  constraints:
+                    nullable: true
+
+        # ── TVA applicable (%) ────────────────────────────────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: tva_taux
+                  type: NUMERIC(5,2)
+                  constraints:
+                    nullable: true
+
+        # ── Surface totale du terrain (m²) ────────────────────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: surface_terrain_m2
+                  type: NUMERIC(12,2)
+                  constraints:
+                    nullable: true
+
+        # ── Prix moyen au m² cible ────────────────────────────────────────
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: prix_moyen_m2_cible
+                  type: NUMERIC(12,2)
+                  constraints:
+                    nullable: true

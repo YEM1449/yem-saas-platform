@@ -94,6 +94,33 @@
             <label>Code postal</label>
             <input formControlName="projectCodePostal" placeholder="13000" />
           </div>
+
+          <!-- ── Informations professionnelles ── -->
+          <div class="field field-full" style="margin-top:8px">
+            <div class="section-divider-label">Informations promoteur</div>
+          </div>
+
+          <div class="field field-half">
+            <label>Maître d'ouvrage</label>
+            <input formControlName="maitreOuvrage" placeholder="Ex : Groupe Immobilier Atlas" />
+          </div>
+          <div class="field field-half">
+            <label>Date d'ouverture commercialisation</label>
+            <input type="date" formControlName="dateOuvertureCommercialisation" />
+          </div>
+
+          <div class="field field-third">
+            <label>TVA applicable (%)</label>
+            <input type="number" formControlName="tvaTaux" placeholder="Ex : 20" min="0" max="100" step="0.01" />
+          </div>
+          <div class="field field-third">
+            <label>Surface terrain (m²)</label>
+            <input type="number" formControlName="surfaceTerrainM2" placeholder="Ex : 5000" min="0" />
+          </div>
+          <div class="field field-third">
+            <label>Prix moyen cible (MAD/m²)</label>
+            <input type="number" formControlName="prixMoyenM2Cible" placeholder="Ex : 12000" min="0" />
+          </div>
         </form>
       </div>
     }
@@ -490,6 +517,35 @@
         <div class="step-intro">
           <h2>Validation — Récapitulatif</h2>
           <p>Vérifiez la configuration avant de lancer la génération.</p>
+        </div>
+
+        <!-- Project info summary card -->
+        <div class="preview-project-card">
+          <div class="preview-project-name">{{ step1.get('projectNom')?.value }}</div>
+          <div class="preview-project-meta">
+            @if (step1.get('projectVille')?.value) {
+              <span>📍 {{ step1.get('projectAdresse')?.value ? (step1.get('projectAdresse')?.value + ', ') : '' }}{{ step1.get('projectVille')?.value }}{{ step1.get('projectCodePostal')?.value ? ' ' + step1.get('projectCodePostal')?.value : '' }}</span>
+            }
+            @if (step1.get('maitreOuvrage')?.value) {
+              <span>🏢 {{ step1.get('maitreOuvrage')?.value }}</span>
+            }
+            @if (step1.get('dateOuvertureCommercialisation')?.value) {
+              <span>📅 Ouverture commercialisation : {{ step1.get('dateOuvertureCommercialisation')?.value }}</span>
+            }
+          </div>
+          @if (step1.get('tvaTaux')?.value || step1.get('surfaceTerrainM2')?.value || step1.get('prixMoyenM2Cible')?.value) {
+            <div class="preview-project-kpis">
+              @if (step1.get('tvaTaux')?.value) {
+                <span class="preview-kpi-chip">TVA {{ step1.get('tvaTaux')?.value }}%</span>
+              }
+              @if (step1.get('surfaceTerrainM2')?.value) {
+                <span class="preview-kpi-chip">{{ step1.get('surfaceTerrainM2')?.value | number:'1.0-0' }} m² terrain</span>
+              }
+              @if (step1.get('prixMoyenM2Cible')?.value) {
+                <span class="preview-kpi-chip">{{ step1.get('prixMoyenM2Cible')?.value | number:'1.0-0' }} MAD/m² cible</span>
+              }
+            </div>
+          }
         </div>
 
         <!-- Tranche timeline table -->
