@@ -24,21 +24,40 @@ export class VenteCreateComponent implements OnInit {
   loading      = signal(false);
 
   // Form fields
-  prixVente:          number | null = null;
-  dateCompromis       = '';
-  dateLivraisonPrevue = '';
-  notes               = '';
+  prixVente:           number | null = null;
+  dateCompromis        = '';
+  dateLivraisonPrevue  = '';
+  notes                = '';
 
   creating    = signal(false);
   createError = signal('');
+
+  readonly PIPELINE_STAGES = [
+    { key: 'COMPROMIS',    label: 'Compromis',     color: '#6366f1' },
+    { key: 'FINANCEMENT',  label: 'Financement',   color: '#f59e0b' },
+    { key: 'ACTE_NOTARIE', label: 'Acte notarié',  color: '#3b82f6' },
+    { key: 'LIVRE',        label: 'Livraison',      color: '#10b981' },
+  ];
 
   get reservationId(): string | null {
     return this.route.snapshot.queryParamMap.get('reservationId');
   }
 
-  /** True when the form can be submitted. */
+  get backUrl(): string[] {
+    const id = this.reservationId;
+    return id ? ['/app/reservations', id] : ['/app/reservations'];
+  }
+
   get canSubmit(): boolean {
-    return (this.prixVente ?? 0) >= 0 && this.prixVente !== null;
+    return (this.prixVente ?? 0) > 0 && this.prixVente !== null;
+  }
+
+  /** Remaining balance = prix de vente − avance déjà versée. */
+  get remainingBalance(): number | null {
+    const p = this.prefill();
+    if (this.prixVente === null || this.prixVente <= 0) return null;
+    const advance = p?.reservationPrice ?? 0;
+    return this.prixVente - Number(advance);
   }
 
   ngOnInit(): void {
@@ -49,8 +68,7 @@ export class VenteCreateComponent implements OnInit {
     this.reservationSvc.getVentePrefill(resId).subscribe({
       next: (data) => {
         this.prefill.set(data);
-        // Pre-fill with suggested price (propertyPrice − advance); user can override
-        this.prixVente = data.suggestedPrixVente ?? data.propertyPrice ?? null;
+        this.prixVente = Number(data.suggestedPrixVente ?? data.propertyPrice ?? null) || null;
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -68,21 +86,20 @@ export class VenteCreateComponent implements OnInit {
     const p = this.prefill();
 
     if (!p) {
-      this.createError.set('Aucune réservation liée — utilisez le formulaire de la liste des ventes.');
+      this.createError.set('Aucune réservation liée.');
       return;
     }
-
-    if (this.prixVente === null) {
-      this.createError.set('Le prix de vente est obligatoire.');
+    if (this.prixVente === null || this.prixVente <= 0) {
+      this.createError.set('Le prix de vente doit être supérieur à 0.');
       return;
     }
 
     const req: CreateVenteRequest = {
-      reservationId:      p.reservationId,
-      prixVente:          this.prixVente,
-      dateCompromis:      this.dateCompromis || null,
+      reservationId:       p.reservationId,
+      prixVente:           this.prixVente,
+      dateCompromis:       this.dateCompromis || null,
       dateLivraisonPrevue: this.dateLivraisonPrevue || null,
-      notes:              this.notes || null,
+      notes:               this.notes || null,
     };
 
     this.creating.set(true);

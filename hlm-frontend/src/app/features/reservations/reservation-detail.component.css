@@ -72,6 +72,93 @@
 
 .mb-16 { margin-bottom: 16px; }
 
+/* ── Linked vente card ─────────────────────────────────────────── */
+.linked-vente-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.lvc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #dcfce7;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lvc-body { flex: 1; min-width: 0; }
+.lvc-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: #15803d;
+  margin: 0 0 2px;
+}
+.lvc-sub {
+  font-size: .8rem;
+  color: #16a34a;
+  margin: 0;
+}
+
+/* ── Convert banner (pipeline launch CTA) ──────────────────────── */
+.convert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.convert-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+.convert-banner-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.convert-banner-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #3730a3;
+  margin: 0 0 4px;
+}
+.convert-banner-sub {
+  font-size: .82rem;
+  color: #4338ca;
+  margin: 0;
+  line-height: 1.4;
+}
+.convert-banner-cta {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 10px 20px;
+  font-weight: 600;
+}
+
 /* ── Definition list ───────────────────────────────────────────── */
 .detail-list {
   display: grid;
