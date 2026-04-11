@@ -60,8 +60,8 @@ export class AdminUsersComponent implements OnInit {
     }).subscribe({
       next: (page) => {
         this.membres = page.content;
-        this.totalPages = page.page.totalPages;
-        this.totalElements = page.page.totalElements;
+        this.totalPages = page.totalPages;
+        this.totalElements = page.totalElements;
         this.loading = false;
       },
       error: (err: HttpErrorResponse) => {
