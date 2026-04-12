@@ -112,20 +112,80 @@
 
   <!-- ═══════════════════════════ DETAILS ════════════════════════════════════ -->
   @if (activeTab === 'details') {
-    <dl>
-      <dt>Prénom</dt>       <dd>{{ contact.firstName }}</dd>
-      <dt>Nom</dt>          <dd>{{ contact.lastName }}</dd>
-      <dt>Email</dt>        <dd>{{ contact.email ?? '—' }}</dd>
-      <dt>Téléphone</dt>    <dd>{{ contact.phone ?? '—' }}</dd>
-      <dt>CIN / Passeport</dt> <dd>{{ contact.nationalId ?? '—' }}</dd>
-      <dt>Adresse</dt>      <dd>{{ contact.address ?? '—' }}</dd>
-      <dt>Notes</dt>        <dd>{{ contact.notes ?? '—' }}</dd>
-      <dt>Qualifié</dt>     <dd>{{ contact.qualified ? 'Oui' : 'Non' }}</dd>
-      <dt>Consentement</dt> <dd>{{ contact.consentGiven ? 'Donné' : 'Non donné' }}</dd>
-      <dt>Base légale</dt>  <dd>{{ contact.processingBasis ?? '—' }}</dd>
-      <dt>Créé le</dt>      <dd>{{ contact.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
-      <dt>Modifié le</dt>   <dd>{{ contact.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
-    </dl>
+
+    @if (!showEditForm) {
+      @if (canWrite) {
+        <div class="transition-bar">
+          <button class="btn btn-sm btn-primary" (click)="toggleEditForm()">
+            Modifier la fiche
+          </button>
+        </div>
+      }
+      <dl>
+        <dt>Prénom</dt>       <dd>{{ contact.firstName }}</dd>
+        <dt>Nom</dt>          <dd>{{ contact.lastName }}</dd>
+        <dt>Email</dt>        <dd>{{ contact.email ?? '—' }}</dd>
+        <dt>Téléphone</dt>    <dd>{{ contact.phone ?? '—' }}</dd>
+        <dt>CIN / Passeport</dt> <dd>{{ contact.nationalId ?? '—' }}</dd>
+        <dt>Adresse</dt>      <dd>{{ contact.address ?? '—' }}</dd>
+        <dt>Notes</dt>        <dd>{{ contact.notes ?? '—' }}</dd>
+        <dt>Qualifié</dt>     <dd>{{ contact.qualified ? 'Oui' : 'Non' }}</dd>
+        <dt>Consentement</dt> <dd>{{ contact.consentGiven ? 'Donné' : 'Non donné' }}</dd>
+        <dt>Base légale</dt>  <dd>{{ contact.processingBasis ?? '—' }}</dd>
+        <dt>Créé le</dt>      <dd>{{ contact.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>Modifié le</dt>   <dd>{{ contact.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+      </dl>
+    }
+
+    @if (showEditForm) {
+      <div class="card qualify-form">
+        <h3 class="card-title">Modifier la fiche contact</h3>
+
+        @if (editError) {
+          <p class="error">{{ editError }}</p>
+        }
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Prénom</label>
+            <input type="text" [(ngModel)]="editForm.firstName" maxlength="120" />
+          </div>
+          <div class="field">
+            <label>Nom</label>
+            <input type="text" [(ngModel)]="editForm.lastName" maxlength="120" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="editForm.email" maxlength="160" />
+          </div>
+          <div class="field">
+            <label>Téléphone</label>
+            <input type="tel" [(ngModel)]="editForm.phone" maxlength="30" />
+          </div>
+          <div class="field">
+            <label>CIN / Passeport</label>
+            <input type="text" [(ngModel)]="editForm.nationalId" maxlength="100" />
+          </div>
+          <div class="field field-full">
+            <label>Adresse</label>
+            <input type="text" [(ngModel)]="editForm.address" maxlength="500" />
+          </div>
+          <div class="field field-full">
+            <label>Notes</label>
+            <textarea [(ngModel)]="editForm.notes" rows="3" maxlength="2000"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" [disabled]="savingEdit" (click)="saveEdit()">
+            {{ savingEdit ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+          <button class="btn btn-outline" [disabled]="savingEdit" (click)="toggleEditForm()">
+            Annuler
+          </button>
+        </div>
+      </div>
+    }
   }
 
   <!-- ═══════════════════════════ INTERESTS ══════════════════════════════════ -->

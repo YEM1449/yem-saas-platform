@@ -35,6 +35,11 @@
       </p>
     </div>
     <div class="page-header-actions">
+      @if (canManageMedia && !showEditForm) {
+        <button class="btn btn-primary btn-sm" (click)="toggleEditForm()">
+          Modifier le bien
+        </button>
+      }
       @if (canManageMedia && allowedStatusTransitions.length > 0) {
         <div class="status-action-wrap">
           <select class="form-control form-control-sm"
@@ -50,6 +55,124 @@
       }
     </div>
   </div>
+
+  @if (showEditForm) {
+    <div class="card" style="margin-bottom:16px; padding:20px">
+      <h3 style="margin-top:0">Modifier le bien</h3>
+
+      @if (editError) {
+        <div class="alert alert-error" style="margin-bottom:12px">{{ editError }}</div>
+      }
+
+      <div class="form-grid">
+        <div class="field field-full">
+          <label>Titre</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.title" maxlength="250" />
+        </div>
+        <div class="field">
+          <label>Prix</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.price" min="0" step="1" />
+        </div>
+        <div class="field">
+          <label>Statut juridique</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.legalStatus" />
+        </div>
+        <div class="field">
+          <label>Surface (m²)</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.surfaceAreaSqm" min="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label>Terrain (m²)</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.landAreaSqm" min="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label>Chambres</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.bedrooms" min="0" />
+        </div>
+        <div class="field">
+          <label>Salles de bain</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.bathrooms" min="0" />
+        </div>
+        <div class="field">
+          <label>Étage</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.floorNumber" />
+        </div>
+        <div class="field">
+          <label>Nb étages</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.floors" min="0" />
+        </div>
+        <div class="field">
+          <label>Parkings</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.parkingSpaces" min="0" />
+        </div>
+        <div class="field">
+          <label>Année de construction</label>
+          <input type="number" class="form-control" [(ngModel)]="editForm.buildingYear" />
+        </div>
+        <div class="field">
+          <label>Zoning</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.zoning" />
+        </div>
+        <div class="field field-full">
+          <label>Adresse</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.address" />
+        </div>
+        <div class="field">
+          <label>Ville</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.city" />
+        </div>
+        <div class="field">
+          <label>Région</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.region" />
+        </div>
+        <div class="field">
+          <label>Code postal</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.postalCode" />
+        </div>
+        <div class="field field-full">
+          <label>Description</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="editForm.description"></textarea>
+        </div>
+        <div class="field field-full">
+          <label>Notes</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="editForm.notes"></textarea>
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" [(ngModel)]="editForm.hasGarden" />
+            Jardin
+          </label>
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" [(ngModel)]="editForm.hasPool" />
+            Piscine
+          </label>
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" [(ngModel)]="editForm.isServiced" />
+            Viabilisé
+          </label>
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" [(ngModel)]="editForm.listedForSale" />
+            En vente
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top:16px; display:flex; gap:8px">
+        <button class="btn btn-primary" [disabled]="savingEdit" (click)="saveEdit()">
+          {{ savingEdit ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        <button class="btn btn-outline" [disabled]="savingEdit" (click)="toggleEditForm()">
+          Annuler
+        </button>
+      </div>
+    </div>
+  }
 
   @if (statusSuccess) {
     <div class="alert alert-success" style="margin-bottom:16px">✓ {{ statusSuccess }}</div>

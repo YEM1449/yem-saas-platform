@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { ContactService, ConvertToProspectRequest } from './contact.service';
+import { ContactService, ConvertToProspectRequest, UpdateContactRequest } from './contact.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Contact, TimelineEvent } from '../../core/models/contact.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
 import { Deposit } from '../../core/models/deposit.model';
@@ -34,6 +35,12 @@ export class ContactDetailComponent implements OnInit {
   private venteSvc     = inject(VenteService);
   private route        = inject(ActivatedRoute);
   private router       = inject(Router);
+  private auth         = inject(AuthService);
+
+  get canWrite(): boolean {
+    const r = this.auth.user?.role;
+    return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
+  }
 
   contact: Contact | null = null;
   loading = true;
@@ -41,6 +48,15 @@ export class ContactDetailComponent implements OnInit {
   contactId = '';
 
   activeTab: TabId = 'details';
+
+  // ── Edit form ──────────────────────────────────────────────────────────────
+  showEditForm = false;
+  savingEdit = false;
+  editError = '';
+  editForm: UpdateContactRequest = {
+    firstName: '', lastName: '', email: '', phone: '',
+    nationalId: '', address: '', notes: '',
+  };
 
   // ── Qualify form ───────────────────────────────────────────────────────────
   showQualifyForm = false;
@@ -176,6 +192,42 @@ export class ContactDetailComponent implements OnInit {
         if (!this.timelineLoaded) this.loadTimeline();
         break;
     }
+  }
+
+  // ── Edit contact details ──────────────────────────────────────────────────
+
+  toggleEditForm(): void {
+    this.showEditForm = !this.showEditForm;
+    this.editError = '';
+    if (this.showEditForm && this.contact) {
+      this.editForm = {
+        firstName:  this.contact.firstName  ?? '',
+        lastName:   this.contact.lastName   ?? '',
+        email:      this.contact.email      ?? '',
+        phone:      this.contact.phone      ?? '',
+        nationalId: this.contact.nationalId ?? '',
+        address:    this.contact.address    ?? '',
+        notes:      this.contact.notes      ?? '',
+      };
+    }
+  }
+
+  saveEdit(): void {
+    if (!this.contact || this.savingEdit) return;
+    this.savingEdit = true;
+    this.editError = '';
+    this.svc.update(this.contactId, this.editForm).subscribe({
+      next: (updated) => {
+        this.contact = updated;
+        this.savingEdit = false;
+        this.showEditForm = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.savingEdit = false;
+        const body = err.error as ErrorResponse | null;
+        this.editError = body?.message ?? `Impossible d'enregistrer (${err.status})`;
+      },
+    });
   }
 
   // ── Qualify / convert to prospect ─────────────────────────────────────────

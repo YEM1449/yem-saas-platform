@@ -131,7 +131,7 @@ export class PropertyService {
   }
 
   /**
-   * Change editorial status (ADMIN only).
+   * Change editorial status (ADMIN / MANAGER).
    * Only DRAFT / ACTIVE / WITHDRAWN / ARCHIVED are accepted.
    * RESERVED and SOLD are managed by the reservation/contract workflow.
    */
