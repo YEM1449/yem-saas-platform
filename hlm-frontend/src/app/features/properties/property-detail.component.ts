@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { PropertyService } from './property.service';
+import { PropertyService, UpdatePropertyRequest } from './property.service';
 import { Property, PropertyMedia } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -38,6 +38,12 @@ export class PropertyDetailComponent implements OnInit {
   statusError = '';
   statusSuccess = '';
 
+  // ── Edit form ──────────────────────────────────────────────────────────────
+  showEditForm = false;
+  savingEdit = false;
+  editError = '';
+  editForm: UpdatePropertyRequest = {};
+
   private propertyId = '';
 
   get canManageMedia(): boolean {
@@ -69,6 +75,56 @@ export class PropertyDetailComponent implements OnInit {
       ARCHIVED:   [{ value: 'DRAFT',      label: 'Remettre en brouillon' }],
     };
     return all[current] ?? [];
+  }
+
+  toggleEditForm(): void {
+    this.showEditForm = !this.showEditForm;
+    this.editError = '';
+    if (this.showEditForm && this.property) {
+      const p = this.property;
+      this.editForm = {
+        title:          p.title,
+        description:    p.description,
+        notes:          p.notes,
+        price:          p.price,
+        address:        p.address,
+        city:           p.city,
+        region:         p.region,
+        postalCode:     p.postalCode,
+        legalStatus:    p.legalStatus,
+        surfaceAreaSqm: p.surfaceAreaSqm,
+        landAreaSqm:    p.landAreaSqm,
+        bedrooms:       p.bedrooms,
+        bathrooms:      p.bathrooms,
+        floors:         p.floors,
+        parkingSpaces:  p.parkingSpaces,
+        hasGarden:      p.hasGarden,
+        hasPool:        p.hasPool,
+        buildingYear:   p.buildingYear,
+        floorNumber:    p.floorNumber,
+        zoning:         p.zoning,
+        isServiced:     p.isServiced,
+        listedForSale:  p.listedForSale,
+      };
+    }
+  }
+
+  saveEdit(): void {
+    if (!this.property || this.savingEdit) return;
+    this.savingEdit = true;
+    this.editError = '';
+    this.svc.update(this.property.id, this.editForm).subscribe({
+      next: (updated) => {
+        this.property = updated;
+        this.savingEdit = false;
+        this.showEditForm = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.savingEdit = false;
+        const body = err.error as ErrorResponse | null;
+        this.editError = body?.message ?? `Impossible d'enregistrer (${err.status})`;
+      },
+    });
   }
 
   changeStatus(newStatus: string): void {

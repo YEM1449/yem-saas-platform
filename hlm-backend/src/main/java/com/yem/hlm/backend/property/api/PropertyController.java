@@ -112,11 +112,11 @@ public class PropertyController {
     /**
      * Change the editorial status of a property (DRAFT / ACTIVE / WITHDRAWN / ARCHIVED).
      * RESERVED and SOLD are rejected — use the reservation/contract workflow instead.
-     * Requires ADMIN role only (status changes are a privileged editorial action).
+     * Consistent with update() and bulkUpdateStatus(): ADMIN/MANAGER can modify.
      */
-    @Operation(summary = "Change editorial status (ADMIN only) — RESERVED/SOLD forbidden here")
+    @Operation(summary = "Change editorial status (ADMIN/MANAGER) — RESERVED/SOLD forbidden here")
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public PropertyResponse updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody PropertyStatusUpdateRequest request) {

@@ -19,6 +19,19 @@ export interface CreateContactRequest {
   processingBasis?: string | null;
 }
 
+export interface UpdateContactRequest {
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  nationalId?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  consentGiven?: boolean | null;
+  consentMethod?: string | null;
+  processingBasis?: string | null;
+}
+
 export interface ConvertToProspectRequest {
   source?: string | null;
   notes?: string | null;
@@ -51,6 +64,11 @@ export class ContactService {
   /** Create a new contact (ADMIN / MANAGER only). */
   create(req: CreateContactRequest): Observable<Contact> {
     return this.http.post<Contact>(`${this.apiUrl}/api/contacts`, req);
+  }
+
+  /** Partially update a contact's fields (ADMIN / MANAGER only). */
+  update(id: string, req: UpdateContactRequest): Observable<Contact> {
+    return this.http.patch<Contact>(`${this.apiUrl}/api/contacts/${id}`, req);
   }
 
   /** Transition the contact's status via the server-enforced state machine. */
