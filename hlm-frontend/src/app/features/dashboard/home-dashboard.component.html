@@ -53,6 +53,7 @@
        ════════════════════════════════════════════════════════════ -->
   @if (isAdminOrManager && bundle()) {
     <app-alerts-panel [alerts]="alertsList()" class="cockpit-alerts"></app-alerts-panel>
+    <app-insights-panel [insights]="insightsList()" class="cockpit-insights"></app-insights-panel>
   }
 
   <!-- ════════════════════════════════════════════════════════════

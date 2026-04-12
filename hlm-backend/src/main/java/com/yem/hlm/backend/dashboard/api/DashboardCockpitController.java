@@ -8,6 +8,7 @@ import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.InventoryIntelligenceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
+import com.yem.hlm.backend.dashboard.api.dto.SmartInsightDTO;
 import com.yem.hlm.backend.dashboard.service.DashboardCockpitService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -87,5 +88,11 @@ public class DashboardCockpitController {
     public ResponseEntity<DiscountAnalyticsDTO> discountAnalytics() {
         UUID societeId = ctx.requireSocieteId();
         return ResponseEntity.ok(svc.getDiscountAnalytics(societeId));
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<List<SmartInsightDTO>> insights() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getInsights(societeId));
     }
 }

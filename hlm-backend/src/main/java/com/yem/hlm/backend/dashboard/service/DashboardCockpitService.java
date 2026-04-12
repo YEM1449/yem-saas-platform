@@ -15,6 +15,9 @@ import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.KpiDelta;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.SparklinePoint;
 import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
+import com.yem.hlm.backend.dashboard.api.dto.SmartInsightDTO;
+import com.yem.hlm.backend.dashboard.api.dto.SmartInsightDTO.InsightPriority;
+import com.yem.hlm.backend.dashboard.api.dto.SmartInsightDTO.InsightType;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
@@ -451,6 +454,156 @@ public class DashboardCockpitService {
                 dealsWithDiscount, totalDeals, avgPct, maxPct, totalVol, agents);
     }
 
+    // ── 9. Smart Insights ───────────────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'insights:' + #societeId")
+    public List<SmartInsightDTO> getInsights(UUID societeId) {
+        List<SmartInsightDTO> insights = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        YearMonth thisMonth = YearMonth.from(now);
+        YearMonth prevMonth = thisMonth.minusMonths(1);
+
+        LocalDateTime thisMonthFrom = thisMonth.atDay(1).atStartOfDay();
+        LocalDateTime thisMonthTo   = thisMonth.plusMonths(1).atDay(1).atStartOfDay();
+        LocalDateTime prevMonthFrom = prevMonth.atDay(1).atStartOfDay();
+
+        // Rule 1 — Revenue pace (current month vs previous)
+        BigDecimal caCurrent  = nz(venteRepo.sumPrixVenteInPeriod(
+                societeId, thisMonthFrom, thisMonthTo, List.of(VenteStatut.ANNULE)));
+        BigDecimal caPrevious = nz(venteRepo.sumPrixVenteInPeriod(
+                societeId, prevMonthFrom, thisMonthFrom, List.of(VenteStatut.ANNULE)));
+
+        if (caPrevious.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal pct = caCurrent.subtract(caPrevious)
+                    .divide(caPrevious.abs(), 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(1, RoundingMode.HALF_UP);
+            if (pct.compareTo(BigDecimal.TEN) > 0) {
+                insights.add(new SmartInsightDTO("revenue-up",
+                        InsightType.TREND, InsightPriority.MEDIUM,
+                        "CA en progression",
+                        "+" + pct + "% vs mois précédent — " + fmtAmount(caCurrent) + " signé ce mois",
+                        "Détail commercial", "/app/dashboard/commercial"));
+            } else if (pct.compareTo(BigDecimal.valueOf(-10)) < 0) {
+                insights.add(new SmartInsightDTO("revenue-down",
+                        InsightType.RISK, InsightPriority.HIGH,
+                        "CA en baisse significative",
+                        pct + "% vs mois précédent — action recommandée",
+                        "Analyser", "/app/dashboard/commercial"));
+            }
+        }
+
+        // Rule 2 — Top-performing project by absorption rate
+        List<Object[]> inv = propertyRepo.inventoryByProjectStatusWithValues(societeId);
+        Map<UUID, long[]> projCounts = new LinkedHashMap<>();
+        Map<UUID, String> projNames = new HashMap<>();
+        for (Object[] r : inv) {
+            UUID pid = (UUID) r[0];
+            projNames.putIfAbsent(pid, (String) r[1]);
+            long[] c = projCounts.computeIfAbsent(pid, k -> new long[3]);
+            PropertyStatus st = (PropertyStatus) r[2];
+            long cnt = ((Number) r[3]).longValue();
+            switch (st) {
+                case ACTIVE   -> c[0] += cnt;
+                case RESERVED -> c[1] += cnt;
+                case SOLD     -> c[2] += cnt;
+                default -> {}
+            }
+        }
+        UUID bestProjId = null;
+        BigDecimal bestAbsorption = BigDecimal.ZERO;
+        for (Map.Entry<UUID, long[]> e : projCounts.entrySet()) {
+            long[] c = e.getValue();
+            long base = c[0] + c[1] + c[2];
+            if (base >= 5) {
+                BigDecimal abs = absorptionRate(c[2], base);
+                if (abs != null && abs.compareTo(bestAbsorption) > 0) {
+                    bestAbsorption = abs;
+                    bestProjId = e.getKey();
+                }
+            }
+        }
+        if (bestProjId != null && bestAbsorption.compareTo(BigDecimal.valueOf(60)) >= 0) {
+            insights.add(new SmartInsightDTO("top-project",
+                    InsightType.OPPORTUNITY, InsightPriority.LOW,
+                    projNames.get(bestProjId) + " — forte commercialisation",
+                    "Taux d'absorption de " + bestAbsorption + "% — envisagez d'accélérer la livraison",
+                    "Voir le projet", "/app/projects/" + bestProjId));
+        }
+
+        // Rule 3 — Stalled deals in pipeline
+        long stalled = venteRepo.countStalledVentes(societeId,
+                List.of(VenteStatut.COMPROMIS, VenteStatut.FINANCEMENT), now.minusDays(30));
+        if (stalled >= 3) {
+            insights.add(new SmartInsightDTO("stalled-deals",
+                    InsightType.RISK, InsightPriority.HIGH,
+                    stalled + " vente" + (stalled > 1 ? "s" : "") + " bloquée" + (stalled > 1 ? "s" : ""),
+                    "Aucun mouvement depuis +30 jours en COMPROMIS/FINANCEMENT — relance recommandée",
+                    "Voir les ventes", "/app/ventes"));
+        }
+
+        // Rule 4 — Conversion rate health
+        LocalDateTime now30 = now.minusDays(30);
+        LocalDateTime prev30 = now.minusDays(60);
+        long res30 = reservationRepo.countCreatedInPeriod(societeId, now30, now);
+        long ventes30 = venteRepo.countCreatedInPeriod(societeId, now30, now);
+        long resPrev = reservationRepo.countCreatedInPeriod(societeId, prev30, now30);
+        long ventesPrev = venteRepo.countCreatedInPeriod(societeId, prev30, now30);
+
+        BigDecimal convCurrent = ratio(ventes30, res30);
+        BigDecimal convPrev = ratio(ventesPrev, resPrev);
+        if (convCurrent != null && convCurrent.compareTo(BigDecimal.valueOf(60)) >= 0) {
+            insights.add(new SmartInsightDTO("conversion-healthy",
+                    InsightType.INFO, InsightPriority.LOW,
+                    "Conversion saine à " + convCurrent + "%",
+                    "Réservation → vente : " + ventes30 + " conversions sur " + res30 + " réservations (30j)",
+                    null, null));
+        } else if (convCurrent != null && convPrev != null
+                && convCurrent.compareTo(convPrev.multiply(BigDecimal.valueOf(0.8))) < 0) {
+            insights.add(new SmartInsightDTO("conversion-drop",
+                    InsightType.RISK, InsightPriority.HIGH,
+                    "Conversion en chute",
+                    convCurrent + "% vs " + convPrev + "% le mois précédent — identifiez les blocages",
+                    "Analyser le pipeline", "/app/ventes"));
+        }
+
+        // Rule 5 — Discount margin pressure
+        List<Object[]> discSummary = venteRepo.discountSummary(societeId);
+        if (discSummary != null && !discSummary.isEmpty()) {
+            Object[] ds = discSummary.get(0);
+            if (ds[2] != null) {
+                BigDecimal avgDisc = toBigDecimal(ds[2]).setScale(1, RoundingMode.HALF_UP);
+                if (avgDisc.compareTo(BigDecimal.TEN) > 0) {
+                    insights.add(new SmartInsightDTO("discount-pressure",
+                            InsightType.RISK, InsightPriority.MEDIUM,
+                            "Pression sur les marges",
+                            "Remise moyenne de " + avgDisc + "% — revoyez la politique de prix",
+                            "Voir les remises", "/app/dashboard"));
+                }
+            }
+        }
+
+        // Rule 6 — Best agent this month
+        List<Object[]> topAgents = venteRepo.topAgentsByCA(societeId, thisMonthFrom, now,
+                org.springframework.data.domain.PageRequest.of(0, 1));
+        if (!topAgents.isEmpty()) {
+            Object[] top = topAgents.get(0);
+            String agentName = (str(top[1]) + " " + str(top[2])).trim();
+            BigDecimal agentCA = toBigDecimal(top[3]);
+            long agentCount = ((Number) top[4]).longValue();
+            if (agentCA.compareTo(BigDecimal.ZERO) > 0 && !agentName.isBlank()) {
+                insights.add(new SmartInsightDTO("top-agent",
+                        InsightType.INFO, InsightPriority.LOW,
+                        agentName + " — leader du mois",
+                        agentCount + " vente" + (agentCount > 1 ? "s" : "") + " pour " + fmtAmount(agentCA),
+                        null, null));
+            }
+        }
+
+        insights.sort(Comparator.comparing(i -> i.priority().ordinal()));
+        return insights;
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static KpiDelta buildDelta(BigDecimal current, BigDecimal previous) {
@@ -533,6 +686,19 @@ public class DashboardCockpitService {
                 .divide(BigDecimal.valueOf(denominator), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(1, RoundingMode.HALF_UP);
+    }
+
+    private static String fmtAmount(BigDecimal n) {
+        if (n == null || n.compareTo(BigDecimal.ZERO) == 0) return "0 MAD";
+        if (n.compareTo(BigDecimal.valueOf(1_000_000)) >= 0) {
+            return n.divide(BigDecimal.valueOf(1_000_000), 1, RoundingMode.HALF_UP)
+                    .toPlainString().replace('.', ',') + " M MAD";
+        }
+        if (n.compareTo(BigDecimal.valueOf(1_000)) >= 0) {
+            return n.divide(BigDecimal.valueOf(1_000), 0, RoundingMode.HALF_UP)
+                    .toPlainString() + " K MAD";
+        }
+        return n.setScale(0, RoundingMode.HALF_UP).toPlainString() + " MAD";
     }
 
     private static BigDecimal absorptionRate(long sold, long commercializedBase) {

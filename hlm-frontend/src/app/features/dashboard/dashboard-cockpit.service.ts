@@ -156,6 +156,20 @@ export interface DiscountAnalytics {
   byAgent: AgentDiscount[];
 }
 
+// ── Smart insights ────────────────────────────────────────────────────────
+export type InsightType = 'OPPORTUNITY' | 'RISK' | 'TREND' | 'INFO';
+export type InsightPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface SmartInsight {
+  id: string;
+  type: InsightType;
+  priority: InsightPriority;
+  title: string;
+  description: string;
+  actionLabel: string | null;
+  actionRoute: string | null;
+}
+
 export interface CockpitBundle {
   kpi: KpiComparison | null;
   funnel: FunnelSnapshot | null;
@@ -165,6 +179,7 @@ export interface CockpitBundle {
   agentPerformance: AgentPerformance | null;
   inventory: InventoryIntelligence | null;
   discount: DiscountAnalytics | null;
+  insights: SmartInsight[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -204,6 +219,10 @@ export class DashboardCockpitService {
     return this.http.get<DiscountAnalytics>(`${this.base}/discount-analytics`);
   }
 
+  getInsights(): Observable<SmartInsight[]> {
+    return this.http.get<SmartInsight[]>(`${this.base}/insights`);
+  }
+
   /** Single call used by the home dashboard — degrades gracefully on per-endpoint failure. */
   getBundle(): Observable<CockpitBundle> {
     return forkJoin({
@@ -215,6 +234,7 @@ export class DashboardCockpitService {
       agentPerformance: this.getAgentPerformance().pipe(catchError(() => of(null))),
       inventory:        this.getInventoryIntelligence().pipe(catchError(() => of(null))),
       discount:         this.getDiscountAnalytics().pipe(catchError(() => of(null))),
+      insights:         this.getInsights().pipe(catchError(() => of([] as SmartInsight[]))),
     });
   }
 }
