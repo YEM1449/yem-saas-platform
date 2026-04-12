@@ -53,10 +53,68 @@ export interface DashboardAlert {
   ctaRoute: string | null;
 }
 
+// ── Pipeline analysis ─────────────────────────────────────────────────────
+export interface PipelineStageRow {
+  statut: string;
+  count: number;
+  rawValue: number;
+  weightedValue: number;
+  defaultProbability: number;
+  avgAgingDays: number;
+}
+
+export interface AtRiskDeal {
+  venteId: string;
+  venteRef: string;
+  contactFullName: string;
+  statut: string;
+  prixVente: number;
+  weightedValue: number;
+  agingDays: number;
+}
+
+export interface PipelineAnalysis {
+  asOf: string;
+  totalWeightedValue: number;
+  totalRawValue: number;
+  stages: PipelineStageRow[];
+  atRiskDeals: AtRiskDeal[];
+}
+
+// ── Forecast ──────────────────────────────────────────────────────────────
+export interface Forecast {
+  asOf: string;
+  next30Days: number;
+  next60Days: number;
+  next90Days: number;
+  undated: number;
+  undatedCount: number;
+}
+
+// ── Agent performance ─────────────────────────────────────────────────────
+export interface AgentRow {
+  agentId: string;
+  agentName: string;
+  totalSales: number;
+  totalCA: number;
+  conversionRate: number | null;
+  avgDealSize: number | null;
+  avgDaysToClose: number | null;
+  activePipeline: number;
+}
+
+export interface AgentPerformance {
+  asOf: string;
+  agents: AgentRow[];
+}
+
 export interface CockpitBundle {
   kpi: KpiComparison | null;
   funnel: FunnelSnapshot | null;
   alerts: DashboardAlert[];
+  pipeline: PipelineAnalysis | null;
+  forecast: Forecast | null;
+  agentPerformance: AgentPerformance | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,12 +134,27 @@ export class DashboardCockpitService {
     return this.http.get<DashboardAlert[]>(`${this.base}/alerts`);
   }
 
+  getPipelineAnalysis(): Observable<PipelineAnalysis> {
+    return this.http.get<PipelineAnalysis>(`${this.base}/pipeline-analysis`);
+  }
+
+  getForecast(): Observable<Forecast> {
+    return this.http.get<Forecast>(`${this.base}/forecast`);
+  }
+
+  getAgentPerformance(): Observable<AgentPerformance> {
+    return this.http.get<AgentPerformance>(`${this.base}/agents-performance`);
+  }
+
   /** Single call used by the home dashboard — degrades gracefully on per-endpoint failure. */
   getBundle(): Observable<CockpitBundle> {
     return forkJoin({
-      kpi:    this.getKpiComparison().pipe(catchError(() => of(null))),
-      funnel: this.getFunnel().pipe(catchError(() => of(null))),
-      alerts: this.getAlerts().pipe(catchError(() => of([] as DashboardAlert[]))),
-    }).pipe(map(b => ({ kpi: b.kpi, funnel: b.funnel, alerts: b.alerts })));
+      kpi:              this.getKpiComparison().pipe(catchError(() => of(null))),
+      funnel:           this.getFunnel().pipe(catchError(() => of(null))),
+      alerts:           this.getAlerts().pipe(catchError(() => of([] as DashboardAlert[]))),
+      pipeline:         this.getPipelineAnalysis().pipe(catchError(() => of(null))),
+      forecast:         this.getForecast().pipe(catchError(() => of(null))),
+      agentPerformance: this.getAgentPerformance().pipe(catchError(() => of(null))),
+    });
   }
 }

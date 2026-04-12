@@ -5,6 +5,7 @@
 /* ── Cockpit (Wave A) ────────────────────────────────────────────────────── */
 .cockpit-alerts { display: block; margin-bottom: 18px; }
 .cockpit-funnel-row { margin-top: 18px; }
+.cockpit-agents-row { display: block; margin-bottom: 18px; }
 .owner-kpi-label {
   display: flex;
   align-items: center;

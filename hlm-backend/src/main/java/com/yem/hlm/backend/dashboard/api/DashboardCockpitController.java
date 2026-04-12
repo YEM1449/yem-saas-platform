@@ -1,8 +1,11 @@
 package com.yem.hlm.backend.dashboard.api;
 
+import com.yem.hlm.backend.dashboard.api.dto.AgentPerformanceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO;
+import com.yem.hlm.backend.dashboard.api.dto.ForecastDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
+import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
 import com.yem.hlm.backend.dashboard.service.DashboardCockpitService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,5 +55,23 @@ public class DashboardCockpitController {
     public ResponseEntity<List<AlertDTO>> alerts() {
         UUID societeId = ctx.requireSocieteId();
         return ResponseEntity.ok(svc.getAlerts(societeId));
+    }
+
+    @GetMapping("/pipeline-analysis")
+    public ResponseEntity<PipelineAnalysisDTO> pipelineAnalysis() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getPipelineAnalysis(societeId));
+    }
+
+    @GetMapping("/forecast")
+    public ResponseEntity<ForecastDTO> forecast() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getForecast(societeId));
+    }
+
+    @GetMapping("/agents-performance")
+    public ResponseEntity<AgentPerformanceDTO> agentsPerformance() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getAgentPerformance(societeId));
     }
 }

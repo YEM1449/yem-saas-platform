@@ -3,13 +3,16 @@ package com.yem.hlm.backend.dashboard.service;
 import com.yem.hlm.backend.auth.config.CacheConfig;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
+import com.yem.hlm.backend.dashboard.api.dto.AgentPerformanceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO.Severity;
+import com.yem.hlm.backend.dashboard.api.dto.ForecastDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO.FunnelStage;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.KpiDelta;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.SparklinePoint;
+import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
@@ -234,6 +237,119 @@ public class DashboardCockpitService {
         return alerts;
     }
 
+    // ── 4. Pipeline Analysis ───────────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'pipeline:' + #societeId")
+    public PipelineAnalysisDTO getPipelineAnalysis(UUID societeId) {
+        List<Object[]> raw = venteRepo.pipelineAnalysis(societeId);
+
+        BigDecimal totalRaw = BigDecimal.ZERO;
+        BigDecimal totalWeighted = BigDecimal.ZERO;
+        List<PipelineAnalysisDTO.PipelineStage> stages = new ArrayList<>();
+
+        for (Object[] r : raw) {
+            String statut         = (String) r[0];
+            long count            = ((Number) r[1]).longValue();
+            BigDecimal rawCA      = toBigDecimal(r[2]);
+            BigDecimal weightedCA = toBigDecimal(r[3]);
+            int prob              = ((Number) r[4]).intValue();
+            long avgAging         = Math.round(((Number) r[5]).doubleValue());
+
+            totalRaw      = totalRaw.add(rawCA);
+            totalWeighted = totalWeighted.add(weightedCA);
+            stages.add(new PipelineAnalysisDTO.PipelineStage(statut, count, rawCA, weightedCA, prob, avgAging));
+        }
+
+        List<Object[]> riskRaw = venteRepo.atRiskDeals(societeId, 30.0);
+        List<PipelineAnalysisDTO.AtRiskDeal> atRisk = riskRaw.stream().map(r -> {
+            BigDecimal prix = toBigDecimal(r[4]);
+            int prob = ((Number) r[5]).intValue();
+            BigDecimal weighted = prix.multiply(BigDecimal.valueOf(prob))
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            return new PipelineAnalysisDTO.AtRiskDeal(
+                    (UUID) r[0], str(r[1]), str(r[2]), str(r[3]),
+                    prix, weighted, Math.round(((Number) r[6]).doubleValue()));
+        }).toList();
+
+        return new PipelineAnalysisDTO(LocalDateTime.now(), totalWeighted, totalRaw, stages, atRisk);
+    }
+
+    // ── 5. Forecast ─────────────────────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'forecast:' + #societeId")
+    public ForecastDTO getForecast(UUID societeId) {
+        List<Object[]> raw = venteRepo.forecastRawData(societeId);
+        LocalDate today = LocalDate.now();
+        LocalDate d30 = today.plusDays(30);
+        LocalDate d60 = today.plusDays(60);
+        LocalDate d90 = today.plusDays(90);
+
+        BigDecimal next30 = BigDecimal.ZERO;
+        BigDecimal next60 = BigDecimal.ZERO;
+        BigDecimal next90 = BigDecimal.ZERO;
+        BigDecimal undated = BigDecimal.ZERO;
+        long undatedCount = 0;
+
+        for (Object[] r : raw) {
+            BigDecimal prix = toBigDecimal(r[1]);
+            int prob = ((Number) r[2]).intValue();
+            BigDecimal weighted = prix.multiply(BigDecimal.valueOf(prob))
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            Object dateObj = r[0];
+            LocalDate closingDate = null;
+            if (dateObj instanceof java.sql.Date d) closingDate = d.toLocalDate();
+            else if (dateObj instanceof LocalDate ld) closingDate = ld;
+
+            if (closingDate == null) {
+                undated = undated.add(weighted);
+                undatedCount++;
+            } else {
+                if (!closingDate.isAfter(d30)) next30 = next30.add(weighted);
+                if (!closingDate.isAfter(d60)) next60 = next60.add(weighted);
+                if (!closingDate.isAfter(d90)) next90 = next90.add(weighted);
+            }
+        }
+
+        return new ForecastDTO(LocalDateTime.now(), next30, next60, next90, undated, undatedCount);
+    }
+
+    // ── 6. Agent Performance ────────────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'agents:' + #societeId")
+    public AgentPerformanceDTO getAgentPerformance(UUID societeId) {
+        List<Object[]> raw = venteRepo.agentPerformance(societeId);
+        List<AgentPerformanceDTO.AgentRow> agents = raw.stream().map(r -> {
+            UUID agentId = (UUID) r[0];
+            String name = ((str(r[1]) + " " + str(r[2])).trim());
+            if (name.isBlank()) name = "—";
+            long livreCount = ((Number) r[3]).longValue();
+            BigDecimal totalCA = toBigDecimal(r[4]);
+            long annuleCount = ((Number) r[5]).longValue();
+            Double avgDays = r[6] != null ? ((Number) r[6]).doubleValue() : null;
+            long activeCount = ((Number) r[7]).longValue();
+
+            long terminal = livreCount + annuleCount;
+            BigDecimal convRate = terminal > 0
+                    ? BigDecimal.valueOf(livreCount)
+                            .divide(BigDecimal.valueOf(terminal), 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100))
+                            .setScale(1, RoundingMode.HALF_UP)
+                    : null;
+            BigDecimal avgDeal = livreCount > 0
+                    ? totalCA.divide(BigDecimal.valueOf(livreCount), 0, RoundingMode.HALF_UP)
+                    : null;
+            BigDecimal avgClose = avgDays != null
+                    ? BigDecimal.valueOf(avgDays).setScale(1, RoundingMode.HALF_UP)
+                    : null;
+
+            return new AgentPerformanceDTO.AgentRow(
+                    agentId, name, livreCount, totalCA, convRate, avgDeal, avgClose, activeCount);
+        }).toList();
+
+        return new AgentPerformanceDTO(LocalDateTime.now(), agents);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static KpiDelta buildDelta(BigDecimal current, BigDecimal previous) {
@@ -298,6 +414,16 @@ public class DashboardCockpitService {
 
     private static BigDecimal nz(BigDecimal v) {
         return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private static BigDecimal toBigDecimal(Object o) {
+        if (o == null) return BigDecimal.ZERO;
+        if (o instanceof BigDecimal bd) return bd;
+        return BigDecimal.valueOf(((Number) o).doubleValue());
+    }
+
+    private static String str(Object o) {
+        return o != null ? o.toString() : "";
     }
 
     private static BigDecimal ratio(long numerator, long denominator) {

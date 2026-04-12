@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: "066-vente-pipeline-intelligence"
+      author: "yem"
+      comment: >
+        Pipeline intelligence columns on vente table:
+        (a) probability — deal probability 0-100% (default per statut via backfill)
+        (b) stage_entry_date — timestamp when the vente entered its current stage
+        (c) expected_closing_date — forecasted closing date (nullable)
+        Includes backfill of probability by current statut and stage_entry_date = created_at.
+      changes:
+
+        # ── New columns ────────────────────────────────────────────────────────
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: probability
+                  type: int
+                  defaultValueNumeric: 25
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stage_entry_date
+                  type: timestamp
+                  constraints:
+                    nullable: true
+              - column:
+                  name: expected_closing_date
+                  type: date
+                  constraints:
+                    nullable: true
+
+        # ── Backfill probability by current statut ─────────────────────────────
+        - sql:
+            sql: >
+              UPDATE vente SET probability = CASE statut
+                WHEN 'COMPROMIS'     THEN 25
+                WHEN 'FINANCEMENT'   THEN 50
+                WHEN 'ACTE_NOTARIE'  THEN 75
+                WHEN 'LIVRE'         THEN 100
+                WHEN 'ANNULE'        THEN 0
+                ELSE 25
+              END;
+
+        # ── Backfill stage_entry_date from updated_at (best available proxy) ──
+        - sql:
+            sql: >
+              UPDATE vente SET stage_entry_date = updated_at
+              WHERE stage_entry_date IS NULL;
+
+        # ── Make stage_entry_date non-null after backfill ──────────────────────
+        - addNotNullConstraint:
+            tableName: vente
+            columnName: stage_entry_date
+            columnDataType: timestamp
+
+        # ── Check constraint for probability range ─────────────────────────────
+        - sql:
+            sql: >
+              ALTER TABLE vente ADD CONSTRAINT chk_vente_probability
+              CHECK (probability >= 0 AND probability <= 100);

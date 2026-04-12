@@ -131,3 +131,5 @@ databaseChangeLog:
       file: db/changelog/changes/064-vente-ref.yaml
   - include:
       file: db/changelog/changes/065-project-professional-fields.yaml
+  - include:
+      file: db/changelog/changes/066-vente-pipeline-intelligence.yaml

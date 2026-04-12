@@ -449,6 +449,17 @@
   }
 
   <!-- ════════════════════════════════════════════════════════════
+       SECTION 3.7 — PIPELINE + FORECAST + AGENTS (cockpit Wave B)
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager && bundle()) {
+    <div class="two-col-row">
+      <app-pipeline-analysis [data]="pipelineData()"></app-pipeline-analysis>
+      <app-forecast-widget [data]="forecastData()"></app-forecast-widget>
+    </div>
+    <app-agent-performance [data]="agentPerformanceData()" class="cockpit-agents-row"></app-agent-performance>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
        SECTION 4 — ENTONNOIR + STOCK (2 colonnes)
        ════════════════════════════════════════════════════════════ -->
   <div class="two-col-row">
