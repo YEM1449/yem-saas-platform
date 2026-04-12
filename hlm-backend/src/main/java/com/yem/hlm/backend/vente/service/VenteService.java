@@ -231,6 +231,8 @@ public class VenteService {
 
         validateTransition(vente.getStatut(), request.statut());
         vente.setStatut(request.statut());
+        vente.setStageEntryDate(LocalDateTime.now());
+        vente.setProbability(defaultProbability(request.statut()));
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
 
         // Stamp date fields based on the new statut
@@ -422,6 +424,16 @@ public class VenteService {
         }
     }
 
+    private static int defaultProbability(VenteStatut statut) {
+        return switch (statut) {
+            case COMPROMIS    -> 25;
+            case FINANCEMENT  -> 50;
+            case ACTE_NOTARIE -> 75;
+            case LIVRE        -> 100;
+            case ANNULE       -> 0;
+        };
+    }
+
     /**
      * Validates that the requested statut transition is permitted.
      *
@@ -457,7 +469,8 @@ public class VenteService {
                 v.getReservationId(), v.getStatut(), v.getContractStatus(), v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
-                v.getNotes(), echeances, docs,
+                v.getNotes(), v.getProbability(), v.getStageEntryDate(),
+                v.getExpectedClosingDate(), echeances, docs,
                 v.getCreatedAt(), v.getUpdatedAt());
     }
 

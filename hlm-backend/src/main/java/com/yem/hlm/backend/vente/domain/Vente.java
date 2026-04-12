@@ -99,6 +99,18 @@ public class Vente {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    @Setter
+    @Column(name = "probability", nullable = false)
+    private int probability = 25;
+
+    @Setter
+    @Column(name = "stage_entry_date", nullable = false)
+    private LocalDateTime stageEntryDate;
+
+    @Setter
+    @Column(name = "expected_closing_date")
+    private LocalDate expectedClosingDate;
+
     /**
      * Tracks the contract document lifecycle.
      * PENDING → GENERATED (after PDF creation) → SIGNED.
@@ -128,6 +140,7 @@ public class Vente {
         var now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.stageEntryDate == null) this.stageEntryDate = now;
     }
 
     @PreUpdate

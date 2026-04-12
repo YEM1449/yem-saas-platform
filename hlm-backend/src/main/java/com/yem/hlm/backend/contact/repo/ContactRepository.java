@@ -41,6 +41,9 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
     long countActiveProspects(@Param("societeId") UUID societeId,
                               @Param("statuses") List<ContactStatus> statuses);
 
+    /** Single-status count for funnel buckets (excludes soft-deleted). */
+    long countBySocieteIdAndStatusAndDeletedFalse(UUID societeId, ContactStatus status);
+
     /**
      * Prospect source funnel: count all prospects by source and count converted ones.
      * "Converted" = status CLIENT or beyond (CLIENT, ACTIVE_CLIENT, COMPLETED_CLIENT, REFERRAL).

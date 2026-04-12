@@ -47,6 +47,9 @@ export interface Vente {
   dateLivraisonPrevue: string | null;
   dateLivraisonReelle: string | null;
   notes: string | null;
+  probability: number;
+  stageEntryDate: string;
+  expectedClosingDate: string | null;
   echeances: Echeance[];
   documents: VenteDocument[];
   createdAt: string;

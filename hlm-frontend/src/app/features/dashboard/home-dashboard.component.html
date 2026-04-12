@@ -49,6 +49,14 @@
 @if (snap(); as s) {
 
   <!-- ════════════════════════════════════════════════════════════
+       SECTION 0 — COCKPIT ALERTS (admin/manager only)
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager && bundle()) {
+    <app-alerts-panel [alerts]="alertsList()" class="cockpit-alerts"></app-alerts-panel>
+    <app-insights-panel [insights]="insightsList()" class="cockpit-insights"></app-insights-panel>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
        SECTION 1 — KPI HERO ROW (CA + Trend + Taux d'absorption)
        ════════════════════════════════════════════════════════════ -->
   <div class="hero-row">
@@ -61,11 +69,23 @@
         </svg>
       </div>
       <div class="hero-body">
-        <div class="hero-value">{{ formatAmount(s.caActivePipeline) }}</div>
+        <div class="hero-value-row">
+          <div class="hero-value">{{ formatAmount(s.caActivePipeline) }}</div>
+          @if (isAdminOrManager && ventesDelta()) {
+            <app-kpi-delta-chip
+              [delta]="ventesDelta()"
+              [previousLabel]="'30j précédents : ' + ventesDelta()!.previous + ' ventes'">
+            </app-kpi-delta-chip>
+          }
+        </div>
         <div class="hero-label">CA Pipeline Actif</div>
         <div class="hero-sub">
           {{ s.activeVentesCount }} vente{{ s.activeVentesCount !== 1 ? 's' : '' }} en cours
         </div>
+        @if (isAdminOrManager && ventesSparkline().length > 0) {
+          <app-sparkline [data]="ventesSparkline()" color="#6366f1"
+                         ariaLabel="Ventes créées sur 12 semaines"></app-sparkline>
+        }
       </div>
     </div>
 
@@ -80,10 +100,17 @@
       <div class="hero-body">
         <div class="hero-value-row">
           <div class="hero-value">{{ formatAmount(s.caSigneMoisCourant) }}</div>
-          @if (moisTrend(s.caSigneMoisCourant, s.caSigneMoisPrecedent); as t) {
-            <span class="trend-chip {{ t >= 0 ? 'trend-up' : 'trend-down' }}">
-              {{ t >= 0 ? '↑' : '↓' }} {{ t < 0 ? -t : t }}%
-            </span>
+          @if (isAdminOrManager && caDelta()) {
+            <app-kpi-delta-chip
+              [delta]="caDelta()"
+              [previousLabel]="formatDeltaPrev(caDelta())">
+            </app-kpi-delta-chip>
+          } @else {
+            @if (moisTrend(s.caSigneMoisCourant, s.caSigneMoisPrecedent); as t) {
+              <span class="trend-chip {{ t >= 0 ? 'trend-up' : 'trend-down' }}">
+                {{ t >= 0 ? '↑' : '↓' }} {{ t < 0 ? -t : t }}%
+              </span>
+            }
           }
         </div>
         <div class="hero-label">CA ce mois</div>
@@ -94,6 +121,10 @@
             Premier mois enregistré
           }
         </div>
+        @if (isAdminOrManager && caSparkline().length > 0) {
+          <app-sparkline [data]="caSparkline()" color="#10b981"
+                         ariaLabel="CA signé sur 12 semaines"></app-sparkline>
+        }
       </div>
     </div>
 
@@ -344,7 +375,15 @@
         </div>
 
         <div class="owner-kpi-card">
-          <div class="owner-kpi-label">Conversion réservation → vente</div>
+          <div class="owner-kpi-label">
+            Conversion réservation → vente
+            @if (reservationsDelta()) {
+              <app-kpi-delta-chip
+                [delta]="reservationsDelta()"
+                previousLabel="Réservations 30j précédents">
+              </app-kpi-delta-chip>
+            }
+          </div>
           <div class="owner-kpi-value"
                [class.owner-kpi-good]="(s.conversionRate30d ?? 0) >= 50">
             @if (s.conversionRate30d != null) {
@@ -357,7 +396,15 @@
         </div>
 
         <div class="owner-kpi-card">
-          <div class="owner-kpi-label">Encaissé ce mois</div>
+          <div class="owner-kpi-label">
+            Encaissé ce mois
+            @if (encaisseDelta()) {
+              <app-kpi-delta-chip
+                [delta]="encaisseDelta()"
+                [previousLabel]="formatDeltaPrev(encaisseDelta())">
+              </app-kpi-delta-chip>
+            }
+          </div>
           <div class="owner-kpi-value owner-kpi-good">
             {{ formatAmount(s.encaisseMoisCourant) }}
           </div>
@@ -365,6 +412,12 @@
         </div>
 
       </div>
+
+      @if (funnelData()) {
+        <div class="cockpit-funnel-row">
+          <app-funnel [data]="funnelData()"></app-funnel>
+        </div>
+      }
 
       @if (s.topAgents.length > 0) {
         <div class="leaderboard-card">
@@ -393,6 +446,21 @@
           </table>
         </div>
       }
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
+       SECTION 3.7 — PIPELINE + FORECAST + AGENTS (cockpit Wave B)
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager && bundle()) {
+    <div class="two-col-row">
+      <app-pipeline-analysis [data]="pipelineData()"></app-pipeline-analysis>
+      <app-forecast-widget [data]="forecastData()"></app-forecast-widget>
+    </div>
+    <app-agent-performance [data]="agentPerformanceData()" class="cockpit-agents-row"></app-agent-performance>
+    <div class="two-col-row">
+      <app-inventory-intelligence [data]="inventoryData()"></app-inventory-intelligence>
+      <app-discount-analytics [data]="discountData()"></app-discount-analytics>
     </div>
   }
 

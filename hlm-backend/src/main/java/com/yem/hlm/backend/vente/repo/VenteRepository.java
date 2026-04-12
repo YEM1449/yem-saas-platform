@@ -211,4 +211,159 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                                  @Param("from") java.time.LocalDateTime from,
                                  @Param("to") java.time.LocalDateTime to,
                                  org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Weekly sparkline of CA signé (sum of prixVente per ISO week, ANNULE excluded).
+     * Result rows: [weekStart java.sql.Date, total BigDecimal] ordered chronologically.
+     */
+    @Query(value = """
+            SELECT date_trunc('week', v.created_at)::date AS week,
+                   COALESCE(SUM(v.prix_vente), 0) AS total
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.created_at >= :from
+              AND v.statut <> 'ANNULE'
+            GROUP BY week
+            ORDER BY week
+            """, nativeQuery = true)
+    List<Object[]> sumPrixVenteByWeek(@Param("societeId") UUID societeId,
+                                      @Param("from") java.time.LocalDateTime from);
+
+    /**
+     * Weekly sparkline of vente count (created per ISO week, all statuses).
+     * Result rows: [weekStart java.sql.Date, count Long] ordered chronologically.
+     */
+    @Query(value = """
+            SELECT date_trunc('week', v.created_at)::date AS week,
+                   COUNT(*) AS total
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.created_at >= :from
+            GROUP BY week
+            ORDER BY week
+            """, nativeQuery = true)
+    List<Object[]> countCreatedByWeek(@Param("societeId") UUID societeId,
+                                      @Param("from") java.time.LocalDateTime from);
+
+    /**
+     * Pipeline analysis — per-statut aggregates for non-terminal ventes.
+     * Rows: [statut(String), count(Long), rawCA(BigDecimal), weightedCA(BigDecimal),
+     *        probability(Integer), avgAgingDays(Double)].
+     */
+    @Query(value = """
+            SELECT v.statut,
+                   COUNT(*),
+                   COALESCE(SUM(v.prix_vente), 0),
+                   COALESCE(SUM(v.prix_vente * v.probability / 100.0), 0),
+                   v.probability,
+                   COALESCE(AVG(EXTRACT(EPOCH FROM (NOW() - v.stage_entry_date)) / 86400.0), 0)
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('LIVRE','ANNULE')
+            GROUP BY v.statut, v.probability
+            ORDER BY v.probability
+            """, nativeQuery = true)
+    List<Object[]> pipelineAnalysis(@Param("societeId") UUID societeId);
+
+    /**
+     * At-risk deals: non-terminal ventes that have been in their current stage
+     * for more than :thresholdDays days. Max 20 results ordered by aging desc.
+     */
+    @Query(value = """
+            SELECT v.id, v.vente_ref, c.first_name || ' ' || c.last_name,
+                   v.statut, v.prix_vente, v.probability,
+                   EXTRACT(EPOCH FROM (NOW() - v.stage_entry_date)) / 86400.0 AS aging
+            FROM vente v
+            JOIN contact c ON c.id = v.contact_id
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('LIVRE','ANNULE')
+              AND EXTRACT(EPOCH FROM (NOW() - v.stage_entry_date)) / 86400.0 > :thresholdDays
+            ORDER BY aging DESC
+            LIMIT 20
+            """, nativeQuery = true)
+    List<Object[]> atRiskDeals(@Param("societeId") UUID societeId,
+                               @Param("thresholdDays") double thresholdDays);
+
+    /**
+     * Forecast: weighted CA grouped by closing horizon bucket.
+     * Rows: [expectedClosingDate(Date|null), prixVente(BigDecimal), probability(Integer)].
+     * Returns only active (non-terminal) deals.
+     */
+    @Query(value = """
+            SELECT v.expected_closing_date, v.prix_vente, v.probability
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('LIVRE','ANNULE')
+            """, nativeQuery = true)
+    List<Object[]> forecastRawData(@Param("societeId") UUID societeId);
+
+    /**
+     * Agent performance: per-agent stats across all ventes.
+     * Rows: [agentId(UUID), prenom(String), nomFamille(String),
+     *        livreCount(Long), totalCA(BigDecimal), annuleCount(Long),
+     *        avgDaysToClose(Double), activeCount(Long)].
+     */
+    @Query(value = """
+            SELECT v.agent_id,
+                   u.prenom, u.nom_famille,
+                   COUNT(*) FILTER (WHERE v.statut = 'LIVRE'),
+                   COALESCE(SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE'), 0),
+                   COUNT(*) FILTER (WHERE v.statut = 'ANNULE'),
+                   AVG(EXTRACT(EPOCH FROM (v.updated_at - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
+                   COUNT(*) FILTER (WHERE v.statut NOT IN ('LIVRE','ANNULE'))
+            FROM vente v
+            JOIN app_user u ON u.id = v.agent_id
+            WHERE v.societe_id = :societeId
+            GROUP BY v.agent_id, u.prenom, u.nom_famille
+            ORDER BY SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE') DESC NULLS LAST
+            """, nativeQuery = true)
+    List<Object[]> agentPerformance(@Param("societeId") UUID societeId);
+
+    /**
+     * Discount summary: compares property.price (list) vs vente.prix_vente (agreed).
+     * Rows: [dealsWithDiscount(Long), totalDeals(Long), avgDiscountPct(Double),
+     *        maxDiscountPct(Double), totalDiscountVolume(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT COUNT(*) FILTER (WHERE p.price > v.prix_vente),
+                   COUNT(*),
+                   AVG(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 END),
+                   MAX(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 ELSE 0 END),
+                   COALESCE(SUM(CASE WHEN p.price > v.prix_vente
+                       THEN p.price - v.prix_vente ELSE 0 END), 0)
+            FROM vente v
+            JOIN property p ON p.id = v.property_id AND p.societe_id = v.societe_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price IS NOT NULL AND v.prix_vente IS NOT NULL AND p.price > 0
+            """, nativeQuery = true)
+    List<Object[]> discountSummary(@Param("societeId") UUID societeId);
+
+    /**
+     * Discount breakdown per agent.
+     * Rows: [agentId(UUID), prenom(String), nomFamille(String),
+     *        dealsWithDiscount(Long), totalDeals(Long), avgDiscountPct(Double),
+     *        totalDiscountVolume(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT v.agent_id, u.prenom, u.nom_famille,
+                   COUNT(*) FILTER (WHERE p.price > v.prix_vente),
+                   COUNT(*),
+                   AVG(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 END),
+                   COALESCE(SUM(CASE WHEN p.price > v.prix_vente
+                       THEN p.price - v.prix_vente ELSE 0 END), 0)
+            FROM vente v
+            JOIN property p ON p.id = v.property_id AND p.societe_id = v.societe_id
+            JOIN app_user u ON u.id = v.agent_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price IS NOT NULL AND v.prix_vente IS NOT NULL AND p.price > 0
+            GROUP BY v.agent_id, u.prenom, u.nom_famille
+            ORDER BY SUM(CASE WHEN p.price > v.prix_vente
+                        THEN p.price - v.prix_vente ELSE 0 END) DESC
+            """, nativeQuery = true)
+    List<Object[]> discountByAgent(@Param("societeId") UUID societeId);
 }

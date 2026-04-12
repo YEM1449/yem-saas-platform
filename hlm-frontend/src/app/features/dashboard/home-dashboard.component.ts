@@ -2,20 +2,42 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HomeDashboardService, HomeDashboard } from './home-dashboard.service';
+import {
+  DashboardCockpitService,
+  CockpitBundle,
+  KpiDelta,
+} from './dashboard-cockpit.service';
+import { KpiDeltaChipComponent } from './cockpit/kpi-delta-chip.component';
+import { SparklineComponent } from './cockpit/sparkline.component';
+import { FunnelComponent } from './cockpit/funnel.component';
+import { AlertsPanelComponent } from './cockpit/alerts-panel.component';
+import { PipelineAnalysisComponent } from './cockpit/pipeline-analysis.component';
+import { ForecastWidgetComponent } from './cockpit/forecast-widget.component';
+import { AgentPerformanceComponent } from './cockpit/agent-performance.component';
+import { InventoryIntelligenceComponent } from './cockpit/inventory-intelligence.component';
+import { DiscountAnalyticsComponent } from './cockpit/discount-analytics.component';
+import { InsightsPanelComponent } from './cockpit/insights-panel.component';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-home-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [
+    CommonModule, RouterLink, DatePipe, DecimalPipe,
+    KpiDeltaChipComponent, SparklineComponent, FunnelComponent, AlertsPanelComponent,
+    PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
+    InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
+  ],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
 })
 export class HomeDashboardComponent implements OnInit {
-  private svc   = inject(HomeDashboardService);
-  readonly auth = inject(AuthService);
+  private svc     = inject(HomeDashboardService);
+  private cockpit = inject(DashboardCockpitService);
+  readonly auth   = inject(AuthService);
 
   snap    = signal<HomeDashboard | null>(null);
+  bundle  = signal<CockpitBundle | null>(null);
   loading = signal(true);
   error   = signal('');
 
@@ -46,6 +68,33 @@ export class HomeDashboardComponent implements OnInit {
       next:  s  => { this.snap.set(s); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger le tableau de bord.'); this.loading.set(false); },
     });
+    if (this.isAdminOrManager) {
+      this.cockpit.getBundle().subscribe(b => this.bundle.set(b));
+    }
+  }
+
+  // ── Cockpit helpers (KPI deltas + sparklines + alerts) ─────────────────────
+
+  caDelta(): KpiDelta | null            { return this.bundle()?.kpi?.caSigne ?? null; }
+  ventesDelta(): KpiDelta | null        { return this.bundle()?.kpi?.ventesCreated ?? null; }
+  reservationsDelta(): KpiDelta | null  { return this.bundle()?.kpi?.reservations ?? null; }
+  encaisseDelta(): KpiDelta | null      { return this.bundle()?.kpi?.encaisse ?? null; }
+
+  caSparkline()     { return this.bundle()?.kpi?.caSparkline     ?? []; }
+  ventesSparkline() { return this.bundle()?.kpi?.ventesSparkline ?? []; }
+
+  funnelData()          { return this.bundle()?.funnel ?? null; }
+  alertsList()          { return this.bundle()?.alerts ?? []; }
+  pipelineData()        { return this.bundle()?.pipeline ?? null; }
+  forecastData()        { return this.bundle()?.forecast ?? null; }
+  agentPerformanceData(){ return this.bundle()?.agentPerformance ?? null; }
+  inventoryData()       { return this.bundle()?.inventory ?? null; }
+  discountData()        { return this.bundle()?.discount ?? null; }
+  insightsList()        { return this.bundle()?.insights ?? []; }
+
+  formatDeltaPrev(d: KpiDelta | null): string {
+    if (!d) return '';
+    return this.formatAmount(d.previous);
   }
 
   // ── Statut labels/colors ────────────────────────────────────────────────────

@@ -49,6 +49,12 @@ public class CacheConfig {
     public static final String HOME_DASHBOARD_CACHE = "homeDashboard";
 
     /**
+     * Dashboard cockpit — KPI comparison, funnel and alerts. Société-scoped.
+     * TTL: 60 s. Max 500 entries.
+     */
+    public static final String DASHBOARD_COCKPIT_CACHE = "dashboardCockpit";
+
+    /**
      * Projects cache — societe-scoped project lists.
      * TTL: 60 s. Max 1 000 entries.
      */
@@ -97,6 +103,13 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .maximumSize(1_000)
                         .expireAfterWrite(30, TimeUnit.SECONDS)
+                        .build());
+
+        // Dashboard cockpit (kpi-comparison, funnel, alerts) — 60 s TTL, up to 500 entries
+        manager.registerCustomCache(DASHBOARD_COCKPIT_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(500)
+                        .expireAfterWrite(60, TimeUnit.SECONDS)
                         .build());
 
         // Projects — 60 s TTL, up to 1 000 entries
