@@ -44,5 +44,6 @@ public record CreateVenteRequest(
         @PositiveOrZero BigDecimal reduction,
         LocalDate dateCompromis,
         LocalDate dateLivraisonPrevue,
+        LocalDate expectedClosingDate,
         String notes
 ) {}

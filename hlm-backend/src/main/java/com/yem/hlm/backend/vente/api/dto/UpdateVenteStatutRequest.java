@@ -10,5 +10,7 @@ public record UpdateVenteStatutRequest(
         @NotNull VenteStatut statut,
         /** Optional date to record alongside the transition (e.g. date of notarial act). */
         LocalDate dateTransition,
+        /** Optional expected closing date override; auto-estimated when null. */
+        LocalDate expectedClosingDate,
         String notes
 ) {}

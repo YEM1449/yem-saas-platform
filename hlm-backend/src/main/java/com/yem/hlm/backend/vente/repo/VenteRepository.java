@@ -116,13 +116,13 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     java.math.BigDecimal sumPrixVenteByStatut(@Param("societeId") UUID societeId,
                                               @Param("statut") VenteStatut statut);
 
-    /** Count ventes stuck in early pipeline stages since before :before (admin stalled alert). */
+    /** Count ventes stuck in early pipeline stages — no movement since before :before. */
     @Query("""
             SELECT COUNT(v)
             FROM Vente v
             WHERE v.societeId = :societeId
               AND v.statut IN :statuts
-              AND v.createdAt < :before
+              AND v.stageEntryDate < :before
             """)
     long countStalledVentes(@Param("societeId") UUID societeId,
                              @Param("statuts") List<VenteStatut> statuts,
