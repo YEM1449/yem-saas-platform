@@ -286,6 +286,40 @@ no suitable constructor found for type ...
 
 **This is expected behavior.** Tests should inject `EmailSender` (the interface), not `SmtpEmailSender` directly.
 
+### `MailConnectException: Couldn't connect to host, port: …, 465; timeout 5000`
+
+**Symptom:** Sending email (portal magic link, buyer invite, outbox dispatcher) fails with a connect timeout on port 465 or 587. The stack trace points at `SmtpEmailSender.send()`.
+
+**Cause:** The host/container network blocks outbound SMTP. Port 465 is the most commonly blocked; 587 can also be filtered by some cloud providers and corporate firewalls.
+
+**Fix options:**
+
+1. **Switch to STARTTLS on 587** (if port 587 is allowed):
+   ```env
+   EMAIL_PROVIDER=smtp
+   EMAIL_PORT=587
+   EMAIL_SSL_ENABLE=false
+   EMAIL_STARTTLS_ENABLE=true
+   EMAIL_STARTTLS_REQUIRED=true
+   ```
+
+2. **Switch to the Brevo HTTPS API** (works everywhere port 443 is allowed — recommended when all SMTP ports are blocked):
+   ```env
+   EMAIL_PROVIDER=brevo-http
+   BREVO_API_KEY=xkeysib-...
+   EMAIL_FROM=noreply@yourdomain.com
+   EMAIL_FROM_NAME=HLM CRM
+   ```
+   Then redeploy the backend. `BrevoHttpEmailSender` will activate and `SmtpEmailSender` will be disabled automatically — the conditionals are mutually exclusive. See [Integrations → Email](../../08-integrations/README.md#2-email-integration) for the full provider switch reference.
+
+3. **Probe the outbound connection from inside the container** to confirm which ports are reachable:
+   ```bash
+   docker compose exec hlm-backend sh -c 'nc -zv smtp-relay.brevo.com 587 && nc -zv smtp-relay.brevo.com 465'
+   docker compose exec hlm-backend sh -c 'curl -s -o /dev/null -w "%{http_code}\n" https://api.brevo.com/v3/account'
+   ```
+
+**Note:** `PortalAuthService.requestLink()` already catches the `RuntimeException` from the sender, so the end-user HTTP request does not 500 — the magic link simply never arrives. The error is only visible in backend logs.
+
 ### Frontend test fails with "Angular CLI version mismatch"
 
 **Fix:** Align `@angular/cli` and `@angular/core` versions in `package.json`:

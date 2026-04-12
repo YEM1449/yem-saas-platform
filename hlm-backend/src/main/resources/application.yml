@@ -172,13 +172,20 @@ app:
     # Delay between scheduler ticks in milliseconds.
     polling-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
 
-  # SMTP email provider (optional — NoopEmailSender used when EMAIL_HOST is not set)
+  # Email provider — choose between "smtp" (classic SMTP relay) and "brevo-http"
+  # (Brevo transactional HTTPS API). Fallbacks to NoopEmailSender when the
+  # selected provider's required config is missing.
   email:
+    provider: ${EMAIL_PROVIDER:smtp}
     host: ${EMAIL_HOST:}
     port: ${EMAIL_PORT:587}
     username: ${EMAIL_USER:}
     password: ${EMAIL_PASSWORD:}
     from: ${EMAIL_FROM:noreply@example.com}
+    from-name: ${EMAIL_FROM_NAME:}
+    brevo:
+      api-key: ${BREVO_API_KEY:}
+      base-url: ${BREVO_BASE_URL:https://api.brevo.com}
 
   # SMS provider (Twilio — optional; NoopSmsSender used when TWILIO_ACCOUNT_SID is not set)
   sms:

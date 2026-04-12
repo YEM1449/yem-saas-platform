@@ -30,7 +30,9 @@ These variables **must** differ from their defaults in any non-disposable enviro
 | `CORS_ALLOWED_ORIGINS` | Your actual domain only (e.g. `https://app.yourcompany.com`) |
 | `FRONTEND_BASE_URL` | Your actual CRM domain |
 | `PORTAL_BASE_URL` | Your actual portal domain |
-| `EMAIL_HOST` | SMTP hostname for real email delivery |
+| `EMAIL_PROVIDER` | `smtp` or `brevo-http` — pick the transport (defaults to `smtp`) |
+| `EMAIL_HOST` | SMTP hostname (required when `EMAIL_PROVIDER=smtp`) |
+| `BREVO_API_KEY` | Brevo API key (required when `EMAIL_PROVIDER=brevo-http`) |
 | `REDIS_ENABLED=true` + `REDIS_HOST` | Required for multi-instance deployments |
 
 ---
@@ -57,12 +59,20 @@ CORS_ALLOWED_ORIGINS=https://app.yourcompany.com
 FRONTEND_BASE_URL=https://app.yourcompany.com
 PORTAL_BASE_URL=https://portal.yourcompany.com
 
-# Email
+# Email — option A: classic SMTP relay (default)
+EMAIL_PROVIDER=smtp
 EMAIL_HOST=smtp.yourprovider.com
 EMAIL_PORT=587
 EMAIL_USER=apikey
 EMAIL_PASSWORD=your-smtp-password
 EMAIL_FROM=noreply@yourcompany.com
+EMAIL_FROM_NAME=Your Company
+
+# Email — option B: Brevo HTTPS API (use when outbound SMTP is blocked)
+# EMAIL_PROVIDER=brevo-http
+# BREVO_API_KEY=xkeysib-...
+# EMAIL_FROM=noreply@yourcompany.com
+# EMAIL_FROM_NAME=Your Company
 
 # Redis (for multi-instance)
 REDIS_ENABLED=true

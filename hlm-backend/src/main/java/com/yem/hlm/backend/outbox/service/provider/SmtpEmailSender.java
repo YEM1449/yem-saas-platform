@@ -29,7 +29,9 @@ import org.springframework.stereotype.Service;
  * {@code application.yml}.
  */
 @Service
-@ConditionalOnExpression("!'${app.email.host:}'.isBlank()")
+@ConditionalOnExpression(
+    "'${app.email.provider:smtp}'.equalsIgnoreCase('smtp') && !'${app.email.host:}'.isBlank()"
+)
 public class SmtpEmailSender implements EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(SmtpEmailSender.class);

@@ -10,7 +10,8 @@ External services, optional integrations, and activation patterns.
 |---|---|---|---|
 | PostgreSQL 16 | Yes | Always | Primary database; RLS, advisory locks |
 | Redis | No | `REDIS_ENABLED=true` | Distributed cache; token-version revocation |
-| SMTP Email | No | `EMAIL_HOST` non-blank | Transactional outbox + portal magic links |
+| SMTP Email | No | `EMAIL_PROVIDER=smtp` + `EMAIL_HOST` non-blank | Transactional outbox + portal magic links (classic SMTP) |
+| Brevo HTTP Email | No | `EMAIL_PROVIDER=brevo-http` + `BREVO_API_KEY` non-blank | Transactional email via HTTPS API (use when SMTP ports are blocked) |
 | Twilio SMS | No | `TWILIO_ACCOUNT_SID` set | SMS notifications via outbox |
 | MinIO / S3 | No | `MEDIA_OBJECT_STORAGE_ENABLED=true` | Media and document object storage |
 | OTel Collector | No | `OTEL_ENABLED=true` + `OTEL_EXPORTER_OTLP_ENDPOINT` | Distributed tracing and Prometheus metrics |
@@ -19,29 +20,74 @@ External services, optional integrations, and activation patterns.
 
 ## 2. Email Integration
 
-### Default Behavior
+### Provider Switch
 
-Without any email configuration, `NoopEmailSender` is active. It logs message details to the application log but does not deliver emails.
+Two real providers are bundled. Choose one with the `EMAIL_PROVIDER` env var; only one `EmailSender` bean activates at any time.
 
-### Enabling SMTP
+| `EMAIL_PROVIDER` | Implementation | Transport | When to use |
+|---|---|---|---|
+| `smtp` *(default)* | `SmtpEmailSender` | SMTP/STARTTLS (port 587) or implicit SSL (465) | Standard SMTP relays (SendGrid, Mailgun, Gmail, Brevo SMTP, …) |
+| `brevo-http` | `BrevoHttpEmailSender` | HTTPS `POST https://api.brevo.com/v3/smtp/email` | When outbound SMTP ports (25/465/587) are blocked by the host/firewall |
 
-Set the `EMAIL_HOST` environment variable to a non-blank value:
+If the selected provider's required config is missing (`EMAIL_HOST` blank for `smtp`, `BREVO_API_KEY` blank for `brevo-http`), `NoopEmailSender` takes over as a safe fallback — it only logs messages to the application log and does not deliver anything.
+
+### Option A — SMTP relay
 
 ```env
-EMAIL_HOST=smtp.example.com
+EMAIL_PROVIDER=smtp
+EMAIL_HOST=smtp-relay.brevo.com
 EMAIL_PORT=587
-EMAIL_USERNAME=user@example.com
-EMAIL_PASSWORD=secret
+EMAIL_USER=your_login
+EMAIL_PASSWORD=your_smtp_key
 EMAIL_FROM=noreply@example.com
+EMAIL_FROM_NAME=HLM CRM
+
+# Transport mode — STARTTLS on 587 is the default
+EMAIL_SSL_ENABLE=false
+EMAIL_STARTTLS_ENABLE=true
+EMAIL_STARTTLS_REQUIRED=true
+
+# Optional timeouts (ms)
+EMAIL_CONNECT_TIMEOUT_MS=10000
+EMAIL_READ_TIMEOUT_MS=10000
+EMAIL_WRITE_TIMEOUT_MS=10000
 ```
+
+Set `EMAIL_SSL_ENABLE=true` and `EMAIL_PORT=465` only if your provider mandates implicit SSL. **Port 465 is commonly blocked outbound in containerised / cloud environments — prefer 587 whenever possible.**
 
 `SmtpEmailSender` activates via:
 
 ```java
-@ConditionalOnExpression("!'${app.email.host:}'.isBlank()")
+@ConditionalOnExpression(
+    "'${app.email.provider:smtp}'.equalsIgnoreCase('smtp') && !'${app.email.host:}'.isBlank()"
+)
 ```
 
 **Critical**: `@ConditionalOnProperty` must NOT be used here. When `EMAIL_HOST` is unset, the `${app.email.host:}` YAML expression defaults to an empty string `""`. `@ConditionalOnProperty` treats `""` as "present" and would incorrectly activate the SMTP sender, causing authentication failures on every startup.
+
+### Option B — Brevo HTTPS API
+
+Use this when the host/firewall blocks SMTP ports. It talks to Brevo over plain HTTPS (port 443), which is almost always allowed.
+
+```env
+EMAIL_PROVIDER=brevo-http
+BREVO_API_KEY=xkeysib-...
+BREVO_BASE_URL=https://api.brevo.com   # optional, defaults to this
+EMAIL_FROM=noreply@example.com
+EMAIL_FROM_NAME=HLM CRM
+```
+
+Generate an API key at <https://app.brevo.com/settings/keys/api>. `BrevoHttpEmailSender` activates via:
+
+```java
+@ConditionalOnExpression(
+    "'${app.email.provider:}'.equalsIgnoreCase('brevo-http') && !'${app.email.brevo.api-key:}'.isBlank()"
+)
+```
+
+The sender uses Spring's `RestClient` to `POST /v3/smtp/email` with the Brevo payload shape `{sender:{email,name?}, to:[{email}], subject, htmlContent|textContent}`. HTML vs plain-text is auto-detected: if the body matches `<tag>` anywhere it is sent as `htmlContent`, otherwise as `textContent`.
+
+Errors are wrapped as `RuntimeException` so the outbox dispatcher retries them with exponential backoff like any other send failure.
 
 ### Two Email Delivery Flows
 
@@ -247,11 +293,21 @@ Complete list of integration-related environment variables:
 | `REDIS_ENABLED` | `false` | Enable Redis for distributed caching |
 | `REDIS_HOST` | `localhost` | Redis hostname |
 | `REDIS_PORT` | `6379` | Redis port |
-| `EMAIL_HOST` | `` (blank) | SMTP host; blank = NoopEmailSender |
-| `EMAIL_PORT` | `587` | SMTP port |
-| `EMAIL_USERNAME` | — | SMTP authentication username |
+| `EMAIL_PROVIDER` | `smtp` | Email backend selector: `smtp`, `brevo-http` (anything else → Noop) |
+| `EMAIL_HOST` | `` (blank) | SMTP host; blank + `EMAIL_PROVIDER=smtp` → NoopEmailSender |
+| `EMAIL_PORT` | `587` | SMTP port (587 STARTTLS recommended; 465 implicit SSL often blocked) |
+| `EMAIL_USER` | — | SMTP authentication username |
 | `EMAIL_PASSWORD` | — | SMTP authentication password |
+| `EMAIL_SSL_ENABLE` | `false` | Enable implicit SSL (set `true` only if using port 465) |
+| `EMAIL_STARTTLS_ENABLE` | `true` | Enable STARTTLS upgrade on plain SMTP connection |
+| `EMAIL_STARTTLS_REQUIRED` | `true` | Fail if STARTTLS upgrade not offered by server |
+| `EMAIL_CONNECT_TIMEOUT_MS` | `10000` | SMTP connection timeout (ms) |
+| `EMAIL_READ_TIMEOUT_MS` | `10000` | SMTP read timeout (ms) |
+| `EMAIL_WRITE_TIMEOUT_MS` | `10000` | SMTP write timeout (ms) |
+| `BREVO_API_KEY` | — | Brevo API key; blank + `EMAIL_PROVIDER=brevo-http` → NoopEmailSender |
+| `BREVO_BASE_URL` | `https://api.brevo.com` | Brevo API base URL (override only for testing) |
 | `EMAIL_FROM` | — | From address for outgoing email |
+| `EMAIL_FROM_NAME` | `` (blank) | Optional display name for the sender (e.g., "HLM CRM") |
 | `TWILIO_ACCOUNT_SID` | — | Twilio account SID; absent = NoopSmsSender |
 | `TWILIO_AUTH_TOKEN` | — | Twilio auth token |
 | `TWILIO_FROM` | — | Twilio sender phone number |
