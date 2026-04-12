@@ -318,4 +318,52 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             ORDER BY SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE') DESC NULLS LAST
             """, nativeQuery = true)
     List<Object[]> agentPerformance(@Param("societeId") UUID societeId);
+
+    /**
+     * Discount summary: compares property.price (list) vs vente.prix_vente (agreed).
+     * Rows: [dealsWithDiscount(Long), totalDeals(Long), avgDiscountPct(Double),
+     *        maxDiscountPct(Double), totalDiscountVolume(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT COUNT(*) FILTER (WHERE p.price > v.prix_vente),
+                   COUNT(*),
+                   AVG(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 END),
+                   MAX(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 ELSE 0 END),
+                   COALESCE(SUM(CASE WHEN p.price > v.prix_vente
+                       THEN p.price - v.prix_vente ELSE 0 END), 0)
+            FROM vente v
+            JOIN property p ON p.id = v.property_id AND p.societe_id = v.societe_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price IS NOT NULL AND v.prix_vente IS NOT NULL AND p.price > 0
+            """, nativeQuery = true)
+    List<Object[]> discountSummary(@Param("societeId") UUID societeId);
+
+    /**
+     * Discount breakdown per agent.
+     * Rows: [agentId(UUID), prenom(String), nomFamille(String),
+     *        dealsWithDiscount(Long), totalDeals(Long), avgDiscountPct(Double),
+     *        totalDiscountVolume(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT v.agent_id, u.prenom, u.nom_famille,
+                   COUNT(*) FILTER (WHERE p.price > v.prix_vente),
+                   COUNT(*),
+                   AVG(CASE WHEN p.price > v.prix_vente AND p.price > 0
+                       THEN (p.price - v.prix_vente) / p.price * 100 END),
+                   COALESCE(SUM(CASE WHEN p.price > v.prix_vente
+                       THEN p.price - v.prix_vente ELSE 0 END), 0)
+            FROM vente v
+            JOIN property p ON p.id = v.property_id AND p.societe_id = v.societe_id
+            JOIN app_user u ON u.id = v.agent_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price IS NOT NULL AND v.prix_vente IS NOT NULL AND p.price > 0
+            GROUP BY v.agent_id, u.prenom, u.nom_famille
+            ORDER BY SUM(CASE WHEN p.price > v.prix_vente
+                        THEN p.price - v.prix_vente ELSE 0 END) DESC
+            """, nativeQuery = true)
+    List<Object[]> discountByAgent(@Param("societeId") UUID societeId);
 }

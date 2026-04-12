@@ -457,6 +457,10 @@
       <app-forecast-widget [data]="forecastData()"></app-forecast-widget>
     </div>
     <app-agent-performance [data]="agentPerformanceData()" class="cockpit-agents-row"></app-agent-performance>
+    <div class="two-col-row">
+      <app-inventory-intelligence [data]="inventoryData()"></app-inventory-intelligence>
+      <app-discount-analytics [data]="discountData()"></app-discount-analytics>
+    </div>
   }
 
   <!-- ════════════════════════════════════════════════════════════

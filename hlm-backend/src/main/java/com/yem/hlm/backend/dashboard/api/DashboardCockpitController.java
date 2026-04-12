@@ -2,8 +2,10 @@ package com.yem.hlm.backend.dashboard.api;
 
 import com.yem.hlm.backend.dashboard.api.dto.AgentPerformanceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO;
+import com.yem.hlm.backend.dashboard.api.dto.DiscountAnalyticsDTO;
 import com.yem.hlm.backend.dashboard.api.dto.ForecastDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
+import com.yem.hlm.backend.dashboard.api.dto.InventoryIntelligenceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
 import com.yem.hlm.backend.dashboard.service.DashboardCockpitService;
@@ -73,5 +75,17 @@ public class DashboardCockpitController {
     public ResponseEntity<AgentPerformanceDTO> agentsPerformance() {
         UUID societeId = ctx.requireSocieteId();
         return ResponseEntity.ok(svc.getAgentPerformance(societeId));
+    }
+
+    @GetMapping("/inventory-intelligence")
+    public ResponseEntity<InventoryIntelligenceDTO> inventoryIntelligence() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getInventoryIntelligence(societeId));
+    }
+
+    @GetMapping("/discount-analytics")
+    public ResponseEntity<DiscountAnalyticsDTO> discountAnalytics() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(svc.getDiscountAnalytics(societeId));
     }
 }

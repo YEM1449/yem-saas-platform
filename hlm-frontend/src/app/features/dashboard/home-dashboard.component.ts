@@ -14,6 +14,8 @@ import { AlertsPanelComponent } from './cockpit/alerts-panel.component';
 import { PipelineAnalysisComponent } from './cockpit/pipeline-analysis.component';
 import { ForecastWidgetComponent } from './cockpit/forecast-widget.component';
 import { AgentPerformanceComponent } from './cockpit/agent-performance.component';
+import { InventoryIntelligenceComponent } from './cockpit/inventory-intelligence.component';
+import { DiscountAnalyticsComponent } from './cockpit/discount-analytics.component';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -23,6 +25,7 @@ import { AuthService } from '../../core/auth/auth.service';
     CommonModule, RouterLink, DatePipe, DecimalPipe,
     KpiDeltaChipComponent, SparklineComponent, FunnelComponent, AlertsPanelComponent,
     PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
+    InventoryIntelligenceComponent, DiscountAnalyticsComponent,
   ],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
@@ -84,6 +87,8 @@ export class HomeDashboardComponent implements OnInit {
   pipelineData()        { return this.bundle()?.pipeline ?? null; }
   forecastData()        { return this.bundle()?.forecast ?? null; }
   agentPerformanceData(){ return this.bundle()?.agentPerformance ?? null; }
+  inventoryData()       { return this.bundle()?.inventory ?? null; }
+  discountData()        { return this.bundle()?.discount ?? null; }
 
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';

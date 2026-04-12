@@ -5,6 +5,7 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
@@ -39,6 +40,7 @@ class DashboardCockpitServiceTest {
     private VenteEcheanceRepository echeanceRepo;
     private ReservationRepository   reservationRepo;
     private ContactRepository       contactRepo;
+    private PropertyRepository      propertyRepo;
     private DashboardCockpitService service;
     private final UUID societeId = UUID.randomUUID();
 
@@ -48,6 +50,7 @@ class DashboardCockpitServiceTest {
         echeanceRepo    = mock(VenteEcheanceRepository.class);
         reservationRepo = mock(ReservationRepository.class);
         contactRepo     = mock(ContactRepository.class);
+        propertyRepo    = mock(PropertyRepository.class);
 
         // Defaults that keep getKpiComparison happy when individual tests don't override
         when(venteRepo.sumPrixVenteInPeriod(any(), any(), any(), anyList())).thenReturn(BigDecimal.ZERO);
@@ -59,7 +62,7 @@ class DashboardCockpitServiceTest {
         when(echeanceRepo.sumPaidInPeriod(any(), any(), any())).thenReturn(BigDecimal.ZERO);
         when(reservationRepo.countCreatedInPeriod(any(), any(), any())).thenReturn(0L);
 
-        service = new DashboardCockpitService(venteRepo, echeanceRepo, reservationRepo, contactRepo);
+        service = new DashboardCockpitService(venteRepo, echeanceRepo, reservationRepo, contactRepo, propertyRepo);
     }
 
     // ── KPI deltas ───────────────────────────────────────────────────────────

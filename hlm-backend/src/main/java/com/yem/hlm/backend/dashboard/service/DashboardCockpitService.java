@@ -6,13 +6,17 @@ import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.dashboard.api.dto.AgentPerformanceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO;
 import com.yem.hlm.backend.dashboard.api.dto.AlertDTO.Severity;
+import com.yem.hlm.backend.dashboard.api.dto.DiscountAnalyticsDTO;
 import com.yem.hlm.backend.dashboard.api.dto.ForecastDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO.FunnelStage;
+import com.yem.hlm.backend.dashboard.api.dto.InventoryIntelligenceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.KpiDelta;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO.SparklinePoint;
 import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
@@ -33,6 +37,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,15 +69,18 @@ public class DashboardCockpitService {
     private final VenteEcheanceRepository echeanceRepo;
     private final ReservationRepository   reservationRepo;
     private final ContactRepository       contactRepo;
+    private final PropertyRepository      propertyRepo;
 
     public DashboardCockpitService(VenteRepository venteRepo,
                                    VenteEcheanceRepository echeanceRepo,
                                    ReservationRepository reservationRepo,
-                                   ContactRepository contactRepo) {
+                                   ContactRepository contactRepo,
+                                   PropertyRepository propertyRepo) {
         this.venteRepo       = venteRepo;
         this.echeanceRepo    = echeanceRepo;
         this.reservationRepo = reservationRepo;
         this.contactRepo     = contactRepo;
+        this.propertyRepo    = propertyRepo;
     }
 
     // ── 1. KPI comparison ────────────────────────────────────────────────────
@@ -350,6 +358,99 @@ public class DashboardCockpitService {
         return new AgentPerformanceDTO(LocalDateTime.now(), agents);
     }
 
+    // ── 7. Inventory Intelligence ──────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'inventory:' + #societeId")
+    public InventoryIntelligenceDTO getInventoryIntelligence(UUID societeId) {
+        List<Object[]> raw = propertyRepo.inventoryByProjectStatusWithValues(societeId);
+
+        Map<UUID, long[]> projectCounts = new LinkedHashMap<>();
+        Map<UUID, String> projectNames = new LinkedHashMap<>();
+        Map<UUID, BigDecimal[]> projectValues = new LinkedHashMap<>();
+
+        long totalAll = 0, availAll = 0, resAll = 0, soldAll = 0, withdAll = 0;
+
+        for (Object[] r : raw) {
+            UUID projectId = (UUID) r[0];
+            String projectName = (String) r[1];
+            PropertyStatus status = (PropertyStatus) r[2];
+            long count = ((Number) r[3]).longValue();
+            BigDecimal value = toBigDecimal(r[4]);
+
+            projectNames.putIfAbsent(projectId, projectName);
+            long[] c = projectCounts.computeIfAbsent(projectId, k -> new long[5]);
+            BigDecimal[] v = projectValues.computeIfAbsent(projectId,
+                    k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+
+            c[0] += count;
+            v[0] = v[0].add(value);
+            totalAll += count;
+
+            switch (status) {
+                case ACTIVE   -> { c[1] += count; availAll += count; }
+                case RESERVED -> { c[2] += count; resAll   += count; }
+                case SOLD     -> { c[3] += count; soldAll  += count; v[1] = v[1].add(value); }
+                case WITHDRAWN, ARCHIVED -> { c[4] += count; withdAll += count; }
+                default -> {}
+            }
+        }
+
+        BigDecimal overallAbsorption = absorptionRate(soldAll, availAll + resAll + soldAll);
+
+        List<InventoryIntelligenceDTO.ProjectStock> projects = new ArrayList<>();
+        for (Map.Entry<UUID, long[]> e : projectCounts.entrySet()) {
+            UUID pid = e.getKey();
+            long[] c = e.getValue();
+            BigDecimal[] v = projectValues.get(pid);
+            long base = c[1] + c[2] + c[3];
+            projects.add(new InventoryIntelligenceDTO.ProjectStock(
+                    pid, projectNames.get(pid),
+                    c[0], c[1], c[2], c[3],
+                    absorptionRate(c[3], base),
+                    v[0], v[1]));
+        }
+
+        return new InventoryIntelligenceDTO(LocalDateTime.now(),
+                new InventoryIntelligenceDTO.StockSummary(
+                        totalAll, availAll, resAll, soldAll, withdAll, overallAbsorption),
+                projects);
+    }
+
+    // ── 8. Discount Analytics ───────────────────────────────────────────────
+
+    @Cacheable(value = CacheConfig.DASHBOARD_COCKPIT_CACHE, key = "'discount:' + #societeId")
+    public DiscountAnalyticsDTO getDiscountAnalytics(UUID societeId) {
+        List<Object[]> summaryRows = venteRepo.discountSummary(societeId);
+        Object[] summary = (summaryRows != null && !summaryRows.isEmpty()) ? summaryRows.get(0) : null;
+
+        long dealsWithDiscount = summary != null && summary[0] != null
+                ? ((Number) summary[0]).longValue() : 0;
+        long totalDeals = summary != null && summary[1] != null
+                ? ((Number) summary[1]).longValue() : 0;
+        BigDecimal avgPct = summary != null && summary[2] != null
+                ? toBigDecimal(summary[2]).setScale(1, RoundingMode.HALF_UP) : null;
+        BigDecimal maxPct = summary != null && summary[3] != null
+                ? toBigDecimal(summary[3]).setScale(1, RoundingMode.HALF_UP) : null;
+        BigDecimal totalVol = summary != null ? toBigDecimal(summary[4]) : BigDecimal.ZERO;
+
+        List<Object[]> agentRows = venteRepo.discountByAgent(societeId);
+        List<DiscountAnalyticsDTO.AgentDiscount> agents = agentRows.stream().map(r -> {
+            UUID agentId = (UUID) r[0];
+            String name = (str(r[1]) + " " + str(r[2])).trim();
+            if (name.isBlank()) name = "—";
+            long agentDiscounted = ((Number) r[3]).longValue();
+            long agentTotal = ((Number) r[4]).longValue();
+            BigDecimal agentAvg = r[5] != null
+                    ? toBigDecimal(r[5]).setScale(1, RoundingMode.HALF_UP) : null;
+            BigDecimal agentVol = toBigDecimal(r[6]);
+            return new DiscountAnalyticsDTO.AgentDiscount(
+                    agentId, name, agentDiscounted, agentTotal, agentAvg, agentVol);
+        }).toList();
+
+        return new DiscountAnalyticsDTO(LocalDateTime.now(),
+                dealsWithDiscount, totalDeals, avgPct, maxPct, totalVol, agents);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static KpiDelta buildDelta(BigDecimal current, BigDecimal previous) {
@@ -430,6 +531,14 @@ public class DashboardCockpitService {
         if (denominator <= 0) return null;
         return BigDecimal.valueOf(numerator)
                 .divide(BigDecimal.valueOf(denominator), 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(1, RoundingMode.HALF_UP);
+    }
+
+    private static BigDecimal absorptionRate(long sold, long commercializedBase) {
+        if (commercializedBase <= 0) return null;
+        return BigDecimal.valueOf(sold)
+                .divide(BigDecimal.valueOf(commercializedBase), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(1, RoundingMode.HALF_UP);
     }
