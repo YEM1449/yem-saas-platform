@@ -2,6 +2,16 @@
    HOME DASHBOARD — Tableau de bord consultant immobilier
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Cockpit (Wave A) ────────────────────────────────────────────────────── */
+.cockpit-alerts { display: block; margin-bottom: 18px; }
+.cockpit-funnel-row { margin-top: 18px; }
+.owner-kpi-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* ── Page header ──────────────────────────────────────────────────────────── */
 .db-header {
   display: flex;

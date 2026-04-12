@@ -90,6 +90,9 @@ public class RedisCacheConfig {
         cacheConfigs.put(CacheConfig.HOME_DASHBOARD_CACHE,
                 defaultConfig.entryTtl(Duration.ofSeconds(30)));
 
+        cacheConfigs.put(CacheConfig.DASHBOARD_COCKPIT_CACHE,
+                defaultConfig.entryTtl(Duration.ofSeconds(60)));
+
         cacheConfigs.put(CacheConfig.PROJECTS_CACHE,
                 defaultConfig.entryTtl(Duration.ofSeconds(60)));
 

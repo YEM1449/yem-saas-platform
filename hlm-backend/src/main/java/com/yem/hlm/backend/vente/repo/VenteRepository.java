@@ -211,4 +211,37 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                                  @Param("from") java.time.LocalDateTime from,
                                  @Param("to") java.time.LocalDateTime to,
                                  org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Weekly sparkline of CA signé (sum of prixVente per ISO week, ANNULE excluded).
+     * Result rows: [weekStart java.sql.Date, total BigDecimal] ordered chronologically.
+     */
+    @Query(value = """
+            SELECT date_trunc('week', v.created_at)::date AS week,
+                   COALESCE(SUM(v.prix_vente), 0) AS total
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.created_at >= :from
+              AND v.statut <> 'ANNULE'
+            GROUP BY week
+            ORDER BY week
+            """, nativeQuery = true)
+    List<Object[]> sumPrixVenteByWeek(@Param("societeId") UUID societeId,
+                                      @Param("from") java.time.LocalDateTime from);
+
+    /**
+     * Weekly sparkline of vente count (created per ISO week, all statuses).
+     * Result rows: [weekStart java.sql.Date, count Long] ordered chronologically.
+     */
+    @Query(value = """
+            SELECT date_trunc('week', v.created_at)::date AS week,
+                   COUNT(*) AS total
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.created_at >= :from
+            GROUP BY week
+            ORDER BY week
+            """, nativeQuery = true)
+    List<Object[]> countCreatedByWeek(@Param("societeId") UUID societeId,
+                                      @Param("from") java.time.LocalDateTime from);
 }
