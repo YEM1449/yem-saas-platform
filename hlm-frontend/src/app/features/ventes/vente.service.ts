@@ -66,12 +66,14 @@ export interface CreateVenteRequest {
   reduction?: number | null;
   dateCompromis?: string | null;
   dateLivraisonPrevue?: string | null;
+  expectedClosingDate?: string | null;
   notes?: string | null;
 }
 
 export interface UpdateVenteStatutRequest {
   statut: VenteStatut;
   dateTransition?: string | null;
+  expectedClosingDate?: string | null;
   notes?: string | null;
 }
 

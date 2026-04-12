@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -198,6 +199,14 @@ public class VenteService {
         vente.setDateLivraisonPrevue(request.dateLivraisonPrevue());
         vente.setNotes(request.notes());
 
+        if (request.expectedClosingDate() != null) {
+            vente.setExpectedClosingDate(request.expectedClosingDate());
+        } else if (request.dateLivraisonPrevue() != null) {
+            vente.setExpectedClosingDate(request.dateLivraisonPrevue());
+        } else {
+            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(vente.getStatut())));
+        }
+
         return toResponse(venteRepository.save(vente));
     }
 
@@ -234,6 +243,12 @@ public class VenteService {
         vente.setStageEntryDate(LocalDateTime.now());
         vente.setProbability(defaultProbability(request.statut()));
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
+
+        if (request.expectedClosingDate() != null) {
+            vente.setExpectedClosingDate(request.expectedClosingDate());
+        } else if (vente.getExpectedClosingDate() == null) {
+            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(request.statut())));
+        }
 
         // Stamp date fields based on the new statut
         if (request.dateTransition() != null) {
@@ -431,6 +446,15 @@ public class VenteService {
             case ACTE_NOTARIE -> 75;
             case LIVRE        -> 100;
             case ANNULE       -> 0;
+        };
+    }
+
+    private static long estimatedDaysToClose(VenteStatut statut) {
+        return switch (statut) {
+            case COMPROMIS    -> 90;
+            case FINANCEMENT  -> 60;
+            case ACTE_NOTARIE -> 30;
+            case LIVRE, ANNULE -> 0;
         };
     }
 
