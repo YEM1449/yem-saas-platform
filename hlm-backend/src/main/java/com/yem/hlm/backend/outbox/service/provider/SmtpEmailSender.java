@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * <h3>Configuration keys (all overridable via env vars)</h3>
  * <pre>
  * app.email.host     (env: EMAIL_HOST)
- * app.email.port     (env: EMAIL_PORT,     default 587)
+ * app.email.port     (env: EMAIL_PORT,     default 587 — STARTTLS)
  * app.email.username (env: EMAIL_USER)
  * app.email.password (env: EMAIL_PASSWORD)
  * app.email.from     (env: EMAIL_FROM)

@@ -22,7 +22,9 @@ import java.util.UUID;
  * REST API for the Vente (sale) pipeline.
  *
  * <p>All endpoints are société-scoped via {@code SocieteContext}.
- * ADMIN and MANAGER can create/update; AGENT is read-only.
+ * AGENT has write access in the vente module (deliberate RBAC exception) so
+ * that assigned agents can run their own deals end-to-end — from creating the
+ * vente off a reservation through échéances, documents, and contract signing.
  */
 @Tag(name = "Ventes", description = "Sales pipeline — from compromis to livraison")
 @RestController
@@ -47,7 +49,7 @@ public class VenteController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteResponse create(@Valid @RequestBody CreateVenteRequest request) {
         return venteService.create(request);
     }
@@ -68,7 +70,7 @@ public class VenteController {
     // =========================================================================
 
     @PatchMapping("/{id}/statut")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteResponse updateStatut(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateVenteStatutRequest request) {
@@ -86,7 +88,7 @@ public class VenteController {
 
     @PostMapping("/{id}/echeances")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public EcheanceResponse addEcheance(
             @PathVariable UUID id,
             @Valid @RequestBody CreateEcheanceRequest request) {
@@ -94,7 +96,7 @@ public class VenteController {
     }
 
     @PatchMapping("/{id}/echeances/{eid}/statut")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public EcheanceResponse updateEcheanceStatut(
             @PathVariable UUID id,
             @PathVariable UUID eid,
@@ -117,7 +119,7 @@ public class VenteController {
 
     /** Sends a portal magic-link email to the buyer of the given vente. */
     @PostMapping("/{id}/portal/invite")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public MagicLinkResponse inviteBuyer(@PathVariable UUID id) {
         return venteInviteService.inviteBuyer(id);
     }
@@ -125,7 +127,7 @@ public class VenteController {
     /** Generate the sale contract PDF and transition contractStatus → GENERATED. */
     @PostMapping("/{id}/contract/generate")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteResponse generateContract(@PathVariable UUID id) {
         return venteService.generateContract(id);
     }
@@ -133,14 +135,14 @@ public class VenteController {
     /** Sign the contract — requires contractStatus == GENERATED. */
     @PostMapping("/{id}/contract/sign")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteResponse signContract(@PathVariable UUID id) {
         return venteService.signContract(id);
     }
 
     @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteDocumentResponse uploadDocument(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file) {

@@ -41,7 +41,7 @@ export class ReservationsComponent implements OnInit {
 
   get canWrite(): boolean {
     const r = this.auth.user?.role;
-    return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
+    return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER' || r === 'ROLE_AGENT';
   }
 
   get filtered(): Reservation[] {
