@@ -1,0 +1,37 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 067-societe-ca-mensuel-cible
+      author: yem
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: ca_mensuel_cible
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: ca_mensuel_cible
+                  type: DECIMAL(14, 2)
+                  remarks: "Owner dashboard — monthly CA signé target (MAD), null if not set"
+
+  - changeSet:
+      id: 067-societe-ventes-mensuel-cible
+      author: yem
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: societe
+            columnName: ventes_mensuel_cible
+      changes:
+        - addColumn:
+            tableName: societe
+            columns:
+              - column:
+                  name: ventes_mensuel_cible
+                  type: INTEGER
+                  remarks: "Owner dashboard — monthly count of ventes target, null if not set"

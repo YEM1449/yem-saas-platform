@@ -67,6 +67,21 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
                                          @Param("to") java.time.LocalDate to);
 
     /**
+     * Sum of all échéance amounts (paid + unpaid) whose due date falls in [from, to).
+     * Denominator for the collection-efficiency KPI on the owner executive view.
+     */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.dateEcheance >= :from
+              AND e.dateEcheance <  :to
+            """)
+    java.math.BigDecimal sumMontantDueInPeriodAll(@Param("societeId") UUID societeId,
+                                                  @Param("from") java.time.LocalDate from,
+                                                  @Param("to") java.time.LocalDate to);
+
+    /**
      * Returns all écheances for ventes whose property belongs to the given tranche.
      * Used by KpiComputationService to compute payment KPIs at tranche granularity.
      */

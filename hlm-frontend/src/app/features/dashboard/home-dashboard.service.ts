@@ -40,9 +40,33 @@ export interface HomeDashboard {
   conversionRate30d: number | null;
   encaisseMoisCourant: number;
   topAgents: AgentLeaderboardRow[];
+  // Executive view (Wave 13)
+  caYtd: number;
+  caSameMonthLastYear: number;
+  caYoYPct: number | null;
+  monthsOfSupply: number | null;
+  salesVelocityPerWeek: number;
+  winRate90d: number | null;
+  dsoRolling90d: number | null;
+  collectionEfficiency90d: number | null;
+  caMensuelCible: number | null;
+  ventesMensuelCible: number | null;
+  quotaAttainmentMtdPct: number | null;
+  upcomingDeliveries: UpcomingDeliveryRow[];
   // Widgets
   recentVentes: RecentVenteRow[];
   urgentTasks: UrgentTaskRow[];
+}
+
+export interface UpcomingDeliveryRow {
+  trancheId: string;
+  trancheLabel: string;
+  projectId: string;
+  projectName: string;
+  dateLivraisonPrevue: string;
+  daysUntilDelivery: number;
+  totalUnits: number;
+  soldUnits: number;
 }
 
 export interface AgentLeaderboardRow {

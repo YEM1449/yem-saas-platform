@@ -450,6 +450,201 @@
   }
 
   <!-- ════════════════════════════════════════════════════════════
+       SECTION 3.6 — EXECUTIVE VIEW (Wave 13, admin/manager only)
+       Owner-grade KPIs: pacing, velocity, cash health, deliveries.
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager) {
+    <div class="section-row exec-section">
+      <div class="section-head">
+        <span class="section-label">Vue dirigeant</span>
+        <span class="section-sublabel">CA, velocity, santé financière et livraisons</span>
+      </div>
+
+      <!-- Pacing gauge: MTD CA vs monthly target -->
+      @if (s.caMensuelCible != null && s.caMensuelCible > 0) {
+        <div class="pacing-card">
+          <div class="pacing-head">
+            <div>
+              <div class="pacing-label">Objectif mensuel CA signé</div>
+              <div class="pacing-value">
+                {{ formatAmount(s.caSigneMoisCourant) }}
+                <span class="pacing-target">/ {{ formatAmount(s.caMensuelCible) }}</span>
+              </div>
+            </div>
+            @if (s.quotaAttainmentMtdPct != null) {
+              <span class="pacing-pct"
+                    [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
+                    [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
+                    [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)">
+                {{ s.quotaAttainmentMtdPct }}%
+              </span>
+            }
+          </div>
+          <div class="pacing-bar">
+            <!-- Expected trajectory marker (day_of_month / days_in_month * 100) -->
+            <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+            <div class="pacing-fill"
+                 [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
+                 [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
+                 [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)"
+                 [style.width]="pacingWidth(s.quotaAttainmentMtdPct)"></div>
+          </div>
+          <div class="pacing-legend">
+            <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
+            <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="pacing-card pacing-untargeted">
+          <div class="pacing-empty">
+            <strong>Aucun objectif mensuel configuré.</strong>
+            Définissez <code>caMensuelCible</code> sur la société pour activer le suivi du rythme (pacing).
+          </div>
+        </div>
+      }
+
+      <!-- Executive KPI grid -->
+      <div class="exec-kpi-grid">
+
+        <!-- CA YTD -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">CA signé YTD</span>
+            @if (s.caYoYPct != null) {
+              <span class="exec-delta"
+                    [class.up]="s.caYoYPct >= 0"
+                    [class.down]="s.caYoYPct < 0">
+                {{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ absNum(s.caYoYPct) }}% YoY
+              </span>
+            }
+          </div>
+          <div class="exec-value">{{ formatAmount(s.caYtd) }}</div>
+          <div class="exec-hint">
+            @if (s.caSameMonthLastYear > 0) {
+              Mois n-1 : {{ formatAmount(s.caSameMonthLastYear) }}
+            } @else {
+              Pas de référence n-1
+            }
+          </div>
+        </div>
+
+        <!-- Velocity -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">Velocity ventes</span>
+          </div>
+          <div class="exec-value">
+            {{ s.salesVelocityPerWeek | number:'1.1-1' }}
+            <span class="exec-unit">/sem</span>
+          </div>
+          <div class="exec-hint">Moyenne 4 dernières semaines</div>
+        </div>
+
+        <!-- Months of supply -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">Mois de stock</span>
+          </div>
+          <div class="exec-value"
+               [class.exec-good]="isSupplyHealthy(s.monthsOfSupply)"
+               [class.exec-warn]="isSupplyElevated(s.monthsOfSupply)"
+               [class.exec-bad]="isSupplyCritical(s.monthsOfSupply)">
+            @if (s.monthsOfSupply != null) {
+              {{ s.monthsOfSupply | number:'1.1-1' }}
+              <span class="exec-unit">mois</span>
+            } @else { — }
+          </div>
+          <div class="exec-hint">Stock actif / rythme mensuel 90j</div>
+        </div>
+
+        <!-- Win rate -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">Taux de succès 90j</span>
+          </div>
+          <div class="exec-value"
+               [class.exec-good]="(s.winRate90d ?? 0) >= 80"
+               [class.exec-warn]="(s.winRate90d ?? 0) < 60 && (s.winRate90d ?? 0) >= 40"
+               [class.exec-bad]="(s.winRate90d ?? 0) < 40 && s.winRate90d != null">
+            @if (s.winRate90d != null) {
+              {{ s.winRate90d }}%
+            } @else { — }
+          </div>
+          <div class="exec-hint">Livrées / (Livrées + Annulées)</div>
+        </div>
+
+        <!-- DSO -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">DSO (retard moyen)</span>
+          </div>
+          <div class="exec-value"
+               [class.exec-good]="(s.dsoRolling90d ?? 999) <= 15"
+               [class.exec-warn]="(s.dsoRolling90d ?? 0) > 15 && (s.dsoRolling90d ?? 0) <= 45"
+               [class.exec-bad]="(s.dsoRolling90d ?? 0) > 45">
+            @if (s.dsoRolling90d != null) {
+              {{ s.dsoRolling90d | number:'1.0-1' }}
+              <span class="exec-unit">j</span>
+            } @else { — }
+          </div>
+          <div class="exec-hint">Impayés ÷ rythme quotidien encaissé 90j</div>
+        </div>
+
+        <!-- Collection efficiency -->
+        <div class="exec-card">
+          <div class="exec-card-head">
+            <span class="exec-label">Efficacité recouvrement</span>
+          </div>
+          <div class="exec-value"
+               [class.exec-good]="(s.collectionEfficiency90d ?? 0) >= 90"
+               [class.exec-warn]="(s.collectionEfficiency90d ?? 0) < 90 && (s.collectionEfficiency90d ?? 0) >= 75"
+               [class.exec-bad]="(s.collectionEfficiency90d ?? 0) < 75 && s.collectionEfficiency90d != null">
+            @if (s.collectionEfficiency90d != null) {
+              {{ s.collectionEfficiency90d }}%
+            } @else { — }
+          </div>
+          <div class="exec-hint">Encaissé ÷ exigible 90 derniers jours</div>
+        </div>
+
+      </div>
+
+      <!-- Upcoming deliveries strip -->
+      @if (s.upcomingDeliveries.length > 0) {
+        <div class="deliveries-card">
+          <div class="deliveries-head">
+            <span class="deliveries-title">📦 Livraisons planifiées — 90 prochains jours</span>
+            <a routerLink="/app/projects" class="deliveries-link">Projets →</a>
+          </div>
+          <div class="deliveries-strip">
+            @for (d of s.upcomingDeliveries; track d.trancheId) {
+              <a [routerLink]="['/app/projects', d.projectId]" class="delivery-chip"
+                 [class.delivery-urgent]="d.daysUntilDelivery <= 30">
+                <div class="delivery-date">
+                  <span class="delivery-days">J{{ d.daysUntilDelivery >= 0 ? '+' + d.daysUntilDelivery : d.daysUntilDelivery }}</span>
+                  <span class="delivery-iso">{{ d.dateLivraisonPrevue | date:'dd/MM/yy' }}</span>
+                </div>
+                <div class="delivery-body">
+                  <div class="delivery-project">{{ d.projectName }}</div>
+                  <div class="delivery-tranche">{{ d.trancheLabel }}</div>
+                  @if (d.totalUnits > 0) {
+                    <div class="delivery-progress">
+                      <div class="delivery-progress-bar">
+                        <div class="delivery-progress-fill"
+                             [style.width]="(d.soldUnits / d.totalUnits * 100) + '%'"></div>
+                      </div>
+                      <span class="delivery-progress-lbl">{{ d.soldUnits }}/{{ d.totalUnits }} vendus</span>
+                    </div>
+                  }
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
        SECTION 3.7 — PIPELINE + FORECAST + AGENTS (cockpit Wave B)
        ════════════════════════════════════════════════════════════ -->
   @if (isAdminOrManager && bundle()) {

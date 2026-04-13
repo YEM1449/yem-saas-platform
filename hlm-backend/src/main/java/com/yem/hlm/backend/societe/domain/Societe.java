@@ -195,6 +195,14 @@ public class Societe {
     @Column(name = "periode_essai", nullable = false)
     private boolean periodeEssai = true;
 
+    // ── Commercial targets (Wave 13 — Owner Executive View) ───────────────────
+
+    @Column(name = "ca_mensuel_cible", precision = 14, scale = 2)
+    private java.math.BigDecimal caMensuelCible;
+
+    @Column(name = "ventes_mensuel_cible")
+    private Integer ventesMensuelCible;
+
     // ── Core fields ───────────────────────────────────────────────────────────
 
     @Column(name = "pays", nullable = false, length = 10)
@@ -371,6 +379,10 @@ public class Societe {
     public void setDateFinAbonnement(LocalDate d) { this.dateFinAbonnement = d; }
     public boolean isPeriodeEssai() { return periodeEssai; }
     public void setPeriodeEssai(boolean periodeEssai) { this.periodeEssai = periodeEssai; }
+    public java.math.BigDecimal getCaMensuelCible() { return caMensuelCible; }
+    public void setCaMensuelCible(java.math.BigDecimal caMensuelCible) { this.caMensuelCible = caMensuelCible; }
+    public Integer getVentesMensuelCible() { return ventesMensuelCible; }
+    public void setVentesMensuelCible(Integer ventesMensuelCible) { this.ventesMensuelCible = ventesMensuelCible; }
     public String getPays() { return pays; }
     public void setPays(String pays) { this.pays = pays; }
     public boolean isActif() { return actif; }
