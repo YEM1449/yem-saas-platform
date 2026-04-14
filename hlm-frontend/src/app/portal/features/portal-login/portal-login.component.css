@@ -1,0 +1,195 @@
+/* ================================================================
+   Portal Login — Magic-link request page (buyer-facing)
+   Self-service flow: buyer enters email + société key to receive
+   a new magic link. Also handles the post-verification states
+   (sent confirmation, error recovery).
+   ================================================================ */
+
+/* ── Page wrapper ─────────────────────────────────────────────── */
+.portal-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37, 99, 235, .10) 0%, transparent 70%),
+    var(--c-bg, #f8fafc);
+  padding: var(--sp-6, 24px) var(--sp-4, 16px);
+}
+
+/* ── Card ─────────────────────────────────────────────────────── */
+.portal-login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-xl, 16px);
+  box-shadow: var(--sh-xl, 0 20px 25px -5px rgba(0, 0, 0, .08));
+  overflow: hidden;
+  padding: var(--sp-8, 32px);
+}
+
+/* ── Title ────────────────────────────────────────────────────── */
+.portal-login-title {
+  margin: 0 0 var(--sp-2, 8px);
+  font-size: var(--text-2xl, 1.5rem);
+  font-weight: var(--fw-bold, 700);
+  letter-spacing: var(--ls-tight, -0.025em);
+  color: var(--c-text, #0f172a);
+  text-align: center;
+}
+
+/* ── Subtitle ─────────────────────────────────────────────────── */
+.portal-login-subtitle {
+  margin: 0 0 var(--sp-6, 24px);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--c-text-secondary, #475569);
+  text-align: center;
+  line-height: var(--lh-normal, 1.5);
+}
+
+/* ── Form group ───────────────────────────────────────────────── */
+.portal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1-5, 6px);
+  margin-bottom: var(--sp-4, 16px);
+}
+
+.portal-form-group label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--c-text, #0f172a);
+}
+
+.portal-form-group input {
+  width: 100%;
+  padding: var(--sp-2-5, 10px) var(--sp-3, 12px);
+  font-size: var(--text-base, 1rem);
+  font-family: var(--font, inherit);
+  color: var(--c-text, #0f172a);
+  background: var(--c-surface, #fff);
+  border: 1.5px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  transition: border-color var(--tr, 150ms ease), box-shadow var(--tr, 150ms ease);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.portal-form-group input:hover {
+  border-color: var(--c-border-strong, #cbd5e1);
+}
+
+.portal-form-group input:focus {
+  border-color: var(--c-primary-400, #60a5fa);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+}
+
+/* ── Primary button ───────────────────────────────────────────── */
+.portal-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--touch-target, 44px);
+  padding: var(--sp-2-5, 10px) var(--sp-4, 16px);
+  margin-top: var(--sp-2, 8px);
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--fw-semibold, 600);
+  font-family: var(--font, inherit);
+  color: #fff;
+  background: var(--c-primary, #2563eb);
+  border: none;
+  border-radius: var(--r-md, 8px);
+  cursor: pointer;
+  transition: background var(--tr, 150ms ease), box-shadow var(--tr, 150ms ease),
+              transform var(--tr-fast, 100ms ease);
+}
+
+.portal-btn-primary:hover:not(:disabled) {
+  background: var(--c-primary-hover, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, .35);
+  transform: translateY(-1px);
+}
+
+.portal-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.portal-btn-primary:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .4);
+  outline-offset: 2px;
+}
+
+.portal-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Secondary / ghost button ─────────────────────────────────── */
+.portal-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--touch-target, 44px);
+  padding: var(--sp-2-5, 10px) var(--sp-4, 16px);
+  margin-top: var(--sp-3, 12px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-medium, 500);
+  font-family: var(--font, inherit);
+  color: var(--c-text-secondary, #475569);
+  background: transparent;
+  border: 1.5px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  cursor: pointer;
+  transition: border-color var(--tr, 150ms ease), color var(--tr, 150ms ease),
+              background var(--tr, 150ms ease);
+}
+
+.portal-btn-secondary:hover {
+  border-color: var(--c-primary-300, #93c5fd);
+  color: var(--c-primary, #2563eb);
+  background: var(--c-primary-50, #eff6ff);
+}
+
+.portal-btn-secondary:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .3);
+  outline-offset: 2px;
+}
+
+/* ── Alert banners ────────────────────────────────────────────── */
+.portal-alert {
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  border-radius: var(--r-md, 8px);
+  font-size: var(--text-sm, 0.875rem);
+  line-height: var(--lh-normal, 1.5);
+  margin-bottom: var(--sp-4, 16px);
+}
+
+.portal-alert-success {
+  background: var(--c-success-light, #f0fdf4);
+  border: 1px solid var(--c-success-border, #bbf7d0);
+  color: var(--c-success, #16a34a);
+}
+
+.portal-alert-success strong {
+  display: block;
+  margin-bottom: var(--sp-1, 4px);
+  font-weight: var(--fw-semibold, 600);
+}
+
+.portal-alert-error {
+  background: var(--c-danger-light, #fef2f2);
+  border: 1px solid var(--c-danger-border, #fecaca);
+  color: var(--c-danger, #dc2626);
+}
+
+/* ── Verifying state (inline on login page) ───────────────────── */
+.portal-login-subtitle[data-testid="portal-verifying-message"] {
+  margin-top: var(--sp-4, 16px);
+  font-size: var(--text-base, 1rem);
+  font-style: italic;
+}

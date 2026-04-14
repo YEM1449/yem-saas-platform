@@ -11,6 +11,7 @@ type Step = 'request' | 'sent' | 'verifying' | 'error';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './portal-login.component.html',
+  styleUrl: './portal-login.component.css',
 })
 export class PortalLoginComponent {
   private auth   = inject(PortalAuthService);
@@ -62,7 +63,7 @@ export class PortalLoginComponent {
   private verifyToken(token: string): void {
     this.auth.verifyToken(token).subscribe({
       next: () => {
-        this.router.navigateByUrl('/portal/contracts');
+        this.router.navigateByUrl('/portal');
       },
       error: () => {
         this.error.set('This link is invalid or has expired. Please request a new one.');

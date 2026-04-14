@@ -192,6 +192,19 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Wave 10: Tranche + Bulk Project Generation ✅ (items below)
 - Wave 11: UX + Performance Sprint (F1–F10) ✅ (items below)
 - Wave 12: Owner KPIs + Template builder + UI polish ✅ (items below)
+- Portal magic-link pipeline fix ✅ (2026-04-14, items below)
+
+### Portal Magic-Link Pipeline Fix (complete, 2026-04-14)
+
+Three bugs prevented buyers from reaching their portal after clicking "Accéder à mon espace":
+
+| Bug | Root Cause | Fix |
+|-----|-----------|-----|
+| Buyers landed on CRM `/login` (no password) | `/portal/verify` route missing in `app.routes.ts`; Angular wildcard redirected there | Added `{ path: 'verify', loadComponent: PortalVerifyComponent }` as public sibling of `login` in portal children |
+| Post-verification redirect went to `/portal/contracts` (wrong default) | `PortalLoginComponent.verifyToken():65` hard-coded `/portal/contracts` | Changed to `navigateByUrl('/portal')`; shell's `redirectTo:'ventes'` handles the tab |
+| Portal auth pages completely unstyled | `PortalLoginComponent` had no `styleUrl`; CSS classes unresolved | Added `portal-login.component.css` with full design-token-based styles + `styleUrl` in decorator |
+
+New component: `PortalVerifyComponent` (`portal/features/portal-verify/`) — dedicated single-purpose magic-link handler. Shows spinner while verifying → redirects to `/portal` on success → branded error + "Demander un nouveau lien" on failure. `PortalLoginComponent` keeps `?token=` fallback for old email links.
 
 ### Wave 8 — Pipeline UX + Activation Redesign (complete, 2026-04-05)
 
