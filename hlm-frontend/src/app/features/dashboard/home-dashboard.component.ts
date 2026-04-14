@@ -185,4 +185,59 @@ export class HomeDashboardComponent implements OnInit {
          + (s.echeancesEnRetardCount > 0 ? 1 : 0)
          + (s.ventesStalleesCount > 0 ? 1 : 0);
   }
+
+  // ── Executive view (Wave 13) ───────────────────────────────────────────────
+
+  currentDayOfMonth(): number { return new Date().getDate(); }
+
+  daysInCurrentMonth(): number {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  }
+
+  /** Expected quota attainment pacing for today, as a percentage of the month. */
+  pacingExpectedPct(): number {
+    return Math.round((this.currentDayOfMonth() / this.daysInCurrentMonth()) * 100);
+  }
+
+  pacingWidth(pct: number | null): string {
+    if (pct == null) return '0%';
+    return Math.min(Math.max(pct, 0), 100) + '%';
+  }
+
+  /** Within 10 pts of expected pacing = on track. */
+  isPacingOnTrack(pct: number | null): boolean {
+    if (pct == null) return false;
+    return pct >= this.pacingExpectedPct() - 10;
+  }
+
+  isPacingBehind(pct: number | null): boolean {
+    if (pct == null) return false;
+    const exp = this.pacingExpectedPct();
+    return pct < exp - 10 && pct >= exp - 25;
+  }
+
+  isPacingCritical(pct: number | null): boolean {
+    if (pct == null) return false;
+    return pct < this.pacingExpectedPct() - 25;
+  }
+
+  pacingVerdict(pct: number | null): string {
+    if (pct == null) return '—';
+    const exp = this.pacingExpectedPct();
+    if (pct >= exp + 10) return 'En avance';
+    if (pct >= exp - 10) return 'Dans le rythme';
+    if (pct >= exp - 25) return 'En retard';
+    return 'Sous-performance critique';
+  }
+
+  absNum(n: number | null | undefined): number {
+    if (n == null) return 0;
+    return Math.abs(n);
+  }
+
+  /** Months of supply < 12 = healthy (fast sell-through). */
+  isSupplyHealthy(m: number | null): boolean { return m != null && m < 12; }
+  isSupplyElevated(m: number | null): boolean { return m != null && m >= 12 && m < 24; }
+  isSupplyCritical(m: number | null): boolean { return m != null && m >= 24; }
 }

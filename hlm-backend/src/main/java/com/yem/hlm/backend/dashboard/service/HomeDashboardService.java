@@ -8,9 +8,12 @@ import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.reservation.domain.ReservationStatus;
 import com.yem.hlm.backend.reservation.repo.ReservationRepository;
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.societe.SocieteRepository;
+import com.yem.hlm.backend.societe.domain.Societe;
 import com.yem.hlm.backend.task.domain.Task;
 import com.yem.hlm.backend.task.domain.TaskStatus;
 import com.yem.hlm.backend.task.repo.TaskRepository;
+import com.yem.hlm.backend.tranche.repo.TrancheRepository;
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
@@ -26,6 +29,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,19 +62,25 @@ public class HomeDashboardService {
     private final ContactRepository       contactRepo;
     private final PropertyRepository      propertyRepo;
     private final ReservationRepository   reservationRepo;
+    private final SocieteRepository       societeRepo;
+    private final TrancheRepository       trancheRepo;
 
     public HomeDashboardService(VenteRepository venteRepo,
                                 VenteEcheanceRepository echeanceRepo,
                                 TaskRepository taskRepo,
                                 ContactRepository contactRepo,
                                 PropertyRepository propertyRepo,
-                                ReservationRepository reservationRepo) {
+                                ReservationRepository reservationRepo,
+                                SocieteRepository societeRepo,
+                                TrancheRepository trancheRepo) {
         this.venteRepo       = venteRepo;
         this.echeanceRepo    = echeanceRepo;
         this.taskRepo        = taskRepo;
         this.contactRepo     = contactRepo;
         this.propertyRepo    = propertyRepo;
         this.reservationRepo = reservationRepo;
+        this.societeRepo     = societeRepo;
+        this.trancheRepo     = trancheRepo;
     }
 
     @Cacheable(
@@ -254,6 +265,133 @@ public class HomeDashboardService {
                     .toList();
         }
 
+        // ── 12. Executive KPIs (Wave 13 — Owner view) ────────────────────────
+        BigDecimal caYtd               = BigDecimal.ZERO;
+        BigDecimal caSameMonthLastYear = BigDecimal.ZERO;
+        BigDecimal caYoYPct            = null;
+        BigDecimal monthsOfSupply      = null;
+        BigDecimal salesVelocityPerWeek;
+        BigDecimal winRate90d          = null;
+        BigDecimal dsoRolling90d       = null;
+        BigDecimal collectionEff90d    = null;
+        BigDecimal caMensuelCible      = null;
+        Long ventesMensuelCible        = null;
+        BigDecimal quotaAttainmentMtd  = null;
+        List<HomeDashboardDTO.UpcomingDeliveryRow> upcomingDeliveries = List.of();
+
+        if (!isAgent) {
+            // CA YTD (Jan 1 → now), excluding ANNULE
+            LocalDateTime ytdFrom = now.toLocalDate().withDayOfYear(1).atStartOfDay();
+            BigDecimal ytdTmp = venteRepo.sumPrixVenteInPeriod(societeId, ytdFrom, now, ANNULE_ONLY);
+            caYtd = ytdTmp != null ? ytdTmp : BigDecimal.ZERO;
+
+            // CA same month last year → YoY
+            YearMonth sameMonthLastYear = currentMonth.minusYears(1);
+            LocalDateTime smlyFrom = sameMonthLastYear.atDay(1).atStartOfDay();
+            LocalDateTime smlyTo   = sameMonthLastYear.plusMonths(1).atDay(1).atStartOfDay();
+            BigDecimal smlyTmp = venteRepo.sumPrixVenteInPeriod(societeId, smlyFrom, smlyTo, ANNULE_ONLY);
+            caSameMonthLastYear = smlyTmp != null ? smlyTmp : BigDecimal.ZERO;
+            if (caSameMonthLastYear.signum() > 0) {
+                caYoYPct = caSigneMoisCourant.subtract(caSameMonthLastYear)
+                        .divide(caSameMonthLastYear, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP);
+            }
+
+            // Months of supply = biensActifs / (ventes90d / 3)
+            if (ventes90d > 0 && biensActifs > 0) {
+                BigDecimal monthlyRun = BigDecimal.valueOf(ventes90d)
+                        .divide(BigDecimal.valueOf(3), 4, RoundingMode.HALF_UP);
+                if (monthlyRun.signum() > 0) {
+                    monthsOfSupply = BigDecimal.valueOf(biensActifs)
+                            .divide(monthlyRun, 1, RoundingMode.HALF_UP);
+                }
+            }
+
+            // Sales velocity: ventes last 28 days / 4
+            LocalDateTime twentyEightDaysAgo = now.minusDays(28);
+            long ventes28d = venteRepo.countCreatedInPeriod(societeId, twentyEightDaysAgo, now);
+            salesVelocityPerWeek = BigDecimal.valueOf(ventes28d)
+                    .divide(BigDecimal.valueOf(4), 1, RoundingMode.HALF_UP);
+
+            // Win rate 90d = LIVRE / (LIVRE + ANNULE)
+            long livre90d = venteRepo.countByStatutInPeriod(societeId, VenteStatut.LIVRE, ninetyDaysAgo, now);
+            long terminal90d = livre90d + annule90d;
+            if (terminal90d > 0) {
+                winRate90d = BigDecimal.valueOf(livre90d)
+                        .divide(BigDecimal.valueOf(terminal90d), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP);
+            }
+
+            // Collection efficiency 90d (paid ÷ due, window = [today-90d, today))
+            LocalDate ninetyDaysAgoDate = today.minusDays(90);
+            BigDecimal duePast90d  = echeanceRepo.sumMontantDueInPeriodAll(societeId, ninetyDaysAgoDate, today);
+            BigDecimal paidPast90d = echeanceRepo.sumPaidInPeriod(societeId, ninetyDaysAgoDate, today);
+            if (duePast90d == null)  duePast90d  = BigDecimal.ZERO;
+            if (paidPast90d == null) paidPast90d = BigDecimal.ZERO;
+            if (duePast90d.signum() > 0) {
+                collectionEff90d = paidPast90d
+                        .divide(duePast90d, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP);
+            }
+
+            // DSO approximation: overdue amount ÷ daily paid run-rate on trailing 90d
+            if (paidPast90d.signum() > 0) {
+                BigDecimal dailyRun = paidPast90d.divide(BigDecimal.valueOf(90), 4, RoundingMode.HALF_UP);
+                if (dailyRun.signum() > 0 && echeancesEnRetard.signum() > 0) {
+                    dsoRolling90d = echeancesEnRetard.divide(dailyRun, 1, RoundingMode.HALF_UP);
+                } else {
+                    dsoRolling90d = BigDecimal.ZERO;
+                }
+            }
+
+            // Société targets + quota attainment MTD
+            Societe societe = societeRepo.findById(societeId).orElse(null);
+            if (societe != null) {
+                caMensuelCible = societe.getCaMensuelCible();
+                if (societe.getVentesMensuelCible() != null) {
+                    ventesMensuelCible = societe.getVentesMensuelCible().longValue();
+                }
+                if (caMensuelCible != null && caMensuelCible.signum() > 0) {
+                    quotaAttainmentMtd = caSigneMoisCourant
+                            .divide(caMensuelCible, 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100))
+                            .setScale(1, RoundingMode.HALF_UP);
+                }
+            }
+
+            // Upcoming deliveries: next 90 days, excluding LIVREE
+            LocalDate horizonDate = today.plusDays(90);
+            List<Object[]> rawDeliveries = trancheRepo.findUpcomingDeliveries(societeId, today, horizonDate);
+            List<HomeDashboardDTO.UpcomingDeliveryRow> deliveries = new ArrayList<>(rawDeliveries.size());
+            for (Object[] r : rawDeliveries) {
+                UUID trancheId        = (UUID) r[0];
+                String trancheNom     = r[1] != null ? r[1].toString() : null;
+                Integer trancheNumero = r[2] != null ? ((Number) r[2]).intValue() : null;
+                String label          = (trancheNom != null && !trancheNom.isBlank())
+                        ? trancheNom
+                        : (trancheNumero != null ? "Tranche " + trancheNumero : "Tranche");
+                UUID projectId        = (UUID) r[3];
+                String projectName    = r[4] != null ? r[4].toString() : "";
+                LocalDate livraison   = toLocalDate(r[5]);
+                long daysUntil        = livraison != null ? ChronoUnit.DAYS.between(today, livraison) : 0L;
+                long totalUnits       = toLong(r[6]);
+                long soldUnits        = toLong(r[7]);
+                deliveries.add(new HomeDashboardDTO.UpcomingDeliveryRow(
+                        trancheId, label, projectId, projectName,
+                        livraison, daysUntil, totalUnits, soldUnits));
+            }
+            upcomingDeliveries = deliveries;
+        } else {
+            // Agent scope: only compute velocity (cheap, useful); leave owner-only fields null.
+            LocalDateTime twentyEightDaysAgo = now.minusDays(28);
+            long ventes28d = venteRepo.countCreatedInPeriod(societeId, twentyEightDaysAgo, now);
+            salesVelocityPerWeek = BigDecimal.valueOf(ventes28d)
+                    .divide(BigDecimal.valueOf(4), 1, RoundingMode.HALF_UP);
+        }
+
         return new HomeDashboardDTO(
                 now,
                 activeVentesCount, caActivePipeline, ventesParStatut,
@@ -265,6 +403,11 @@ public class HomeDashboardService {
                 ventesStalleesCount,
                 openTasks, overdueTasks, todayTasks,
                 cancellationRate90d, avgTicketLivre, conversionRate30d, encaisseMois, topAgents,
+                caYtd, caSameMonthLastYear, caYoYPct,
+                monthsOfSupply, salesVelocityPerWeek, winRate90d,
+                dsoRolling90d, collectionEff90d,
+                caMensuelCible, ventesMensuelCible, quotaAttainmentMtd,
+                upcomingDeliveries,
                 recentVentes, urgentTasks
         );
     }
@@ -276,5 +419,13 @@ public class HomeDashboardService {
         if (o instanceof Long l) return l;
         if (o instanceof Number n) return n.longValue();
         return 0L;
+    }
+
+    private LocalDate toLocalDate(Object o) {
+        if (o == null) return null;
+        if (o instanceof LocalDate ld) return ld;
+        if (o instanceof java.sql.Date sd) return sd.toLocalDate();
+        if (o instanceof java.util.Date d) return d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return null;
     }
 }

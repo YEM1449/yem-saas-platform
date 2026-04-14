@@ -90,6 +90,54 @@ public record HomeDashboardDTO(
         /** Top 5 agents by signed CA (last 90 days). Empty for AGENT role. */
         List<AgentLeaderboardRow> topAgents,
 
+        // ── Executive view KPIs (Wave 13) ─────────────────────────────────────
+        /** Sum of prixVente (non-ANNULE) for ventes created since Jan 1st of the current year. */
+        BigDecimal caYtd,
+        /** Sum of prixVente (non-ANNULE) for ventes created in the same calendar month one year ago. */
+        BigDecimal caSameMonthLastYear,
+        /**
+         * Year-over-year percent change = (caSigneMoisCourant − caSameMonthLastYear) / caSameMonthLastYear × 100.
+         * Null when caSameMonthLastYear is 0.
+         */
+        BigDecimal caYoYPct,
+        /**
+         * Months of supply = biensActifs / (ventes last 90d / 3).
+         * Classic absorption horizon — how many months of active stock remain at the current sales pace.
+         * Null when no sales in 90d.
+         */
+        BigDecimal monthsOfSupply,
+        /**
+         * Rolling 4-week velocity: count of ventes created in the last 28 days divided by 4.
+         * Expressed in ventes per week (1 decimal).
+         */
+        BigDecimal salesVelocityPerWeek,
+        /**
+         * Win rate over the last 90 days = LIVRE / (LIVRE + ANNULE) × 100, on ventes created in window.
+         * Null when no terminal ventes in window.
+         */
+        BigDecimal winRate90d,
+        /**
+         * Days Sales Outstanding (approximation): overdue unpaid amount divided by daily paid run-rate
+         * of the trailing 90 days. Null when no paid receivables in window.
+         */
+        BigDecimal dsoRolling90d,
+        /**
+         * Collection efficiency (90d trailing) = paid ÷ due for échéances whose dateEcheance is in
+         * [today-90d, today]. Null when nothing was due.
+         */
+        BigDecimal collectionEfficiency90d,
+        /** Monthly CA target from Societe.caMensuelCible; null if not configured. */
+        BigDecimal caMensuelCible,
+        /** Monthly vente-count target from Societe.ventesMensuelCible; null if not configured. */
+        Long ventesMensuelCible,
+        /**
+         * Quota attainment MTD % = caSigneMoisCourant / caMensuelCible × 100.
+         * Null when target not configured or 0.
+         */
+        BigDecimal quotaAttainmentMtdPct,
+        /** Up to 10 upcoming tranche deliveries within the next 90 days. */
+        List<UpcomingDeliveryRow> upcomingDeliveries,
+
         // ── Widgets ───────────────────────────────────────────────────────────
         /** Up to 5 recent ventes for the widget. */
         List<RecentVenteRow> recentVentes,
@@ -121,5 +169,16 @@ public record HomeDashboardDTO(
             String agentName,
             BigDecimal totalCA,
             long ventesCount
+    ) {}
+
+    public record UpcomingDeliveryRow(
+            java.util.UUID trancheId,
+            String trancheLabel,
+            java.util.UUID projectId,
+            String projectName,
+            java.time.LocalDate dateLivraisonPrevue,
+            long daysUntilDelivery,
+            long totalUnits,
+            long soldUnits
     ) {}
 }
