@@ -62,7 +62,8 @@ export const routes: Routes = [
   {
     path: 'portal',
     children: [
-      { path: 'login', loadComponent: () => import('./portal/features/portal-login/portal-login.component').then(m => m.PortalLoginComponent) },
+      { path: 'login',  loadComponent: () => import('./portal/features/portal-login/portal-login.component').then(m => m.PortalLoginComponent) },
+      { path: 'verify', loadComponent: () => import('./portal/features/portal-verify/portal-verify.component').then(m => m.PortalVerifyComponent) },
       {
         path: '',
         loadComponent: () => import('./portal/features/portal-shell/portal-shell.component').then(m => m.PortalShellComponent),
