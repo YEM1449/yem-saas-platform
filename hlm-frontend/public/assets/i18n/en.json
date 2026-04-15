@@ -87,7 +87,9 @@
     "preview": "Preview",
     "upload": "Upload",
     "deleteConfirm": "Are you sure you want to delete this item?",
-    "internalError": "An internal error occurred."
+    "internalError": "An internal error occurred.",
+    "passwordHide": "Hide password",
+    "passwordShow": "Show password"
   },
   "contacts": {
     "title": "Contacts",
@@ -405,13 +407,41 @@
     "signedAt": "Signed on",
     "amount": "Amount",
     "login": {
-      "title": "Client Portal Access",
-      "subtitle": "Enter your email to receive an access link.",
-      "email": "Email",
-      "submit": "Get access link",
-      "submitting": "Sending...",
+      "title": "Client Portal",
+      "subtitle": "Access your acquisition file securely",
+      "orgLabel": "Organisation",
+      "orgPlaceholder": "e.g. acme",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Get my access link",
+      "submitting": "Sending…",
+      "hint": "No password required — we'll send you a secure single-use link.",
+      "sentTitle": "Check your inbox!",
+      "sentBody": "A secure link has been sent to {{email}}. It is valid for 48 hours.",
+      "resend": "Resend a link",
+      "verifying": "Verifying your access link…",
+      "retry": "Try again",
+      "errorSend": "Unable to send the link. Please check your email address and try again.",
+      "errorVerify": "This link is invalid or has expired. Please request a new one.",
       "sent": "An access link has been sent to your email address.",
       "error": "Email not found or link expired."
+    },
+    "verify": {
+      "brand": "Client Portal",
+      "verifying": "Verifying your access link…",
+      "redirect": "You will be redirected automatically.",
+      "retry": "Request a new link",
+      "errorNoToken": "Invalid link — no token found in the URL.",
+      "errorExpired": "This link is invalid or has expired. Please request a new one."
+    },
+    "shell": {
+      "brandFallback": "Client Portal",
+      "navMySales": "My Sales",
+      "navMyContracts": "My Contracts",
+      "logout": "Sign out",
+      "logoutAria": "Sign out",
+      "navAria": "Main navigation",
+      "footer": "Your secure client portal"
     }
   },
   "templates": {
@@ -465,6 +495,64 @@
     "paymentDate": "Payment date",
     "method": "Method",
     "reference": "Reference"
+  },
+  "ventes": {
+    "title": "Sales",
+    "create": "New sale",
+    "detail": "Detail",
+    "buyer": "Buyer",
+    "salePrice": "Sale price",
+    "dateCompromis": "Sale agreement date",
+    "dateActeNotarie": "Notarial deed date",
+    "plannedDelivery": "Planned delivery",
+    "actualDelivery": "Actual delivery",
+    "createdAt": "Created on",
+    "fromReservation": "from a reservation",
+    "advancePipeline": "Advance pipeline",
+    "contractSection": "Contract",
+    "contractGenerate": "Generate contract",
+    "contractSign": "Sign contract",
+    "contractDownloadSoon": "Download (coming soon)",
+    "contractSigned": "Contract signed successfully.",
+    "contractPending": "The contract has not yet been generated.",
+    "contractGenerated": "The contract has been generated and is ready to sign.",
+    "financing": "Financing",
+    "editFinancing": "Edit",
+    "saveFinancing": "Save",
+    "cancelFinancing": "Cancel",
+    "sruDeadline": "SRU deadline",
+    "cspCreditDeadline": "Credit condition",
+    "notaireAcquereur": "Buyer's notary",
+    "notaireNom": "Notary name",
+    "notaireEmail": "Notary email",
+    "cspDateLabel": "Credit condition deadline",
+    "loading": "Loading…",
+    "statuts": {
+      "COMPROMIS": "Sale Agreement",
+      "FINANCEMENT": "Financing",
+      "ACTE_NOTARIE": "Notarial Deed",
+      "LIVRE": "Delivered",
+      "ANNULE": "Cancelled"
+    },
+    "contractStatuts": {
+      "PENDING": "Pending",
+      "GENERATED": "Generated",
+      "SIGNED": "Signed"
+    },
+    "motifAnnulation": {
+      "CREDIT_REFUSE": "Credit refused",
+      "DESISTEMENT_SRU": "SRU withdrawal (Art. L271-1)",
+      "CSP_NON_REALISEE": "Condition precedent not met",
+      "ACCORD_PARTIES": "Mutual agreement",
+      "LITIGE": "Dispute",
+      "AUTRE": "Other"
+    },
+    "typeFinancement": {
+      "COMPTANT": "Cash",
+      "CREDIT_IMMOBILIER": "Mortgage",
+      "PTZ": "PTZ (Zero-rate loan)",
+      "MIXTE": "Mixed"
+    }
   },
   "documents": {
     "title": "Documents",

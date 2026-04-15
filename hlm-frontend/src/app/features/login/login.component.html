@@ -57,7 +57,7 @@
                 [attr.aria-invalid]="error ? 'true' : null"
               />
               <button type="button" class="btn-eye" (click)="showPassword = !showPassword"
-                      [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                      [attr.aria-label]="showPassword ? ('common.passwordHide' | translate) : ('common.passwordShow' | translate)"
                       tabindex="-1">
                 @if (showPassword) {
                   <!-- Eye-off icon -->

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 
 type Step = 'request' | 'sent' | 'verifying' | 'error';
@@ -9,14 +10,15 @@ type Step = 'request' | 'sent' | 'verifying' | 'error';
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './portal-login.component.html',
   styleUrl: './portal-login.component.css',
 })
 export class PortalLoginComponent {
-  private auth   = inject(PortalAuthService);
-  private router = inject(Router);
-  private route  = inject(ActivatedRoute);
+  private auth      = inject(PortalAuthService);
+  private router    = inject(Router);
+  private route     = inject(ActivatedRoute);
+  private translate = inject(TranslateService);
 
   step    = signal<Step>('request');
   email   = '';
@@ -54,7 +56,7 @@ export class PortalLoginComponent {
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('Unable to send magic link. Please check your email and try again.');
+        this.error.set(this.translate.instant('portal.login.errorSend'));
         this.step.set('error');
       },
     });
@@ -66,7 +68,7 @@ export class PortalLoginComponent {
         this.router.navigateByUrl('/portal');
       },
       error: () => {
-        this.error.set('This link is invalid or has expired. Please request a new one.');
+        this.error.set(this.translate.instant('portal.login.errorVerify'));
         this.step.set('error');
       },
     });

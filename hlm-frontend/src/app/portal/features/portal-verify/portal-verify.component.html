@@ -9,14 +9,14 @@
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
       </div>
-      <h1 class="portal-auth-title">Espace Client</h1>
+      <h1 class="portal-auth-title">{{ 'portal.verify.brand' | translate }}</h1>
     </div>
 
     @if (state() === 'verifying') {
       <div class="portal-verify-state" data-testid="portal-verifying-message">
         <div class="portal-spinner" aria-hidden="true"></div>
-        <p class="portal-verify-message">Vérification de votre lien d'accès…</p>
-        <p class="portal-verify-hint">Vous serez redirigé automatiquement.</p>
+        <p class="portal-verify-message">{{ 'portal.verify.verifying' | translate }}</p>
+        <p class="portal-verify-hint">{{ 'portal.verify.redirect' | translate }}</p>
       </div>
     }
 
@@ -34,7 +34,7 @@
           {{ error() }}
         </p>
         <button class="portal-btn-primary" (click)="goToLogin()" data-testid="portal-verify-retry">
-          Demander un nouveau lien
+          {{ 'portal.verify.retry' | translate }}
         </button>
       </div>
     }
