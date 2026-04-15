@@ -69,7 +69,20 @@
         </button>
       }
       @if (cancelMode) {
-        <button class="btn-cancel-toggle" type="button" (click)="cancelMode = false">
+        <!-- Motif d'annulation — required -->
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label required">Motif d'annulation</label>
+          <select class="form-control"
+                  [(ngModel)]="motifAnnulation"
+                  [disabled]="saving"
+                  data-testid="dialog-motif-annulation">
+            <option [ngValue]="null">— Sélectionner un motif —</option>
+            @for (m of motifAnnulationOptions; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+        <button class="btn-cancel-toggle" type="button" (click)="cancelMode = false; motifAnnulation = null">
           ← Retour à l'avancement normal
         </button>
       }
@@ -83,7 +96,7 @@
         [class.btn-danger]="cancelMode"
         [class.btn-primary]="!cancelMode"
         (click)="confirm()"
-        [disabled]="saving || (targetNeedsDate && !dateTransition)"
+        [disabled]="confirmDisabled"
         data-testid="dialog-confirm"
       >
         @if (saving) {

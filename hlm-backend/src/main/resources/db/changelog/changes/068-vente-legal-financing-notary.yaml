@@ -1,0 +1,173 @@
+databaseChangeLog:
+
+  # ── A. Legal Deadline Dates (French Law) ─────────────────────────────────
+
+  - changeSet:
+      id: "068-vente-date-fin-delai-sru"
+      author: "yem"
+      comment: "SRU cooling-off deadline (Art. L271-1): auto-set to dateCompromis + 10 days on vente creation"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: date_fin_delai_sru
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: date_fin_delai_sru
+                  type: DATE
+                  constraints:
+                    nullable: true
+                  remarks: "SRU cooling-off deadline = dateCompromis + 10 days (Art. L271-1 Code de la Construction)"
+
+  - changeSet:
+      id: "068-vente-date-limite-condition-credit"
+      author: "yem"
+      comment: "Condition suspensive crédit deadline — default dateCompromis + 45 days, overridable"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: date_limite_condition_credit
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: date_limite_condition_credit
+                  type: DATE
+                  constraints:
+                    nullable: true
+                  remarks: "CSP credit condition deadline = dateCompromis + 45 days by default, overridable"
+
+  # ── B. Financing Risk ─────────────────────────────────────────────────────
+
+  - changeSet:
+      id: "068-vente-type-financement"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: type_financement
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: type_financement
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: true
+                  remarks: "COMPTANT | CREDIT_IMMOBILIER | PTZ | MIXTE"
+
+  - changeSet:
+      id: "068-vente-montant-credit"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: montant_credit
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: montant_credit
+                  type: NUMERIC(15,2)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: "068-vente-banque-credit"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: banque_credit
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: banque_credit
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: "068-vente-credit-obtenu"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: credit_obtenu
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: credit_obtenu
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+  # ── C. Cancellation Reason ────────────────────────────────────────────────
+
+  - changeSet:
+      id: "068-vente-motif-annulation"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: motif_annulation
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: motif_annulation
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: true
+                  remarks: "CREDIT_REFUSE | DESISTEMENT_SRU | CSP_NON_REALISEE | ACCORD_PARTIES | LITIGE | AUTRE"
+
+  # ── D. Notary Information ─────────────────────────────────────────────────
+
+  - changeSet:
+      id: "068-vente-notaire-acquereur"
+      author: "yem"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: vente
+            columnName: notaire_acquereur_nom
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: notaire_acquereur_nom
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: notaire_acquereur_email
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: true

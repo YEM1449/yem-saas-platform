@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { VenteStatut, UpdateVenteStatutRequest } from './vente.service';
+import { VenteStatut, MotifAnnulation, UpdateVenteStatutRequest } from './vente.service';
 
 /** Allowed forward transitions per current statut (excludes ANNULE which is separate). */
 const NEXT_MAP: Partial<Record<VenteStatut, VenteStatut>> = {
@@ -32,9 +32,19 @@ export class AdvancePipelineDialogComponent {
   @Output() confirmed = new EventEmitter<UpdateVenteStatutRequest>();
   @Output() cancelled = new EventEmitter<void>();
 
-  cancelMode = false;
-  dateTransition = '';
-  notes = '';
+  cancelMode       = false;
+  dateTransition   = '';
+  notes            = '';
+  motifAnnulation: MotifAnnulation | null = null;
+
+  readonly motifAnnulationOptions: { value: MotifAnnulation; label: string }[] = [
+    { value: 'CREDIT_REFUSE',    label: 'Crédit refusé' },
+    { value: 'DESISTEMENT_SRU',  label: 'Rétractation SRU (Art. L271-1)' },
+    { value: 'CSP_NON_REALISEE', label: 'Condition suspensive non réalisée' },
+    { value: 'ACCORD_PARTIES',   label: 'Accord entre parties' },
+    { value: 'LITIGE',           label: 'Litige' },
+    { value: 'AUTRE',            label: 'Autre' },
+  ];
 
   get nextStatut(): VenteStatut | null {
     return NEXT_MAP[this.currentStatut] ?? null;
@@ -65,12 +75,20 @@ export class AdvancePipelineDialogComponent {
     return 'Date';
   }
 
+  get confirmDisabled(): boolean {
+    if (this.saving) return true;
+    if (this.targetNeedsDate && !this.dateTransition) return true;
+    if (this.cancelMode && !this.motifAnnulation) return true;
+    return false;
+  }
+
   confirm(): void {
     const targetStatut: VenteStatut = this.cancelMode ? 'ANNULE' : (this.nextStatut!);
     this.confirmed.emit({
-      statut: targetStatut,
-      dateTransition: this.dateTransition || null,
-      notes: this.notes.trim() || null,
+      statut:          targetStatut,
+      motifAnnulation: this.cancelMode ? this.motifAnnulation : null,
+      dateTransition:  this.dateTransition || null,
+      notes:           this.notes.trim() || null,
     });
   }
 

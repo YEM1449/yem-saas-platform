@@ -196,6 +196,11 @@ public class VenteService {
         vente.setReservationId(reservationId);
         vente.setPrixVente(finalPrice);
         vente.setDateCompromis(request.dateCompromis());
+        // Auto-populate French legal deadlines from dateCompromis
+        if (request.dateCompromis() != null) {
+            vente.setDateFinDelaiSru(request.dateCompromis().plusDays(10));
+            vente.setDateLimiteConditionCredit(request.dateCompromis().plusDays(45));
+        }
         vente.setDateLivraisonPrevue(request.dateLivraisonPrevue());
         vente.setNotes(request.notes());
 
@@ -239,6 +244,16 @@ public class VenteService {
         Vente vente = requireVente(societeId, id);
 
         validateTransition(vente.getStatut(), request.statut());
+
+        // Cancellation reason is mandatory when annulling a sale
+        if (request.statut() == VenteStatut.ANNULE) {
+            if (request.motifAnnulation() == null) {
+                throw new IllegalArgumentException(
+                        "motifAnnulation est obligatoire lors de l'annulation d'une vente.");
+            }
+            vente.setMotifAnnulation(request.motifAnnulation());
+        }
+
         vente.setStatut(request.statut());
         vente.setStageEntryDate(LocalDateTime.now());
         vente.setProbability(defaultProbability(request.statut()));
@@ -379,6 +394,25 @@ public class VenteService {
         return toResponse(venteRepository.save(vente));
     }
 
+    /**
+     * Updates financing information for a vente (patch semantics — null fields are ignored).
+     * Also allows overriding the condition suspensive crédit deadline and notary details.
+     */
+    public VenteResponse updateFinancement(UUID venteId, UpdateFinancingRequest request) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente    = requireVente(societeId, venteId);
+
+        if (request.typeFinancement()             != null) vente.setTypeFinancement(request.typeFinancement());
+        if (request.montantCredit()               != null) vente.setMontantCredit(request.montantCredit());
+        if (request.banqueCredit()                != null) vente.setBanqueCredit(request.banqueCredit());
+        if (request.creditObtenu()                != null) vente.setCreditObtenu(request.creditObtenu());
+        if (request.dateLimiteConditionCredit()   != null) vente.setDateLimiteConditionCredit(request.dateLimiteConditionCredit());
+        if (request.notaireAcquereurNom()         != null) vente.setNotaireAcquereurNom(request.notaireAcquereurNom());
+        if (request.notaireAcquereurEmail()       != null) vente.setNotaireAcquereurEmail(request.notaireAcquereurEmail());
+
+        return toResponse(venteRepository.save(vente));
+    }
+
     // =========================================================================
     // Documents
     // =========================================================================
@@ -490,7 +524,16 @@ public class VenteService {
         return new VenteResponse(
                 v.getId(), v.getVenteRef(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
-                v.getReservationId(), v.getStatut(), v.getContractStatus(), v.getPrixVente(),
+                v.getReservationId(), v.getStatut(), v.getContractStatus(),
+                // Legal deadlines
+                v.getDateFinDelaiSru(), v.getDateLimiteConditionCredit(),
+                // Financing
+                v.getTypeFinancement(), v.getMontantCredit(), v.getBanqueCredit(), v.isCreditObtenu(),
+                // Cancellation
+                v.getMotifAnnulation(),
+                // Notary
+                v.getNotaireAcquereurNom(), v.getNotaireAcquereurEmail(),
+                v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
                 v.getNotes(), v.getProbability(), v.getStageEntryDate(),

@@ -121,6 +121,54 @@ public class Vente {
     @Column(name = "contract_status", nullable = false, length = 20)
     private ContractStatus contractStatus = ContractStatus.PENDING;
 
+    // ── French Legal Deadlines ────────────────────────────────────────────
+
+    /** SRU cooling-off deadline = dateCompromis + 10 days (Art. L271-1 Code de la Construction). Auto-populated on create. */
+    @Setter
+    @Column(name = "date_fin_delai_sru")
+    private LocalDate dateFinDelaiSru;
+
+    /** Condition suspensive crédit deadline = dateCompromis + 45 days by default, overridable. */
+    @Setter
+    @Column(name = "date_limite_condition_credit")
+    private LocalDate dateLimiteConditionCredit;
+
+    // ── Financing Risk ────────────────────────────────────────────────────
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_financement", length = 30)
+    private TypeFinancement typeFinancement;
+
+    @Setter
+    @Column(name = "montant_credit", precision = 15, scale = 2)
+    private BigDecimal montantCredit;
+
+    @Setter
+    @Column(name = "banque_credit", length = 100)
+    private String banqueCredit;
+
+    @Setter
+    @Column(name = "credit_obtenu", nullable = false)
+    private boolean creditObtenu = false;
+
+    // ── Cancellation Reason ───────────────────────────────────────────────
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motif_annulation", length = 50)
+    private MotifAnnulation motifAnnulation;
+
+    // ── Notary Information ────────────────────────────────────────────────
+
+    @Setter
+    @Column(name = "notaire_acquereur_nom", length = 200)
+    private String notaireAcquereurNom;
+
+    @Setter
+    @Column(name = "notaire_acquereur_email", length = 200)
+    private String notaireAcquereurEmail;
+
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("dateEcheance ASC")
     private List<VenteEcheance> echeances = new ArrayList<>();

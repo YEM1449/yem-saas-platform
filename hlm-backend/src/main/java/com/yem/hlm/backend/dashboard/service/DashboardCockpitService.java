@@ -245,6 +245,38 @@ public class DashboardCockpitService {
             }
         }
 
+        // Rule 4 — SRU deadlines expiring within 3 days (Art. L271-1 critical legal deadline)
+        // Rule 5 — Condition suspensive crédit expiring within 7 days
+        List<Object[]> deadlines = venteRepo.countExpiringDeadlines(societeId, 7);
+        long sruExpiring    = 0L;
+        long creditExpiring = 0L;
+        for (Object[] r : deadlines) {
+            String type = (String) r[0];
+            long count  = ((Number) r[1]).longValue();
+            if ("SRU".equals(type))    sruExpiring    = count;
+            if ("CREDIT".equals(type)) creditExpiring = count;
+        }
+        if (sruExpiring > 0) {
+            alerts.add(new AlertDTO(
+                    "sru-expiring",
+                    Severity.CRITICAL,
+                    "DÉLAI LÉGAL",
+                    sruExpiring + " délai" + (sruExpiring > 1 ? "s" : "") + " SRU expirant dans 3 jours",
+                    "Délai de rétractation Art. L271-1 — vérifiez les compromis concernés avant expiration",
+                    "Voir les ventes",
+                    "/app/ventes"));
+        }
+        if (creditExpiring > 0) {
+            alerts.add(new AlertDTO(
+                    "credit-condition-expiring",
+                    Severity.WARNING,
+                    "DÉLAI LÉGAL",
+                    creditExpiring + " condition" + (creditExpiring > 1 ? "s" : "") + " crédit expirant dans 7 jours",
+                    "Condition suspensive crédit à échéance — vérifiez l'avancement des dossiers bancaires",
+                    "Voir les ventes",
+                    "/app/ventes"));
+        }
+
         return alerts;
     }
 

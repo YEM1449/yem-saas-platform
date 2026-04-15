@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-  VenteService, Vente, VenteStatut, EcheanceStatut,
+  VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
+  TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
   CreateEcheanceRequest, UpdateVenteStatutRequest
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -39,11 +40,29 @@ export class VenteDetailComponent implements OnInit {
   docUploading      = signal(false);
   docError          = signal('');
 
+  // Contract actions
+  contractGenerating = signal(false);
+  contractSigning    = signal(false);
+  contractError      = signal('');
+
+  // Financing edit panel
+  showFinancingForm = false;
+  financing: UpdateFinancingRequest = {};
+  financingError  = signal('');
+  financingSaving = signal(false);
+
+  readonly typeFinancementOptions: TypeFinancement[] = ['COMPTANT', 'CREDIT_IMMOBILIER', 'PTZ', 'MIXTE'];
+
   ech: CreateEcheanceRequest = { libelle: '', montant: 0, dateEcheance: '' };
 
   get canWrite(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
+  }
+
+  get canWriteFinancing(): boolean {
+    const r = this.auth.user?.role;
+    return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER' || r === 'ROLE_AGENT';
   }
 
   ngOnInit(): void {
@@ -116,6 +135,50 @@ export class VenteDetailComponent implements OnInit {
     input.value = '';
   }
 
+  generateContract(venteId: string): void {
+    this.contractGenerating.set(true);
+    this.contractError.set('');
+    this.svc.generateContract(venteId).subscribe({
+      next:  (v) => { this.vente.set(v); this.contractGenerating.set(false); },
+      error: ()  => { this.contractGenerating.set(false); this.contractError.set('Erreur lors de la génération du contrat.'); },
+    });
+  }
+
+  signContract(venteId: string): void {
+    this.contractSigning.set(true);
+    this.contractError.set('');
+    this.svc.signContract(venteId).subscribe({
+      next:  (v) => { this.vente.set(v); this.contractSigning.set(false); },
+      error: ()  => { this.contractSigning.set(false); this.contractError.set('Erreur lors de la signature du contrat.'); },
+    });
+  }
+
+  openFinancingForm(v: Vente): void {
+    this.financing = {
+      typeFinancement:           v.typeFinancement,
+      montantCredit:             v.montantCredit,
+      banqueCredit:              v.banqueCredit,
+      creditObtenu:              v.creditObtenu,
+      dateLimiteConditionCredit: v.dateLimiteConditionCredit,
+      notaireAcquereurNom:       v.notaireAcquereurNom,
+      notaireAcquereurEmail:     v.notaireAcquereurEmail,
+    };
+    this.showFinancingForm = true;
+  }
+
+  saveFinancement(venteId: string): void {
+    this.financingSaving.set(true);
+    this.financingError.set('');
+    this.svc.updateFinancement(venteId, this.financing).subscribe({
+      next: (v) => {
+        this.vente.set(v);
+        this.financingSaving.set(false);
+        this.showFinancingForm = false;
+      },
+      error: () => { this.financingSaving.set(false); this.financingError.set('Erreur lors de la mise à jour.'); },
+    });
+  }
+
   isTerminal(s: VenteStatut): boolean {
     return s === 'LIVRE' || s === 'ANNULE';
   }
@@ -146,5 +209,53 @@ export class VenteDetailComponent implements OnInit {
 
   echClass(s: EcheanceStatut): string {
     return { EN_ATTENTE: 'badge-info', PAYEE: 'badge-success', EN_RETARD: 'badge-error' }[s] ?? '';
+  }
+
+  contractStatusLabel(s: ContractStatus): string {
+    return { PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé' }[s] ?? s;
+  }
+
+  contractStatusClass(s: ContractStatus): string {
+    return { PENDING: 'badge-secondary', GENERATED: 'badge-info', SIGNED: 'badge-success' }[s] ?? '';
+  }
+
+  /** Returns number of days until given ISO date string (negative = past). */
+  daysUntil(dateStr: string | null): number | null {
+    if (!dateStr) return null;
+    const diff = new Date(dateStr).getTime() - Date.now();
+    return Math.ceil(diff / 86_400_000);
+  }
+
+  deadlineUrgencyClass(dateStr: string | null): string {
+    const d = this.daysUntil(dateStr);
+    if (d === null) return '';
+    if (d < 0)  return 'deadline-overdue';
+    if (d <= 3) return 'deadline-critical';
+    if (d <= 7) return 'deadline-warning';
+    return '';
+  }
+
+  financingLabel(t: TypeFinancement | null): string {
+    if (!t) return '—';
+    const labels: Record<TypeFinancement, string> = {
+      COMPTANT:          'Comptant',
+      CREDIT_IMMOBILIER: 'Crédit immobilier',
+      PTZ:               'Prêt à taux zéro (PTZ)',
+      MIXTE:             'Mixte',
+    };
+    return labels[t];
+  }
+
+  motifLabel(m: MotifAnnulation | null): string {
+    if (!m) return '—';
+    const labels: Record<MotifAnnulation, string> = {
+      CREDIT_REFUSE:    'Crédit refusé',
+      DESISTEMENT_SRU:  'Rétractation SRU (Art. L271-1)',
+      CSP_NON_REALISEE: 'Condition suspensive non réalisée',
+      ACCORD_PARTIES:   'Accord entre parties',
+      LITIGE:           'Litige',
+      AUTRE:            'Autre',
+    };
+    return labels[m];
   }
 }

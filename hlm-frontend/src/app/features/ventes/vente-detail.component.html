@@ -77,6 +77,37 @@
           <dt>Livraison réelle</dt>
           <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
 
+          @if (v.dateCompromis) {
+            <dt>Délai SRU</dt>
+            <dd>
+              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateFinDelaiSru)">
+                {{ (v.dateFinDelaiSru | date:'dd/MM/yyyy') || '—' }}
+                @if (daysUntil(v.dateFinDelaiSru); as d) {
+                  &nbsp;({{ d }}j)
+                }
+              </span>
+            </dd>
+
+            <dt>Cond. crédit</dt>
+            <dd>
+              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateLimiteConditionCredit)">
+                {{ (v.dateLimiteConditionCredit | date:'dd/MM/yyyy') || '—' }}
+                @if (daysUntil(v.dateLimiteConditionCredit); as d) {
+                  &nbsp;({{ d }}j)
+                }
+              </span>
+            </dd>
+          }
+
+          @if (v.notaireAcquereurNom) {
+            <dt>Notaire acquéreur</dt>
+            <dd>{{ v.notaireAcquereurNom }}</dd>
+          }
+          @if (v.notaireAcquereurEmail) {
+            <dt>Email notaire</dt>
+            <dd>{{ v.notaireAcquereurEmail }}</dd>
+          }
+
           @if (v.notes) {
             <dt>Notes</dt>
             <dd>{{ v.notes }}</dd>
@@ -117,6 +148,71 @@
     </div>
 
   </div>
+
+  <!-- ── Contrat de vente ───────────────────────────────────── -->
+  @if (v.statut !== 'ANNULE') {
+    <div class="card mb-20" data-testid="contract-card">
+      <div class="card-header">
+        <h2 class="card-title">Contrat de vente</h2>
+        <span class="badge" [class]="contractStatusClass(v.contractStatus)">
+          {{ contractStatusLabel(v.contractStatus) }}
+        </span>
+      </div>
+      <div class="card-body">
+        @if (contractError()) {
+          <div class="alert alert-error mb-10">{{ contractError() }}</div>
+        }
+
+        @if (v.contractStatus === 'PENDING') {
+          <p class="portal-desc">Le contrat n'a pas encore été généré pour cette vente.</p>
+          @if (canWrite) {
+            <button class="btn btn-secondary"
+                    (click)="generateContract(v.id)"
+                    [disabled]="contractGenerating()"
+                    data-testid="btn-generate-contract">
+              @if (contractGenerating()) {
+                <span class="spinner spinner-sm"></span> Génération…
+              } @else {
+                Générer le contrat
+              }
+            </button>
+          }
+        }
+
+        @if (v.contractStatus === 'GENERATED') {
+          <p class="portal-desc">Le contrat a été généré et est prêt à être signé.</p>
+          @if (canWrite) {
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary"
+                      (click)="signContract(v.id)"
+                      [disabled]="contractSigning()"
+                      data-testid="btn-sign-contract">
+                @if (contractSigning()) {
+                  <span class="spinner spinner-sm"></span> Signature…
+                } @else {
+                  Signer le contrat
+                }
+              </button>
+              <button class="btn btn-secondary" disabled data-testid="btn-download-contract">
+                Télécharger (bientôt)
+              </button>
+            </div>
+          }
+        }
+
+        @if (v.contractStatus === 'SIGNED') {
+          <p class="portal-desc contract-signed-msg">Contrat signé par toutes les parties.</p>
+          <button class="btn btn-secondary" disabled data-testid="btn-download-contract-signed">
+            Télécharger (bientôt)
+          </button>
+        }
+
+        @if (!canWrite && v.contractStatus === 'PENDING') {
+          <p class="portal-desc">Statut du contrat : <strong>{{ contractStatusLabel(v.contractStatus) }}</strong></p>
+        }
+      </div>
+    </div>
+  }
 
   <!-- ── Échéancier ──────────────────────────────────────────── -->
   <div class="card mb-20">
@@ -201,6 +297,97 @@
         </table>
       </div>
     }
+  </div>
+
+  <!-- ── Financement ───────────────────────────────────────── -->
+  <div class="card mb-20" data-testid="financing-card">
+    <div class="card-header">
+      <h2 class="card-title">Financement</h2>
+      @if (canWriteFinancing && v.statut !== 'ACTE_NOTARIE' && v.statut !== 'LIVRE' && v.statut !== 'ANNULE') {
+        <button class="btn btn-sm btn-secondary"
+                (click)="showFinancingForm ? showFinancingForm = false : openFinancingForm(v)"
+                data-testid="btn-edit-financing">
+          {{ showFinancingForm ? 'Annuler' : 'Modifier' }}
+        </button>
+      }
+    </div>
+    <div class="card-body">
+      @if (showFinancingForm) {
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Type de financement</label>
+            <select class="form-control" [(ngModel)]="financing.typeFinancement" data-testid="financing-type">
+              <option [ngValue]="null">— Sélectionner —</option>
+              @for (t of typeFinancementOptions; track t) {
+                <option [value]="t">{{ financingLabel(t) }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Montant crédit (MAD)</label>
+            <input class="form-control" type="number" [(ngModel)]="financing.montantCredit"
+                   placeholder="0" data-testid="financing-montant"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Banque / Établissement</label>
+            <input class="form-control" type="text" [(ngModel)]="financing.banqueCredit"
+                   placeholder="Ex : BNP, Crédit Agricole…" data-testid="financing-banque"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cond. suspensive — date limite</label>
+            <input class="form-control" type="date" [(ngModel)]="financing.dateLimiteConditionCredit"
+                   data-testid="financing-date-csp"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notaire acquéreur</label>
+            <input class="form-control" type="text" [(ngModel)]="financing.notaireAcquereurNom"
+                   placeholder="Nom du notaire" data-testid="financing-notaire-nom"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email notaire</label>
+            <input class="form-control" type="email" [(ngModel)]="financing.notaireAcquereurEmail"
+                   placeholder="notaire@etude.fr" data-testid="financing-notaire-email"/>
+          </div>
+        </div>
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <input type="checkbox" [(ngModel)]="financing.creditObtenu" data-testid="financing-credit-obtenu"/>
+          Crédit obtenu
+        </label>
+        @if (financingError()) {
+          <div class="alert alert-error mt-8">{{ financingError() }}</div>
+        }
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showFinancingForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm"
+                  (click)="saveFinancement(v.id)"
+                  [disabled]="financingSaving()"
+                  data-testid="financing-submit">
+            {{ financingSaving() ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+        </div>
+      } @else {
+        <dl class="detail-list">
+          <dt>Type</dt>
+          <dd>{{ financingLabel(v.typeFinancement) }}</dd>
+          <dt>Montant crédit</dt>
+          <dd>{{ v.montantCredit ? ((v.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
+          <dt>Banque</dt>
+          <dd>{{ v.banqueCredit || '—' }}</dd>
+          <dt>Crédit obtenu</dt>
+          <dd>
+            @if (v.creditObtenu) {
+              <span class="badge badge-success">Oui</span>
+            } @else {
+              <span class="badge badge-secondary">Non</span>
+            }
+          </dd>
+          @if (v.motifAnnulation) {
+            <dt>Motif d'annulation</dt>
+            <dd>{{ motifLabel(v.motifAnnulation) }}</dd>
+          }
+        </dl>
+      }
+    </div>
   </div>
 
   <!-- ── Documents ──────────────────────────────────────────── -->

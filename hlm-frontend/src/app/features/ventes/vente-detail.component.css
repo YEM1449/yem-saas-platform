@@ -123,6 +123,15 @@
   white-space: nowrap;
 }
 
+/* ── Legal deadline badges ───────────────────────────────────── */
+.deadline-badge { font-size: 13px; }
+.deadline-critical { color: #b91c1c; font-weight: 700; }
+.deadline-warning  { color: #b45309; font-weight: 600; }
+.deadline-overdue  { color: #991b1b; font-weight: 700; text-decoration: line-through; }
+
+/* ── Contract signed confirmation ───────────────────────────── */
+.contract-signed-msg { color: var(--color-success, #16a34a); font-weight: 500; }
+
 /* ── Helpers ─────────────────────────────────────────────────── */
 .mb-20 { margin-bottom: 20px; }
 .mb-10 { margin-bottom: 10px; }
