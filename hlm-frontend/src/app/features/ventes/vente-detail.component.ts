@@ -135,6 +135,20 @@ export class VenteDetailComponent implements OnInit {
     input.value = '';
   }
 
+  downloadDoc(venteId: string, docId: string, fileName: string): void {
+    this.svc.downloadDocument(venteId, docId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.docError.set('Échec du téléchargement.'),
+    });
+  }
+
   generateContract(venteId: string): void {
     this.contractGenerating.set(true);
     this.contractError.set('');

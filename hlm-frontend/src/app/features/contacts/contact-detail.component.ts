@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +14,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 import { DepositService, CreateDepositRequest } from '../prospects/deposit.service';
 import { PropertyService } from '../properties/property.service';
 import { Reservation, ReservationService, CreateReservationRequest } from '../reservations/reservation.service';
-import { VenteService, Vente } from '../ventes/vente.service';
+import { VenteService, Vente, VenteDocument } from '../ventes/vente.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { ContactTasksComponent } from '../tasks/contact-tasks.component';
 
@@ -123,6 +123,10 @@ export class ContactDetailComponent implements OnInit {
   ventesLoaded = false;
   ventesError = '';
 
+  // ── Portal documents (from buyer portal uploads) ───────────────────────────
+  portalDocs = signal<Array<{venteName: string; doc: VenteDocument}>>([]);
+  portalDocsLoaded = false;
+
   // ── Timeline ───────────────────────────────────────────────────────────────
   timeline: TimelineEvent[] = [];
   timelineLoading = false;
@@ -187,6 +191,9 @@ export class ContactDetailComponent implements OnInit {
         break;
       case 'ventes':
         if (!this.ventesLoaded) this.loadVentes();
+        break;
+      case 'documents':
+        if (!this.portalDocsLoaded) this.loadPortalDocs();
         break;
       case 'timeline':
         if (!this.timelineLoaded) this.loadTimeline();
@@ -591,6 +598,24 @@ export class ContactDetailComponent implements OnInit {
         const body = err.error as ErrorResponse | null;
         this.ventesError = body?.message ?? `Erreur (${err.status})`;
       },
+    });
+  }
+
+  private loadPortalDocs(): void {
+    this.venteSvc.listByContact(this.contactId).subscribe({
+      next: (ventes) => {
+        const docs: Array<{venteName: string; doc: VenteDocument}> = [];
+        for (const v of ventes) {
+          for (const d of v.documents) {
+            if (d.uploadedByPortal) {
+              docs.push({ venteName: v.venteRef || v.id, doc: d });
+            }
+          }
+        }
+        this.portalDocs.set(docs);
+        this.portalDocsLoaded = true;
+      },
+      error: () => { this.portalDocsLoaded = true; },
     });
   }
 
