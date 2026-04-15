@@ -1,45 +1,87 @@
 <div class="portal-login-page" data-testid="portal-login-page">
   <div class="portal-login-card">
-    <h1 class="portal-login-title" data-testid="portal-login-title">Client Portal</h1>
 
-    @if (step() === 'request') {
-      <p class="portal-login-subtitle">Enter your email to receive a secure access link.</p>
-      <form (ngSubmit)="requestLink()" #loginForm="ngForm" data-testid="portal-request-form">
-        <div class="portal-form-group">
-          <label for="societeKey">Organisation</label>
-          <input id="societeKey" type="text" [(ngModel)]="societeKey" name="societeKey"
-                 placeholder="e.g. acme" required />
-        </div>
-        <div class="portal-form-group">
-          <label for="email">Email address</label>
-          <input id="email" type="email" [(ngModel)]="email" name="email"
-                 placeholder="you@example.com" required />
-        </div>
-        <button type="submit" class="portal-btn-primary" [disabled]="loading()">
-          {{ loading() ? 'Sending…' : 'Send magic link' }}
-        </button>
-      </form>
-    }
-
-    @if (step() === 'sent') {
-      <div class="portal-alert portal-alert-success" data-testid="portal-success-message">
-        <strong>Check your inbox!</strong> A secure access link has been sent to
-        <strong>{{ email }}</strong>. The link expires in 48 hours.
+    <!-- Brand header -->
+    <div class="portal-login-header">
+      <div class="portal-login-logo" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
       </div>
-      <button class="portal-btn-secondary" (click)="step.set('request')">
-        Send another link
-      </button>
-    }
+      <h1 class="portal-login-title" data-testid="portal-login-title">Espace Client</h1>
+      <p class="portal-login-subtitle">Accédez à votre dossier d'acquisition en toute sécurité</p>
+    </div>
 
-    @if (step() === 'verifying') {
-      <p class="portal-login-subtitle" data-testid="portal-verifying-message">Verifying your access link…</p>
-    }
+    <!-- Steps -->
+    <div class="portal-login-body">
 
-    @if (step() === 'error') {
-      <div class="portal-alert portal-alert-error" data-testid="portal-error-message">{{ error() }}</div>
-      <button class="portal-btn-secondary" (click)="step.set('request')">
-        Try again
-      </button>
-    }
+      @if (step() === 'request') {
+        <form (ngSubmit)="requestLink()" #loginForm="ngForm" data-testid="portal-request-form">
+          <div class="portal-form-group">
+            <label for="societeKey">Organisation</label>
+            <input id="societeKey" type="text" [(ngModel)]="societeKey" name="societeKey"
+                   placeholder="ex : acme" required autocomplete="organization" />
+          </div>
+          <div class="portal-form-group">
+            <label for="email">Adresse e-mail</label>
+            <input id="email" type="email" [(ngModel)]="email" name="email"
+                   placeholder="vous@example.com" required autocomplete="email" />
+          </div>
+          <button type="submit" class="portal-btn-primary" [disabled]="loading()">
+            @if (loading()) {
+              <span class="portal-btn-spinner" aria-hidden="true"></span>
+              Envoi en cours…
+            } @else {
+              Recevoir mon lien d'accès
+            }
+          </button>
+          <p class="portal-login-hint">
+            Aucun mot de passe requis — nous vous enverrons un lien sécurisé à usage unique.
+          </p>
+        </form>
+      }
+
+      @if (step() === 'sent') {
+        <div class="portal-alert portal-alert-success" data-testid="portal-success-message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div>
+            <strong>Vérifiez votre boîte e-mail !</strong>
+            <p>Un lien sécurisé a été envoyé à <strong>{{ email }}</strong>. Il est valable 48 heures.</p>
+          </div>
+        </div>
+        <button class="portal-btn-secondary" (click)="step.set('request')">
+          Renvoyer un lien
+        </button>
+      }
+
+      @if (step() === 'verifying') {
+        <div class="portal-verify-inline" data-testid="portal-verifying-message">
+          <span class="portal-btn-spinner portal-btn-spinner--large" aria-hidden="true"></span>
+          <p>Vérification de votre lien d'accès…</p>
+        </div>
+      }
+
+      @if (step() === 'error') {
+        <div class="portal-alert portal-alert-error" data-testid="portal-error-message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>{{ error() }}</div>
+        </div>
+        <button class="portal-btn-secondary" (click)="step.set('request')">
+          Réessayer
+        </button>
+      }
+
+    </div>
   </div>
 </div>

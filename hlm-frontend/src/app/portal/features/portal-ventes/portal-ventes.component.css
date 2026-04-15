@@ -1,126 +1,197 @@
-/* ── Section header ──────────────────────────────────────────── */
-.portal-section-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--c-text, #1e293b);
-  margin: 0 0 20px;
+/* ================================================================
+   Portal Ventes — Buyer acquisition view
+   Main portal page: pipeline, financial summary, payment schedule,
+   documents. Mobile-first responsive layout.
+   ================================================================ */
+
+/* ── Page header ──────────────────────────────────────────────── */
+.portal-page-header { margin-bottom: var(--sp-6, 24px); }
+
+.portal-page-subtitle {
+  margin: var(--sp-1, 4px) 0 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--c-text-muted, #94a3b8);
 }
 
-/* ── Vente card ──────────────────────────────────────────────── */
+/* ── Vente card (article) ─────────────────────────────────────── */
 .portal-vente-card {
-  background: var(--c-card, #fff);
+  background: var(--c-surface, #fff);
   border: 1px solid var(--c-border, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--r-xl, 16px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.03);
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: var(--sp-6, 24px);
 }
 
+/* ── Card header ──────────────────────────────────────────────── */
+.pvc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+  padding: var(--sp-4, 16px) var(--sp-5, 20px);
+  background: linear-gradient(135deg, var(--c-primary-900, #1e3a8a) 0%, var(--c-primary-700, #1d4ed8) 100%);
+  flex-wrap: wrap;
+}
+
+.pvc-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2-5, 10px);
+}
+
+.pvc-ref {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-bold, 700);
+  color: #fff;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+}
+
+.pvc-price {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--fw-bold, 700);
+  color: rgba(255,255,255,.95);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Sections inside card ─────────────────────────────────────── */
 .portal-card-section {
-  padding: 16px 20px;
+  padding: var(--sp-5, 20px);
   border-bottom: 1px solid var(--c-border, #e2e8f0);
 }
 
 .portal-card-section:last-child { border-bottom: none; }
 
 .portal-card-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--c-text-secondary, #475569);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--c-text-muted, #94a3b8);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 14px;
+  letter-spacing: var(--ls-widest, 0.1em);
+  margin: 0 0 var(--sp-4, 16px);
 }
 
-/* ── Summary grid ────────────────────────────────────────────── */
+/* ── Summary grid ─────────────────────────────────────────────── */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--sp-3, 12px);
+  margin-bottom: var(--sp-5, 20px);
 }
 
 .summary-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--sp-1, 4px);
 }
 
 .summary-label {
-  font-size: 11px;
+  font-size: var(--text-xs, 0.75rem);
   color: var(--c-text-muted, #94a3b8);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-wider, 0.05em);
+  font-weight: var(--fw-semibold, 600);
 }
 
 .summary-value {
-  font-size: 15px;
-  color: var(--c-text, #1e293b);
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-text, #0f172a);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Échéancier table ────────────────────────────────────────── */
-.ech-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+/* ── Payment progress bar ─────────────────────────────────────── */
+/* Inherits .portal-progress-* from global styles.css */
+.ech-paid      { color: var(--c-success, #16a34a); font-weight: var(--fw-semibold, 600); }
+.ech-remaining { color: var(--c-text-secondary, #475569); }
 
-.portal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.portal-table th { font-size: 11px; font-weight: 600; color: var(--c-text-muted, #94a3b8); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--c-border, #e2e8f0); }
-.portal-table td { padding: 9px 8px; border-bottom: 1px solid var(--c-border, #e2e8f0); color: var(--c-text-secondary, #475569); }
-.portal-table tr:last-child td { border-bottom: none; }
-.td-num { font-variant-numeric: tabular-nums; }
+/* ── Échéancier table (desktop) ───────────────────────────────── */
+.ech-table-wrap { overflow-x: auto; margin-bottom: var(--sp-3, 12px); }
 
-.row-paid td { color: var(--c-text-muted, #94a3b8); }
-.row-late td { color: #dc2626; }
+.th-num { text-align: right; }
+.td-num { text-align: right; font-variant-numeric: tabular-nums; }
+.td-muted { color: var(--c-text-muted, #94a3b8); }
 
-/* ── Totals ──────────────────────────────────────────────────── */
-.ech-totals {
+/* ── Échéancier cards (mobile) ────────────────────────────────── */
+.ech-cards { display: none; }
+
+.ech-card {
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-lg, 12px);
+  padding: var(--sp-4, 16px);
+  margin-bottom: var(--sp-2-5, 10px);
+  background: var(--c-surface, #fff);
+}
+
+.ech-card--paid  { background: var(--c-neutral-50, #f8fafc); opacity: .75; }
+.ech-card--late  { border-color: var(--c-danger-border, #fecaca); background: var(--c-danger-light, #fef2f2); }
+
+.ech-card-top {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2, 8px);
+  margin-bottom: var(--sp-2, 8px);
+}
+
+.ech-card-label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--c-text, #0f172a);
+}
+
+.ech-card-amount {
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-text, #0f172a);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: var(--sp-1-5, 6px);
+}
+
+.ech-card-dates {
+  display: flex;
+  gap: var(--sp-4, 16px);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
   flex-wrap: wrap;
 }
 
-.ech-total-item {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.ech-paid      { color: #10b981; }
-.ech-remaining { color: var(--c-text-secondary, #475569); }
-
-/* ── Documents ───────────────────────────────────────────────── */
+/* ── Documents ────────────────────────────────────────────────── */
 .portal-doc-list { list-style: none; padding: 0; margin: 0; }
 
 .portal-doc-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 0;
+  gap: var(--sp-2-5, 10px);
+  padding: var(--sp-2-5, 10px) 0;
   border-bottom: 1px solid var(--c-border, #e2e8f0);
-  font-size: 13px;
+  font-size: var(--text-sm, 0.875rem);
+  transition: background var(--tr, 150ms ease);
 }
 
 .portal-doc-item:last-child { border-bottom: none; }
-.doc-icon { color: var(--c-text-muted, #94a3b8); flex-shrink: 0; }
-.doc-name { flex: 1; color: var(--c-text, #1e293b); }
-.doc-date { color: var(--c-text-muted, #94a3b8); font-size: 11px; white-space: nowrap; }
 
-/* ── Notes ───────────────────────────────────────────────────── */
+.doc-icon   { color: var(--c-text-muted, #94a3b8); flex-shrink: 0; }
+.doc-name   { flex: 1; color: var(--c-text, #0f172a); font-weight: var(--fw-medium, 500); }
+.doc-date   { color: var(--c-text-muted, #94a3b8); font-size: var(--text-xs, 0.75rem); white-space: nowrap; }
+
+/* ── Notes ────────────────────────────────────────────────────── */
 .portal-notes {
-  font-size: 13px;
+  font-size: var(--text-sm, 0.875rem);
   color: var(--c-text-secondary, #475569);
-  line-height: 1.6;
+  line-height: var(--lh-relaxed, 1.625);
   margin: 0;
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  background: var(--c-neutral-50, #f8fafc);
+  border-radius: var(--r-md, 8px);
+  border-left: 3px solid var(--c-border-strong, #cbd5e1);
 }
 
-/* ── Loading / empty ─────────────────────────────────────────── */
-.portal-loading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 32px 0;
-  color: var(--c-text-muted, #94a3b8);
-  font-size: 14px;
-}
-
-.portal-empty {
-  padding: 32px 0;
-  text-align: center;
-  color: var(--c-text-muted, #94a3b8);
-  font-size: 14px;
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ech-table-wrap { display: none; }
+  .ech-cards      { display: block; }
+  .summary-grid   { grid-template-columns: 1fr 1fr; }
+  .pvc-header     { flex-direction: column; align-items: flex-start; gap: var(--sp-2, 8px); }
 }

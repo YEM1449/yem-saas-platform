@@ -9,6 +9,7 @@ import { PortalTenantInfo } from '../../../core/models/portal.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './portal-shell.component.html',
+  styleUrl: './portal-shell.component.css',
 })
 export class PortalShellComponent implements OnInit {
   private auth = inject(PortalAuthService);

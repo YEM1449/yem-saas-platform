@@ -1,80 +1,134 @@
-<!-- ── Portal Ventes (Espace Acquéreur) ───────────────────────── -->
+<!-- ── Portal Ventes — Mon Acquisition ────────────────────────── -->
 <div class="portal-section">
-  <h2 class="portal-section-title">Mon Acquisition</h2>
+
+  <div class="portal-page-header">
+    <h2 class="portal-section-title">Mon Acquisition</h2>
+    <p class="portal-page-subtitle">Suivez l'avancement de votre dossier en temps réel</p>
+  </div>
 
   @if (loading()) {
     <div class="portal-loading">
       <div class="spinner"></div>
-      Chargement…
+      Chargement de votre dossier…
     </div>
   }
 
   @if (error()) {
-    <div class="alert alert-error">{{ error() }}</div>
+    <div class="portal-error">{{ error() }}</div>
   }
 
   @if (!loading() && ventes().length === 0) {
     <div class="portal-empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
       <p>Aucune vente enregistrée pour votre dossier.</p>
     </div>
   }
 
   @for (v of ventes(); track v.id) {
-    <div class="portal-vente-card">
+    <article class="portal-vente-card" aria-label="Dossier de vente">
 
-      <!-- Pipeline progress -->
+      <!-- ── Card header: reference + status ─────────────────────── -->
+      <div class="pvc-header">
+        <div class="pvc-header-left">
+          <span class="pvc-ref">{{ v.venteRef || 'Dossier' }}</span>
+          @if (v.statut === 'LIVRE') {
+            <span class="portal-badge badge-success">Livré</span>
+          } @else if (v.statut === 'ANNULE') {
+            <span class="portal-badge badge-error">Annulé</span>
+          } @else {
+            <span class="portal-badge badge-info">En cours</span>
+          }
+        </div>
+        @if (v.prixVente) {
+          <div class="pvc-price">{{ v.prixVente | number:'1.0-0' }} MAD</div>
+        }
+      </div>
+
+      <!-- ── Pipeline progress ────────────────────────────────────── -->
       <div class="portal-card-section">
-        <h3 class="portal-card-section-title">Avancement de votre dossier</h3>
+        <h3 class="portal-card-section-title">Avancement du dossier</h3>
         <app-pipeline-stepper [statut]="v.statut"></app-pipeline-stepper>
       </div>
 
-      <!-- Financial summary -->
-      <div class="portal-card-section summary-grid">
-        @if (v.prixVente) {
-          <div class="summary-item">
-            <span class="summary-label">Prix de vente</span>
-            <strong class="summary-value">{{ v.prixVente | number:'1.0-0' }} MAD</strong>
-          </div>
-        }
-        @if (v.dateCompromis) {
-          <div class="summary-item">
-            <span class="summary-label">Date compromis</span>
-            <strong class="summary-value">{{ v.dateCompromis | date:'dd/MM/yyyy' }}</strong>
-          </div>
-        }
-        @if (v.dateActeNotarie) {
-          <div class="summary-item">
-            <span class="summary-label">Acte notarié</span>
-            <strong class="summary-value">{{ v.dateActeNotarie | date:'dd/MM/yyyy' }}</strong>
-          </div>
-        }
-        @if (v.dateLivraisonPrevue) {
-          <div class="summary-item">
-            <span class="summary-label">Livraison prévue</span>
-            <strong class="summary-value">{{ v.dateLivraisonPrevue | date:'dd/MM/yyyy' }}</strong>
-          </div>
-        }
-        @if (v.dateLivraisonReelle) {
-          <div class="summary-item">
-            <span class="summary-label">Livraison effective</span>
-            <strong class="summary-value">{{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }}</strong>
+      <!-- ── Financial summary + progress bar ─────────────────────── -->
+      <div class="portal-card-section">
+        <h3 class="portal-card-section-title">Synthèse financière</h3>
+
+        <div class="summary-grid">
+          @if (v.prixVente) {
+            <div class="summary-item">
+              <span class="summary-label">Prix de vente</span>
+              <strong class="summary-value">{{ v.prixVente | number:'1.0-0' }} MAD</strong>
+            </div>
+          }
+          @if (v.dateCompromis) {
+            <div class="summary-item">
+              <span class="summary-label">Date compromis</span>
+              <strong class="summary-value">{{ v.dateCompromis | date:'dd/MM/yyyy' }}</strong>
+            </div>
+          }
+          @if (v.dateActeNotarie) {
+            <div class="summary-item">
+              <span class="summary-label">Acte notarié</span>
+              <strong class="summary-value">{{ v.dateActeNotarie | date:'dd/MM/yyyy' }}</strong>
+            </div>
+          }
+          @if (v.dateLivraisonPrevue) {
+            <div class="summary-item">
+              <span class="summary-label">Livraison prévue</span>
+              <strong class="summary-value">{{ v.dateLivraisonPrevue | date:'dd/MM/yyyy' }}</strong>
+            </div>
+          }
+          @if (v.dateLivraisonReelle) {
+            <div class="summary-item">
+              <span class="summary-label">Livraison effective</span>
+              <strong class="summary-value">{{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }}</strong>
+            </div>
+          }
+        </div>
+
+        <!-- Payment progress bar -->
+        @if (v.prixVente && v.echeances.length > 0) {
+          <div class="portal-progress-wrap">
+            <div class="portal-progress-bar">
+              <div class="portal-progress-fill"
+                   [style.width.%]="(paidTotal(v) / v.prixVente) * 100 | number:'1.0-0'">
+              </div>
+            </div>
+            <div class="portal-progress-labels">
+              <span>
+                <strong class="ech-paid">{{ paidTotal(v) | number:'1.0-0' }} MAD</strong>
+                réglés
+              </span>
+              <span>{{ (paidTotal(v) / v.prixVente * 100) | number:'1.0-0' }}% du prix</span>
+              <span>
+                Restant :
+                <strong>{{ remainingTotal(v) | number:'1.0-0' }} MAD</strong>
+              </span>
+            </div>
           </div>
         }
       </div>
 
-      <!-- Échéancier -->
+      <!-- ── Échéancier ────────────────────────────────────────────── -->
       @if (v.echeances.length > 0) {
         <div class="portal-card-section">
           <h3 class="portal-card-section-title">Échéancier de paiement</h3>
+
+          <!-- Desktop table -->
           <div class="ech-table-wrap">
             <table class="portal-table">
               <thead>
                 <tr>
                   <th>Libellé</th>
-                  <th>Montant</th>
-                  <th>Date d'échéance</th>
+                  <th class="th-num">Montant</th>
+                  <th>Échéance</th>
                   <th>Statut</th>
-                  <th>Paiement</th>
+                  <th>Date paiement</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,37 +139,54 @@
                     <td class="td-num">{{ e.montant | number:'1.0-0' }} MAD</td>
                     <td>{{ e.dateEcheance | date:'dd/MM/yyyy' }}</td>
                     <td>
-                      <span class="badge" [class]="echClass(e.statut)">{{ echLabel(e.statut) }}</span>
+                      <span class="badge portal-badge" [class]="echClass(e.statut)">
+                        {{ echLabel(e.statut) }}
+                      </span>
                     </td>
-                    <td>{{ (e.datePaiement | date:'dd/MM/yyyy') || '—' }}</td>
+                    <td class="td-muted">{{ (e.datePaiement | date:'dd/MM/yyyy') || '—' }}</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
 
-          <!-- Running totals -->
-          <div class="ech-totals">
-            <span class="ech-total-item ech-paid">
-              Payé : {{ paidTotal(v) | number:'1.0-0' }} MAD
-            </span>
-            <span class="ech-total-item ech-remaining">
-              Restant : {{ remainingTotal(v) | number:'1.0-0' }} MAD
-            </span>
+          <!-- Mobile cards -->
+          <div class="ech-cards">
+            @for (e of v.echeances; track e.id) {
+              <div class="ech-card" [class.ech-card--paid]="e.statut === 'PAYEE'"
+                   [class.ech-card--late]="e.statut === 'EN_RETARD'">
+                <div class="ech-card-top">
+                  <span class="ech-card-label">{{ e.libelle }}</span>
+                  <span class="badge portal-badge" [class]="echClass(e.statut)">
+                    {{ echLabel(e.statut) }}
+                  </span>
+                </div>
+                <div class="ech-card-amount">{{ e.montant | number:'1.0-0' }} MAD</div>
+                <div class="ech-card-dates">
+                  <span>Échéance : {{ e.dateEcheance | date:'dd/MM/yyyy' }}</span>
+                  @if (e.datePaiement) {
+                    <span>Payé le : {{ e.datePaiement | date:'dd/MM/yyyy' }}</span>
+                  }
+                </div>
+              </div>
+            }
           </div>
         </div>
       }
 
-      <!-- Documents -->
+      <!-- ── Documents ─────────────────────────────────────────────── -->
       @if (v.documents.length > 0) {
         <div class="portal-card-section">
           <h3 class="portal-card-section-title">Documents</h3>
           <ul class="portal-doc-list">
             @for (d of v.documents; track d.id) {
               <li class="portal-doc-item">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="doc-icon">
-                  <rect x="2" y="1" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-                  <path d="M4 5h5M4 7.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="doc-icon" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
                 <span class="doc-name">{{ d.nomFichier }}</span>
                 <span class="doc-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
@@ -125,6 +196,7 @@
         </div>
       }
 
+      <!-- ── Notes ─────────────────────────────────────────────────── -->
       @if (v.notes) {
         <div class="portal-card-section">
           <h3 class="portal-card-section-title">Notes</h3>
@@ -132,6 +204,7 @@
         </div>
       }
 
-    </div>
+    </article>
   }
+
 </div>

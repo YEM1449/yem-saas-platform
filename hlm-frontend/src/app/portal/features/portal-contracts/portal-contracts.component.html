@@ -1,55 +1,83 @@
 <div class="portal-section">
-  <h2 class="portal-section-title">My Contracts</h2>
+
+  <div class="portal-page-header">
+    <h2 class="portal-section-title">Mes Contrats</h2>
+    <p class="portal-page-subtitle">Retrouvez ici vos contrats de vente et leur statut</p>
+  </div>
 
   @if (loading()) {
-    <p class="portal-loading">Loading…</p>
+    <div class="portal-loading">
+      <div class="spinner"></div>
+      Chargement de vos contrats…
+    </div>
   } @else if (error()) {
-    <p class="portal-error">{{ error() }}</p>
+    <div class="portal-error">{{ error() }}</div>
   } @else if (contracts().length === 0) {
-    <p class="portal-empty">No contracts found.</p>
+    <div class="portal-empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <p>Aucun contrat trouvé pour votre dossier.</p>
+    </div>
   } @else {
     <div class="portal-card-list">
       @for (c of contracts(); track c.id) {
         <div class="portal-card">
+
           <div class="portal-card-header">
             <span class="portal-card-ref">{{ c.propertyRef }}</span>
             <span class="portal-badge" [ngClass]="statusClass(c.status)">
               {{ statusLabel(c.status) }}
             </span>
           </div>
+
           <div class="portal-card-body">
             <div class="portal-card-row">
-              <span class="portal-label">Project</span>
-              <span>{{ c.projectName }}</span>
+              <span class="portal-label">Projet</span>
+              <span class="portal-value">{{ c.projectName }}</span>
             </div>
             <div class="portal-card-row">
-              <span class="portal-label">Type</span>
-              <span>{{ c.propertyType }}</span>
+              <span class="portal-label">Type de bien</span>
+              <span class="portal-value">{{ c.propertyType }}</span>
             </div>
             <div class="portal-card-row">
-              <span class="portal-label">Price</span>
-              <span>{{ c.agreedPrice | number:'1.0-0' }} MAD</span>
+              <span class="portal-label">Prix convenu</span>
+              <span class="portal-value contract-price">{{ c.agreedPrice | number:'1.0-0' }} MAD</span>
             </div>
             @if (c.signedAt) {
               <div class="portal-card-row">
-                <span class="portal-label">Signed</span>
-                <span>{{ c.signedAt | date:'dd/MM/yyyy' }}</span>
+                <span class="portal-label">Signé le</span>
+                <span class="portal-value">{{ c.signedAt | date:'dd/MM/yyyy' }}</span>
               </div>
             }
           </div>
+
           <div class="portal-card-actions">
             <a [routerLink]="['/portal/contracts', c.id, 'payments']"
                class="portal-btn-secondary">
-              Payment schedule
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Échéancier de paiement
             </a>
             @if (c.status === 'SIGNED') {
               <button class="portal-btn-primary" (click)="downloadPdf(c.id)">
-                Download PDF
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Télécharger le contrat
               </button>
             }
           </div>
+
         </div>
       }
     </div>
   }
+
 </div>

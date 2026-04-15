@@ -1,0 +1,192 @@
+/* ================================================================
+   Portal Shell — App chrome: sticky header, main content area,
+   footer. Consumer-grade aesthetic — clean white, ample space,
+   distinct from the staff CRM dark sidebar.
+   ================================================================ */
+
+/* ── Full-height layout ─────────────────────────────────────────── */
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.portal-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--c-bg, #f8fafc);
+}
+
+/* ── Sticky header ──────────────────────────────────────────────── */
+.portal-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 200);
+  background: var(--c-surface, #fff);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.portal-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4, 16px);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--sp-6, 24px);
+  height: 60px;
+}
+
+/* ── Brand ──────────────────────────────────────────────────────── */
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2-5, 10px);
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.portal-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  border-radius: var(--r-md, 8px);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(37,99,235,.35);
+}
+
+.portal-brand-name {
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-text, #0f172a);
+  letter-spacing: var(--ls-tight, -0.015em);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+/* ── Primary navigation ─────────────────────────────────────────── */
+.portal-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1, 4px);
+}
+
+.portal-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1-5, 6px);
+  padding: var(--sp-2, 8px) var(--sp-3, 12px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-medium, 500);
+  color: var(--c-text-secondary, #475569);
+  border-radius: var(--r-md, 8px);
+  text-decoration: none;
+  transition: color var(--tr, 150ms ease), background var(--tr, 150ms ease);
+  white-space: nowrap;
+}
+
+.portal-nav-link:hover {
+  color: var(--c-text, #0f172a);
+  background: var(--c-neutral-100, #f1f5f9);
+  text-decoration: none;
+}
+
+.portal-nav-link.active {
+  color: var(--c-primary, #2563eb);
+  background: var(--c-primary-50, #eff6ff);
+  font-weight: var(--fw-semibold, 600);
+}
+
+.portal-nav-link.active svg {
+  stroke: var(--c-primary, #2563eb);
+}
+
+/* ── Header actions (logout) ────────────────────────────────────── */
+.portal-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.portal-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1-5, 6px);
+  padding: var(--sp-2, 8px) var(--sp-3, 12px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-medium, 500);
+  font-family: var(--font, inherit);
+  color: var(--c-text-secondary, #475569);
+  background: transparent;
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  cursor: pointer;
+  transition: color var(--tr, 150ms ease), border-color var(--tr, 150ms ease),
+              background var(--tr, 150ms ease);
+  white-space: nowrap;
+}
+
+.portal-logout-btn:hover {
+  color: var(--c-danger, #dc2626);
+  border-color: var(--c-danger-border, #fecaca);
+  background: var(--c-danger-light, #fef2f2);
+}
+
+.portal-logout-btn:focus-visible {
+  outline: 2px solid var(--c-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* ── Main content ───────────────────────────────────────────────── */
+.portal-main {
+  flex: 1;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+.portal-footer {
+  border-top: 1px solid var(--c-border, #e2e8f0);
+  background: var(--c-surface, #fff);
+  padding: var(--sp-4, 16px) var(--sp-6, 24px);
+  text-align: center;
+}
+
+.portal-footer-text {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .portal-header-inner {
+    padding: 0 var(--sp-3, 12px);
+    height: 56px;
+  }
+
+  .portal-brand-name {
+    max-width: 140px;
+    font-size: var(--text-sm, 0.875rem);
+  }
+
+  .portal-nav-link {
+    padding: var(--sp-1-5, 6px) var(--sp-2, 8px);
+    font-size: var(--text-xs, 0.75rem);
+    gap: var(--sp-1, 4px);
+  }
+
+  .portal-nav-link svg { display: none; }
+
+  .portal-logout-label { display: none; }
+
+  .portal-logout-btn {
+    padding: var(--sp-2, 8px);
+    border-radius: var(--r-md, 8px);
+  }
+}
