@@ -2,6 +2,7 @@ package com.yem.hlm.backend.portal.api.dto;
 
 import com.yem.hlm.backend.vente.api.dto.EcheanceResponse;
 import com.yem.hlm.backend.vente.api.dto.VenteDocumentResponse;
+import com.yem.hlm.backend.vente.domain.ContractStatus;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 
 import java.math.BigDecimal;
@@ -16,6 +17,8 @@ import java.util.UUID;
  */
 public record PortalVenteResponse(
         UUID id,
+        String venteRef,
+        ContractStatus contractStatus,
         UUID propertyId,
         VenteStatut statut,
         BigDecimal prixVente,

@@ -24,8 +24,10 @@ import com.yem.hlm.backend.vente.repo.VenteDocumentRepository;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import com.yem.hlm.backend.vente.repo.VenteRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -431,6 +433,31 @@ public class VenteService {
         return toDocumentResponse(documentRepository.save(doc));
     }
 
+    /** Portal-upload variant — no CRM user; sets {@code uploadedByPortal = true}. */
+    public VenteDocumentResponse addDocumentFromPortal(UUID venteId, String nomFichier,
+                                                       String storageKey, String contentType,
+                                                       Long tailleOctets,
+                                                       VenteDocumentType documentType) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente    = requireVente(societeId, venteId);
+        var doc = new VenteDocument(societeId, vente, nomFichier,
+                storageKey, contentType, tailleOctets, documentType);
+        return toDocumentResponse(documentRepository.save(doc));
+    }
+
+    /**
+     * Returns the storage key for a document so the caller (controller) can stream it.
+     * Enforces société isolation and vente access checks.
+     */
+    @Transactional(readOnly = true)
+    public String downloadDocumentKey(UUID venteId, UUID docId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        requireVente(societeId, venteId); // access-check
+        return documentRepository.findBySocieteIdAndId(societeId, docId)
+                .map(VenteDocument::getStorageKey)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+    }
+
     @Transactional(readOnly = true)
     public List<VenteDocumentResponse> findDocuments(UUID venteId) {
         UUID societeId = societeCtx.requireSocieteId();
@@ -533,6 +560,8 @@ public class VenteService {
                 v.getMotifAnnulation(),
                 // Notary
                 v.getNotaireAcquereurNom(), v.getNotaireAcquereurEmail(),
+                // Post-livraison
+                v.getDatePvReception(), v.getDateTitreFoncier(),
                 v.getPrixVente(),
                 v.getDateCompromis(), v.getDateActeNotarie(),
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
@@ -552,6 +581,8 @@ public class VenteService {
         return new VenteDocumentResponse(
                 d.getId(), d.getVente().getId(),
                 d.getNomFichier(), d.getContentType(), d.getTailleOctets(),
-                d.getUploadedBy().getId(), d.getCreatedAt());
+                d.getUploadedBy() != null ? d.getUploadedBy().getId() : null,
+                d.isUploadedByPortal(), d.getDocumentType(),
+                d.getCreatedAt());
     }
 }

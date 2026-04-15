@@ -566,6 +566,21 @@
   <!-- ═══════════════════════════ DOCUMENTS ══════════════════════════════════ -->
   @if (activeTab === 'documents') {
     <app-document-list entityType="CONTACT" [entityId]="contact.id" />
+
+    @if (portalDocs().length > 0) {
+      <div class="portal-docs-section">
+        <h4 class="section-subtitle">Documents déposés via le portail</h4>
+        <ul class="doc-list">
+          @for (item of portalDocs(); track item.doc.id) {
+            <li class="doc-item">
+              <span class="badge badge-info" style="font-size:11px">Portail</span>
+              <span class="doc-name">{{ item.doc.nomFichier }}</span>
+              <span class="doc-meta">{{ item.venteName }} — {{ item.doc.createdAt | date:'dd/MM/yyyy' }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
   }
 
   <!-- ═══════════════════════════ TASKS ══════════════════════════════════════ -->

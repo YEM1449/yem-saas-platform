@@ -35,7 +35,9 @@ export interface VenteDocument {
   nomFichier: string;
   contentType: string | null;
   tailleOctets: number | null;
-  uploadedById: string;
+  uploadedById: string | null;    // null for portal-uploaded documents
+  uploadedByPortal: boolean;
+  documentType: string | null;
   createdAt: string;
 }
 
@@ -64,6 +66,9 @@ export interface Vente {
   // Notary
   notaireAcquereurNom: string | null;
   notaireAcquereurEmail: string | null;
+  // Post-livraison tracking (Moroccan closing process)
+  datePvReception: string | null;
+  dateTitreFoncier: string | null;
   prixVente: number | null;
   dateCompromis: string | null;
   dateActeNotarie: string | null;
@@ -140,6 +145,11 @@ export class VenteService {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<VenteDocument>(`${BASE}/${venteId}/documents`, form);
+  }
+
+  downloadDocument(venteId: string, docId: string): Observable<Blob> {
+    return this.http.get(`${BASE}/${venteId}/documents/${docId}/download`,
+      { responseType: 'blob' });
   }
 
   get(id: string): Observable<Vente> {

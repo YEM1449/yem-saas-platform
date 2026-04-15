@@ -421,7 +421,21 @@
               <path d="M4 5h5M4 7.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
             <span class="doc-name">{{ d.nomFichier }}</span>
+            @if (d.uploadedByPortal) {
+              <span class="badge badge-info" style="font-size:11px;margin-left:4px">Portail</span>
+            }
             <span class="doc-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
+            <button class="btn-link doc-download-btn"
+                    (click)="downloadDoc(v.id, d.id, d.nomFichier)"
+                    data-testid="btn-download-document"
+                    title="Télécharger">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
           </li>
         }
       </ul>

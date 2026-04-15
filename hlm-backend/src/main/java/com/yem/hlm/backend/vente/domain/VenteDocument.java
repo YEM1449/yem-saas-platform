@@ -49,9 +49,21 @@ public class VenteDocument {
     @Column(name = "taille_octets")
     private Long tailleOctets;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploaded_by", nullable = false, foreignKey = @ForeignKey(name = "fk_vdoc_uploaded_by"))
+    /** Nullable — portal-uploaded documents have no CRM user. */
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by", nullable = true, foreignKey = @ForeignKey(name = "fk_vdoc_uploaded_by"))
     private User uploadedBy;
+
+    /** {@code true} when this document was uploaded by the buyer via the portal. */
+    @Setter
+    @Column(name = "uploaded_by_portal", nullable = false)
+    private boolean uploadedByPortal = false;
+
+    /** Categorises the document (contract, PV réception, etc.). */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type", length = 30)
+    private VenteDocumentType documentType;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -61,14 +73,29 @@ public class VenteDocument {
         this.createdAt = LocalDateTime.now();
     }
 
+    /** Constructor for CRM-staff-uploaded documents. */
     public VenteDocument(UUID societeId, Vente vente, String nomFichier,
                          String storageKey, String contentType, Long tailleOctets, User uploadedBy) {
-        this.societeId   = societeId;
-        this.vente       = vente;
-        this.nomFichier  = nomFichier;
-        this.storageKey  = storageKey;
-        this.contentType = contentType;
+        this.societeId    = societeId;
+        this.vente        = vente;
+        this.nomFichier   = nomFichier;
+        this.storageKey   = storageKey;
+        this.contentType  = contentType;
         this.tailleOctets = tailleOctets;
-        this.uploadedBy  = uploadedBy;
+        this.uploadedBy   = uploadedBy;
+    }
+
+    /** Constructor for portal-uploaded documents (buyer; no CRM user). */
+    public VenteDocument(UUID societeId, Vente vente, String nomFichier,
+                         String storageKey, String contentType, Long tailleOctets,
+                         VenteDocumentType documentType) {
+        this.societeId       = societeId;
+        this.vente           = vente;
+        this.nomFichier      = nomFichier;
+        this.storageKey      = storageKey;
+        this.contentType     = contentType;
+        this.tailleOctets    = tailleOctets;
+        this.documentType    = documentType;
+        this.uploadedByPortal = true;
     }
 }

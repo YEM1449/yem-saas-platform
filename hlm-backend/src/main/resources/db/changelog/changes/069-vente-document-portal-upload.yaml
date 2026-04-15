@@ -1,0 +1,105 @@
+databaseChangeLog:
+
+  # ── vente_document: add document_type column ──────────────────────────────
+  - changeSet:
+      id: "069-vdoc-document-type"
+      author: "yem"
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: vente_document
+              columnName: document_type
+      changes:
+        - addColumn:
+            tableName: vente_document
+            columns:
+              - column:
+                  name: document_type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: true
+                  remarks: "Category of document (CONTRAT_GENERE, CONTRAT_SIGNE_CLIENT, etc.)"
+
+  # ── vente_document: add uploaded_by_portal flag ───────────────────────────
+  - changeSet:
+      id: "069-vdoc-uploaded-by-portal"
+      author: "yem"
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: vente_document
+              columnName: uploaded_by_portal
+      changes:
+        - addColumn:
+            tableName: vente_document
+            columns:
+              - column:
+                  name: uploaded_by_portal
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "true when uploaded by the buyer via the portal (no CRM user)"
+
+  # ── vente_document: make uploaded_by nullable (portal uploads have no User) ─
+  - changeSet:
+      id: "069-vdoc-uploaded-by-nullable"
+      author: "yem"
+      preConditions:
+        - onFail: MARK_RAN
+          sqlCheck:
+            expectedResult: "1"
+            sql: >
+              SELECT COUNT(*) FROM information_schema.columns
+              WHERE table_name = 'vente_document'
+              AND column_name = 'uploaded_by'
+              AND is_nullable = 'NO'
+      changes:
+        - dropNotNullConstraint:
+            tableName: vente_document
+            columnName: uploaded_by
+            columnDataType: UUID
+
+  # ── vente: post-LIVRE tracking — PV de réception date ────────────────────
+  - changeSet:
+      id: "069-vente-date-pv-reception"
+      author: "yem"
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: vente
+              columnName: date_pv_reception
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: date_pv_reception
+                  type: DATE
+                  constraints:
+                    nullable: true
+                  remarks: "Date PV de réception — buyer acceptance of the delivered unit"
+
+  # ── vente: post-LIVRE tracking — Titre Foncier date ─────────────────────
+  - changeSet:
+      id: "069-vente-date-titre-foncier"
+      author: "yem"
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: vente
+              columnName: date_titre_foncier
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: date_titre_foncier
+                  type: DATE
+                  constraints:
+                    nullable: true
+                  remarks: "Date titre foncier obtained from Conservation Foncière (Moroccan land registry)"

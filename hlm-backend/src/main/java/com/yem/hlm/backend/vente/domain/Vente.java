@@ -169,6 +169,18 @@ public class Vente {
     @Column(name = "notaire_acquereur_email", length = 200)
     private String notaireAcquereurEmail;
 
+    // ── Post-Livraison Tracking (Moroccan closing process) ────────────────
+
+    /** Date of the PV de réception (procès-verbal) — buyer acceptance of the delivered unit. */
+    @Setter
+    @Column(name = "date_pv_reception")
+    private LocalDate datePvReception;
+
+    /** Date titre foncier obtained from the Conservation Foncière (land registry). */
+    @Setter
+    @Column(name = "date_titre_foncier")
+    private LocalDate dateTitreFoncier;
+
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("dateEcheance ASC")
     private List<VenteEcheance> echeances = new ArrayList<>();

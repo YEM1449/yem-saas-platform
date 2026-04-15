@@ -442,6 +442,29 @@
       "logoutAria": "Se déconnecter",
       "navAria": "Navigation principale",
       "footer": "Votre espace client sécurisé"
+    },
+    "contract": {
+      "title": "Votre contrat de vente",
+      "pendingMsg": "Votre contrat sera disponible ici dès sa génération par votre conseiller.",
+      "downloadBtn": "Télécharger le contrat",
+      "uploadTitle": "Déposer le contrat signé",
+      "uploadBody": "Après signature et légalisation chez le notaire, déposez ici votre exemplaire signé.",
+      "legalAck": "Je certifie avoir lu, signé et légalisé le présent contrat de vente conformément à la loi n°44-00 du 3 octobre 2002 relative à la vente en l'état futur d'achèvement (VEFA). Je reconnais avoir reçu un exemplaire du contrat, l'avoir signé en présence du notaire instrumentaire, et je transmets par la présente voie numérique un exemplaire signé et légalisé à l'agence immobilière, conformément aux dispositions du Dahir des Obligations et Contrats (D.O.C.).",
+      "uploadBtn": "Déposer le contrat signé",
+      "uploading": "Dépôt en cours…",
+      "uploadSuccess": "Contrat signé transmis avec succès.",
+      "signedConfirm": "Votre contrat signé a bien été reçu par l'agence.",
+      "docsTitle": "Mes documents",
+      "addDoc": "Ajouter un document",
+      "docTypeLabel": "Type de document",
+      "selectFile": "Sélectionner un fichier",
+      "docTypes": {
+        "CONTRAT_GENERE": "Contrat généré",
+        "CONTRAT_SIGNE_CLIENT": "Contrat signé (client)",
+        "CONTRAT_SIGNE_FINAL": "Contrat signé (final)",
+        "PV_RECEPTION": "PV de réception",
+        "AUTRE": "Autre document"
+      }
     }
   },
   "templates": {
