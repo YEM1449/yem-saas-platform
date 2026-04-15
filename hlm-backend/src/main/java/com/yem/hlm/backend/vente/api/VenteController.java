@@ -7,14 +7,18 @@ import com.yem.hlm.backend.vente.service.VenteInviteService;
 import com.yem.hlm.backend.vente.service.VenteService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -170,6 +174,24 @@ public class VenteController {
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to store document: " + e.getMessage());
+        }
+    }
+
+    /** Download a previously uploaded document (streams the file from object storage). */
+    @GetMapping("/{id}/documents/{docId}/download")
+    public ResponseEntity<InputStreamResource> downloadDocument(
+            @PathVariable UUID id,
+            @PathVariable UUID docId) {
+        String key = venteService.downloadDocumentKey(id, docId);
+        try {
+            InputStream stream = mediaStorage.load(key);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment")
+                    .body(new InputStreamResource(stream));
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to load document: " + e.getMessage());
         }
     }
 }

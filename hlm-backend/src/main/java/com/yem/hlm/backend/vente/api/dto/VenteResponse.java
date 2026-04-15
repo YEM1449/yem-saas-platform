@@ -37,6 +37,9 @@ public record VenteResponse(
         // Notary information
         String notaireAcquereurNom,
         String notaireAcquereurEmail,
+        // Post-livraison tracking (Moroccan closing process)
+        LocalDate datePvReception,
+        LocalDate dateTitreFoncier,
         BigDecimal prixVente,
         LocalDate dateCompromis,
         LocalDate dateActeNotarie,
