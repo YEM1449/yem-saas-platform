@@ -9,6 +9,7 @@ import { PortalProperty } from '../../../core/models/portal.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './portal-property.component.html',
+  styleUrl: './portal-property.component.css',
 })
 export class PortalPropertyComponent implements OnInit {
   private service = inject(PortalContractsService);

@@ -1,57 +1,127 @@
 <div class="portal-section">
+
   <div class="portal-section-nav">
-    <a routerLink="/portal/contracts" class="portal-back-link">← Back to contracts</a>
+    <a routerLink="/portal/contracts" class="portal-back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Retour aux contrats
+    </a>
   </div>
 
-  <h2 class="portal-section-title">Payment Schedule</h2>
+  <h2 class="portal-section-title">Échéancier de paiement</h2>
 
   @if (loading()) {
-    <p class="portal-loading">Loading…</p>
+    <div class="portal-loading">
+      <div class="spinner"></div>
+      Chargement de l'échéancier…
+    </div>
   } @else if (error()) {
-    <p class="portal-error">{{ error() }}</p>
+    <div class="portal-error">{{ error() }}</div>
   } @else if (items().length === 0) {
-    <p class="portal-empty">No payment schedule available for this contract.</p>
+    <div class="portal-empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+      <p>Aucun échéancier disponible pour ce contrat.</p>
+    </div>
   } @else {
+
+    <!-- KPI summary cards -->
     <div class="portal-summary-row">
       <div class="portal-summary-item">
-        <span class="portal-label">Total amount</span>
+        <span class="portal-label">Montant total</span>
         <strong>{{ totalAmount(items()) | number:'1.0-0' }} MAD</strong>
       </div>
       <div class="portal-summary-item">
-        <span class="portal-label">Paid</span>
+        <span class="portal-label">Déjà réglé</span>
         <strong class="portal-text-success">{{ totalPaid(items()) | number:'1.0-0' }} MAD</strong>
+      </div>
+      <div class="portal-summary-item">
+        <span class="portal-label">Restant dû</span>
+        <strong class="amount-remaining">{{ (totalAmount(items()) - totalPaid(items())) | number:'1.0-0' }} MAD</strong>
       </div>
     </div>
 
-    <div class="portal-table-wrapper">
-      <table class="portal-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Milestone</th>
-            <th>Amount (MAD)</th>
-            <th>Paid (MAD)</th>
-            <th>Due date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track item.id) {
-            <tr class="tranche-row tranche-{{ item.status | lowercase }}">
-              <td>{{ item.sequence }}</td>
-              <td>{{ item.label }}</td>
-              <td>{{ item.amount | number:'1.0-0' }}</td>
-              <td>{{ item.amountPaid | number:'1.0-0' }}</td>
-              <td>{{ item.dueDate ? (item.dueDate | date:'dd/MM/yyyy') : '—' }}</td>
-              <td>
-                <span class="portal-badge" [ngClass]="itemStatusClass(item.status)">
-                  {{ itemStatusLabel(item.status) }}
-                </span>
-              </td>
+    <!-- Payment progress bar -->
+    @if (totalAmount(items()) > 0) {
+      <div class="portal-progress-wrap" style="margin-bottom: 24px;">
+        <div class="portal-progress-bar">
+          <div class="portal-progress-fill"
+               [style.width.%]="(totalPaid(items()) / totalAmount(items())) * 100">
+          </div>
+        </div>
+        <div class="portal-progress-labels">
+          <span>{{ (totalPaid(items()) / totalAmount(items()) * 100) | number:'1.0-0' }}% réglé</span>
+          <span>{{ items().length }} échéances</span>
+        </div>
+      </div>
+    }
+
+    <!-- Desktop table -->
+    <div class="portal-card pmt-table-card">
+      <div class="portal-table-wrapper">
+        <table class="portal-table">
+          <thead>
+            <tr>
+              <th class="th-seq">#</th>
+              <th>Libellé</th>
+              <th class="th-num">Montant (MAD)</th>
+              <th class="th-num">Réglé (MAD)</th>
+              <th>Échéance</th>
+              <th>Statut</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr class="tranche-row" [class]="'tranche-' + (item.status | lowercase)">
+                <td class="td-seq">{{ item.sequence }}</td>
+                <td class="td-label">{{ item.label }}</td>
+                <td class="td-num">{{ item.amount | number:'1.0-0' }}</td>
+                <td class="td-num td-paid">{{ item.amountPaid | number:'1.0-0' }}</td>
+                <td>{{ item.dueDate ? (item.dueDate | date:'dd/MM/yyyy') : '—' }}</td>
+                <td>
+                  <span class="portal-badge" [ngClass]="itemStatusClass(item.status)">
+                    {{ itemStatusLabel(item.status) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
+
+    <!-- Mobile timeline cards -->
+    <div class="pmt-timeline">
+      @for (item of items(); track item.id) {
+        <div class="pmt-card" [class]="'pmt-card--' + (item.status | lowercase)">
+          <div class="pmt-card-left">
+            <div class="pmt-seq">{{ item.sequence }}</div>
+            <div class="pmt-connector" aria-hidden="true"></div>
+          </div>
+          <div class="pmt-card-body">
+            <div class="pmt-card-top">
+              <span class="pmt-label">{{ item.label }}</span>
+              <span class="portal-badge" [ngClass]="itemStatusClass(item.status)">
+                {{ itemStatusLabel(item.status) }}
+              </span>
+            </div>
+            <div class="pmt-amount">{{ item.amount | number:'1.0-0' }} MAD</div>
+            @if (item.amountPaid > 0 && item.amountPaid < item.amount) {
+              <div class="pmt-partial">
+                Réglé : {{ item.amountPaid | number:'1.0-0' }} MAD
+              </div>
+            }
+            @if (item.dueDate) {
+              <div class="pmt-due">Échéance : {{ item.dueDate | date:'dd/MM/yyyy' }}</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
   }
 </div>

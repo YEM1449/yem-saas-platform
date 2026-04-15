@@ -193,6 +193,152 @@ test.describe('Vente pipeline', () => {
     expect(body.code).toBe('INVALID_STATUS_TRANSITION');
   });
 
+  // ── Contract card (Wave 13) ──────────────────────────────────────────
+
+  test('contract card shows PENDING status on a new vente', async ({ page }) => {
+    const vente = await createTestVente(page);
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    // Contract card should be visible for non-terminal statut
+    await expect(page.locator('[data-testid="contract-card"]')).toBeVisible({ timeout: 10000 });
+    // Status badge shows PENDING label
+    await expect(page.locator('[data-testid="contract-card"] .badge')).toContainText('En attente');
+    // Generate button visible for ADMIN
+    await expect(page.locator('[data-testid="btn-generate-contract"]')).toBeVisible();
+    // Sign button not yet visible
+    await expect(page.locator('[data-testid="btn-sign-contract"]')).not.toBeVisible();
+  });
+
+  test('generating a contract transitions contractStatus to GENERATED', async ({ page }) => {
+    const vente = await createTestVente(page);
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    await page.waitForSelector('[data-testid="btn-generate-contract"]', { timeout: 10000 });
+    await page.click('[data-testid="btn-generate-contract"]');
+
+    // Badge updates to Généré
+    await expect(page.locator('[data-testid="contract-card"] .badge')).toContainText('Généré', { timeout: 8000 });
+    // Sign button now visible
+    await expect(page.locator('[data-testid="btn-sign-contract"]')).toBeVisible();
+    // Generate button no longer present
+    await expect(page.locator('[data-testid="btn-generate-contract"]')).not.toBeVisible();
+  });
+
+  test('signing a contract transitions contractStatus to SIGNED', async ({ page }) => {
+    const vente = await createTestVente(page);
+    // Pre-generate via API so UI opens directly in GENERATED state
+    const genRes = await page.request.post(`${API_BASE}/api/ventes/${vente.id}/contract/generate`);
+    expect(genRes.status()).toBe(200);
+
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    await page.waitForSelector('[data-testid="btn-sign-contract"]', { timeout: 10000 });
+    await page.click('[data-testid="btn-sign-contract"]');
+
+    // Badge updates to Signé
+    await expect(page.locator('[data-testid="contract-card"] .badge')).toContainText('Signé', { timeout: 8000 });
+    // Both action buttons gone after signing
+    await expect(page.locator('[data-testid="btn-sign-contract"]')).not.toBeVisible();
+    await expect(page.locator('[data-testid="btn-generate-contract"]')).not.toBeVisible();
+  });
+
+  test('contract card is hidden when vente is ANNULE', async ({ page }) => {
+    const vente = await createTestVente(page);
+    // Cancel via API (motifAnnulation is now required)
+    const res = await page.request.patch(`${API_BASE}/api/ventes/${vente.id}/statut`, {
+      data: { statut: 'ANNULE', motifAnnulation: 'ACCORD_PARTIES' },
+    });
+    expect(res.status()).toBe(200);
+
+    await page.goto(`/app/ventes/${vente.id}`);
+    await page.waitForLoadState('networkidle');
+
+    // Contract card must not be visible for ANNULE statut
+    await expect(page.locator('[data-testid="contract-card"]')).not.toBeVisible({ timeout: 8000 });
+  });
+
+  // ── Cancellation motif (Wave 13) ─────────────────────────────────────────
+
+  test('API rejects ANNULE transition without motifAnnulation (400)', async ({ page }) => {
+    const vente = await createTestVente(page);
+    const res = await page.request.patch(`${API_BASE}/api/ventes/${vente.id}/statut`, {
+      data: { statut: 'ANNULE' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('cancel mode in advance dialog requires a motif before confirm is enabled', async ({ page }) => {
+    const vente = await createTestVente(page);
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    await page.waitForSelector('[data-testid="advance-pipeline"]', { timeout: 10000 });
+    await page.click('[data-testid="advance-pipeline"]');
+    await expect(page.locator('app-advance-pipeline-dialog')).toBeVisible();
+
+    // Switch to cancel mode
+    await page.locator('app-advance-pipeline-dialog .btn-cancel-toggle').first().click();
+
+    // Motif dropdown must appear
+    await expect(page.locator('[data-testid="dialog-motif-annulation"]')).toBeVisible({ timeout: 5000 });
+
+    // Confirm button disabled until motif selected
+    await expect(page.locator('[data-testid="dialog-confirm"]')).toBeDisabled();
+
+    // Select a motif
+    await page.selectOption('[data-testid="dialog-motif-annulation"]', 'CREDIT_REFUSE');
+
+    // Confirm button now enabled
+    await expect(page.locator('[data-testid="dialog-confirm"]')).toBeEnabled({ timeout: 3000 });
+  });
+
+  test('cancelling a vente with motif sets statut to ANNULE', async ({ page }) => {
+    const vente = await createTestVente(page);
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    await page.waitForSelector('[data-testid="advance-pipeline"]', { timeout: 10000 });
+    await page.click('[data-testid="advance-pipeline"]');
+
+    // Switch to cancel mode and select motif
+    await page.locator('app-advance-pipeline-dialog .btn-cancel-toggle').first().click();
+    await expect(page.locator('[data-testid="dialog-motif-annulation"]')).toBeVisible();
+    await page.selectOption('[data-testid="dialog-motif-annulation"]', 'CSP_NON_REALISEE');
+
+    // Confirm cancellation
+    await page.locator('[data-testid="dialog-confirm"]').click();
+
+    // Dialog closes and statut badge updates to Annulé
+    await expect(page.locator('app-advance-pipeline-dialog')).not.toBeVisible({ timeout: 8000 });
+    await expect(page.locator('.page-header .badge')).toContainText('Annulé', { timeout: 8000 });
+  });
+
+  // ── Financing panel (Wave 13) ────────────────────────────────────────────
+
+  test('financing panel is visible and editable, saves to backend', async ({ page }) => {
+    const vente = await createTestVente(page);
+    await page.goto(`/app/ventes/${vente.id}`);
+
+    // Financing card visible
+    await expect(page.locator('[data-testid="financing-card"]')).toBeVisible({ timeout: 10000 });
+    // Edit button visible for ADMIN on non-terminal statut
+    await expect(page.locator('[data-testid="btn-edit-financing"]')).toBeVisible();
+
+    // Open the financing form
+    await page.click('[data-testid="btn-edit-financing"]');
+    await expect(page.locator('[data-testid="financing-type"]')).toBeVisible({ timeout: 5000 });
+
+    // Fill in financing details
+    await page.selectOption('[data-testid="financing-type"]', 'CREDIT_IMMOBILIER');
+    await page.fill('[data-testid="financing-banque"]', 'Banque Populaire');
+    await page.fill('[data-testid="financing-montant"]', '850000');
+
+    // Save
+    await page.click('[data-testid="financing-submit"]');
+
+    // Form closes; display shows the updated values
+    await expect(page.locator('[data-testid="financing-card"]')).toContainText('Crédit immobilier', { timeout: 8000 });
+    await expect(page.locator('[data-testid="financing-card"]')).toContainText('Banque Populaire');
+  });
+
   // ── Échéancier ───────────────────────────────────────────────────────
 
   test('adding an echéance via the form appears in table', async ({ page }) => {

@@ -62,7 +62,7 @@ test.describe('Buyer Portal', () => {
 
   test('portal login page renders', async ({ page }) => {
     await page.goto('/portal/login');
-    await expect(page.getByTestId('portal-login-title')).toContainText('Client Portal', { timeout: 8000 });
+    await expect(page.getByTestId('portal-login-title')).toContainText('Espace Client', { timeout: 8000 });
     await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('#societeKey')).toBeVisible();
     await expect(page.getByTestId('portal-request-form').locator('button[type="submit"]')).toBeVisible();
@@ -86,11 +86,11 @@ test.describe('Buyer Portal', () => {
     // After sending, shows the "check your inbox" confirmation
     const successAlert = page.getByTestId('portal-success-message');
     await expect(successAlert).toBeVisible({ timeout: 8000 });
-    await expect(successAlert).toContainText('Check your inbox');
+    await expect(successAlert).toContainText('Vérifiez votre boîte e-mail');
     await expect(successAlert).toContainText('buyer@example.com');
 
     // "Send another link" button lets user retry
-    await expect(page.locator('button:has-text("Send another link")')).toBeVisible();
+    await expect(page.locator('button:has-text("Renvoyer un lien")')).toBeVisible();
   });
 
   test('invalid magic link token shows error state', async ({ page }) => {
@@ -251,8 +251,8 @@ test.describe('Buyer Portal', () => {
     await expect(page.locator('.portal-section-title')).toContainText('Mon Acquisition', { timeout: 10000 });
 
     // Echeance row visible
-    await expect(page.locator('text=Versement initial')).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=En attente')).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Versement initial' }).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('cell', { name: 'En attente' }).first()).toBeVisible();
   });
 
   // ── Portal invite API (integration smoke) ─────────────────────────────

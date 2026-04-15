@@ -3,7 +3,7 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { VenteService, Vente, VenteStatut, CreateVenteRequest } from './vente.service';
+import { VenteService, Vente, VenteStatut, ContractStatus, CreateVenteRequest } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ContactService } from '../contacts/contact.service';
 import { Contact } from '../../core/models/contact.model';
@@ -83,6 +83,14 @@ export class VenteListComponent implements OnInit {
       ANNULE:       'badge-error',
     };
     return classes[s] ?? '';
+  }
+
+  contractStatusLabel(s: ContractStatus): string {
+    return { PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé' }[s] ?? s;
+  }
+
+  contractStatusClass(s: ContractStatus): string {
+    return { PENDING: 'badge-secondary', GENERATED: 'badge-info', SIGNED: 'badge-success' }[s] ?? '';
   }
 
   // ── Create dialog ──────────────────────────────────────────────────────────

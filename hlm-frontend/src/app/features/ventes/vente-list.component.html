@@ -67,6 +67,7 @@
           <th>Référence</th>
           <th>Acquéreur</th>
           <th>Statut</th>
+          <th>Contrat</th>
           <th>Prix de vente</th>
           <th>Date compromis</th>
           <th>Créée le</th>
@@ -86,6 +87,12 @@
             </td>
             <td>
               <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
+            </td>
+            <td>
+              <span class="badge" [class]="contractStatusClass(v.contractStatus)"
+                    [title]="contractStatusLabel(v.contractStatus)">
+                {{ contractStatusLabel(v.contractStatus) }}
+              </span>
             </td>
             <td class="td-num">
               {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}

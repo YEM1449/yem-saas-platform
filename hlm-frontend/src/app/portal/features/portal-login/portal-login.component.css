@@ -1,8 +1,6 @@
 /* ================================================================
    Portal Login — Magic-link request page (buyer-facing)
-   Self-service flow: buyer enters email + société key to receive
-   a new magic link. Also handles the post-verification states
-   (sent confirmation, error recovery).
+   Single-focus layout: one clear action, no distractions.
    ================================================================ */
 
 /* ── Page wrapper ─────────────────────────────────────────────── */
@@ -12,7 +10,7 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37, 99, 235, .10) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37,99,235,.10) 0%, transparent 70%),
     var(--c-bg, #f8fafc);
   padding: var(--sp-6, 24px) var(--sp-4, 16px);
 }
@@ -20,35 +18,64 @@
 /* ── Card ─────────────────────────────────────────────────────── */
 .portal-login-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   background: var(--c-surface, #fff);
   border: 1px solid var(--c-border, #e2e8f0);
   border-radius: var(--r-xl, 16px);
-  box-shadow: var(--sh-xl, 0 20px 25px -5px rgba(0, 0, 0, .08));
+  box-shadow: 0 20px 40px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
   overflow: hidden;
-  padding: var(--sp-8, 32px);
 }
 
-/* ── Title ────────────────────────────────────────────────────── */
+/* ── Brand header inside card ─────────────────────────────────── */
+.portal-login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sp-8, 32px) var(--sp-8, 32px) var(--sp-6, 24px);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+  text-align: center;
+  background: var(--c-surface, #fff);
+}
+
+.portal-login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  border-radius: var(--r-xl, 16px);
+  color: #fff;
+  margin-bottom: var(--sp-4, 16px);
+  box-shadow: 0 6px 16px rgba(37,99,235,.35);
+}
+
 .portal-login-title {
-  margin: 0 0 var(--sp-2, 8px);
+  margin: 0 0 var(--sp-1-5, 6px);
   font-size: var(--text-2xl, 1.5rem);
   font-weight: var(--fw-bold, 700);
   letter-spacing: var(--ls-tight, -0.025em);
   color: var(--c-text, #0f172a);
-  text-align: center;
+  line-height: var(--lh-tight, 1.25);
 }
 
-/* ── Subtitle ─────────────────────────────────────────────────── */
 .portal-login-subtitle {
-  margin: 0 0 var(--sp-6, 24px);
+  margin: 0;
   font-size: var(--text-sm, 0.875rem);
   color: var(--c-text-secondary, #475569);
-  text-align: center;
   line-height: var(--lh-normal, 1.5);
+  max-width: 280px;
 }
 
-/* ── Form group ───────────────────────────────────────────────── */
+/* ── Card body ────────────────────────────────────────────────── */
+.portal-login-body {
+  padding: var(--sp-6, 24px) var(--sp-8, 32px) var(--sp-8, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 16px);
+}
+
+/* ── Form fields ──────────────────────────────────────────────── */
 .portal-form-group {
   display: flex;
   flex-direction: column;
@@ -76,13 +103,11 @@
   box-sizing: border-box;
 }
 
-.portal-form-group input:hover {
-  border-color: var(--c-border-strong, #cbd5e1);
-}
+.portal-form-group input:hover { border-color: var(--c-border-strong, #cbd5e1); }
 
 .portal-form-group input:focus {
   border-color: var(--c-primary-400, #60a5fa);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
 }
 
 /* ── Primary button ───────────────────────────────────────────── */
@@ -90,10 +115,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--sp-2, 8px);
   width: 100%;
-  min-height: var(--touch-target, 44px);
-  padding: var(--sp-2-5, 10px) var(--sp-4, 16px);
-  margin-top: var(--sp-2, 8px);
+  min-height: 48px;
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
   font-size: var(--text-base, 1rem);
   font-weight: var(--fw-semibold, 600);
   font-family: var(--font, inherit);
@@ -108,35 +133,22 @@
 
 .portal-btn-primary:hover:not(:disabled) {
   background: var(--c-primary-hover, #1d4ed8);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, .35);
+  box-shadow: 0 6px 16px rgba(37,99,235,.35);
   transform: translateY(-1px);
 }
 
-.portal-btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
+.portal-btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.portal-btn-primary:focus-visible { outline: 3px solid rgba(37,99,235,.4); outline-offset: 2px; }
+.portal-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
-.portal-btn-primary:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, .4);
-  outline-offset: 2px;
-}
-
-.portal-btn-primary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ── Secondary / ghost button ─────────────────────────────────── */
+/* ── Secondary button ─────────────────────────────────────────── */
 .portal-btn-secondary {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: var(--touch-target, 44px);
+  min-height: 44px;
   padding: var(--sp-2-5, 10px) var(--sp-4, 16px);
-  margin-top: var(--sp-3, 12px);
   font-size: var(--text-sm, 0.875rem);
   font-weight: var(--fw-medium, 500);
   font-family: var(--font, inherit);
@@ -155,30 +167,27 @@
   background: var(--c-primary-50, #eff6ff);
 }
 
-.portal-btn-secondary:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, .3);
-  outline-offset: 2px;
-}
+.portal-btn-secondary:focus-visible { outline: 3px solid rgba(37,99,235,.3); outline-offset: 2px; }
 
 /* ── Alert banners ────────────────────────────────────────────── */
 .portal-alert {
-  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3, 12px);
+  padding: var(--sp-3-5, 14px) var(--sp-4, 16px);
   border-radius: var(--r-md, 8px);
   font-size: var(--text-sm, 0.875rem);
   line-height: var(--lh-normal, 1.5);
-  margin-bottom: var(--sp-4, 16px);
 }
+
+.portal-alert svg { flex-shrink: 0; margin-top: 1px; }
+.portal-alert strong { display: block; margin-bottom: var(--sp-1, 4px); }
+.portal-alert p { margin: 0; }
 
 .portal-alert-success {
   background: var(--c-success-light, #f0fdf4);
   border: 1px solid var(--c-success-border, #bbf7d0);
   color: var(--c-success, #16a34a);
-}
-
-.portal-alert-success strong {
-  display: block;
-  margin-bottom: var(--sp-1, 4px);
-  font-weight: var(--fw-semibold, 600);
 }
 
 .portal-alert-error {
@@ -187,9 +196,51 @@
   color: var(--c-danger, #dc2626);
 }
 
-/* ── Verifying state (inline on login page) ───────────────────── */
-.portal-login-subtitle[data-testid="portal-verifying-message"] {
-  margin-top: var(--sp-4, 16px);
-  font-size: var(--text-base, 1rem);
-  font-style: italic;
+/* ── Button spinner ───────────────────────────────────────────── */
+.portal-btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: portal-login-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.portal-btn-spinner--large {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+  border-color: var(--c-primary-100, #dbeafe);
+  border-top-color: var(--c-primary, #2563eb);
+}
+
+@keyframes portal-login-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-btn-spinner { animation: none; }
+}
+
+/* ── Verifying inline state ───────────────────────────────────── */
+.portal-verify-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  padding: var(--sp-6, 24px) 0;
+  text-align: center;
+  color: var(--c-text-secondary, #475569);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.portal-verify-inline p { margin: 0; }
+
+/* ── Hint text below form ─────────────────────────────────────── */
+.portal-login-hint {
+  margin: var(--sp-2, 8px) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
+  text-align: center;
+  line-height: var(--lh-normal, 1.5);
 }

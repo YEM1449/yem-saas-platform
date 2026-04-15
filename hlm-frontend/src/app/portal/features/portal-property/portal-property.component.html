@@ -1,57 +1,110 @@
 <div class="portal-section">
+
   <div class="portal-section-nav">
-    <a routerLink="/portal/contracts" class="portal-back-link">← Back to contracts</a>
+    <a routerLink="/portal/contracts" class="portal-back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Retour aux contrats
+    </a>
   </div>
 
-  <h2 class="portal-section-title">My Property</h2>
+  <h2 class="portal-section-title">Mon Bien Immobilier</h2>
 
   @if (loading()) {
-    <p class="portal-loading">Loading…</p>
+    <div class="portal-loading">
+      <div class="spinner"></div>
+      Chargement…
+    </div>
   } @else if (error()) {
-    <p class="portal-error">{{ error() }}</p>
+    <div class="portal-error">{{ error() }}</div>
   } @else if (property()) {
     @let p = property()!;
-    <div class="portal-card portal-card-property">
+
+    <!-- ── Property hero card ───────────────────────────────────── -->
+    <div class="portal-card prop-card">
+
+      <!-- Header with type badge -->
       <div class="portal-card-header">
-        <span class="portal-card-ref">{{ p.reference }}</span>
-        <span class="portal-badge badge-type">{{ p.type }}</span>
+        <div class="prop-header-left">
+          <div class="prop-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div>
+            <div class="portal-card-ref">{{ p.reference }}</div>
+            @if (p.title) {
+              <div class="prop-title">{{ p.title }}</div>
+            }
+          </div>
+        </div>
+        <span class="portal-badge badge-info prop-type-badge">{{ p.type }}</span>
       </div>
-      <div class="portal-card-body">
-        <h3 class="portal-property-title">{{ p.title }}</h3>
+
+      <!-- Details grid -->
+      <div class="portal-card-body prop-details">
 
         @if (p.projectName) {
           <div class="portal-card-row">
-            <span class="portal-label">Project</span>
-            <span>{{ p.projectName }}</span>
+            <span class="portal-label">Projet</span>
+            <span class="portal-value">{{ p.projectName }}</span>
           </div>
         }
         @if (p.city) {
           <div class="portal-card-row">
-            <span class="portal-label">City</span>
-            <span>{{ p.city }}</span>
+            <span class="portal-label">Ville</span>
+            <span class="portal-value">{{ p.city }}</span>
           </div>
         }
         @if (p.address) {
           <div class="portal-card-row">
-            <span class="portal-label">Address</span>
-            <span>{{ p.address }}</span>
+            <span class="portal-label">Adresse</span>
+            <span class="portal-value">{{ p.address }}</span>
           </div>
         }
         @if (p.surfaceAreaSqm) {
           <div class="portal-card-row">
-            <span class="portal-label">Surface area</span>
-            <span>{{ p.surfaceAreaSqm }} m²</span>
+            <span class="portal-label">Surface</span>
+            <span class="portal-value">{{ p.surfaceAreaSqm }} m²</span>
           </div>
         }
         @if (p.description) {
-          <div class="portal-card-description">{{ p.description }}</div>
+          <div class="prop-description">{{ p.description }}</div>
         }
+
+      </div>
+
+    </div>
+
+    <!-- ── Construction progress placeholder ──────────────────── -->
+    <div class="portal-card prop-progress-card">
+      <div class="prop-progress-inner">
+        <div class="prop-progress-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+          </svg>
+        </div>
+        <div>
+          <p class="prop-progress-title">Suivi de chantier</p>
+          <p class="prop-progress-desc">Le suivi en temps réel de l'avancement des travaux sera disponible prochainement.</p>
+        </div>
       </div>
     </div>
 
-    <!-- Construction progress placeholder -->
-    <div class="portal-card portal-card-coming-soon">
-      <p>🏗️ Construction progress — <em>Coming soon</em></p>
+  } @else {
+    <div class="portal-empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      </svg>
+      <p>Bien introuvable.</p>
     </div>
   }
+
 </div>

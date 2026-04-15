@@ -1,0 +1,23 @@
+/* ================================================================
+   Portal Contracts — Buyer contract list
+   Component-specific layout. Shared portal card/badge/button
+   utilities come from the global styles.css portal section.
+   ================================================================ */
+
+.portal-page-header  { margin-bottom: var(--sp-5, 20px); }
+.portal-page-subtitle {
+  margin: var(--sp-1, 4px) 0 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+/* Contract list wrapper */
+.portal-card-list { display: flex; flex-direction: column; gap: 0; }
+
+/* Price emphasis */
+.contract-price {
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-text, #0f172a);
+  font-variant-numeric: tabular-nums;
+}

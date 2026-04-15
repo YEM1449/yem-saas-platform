@@ -9,6 +9,7 @@ import { PortalContract } from '../../../core/models/portal.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './portal-contracts.component.html',
+  styleUrl: './portal-contracts.component.css',
 })
 export class PortalContractsComponent implements OnInit {
   private service = inject(PortalContractsService);
@@ -25,7 +26,7 @@ export class PortalContractsComponent implements OnInit {
   }
 
   statusLabel(s: string): string {
-    return { DRAFT: 'Draft', SIGNED: 'Signed', CANCELED: 'Cancelled' }[s] ?? s;
+    return { DRAFT: 'Brouillon', SIGNED: 'Signé', CANCELED: 'Annulé' }[s] ?? s;
   }
 
   statusClass(s: string): string {

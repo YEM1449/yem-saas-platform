@@ -1,0 +1,119 @@
+/* ================================================================
+   Portal Payments — Payment schedule detail
+   Shows KPI cards, progress bar, desktop table + mobile timeline.
+   ================================================================ */
+
+/* Restant dû — amber emphasis */
+.amount-remaining {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-warning, #d97706);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Desktop table card ──────────────────────────────────────── */
+.pmt-table-card { margin-bottom: var(--sp-4, 16px); }
+
+.th-seq { width: 48px; }
+.th-num { text-align: right; }
+.td-seq { color: var(--c-text-muted, #94a3b8); font-size: var(--text-xs, 0.75rem); font-weight: var(--fw-bold, 700); }
+.td-label { font-weight: var(--fw-medium, 500); }
+.td-num  { text-align: right; font-variant-numeric: tabular-nums; }
+.td-paid { color: var(--c-success, #16a34a); font-weight: var(--fw-semibold, 600); }
+
+/* Row tints by status */
+.tranche-paid    td { color: var(--c-text-muted, #94a3b8); }
+.tranche-overdue td { color: var(--c-danger, #dc2626); }
+
+/* ── Mobile timeline ─────────────────────────────────────────── */
+.pmt-timeline { display: none; }
+
+.pmt-card {
+  display: flex;
+  gap: var(--sp-3, 12px);
+  padding-bottom: var(--sp-4, 16px);
+}
+
+.pmt-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pmt-seq {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c-primary-100, #dbeafe);
+  color: var(--c-primary, #2563eb);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--fw-bold, 700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pmt-card--paid .pmt-seq {
+  background: var(--c-success-light, #f0fdf4);
+  color: var(--c-success, #16a34a);
+}
+
+.pmt-card--overdue .pmt-seq {
+  background: var(--c-danger-light, #fef2f2);
+  color: var(--c-danger, #dc2626);
+}
+
+.pmt-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  background: var(--c-border, #e2e8f0);
+  margin-top: var(--sp-1-5, 6px);
+}
+
+.pmt-card:last-child .pmt-connector { display: none; }
+
+.pmt-card-body {
+  flex: 1;
+  padding-bottom: var(--sp-4, 16px);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.pmt-card:last-child .pmt-card-body { border-bottom: none; }
+
+.pmt-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2, 8px);
+  margin-bottom: var(--sp-1-5, 6px);
+}
+
+.pmt-label  {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--c-text, #0f172a);
+}
+
+.pmt-amount {
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: var(--fw-bold, 700);
+  color: var(--c-text, #0f172a);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: var(--sp-1, 4px);
+}
+
+.pmt-partial, .pmt-due {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+.pmt-partial { color: var(--c-success, #16a34a); }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .pmt-table-card { display: none; }
+  .pmt-timeline   { display: flex; flex-direction: column; }
+}

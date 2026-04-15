@@ -366,4 +366,29 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                         THEN p.price - v.prix_vente ELSE 0 END) DESC
             """, nativeQuery = true)
     List<Object[]> discountByAgent(@Param("societeId") UUID societeId);
+
+    /**
+     * Counts ventes with SRU or condition-suspensive-crédit deadlines expiring within
+     * {@code daysAhead} calendar days. Only active (non-terminal) ventes are considered.
+     *
+     * <p>Returns rows: [alert_type STRING, cnt LONG]
+     * where alert_type is "SRU" or "CREDIT".
+     */
+    @Query(value = """
+            SELECT 'SRU' AS alert_type, COUNT(*) AS cnt
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('LIVRE', 'ANNULE')
+              AND v.date_fin_delai_sru IS NOT NULL
+              AND v.date_fin_delai_sru BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
+            UNION ALL
+            SELECT 'CREDIT' AS alert_type, COUNT(*) AS cnt
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('LIVRE', 'ANNULE')
+              AND v.date_limite_condition_credit IS NOT NULL
+              AND v.date_limite_condition_credit BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
+            """, nativeQuery = true)
+    List<Object[]> countExpiringDeadlines(@Param("societeId") UUID societeId,
+                                          @Param("daysAhead") int daysAhead);
 }

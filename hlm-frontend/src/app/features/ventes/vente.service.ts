@@ -7,6 +7,15 @@ const BASE = `${environment.apiUrl}/api/ventes`;
 
 export type VenteStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
 export type EcheanceStatut = 'EN_ATTENTE' | 'PAYEE' | 'EN_RETARD';
+export type ContractStatus = 'PENDING' | 'GENERATED' | 'SIGNED';
+export type TypeFinancement = 'COMPTANT' | 'CREDIT_IMMOBILIER' | 'PTZ' | 'MIXTE';
+export type MotifAnnulation =
+  | 'CREDIT_REFUSE'
+  | 'DESISTEMENT_SRU'
+  | 'CSP_NON_REALISEE'
+  | 'ACCORD_PARTIES'
+  | 'LITIGE'
+  | 'AUTRE';
 
 export interface Echeance {
   id: string;
@@ -41,6 +50,20 @@ export interface Vente {
   agentId: string;
   reservationId: string | null;
   statut: VenteStatut;
+  contractStatus: ContractStatus;
+  // French legal deadlines
+  dateFinDelaiSru: string | null;
+  dateLimiteConditionCredit: string | null;
+  // Financing risk
+  typeFinancement: TypeFinancement | null;
+  montantCredit: number | null;
+  banqueCredit: string | null;
+  creditObtenu: boolean;
+  // Cancellation reason
+  motifAnnulation: MotifAnnulation | null;
+  // Notary
+  notaireAcquereurNom: string | null;
+  notaireAcquereurEmail: string | null;
   prixVente: number | null;
   dateCompromis: string | null;
   dateActeNotarie: string | null;
@@ -72,9 +95,21 @@ export interface CreateVenteRequest {
 
 export interface UpdateVenteStatutRequest {
   statut: VenteStatut;
+  /** Required when statut === 'ANNULE'. */
+  motifAnnulation?: MotifAnnulation | null;
   dateTransition?: string | null;
   expectedClosingDate?: string | null;
   notes?: string | null;
+}
+
+export interface UpdateFinancingRequest {
+  typeFinancement?: TypeFinancement | null;
+  montantCredit?: number | null;
+  banqueCredit?: string | null;
+  creditObtenu?: boolean | null;
+  dateLimiteConditionCredit?: string | null;
+  notaireAcquereurNom?: string | null;
+  notaireAcquereurEmail?: string | null;
 }
 
 export interface CreateEcheanceRequest {
@@ -129,5 +164,17 @@ export class VenteService {
 
   inviteBuyer(venteId: string): Observable<{ message: string; magicLinkUrl: string }> {
     return this.http.post<{ message: string; magicLinkUrl: string }>(`${BASE}/${venteId}/portal/invite`, {});
+  }
+
+  generateContract(id: string): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/contract/generate`, {});
+  }
+
+  signContract(id: string): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/contract/sign`, {});
+  }
+
+  updateFinancement(id: string, req: UpdateFinancingRequest): Observable<Vente> {
+    return this.http.patch<Vente>(`${BASE}/${id}/financement`, req);
   }
 }

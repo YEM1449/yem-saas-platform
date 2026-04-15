@@ -140,6 +140,16 @@ public class VenteController {
         return venteService.signContract(id);
     }
 
+    /** Update financing information for a vente (patch semantics — null fields are ignored). */
+    @PatchMapping("/{id}/financement")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VenteResponse updateFinancement(
+            @PathVariable UUID id,
+            @RequestBody UpdateFinancingRequest request) {
+        return venteService.updateFinancement(id, request);
+    }
+
     @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")

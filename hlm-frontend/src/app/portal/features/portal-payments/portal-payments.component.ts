@@ -9,6 +9,7 @@ import { PaymentScheduleItem } from '../../../core/models/payment-schedule.model
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './portal-payments.component.html',
+  styleUrl: './portal-payments.component.css',
 })
 export class PortalPaymentsComponent implements OnInit {
   private service = inject(PortalContractsService);
@@ -38,8 +39,8 @@ export class PortalPaymentsComponent implements OnInit {
 
   itemStatusLabel(s: string): string {
     const map: Record<string, string> = {
-      DRAFT: 'Draft', ISSUED: 'Issued', SENT: 'Sent',
-      OVERDUE: 'Overdue', PAID: 'Paid', CANCELED: 'Canceled',
+      DRAFT: 'Brouillon', ISSUED: 'Émis', SENT: 'Envoyé',
+      OVERDUE: 'En retard', PAID: 'Payé', CANCELED: 'Annulé',
     };
     return map[s] ?? s;
   }

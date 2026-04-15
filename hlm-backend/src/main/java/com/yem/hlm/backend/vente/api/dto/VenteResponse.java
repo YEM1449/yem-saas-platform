@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.vente.api.dto;
 
 import com.yem.hlm.backend.vente.domain.ContractStatus;
+import com.yem.hlm.backend.vente.domain.MotifAnnulation;
+import com.yem.hlm.backend.vente.domain.TypeFinancement;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 
 import java.math.BigDecimal;
@@ -22,6 +24,19 @@ public record VenteResponse(
         UUID reservationId,
         VenteStatut statut,
         ContractStatus contractStatus,
+        // French legal deadlines
+        LocalDate dateFinDelaiSru,
+        LocalDate dateLimiteConditionCredit,
+        // Financing risk
+        TypeFinancement typeFinancement,
+        BigDecimal montantCredit,
+        String banqueCredit,
+        boolean creditObtenu,
+        // Cancellation reason
+        MotifAnnulation motifAnnulation,
+        // Notary information
+        String notaireAcquereurNom,
+        String notaireAcquereurEmail,
         BigDecimal prixVente,
         LocalDate dateCompromis,
         LocalDate dateActeNotarie,
