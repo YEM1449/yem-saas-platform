@@ -87,7 +87,9 @@
     "preview": "Aperçu",
     "upload": "Téléverser",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet élément ?",
-    "internalError": "Une erreur interne est survenue."
+    "internalError": "Une erreur interne est survenue.",
+    "passwordHide": "Masquer le mot de passe",
+    "passwordShow": "Afficher le mot de passe"
   },
   "contacts": {
     "title": "Contacts",
@@ -393,7 +395,7 @@
     "passwordWeak": "Le mot de passe doit contenir au moins 12 caractères, majuscules, minuscules, chiffres et caractères spéciaux."
   },
   "portal": {
-    "title": "Espace client",
+    "title": "Espace Client",
     "welcome": "Bienvenue",
     "myContracts": "Mes contrats",
     "myPayments": "Mon échéancier",
@@ -405,13 +407,41 @@
     "signedAt": "Signé le",
     "amount": "Montant",
     "login": {
-      "title": "Accès espace client",
-      "subtitle": "Entrez votre email pour recevoir un lien d'accès.",
-      "email": "Email",
-      "submit": "Recevoir le lien",
-      "submitting": "Envoi...",
+      "title": "Espace Client",
+      "subtitle": "Accédez à votre dossier d'acquisition en toute sécurité",
+      "orgLabel": "Organisation",
+      "orgPlaceholder": "ex : acme",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "vous@example.com",
+      "submit": "Recevoir mon lien d'accès",
+      "submitting": "Envoi en cours…",
+      "hint": "Aucun mot de passe requis — nous vous enverrons un lien sécurisé à usage unique.",
+      "sentTitle": "Vérifiez votre boîte e-mail !",
+      "sentBody": "Un lien sécurisé a été envoyé à {{email}}. Il est valable 48 heures.",
+      "resend": "Renvoyer un lien",
+      "verifying": "Vérification de votre lien d'accès…",
+      "retry": "Réessayer",
+      "errorSend": "Impossible d'envoyer le lien. Vérifiez votre adresse e-mail et réessayez.",
+      "errorVerify": "Ce lien est invalide ou expiré. Veuillez en demander un nouveau.",
       "sent": "Un lien d'accès a été envoyé à votre adresse email.",
       "error": "Email non trouvé ou lien expiré."
+    },
+    "verify": {
+      "brand": "Espace Client",
+      "verifying": "Vérification de votre lien d'accès…",
+      "redirect": "Vous serez redirigé automatiquement.",
+      "retry": "Demander un nouveau lien",
+      "errorNoToken": "Lien invalide — aucun jeton trouvé dans l'URL.",
+      "errorExpired": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+    },
+    "shell": {
+      "brandFallback": "Espace Client",
+      "navMySales": "Mes Ventes",
+      "navMyContracts": "Mes Contrats",
+      "logout": "Déconnexion",
+      "logoutAria": "Se déconnecter",
+      "navAria": "Navigation principale",
+      "footer": "Votre espace client sécurisé"
     }
   },
   "templates": {
@@ -465,6 +495,64 @@
     "paymentDate": "Date paiement",
     "method": "Méthode",
     "reference": "Référence"
+  },
+  "ventes": {
+    "title": "Ventes",
+    "create": "Nouvelle vente",
+    "detail": "Détail",
+    "buyer": "Acquéreur",
+    "salePrice": "Prix de vente",
+    "dateCompromis": "Date compromis",
+    "dateActeNotarie": "Date acte notarié",
+    "plannedDelivery": "Livraison prévue",
+    "actualDelivery": "Livraison réelle",
+    "createdAt": "Créée le",
+    "fromReservation": "issue d'une réservation",
+    "advancePipeline": "Avancer le pipeline",
+    "contractSection": "Contrat",
+    "contractGenerate": "Générer le contrat",
+    "contractSign": "Signer le contrat",
+    "contractDownloadSoon": "Télécharger (bientôt)",
+    "contractSigned": "Contrat signé avec succès.",
+    "contractPending": "Le contrat n'a pas encore été généré.",
+    "contractGenerated": "Le contrat a été généré et est prêt à être signé.",
+    "financing": "Financement",
+    "editFinancing": "Modifier",
+    "saveFinancing": "Enregistrer",
+    "cancelFinancing": "Annuler",
+    "sruDeadline": "Délai SRU",
+    "cspCreditDeadline": "Cond. crédit",
+    "notaireAcquereur": "Notaire acquéreur",
+    "notaireNom": "Nom du notaire",
+    "notaireEmail": "Email du notaire",
+    "cspDateLabel": "Date limite CSP crédit",
+    "loading": "Chargement…",
+    "statuts": {
+      "COMPROMIS": "Compromis",
+      "FINANCEMENT": "Financement",
+      "ACTE_NOTARIE": "Acte notarié",
+      "LIVRE": "Livré",
+      "ANNULE": "Annulé"
+    },
+    "contractStatuts": {
+      "PENDING": "En attente",
+      "GENERATED": "Généré",
+      "SIGNED": "Signé"
+    },
+    "motifAnnulation": {
+      "CREDIT_REFUSE": "Crédit refusé",
+      "DESISTEMENT_SRU": "Rétractation SRU (Art. L271-1)",
+      "CSP_NON_REALISEE": "Condition suspensive non réalisée",
+      "ACCORD_PARTIES": "Accord entre parties",
+      "LITIGE": "Litige",
+      "AUTRE": "Autre"
+    },
+    "typeFinancement": {
+      "COMPTANT": "Comptant",
+      "CREDIT_IMMOBILIER": "Crédit immobilier",
+      "PTZ": "PTZ (Prêt à taux zéro)",
+      "MIXTE": "Mixte"
+    }
   },
   "documents": {
     "title": "Documents",

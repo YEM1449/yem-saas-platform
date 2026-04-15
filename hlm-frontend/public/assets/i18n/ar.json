@@ -87,7 +87,9 @@
     "preview": "معاينة",
     "upload": "رفع",
     "deleteConfirm": "هل أنت متأكد من حذف هذا العنصر؟",
-    "internalError": "حدث خطأ داخلي."
+    "internalError": "حدث خطأ داخلي.",
+    "passwordHide": "إخفاء كلمة المرور",
+    "passwordShow": "إظهار كلمة المرور"
   },
   "contacts": {
     "title": "جهات الاتصال",
@@ -405,13 +407,41 @@
     "signedAt": "تاريخ التوقيع",
     "amount": "المبلغ",
     "login": {
-      "title": "الوصول إلى بوابة العملاء",
-      "subtitle": "أدخل بريدك الإلكتروني للحصول على رابط وصول.",
-      "email": "البريد الإلكتروني",
+      "title": "بوابة العملاء",
+      "subtitle": "ادخل إلى ملف اقتنائك بأمان تام",
+      "orgLabel": "المؤسسة",
+      "orgPlaceholder": "مثال: acme",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "أنت@example.com",
       "submit": "الحصول على رابط الوصول",
-      "submitting": "جارٍ الإرسال...",
+      "submitting": "جارٍ الإرسال…",
+      "hint": "لا حاجة لكلمة مرور — سنرسل إليك رابطاً آمناً للاستخدام مرة واحدة.",
+      "sentTitle": "تحقق من بريدك الإلكتروني!",
+      "sentBody": "تم إرسال رابط آمن إلى {{email}}. صالح لمدة 48 ساعة.",
+      "resend": "إعادة إرسال رابط",
+      "verifying": "جارٍ التحقق من رابط وصولك…",
+      "retry": "إعادة المحاولة",
+      "errorSend": "تعذر إرسال الرابط. يرجى التحقق من بريدك الإلكتروني والمحاولة مرة أخرى.",
+      "errorVerify": "هذا الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
       "sent": "تم إرسال رابط الوصول إلى بريدك الإلكتروني.",
       "error": "البريد الإلكتروني غير موجود أو الرابط منتهي الصلاحية."
+    },
+    "verify": {
+      "brand": "بوابة العملاء",
+      "verifying": "جارٍ التحقق من رابط وصولك…",
+      "redirect": "ستتم إعادة توجيهك تلقائياً.",
+      "retry": "طلب رابط جديد",
+      "errorNoToken": "رابط غير صالح — لم يُعثر على رمز في الرابط.",
+      "errorExpired": "هذا الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد."
+    },
+    "shell": {
+      "brandFallback": "بوابة العملاء",
+      "navMySales": "مبيعاتي",
+      "navMyContracts": "عقودي",
+      "logout": "تسجيل الخروج",
+      "logoutAria": "تسجيل الخروج",
+      "navAria": "التنقل الرئيسي",
+      "footer": "بوابتك الإلكترونية الآمنة للعملاء"
     }
   },
   "templates": {
@@ -465,6 +495,64 @@
     "paymentDate": "تاريخ الدفع",
     "method": "الطريقة",
     "reference": "المرجع"
+  },
+  "ventes": {
+    "title": "المبيعات",
+    "create": "صفقة جديدة",
+    "detail": "التفاصيل",
+    "buyer": "المشتري",
+    "salePrice": "سعر البيع",
+    "dateCompromis": "تاريخ مذكرة التفاهم",
+    "dateActeNotarie": "تاريخ العقد الموثق",
+    "plannedDelivery": "التسليم المخطط",
+    "actualDelivery": "التسليم الفعلي",
+    "createdAt": "أُنشئت في",
+    "fromReservation": "من حجز",
+    "advancePipeline": "تقديم المسار",
+    "contractSection": "العقد",
+    "contractGenerate": "توليد العقد",
+    "contractSign": "توقيع العقد",
+    "contractDownloadSoon": "تحميل (قريباً)",
+    "contractSigned": "تم توقيع العقد بنجاح.",
+    "contractPending": "لم يتم توليد العقد بعد.",
+    "contractGenerated": "تم توليد العقد وهو جاهز للتوقيع.",
+    "financing": "التمويل",
+    "editFinancing": "تعديل",
+    "saveFinancing": "حفظ",
+    "cancelFinancing": "إلغاء",
+    "sruDeadline": "مهلة الرجوع",
+    "cspCreditDeadline": "شرط الائتمان",
+    "notaireAcquereur": "موثق المشتري",
+    "notaireNom": "اسم الموثق",
+    "notaireEmail": "بريد الموثق",
+    "cspDateLabel": "تاريخ انتهاء شرط الائتمان",
+    "loading": "جارٍ التحميل…",
+    "statuts": {
+      "COMPROMIS": "مذكرة التفاهم",
+      "FINANCEMENT": "التمويل",
+      "ACTE_NOTARIE": "العقد الموثق",
+      "LIVRE": "مُسلَّم",
+      "ANNULE": "ملغى"
+    },
+    "contractStatuts": {
+      "PENDING": "قيد الانتظار",
+      "GENERATED": "مُولَّد",
+      "SIGNED": "مُوقَّع"
+    },
+    "motifAnnulation": {
+      "CREDIT_REFUSE": "رُفض التمويل",
+      "DESISTEMENT_SRU": "حق الرجوع القانوني",
+      "CSP_NON_REALISEE": "الشرط التعليقي غير مُستوفى",
+      "ACCORD_PARTIES": "اتفاق الطرفين",
+      "LITIGE": "نزاع",
+      "AUTRE": "أخرى"
+    },
+    "typeFinancement": {
+      "COMPTANT": "نقداً",
+      "CREDIT_IMMOBILIER": "قرض عقاري",
+      "PTZ": "قرض بدون فوائد",
+      "MIXTE": "مختلط"
+    }
   },
   "documents": {
     "title": "المستندات",

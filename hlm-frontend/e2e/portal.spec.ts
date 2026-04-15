@@ -112,7 +112,7 @@ test.describe('Buyer Portal', () => {
     // than one element under Playwright strict mode.
     const errorAlert = page.getByTestId('portal-error-message');
     await expect(errorAlert).toBeVisible({ timeout: 10000 });
-    await expect(errorAlert).toContainText('invalid or has expired');
+    await expect(errorAlert).toContainText('invalide ou expiré');
   });
 
   // ── Auth guard ─────────────────────────────────────────────────────────

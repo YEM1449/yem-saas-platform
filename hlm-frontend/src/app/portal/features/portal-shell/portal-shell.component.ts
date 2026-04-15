@@ -1,13 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 import { PortalTenantInfo } from '../../../core/models/portal.model';
 
 @Component({
   selector: 'app-portal-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslateModule],
   templateUrl: './portal-shell.component.html',
   styleUrl: './portal-shell.component.css',
 })
