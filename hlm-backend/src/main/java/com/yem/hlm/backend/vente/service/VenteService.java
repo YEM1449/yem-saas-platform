@@ -276,6 +276,11 @@ public class VenteService {
             }
         }
 
+        // Capture PV de réception date when advancing to LIVRE (optional convenience field)
+        if (request.statut() == VenteStatut.LIVRE && request.datePvReception() != null) {
+            vente.setDatePvReception(request.datePvReception());
+        }
+
         // Advance contact to COMPLETED_CLIENT when sale is delivered
         if (request.statut() == VenteStatut.LIVRE) {
             Contact contact = vente.getContact();
@@ -358,24 +363,28 @@ public class VenteService {
     // =========================================================================
 
     /**
-     * Generates a contract document for the given vente and transitions
+     * Called by the controller after PDF bytes have been generated and stored.
+     * Creates a {@link VenteDocument} record for the PDF and transitions
      * {@code contractStatus} to {@link com.yem.hlm.backend.vente.domain.ContractStatus#GENERATED}.
-     *
-     * <p>PDF generation is a placeholder — a real implementation would call a template engine
-     * (e.g., Thymeleaf + openhtmltopdf) and store the result via {@code VenteDocumentService}.
-     *
-     * @return updated VenteResponse with contractStatus = GENERATED
      */
-    public VenteResponse generateContract(UUID venteId) {
+    public VenteResponse generateContract(UUID venteId, String storageKey,
+                                          String fileName, long fileSizeBytes) {
         UUID societeId = societeCtx.requireSocieteId();
+        UUID actorId   = societeCtx.requireUserId();
         Vente vente    = requireVente(societeId, venteId);
 
         if (vente.getContractStatus() == com.yem.hlm.backend.vente.domain.ContractStatus.SIGNED) {
             throw new InvalidVenteTransitionException(vente.getStatut(), vente.getStatut());
         }
 
-        // TODO: invoke PDF template engine and store document via addDocument()
-        // For now we mark the status so the UI unlocks the Sign button.
+        User uploader = userRepository.findById(actorId)
+                .orElseThrow(() -> new UserNotFoundException(actorId));
+
+        var doc = new VenteDocument(societeId, vente, fileName, storageKey,
+                "application/pdf", fileSizeBytes, uploader);
+        doc.setDocumentType(com.yem.hlm.backend.vente.domain.VenteDocumentType.CONTRAT_GENERE);
+        documentRepository.save(doc);
+
         vente.setContractStatus(com.yem.hlm.backend.vente.domain.ContractStatus.GENERATED);
         return toResponse(venteRepository.save(vente));
     }
@@ -411,6 +420,8 @@ public class VenteService {
         if (request.dateLimiteConditionCredit()   != null) vente.setDateLimiteConditionCredit(request.dateLimiteConditionCredit());
         if (request.notaireAcquereurNom()         != null) vente.setNotaireAcquereurNom(request.notaireAcquereurNom());
         if (request.notaireAcquereurEmail()       != null) vente.setNotaireAcquereurEmail(request.notaireAcquereurEmail());
+        if (request.datePvReception()             != null) vente.setDatePvReception(request.datePvReception());
+        if (request.dateTitreFoncier()            != null) vente.setDateTitreFoncier(request.dateTitreFoncier());
 
         return toResponse(venteRepository.save(vente));
     }
