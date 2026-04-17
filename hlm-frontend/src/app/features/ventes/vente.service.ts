@@ -105,6 +105,7 @@ export interface UpdateVenteStatutRequest {
   dateTransition?: string | null;
   expectedClosingDate?: string | null;
   notes?: string | null;
+  datePvReception?: string | null;
 }
 
 export interface UpdateFinancingRequest {
@@ -115,6 +116,8 @@ export interface UpdateFinancingRequest {
   dateLimiteConditionCredit?: string | null;
   notaireAcquereurNom?: string | null;
   notaireAcquereurEmail?: string | null;
+  datePvReception?: string | null;
+  dateTitreFoncier?: string | null;
 }
 
 export interface CreateEcheanceRequest {

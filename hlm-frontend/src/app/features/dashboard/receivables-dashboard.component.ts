@@ -12,7 +12,7 @@ import {
   Tooltip, Legend,
 } from 'chart.js';
 import { AuthService } from '../../core/auth/auth.service';
-import { ReceivablesDashboardService } from './receivables-dashboard.service';
+import { ReceivablesDashboardService, VenteReceivablesSummary } from './receivables-dashboard.service';
 import { ReceivablesDashboard } from '../../core/models/receivables-dashboard.model';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale,
@@ -23,6 +23,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
   standalone: true,
   imports: [CommonModule, TranslateModule],
   templateUrl: './receivables-dashboard.component.html',
+  styleUrl: './receivables-dashboard.component.css',
 })
 export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
   @ViewChild('agingCanvas')   agingRef!:   ElementRef<HTMLCanvasElement>;
@@ -34,6 +35,7 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
 
   data: ReceivablesDashboard | null = null;
+  venteReceivables: VenteReceivablesSummary | null = null;
   loading = false;
   error   = '';
 
@@ -44,6 +46,14 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.loadVenteReceivables();
+  }
+
+  loadVenteReceivables(): void {
+    this.svc.getVenteReceivables().subscribe({
+      next: d => { this.venteReceivables = d; },
+      error: () => { /* non-blocking — vente receivables section stays hidden */ },
+    });
   }
 
   ngOnDestroy(): void {
