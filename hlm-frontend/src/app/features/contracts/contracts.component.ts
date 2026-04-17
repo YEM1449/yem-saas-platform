@@ -9,6 +9,7 @@ import { ContractResponse, SaleContractStatus } from '../../core/models/contract
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { OutboxService } from '../outbox/outbox.service';
 import { MessageChannel } from '../../core/models/outbox.model';
+import { VenteService, Vente } from '../ventes/vente.service';
 
 @Component({
   selector: 'app-contracts',
@@ -20,9 +21,18 @@ import { MessageChannel } from '../../core/models/outbox.model';
 export class ContractsComponent implements OnInit {
   private contractSvc = inject(ContractService);
   private outboxSvc  = inject(OutboxService);
+  private venteSvc   = inject(VenteService);
 
+  activeTab: 'ventes' | 'legacy' = 'ventes';
+
+  // Legacy contracts (SaleContract)
   contracts: ContractResponse[] = [];
   loading = false;
+
+  // Vente pipeline contracts
+  venteContracts: Vente[] = [];
+  venteContractsLoading = false;
+
   error = '';
 
   filterStatus: SaleContractStatus | '' = '';
@@ -34,6 +44,46 @@ export class ContractsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadVenteContracts();
+  }
+
+  loadVenteContracts(): void {
+    this.venteContractsLoading = true;
+    this.venteSvc.list().subscribe({
+      next: (all) => {
+        this.venteContracts = all.filter(
+          v => v.contractStatus === 'GENERATED' || v.contractStatus === 'SIGNED');
+        this.venteContractsLoading = false;
+      },
+      error: () => { this.venteContractsLoading = false; },
+    });
+  }
+
+  downloadVenteContract(venteId: string, docId: string, fileName: string): void {
+    this.venteSvc.downloadDocument(venteId, docId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href = url; a.download = fileName; a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => { this.error = 'Échec du téléchargement.'; },
+    });
+  }
+
+  venteStatutLabel(s: string): string {
+    const map: Record<string, string> = {
+      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
+      ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+    };
+    return map[s] ?? s;
+  }
+
+  contractStatusLabel(s: string): string {
+    const map: Record<string, string> = {
+      PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé',
+    };
+    return map[s] ?? s;
   }
 
   load(): void {

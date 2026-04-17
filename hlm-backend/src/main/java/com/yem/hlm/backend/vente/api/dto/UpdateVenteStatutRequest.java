@@ -15,5 +15,7 @@ public record UpdateVenteStatutRequest(
         LocalDate dateTransition,
         /** Optional expected closing date override; auto-estimated when null. */
         LocalDate expectedClosingDate,
-        String notes
+        String notes,
+        /** Optional PV de réception date; captured at LIVRE advance for convenience. */
+        LocalDate datePvReception
 ) {}

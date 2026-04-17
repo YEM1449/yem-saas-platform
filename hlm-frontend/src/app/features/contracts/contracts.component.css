@@ -24,3 +24,42 @@
   background: #fffbeb;
 }
 .msg-sms:hover:not(:disabled) { background: #fef3c7; }
+
+/* Tab bar */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  margin-bottom: -2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: #2563eb; }
+.tab-btn.active { border-bottom-color: #2563eb; color: #2563eb; font-weight: 600; }
+
+.tab-count {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badge-info    { background: #dbeafe; color: #1d4ed8; }
+.badge-success { background: #dcfce7; color: #15803d; }
+.badge-statut  { background: #f1f5f9; color: #475569; }
+
+.link-primary { color: #2563eb; text-decoration: none; }
+.link-primary:hover { text-decoration: underline; }

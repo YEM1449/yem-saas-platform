@@ -51,6 +51,11 @@ export class VenteDetailComponent implements OnInit {
   financingError  = signal('');
   financingSaving = signal(false);
 
+  // Post-livraison dates (PV réception + titre foncier)
+  editingPostLivraison = false;
+  postLivraisonForm: { datePvReception: string | null; dateTitreFoncier: string | null } =
+    { datePvReception: null, dateTitreFoncier: null };
+
   readonly typeFinancementOptions: TypeFinancement[] = ['COMPTANT', 'CREDIT_IMMOBILIER', 'PTZ', 'MIXTE'];
 
   ech: CreateEcheanceRequest = { libelle: '', montant: 0, dateEcheance: '' };
@@ -146,6 +151,24 @@ export class VenteDetailComponent implements OnInit {
         URL.revokeObjectURL(url);
       },
       error: () => this.docError.set('Échec du téléchargement.'),
+    });
+  }
+
+  openPostLivraisonEdit(v: Vente): void {
+    this.postLivraisonForm = {
+      datePvReception:  v.datePvReception  || null,
+      dateTitreFoncier: v.dateTitreFoncier || null,
+    };
+    this.editingPostLivraison = true;
+  }
+
+  savePostLivraison(venteId: string): void {
+    this.svc.updateFinancement(venteId, {
+      datePvReception:  this.postLivraisonForm.datePvReception  || null,
+      dateTitreFoncier: this.postLivraisonForm.dateTitreFoncier || null,
+    }).subscribe({
+      next: (v) => { this.vente.set(v); this.editingPostLivraison = false; },
+      error: () => {},
     });
   }
 

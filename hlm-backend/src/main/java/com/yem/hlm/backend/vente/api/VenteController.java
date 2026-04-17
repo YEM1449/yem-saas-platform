@@ -3,6 +3,7 @@ package com.yem.hlm.backend.vente.api;
 import com.yem.hlm.backend.media.service.MediaStorageService;
 import com.yem.hlm.backend.portal.api.dto.MagicLinkResponse;
 import com.yem.hlm.backend.vente.api.dto.*;
+import com.yem.hlm.backend.vente.service.VenteContractPdfService;
 import com.yem.hlm.backend.vente.service.VenteInviteService;
 import com.yem.hlm.backend.vente.service.VenteService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,13 +39,16 @@ public class VenteController {
     private final VenteService venteService;
     private final VenteInviteService venteInviteService;
     private final MediaStorageService mediaStorage;
+    private final VenteContractPdfService venteContractPdfService;
 
     public VenteController(VenteService venteService,
                            VenteInviteService venteInviteService,
-                           MediaStorageService mediaStorage) {
-        this.venteService       = venteService;
-        this.venteInviteService = venteInviteService;
-        this.mediaStorage       = mediaStorage;
+                           MediaStorageService mediaStorage,
+                           VenteContractPdfService venteContractPdfService) {
+        this.venteService             = venteService;
+        this.venteInviteService       = venteInviteService;
+        this.mediaStorage             = mediaStorage;
+        this.venteContractPdfService  = venteContractPdfService;
     }
 
     // =========================================================================
@@ -133,7 +137,15 @@ public class VenteController {
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VenteResponse generateContract(@PathVariable UUID id) {
-        return venteService.generateContract(id);
+        try {
+            byte[] pdfBytes  = venteContractPdfService.generate(id);
+            String fileName  = "contrat_" + id.toString().substring(0, 8).toUpperCase() + ".pdf";
+            String storageKey = mediaStorage.store(pdfBytes, fileName, "application/pdf");
+            return venteService.generateContract(id, storageKey, fileName, (long) pdfBytes.length);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Échec de la génération du contrat : " + e.getMessage());
+        }
     }
 
     /** Sign the contract — requires contractStatus == GENERATED. */

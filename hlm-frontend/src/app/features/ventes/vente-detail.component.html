@@ -77,6 +77,41 @@
           <dt>Livraison réelle</dt>
           <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
 
+          @if (v.statut === 'LIVRE') {
+            <dt>PV de réception</dt>
+            <dd>
+              @if (!editingPostLivraison) {
+                {{ (v.datePvReception | date:'dd/MM/yyyy') || '—' }}
+                @if (canWrite) {
+                  <button class="btn-link" (click)="openPostLivraisonEdit(v)" style="margin-left:6px;font-size:0.8rem">
+                    {{ v.datePvReception ? 'Modifier' : 'Saisir' }}
+                  </button>
+                }
+              } @else {
+                <input type="date" class="input-sm"
+                       [value]="postLivraisonForm.datePvReception || ''"
+                       (input)="postLivraisonForm.datePvReception = $any($event.target).value"
+                       style="border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;font-size:0.85rem"/>
+              }
+            </dd>
+
+            <dt>Titre foncier</dt>
+            <dd>
+              @if (!editingPostLivraison) {
+                {{ (v.dateTitreFoncier | date:'dd/MM/yyyy') || '—' }}
+              } @else {
+                <input type="date" class="input-sm"
+                       [value]="postLivraisonForm.dateTitreFoncier || ''"
+                       (input)="postLivraisonForm.dateTitreFoncier = $any($event.target).value"
+                       style="border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;font-size:0.85rem"/>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                  <button class="btn btn-sm btn-primary" (click)="savePostLivraison(v.id)">Enregistrer</button>
+                  <button class="btn btn-sm btn-secondary" (click)="editingPostLivraison = false">Annuler</button>
+                </div>
+              }
+            </dd>
+          }
+
           @if (v.dateCompromis) {
             <dt>Délai SRU</dt>
             <dd>
@@ -193,18 +228,30 @@
                   Signer le contrat
                 }
               </button>
-              <button class="btn btn-secondary" disabled data-testid="btn-download-contract">
-                Télécharger (bientôt)
-              </button>
+              @for (d of v.documents; track d.id) {
+                @if (d.documentType === 'CONTRAT_GENERE') {
+                  <button class="btn btn-secondary"
+                          (click)="downloadDoc(v.id, d.id, d.nomFichier)"
+                          data-testid="btn-download-contract">
+                    Télécharger
+                  </button>
+                }
+              }
             </div>
           }
         }
 
         @if (v.contractStatus === 'SIGNED') {
           <p class="portal-desc contract-signed-msg">Contrat signé par toutes les parties.</p>
-          <button class="btn btn-secondary" disabled data-testid="btn-download-contract-signed">
-            Télécharger (bientôt)
-          </button>
+          @for (d of v.documents; track d.id) {
+            @if (d.documentType === 'CONTRAT_GENERE') {
+              <button class="btn btn-secondary"
+                      (click)="downloadDoc(v.id, d.id, d.nomFichier)"
+                      data-testid="btn-download-contract-signed">
+                Télécharger le contrat
+              </button>
+            }
+          }
         }
 
         @if (!canWrite && v.contractStatus === 'PENDING') {

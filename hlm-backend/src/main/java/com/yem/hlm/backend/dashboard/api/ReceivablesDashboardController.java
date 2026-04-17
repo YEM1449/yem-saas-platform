@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.dashboard.api;
 
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
+import com.yem.hlm.backend.dashboard.api.dto.VenteReceivablesSummary;
 import com.yem.hlm.backend.dashboard.service.ReceivablesDashboardService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,5 +47,11 @@ public class ReceivablesDashboardController {
         UUID societeId        = societeContextHelper.requireSocieteId();
         UUID effectiveAgentId = service.resolveEffectiveAgentId(agentId);
         return service.getSummary(societeId, effectiveAgentId);
+    }
+
+    @GetMapping("/vente")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','AGENT')")
+    public VenteReceivablesSummary venteReceivables() {
+        return service.getVenteReceivablesSummary(societeContextHelper.requireSocieteId());
     }
 }

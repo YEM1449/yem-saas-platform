@@ -1,0 +1,100 @@
+/* Vente pipeline créances section */
+.vente-receivables-card {
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.vr-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e7ff;
+}
+
+.vr-kpis {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.vr-kpi {
+  flex: 1;
+  min-width: 140px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vr-kpi.accent-red   { background: #fef2f2; }
+.vr-kpi.accent-green { background: #f0fdf4; }
+
+.vr-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.vr-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.accent-red .vr-value   { color: #dc2626; }
+.accent-green .vr-value { color: #16a34a; }
+
+.vr-aging { margin-top: 4px; }
+.vr-aging-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.vr-aging-buckets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vr-bucket {
+  flex: 1;
+  min-width: 90px;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vr-bucket.accent-red { background: #fef2f2; }
+
+.vr-b-period {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.vr-b-amt {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+.vr-bucket.accent-red .vr-b-amt { color: #dc2626; }

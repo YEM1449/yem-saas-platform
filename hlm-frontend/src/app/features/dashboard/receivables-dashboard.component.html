@@ -8,6 +8,36 @@
   }
   @if (error) { <div class="alert alert-error">{{ error }}</div> }
 
+  <!-- Créances — Pipeline de ventes (VenteEcheance-based) -->
+  @if (venteReceivables) {
+    <section class="vente-receivables-card">
+      <h3 class="vr-title">Créances — Pipeline de ventes</h3>
+      <div class="vr-kpis">
+        <div class="vr-kpi">
+          <span class="vr-label">Dû total (impayé)</span>
+          <span class="vr-value">{{ formatAmount(venteReceivables.totalOutstanding) }}</span>
+        </div>
+        <div class="vr-kpi accent-red">
+          <span class="vr-label">En retard</span>
+          <span class="vr-value">{{ formatAmount(venteReceivables.totalOverdue) }}</span>
+        </div>
+        <div class="vr-kpi accent-green">
+          <span class="vr-label">À échoir</span>
+          <span class="vr-value">{{ formatAmount(venteReceivables.current) }}</span>
+        </div>
+      </div>
+      <div class="vr-aging">
+        <span class="vr-aging-label">Retard par tranche :</span>
+        <div class="vr-aging-buckets">
+          <div class="vr-bucket"><span class="vr-b-period">1–30 j</span><span class="vr-b-amt">{{ formatAmount(venteReceivables.bucket1to30) }}</span></div>
+          <div class="vr-bucket"><span class="vr-b-period">31–60 j</span><span class="vr-b-amt">{{ formatAmount(venteReceivables.bucket31to60) }}</span></div>
+          <div class="vr-bucket"><span class="vr-b-period">61–90 j</span><span class="vr-b-amt">{{ formatAmount(venteReceivables.bucket61to90) }}</span></div>
+          <div class="vr-bucket accent-red"><span class="vr-b-period">&gt;90 j</span><span class="vr-b-amt">{{ formatAmount(venteReceivables.bucketOver90) }}</span></div>
+        </div>
+      </div>
+    </section>
+  }
+
   @if (!loading && !error && data) {
     <p class="as-of">{{ 'dashboard.commercial.asOf' | translate }} {{ data.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
 

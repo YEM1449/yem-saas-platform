@@ -46,6 +46,23 @@
         </div>
       }
 
+      <!-- PV de réception — optional, shown only on LIVRE advance -->
+      @if (!cancelMode && nextStatut === 'LIVRE') {
+        <div class="form-group">
+          <label class="form-label">
+            Date PV de réception
+            <span style="font-weight:400;color:#94a3b8;font-size:0.8rem">(optionnel — saisissable plus tard)</span>
+          </label>
+          <input
+            class="form-control"
+            type="date"
+            [(ngModel)]="datePvReception"
+            [disabled]="saving"
+            data-testid="dialog-date-pv-reception"
+          />
+        </div>
+      }
+
       <!-- Notes -->
       <div class="form-group">
         <label class="form-label">Notes (optionnel)</label>

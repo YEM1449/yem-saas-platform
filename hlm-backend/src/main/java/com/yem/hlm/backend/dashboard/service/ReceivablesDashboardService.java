@@ -5,9 +5,11 @@ import com.yem.hlm.backend.dashboard.api.dto.AgingBucketDTO;
 import com.yem.hlm.backend.dashboard.api.dto.OverdueByProjectRow;
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.api.dto.RecentPaymentRow;
+import com.yem.hlm.backend.dashboard.api.dto.VenteReceivablesSummary;
 import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
 import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
 import com.yem.hlm.backend.societe.SocieteContext;
+import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,11 +48,14 @@ public class ReceivablesDashboardService {
 
     private final PaymentScheduleItemRepository itemRepository;
     private final SchedulePaymentRepository     paymentRepository;
+    private final VenteEcheanceRepository       echeanceRepository;
 
     public ReceivablesDashboardService(PaymentScheduleItemRepository itemRepository,
-                                       SchedulePaymentRepository paymentRepository) {
-        this.itemRepository    = itemRepository;
-        this.paymentRepository = paymentRepository;
+                                       SchedulePaymentRepository paymentRepository,
+                                       VenteEcheanceRepository echeanceRepository) {
+        this.itemRepository     = itemRepository;
+        this.paymentRepository  = paymentRepository;
+        this.echeanceRepository = echeanceRepository;
     }
 
     /**
@@ -136,6 +141,22 @@ public class ReceivablesDashboardService {
                 buckets.current, buckets.days30, buckets.days60, buckets.days90, buckets.days90plus,
                 overdueByProject, recentPayments
         );
+    }
+
+    // =========================================================================
+    // Vente pipeline receivables (VenteEcheance-based)
+    // =========================================================================
+
+    public VenteReceivablesSummary getVenteReceivablesSummary(UUID societeId) {
+        Object[] row = echeanceRepository.getVenteReceivablesAging(societeId);
+        BigDecimal current   = toBD(row[0]);
+        BigDecimal b1        = toBD(row[1]);
+        BigDecimal b2        = toBD(row[2]);
+        BigDecimal b3        = toBD(row[3]);
+        BigDecimal b4        = toBD(row[4]);
+        BigDecimal totalOut  = toBD(row[5]);
+        BigDecimal overdue   = b1.add(b2).add(b3).add(b4);
+        return new VenteReceivablesSummary(totalOut, overdue, current, b1, b2, b3, b4);
     }
 
     // =========================================================================

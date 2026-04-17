@@ -13,5 +13,7 @@ public record UpdateFinancingRequest(
         Boolean creditObtenu,
         LocalDate dateLimiteConditionCredit,
         String notaireAcquereurNom,
-        String notaireAcquereurEmail
+        String notaireAcquereurEmail,
+        LocalDate datePvReception,
+        LocalDate dateTitreFoncier
 ) {}

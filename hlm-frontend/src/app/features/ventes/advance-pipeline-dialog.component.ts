@@ -34,6 +34,7 @@ export class AdvancePipelineDialogComponent {
 
   cancelMode       = false;
   dateTransition   = '';
+  datePvReception  = '';
   notes            = '';
   motifAnnulation: MotifAnnulation | null = null;
 
@@ -85,10 +86,12 @@ export class AdvancePipelineDialogComponent {
   confirm(): void {
     const targetStatut: VenteStatut = this.cancelMode ? 'ANNULE' : (this.nextStatut!);
     this.confirmed.emit({
-      statut:          targetStatut,
-      motifAnnulation: this.cancelMode ? this.motifAnnulation : null,
-      dateTransition:  this.dateTransition || null,
-      notes:           this.notes.trim() || null,
+      statut:           targetStatut,
+      motifAnnulation:  this.cancelMode ? this.motifAnnulation : null,
+      dateTransition:   this.dateTransition || null,
+      datePvReception:  targetStatut === 'LIVRE' && this.datePvReception
+                          ? this.datePvReception : null,
+      notes:            this.notes.trim() || null,
     });
   }
 
