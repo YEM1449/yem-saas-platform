@@ -69,6 +69,28 @@ export class AdvancePipelineDialogComponent {
     return target === 'ACTE_NOTARIE' || target === 'LIVRE';
   }
 
+  get hintTitle(): string {
+    if (this.cancelMode) return 'Annulation irréversible';
+    const map: Partial<Record<VenteStatut, string>> = {
+      FINANCEMENT:  'Passage en phase Financement',
+      ACTE_NOTARIE: 'Signature de l\'Acte Notarié',
+      LIVRE:        'Livraison du bien',
+    };
+    return this.nextStatut ? (map[this.nextStatut] ?? '') : '';
+  }
+
+  get hintBody(): string {
+    if (this.cancelMode) {
+      return 'Cette action met fin définitivement à la vente. Le motif sera enregistré pour la traçabilité. L\'acquéreur n\'est pas notifié automatiquement.';
+    }
+    const map: Partial<Record<VenteStatut, string>> = {
+      FINANCEMENT:  'Le dossier de financement de l\'acquéreur est en cours d\'instruction. Renseignez la date limite de la condition suspensive de crédit ci-dessous si applicable.',
+      ACTE_NOTARIE: 'La signature de l\'acte authentique devant notaire officialise le transfert de propriété. La date de signature est requise.',
+      LIVRE:        'Le bien est remis à l\'acquéreur. Renseignez la date de livraison réelle. Vous pouvez également saisir la date du PV de réception si disponible.',
+    };
+    return this.nextStatut ? (map[this.nextStatut] ?? '') : '';
+  }
+
   get targetDateLabel(): string {
     const target = this.cancelMode ? 'ANNULE' : this.nextStatut;
     if (target === 'ACTE_NOTARIE') return 'Date de signature de l\'acte';

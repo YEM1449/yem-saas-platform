@@ -132,6 +132,55 @@
 /* ── Contract signed confirmation ───────────────────────────── */
 .contract-signed-msg { color: var(--color-success, #16a34a); font-weight: 500; }
 
+/* ── Contract workflow hint (step indicator) ─────────────────── */
+.contract-workflow-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cwh-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-muted, #94a3b8);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--c-surface, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+}
+
+.cwh-step.cwh-active {
+  color: #4f46e5;
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  font-weight: 600;
+}
+
+.cwh-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: currentColor;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cwh-step.cwh-active .cwh-num { background: #4f46e5; }
+.cwh-step:not(.cwh-active) .cwh-num { background: #cbd5e1; }
+
+.cwh-arrow {
+  color: var(--c-text-muted, #cbd5e1);
+  flex-shrink: 0;
+}
+
 /* ── Helpers ─────────────────────────────────────────────────── */
 .mb-20 { margin-bottom: 20px; }
 .mb-10 { margin-bottom: 10px; }

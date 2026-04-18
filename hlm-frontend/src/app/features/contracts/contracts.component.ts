@@ -71,6 +71,10 @@ export class ContractsComponent implements OnInit {
     });
   }
 
+  hasContratGenereDoc(v: Vente): boolean {
+    return v.documents.some(d => d.documentType === 'CONTRAT_GENERE');
+  }
+
   venteStatutLabel(s: string): string {
     const map: Record<string, string> = {
       COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',

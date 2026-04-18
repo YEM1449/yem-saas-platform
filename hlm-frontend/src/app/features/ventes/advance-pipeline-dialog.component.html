@@ -33,6 +33,24 @@
         }
       </div>
 
+      <!-- Info-bulle guidance -->
+      @if (hintBody) {
+        <div class="dialog-hint" [class.dialog-hint-cancel]="cancelMode">
+          <svg class="dialog-hint-icon" width="15" height="15" viewBox="0 0 15 15" fill="none">
+            @if (cancelMode) {
+              <path d="M7.5 1a6.5 6.5 0 1 0 0 13A6.5 6.5 0 0 0 7.5 1zM7.5 4v4M7.5 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            } @else {
+              <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M7.5 6.5v4M7.5 5v-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            }
+          </svg>
+          <div>
+            <strong>{{ hintTitle }}</strong>
+            {{ hintBody }}
+          </div>
+        </div>
+      }
+
       <!-- Date field — only when required by target statut -->
       @if (targetNeedsDate) {
         <div class="form-group">

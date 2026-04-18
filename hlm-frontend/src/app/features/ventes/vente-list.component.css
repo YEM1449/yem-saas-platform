@@ -20,6 +20,58 @@
   font-size: 13px;
 }
 
+/* ── Statut summary chips ────────────────────────────────────── */
+.statut-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.statut-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--c-border, #e2e8f0);
+  background: var(--c-surface, #f8fafc);
+  color: var(--c-text-muted, #64748b);
+  transition: background .12s, border-color .12s, color .12s;
+  white-space: nowrap;
+}
+
+.statut-chip:hover,
+.statut-chip.active {
+  border-color: #6366f1;
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.statut-chip-livre {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+.statut-chip-livre:hover,
+.statut-chip-livre.active {
+  border-color: #16a34a;
+  background: #dcfce7;
+}
+
+.statut-chip-annule {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #dc2626;
+}
+.statut-chip-annule:hover,
+.statut-chip-annule.active {
+  border-color: #dc2626;
+  background: #fee2e2;
+}
+
 /* ── Create dialog ───────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed;

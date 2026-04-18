@@ -21,12 +21,35 @@
   }
 </div>
 
+<!-- ── Statut summary chips ───────────────────────────────────── -->
+@if (!loading() && ventes().length > 0) {
+  <div class="statut-summary">
+    <button class="statut-chip"
+            [class.active]="filterStatut === ''"
+            (click)="filterStatut = ''"
+            title="Afficher toutes les ventes">
+      Toutes · {{ ventes().length }}
+    </button>
+    @for (s of statuts; track s) {
+      @if (countStatut(s) > 0) {
+        <button class="statut-chip statut-chip-{{ s.toLowerCase() }}"
+                [class.active]="filterStatut === s"
+                (click)="filterStatut = s"
+                [title]="STATUT_DESC[s]">
+          {{ statutLabel(s) }} · {{ countStatut(s) }}
+        </button>
+      }
+    }
+  </div>
+}
+
 <!-- ── Toolbar ────────────────────────────────────────────────── -->
 <div class="toolbar">
-  <select [(ngModel)]="filterStatut" class="form-control" style="width:200px;height:34px">
+  <select [(ngModel)]="filterStatut" class="form-control" style="width:220px;height:34px"
+          title="Filtrer par statut de la vente">
     <option value="">Tous les statuts</option>
     @for (s of statuts; track s) {
-      <option [value]="s">{{ statutLabel(s) }}</option>
+      <option [value]="s">{{ statutLabel(s) }}{{ countStatut(s) > 0 ? ' (' + countStatut(s) + ')' : '' }}</option>
     }
   </select>
 </div>
@@ -86,7 +109,8 @@
               </a>
             </td>
             <td>
-              <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
+              <span class="badge" [class]="statutClass(v.statut)"
+                    [title]="STATUT_DESC[v.statut]">{{ statutLabel(v.statut) }}</span>
             </td>
             <td>
               <span class="badge" [class]="contractStatusClass(v.contractStatus)"
