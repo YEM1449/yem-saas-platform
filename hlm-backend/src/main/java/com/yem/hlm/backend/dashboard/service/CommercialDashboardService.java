@@ -3,7 +3,6 @@ package com.yem.hlm.backend.dashboard.service;
 import com.yem.hlm.backend.auth.config.CacheConfig;
 import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
-import com.yem.hlm.backend.contract.repo.SaleContractRepository;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSalesDTO;
 import com.yem.hlm.backend.dashboard.api.dto.CommercialDashboardSummaryDTO;
 import com.yem.hlm.backend.dashboard.api.dto.DailySalesPoint;
@@ -75,7 +74,6 @@ public class CommercialDashboardService {
     private static final List<VenteStatut> TERMINAL_STATUTS =
             List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
 
-    private final SaleContractRepository contractRepository;
     private final DepositRepository      depositRepository;
     private final PropertyRepository     propertyRepository;
     private final ProjectRepository      projectRepository;
@@ -87,7 +85,6 @@ public class CommercialDashboardService {
     private final Timer                  summaryTimer;
 
     public CommercialDashboardService(
-            SaleContractRepository contractRepository,
             DepositRepository depositRepository,
             PropertyRepository propertyRepository,
             ProjectRepository projectRepository,
@@ -96,7 +93,6 @@ public class CommercialDashboardService {
             ReservationRepository reservationRepository,
             VenteRepository venteRepository,
             MeterRegistry meterRegistry) {
-        this.contractRepository  = contractRepository;
         this.depositRepository   = depositRepository;
         this.propertyRepository  = propertyRepository;
         this.projectRepository   = projectRepository;
@@ -166,8 +162,8 @@ public class CommercialDashboardService {
                                                          LocalDateTime to,
                                                          UUID projectId,
                                                          UUID effectiveAgentId) {
-        // 1 ─ Sales totals ──────────────────────────────────────────────────────
-        List<Object[]> salesRows = contractRepository.salesTotals(societeId, from, to, projectId, effectiveAgentId);
+        // 1 ─ Sales totals (vente pipeline, non-ANNULE) ───────────────────────
+        List<Object[]> salesRows = venteRepository.venteSalesTotals(societeId, from, to, projectId, effectiveAgentId);
         long salesCount = 0L;
         BigDecimal salesTotalAmount = BigDecimal.ZERO;
         BigDecimal avgSaleValue     = BigDecimal.ZERO;
@@ -188,16 +184,16 @@ public class CommercialDashboardService {
             depositsTotalAmount = toBD(row[1]);
         }
 
-        // 3 ─ Sales by project (top 10) ─────────────────────────────────────────
-        List<SalesByProjectRow> salesByProject = contractRepository
-                .salesByProject(societeId, from, to, effectiveAgentId, PageRequest.of(0, TOP_N))
+        // 3 ─ Sales by project (top 10, vente pipeline) ───────────────────────
+        List<SalesByProjectRow> salesByProject = venteRepository
+                .venteSalesByProject(societeId, from, to, effectiveAgentId)
                 .stream()
                 .map(r -> new SalesByProjectRow((UUID) r[0], (String) r[1], toLong(r[2]), toBD(r[3])))
                 .toList();
 
-        // 4 ─ Sales by agent (top 10) ───────────────────────────────────────────
-        List<SalesByAgentRow> salesByAgent = contractRepository
-                .salesByAgent(societeId, from, to, projectId, PageRequest.of(0, TOP_N))
+        // 4 ─ Sales by agent (top 10, vente pipeline) ─────────────────────────
+        List<SalesByAgentRow> salesByAgent = venteRepository
+                .venteSalesByAgent(societeId, from, to, projectId)
                 .stream()
                 .map(r -> new SalesByAgentRow((UUID) r[0], (String) r[1], toLong(r[2]), toBD(r[3])))
                 .toList();
@@ -212,9 +208,9 @@ public class CommercialDashboardService {
         propertyRepository.inventoryByType(societeId, projectId)
                 .forEach(r -> inventoryByType.put(String.valueOf(r[0]), toLong(r[1])));
 
-        // 7 ─ Sales trend (daily) ───────────────────────────────────────────────
-        List<DailySalesPoint> salesAmountByDay = contractRepository
-                .salesAmountByDay(societeId, from, to, projectId, effectiveAgentId)
+        // 7 ─ Sales trend (daily, vente pipeline) ─────────────────────────────
+        List<DailySalesPoint> salesAmountByDay = venteRepository
+                .venteSalesAmountByDay(societeId, from, to, projectId, effectiveAgentId)
                 .stream()
                 .map(r -> new DailySalesPoint(toLocalDate(r[0]), toBD(r[1])))
                 .toList();
@@ -226,9 +222,8 @@ public class CommercialDashboardService {
                 .map(r -> new DailySalesPoint(toLocalDate(r[0]), toBD(r[1])))
                 .toList();
 
-        // 9 ─ Cycle time (avgDaysDepositToSale) ────────────────────────────────
-        BigDecimal avgDaysDepositToSale = computeAvgCycleTime(
-                contractRepository.cycleTimePairs(societeId, from, to, effectiveAgentId));
+        // 9 ─ Cycle time — not available from vente pipeline (no deposit-to-sign pairs)
+        BigDecimal avgDaysDepositToSale = null;
 
         // 10 ─ Active reservations snapshot (not date-filtered) ────────────────
         List<Object[]> activeRows = depositRepository.activeReservationTotals(societeId, effectiveAgentId);
@@ -255,26 +250,28 @@ public class CommercialDashboardService {
                     .divide(BigDecimal.valueOf(depositsCount), 4, RoundingMode.HALF_UP);
         }
 
-        // 12 ─ Discount totals (avg + max percent) ──────────────────────────────
-        List<Object[]> discountRows = contractRepository.discountTotals(
-                societeId, effectiveAgentId, projectId);
+        // 12 ─ Discount totals (vente pipeline: compare property.price vs prix_vente) ─
+        // discountSummary rows: [dealsWithDiscount, totalDeals, avgDiscountPct, maxDiscountPct, totalVolume]
+        List<Object[]> discountRows = venteRepository.discountSummary(societeId);
         BigDecimal avgDiscountPercent = null;
         BigDecimal maxDiscountPercent = null;
         if (!discountRows.isEmpty()) {
             Object[] dr = discountRows.get(0);
-            avgDiscountPercent = dr[0] != null ? toBD(dr[0]).setScale(2, RoundingMode.HALF_UP) : null;
-            maxDiscountPercent = dr[1] != null ? toBD(dr[1]).setScale(2, RoundingMode.HALF_UP) : null;
+            avgDiscountPercent = dr[2] != null ? toBD(dr[2]).setScale(2, RoundingMode.HALF_UP) : null;
+            maxDiscountPercent = dr[3] != null ? toBD(dr[3]).setScale(2, RoundingMode.HALF_UP) : null;
         }
 
-        // 13 ─ Discount by agent (top 10) ───────────────────────────────────────
-        List<DiscountByAgentRow> discountByAgent = contractRepository
-                .discountByAgent(societeId, PageRequest.of(0, TOP_N))
+        // 13 ─ Discount by agent (top 10, vente pipeline) ─────────────────────
+        // discountByAgent rows: [agentId, prenom, nomFamille, dealsWithDiscount, totalDeals, avgDiscountPct, volume]
+        List<DiscountByAgentRow> discountByAgent = venteRepository
+                .discountByAgent(societeId)
                 .stream()
+                .limit(TOP_N)
                 .map(r -> new DiscountByAgentRow(
                         (UUID)   r[0],
-                        (String) r[1],
-                        toBD(    r[2]).setScale(2, RoundingMode.HALF_UP),
-                        toLong(  r[3])
+                        (String) r[1] + " " + (String) r[2],
+                        r[5] != null ? toBD(r[5]).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO,
+                        toLong(  r[4])
                 ))
                 .toList();
 
@@ -361,24 +358,24 @@ public class CommercialDashboardService {
                                                 int page,
                                                 int size) {
         int safeSize = Math.min(size, 100);
-        Page<Object[]> raw = contractRepository.salesForTable(
+        Page<Object[]> raw = venteRepository.venteSalesForTable(
                 societeId, from, to, projectId, effectiveAgentId,
                 PageRequest.of(page, safeSize));
 
+        // Column 1 (created_at) comes from native SQL as java.sql.Timestamp — convert safely.
         List<SalesTableRow> rows = raw.getContent().stream()
                 .map(r -> new SalesTableRow(
-                        (UUID)            r[0],
-                        (LocalDateTime)   r[1],
-                        (String)          r[2],
-                        (String)          r[3],
-                        (String)          r[4],
-                        (String)          r[5],
-                        toBD(             r[6])
+                        (UUID)          r[0],
+                        toLocalDateTime(r[1]),
+                        (String)        r[2],
+                        (String)        r[3],
+                        (String)        r[4],
+                        (String)        r[5],
+                        toBD(           r[6])
                 ))
                 .toList();
 
-        // Reuse total amount from summary totals (1 extra query) for the table header
-        List<Object[]> totals = contractRepository.salesTotals(societeId, from, to, projectId, effectiveAgentId);
+        List<Object[]> totals = venteRepository.venteSalesTotals(societeId, from, to, projectId, effectiveAgentId);
         BigDecimal totalAmount = totals.isEmpty() ? BigDecimal.ZERO : toBD(totals.get(0)[1]);
 
         return new CommercialDashboardSalesDTO(
@@ -487,5 +484,11 @@ public class CommercialDashboardService {
         if (o instanceof LocalDate ld) return ld;
         if (o instanceof java.sql.Date d) return d.toLocalDate();
         return LocalDate.now();
+    }
+
+    private static LocalDateTime toLocalDateTime(Object o) {
+        if (o instanceof LocalDateTime ldt) return ldt;
+        if (o instanceof java.sql.Timestamp ts) return ts.toLocalDateTime();
+        return null;
     }
 }

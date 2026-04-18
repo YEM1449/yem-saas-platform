@@ -14,38 +14,38 @@ import {
   template: `
     <div class="sales-page">
       <div class="sales-header">
-        <a routerLink="/app/dashboard/commercial">&lsaquo; Back to Dashboard</a>
-        <h2>Sales Details</h2>
+        <a routerLink="/app/dashboard/commercial">&lsaquo; Tableau de bord</a>
+        <h2>Détail des ventes</h2>
       </div>
 
-      @if (loading) { <p>Loading…</p> }
+      @if (loading) { <p>Chargement…</p> }
       @if (error)   { <p class="error">{{ error }}</p> }
 
       @if (!loading && !error && data) {
         <p class="summary-line">
-          <strong>{{ data.totalCount }}</strong> signed contracts &mdash;
-          total <strong>{{ formatAmount(data.totalAmount) }}</strong>
+          <strong>{{ data.totalCount }}</strong> vente{{ data.totalCount !== 1 ? 's' : '' }} &mdash;
+          CA total <strong>{{ formatAmount(data.totalAmount) }}</strong>
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Signed At</th>
-              <th>Project</th>
-              <th>Property</th>
-              <th>Buyer</th>
+              <th>Date compromis</th>
+              <th>Projet</th>
+              <th>Bien</th>
+              <th>Acquéreur</th>
               <th>Agent</th>
-              <th class="num">Amount</th>
+              <th class="num">Prix de vente</th>
             </tr>
           </thead>
           <tbody>
             @for (row of data.sales; track row.id) {
               <tr>
                 <td>{{ row.signedAt | date:'dd/MM/yyyy' }}</td>
-                <td>{{ row.projectName }}</td>
-                <td>{{ row.propertyRef }}</td>
-                <td>{{ row.buyerName }}</td>
-                <td>{{ row.agentEmail }}</td>
+                <td>{{ row.projectName || '—' }}</td>
+                <td>{{ row.propertyRef || '—' }}</td>
+                <td>{{ row.buyerName || '—' }}</td>
+                <td>{{ row.agentEmail || '—' }}</td>
                 <td class="num">{{ formatAmount(row.amount) }}</td>
               </tr>
             }
@@ -62,7 +62,7 @@ import {
       }
 
       @if (!loading && !error && !data) {
-        <p>No sales data available.</p>
+        <p>Aucune vente enregistrée sur cette période.</p>
       }
     </div>
   `,

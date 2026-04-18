@@ -391,4 +391,142 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             """, nativeQuery = true)
     List<Object[]> countExpiringDeadlines(@Param("societeId") UUID societeId,
                                           @Param("daysAhead") int daysAhead);
+
+    // =========================================================================
+    // Commercial dashboard queries
+    // =========================================================================
+
+    /**
+     * Sales totals for the commercial dashboard (non-ANNULE ventes in date range).
+     * Rows: [count(Long), totalAmount(BigDecimal), avgAmount(BigDecimal)].
+     * CAST(:x AS uuid) IS NULL pattern handles nullable UUID params in native SQL.
+     */
+    @Query(value = """
+            SELECT COUNT(v.id), COALESCE(SUM(v.prix_vente), 0), COALESCE(AVG(v.prix_vente), 0)
+            FROM vente v
+            LEFT JOIN property pr ON pr.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:projectId AS uuid) IS NULL OR pr.project_id = CAST(:projectId AS uuid))
+              AND (CAST(:agentId  AS uuid) IS NULL OR v.agent_id   = CAST(:agentId  AS uuid))
+            """, nativeQuery = true)
+    List<Object[]> venteSalesTotals(@Param("societeId") UUID societeId,
+                                    @Param("from") java.time.LocalDateTime from,
+                                    @Param("to") java.time.LocalDateTime to,
+                                    @Param("projectId") UUID projectId,
+                                    @Param("agentId") UUID agentId);
+
+    /**
+     * Paginated drill-down table of ventes for the commercial dashboard.
+     * Rows: [id(UUID), createdAt(Timestamp), projectName(String), propertyRef(String),
+     *        buyerName(String), agentEmail(String), prixVente(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT v.id, v.created_at, proj.name, pr.reference_code,
+                   c.first_name || ' ' || c.last_name, u.email, v.prix_vente
+            FROM vente v
+            LEFT JOIN property pr   ON pr.id   = v.property_id
+            LEFT JOIN project  proj ON proj.id  = pr.project_id
+            LEFT JOIN contact  c    ON c.id     = v.contact_id
+            LEFT JOIN app_user u    ON u.id     = v.agent_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:projectId AS uuid) IS NULL OR proj.id    = CAST(:projectId AS uuid))
+              AND (CAST(:agentId  AS uuid) IS NULL OR v.agent_id  = CAST(:agentId  AS uuid))
+            ORDER BY v.created_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(v.id)
+            FROM vente v
+            LEFT JOIN property pr   ON pr.id   = v.property_id
+            LEFT JOIN project  proj ON proj.id  = pr.project_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:projectId AS uuid) IS NULL OR proj.id    = CAST(:projectId AS uuid))
+              AND (CAST(:agentId  AS uuid) IS NULL OR v.agent_id  = CAST(:agentId  AS uuid))
+            """,
+            nativeQuery = true)
+    org.springframework.data.domain.Page<Object[]> venteSalesForTable(
+            @Param("societeId") UUID societeId,
+            @Param("from") java.time.LocalDateTime from,
+            @Param("to") java.time.LocalDateTime to,
+            @Param("projectId") UUID projectId,
+            @Param("agentId") UUID agentId,
+            org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Top-10 project breakdown for the commercial dashboard.
+     * Rows: [projectId(UUID), projectName(String), count(Long), totalCA(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT proj.id, proj.name, COUNT(v.id), COALESCE(SUM(v.prix_vente), 0)
+            FROM vente v
+            LEFT JOIN property pr   ON pr.id  = v.property_id
+            LEFT JOIN project  proj ON proj.id = pr.project_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:agentId AS uuid) IS NULL OR v.agent_id = CAST(:agentId AS uuid))
+            GROUP BY proj.id, proj.name
+            ORDER BY SUM(v.prix_vente) DESC NULLS LAST
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> venteSalesByProject(@Param("societeId") UUID societeId,
+                                       @Param("from") java.time.LocalDateTime from,
+                                       @Param("to") java.time.LocalDateTime to,
+                                       @Param("agentId") UUID agentId);
+
+    /**
+     * Top-10 agent breakdown for the commercial dashboard.
+     * Rows: [agentId(UUID), agentName(String), count(Long), totalCA(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT v.agent_id, u.prenom || ' ' || u.nom_famille, COUNT(v.id),
+                   COALESCE(SUM(v.prix_vente), 0)
+            FROM vente v
+            LEFT JOIN app_user u ON u.id     = v.agent_id
+            LEFT JOIN property pr ON pr.id   = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:projectId AS uuid) IS NULL OR pr.project_id = CAST(:projectId AS uuid))
+            GROUP BY v.agent_id, u.prenom, u.nom_famille
+            ORDER BY SUM(v.prix_vente) DESC NULLS LAST
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> venteSalesByAgent(@Param("societeId") UUID societeId,
+                                     @Param("from") java.time.LocalDateTime from,
+                                     @Param("to") java.time.LocalDateTime to,
+                                     @Param("projectId") UUID projectId);
+
+    /**
+     * Daily CA trend (non-ANNULE) for the sparkline chart.
+     * Rows: [day(Date), totalCA(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT v.created_at::date, COALESCE(SUM(v.prix_vente), 0)
+            FROM vente v
+            LEFT JOIN property pr ON pr.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND v.created_at >= :from
+              AND v.created_at < :to
+              AND (CAST(:projectId AS uuid) IS NULL OR pr.project_id = CAST(:projectId AS uuid))
+              AND (CAST(:agentId  AS uuid) IS NULL OR v.agent_id    = CAST(:agentId  AS uuid))
+            GROUP BY v.created_at::date
+            ORDER BY v.created_at::date
+            """, nativeQuery = true)
+    List<Object[]> venteSalesAmountByDay(@Param("societeId") UUID societeId,
+                                         @Param("from") java.time.LocalDateTime from,
+                                         @Param("to") java.time.LocalDateTime to,
+                                         @Param("projectId") UUID projectId,
+                                         @Param("agentId") UUID agentId);
 }
