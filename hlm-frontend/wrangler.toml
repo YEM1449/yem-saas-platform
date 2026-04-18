@@ -18,3 +18,10 @@ main = "worker/index.ts"
 directory = "./dist/frontend/browser"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
+
+# Keep the Render backend warm so it never cold-starts.
+# Render free/starter spins down after 15 min of inactivity; a Spring Boot
+# cold start takes 30-90 s which exceeds Cloudflare Workers' 30 s wall-clock
+# limit → HTTP 524.  Pinging every 14 min prevents the spin-down entirely.
+[triggers]
+crons = ["*/14 * * * *"]
