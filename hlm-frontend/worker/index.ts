@@ -73,6 +73,22 @@ function buildProxyHeaders(incoming: Headers): Headers {
 }
 
 export default {
+  /**
+   * Cron handler — keeps the Render backend warm.
+   *
+   * Triggered every 14 min by [triggers] crons = ["*\/14 * * * *"] in wrangler.toml.
+   * Render free/starter idles after 15 min; Spring Boot cold-start takes 30-90 s
+   * which exceeds Cloudflare Workers' 30 s wall-clock cap → HTTP 524 on login.
+   * A lightweight GET /actuator/health ping is enough to reset the idle timer.
+   */
+  async scheduled(_event: ScheduledEvent, _env: Env): Promise<void> {
+    try {
+      await fetch(BACKEND + "/actuator/health", { method: "GET" });
+    } catch {
+      console.error("[warmup] health ping failed");
+    }
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
