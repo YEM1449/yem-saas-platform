@@ -220,6 +220,10 @@ export class VenteDetailComponent implements OnInit {
     return s === 'LIVRE' || s === 'ANNULE';
   }
 
+  hasContratGenereDoc(v: Vente): boolean {
+    return v.documents.some(d => d.documentType === 'CONTRAT_GENERE');
+  }
+
   private reload(id: string): void {
     this.svc.get(id).subscribe({ next: (v) => this.vente.set(v) });
   }

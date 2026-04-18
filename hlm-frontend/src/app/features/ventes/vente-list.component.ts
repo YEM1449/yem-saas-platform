@@ -56,6 +56,18 @@ export class VenteListComponent implements OnInit {
     return this.ventes().filter(v => v.statut === this.filterStatut as VenteStatut);
   }
 
+  countStatut(s: VenteStatut): number {
+    return this.ventes().filter(v => v.statut === s).length;
+  }
+
+  readonly STATUT_DESC: Record<VenteStatut, string> = {
+    COMPROMIS:    'Avant-contrat signé — financement et conditions suspensives en cours',
+    FINANCEMENT:  'Dossier de financement déposé — en attente d\'accord bancaire',
+    ACTE_NOTARIE: 'Acte authentique signé devant notaire — transfert de propriété effectué',
+    LIVRE:        'Bien remis à l\'acquéreur — vente finalisée',
+    ANNULE:       'Vente annulée — voir motif dans la fiche',
+  };
+
   ngOnInit(): void {
     this.svc.list().subscribe({
       next:  (data) => { this.ventes.set(data); this.loading.set(false); },

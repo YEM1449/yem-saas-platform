@@ -56,6 +56,48 @@
   flex-shrink: 0;
 }
 
+/* ── Info-bulle guidance box ─────────────────────────────────── */
+.dialog-hint {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: #0c4a6e;
+  line-height: 1.5;
+}
+
+.dialog-hint-icon {
+  flex-shrink: 0;
+  color: #0284c7;
+  margin-top: 1px;
+}
+
+.dialog-hint strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #075985;
+}
+
+.dialog-hint-cancel {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #7c2d12;
+}
+
+.dialog-hint-cancel .dialog-hint-icon {
+  color: #ea580c;
+}
+
+.dialog-hint-cancel strong {
+  color: #9a3412;
+}
+
 /* ── Cancel toggle button ────────────────────────────────────── */
 .btn-cancel-toggle {
   display: inline-flex;
