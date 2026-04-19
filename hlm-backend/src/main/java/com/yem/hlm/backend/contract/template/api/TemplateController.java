@@ -170,4 +170,6 @@ public class TemplateController {
     public record TemplateSourceResponse(TemplateType templateType, String htmlContent, boolean custom) {}
 
     public record UpsertTemplateRequest(String htmlContent) {}
+
+    public record ImageUploadResponse(String dataUri) {}
 }
