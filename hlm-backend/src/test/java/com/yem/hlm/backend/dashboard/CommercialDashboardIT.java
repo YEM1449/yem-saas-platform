@@ -7,12 +7,11 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
-import com.yem.hlm.backend.contract.api.dto.ContractResponse;
-import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.deposit.api.dto.CreateDepositRequest;
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
+import com.yem.hlm.backend.vente.api.dto.VenteResponse;
 
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
@@ -86,11 +85,9 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID propId2     = createAndActivateProperty(projectId, adminBearer);
         ContactResponse buyer = createContact("dash-buyer@acme.com");
 
-        // Sign 2 contracts → salesCount = 2, salesTotalAmount = 450000 + 550000
-        UUID c1 = createDraftContract(projectId, propId1, buyer.id(), adminBearer);
-        UUID c2 = createDraftContract(projectId, propId2, buyer.id(), adminBearer);
-        signContract(c1);
-        signContract(c2);
+        // Create 2 ventes → salesCount = 2, salesTotalAmount = 900000
+        createVente(propId1, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
+        createVente(propId2, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
 
         // Confirm 1 deposit on a 3rd property (just for deposit totals — won't block since property is ACTIVE)
         UUID propId3   = createAndActivateProperty(projectId, adminBearer);
@@ -110,7 +107,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         JsonNode root = objectMapper.readTree(json);
-        // Two signed contracts at 450k each → total 900k
+        // Two ventes at 450k each → total 900k
         assertThat(root.get("salesTotalAmount").decimalValue())
                 .isEqualByComparingTo("900000.00");
         // Drill-down: verify sales list endpoint also works
@@ -133,21 +130,17 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID propId2   = createAndActivateProperty(projectId, adminBearer);
         ContactResponse buyer = createContact("dash-agent-scope@acme.com");
 
-        // Create second user (AGENT B) in the same tenant
-        Societe societe = societeRepository.findById(TENANT_ID).orElseThrow();
+        // Create second user (AGENT B) — saved in the same test transaction, visible to MockMvc calls
         User agentB = new User("agent-b@acme.com", "hash");
         agentB = userRepository.save(agentB);
 
-        // Contract signed by seed USER_ID (agent A)
-        UUID cA = createDraftContract(projectId, propId1, buyer.id(), adminBearer);
-        signContract(cA);
+        // Vente assigned to seed USER_ID (agent A) — no explicit agentId, defaults to current user
+        createVente(propId1, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
 
-        // Contract created by ADMIN but assigned to agent B (explicit agentId = agentB)
-        String agentBBearer = "Bearer " + jwtProvider.generate(agentB.getId(), TENANT_ID, UserRole.ROLE_ADMIN);
-        UUID cB = createDraftContract(projectId, propId2, buyer.id(), agentBBearer, agentB.getId());
-        signContract(cB, agentBBearer);
+        // Vente assigned to agent B — explicit agentId in request
+        createVente(propId2, buyer.id(), new BigDecimal("450000.00"), agentB.getId(), adminBearer);
 
-        // Seed USER_ID calls dashboard as AGENT → must see only their own contract (salesCount=1)
+        // Seed USER_ID calls dashboard as AGENT → must see only their own vente (salesCount=1)
         String agentABearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_AGENT);
         mvc.perform(get("/api/dashboard/commercial/summary")
                         .header("Authorization", agentABearer))
@@ -228,14 +221,12 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Test
     void summary_discountFields_presentWhenContractHasListPrice() throws Exception {
         UUID projectId = createProject(adminBearer);
-        UUID propId    = createAndActivateProperty(projectId, adminBearer);
+        // Property with catalogue price 500000 — discount computed against property.price
+        UUID propId    = createAndActivateProperty(projectId, adminBearer, new BigDecimal("500000.00"));
         ContactResponse buyer = createContact("dash-disc@acme.com");
 
-        // agreedPrice=450000, listPrice=500000 → discount = 10%
-        UUID contractId = createDraftContractWithListPrice(
-                projectId, propId, buyer.id(),
-                new BigDecimal("450000.00"), new BigDecimal("500000.00"));
-        signContract(contractId);
+        // Vente at 450000 on a 500000-priced property → discount = (500000-450000)/500000*100 = 10%
+        createVente(propId, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
 
         String json = mvc.perform(get("/api/dashboard/commercial/summary")
                         .header("Authorization", adminBearer))
@@ -305,10 +296,14 @@ class CommercialDashboardIT extends IntegrationTestBase {
     }
 
     private UUID createAndActivateProperty(UUID projectId, String bearer) throws Exception {
+        return createAndActivateProperty(projectId, bearer, new BigDecimal("450000.00"));
+    }
+
+    private UUID createAndActivateProperty(UUID projectId, String bearer, BigDecimal price) throws Exception {
         String ref = "DASH-PROP-" + (++refCounter);
         var req = new PropertyCreateRequest(
                 PropertyType.APPARTEMENT, "Dash Test Appt " + ref, ref,
-                new BigDecimal("450000"), "MAD",
+                price, "MAD",
                 null, null, null, "Rabat", null, null, null, null,
                 null, null, null, null,
                 new BigDecimal("90"), null,
@@ -342,36 +337,19 @@ class CommercialDashboardIT extends IntegrationTestBase {
         return objectMapper.readValue(json, ContactResponse.class);
     }
 
-    private UUID createDraftContract(UUID projectId, UUID propertyId, UUID buyerId,
-                                     String bearer) throws Exception {
-        return createDraftContract(projectId, propertyId, buyerId, bearer, USER_ID);
-    }
-
-    private UUID createDraftContract(UUID projectId, UUID propertyId, UUID buyerId,
-                                     String bearer, UUID agentId) throws Exception {
-        var req = new CreateContractRequest(
-                projectId, propertyId, buyerId,
-                agentId,
-                new BigDecimal("450000.00"),
-                null, null
-        );
-        String json = mvc.perform(post("/api/contracts")
+    private UUID createVente(UUID propertyId, UUID contactId, BigDecimal prix,
+                             UUID agentId, String bearer) throws Exception {
+        String agentPart = agentId != null ? ",\"agentId\":\"" + agentId + "\"" : "";
+        String body = "{\"contactId\":\"" + contactId + "\",\"propertyId\":\"" + propertyId
+                + "\",\"prixVente\":" + prix.toPlainString()
+                + ",\"dateCompromis\":\"2026-04-01\"" + agentPart + "}";
+        String json = mvc.perform(post("/api/ventes")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(body))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(json, ContractResponse.class).id();
-    }
-
-    private void signContract(UUID contractId) throws Exception {
-        signContract(contractId, adminBearer);
-    }
-
-    private void signContract(UUID contractId, String bearer) throws Exception {
-        mvc.perform(post("/api/contracts/{id}/sign", contractId)
-                        .header("Authorization", bearer))
-                .andExpect(status().isOk());
+        return objectMapper.readValue(json, VenteResponse.class).id();
     }
 
     private UUID createDeposit(UUID propertyId, UUID contactId) throws Exception {
@@ -392,24 +370,6 @@ class CommercialDashboardIT extends IntegrationTestBase {
         mvc.perform(post("/api/deposits/{id}/confirm", depositId)
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk());
-    }
-
-    /** Creates a DRAFT contract with an explicit listPrice (for discount analytics). */
-    private UUID createDraftContractWithListPrice(UUID projectId, UUID propertyId,
-                                                   UUID buyerId,
-                                                   BigDecimal agreedPrice,
-                                                   BigDecimal listPrice) throws Exception {
-        var req = new CreateContractRequest(
-                projectId, propertyId, buyerId,
-                USER_ID, agreedPrice, listPrice, null
-        );
-        String json = mvc.perform(post("/api/contracts")
-                        .header("Authorization", adminBearer)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(json, ContractResponse.class).id();
     }
 
     /** Sets the prospect source on the ProspectDetail for a given contact. */

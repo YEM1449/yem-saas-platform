@@ -5,15 +5,13 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contact.domain.ProcessingBasis;
-import com.yem.hlm.backend.contract.api.dto.ContractResponse;
-import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.portal.service.PortalJwtProvider;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
+import com.yem.hlm.backend.vente.api.dto.VenteResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,17 +25,17 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for Portal payment-schedule endpoints.
+ * Integration tests for Portal property access.
+ *
+ * The payment-schedule endpoint was removed (écheancier is now in the ventes tab).
+ * Property access now requires a Vente for the authenticated buyer (not a SaleContract).
  *
  * Tests:
- * 1) buyer_seesOwnPaymentSchedule
- * 2) buyer_cannotSeeOtherBuyerSchedule (returns 404)
- * 3) buyer_seesOwnProperty
- * 4) buyer_cannotSeeOtherBuyerProperty (returns 404)
+ * 1) buyer_seesOwnProperty
+ * 2) buyer_cannotSeeOtherBuyerProperty (returns 404)
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -61,54 +59,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     }
 
     // =========================================================================
-    // 1. Buyer sees own payment schedule
-    // =========================================================================
-
-    @Test
-    void buyer_seesOwnPaymentSchedule() throws Exception {
-        UUID buyerId    = createContact("portal-p-buyer1@acme.com");
-        UUID projectId  = createProject();
-        UUID propId     = createAndActivateProperty(projectId);
-        UUID contractId = createAndSignContract(projectId, propId, buyerId,
-                new BigDecimal("500000.00"));
-
-        // Create a payment schedule for the contract
-        createPaymentSchedule(contractId);
-
-        String portalJwt = portalJwtProvider.generate(buyerId, TENANT_ID);
-
-        mvc.perform(get("/api/portal/contracts/{id}/payment-schedule", contractId)
-                        .header("Authorization", "Bearer " + portalJwt))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].contractId").value(contractId.toString()));
-    }
-
-    // =========================================================================
-    // 2. Buyer cannot see another buyer's payment schedule (→ 404)
-    // =========================================================================
-
-    @Test
-    void buyer_cannotSeeOtherBuyerSchedule() throws Exception {
-        UUID buyerA = createContact("portal-p-buyerA@acme.com");
-        UUID buyerB = createContact("portal-p-buyerB@acme.com");
-
-        UUID projectId  = createProject();
-        UUID propId     = createAndActivateProperty(projectId);
-        UUID contractId = createAndSignContract(projectId, propId, buyerA,
-                new BigDecimal("200000.00"));
-
-        createPaymentSchedule(contractId);
-
-        // BuyerB tries to access buyerA's schedule
-        String portalJwt = portalJwtProvider.generate(buyerB, TENANT_ID);
-
-        mvc.perform(get("/api/portal/contracts/{id}/payment-schedule", contractId)
-                        .header("Authorization", "Bearer " + portalJwt))
-                .andExpect(status().isNotFound());
-    }
-
-    // =========================================================================
-    // 3. Buyer sees own property
+    // 1. Buyer sees own property (via Vente ownership)
     // =========================================================================
 
     @Test
@@ -116,7 +67,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
         UUID buyerId   = createContact("portal-p-prop1@acme.com");
         UUID projectId = createProject();
         UUID propId    = createAndActivateProperty(projectId);
-        createAndSignContract(projectId, propId, buyerId, new BigDecimal("350000.00"));
+        createVente(propId, buyerId, new BigDecimal("350000.00"));
 
         String portalJwt = portalJwtProvider.generate(buyerId, TENANT_ID);
 
@@ -127,7 +78,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     }
 
     // =========================================================================
-    // 4. Buyer cannot see another buyer's property (→ 404)
+    // 2. Buyer cannot see another buyer's property (→ 404)
     // =========================================================================
 
     @Test
@@ -137,9 +88,9 @@ class PortalPaymentsIT extends IntegrationTestBase {
 
         UUID projectId = createProject();
         UUID propId    = createAndActivateProperty(projectId);
-        createAndSignContract(projectId, propId, buyerA, new BigDecimal("250000.00"));
+        createVente(propId, buyerA, new BigDecimal("250000.00"));
 
-        // BuyerB tries to access buyerA's property
+        // BuyerB tries to access buyerA's property — no Vente for buyerB → 404
         String portalJwt = portalJwtProvider.generate(buyerB, TENANT_ID);
 
         mvc.perform(get("/api/portal/properties/{id}", propId)
@@ -200,38 +151,16 @@ class PortalPaymentsIT extends IntegrationTestBase {
         return prop.id();
     }
 
-    private UUID createAndSignContract(UUID projectId, UUID propId, UUID buyerId,
-                                       BigDecimal price) throws Exception {
-        var req = new CreateContractRequest(projectId, propId, buyerId,
-                USER_ID, price, null, null);
-        String json = mvc.perform(post("/api/contracts")
-                        .header("Authorization", adminBearer)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        UUID contractId = objectMapper.readValue(json, ContractResponse.class).id();
-        mvc.perform(post("/api/contracts/{id}/sign", contractId)
-                        .header("Authorization", adminBearer))
-                .andExpect(status().isOk());
-        return contractId;
-    }
-
-    /**
-     * Creates a single payment schedule item for the given contract.
-     */
-    private void createPaymentSchedule(UUID contractId) throws Exception {
-        String body = """
-                {
-                  "label": "Full payment",
-                  "amount": 500000.00,
-                  "dueDate": "2025-12-31"
-                }
-                """;
-        mvc.perform(post("/api/contracts/{id}/schedule", contractId)
+    private UUID createVente(UUID propId, UUID buyerId, BigDecimal price) throws Exception {
+        String body = "{\"contactId\":\"" + buyerId + "\",\"propertyId\":\"" + propId
+                + "\",\"prixVente\":" + price.toPlainString()
+                + ",\"dateCompromis\":\"2026-04-01\"}";
+        String json = mvc.perform(post("/api/ventes")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readValue(json, VenteResponse.class).id();
     }
 }
