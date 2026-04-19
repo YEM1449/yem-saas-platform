@@ -26,19 +26,19 @@ export class PortalContractsComponent implements OnInit {
   }
 
   statusLabel(s: string): string {
-    return { DRAFT: 'Brouillon', SIGNED: 'Signé', CANCELED: 'Annulé' }[s] ?? s;
+    return ({ PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé' } as Record<string, string>)[s] ?? s;
   }
 
   statusClass(s: string): string {
-    return { DRAFT: 'badge-draft', SIGNED: 'badge-signed', CANCELED: 'badge-canceled' }[s] ?? '';
+    return ({ PENDING: 'badge-draft', GENERATED: 'badge-generated', SIGNED: 'badge-signed' } as Record<string, string>)[s] ?? '';
   }
 
-  downloadPdf(contractId: string): void {
-    this.service.downloadContractPdf(contractId).subscribe((blob) => {
+  downloadDoc(venteId: string, docId: string): void {
+    this.service.downloadContractPdf(venteId, docId).subscribe((blob) => {
       const url = URL.createObjectURL(blob);
       const a   = document.createElement('a');
       a.href     = url;
-      a.download = `contract_${contractId}.pdf`;
+      a.download = `contrat_${venteId}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     });

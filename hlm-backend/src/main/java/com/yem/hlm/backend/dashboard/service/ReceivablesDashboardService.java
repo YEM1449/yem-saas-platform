@@ -6,12 +6,9 @@ import com.yem.hlm.backend.dashboard.api.dto.OverdueByProjectRow;
 import com.yem.hlm.backend.dashboard.api.dto.ReceivablesDashboardDTO;
 import com.yem.hlm.backend.dashboard.api.dto.RecentPaymentRow;
 import com.yem.hlm.backend.dashboard.api.dto.VenteReceivablesSummary;
-import com.yem.hlm.backend.payments.repo.PaymentScheduleItemRepository;
-import com.yem.hlm.backend.payments.repo.SchedulePaymentRepository;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,15 +43,9 @@ public class ReceivablesDashboardService {
     private static final int TOP_N    = 10;
     private static final int RECENT_N = 10;
 
-    private final PaymentScheduleItemRepository itemRepository;
-    private final SchedulePaymentRepository     paymentRepository;
-    private final VenteEcheanceRepository       echeanceRepository;
+    private final VenteEcheanceRepository echeanceRepository;
 
-    public ReceivablesDashboardService(PaymentScheduleItemRepository itemRepository,
-                                       SchedulePaymentRepository paymentRepository,
-                                       VenteEcheanceRepository echeanceRepository) {
-        this.itemRepository     = itemRepository;
-        this.paymentRepository  = paymentRepository;
+    public ReceivablesDashboardService(VenteEcheanceRepository echeanceRepository) {
         this.echeanceRepository = echeanceRepository;
     }
 
@@ -79,10 +70,8 @@ public class ReceivablesDashboardService {
 
     private ReceivablesDashboardDTO computeSummary(UUID societeId, UUID effectiveAgentId) {
 
-        // 1 — Outstanding + overdue totals
-        List<Object[]> totals = effectiveAgentId == null
-                ? itemRepository.receivablesTotals(societeId)
-                : itemRepository.receivablesTotalsForAgent(societeId, effectiveAgentId);
+        // 1 — Outstanding + overdue totals (VenteEcheance)
+        List<Object[]> totals = echeanceRepository.venteReceivablesTotals(societeId);
         BigDecimal totalOutstanding = BigDecimal.ZERO;
         BigDecimal totalOverdue     = BigDecimal.ZERO;
         if (!totals.isEmpty()) {
@@ -91,9 +80,9 @@ public class ReceivablesDashboardService {
             totalOverdue     = toBD(row[1]);
         }
 
-        // 2 — Collection rate: totalReceived / totalIssued * 100
-        BigDecimal totalIssued   = itemRepository.totalIssuedAmount(societeId);
-        BigDecimal totalReceived = paymentRepository.totalReceived(societeId);
+        // 2 — Collection rate: totalReceived / totalIssued (VenteEcheance all-time)
+        BigDecimal totalIssued   = echeanceRepository.venteTotalIssued(societeId);
+        BigDecimal totalReceived = echeanceRepository.venteTotalReceived(societeId);
         BigDecimal collectionRate = null;
         if (totalIssued != null && totalIssued.compareTo(BigDecimal.ZERO) > 0) {
             collectionRate = totalReceived.divide(totalIssued, 4, RoundingMode.HALF_UP)
@@ -101,36 +90,32 @@ public class ReceivablesDashboardService {
                     .setScale(2, RoundingMode.HALF_UP);
         }
 
-        // 3 — Average days to payment (DATE(issued_at) → DATE(paid_at) pairs)
-        BigDecimal avgDaysToPayment = computeAvgDaysToPayment(
-                paymentRepository.issuedAndReceivedPairs(societeId));
+        // 3 — Avg days to payment — not available from VenteEcheance (no issuedAt field)
+        BigDecimal avgDaysToPayment = null;
 
-        // 4 — Aging buckets
-        List<Object[]> agingRows = effectiveAgentId == null
-                ? itemRepository.outstandingForAging(societeId)
-                : itemRepository.outstandingForAgingByAgent(societeId, effectiveAgentId);
+        // 4 — Aging buckets from raw [montant, dateEcheance] pairs
+        List<Object[]> agingRows = echeanceRepository.venteOutstandingForAging(societeId);
         AgingBuckets buckets = buildAgingBuckets(agingRows, LocalDate.now());
 
         // 5 — Overdue by project (top 10)
-        List<OverdueByProjectRow> overdueByProject = itemRepository
-                .overdueByProject(societeId, PageRequest.of(0, TOP_N))
+        List<OverdueByProjectRow> overdueByProject = echeanceRepository
+                .venteOverdueByProject(societeId)
                 .stream()
                 .map(r -> new OverdueByProjectRow((UUID) r[0], (String) r[1], toBD(r[2])))
                 .toList();
 
-        // 6 — Recent payments (last 10)
-        List<RecentPaymentRow> recentPayments = (effectiveAgentId == null
-                ? paymentRepository.recentPayments(societeId, PageRequest.of(0, RECENT_N))
-                : paymentRepository.recentPaymentsByAgent(societeId, effectiveAgentId, PageRequest.of(0, RECENT_N)))
+        // 6 — Recent payments (last 10 paid échéances)
+        List<RecentPaymentRow> recentPayments = echeanceRepository
+                .venteRecentPayments(societeId)
                 .stream()
                 .map(r -> new RecentPaymentRow(
                         (UUID)      r[0],
                         toBD(       r[1]),
                         toLocalDate(r[2]),
-                        String.valueOf(r[3]),   // channel (String in v2)
-                        (String)    r[4],
-                        (String)    r[5],
-                        (String)    r[6]
+                        (String)    r[3],   // 'Virement' literal
+                        (String)    r[4],   // projectName
+                        (String)    r[5],   // propertyRef
+                        (String)    r[6]    // agentEmail
                 ))
                 .toList();
 
@@ -148,14 +133,19 @@ public class ReceivablesDashboardService {
     // =========================================================================
 
     public VenteReceivablesSummary getVenteReceivablesSummary(UUID societeId) {
-        Object[] row = echeanceRepository.getVenteReceivablesAging(societeId);
-        BigDecimal current   = toBD(row[0]);
-        BigDecimal b1        = toBD(row[1]);
-        BigDecimal b2        = toBD(row[2]);
-        BigDecimal b3        = toBD(row[3]);
-        BigDecimal b4        = toBD(row[4]);
-        BigDecimal totalOut  = toBD(row[5]);
-        BigDecimal overdue   = b1.add(b2).add(b3).add(b4);
+        List<Object[]> rows = echeanceRepository.getVenteReceivablesAging(societeId);
+        if (rows.isEmpty()) {
+            return new VenteReceivablesSummary(BigDecimal.ZERO, BigDecimal.ZERO,
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+        Object[] row = rows.get(0);
+        BigDecimal current  = toBD(row[0]);
+        BigDecimal b1       = toBD(row[1]);
+        BigDecimal b2       = toBD(row[2]);
+        BigDecimal b3       = toBD(row[3]);
+        BigDecimal b4       = toBD(row[4]);
+        BigDecimal totalOut = toBD(row[5]);
+        BigDecimal overdue  = b1.add(b2).add(b3).add(b4);
         return new VenteReceivablesSummary(totalOut, overdue, current, b1, b2, b3, b4);
     }
 

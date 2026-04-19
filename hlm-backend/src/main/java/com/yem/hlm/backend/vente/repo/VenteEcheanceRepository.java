@@ -85,8 +85,10 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
 
     /**
      * Returns aging buckets for unpaid échéances — used by the créances dashboard.
-     * Columns: 0=current(future), 1=1-30d, 2=31-60d, 3=61-90d, 4=>90d,
-     *          5=totalOutstanding(all unpaid), 6=totalEncaisse(all paid, all time).
+     * Single row: col 0=current(future), 1=1-30d, 2=31-60d, 3=61-90d, 4=>90d,
+     *             5=totalOutstanding(all unpaid), 6=hardcoded 0 (placeholder).
+     * Return type is List<Object[]> (single element) — avoids Spring Data JPA
+     * ambiguity with Object[] return type on single-row native queries.
      */
     @Query(value = """
             SELECT
@@ -100,7 +102,95 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
             FROM vente_echeance
             WHERE societe_id = :societeId AND statut != 'PAYEE'
             """, nativeQuery = true)
-    Object[] getVenteReceivablesAging(@Param("societeId") UUID societeId);
+    List<Object[]> getVenteReceivablesAging(@Param("societeId") UUID societeId);
+
+    // =========================================================================
+    // Créances dashboard — VenteEcheance-based queries
+    // =========================================================================
+
+    /**
+     * Outstanding + overdue totals for the main créances KPIs.
+     * Single row: [totalOutstanding(BigDecimal), totalOverdue(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT
+              COALESCE(SUM(montant), 0),
+              COALESCE(SUM(CASE WHEN date_echeance < CURRENT_DATE THEN montant ELSE 0 END), 0)
+            FROM vente_echeance
+            WHERE societe_id = :societeId AND statut != 'PAYEE'
+            """, nativeQuery = true)
+    List<Object[]> venteReceivablesTotals(@Param("societeId") UUID societeId);
+
+    /**
+     * Raw [montant, dateEcheance] pairs for unpaid échéances —
+     * consumed by buildAgingBuckets() in ReceivablesDashboardService.
+     */
+    @Query("""
+            SELECT e.montant, e.dateEcheance
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    List<Object[]> venteOutstandingForAging(@Param("societeId") UUID societeId);
+
+    /**
+     * Overdue amounts grouped by project — top 10 for the bar chart.
+     * Rows: [projectId(UUID), projectName(String), overdueAmount(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT proj.id, proj.name, COALESCE(SUM(e.montant), 0)
+            FROM vente_echeance e
+            JOIN vente v    ON v.id    = e.vente_id
+            JOIN property pr ON pr.id  = v.property_id
+            JOIN project proj ON proj.id = pr.project_id
+            WHERE e.societe_id = :societeId
+              AND e.statut != 'PAYEE'
+              AND e.date_echeance < CURRENT_DATE
+            GROUP BY proj.id, proj.name
+            ORDER BY SUM(e.montant) DESC NULLS LAST
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> venteOverdueByProject(@Param("societeId") UUID societeId);
+
+    /** Sum of all échéance amounts (denominator for collection rate). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+            """)
+    java.math.BigDecimal venteTotalIssued(@Param("societeId") UUID societeId);
+
+    /** Sum of all paid échéance amounts (numerator for collection rate). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    java.math.BigDecimal venteTotalReceived(@Param("societeId") UUID societeId);
+
+    /**
+     * Last 10 paid échéances for the recent-payments table.
+     * Rows: [id, montant, datePaiement, method('Virement'), projectName, propertyRef, agentEmail].
+     */
+    @Query(value = """
+            SELECT e.id, e.montant, e.date_paiement,
+                   'Virement'                         AS method,
+                   COALESCE(proj.name,    '—')        AS project_name,
+                   COALESCE(pr.reference_code, '—')   AS property_ref,
+                   u.email                            AS agent_email
+            FROM vente_echeance e
+            JOIN vente     v    ON v.id    = e.vente_id
+            JOIN app_user  u    ON u.id    = v.agent_id
+            LEFT JOIN property  pr   ON pr.id   = v.property_id
+            LEFT JOIN project   proj ON proj.id  = pr.project_id
+            WHERE e.societe_id = :societeId
+              AND e.statut     = 'PAYEE'
+              AND e.date_paiement IS NOT NULL
+            ORDER BY e.date_paiement DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> venteRecentPayments(@Param("societeId") UUID societeId);
 
     /**
      * Returns all écheances for ventes whose property belongs to the given tranche.

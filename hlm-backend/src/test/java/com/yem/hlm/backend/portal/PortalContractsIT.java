@@ -6,15 +6,13 @@ import com.yem.hlm.backend.auth.service.JwtProvider;
 import com.yem.hlm.backend.contact.api.dto.ContactResponse;
 import com.yem.hlm.backend.contact.api.dto.CreateContactRequest;
 import com.yem.hlm.backend.contact.domain.ProcessingBasis;
-import com.yem.hlm.backend.contract.api.dto.ContractResponse;
-import com.yem.hlm.backend.contract.api.dto.CreateContractRequest;
 import com.yem.hlm.backend.portal.service.PortalJwtProvider;
 import com.yem.hlm.backend.property.api.dto.PropertyCreateRequest;
 import com.yem.hlm.backend.property.api.dto.PropertyResponse;
-
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.support.IntegrationTestBase;
 import com.yem.hlm.backend.user.domain.UserRole;
+import com.yem.hlm.backend.vente.api.dto.VenteResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +20,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -43,7 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class PortalContractsIT extends IntegrationTestBase {
 
     private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -55,24 +51,25 @@ class PortalContractsIT extends IntegrationTestBase {
     @Autowired PortalJwtProvider portalJwtProvider;
 
     private String adminBearer;
+    private String uid;
     private int refCounter = 0;
 
     @BeforeEach
     void setup() {
         adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
+        uid = UUID.randomUUID().toString().substring(0, 8);
     }
 
     // =========================================================================
-    // 1. Buyer sees own contracts
+    // 1. Buyer sees own vente contracts
     // =========================================================================
 
     @Test
     void buyer_seesOwnContracts() throws Exception {
-        UUID buyerId   = createContact("portal-c-buyer1@acme.com");
+        UUID buyerId   = createContact("portal-buyer1-" + uid + "@acme.com");
         UUID projectId = createProject();
         UUID propId    = createAndActivateProperty(projectId);
-        UUID contractId = createAndSignContract(projectId, propId, buyerId,
-                new BigDecimal("300000.00"));
+        UUID venteId   = createVente(propId, buyerId, new BigDecimal("300000.00"));
 
         String portalJwt = portalJwtProvider.generate(buyerId, TENANT_ID);
 
@@ -85,13 +82,13 @@ class PortalContractsIT extends IntegrationTestBase {
         assertThat(arr.isArray()).isTrue();
         boolean found = false;
         for (JsonNode n : arr) {
-            if (contractId.toString().equals(n.get("id").asText())) {
+            if (venteId.toString().equals(n.get("id").asText())) {
                 found = true;
                 assertThat(n.get("agreedPrice").decimalValue())
                         .isEqualByComparingTo("300000.00");
             }
         }
-        assertThat(found).as("contract %s should appear in portal list", contractId).isTrue();
+        assertThat(found).as("vente %s should appear in portal contracts list", venteId).isTrue();
     }
 
     // =========================================================================
@@ -100,14 +97,14 @@ class PortalContractsIT extends IntegrationTestBase {
 
     @Test
     void buyer_cannotSeeOtherBuyerContracts() throws Exception {
-        UUID buyerA = createContact("portal-c-buyerA@acme.com");
-        UUID buyerB = createContact("portal-c-buyerB@acme.com");
+        UUID buyerA = createContact("portal-buyerA-" + uid + "@acme.com");
+        UUID buyerB = createContact("portal-buyerB-" + uid + "@acme.com");
 
         UUID projectId = createProject();
         UUID propA = createAndActivateProperty(projectId);
-        createAndSignContract(projectId, propA, buyerA, new BigDecimal("100000.00"));
+        createVente(propA, buyerA, new BigDecimal("100000.00"));
 
-        // BuyerB has no contracts — portal list must be empty
+        // BuyerB has no ventes — portal list must be empty
         String portalJwt = portalJwtProvider.generate(buyerB, TENANT_ID);
 
         String json = mvc.perform(get("/api/portal/contracts")
@@ -135,7 +132,7 @@ class PortalContractsIT extends IntegrationTestBase {
 
     @Test
     void portal_tenantInfo_returnsName() throws Exception {
-        UUID buyerId = createContact("portal-c-info@acme.com");
+        UUID buyerId = createContact("portal-info-" + uid + "@acme.com");
         String portalJwt = portalJwtProvider.generate(buyerId, TENANT_ID);
 
         mvc.perform(get("/api/portal/tenant-info")
@@ -161,7 +158,7 @@ class PortalContractsIT extends IntegrationTestBase {
     }
 
     private UUID createProject() throws Exception {
-        String ref = "PC-PROJ-" + (++refCounter);
+        String ref = "PC-PROJ-" + uid + "-" + (++refCounter);
         String json = mvc.perform(post("/api/projects")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -172,7 +169,7 @@ class PortalContractsIT extends IntegrationTestBase {
     }
 
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
-        String ref = "PC-PROP-" + (++refCounter);
+        String ref = "PC-PROP-" + uid + "-" + (++refCounter);
         var req = new PropertyCreateRequest(
                 PropertyType.APPARTEMENT, "Portal Appt " + ref, ref,
                 new BigDecimal("400000"), "MAD",
@@ -197,20 +194,16 @@ class PortalContractsIT extends IntegrationTestBase {
         return prop.id();
     }
 
-    private UUID createAndSignContract(UUID projectId, UUID propId, UUID buyerId,
-                                       BigDecimal price) throws Exception {
-        var req = new CreateContractRequest(projectId, propId, buyerId,
-                USER_ID, price, null, null);
-        String json = mvc.perform(post("/api/contracts")
+    private UUID createVente(UUID propId, UUID buyerId, BigDecimal price) throws Exception {
+        String body = """
+                {"contactId":"%s","propertyId":"%s","prixVente":%s,"dateCompromis":"2026-04-19"}
+                """.formatted(buyerId, propId, price.toPlainString());
+        String json = mvc.perform(post("/api/ventes")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(body))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        UUID contractId = objectMapper.readValue(json, ContractResponse.class).id();
-        mvc.perform(post("/api/contracts/{id}/sign", contractId)
-                        .header("Authorization", adminBearer))
-                .andExpect(status().isOk());
-        return contractId;
+        return objectMapper.readValue(json, VenteResponse.class).id();
     }
 }
