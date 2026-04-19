@@ -628,13 +628,52 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   // ── Load / serialize ──────────────────────────────────────
 
   private loadIntoEditor(html: string): void {
-    const varMap = this.buildVarMap();
-    const withPills = html.replace(/\$\{model\.([a-zA-Z0-9_]+)\}/g, (_, varName) => {
-      const desc = varMap[varName] ?? varName;
-      return `<span class="var-pill" data-var="${varName}" contenteditable="false">${desc}</span>`;
-    });
-    this.editorEl.innerHTML = withPills;
+    // Parse into a real DOM so attribute values are never touched.
+    // A naive string-replace would corrupt Thymeleaf attributes such as
+    // th:text="${model.foo}" by inserting an <span> tag inside the quoted value.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    this.replaceTokensInTextNodes(doc.body);
+    this.editorEl.innerHTML = doc.body.innerHTML;
     this.recountInserted();
+  }
+
+  // Walk the DOM tree and replace ${model.*} tokens only inside TEXT nodes.
+  // ELEMENT nodes (and therefore their attribute values) are never modified.
+  private replaceTokensInTextNodes(parent: Node): void {
+    for (const node of Array.from(parent.childNodes)) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        this.replaceTokensInTextNode(node as Text);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = (node as Element).tagName;
+        // Skip <script> and <style> — tokens there are not meant for display.
+        if (tag !== 'SCRIPT' && tag !== 'STYLE') {
+          this.replaceTokensInTextNodes(node);
+        }
+      }
+    }
+  }
+
+  private replaceTokensInTextNode(textNode: Text): void {
+    const text = textNode.textContent ?? '';
+    if (!text.includes('${model.')) return;
+
+    const re = /\$\{model\.([a-zA-Z0-9_]+)\}/g;
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = re.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      fragment.appendChild(this.makeChip(match[1]));
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    textNode.parentNode?.replaceChild(fragment, textNode);
   }
 
   private serializeContent(): string {
