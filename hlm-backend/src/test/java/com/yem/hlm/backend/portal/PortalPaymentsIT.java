@@ -19,7 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -39,7 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class PortalPaymentsIT extends IntegrationTestBase {
 
     private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -51,10 +49,12 @@ class PortalPaymentsIT extends IntegrationTestBase {
     @Autowired PortalJwtProvider portalJwtProvider;
 
     private String adminBearer;
+    private String uid;
     private int refCounter = 0;
 
     @BeforeEach
     void setup() {
+        uid = UUID.randomUUID().toString().substring(0, 8);
         adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
     }
 
@@ -64,7 +64,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
 
     @Test
     void buyer_seesOwnProperty() throws Exception {
-        UUID buyerId   = createContact("portal-p-prop1@acme.com");
+        UUID buyerId   = createContact("portal-p-prop1-" + uid + "@acme.com");
         UUID projectId = createProject();
         UUID propId    = createAndActivateProperty(projectId);
         createVente(propId, buyerId, new BigDecimal("350000.00"));
@@ -83,8 +83,8 @@ class PortalPaymentsIT extends IntegrationTestBase {
 
     @Test
     void buyer_cannotSeeOtherBuyerProperty() throws Exception {
-        UUID buyerA = createContact("portal-p-propA@acme.com");
-        UUID buyerB = createContact("portal-p-propB@acme.com");
+        UUID buyerA = createContact("portal-p-propA-" + uid + "@acme.com");
+        UUID buyerB = createContact("portal-p-propB-" + uid + "@acme.com");
 
         UUID projectId = createProject();
         UUID propId    = createAndActivateProperty(projectId);
@@ -115,7 +115,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     }
 
     private UUID createProject() throws Exception {
-        String ref = "PP-PROJ-" + (++refCounter);
+        String ref = "PP-PROJ-" + uid + "-" + (++refCounter);
         String json = mvc.perform(post("/api/projects")
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +126,7 @@ class PortalPaymentsIT extends IntegrationTestBase {
     }
 
     private UUID createAndActivateProperty(UUID projectId) throws Exception {
-        String ref = "PP-PROP-" + (++refCounter);
+        String ref = "PP-PROP-" + uid + "-" + (++refCounter);
         var req = new PropertyCreateRequest(
                 PropertyType.APPARTEMENT, "Portal Pay Appt " + ref, ref,
                 new BigDecimal("450000"), "MAD",
