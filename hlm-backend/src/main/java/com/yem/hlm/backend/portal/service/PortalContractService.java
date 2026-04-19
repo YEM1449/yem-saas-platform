@@ -1,10 +1,5 @@
 package com.yem.hlm.backend.portal.service;
 
-import com.yem.hlm.backend.contract.repo.SaleContractRepository;
-import com.yem.hlm.backend.contract.service.ContractNotFoundException;
-import com.yem.hlm.backend.contract.service.pdf.ContractDocumentService;
-import com.yem.hlm.backend.payments.api.dto.PaymentScheduleItemResponse;
-import com.yem.hlm.backend.payments.service.PaymentScheduleService;
 import com.yem.hlm.backend.portal.api.dto.PortalContractResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalPropertyResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTenantInfoResponse;
@@ -13,6 +8,11 @@ import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.Societe;
+import com.yem.hlm.backend.vente.domain.Vente;
+import com.yem.hlm.backend.vente.domain.VenteDocumentType;
+import com.yem.hlm.backend.vente.domain.VenteStatut;
+import com.yem.hlm.backend.vente.repo.VenteDocumentRepository;
+import com.yem.hlm.backend.vente.repo.VenteRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,80 +30,35 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PortalContractService {
 
-    private final SaleContractRepository contractRepository;
-    private final PaymentScheduleService paymentScheduleService;
-    private final PropertyRepository propertyRepository;
-    private final SocieteRepository societeRepository;
-    private final ContractDocumentService contractDocumentService;
+    private final VenteRepository         venteRepository;
+    private final VenteDocumentRepository venteDocumentRepository;
+    private final PropertyRepository      propertyRepository;
+    private final SocieteRepository       societeRepository;
 
-    public PortalContractService(SaleContractRepository contractRepository,
-                                 PaymentScheduleService paymentScheduleService,
+    public PortalContractService(VenteRepository venteRepository,
+                                 VenteDocumentRepository venteDocumentRepository,
                                  PropertyRepository propertyRepository,
-                                 SocieteRepository societeRepository,
-                                 ContractDocumentService contractDocumentService) {
-        this.contractRepository      = contractRepository;
-        this.paymentScheduleService  = paymentScheduleService;
+                                 SocieteRepository societeRepository) {
+        this.venteRepository         = venteRepository;
+        this.venteDocumentRepository = venteDocumentRepository;
         this.propertyRepository      = propertyRepository;
         this.societeRepository       = societeRepository;
-        this.contractDocumentService = contractDocumentService;
     }
 
     // =========================================================================
     // Contracts
     // =========================================================================
 
-    /** Returns all contracts where the authenticated contact is the buyer. */
+    /** Returns all non-cancelled ventes where the authenticated contact is the buyer. */
     public List<PortalContractResponse> listContracts() {
         UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
-        return contractRepository.findPortalContracts(societeId, contactId)
+        return venteRepository
+                .findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
                 .stream()
-                .map(PortalContractResponse::from)
+                .filter(v -> v.getStatut() != VenteStatut.ANNULE)
+                .map(v -> buildResponse(societeId, v))
                 .toList();
-    }
-
-    /**
-     * Generates the contract PDF for the authenticated buyer.
-     * Enforces: contract must belong to this contact (→ 404 otherwise).
-     */
-    public byte[] getContractPdf(UUID contractId) {
-        UUID societeId = requireSocieteId();
-        UUID contactId = getContactId();
-
-        var contract = contractRepository.findBySocieteIdAndId(societeId, contractId)
-                .orElseThrow(() -> new ContractNotFoundException(contractId));
-
-        if (!contract.getBuyerContact().getId().equals(contactId)) {
-            throw new ContractNotFoundException(contractId); // 404, no info leak
-        }
-
-        // ContractDocumentService.enforceAgentOwnership() only restricts ROLE_AGENT,
-        // not ROLE_PORTAL, so it passes cleanly.
-        return contractDocumentService.generate(contractId);
-    }
-
-    // =========================================================================
-    // Payment schedule (v2 — PaymentScheduleItem)
-    // =========================================================================
-
-    /**
-     * Returns the v2 payment schedule items for a contract owned by the authenticated buyer.
-     * Enforces buyer ownership (→ 404 if this contact is not the buyer).
-     * Delegates to {@link PaymentScheduleService#listByContract(UUID)} which uses SocieteContext
-     * (already set by the portal JWT filter) for société isolation.
-     */
-    public List<PaymentScheduleItemResponse> getPaymentSchedule(UUID contractId) {
-        UUID societeId = requireSocieteId();
-        UUID contactId = getContactId();
-
-        var contract = contractRepository.findBySocieteIdAndId(societeId, contractId)
-                .orElseThrow(() -> new ContractNotFoundException(contractId));
-
-        if (!contract.getBuyerContact().getId().equals(contactId)) {
-            throw new ContractNotFoundException(contractId);
-        }
-
-        return paymentScheduleService.listByContract(contractId);
     }
 
     // =========================================================================
@@ -111,16 +66,19 @@ public class PortalContractService {
     // =========================================================================
 
     /**
-     * Returns property details if the authenticated contact has a contract for it.
-     * Throws 404 if no such contract exists.
+     * Returns property details if the authenticated contact has a vente for it.
+     * Throws 404 if no such vente exists.
      */
     public PortalPropertyResponse getProperty(UUID propertyId) {
         UUID societeId = requireSocieteId();
         UUID contactId = getContactId();
 
-        boolean hasContract = contractRepository.existsBySocieteIdAndProperty_IdAndBuyerContact_Id(
-                societeId, propertyId, contactId);
-        if (!hasContract) {
+        boolean hasVente = venteRepository
+                .findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
+                .stream()
+                .anyMatch(v -> propertyId.equals(v.getPropertyId())
+                            && v.getStatut() != VenteStatut.ANNULE);
+        if (!hasVente) {
             throw new PropertyNotFoundException(propertyId);
         }
 
@@ -143,8 +101,35 @@ public class PortalContractService {
     }
 
     // =========================================================================
-    // Helpers
+    // Private helpers
     // =========================================================================
+
+    private PortalContractResponse buildResponse(UUID societeId, Vente v) {
+        String propertyRef  = "—";
+        String propertyType = "—";
+        String projectName  = "—";
+
+        if (v.getPropertyId() != null) {
+            var propOpt = propertyRepository.findBySocieteIdAndId(societeId, v.getPropertyId());
+            if (propOpt.isPresent()) {
+                var prop = propOpt.get();
+                propertyRef  = prop.getReferenceCode() != null ? prop.getReferenceCode() : "—";
+                propertyType = prop.getType() != null ? prop.getType().name() : "—";
+                if (prop.getProject() != null && prop.getProject().getName() != null) {
+                    projectName = prop.getProject().getName();
+                }
+            }
+        }
+
+        UUID docId = venteDocumentRepository.findAllByVente_IdOrderByCreatedAtDesc(v.getId())
+                .stream()
+                .filter(d -> VenteDocumentType.CONTRAT_GENERE.equals(d.getDocumentType()))
+                .map(doc -> doc.getId())
+                .findFirst()
+                .orElse(null);
+
+        return PortalContractResponse.fromVente(v, propertyRef, propertyType, projectName, docId);
+    }
 
     private UUID requireSocieteId() {
         UUID id = SocieteContext.getSocieteId();

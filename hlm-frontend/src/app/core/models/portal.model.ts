@@ -17,9 +17,10 @@ export interface PortalContract {
   propertyRef: string;
   propertyType: string;
   projectName: string;
-  status: 'DRAFT' | 'SIGNED' | 'CANCELED';
+  status: 'PENDING' | 'GENERATED' | 'SIGNED';
   agreedPrice: number;
   signedAt: string | null;
+  docId: string | null;
 }
 
 
