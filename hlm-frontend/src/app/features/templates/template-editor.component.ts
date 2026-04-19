@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TemplateService } from './template.service';
 import { TemplateType } from './template.model';
@@ -182,6 +183,27 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
                     stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+
+      <div class="fmt-sep"></div>
+
+      <!-- Insert image -->
+      <button class="fmt-btn fmt-btn-image" title="Insérer une image (logo, tampon…)"
+              (mousedown)="$event.preventDefault()" (click)="triggerImagePicker()"
+              [disabled]="imageUploading">
+        <svg *ngIf="!imageUploading" width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="4.5" cy="5.5" r="1.2" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M1 10l3-3 2.5 2.5L9 7l4 4" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="imageUploading" class="spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="#cbd5e1" stroke-width="2"/>
+          <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Image
+      </button>
+      <input #imageInput type="file" accept="image/jpeg,image/png,image/gif,image/webp"
+             style="display:none" (change)="onImageFileSelected($event)"/>
 
       <div class="fmt-sep"></div>
 
@@ -466,19 +488,28 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
     .btn-danger-soft:hover { background: #fee2e2; }
     .msg-error   { color: #dc2626; font-size: 12px; }
     .msg-success { color: #16a34a; font-size: 12px; }
+
+    /* Image button */
+    .fmt-btn-image { width: auto; padding: 0 8px; gap: 4px; font-size: 12px; color: #374151; }
+    .fmt-btn-image:disabled { opacity: .5; cursor: not-allowed; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .8s linear infinite; }
   `],
 })
 export class TemplateEditorComponent implements OnInit, AfterViewInit {
   private route  = inject(ActivatedRoute);
   private router = inject(Router);
   private svc    = inject(TemplateService);
+  private http   = inject(HttpClient);
 
-  @ViewChild('editor')    editorRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('rawEditor') rawEditorRef!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('editor')     editorRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('rawEditor')  rawEditorRef!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('imageInput') imageInputRef!: ElementRef<HTMLInputElement>;
 
   type!: TemplateType;
-  isCustom     = false;
-  saving       = false;
+  isCustom       = false;
+  saving         = false;
+  imageUploading = false;
   saveError    = '';
   saveSuccess  = false;
   toast        = '';
@@ -800,6 +831,65 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
       .map(g => ({ ...g, vars: g.vars.filter(v =>
         v.var.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q)) }))
       .filter(g => g.vars.length > 0);
+  }
+
+  // ── Image upload ──────────────────────────────────────────
+
+  triggerImagePicker(): void {
+    this.imageInputRef.nativeElement.value = '';
+    this.imageInputRef.nativeElement.click();
+  }
+
+  onImageFileSelected(ev: Event): void {
+    const file = (ev.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      this.flashToast('Image trop grande (max 3 Mo)');
+      return;
+    }
+
+    const form = new FormData();
+    form.append('file', file);
+    this.imageUploading = true;
+    this.saveSelection();
+
+    this.http.post<{ dataUri: string }>('/api/templates/images', form).subscribe({
+      next: ({ dataUri }) => {
+        this.imageUploading = false;
+        this.insertImage(dataUri, file.name);
+      },
+      error: () => {
+        this.imageUploading = false;
+        this.flashToast('Erreur lors du chargement de l\'image.');
+      },
+    });
+  }
+
+  private insertImage(dataUri: string, name: string): void {
+    const img = document.createElement('img');
+    img.src = dataUri;
+    img.alt = name.replace(/\.[^.]+$/, '');
+    img.style.cssText = 'max-width:240px;height:auto;display:block;margin:8px 0;';
+
+    this.editorEl.focus();
+    this.restoreSelection();
+
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (this.editorEl.contains(range.commonAncestorContainer)) {
+        range.deleteContents();
+        range.insertNode(img);
+        range.setStartAfter(img);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        this.savedRange = range.cloneRange();
+        return;
+      }
+    }
+    this.editorEl.insertBefore(img, this.editorEl.firstChild);
   }
 
   // ── Helpers ───────────────────────────────────────────────
