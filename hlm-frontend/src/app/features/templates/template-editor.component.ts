@@ -44,7 +44,7 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
         </div>
       </div>
       <div class="ed-actions">
-        <button class="btn btn-ghost" (click)="toggleRaw()" [title]="rawMode ? 'Revenir à l\'éditeur visuel' : 'Voir le HTML source'">
+        <button class="btn btn-ghost" (click)="toggleRaw()" [title]="rawToggleTitle">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
@@ -242,7 +242,7 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             Mode HTML avancé — les modifications ici écrasent l'éditeur visuel.
-            Les tokens <code>\${model.varName}</code> sont les variables.
+            Les tokens <code>&#36;&#123;model.varName&#125;</code> sont les variables.
           </div>
           <textarea
             #rawEditor
@@ -272,7 +272,7 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
           Cliquez ou glissez une variable pour l'insérer dans le document.
         </div>
         <div class="ref-hint" *ngIf="rawMode">
-          En mode HTML : cliquez pour copier le token <code>\${model.*}</code>.
+          En mode HTML : cliquez pour copier le token <code>&#36;&#123;model.*&#125;</code>.
         </div>
 
         @for (g of filteredGroups; track g.id) {
@@ -291,7 +291,7 @@ interface VarGroup    { id: string; label: string; icon: string; vars: TemplateV
                      (click)="onVarClick(v.var)"
                      [title]="v.desc">
                   <span class="var-chip-label">{{ v.desc }}</span>
-                  <code class="var-chip-token">\${{ '{' }}model.{{ v.var }}{{ '}' }}</code>
+                  <code class="var-chip-token">{{ varToken(v.var) }}</code>
                 </div>
               }
             </div>
@@ -522,7 +522,8 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   private savedRange: Range | null = null;
   private loadedHtml = '';
 
-  get typeLabel():  string { return TYPE_LABELS[this.type] ?? this.type; }
+  get typeLabel():      string { return TYPE_LABELS[this.type] ?? this.type; }
+  get rawToggleTitle(): string { return this.rawMode ? "Revenir à l'éditeur visuel" : 'Voir le HTML source'; }
   get previewHref(): string { return this.svc.previewUrl(this.type); }
   private get editorEl(): HTMLDivElement { return this.editorRef?.nativeElement; }
 
@@ -897,6 +898,10 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   recountInserted(): void {
     const pills = this.editorEl?.querySelectorAll('span[data-var]').length ?? 0;
     this.insertedCount = pills;
+  }
+
+  varToken(varName: string): string {
+    return '${model.' + varName + '}';
   }
 
   private flashToast(msg: string): void {
