@@ -83,7 +83,7 @@ This is set automatically on `ubuntu-latest` GitHub Actions runners.
 
 **Cause**: The user has multiple active societe memberships. A partial token is returned instead of a full JWT.
 
-**Fix**: The client must call `POST /auth/switch-societe` with `{societeId}` and the partial token to receive a full JWT with `sid` claim.
+**Fix**: The client must call `POST /auth/switch-societe` with `{societeId}` and the partial token. The backend then writes the final `hlm_auth` cookie-backed session for the selected societe.
 
 ---
 

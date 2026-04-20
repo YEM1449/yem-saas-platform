@@ -1,228 +1,243 @@
 # Technical Specification
 
-This document summarizes how the current system is implemented and operated.
+This specification describes how the platform is implemented and operated.
 
-## 1. Technology Stack
+## 1. Stack
 
 ### Backend
 
-| Area | Technology |
-| --- | --- |
-| Language | Java 21 |
-| Framework | Spring Boot 3.5.8 |
-| Persistence | Spring Data JPA + Hibernate 6 |
-| Database | PostgreSQL 16 |
-| Migrations | Liquibase 5.0.0 |
-| Security | Spring Security + OAuth2 Resource Server JWT support |
-| Cache | Caffeine by default, Redis optional |
-| Messaging | transactional outbox, SMTP email, Twilio SMS |
-| Documents | Thymeleaf + OpenHTMLtoPDF |
-| Object storage | local filesystem by default, AWS SDK v2 for S3-compatible backends |
-| Observability | Spring Actuator + Micrometer OTLP tracing |
+- Java 21
+- Spring Boot 3.5.11
+- Spring Security, Spring Data JPA, validation, AOP, cache, actuator
+- Liquibase for schema management
+- OpenHTMLToPDF and Thymeleaf for document generation
+- Bucket4j for rate limiting
+- ShedLock for distributed scheduler coordination
 
 ### Frontend
 
-| Area | Technology |
-| --- | --- |
-| Framework | Angular 19 |
-| Language | TypeScript 5 |
-| Styles | CSS/SCSS |
-| Tests | Karma/Jasmine, Playwright E2E |
-| Serving | Angular dev server locally, static build on `:4200` in CI, Nginx in containerized production |
+- Angular 19
+- TypeScript 5.7
+- `@ngx-translate` for i18n
+- Playwright for E2E tests
+- Jasmine / Karma for unit tests
+
+### Data and infrastructure
+
+- PostgreSQL 16
+- optional Redis
+- optional S3-compatible object storage
+- optional SMTP or Brevo HTTP email delivery
+- optional Twilio SMS
+- optional OTLP tracing export
 
 ## 2. Repository Structure
 
+| Path | Purpose |
+| --- | --- |
+| `hlm-backend/` | Spring Boot app |
+| `hlm-frontend/` | Angular app |
+| `hlm-backend/src/main/resources/db/changelog/changes/` | Liquibase migrations |
+| `nginx/nginx.conf` | reference reverse-proxy config |
+| `.github/workflows/` | CI/CD and security workflows |
+
+## 3. Backend Architecture
+
+### Module style
+
+Most modules follow:
+
 ```text
-hlm-backend/   backend code and Liquibase
-hlm-frontend/  Angular application
-docs/          architecture, specs, guides
-scripts/       smoke helpers and API support
-.github/       CI workflows
+api/
+domain/
+repo/
+service/
 ```
 
-## 3. Runtime Configuration
+### Cross-cutting components
 
-Configuration is environment-variable driven through [application.yml](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/resources/application.yml).
+- `SecurityConfig`
+- `JwtAuthenticationFilter`
+- `CookieTokenHelper`
+- `PortalCookieHelper`
+- `SocieteContext`
+- `RlsContextAspect`
+- `TransactionOrderConfig`
+- `AsyncConfig`
 
-Important groups:
+## 4. Frontend Architecture
 
-| Group | Examples |
-| --- | --- |
-| Core runtime | `SERVER_PORT`, `DB_URL`, `DB_USER`, `DB_PASSWORD` |
-| Security | `JWT_SECRET`, `JWT_TTL_SECONDS`, `LOCKOUT_*`, `RATE_LIMIT_*` |
-| Frontend links | `FRONTEND_BASE_URL`, `PORTAL_BASE_URL`, `CORS_ALLOWED_ORIGINS` |
-| Cache | `REDIS_ENABLED`, `REDIS_HOST`, `REDIS_PORT` |
-| Delivery | `EMAIL_*`, `TWILIO_*` |
-| Media | `MEDIA_STORAGE_DIR`, `MEDIA_OBJECT_STORAGE_*` |
-| Schedulers | `REMINDER_*`, `PAYMENTS_OVERDUE_CRON`, `PORTAL_CLEANUP_CRON`, `DATA_RETENTION_CRON` |
-| Observability | `OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
+### Route families
 
-## 4. Identity and Authorization Implementation
+- `/login` and `/activation`
+- `/app/*`
+- `/superadmin/*`
+- `/portal/*`
 
-### CRM auth
+### Session behavior
 
-- `/auth/login` validates credentials and issues JWTs
-- multi-membership users receive partial tokens and must switch societe
-- token revocation is enforced through `tv` and cached user security state
+- final browser sessions rely on backend-issued cookies
+- the CRM validates sessions via `/auth/me`
+- the portal validates sessions via `/api/portal/tenant-info`
+- multi-societe selection is handled after login when the backend returns a partial token
 
-### Portal auth
+### Internationalization
 
-- `POST /api/portal/auth/request-link`
-- `GET /api/portal/auth/verify`
-- verification sets the `hlm_portal_auth` httpOnly cookie for `/api/portal`
-- frontend keeps only an in-memory authenticated flag; it does not persist the portal JWT in browser storage
-- separate `ROLE_PORTAL` token path
+- supported languages: French, English, Arabic
+- language selection is stored locally and also persisted through the backend user profile flow
 
-### Context propagation
+## 5. Persistence And Schema Management
 
-- `JwtAuthenticationFilter` sets `SocieteContext`
-- `SocieteContextHelper` is the injectable façade used by many services
-- `RlsContextAspect` mirrors active societe scope into PostgreSQL transaction-local state
+### PostgreSQL usage
 
-## 5. Persistence Model
+- one shared schema
+- `societe_id` on tenant-scoped tables
+- row-level security enabled on critical domain tables
+- JPA `ddl-auto=validate`
 
-Persistence patterns visible in the code:
+### Migration workflow
 
-- UUID identifiers
-- service-led transaction boundaries
-- repository methods scoped by `societeId`
-- optimistic locking on mutable records
-- soft deletion or archival for high-value records
-- explicit row locking in reservation and deposit paths
+- Liquibase changelog master file includes additive changesets
+- current migration history runs through changeset `069`
+- schema changes must ship through new changesets, never ad-hoc manual edits
 
-Database-level safety:
+## 6. Security Design
 
-- one signed contract per property via partial unique index
-- RLS on `contact` and `property`
+### Staff sessions
 
-## 6. Caching
+- staff final session cookie: `hlm_auth`
+- partial tokens only for societe switching
+- token revocation through `token_version`
 
-Default cache backend:
+### Buyer sessions
 
-- Caffeine (in-process, not shared between instances)
+- portal cookie: `hlm_portal_auth`
+- magic-link storage is hash-based
+- portal cookies are path-scoped to `/api/portal`
 
-Optional backend:
+### Browser protections
 
-- Redis, activated by `REDIS_ENABLED=true`
-- Required for horizontally scaled deployments
+- CSP
+- frame denial
+- no MIME sniffing
+- permissions policy
+- optional HSTS
 
-Named caches (Wave 4, `RedisCacheConfig`):
+## 7. Caching
 
-| Cache name | TTL | Purpose |
-| --- | --- | --- |
-| user security cache | configurable | Token revocation and lockout state |
-| `PROJECTS_CACHE` | 60s | Project list per societe |
-| `SOCIETES_CACHE` | 120s | Societe list (SUPER_ADMIN) |
+### Default
 
-## 7. Async and Scheduler Design
+- Caffeine cache manager
+- user security cache
+- dashboard and project caches
 
-Implemented scheduled or asynchronous processes:
+### Distributed
 
-| Process | ShedLock | Purpose |
-| --- | --- | --- |
-| Outbox dispatcher | `outbox_dispatcher` (PT1M) | deliver queued email/SMS with retries; `FOR UPDATE SKIP LOCKED` |
-| Deposit workflow scheduler | — | expire pending deposits and raise reminders |
-| Reservation expiry scheduler | — | expire reservations and release property state |
-| Payment reminder scheduler | — | pre-due and overdue payment notifications |
-| Portal token cleanup scheduler | — | remove expired portal tokens |
-| GDPR retention scheduler | — | retention sweep / anonymization processing |
+- Redis cache manager when `app.redis.enabled=true`
+- recommended for multi-instance deployments where session revocation and cache coherence matter
 
-Design pattern:
+## 8. Async And Scheduler Design
 
-- business transaction persists state first
-- secondary communication or follow-up work happens asynchronously
+### Schedulers
 
-`ShedLockConfig` (`JdbcTemplateLockProvider` + `usingDbTime()`) uses the `shedlock` table (changeset 052) to prevent duplicate execution across instances.
+- outbox dispatch
+- deposit and reminder lifecycle jobs
+- portal token cleanup
+- GDPR retention
 
-`@Async` methods receive a full `SocieteContext` copy via `SocieteContextTaskDecorator`, which propagates `societeId`, `userId`, `role`, `superAdmin`, and `impersonatedBy` to worker threads.
+### Coordination
 
-## 8. Storage
+- ShedLock uses JDBC-backed locks
+- `FOR UPDATE SKIP LOCKED` is used for outbox batch claims
 
-### Relational storage
+### Async propagation
 
-- PostgreSQL is mandatory
-- Liquibase manages schema evolution
-- Hibernate uses `ddl-auto=validate`
+- `SocieteContextTaskDecorator` copies request scope into worker threads
 
-### Files and object storage
+## 9. File And Document Handling
 
-- local filesystem is default for media
-- S3-compatible storage is optional
-- document and media services sit above the storage mechanism
+### Generic documents
 
-## 9. Delivery Channels
+- stored via the media storage abstraction
+- entity metadata preserved in the database
 
-### Email
+### Property media
 
-- `NoopEmailSender` behavior when SMTP is not configured
-- direct send for portal magic links
-- outbox-based send for most CRM notifications
+- local filesystem by default
+- object storage when enabled
 
-### SMS
+### PDF generation
 
-- optional Twilio integration
-- no-op behavior when credentials are absent
+- Thymeleaf HTML templates
+- OpenHTMLToPDF renderer
+- inline styles are preferred for reliable rendering
 
-## 10. Frontend Architecture
+## 10. Configuration Model
 
-The Angular application is organized around:
+Primary configuration comes from:
 
-- route-based surfaces for CRM, super-admin, and portal
-- guards for authenticated, admin, and super-admin access
-- a bearer-token interceptor for CRM and a credential-forwarding interceptor for portal APIs
-- standalone components with feature-oriented structure
+- `hlm-backend/src/main/resources/application.yml`
+- environment variables
+- `.env` when using Docker Compose
 
-Current session transport:
+Important config families:
 
-- CRM token -> `hlm_access_token`
-- Portal session -> `hlm_portal_auth` httpOnly cookie plus `PortalSessionStore`
+- database and Liquibase
+- JWT and cookie settings
+- CORS and forward headers
+- Redis
+- media and object storage
+- email and SMS providers
+- portal URLs and retention jobs
+- reminder, payments, and outbox scheduler tuning
+- OTEL and Prometheus metrics
 
-## 11. CI/CD and Verification
-
-The repository includes GitHub Actions workflows for:
-
-- backend unit and integration testing
-- frontend tests and build
-- Docker image builds
-- compose smoke validation
-- Playwright E2E against the static `ci` Angular build on port `4200`
-- security scanning
-
-Important E2E implementation detail:
-
-- Playwright setup calls that create backend data use `PLAYWRIGHT_API_BASE=http://localhost:8080`
-- this avoids sending `page.request` writes to the static frontend server, which serves only frontend assets
-
-## 12. Deployment Model
+## 11. Deployment Model
 
 ### Local
 
-- Angular dev server on `:4200`
-- Spring Boot on `:8080`
-- compose-backed PostgreSQL, Redis, MinIO
+- Docker Compose runs PostgreSQL, Redis, MinIO, backend, and frontend
+- backend can also run standalone with a local profile
+- frontend can run with `ng serve`
 
-### Containerized
+### Production
 
-- frontend image serves built Angular assets through Nginx
-- backend image runs Spring Boot
-- compose files describe dependencies and health checks
+- Nginx is the reference TLS termination layer
+- Spring Boot typically runs behind the reverse proxy
+- secure cookies and exact origins must be configured
+- object storage, email, and observability can be swapped per environment
 
-## 13. Observability
+## 12. CI/CD
 
-Implemented observability features include:
+The repository currently uses GitHub Actions for:
 
-- Actuator `health` and `info`
-- Correlation IDs through a request filter
-- Optional OTLP trace export via `management.otlp.*` when `OTEL_ENABLED=true`
+- backend unit and integration tests
+- frontend test and build
+- end-to-end tests
+- Docker image build and push
+- secret scanning
+- Snyk open-source and container scans
 
-Note: `opentelemetry-exporter-otlp` is intentionally **not** on the classpath. It creates `BatchSpanProcessor_WorkerThread` background threads that never stop on JVM shutdown. Only `micrometer-tracing-bridge-otel` (the bridge) is present. Add back the exporter only when an OTel collector endpoint is configured and managed.
+## 13. Testing Strategy
 
-## 14. Confirmed Technical Gaps
+### Backend
 
-These are implementation-level findings, not assumptions:
+- unit tests via Maven Surefire
+- integration tests via Failsafe and Testcontainers
 
-- `SecurityConfig` still advertises `POST /tenants`, but no active controller was found.
-- `SocieteContext` has a role slot that is currently not populated by the request flow.
-- `LoginRateLimiter.cleanupIdleBuckets()` contains a tautological comparison before actual capacity pruning; behavior still works, but the condition is dead logic.
-- The active frontend auth model still omits multi-societe selection support exposed by backend DTOs.
-- Springdoc is configured to serve `/api-docs`, but the public security matcher still permits `/v3/api-docs/**`.
+### Frontend
+
+- Angular unit tests with Karma/Jasmine
+- Playwright E2E against a CI build and a real backend
+
+### Key quality expectation
+
+- auth, tenancy, and workflow transitions are high-risk areas and must be validated with realistic tests
+
+## 14. Technical Constraints
+
+- RLS relies on correct AOP ordering
+- schema changes must remain additive and traceable
+- any auth change must validate both CRM and portal cookies
+- storage adapters must stay vendor-agnostic at the controller level
+- documentation is part of the technical deliverable and must remain synchronized with code changes

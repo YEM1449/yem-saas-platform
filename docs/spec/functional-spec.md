@@ -1,156 +1,183 @@
 # Functional Specification
 
-This specification reconstructs implemented behavior from controllers, services, entities, and integration tests.
+This specification describes the implemented business behavior of the platform from a user and workflow perspective.
 
-## 1. Actors
+## 1. Workflow Overview
 
-| Actor | Description |
-| --- | --- |
-| `SUPER_ADMIN` | platform operator managing societes and privileged membership actions |
-| `ADMIN` | company administrator |
-| `MANAGER` | company operator with broad CRM access but limited administrative power |
-| `AGENT` | company user focused on day-to-day sales execution |
-| Portal buyer | contact using one-time magic-link access to the client portal |
-| Scheduler/system | background jobs operating on reminders, expirations, retention, and outbox delivery |
+The platform supports four major operating loops:
 
-## 2. Authentication and Session Behavior
+1. Platform governance by `SUPER_ADMIN`
+2. CRM administration by societe admins and managers
+3. Sales execution from lead to delivery
+4. Buyer self-service through the portal
 
-### CRM login
+## 2. Platform Governance Workflows
 
-Implemented behavior:
+### Societe lifecycle
 
-- login uses only `email` and `password`
-- account lockout and rate limiting run before normal authentication success
-- disabled users cannot obtain valid CRM sessions
-- a user with one active membership receives a full JWT
-- a user with multiple active memberships receives a partial token and societe list
-- `POST /auth/switch-societe` exchanges that partial token for a full scoped JWT
-- a platform `SUPER_ADMIN` with no memberships receives a platform token without `sid`
+`SUPER_ADMIN` can:
+
+- create a societe
+- edit branding, legal, quota, and subscription data
+- inspect compliance and commercial stats
+- suspend and reactivate the societe
+- inspect members and invite or manage them through platform routes
+
+### Impersonation
+
+`SUPER_ADMIN` can impersonate a member to investigate or support an issue.
+
+Expected functional behavior:
+
+- impersonation is explicit, not silent
+- the impersonated session carries tracking information
+- the UI must make the impersonated state obvious
+- the session can be ended deliberately
+
+## 3. Staff Authentication Workflows
+
+### Standard login
+
+1. User submits email and password.
+2. The backend validates credentials, lockout status, and active memberships.
+3. If the user has one active membership, the session is established directly.
+4. If the user has several active memberships, the user must choose a societe before receiving the final session.
 
 ### Invitation activation
 
-Implemented behavior:
+1. An admin or manager invites a user.
+2. The user opens the activation link.
+3. The user sets a password and accepts the required agreement state.
+4. The backend activates the user and starts a normal authenticated session.
 
-- invited users validate a public invitation token
-- activation requires password confirmation and CGU consent
-- activation returns a normal login response
+## 4. Buyer Portal Authentication Workflow
 
-### Portal login
+1. A buyer requests or receives a magic link using email plus societe key.
+2. The platform sends a time-limited one-time link.
+3. Verification consumes the token once.
+4. The buyer receives a portal session limited to owned records.
 
-Implemented behavior:
-
-- magic-link requests are accepted through `email + societeKey`
-- responses avoid exposing whether the email exists
-- verification consumes the token once and returns a portal JWT
-
-## 3. Company and Membership Administration
-
-### Societe administration
-
-Implemented behavior:
-
-- `SUPER_ADMIN` can create, view, update, suspend, reactivate, and inspect societes
-- `SUPER_ADMIN` can list members of any societe and impersonate a member
-- societes expose branding, compliance, quota, and subscription fields in the management UI/API
+## 5. CRM Administration Workflows
 
 ### Company member management
 
-Implemented behavior:
+Authorized users can:
 
-- `ADMIN` and `SUPER_ADMIN` can invite, reinvite, edit, remove, unblock, and anonymize members
-- `MANAGER` can list members and export user data, but cannot modify membership
-- `AGENT` cannot list or manage members
-- only `SUPER_ADMIN` can assign the `ADMIN` role
-- last-admin protection prevents removing or demoting the last company `ADMIN`
+- list active members
+- invite new members
+- resend invitations
+- modify member profile and role where permitted
+- remove or deactivate members
+- unblock locked accounts
+- export or anonymize member data where the module allows it
 
-## 4. CRM Master Data
+Business constraints:
 
-### Projects
+- only `SUPER_ADMIN` can assign `ADMIN`
+- societe-level admins manage the rest of the member lifecycle
 
-Implemented behavior:
+### Template management
 
-- `ADMIN` and `MANAGER` can create and update projects
-- `ADMIN` can archive a project
-- all CRM roles can list and read projects
-- project KPI views are available to `ADMIN` and `MANAGER`
-- archived projects remain in the system and are not hard-deleted
+Admins can:
 
-### Properties
+- list available templates
+- edit a template source
+- preview generated output
+- reset a template when necessary
 
-Implemented behavior:
+## 6. CRM Master Data Workflows
 
-- `ADMIN` and `MANAGER` can create, update, and import properties
-- `ADMIN` can soft-delete properties
-- all CRM roles can list and read properties
-- create and update enforce property-type-specific required fields
-- properties belong to an active project when created
+### Projects, immeubles, tranches, and properties
+
+Authorized staff can:
+
+- create and maintain projects
+- organize buildings with `immeuble`
+- generate or manage tranches
+- create or import property inventory
+- update editorial property status
+- attach media and documents
+
+Business expectations:
+
 - property references are unique inside a societe
-- property lifecycle is driven partly by commercial workflows, not only by direct CRUD
+- sold and reserved states are primarily driven by commercial workflows
+- deleted property behavior is soft-delete oriented
 
-### Contacts
+### Contacts and interests
 
-Implemented behavior:
+Authorized staff can:
 
-- `ADMIN` and `MANAGER` can create and update contacts
-- all CRM roles can list and read contacts
-- duplicate email within a societe is rejected
-- contact status transitions are validated
-- contacts support prospect qualification and client conversion workflows
-- contacts have a unified timeline composed from audit, outbox, notification, and status events
-- contacts persist privacy-related consent fields and anonymization metadata
+- create a contact
+- update a contact profile
+- qualify a contact as a prospect
+- convert a contact to a client
+- track property interests
+- read a unified timeline of sales and communication activity
 
-## 5. Commercial Workflow
-
-### Reservation workflow
-
-Implemented behavior:
-
-- `ADMIN` and `MANAGER` can create and cancel reservations
-- all CRM roles can list and view reservations
-- reservations require the property to be available
-- active reservations expire automatically through a scheduler
-- reservation conversion creates a formal deposit workflow
-
-State model:
+Contact lifecycle:
 
 ```text
-ACTIVE -> EXPIRED
-ACTIVE -> CANCELLED
-ACTIVE -> CONVERTED_TO_DEPOSIT
+PROSPECT -> QUALIFIED_PROSPECT -> CLIENT -> ACTIVE_CLIENT -> COMPLETED_CLIENT
+                                           \-> LOST
+COMPLETED_CLIENT -> REFERRAL
+LOST -> PROSPECT
 ```
 
-### Deposit workflow
+## 7. Sales Pipeline Workflows
 
-Implemented behavior:
+### Reservation
 
-- `ADMIN` and `MANAGER` can create, confirm, cancel, and report on deposits
-- all CRM roles can read individual deposits and download reservation PDFs
-- deposit creation locks the property row and prevents conflicting holds
-- confirming a deposit promotes the property and buyer state
-- canceling a non-confirmed deposit releases property state and may revert contact state
-- pending deposits can expire automatically
+Purpose: create a short-lived property hold before financial commitment.
 
-State model:
+Flow:
+
+1. User creates reservation for a contact and a property.
+2. Property becomes unavailable for conflicting sales actions.
+3. Reservation can be canceled, expire automatically, or be converted to a deposit.
+
+### Deposit
+
+Purpose: formalize financial intent on a property.
+
+Flow:
+
+1. User creates a deposit.
+2. The system guards against conflicting holds.
+3. Deposit can be confirmed, canceled, or expire if pending too long.
+4. Reservation PDF can be generated for the deposit.
+
+### Vente
+
+Purpose: manage the deal through commercial and legal milestones.
+
+Flow:
+
+1. User creates a vente directly or from a reservation context.
+2. User advances the sale across defined stages.
+3. Financing information, deadlines, and notes are captured.
+4. Echeances and documents are attached as the deal matures.
+5. Buyer portal invitation can be issued from the vente.
+
+Vente lifecycle:
 
 ```text
-PENDING -> CONFIRMED
-PENDING -> CANCELLED
-PENDING -> EXPIRED
+COMPROMIS -> FINANCEMENT -> ACTE_NOTARIE -> LIVRE
+      \--------------------------------------> ANNULE
 ```
 
-### Contract workflow
+### Contract
 
-Implemented behavior:
+Purpose: manage the formal legal contract record and linked payment schedule.
 
-- all CRM roles can create draft contracts
-- `AGENT` creation is scoped to self
-- `ADMIN` and `MANAGER` can sign and cancel contracts
-- all CRM roles can list and read contracts
-- `AGENT` visibility is restricted to own contracts
-- signing a contract captures buyer snapshot data and marks the property sold
-- canceling a signed contract reverts the property to `RESERVED` or `ACTIVE` depending on deposit state
+Flow:
 
-State model:
+1. User creates a draft contract.
+2. Authorized user signs or cancels it.
+3. Signed contracts may affect property and downstream payment behavior.
+4. PDF download is available.
+
+Contract lifecycle:
 
 ```text
 DRAFT -> SIGNED
@@ -158,111 +185,104 @@ DRAFT -> CANCELED
 SIGNED -> CANCELED
 ```
 
-## 6. Collections and Commissions
+### Payment schedule and collection
 
-### Payment schedule
+Authorized users can:
 
-Implemented behavior:
+- create schedule items
+- update or delete schedule items
+- issue and send payment calls
+- cancel schedule items
+- register payments
+- run reminders
+- read cash and receivables dashboards
 
-- payment schedule items are created under a contract
-- only `ADMIN` and `MANAGER` can modify schedule items
-- schedule items can be issued, sent, canceled, and paid partially
-- all CRM roles can read schedule items and PDFs
-- reminders and overdue transitions are automated
-
-State model:
-
-```text
-DRAFT -> ISSUED
-ISSUED -> SENT
-SENT -> OVERDUE
-ISSUED|SENT|OVERDUE -> CANCELED
-ISSUED|SENT|OVERDUE -> PAID
-```
-
-### Commissions
-
-Implemented behavior:
-
-- `AGENT` can read own commissions
-- `ADMIN` and `MANAGER` can query commission results by agent and period
-- only `ADMIN` can manage commission rules
-- project-level rules override societe-level rules
-- when no rule exists, commission calculation falls back to zero-valued results
-
-## 7. Messaging, Notifications, Documents, and Tasks
-
-### Messages
-
-Implemented behavior:
-
-- all CRM roles can compose outbound messages
-- send requests queue outbox records rather than synchronously sending
-- list views support filtering by channel, status, contact, and date range
-
-### Notifications
-
-Implemented behavior:
-
-- all CRM roles can list their notifications and mark them as read
-- business services create notifications for deposit and payment events
-
-### Documents
-
-Implemented behavior:
-
-- all CRM roles can upload, list, and download generic documents for supported entity types
-- only `ADMIN` and `MANAGER` can delete documents
+## 8. Productivity And Communication Workflows
 
 ### Tasks
 
-Implemented behavior:
+Users can:
 
-- all CRM roles can create and update tasks
-- only `ADMIN` can delete tasks
-- task listing defaults to the current user unless filters are supplied
-- tasks may be linked to a contact or property
+- create tasks
+- update tasks
+- list their own tasks by default
+- filter by assignee or status
+- view tasks linked to a contact or property
 
-## 8. Dashboards and Reporting
+### Notifications
 
-Implemented behavior:
+Users can:
 
-- commercial summary and sales dashboards exist under `/api/dashboard/commercial`
-- receivables dashboard exists under `/api/dashboard/receivables`
-- cash dashboard exists under `/api/dashboard/commercial/cash`
-- `AGENT` scope is server-enforced to self for agent-sensitive views
-- dashboard refresh events are available via SSE
+- list notifications
+- mark notifications as read
+- use notifications as a lightweight awareness layer for operational events
 
-## 9. Buyer Portal
+### Outbound messages
 
-Implemented behavior:
+Users can:
 
-- buyers can obtain a one-time link using `email + societeKey`
-- portal users can view only their own contracts
-- portal users can view payment schedules only for owned contracts
-- portal users can view property details only where contract ownership authorizes it
-- portal users can fetch lightweight tenant branding for the shell
+- create outbound messages
+- review outbound message status and history
+- rely on asynchronous delivery instead of blocking business transactions
 
-## 10. Privacy and Compliance
+### Audit
 
-Implemented behavior:
+Authorized users can:
 
-- contacts support export, rectification view, privacy notice, and anonymization
-- users support export and anonymization through company-member management
-- signed contracts block contact anonymization
-- draft contract snapshots can be anonymized when user/contact data is erased
+- review commercial workflow history
+- inspect operational events for troubleshooting and governance
 
-## 11. Confirmed Functional Gaps
+## 9. Dashboard And Reporting Workflows
 
-These are functional inconsistencies or incomplete behaviors confirmed from code:
+The platform exposes:
 
-- The backend supports multi-societe login selection, but the current Angular login flow does not implement the `requiresSocieteSelection` branch.
-- Societe suspension exists as administrative data but was not found as an enforced access-control rule.
-- Societe quotas for contacts, properties, and projects exist in the data model but were not found enforced in the corresponding services.
-- `AdminUserController` is on `/api/users` (not `/api/admin/users` — that prefix is SUPER_ADMIN-only). The HR membership surface is `/api/mon-espace/utilisateurs`.
+- home dashboard
+- commercial dashboard summary and sales views
+- dashboard cockpit analytics
+- receivables dashboard
+- cash dashboard
+- project, tranche, and property KPI slices where implemented
 
-## 12. Needs Clarification
+Functional expectations:
 
-- Should `convert-to-client` keep its current backward-compatible name even though it now creates a deposit-style reservation flow?
-- Should societe suspension block login, all API access, or only selected write operations?
-- Should resource quotas be enforced immediately for contacts, properties, and projects, or are they informational today?
+- managers and admins can supervise broader performance
+- agents see appropriately scoped data
+- dashboards are fast enough to serve as operational decision tools, not just reporting exports
+
+## 10. Buyer Portal Workflows
+
+Buyers can:
+
+- log in through a magic link
+- list their ventes
+- list their contracts
+- view payment schedules
+- view property details related to owned records
+- download or upload vente-linked documents where the portal flow allows it
+
+Functional limits:
+
+- no access to CRM administration
+- no access to other buyers’ data
+- no editing of broad business records
+
+## 11. Privacy And Compliance Workflows
+
+Authorized users can:
+
+- export contact data
+- inspect rectification-oriented views
+- anonymize eligible data
+- read the privacy notice
+- trigger or rely on retention automation
+
+Business caveat:
+
+- some records cannot be erased without breaking legal or contractual integrity, so anonymization follows explicit blocking rules
+
+## 12. Functional Integrity Rules
+
+- all tenant-scoped business actions must operate within the active societe
+- user-facing lifecycle transitions must obey status rules
+- buyer portal visibility must be ownership-checked
+- asynchronous workflows must remain traceable through audit, notification, or outbox history

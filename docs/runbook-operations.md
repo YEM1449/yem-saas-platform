@@ -182,7 +182,7 @@ Expected backend behavior:
 Current codebase note:
 
 - the backend fully supports this flow
-- the current Angular login experience does not yet implement that selection UX
+- the current Angular login experience implements the selection UX and should be validated after auth-related changes
 
 ### Company appears deactivated but users still access CRM
 

@@ -1,115 +1,180 @@
 # Requirements Specification
 
-This document formalizes requirements that are directly supported or strongly implied by the current codebase.
+This specification defines the business and technical requirements for the current YEM SaaS Platform.
 
-## 1. Functional Requirements
+## 1. Product Purpose
 
-### FR-1 Authentication and Session
+The platform must provide a secure, multi-societe real-estate CRM for Moroccan operators while also offering:
 
-- `FR-1.1` The system shall authenticate CRM users using email and password.
-- `FR-1.2` The system shall support multi-societe users by requiring explicit societe selection before issuing a fully scoped CRM token.
-- `FR-1.3` The system shall support public invitation activation without an existing CRM session.
-- `FR-1.4` The system shall support buyer portal access through one-time magic links.
+- platform-level governance for the SaaS owner
+- guided sales execution for internal teams
+- controlled self-service visibility for buyers
 
-### FR-2 Authorization and Scope
+## 2. Primary Personas
 
-- `FR-2.1` The system shall distinguish platform-level `SUPER_ADMIN` access from company-scoped CRM access.
-- `FR-2.2` The system shall scope CRM business data to the active societe.
-- `FR-2.3` The system shall restrict portal users to their own contract-related data.
-- `FR-2.4` The system shall prevent company `ADMIN` users from assigning the `ADMIN` role.
+| Persona | Goal |
+| --- | --- |
+| `SUPER_ADMIN` | create, govern, and support societes on the platform |
+| Societe `ADMIN` | manage the company workspace, users, templates, and advanced operations |
+| Societe `MANAGER` | supervise pipeline execution and operational performance |
+| Societe `AGENT` | execute assigned deals, follow up leads, and progress ventes |
+| Buyer / portal user | consult contracts, payment information, and related property details |
+| New engineer | understand and safely extend the platform |
+| Student / trainee | learn modern SaaS, security, and domain-driven implementation patterns from a real project |
 
-### FR-3 Company Administration
+## 3. Functional Requirement Groups
 
-- `FR-3.1` `SUPER_ADMIN` shall be able to create, update, suspend, reactivate, and inspect societes.
-- `FR-3.2` `SUPER_ADMIN` shall be able to impersonate a member of a societe.
-- `FR-3.3` The system shall expose societe compliance and usage statistics.
+### A. Platform governance
 
-### FR-4 Membership Management
+The system must:
 
-- `FR-4.1` `ADMIN` and `SUPER_ADMIN` shall be able to invite members.
-- `FR-4.2` `ADMIN` and `SUPER_ADMIN` shall be able to edit, remove, unblock, and anonymize members.
-- `FR-4.3` `MANAGER` shall have read-only visibility over company members.
-- `FR-4.4` The system shall prevent removing or demoting the last company `ADMIN`.
+- allow `SUPER_ADMIN` to create, update, suspend, reactivate, and inspect societes
+- store branding, quota, legal, and compliance data per societe
+- support member inspection and impersonation for support scenarios
 
-### FR-5 CRM Data Management
+### B. Authentication and identity
 
-- `FR-5.1` The system shall manage projects, properties, contacts, reservations, deposits, contracts, tasks, documents, notifications, and messages.
-- `FR-5.2` Property creation and update shall validate type-dependent required fields.
-- `FR-5.3` Property deletion shall be soft deletion.
-- `FR-5.4` Project deletion shall be archival, not physical deletion.
-- `FR-5.5` Contact operations shall support prospect qualification, interest management, and client/deposit conversion workflows.
+The system must:
 
-### FR-6 Commercial Workflow
+- authenticate staff users with email and password
+- support invitation-based activation for newly invited staff members
+- support multi-societe users through an explicit societe selection step
+- authenticate buyers through one-time magic links
+- revoke staff sessions when user security state changes
 
-- `FR-6.1` The system shall support property reservations with expiry.
-- `FR-6.2` The system shall support deposit creation, confirmation, cancellation, and expiry.
-- `FR-6.3` The system shall prevent conflicting holds on the same property.
-- `FR-6.4` The system shall support draft sales contracts, signature, cancellation, and PDF generation.
-- `FR-6.5` The system shall capture buyer snapshot data when a contract is signed.
+### C. CRM master data
 
-### FR-7 Collections and Reporting
+The system must:
 
-- `FR-7.1` The system shall support payment schedule items tied to contracts.
-- `FR-7.2` The system shall support partial payment recording.
-- `FR-7.3` The system shall support commission reporting and rule management.
-- `FR-7.4` The system shall expose commercial, receivables, cash, property, audit, and deposit reporting views.
+- manage projects, immeubles, tranches, and properties
+- manage contacts across prospect and client stages
+- capture contact-property interests
+- support documents and media linked to business entities
 
-### FR-8 Communication and Automation
+### D. Sales execution
 
-- `FR-8.1` The system shall queue outbound email and SMS messages asynchronously.
-- `FR-8.2` The system shall generate in-app notifications for selected business events.
-- `FR-8.3` The system shall run scheduled processes for reminders, expirations, portal token cleanup, and data retention.
+The system must:
 
-### FR-9 Privacy and Compliance
+- manage reservations, deposits, ventes, and contracts
+- support financing and legal milestones in the sale lifecycle
+- manage payment schedules and payments
+- invite buyers into the portal from sales workflows
 
-- `FR-9.1` The system shall support contact export, rectification, privacy notice display, and anonymization.
-- `FR-9.2` The system shall support user data export and anonymization.
-- `FR-9.3` The system shall block contact anonymization when signed contracts still require legal identity retention.
+### E. Operational productivity
 
-## 2. Non-Functional Requirements
+The system must:
 
-### NFR-1 Security
+- support user tasks and due-date follow-up
+- provide notifications and outbound message history
+- surface audit trails and workflow timelines
 
-- `NFR-1.1` Authentication shall use signed JWTs.
-- `NFR-1.2` CRM sessions shall be revocable before token expiry.
-- `NFR-1.3` Login shall be protected by rate limits and account lockout.
-- `NFR-1.4` Platform, CRM, and portal route spaces shall be separated by explicit authorization rules.
+### F. Reporting and analytics
 
-### NFR-2 Isolation and Data Integrity
+The system must:
 
-- `NFR-2.1` Business data access shall be scoped to the active societe.
-- `NFR-2.2` High-value workflows shall protect against conflicting concurrent updates.
-- `NFR-2.3` The system shall preserve historical and legal integrity through soft delete, archival, or immutable snapshots rather than broad hard deletes.
+- provide commercial dashboards
+- provide receivables and cash views
+- expose KPI slices by project and tranche where implemented
+- support agent-scoped and management-scoped visibility rules
 
-### NFR-3 Operability
+### G. Privacy and compliance
 
-- `NFR-3.1` The application shall expose health endpoints.
-- `NFR-3.2` Configuration shall be driven by environment variables.
-- `NFR-3.3` The application shall support optional Redis, SMTP, SMS, and object-storage integrations.
-- `NFR-3.4` The codebase shall be runnable through Docker Compose and through split local development.
+The system must:
 
-### NFR-4 Maintainability
+- store consent and processing basis information
+- support export, rectification, and anonymization flows
+- enforce retention rules through scheduled jobs
+- preserve legally necessary data where business rules require it
 
-- `NFR-4.1` Schema evolution shall be managed through sequential Liquibase changesets.
-- `NFR-4.2` Mutable administrative entities shall support optimistic concurrency protection.
-- `NFR-4.3` Business modules shall remain separated into controller/service/repository layers.
+### H. Learning and onboarding
 
-### NFR-5 Observability
+The repository must:
 
-- `NFR-5.1` Requests shall have correlation IDs for diagnostics.
-- `NFR-5.2` The platform shall support trace export when OTEL is enabled.
-- `NFR-5.3` Background delivery and reminder workflows shall be diagnosable through logs and persisted state.
+- provide source-of-truth architecture and specification documents
+- provide role-based user guides
+- provide engineer onboarding guides
+- provide course material suitable for newcomers and students
 
-## 3. Confirmed Requirement Gaps and Ambiguities
+## 4. Role Requirements
 
-### Needs clarification
+### `SUPER_ADMIN`
 
-- `RC-1` Whether societe suspension is intended to block login or API usage.
-- `RC-2` Whether contact, property, and project quotas are informational or meant to be enforced now.
-- `RC-3` Whether the legacy `/api/admin/users` and dead `/tenants` path should remain part of the supported contract.
-- `RC-4` Whether the Angular client should implement multi-societe selection immediately or whether multi-membership is not yet a supported frontend scenario.
+- can manage societes and their metadata
+- can inspect societe members
+- can impersonate users
+- cannot use platform powers accidentally inside the normal CRM without deliberate impersonation or route targeting
 
-### Confirmed mismatches
+### `ADMIN`
 
-- `RM-1` Backend auth DTOs support `requiresSocieteSelection`, but the current frontend login model does not.
-- `RM-2` Security configuration still contains a public bootstrap route with no active controller behind it.
+- can manage staff members inside the societe
+- can manage templates and advanced operational data
+- can perform destructive actions permitted by the product, such as delete/disable flows where supported
+
+### `MANAGER`
+
+- can execute most operational CRM workflows
+- cannot assign `ADMIN`
+- cannot access platform-level governance routes
+
+### `AGENT`
+
+- can read most operational data needed to execute sales
+- can work with ventes and related milestones where the product explicitly allows it
+- cannot access admin-only management flows
+
+### Buyer
+
+- can access only owned portal data
+- cannot access CRM routes or other buyers’ records
+
+## 5. Data Requirements
+
+The system must:
+
+- scope tenant-owned data by `societe_id`
+- preserve auditable timestamps on business-critical entities
+- support optimistic locking on mutable aggregates where concurrent edits matter
+- preserve attachments and media with metadata sufficient for download and governance
+
+## 6. Security Requirements
+
+The system must:
+
+- isolate societes at the application and database level
+- use secure cookie-based final sessions for browser flows
+- support staff token revocation before expiry
+- protect login and magic-link endpoints against abuse
+- keep buyer and staff authentication surfaces separate
+- apply secure headers and transport-aware cookie settings
+
+## 7. Non-Functional Requirements
+
+### Availability and operability
+
+- the stack must run locally through Docker Compose
+- backend health and readiness must be externally verifiable
+- production deployment must support reverse proxy TLS termination
+
+### Maintainability
+
+- backend code must remain modular by business domain
+- frontend code must remain organized by surface and feature area
+- schema changes must remain traceable through Liquibase
+- documentation must stay aligned with code, not drift into “historical only” ambiguity
+
+### Testability
+
+- backend unit and integration tests must be automatable in CI
+- frontend unit tests and Playwright E2E tests must cover critical flows
+- documentation must explain current test conventions and pitfalls
+
+### Compliance
+
+- the platform must support Moroccan business context and local privacy obligations
+- privacy operations must be actionable by authorized users
+
+## 8. Explicit Out-Of-Scope Assumptions
+
+- the buyer portal is not a full CRM; it is a constrained self-service surface
+- public anonymous browsing of inventory is not part of the current product contract
+- separate database-per-societe deployment is not the target architecture

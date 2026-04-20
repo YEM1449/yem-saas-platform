@@ -1,24 +1,34 @@
 # HLM Backend
 
-Spring Boot backend for the YEM SaaS Platform.
+The backend is a Spring Boot 3.5 application that exposes the CRM API, the superadmin API, and the buyer portal API.
 
 ## Responsibilities
 
-The backend currently provides:
+- authenticate staff users and portal buyers
+- enforce societe isolation and role-based access control
+- manage CRM aggregates such as contacts, properties, reservations, deposits, ventes, contracts, payments, tasks, and documents
+- run schedulers for reminders, retention, token cleanup, and outbox dispatch
+- generate PDFs and integrate with storage, email, SMS, and observability backends
 
-- CRM and portal authentication
-- societe and membership administration
-- project, property, contact, reservation, deposit, contract, payment, task, document, commission, audit, and dashboard APIs
-- schedulers for reminders, expirations, retention, and outbox delivery
+## Structure
 
-## Run Locally
+The codebase is domain-oriented. Most modules follow this shape:
 
-```bash
-cd hlm-backend
-./mvnw spring-boot:run
+```text
+<module>/
+  api/
+  domain/
+  repo/
+  service/
 ```
 
-Or with the local profile:
+Cross-cutting packages include:
+
+- `auth` for session issuance, cookies, filters, revocation, and lockout
+- `common` for errors, validation, rate limiting, shared DTOs, and utility code
+- `societe` for multi-societe context, membership, impersonation, and RLS hooks
+
+## Run Locally
 
 ```bash
 cd hlm-backend
@@ -29,31 +39,20 @@ cd hlm-backend
 
 ```bash
 curl -s http://localhost:8080/actuator/health
-curl -s http://localhost:8080/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@demo.ma","password":"Admin123!Secure"}'
+curl -s http://localhost:8080/swagger-ui.html
 ```
 
 ## Important Runtime Notes
 
-- CRM login is email/password only.
-- Multi-societe users may receive `requiresSocieteSelection=true` and must call `/auth/switch-societe`.
-- `SUPER_ADMIN` tokens are platform-level and may omit `sid`.
-- Portal authentication is separate and lives under `/api/portal/*`.
+- staff auth is cookie-based through `hlm_auth`
+- multi-societe staff users may receive a partial token before final societe selection
+- portal auth is separate and uses `hlm_portal_auth`
+- schema changes are managed only through Liquibase
+- RLS relies on `RlsContextAspect` running inside an open transaction
 
-## Main Entry Points
-
-| Area | Path |
-| --- | --- |
-| Auth | `/auth/*` |
-| CRM API | `/api/*` |
-| Portal API | `/api/portal/*` |
-| Super-admin API | `/api/admin/societes/*` |
-| Actuator | `/actuator/*` |
-
-## Further Reading
+## Read Next
 
 - [../docs/context/ARCHITECTURE.md](../docs/context/ARCHITECTURE.md)
 - [../docs/context/SECURITY_BASELINE.md](../docs/context/SECURITY_BASELINE.md)
-- [../docs/spec/api-reference.md](../docs/spec/api-reference.md)
-- [../docs/runbook-operations.md](../docs/runbook-operations.md)
+- [../docs/spec/technical-spec.md](../docs/spec/technical-spec.md)
+- [../docs/guides/engineer/backend-deep-dive.md](../docs/guides/engineer/backend-deep-dive.md)
