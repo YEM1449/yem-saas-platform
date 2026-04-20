@@ -28,7 +28,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -40,6 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration tests for GET /api/dashboard/commercial/summary (and /sales).
  *
+ * Each test creates its own fresh Societe so exact count assertions are isolated
+ * from data left by other IT classes that run without @Transactional rollback.
+ *
  * Tests:
  * 1) summary_asManager_returns200_andTotalsMatchSeededData
  * 2) summary_asAgent_forcesAgentScope
@@ -48,11 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class CommercialDashboardIT extends IntegrationTestBase {
-
-    private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private static final UUID USER_ID   = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
@@ -63,12 +61,20 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Autowired CacheManager cacheManager;
 
     private String adminBearer;
+    private String uid;
+    private UUID freshSocieteId;
+    private UUID freshAdminId;
     private int refCounter = 0;
 
     @BeforeEach
     void setup() {
-        adminBearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_ADMIN);
-        // Evict dashboard cache to prevent stale @Cacheable results bleeding between @Transactional tests
+        uid = UUID.randomUUID().toString().substring(0, 8);
+        Societe freshSociete = societeRepository.save(new Societe("Test Société " + uid, "MA"));
+        User freshAdmin = new User("dash-admin-" + uid + "@test.com", "hash");
+        freshAdmin = userRepository.save(freshAdmin);
+        freshSocieteId = freshSociete.getId();
+        freshAdminId = freshAdmin.getId();
+        adminBearer = "Bearer " + jwtProvider.generate(freshAdminId, freshSocieteId, UserRole.ROLE_ADMIN);
         var cache = cacheManager.getCache(CacheConfig.COMMERCIAL_DASHBOARD_CACHE);
         if (cache != null) cache.clear();
     }
@@ -83,13 +89,13 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID projectId   = createProject(adminBearer);
         UUID propId1     = createAndActivateProperty(projectId, adminBearer);
         UUID propId2     = createAndActivateProperty(projectId, adminBearer);
-        ContactResponse buyer = createContact("dash-buyer@acme.com");
+        ContactResponse buyer = createContact("dash-buyer-" + uid + "@acme.com");
 
         // Create 2 ventes → salesCount = 2, salesTotalAmount = 900000
         createVente(propId1, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
         createVente(propId2, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
 
-        // Confirm 1 deposit on a 3rd property (just for deposit totals — won't block since property is ACTIVE)
+        // Confirm 1 deposit on a 3rd property (just for deposit totals)
         UUID propId3   = createAndActivateProperty(projectId, adminBearer);
         UUID depositId = createDeposit(propId3, buyer.id());
         confirmDeposit(depositId);
@@ -128,20 +134,20 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID projectId = createProject(adminBearer);
         UUID propId1   = createAndActivateProperty(projectId, adminBearer);
         UUID propId2   = createAndActivateProperty(projectId, adminBearer);
-        ContactResponse buyer = createContact("dash-agent-scope@acme.com");
+        ContactResponse buyer = createContact("dash-agent-scope-" + uid + "@acme.com");
 
-        // Create second user (AGENT B) — saved in the same test transaction, visible to MockMvc calls
-        User agentB = new User("agent-b@acme.com", "hash");
+        // Create second user (AGENT B) saved and committed before MockMvc calls
+        User agentB = new User("agent-b-" + uid + "@acme.com", "hash");
         agentB = userRepository.save(agentB);
 
-        // Vente assigned to seed USER_ID (agent A) — no explicit agentId, defaults to current user
+        // Vente assigned to freshAdminId (agent A) — no explicit agentId, defaults to current user
         createVente(propId1, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
 
         // Vente assigned to agent B — explicit agentId in request
         createVente(propId2, buyer.id(), new BigDecimal("450000.00"), agentB.getId(), adminBearer);
 
-        // Seed USER_ID calls dashboard as AGENT → must see only their own vente (salesCount=1)
-        String agentABearer = "Bearer " + jwtProvider.generate(USER_ID, TENANT_ID, UserRole.ROLE_AGENT);
+        // freshAdminId calls dashboard as AGENT → must see only their own vente (salesCount=1)
+        String agentABearer = "Bearer " + jwtProvider.generate(freshAdminId, freshSocieteId, UserRole.ROLE_AGENT);
         mvc.perform(get("/api/dashboard/commercial/summary")
                         .header("Authorization", agentABearer))
                 .andExpect(status().isOk())
@@ -156,14 +162,14 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Test
     void summary_projectFilter_crossTenant_returns404() throws Exception {
         // Create a second tenant + project
-        Societe otherTenant = societeRepository.save(new Societe("Acme Corp", "MA"));
-        User otherAdmin = new User("other-admin-dash@test.com", "hash");
+        Societe otherTenant = societeRepository.save(new Societe("Other Corp " + uid, "MA"));
+        User otherAdmin = new User("other-admin-dash-" + uid + "@test.com", "hash");
         otherAdmin = userRepository.save(otherAdmin);
         String otherBearer = "Bearer " + jwtProvider.generate(otherAdmin.getId(), otherTenant.getId(), UserRole.ROLE_ADMIN);
 
         UUID otherProjectId = createProject(otherBearer);
 
-        // Use TENANT_ID token but supply otherTenant's projectId → must be 404
+        // Use freshSociete token but supply otherTenant's projectId → must be 404
         mvc.perform(get("/api/dashboard/commercial/summary")
                         .param("projectId", otherProjectId.toString())
                         .header("Authorization", adminBearer))
@@ -195,9 +201,9 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID projectId = createProject(adminBearer);
 
         // Create 3 contacts → all default to status=PROSPECT
-        createContact("dash-pros1@acme.com");
-        createContact("dash-pros2@acme.com");
-        ContactResponse p3 = createContact("dash-pros3@acme.com");
+        createContact("dash-pros1-" + uid + "@acme.com");
+        createContact("dash-pros2-" + uid + "@acme.com");
+        ContactResponse p3 = createContact("dash-pros3-" + uid + "@acme.com");
 
         // Creating a deposit promotes p3 → QUALIFIED_PROSPECT (still a prospect)
         UUID propId = createAndActivateProperty(projectId, adminBearer);
@@ -223,7 +229,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
         UUID projectId = createProject(adminBearer);
         // Property with catalogue price 500000 — discount computed against property.price
         UUID propId    = createAndActivateProperty(projectId, adminBearer, new BigDecimal("500000.00"));
-        ContactResponse buyer = createContact("dash-disc@acme.com");
+        ContactResponse buyer = createContact("dash-disc-" + uid + "@acme.com");
 
         // Vente at 450000 on a 500000-priced property → discount = (500000-450000)/500000*100 = 10%
         createVente(propId, buyer.id(), new BigDecimal("450000.00"), null, adminBearer);
@@ -251,9 +257,9 @@ class CommercialDashboardIT extends IntegrationTestBase {
     @Test
     void summary_prospectSourceFunnel_returnsSourceGroups() throws Exception {
         // Create 3 contacts and assign sources directly via ProspectDetailRepository
-        ContactResponse c1 = createContact("dash-src1@acme.com");
-        ContactResponse c2 = createContact("dash-src2@acme.com");
-        ContactResponse c3 = createContact("dash-src3@acme.com");
+        ContactResponse c1 = createContact("dash-src1-" + uid + "@acme.com");
+        ContactResponse c2 = createContact("dash-src2-" + uid + "@acme.com");
+        ContactResponse c3 = createContact("dash-src3-" + uid + "@acme.com");
 
         setProspectSource(c1.id(), "WEBSITE");
         setProspectSource(c2.id(), "WEBSITE");
@@ -374,7 +380,7 @@ class CommercialDashboardIT extends IntegrationTestBase {
 
     /** Sets the prospect source on the ProspectDetail for a given contact. */
     private void setProspectSource(UUID contactId, String source) {
-        prospectDetailRepository.findBySocieteIdAndContactId(TENANT_ID, contactId)
+        prospectDetailRepository.findBySocieteIdAndContactId(freshSocieteId, contactId)
                 .ifPresent(pd -> {
                     pd.setSource(source);
                     prospectDetailRepository.save(pd);

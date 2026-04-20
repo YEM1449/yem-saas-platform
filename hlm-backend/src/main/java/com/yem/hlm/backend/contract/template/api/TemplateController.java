@@ -3,6 +3,8 @@ package com.yem.hlm.backend.contract.template.api;
 import com.yem.hlm.backend.contract.template.domain.ContractTemplate;
 import com.yem.hlm.backend.contract.template.domain.TemplateType;
 import com.yem.hlm.backend.contract.template.service.ContractTemplateService;
+import com.yem.hlm.backend.media.service.MediaTooLargeException;
+import com.yem.hlm.backend.media.service.MediaTypeNotAllowedException;
 import com.yem.hlm.backend.societe.SocieteContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
@@ -10,9 +12,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -91,6 +97,32 @@ public class TemplateController {
                 .body(pdf);
     }
 
+    /**
+     * Accepts an image file and returns it as a base64 data URI.
+     * The data URI is embedded directly in the template HTML so openhtmltopdf
+     * can resolve it without any external URL call during PDF rendering.
+     * Limit: 3 MB, JPEG/PNG/GIF/WEBP only.
+     */
+    @PostMapping("/images")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ImageUploadResponse> uploadImage(
+            @RequestParam MultipartFile file) throws IOException {
+        String ct = file.getContentType() != null ? file.getContentType() : "";
+        if (!ALLOWED_IMAGE_TYPES.contains(ct)) {
+            throw new MediaTypeNotAllowedException(ct);
+        }
+        if (file.getSize() > MAX_IMAGE_BYTES) {
+            throw new MediaTooLargeException(file.getSize(), MAX_IMAGE_BYTES);
+        }
+        String b64     = Base64.getEncoder().encodeToString(file.getBytes());
+        String dataUri = "data:" + ct + ";base64," + b64;
+        return ResponseEntity.ok(new ImageUploadResponse(dataUri));
+    }
+
+    private static final long        MAX_IMAGE_BYTES   = 3L * 1024 * 1024;
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp");
+
     // ── Sample variables for preview rendering ───────────────────────────────
 
     private java.util.Map<String, Object> buildSampleVars(TemplateType type) {
@@ -138,4 +170,6 @@ public class TemplateController {
     public record TemplateSourceResponse(TemplateType templateType, String htmlContent, boolean custom) {}
 
     public record UpsertTemplateRequest(String htmlContent) {}
+
+    public record ImageUploadResponse(String dataUri) {}
 }
