@@ -392,6 +392,43 @@ public class HomeDashboardService {
                     .divide(BigDecimal.valueOf(4), 1, RoundingMode.HALF_UP);
         }
 
+        // ── 13. Monthly CA trend (last 6 months) + project breakdown ─────────
+        List<HomeDashboardDTO.MonthlyTrendPoint> monthlyTrend = List.of();
+        List<HomeDashboardDTO.ProjectBreakdownRow> projectBreakdown = List.of();
+
+        if (!isAgent) {
+            LocalDateTime sixMonthsAgo = now.minusMonths(6).withDayOfMonth(1).toLocalDate().atStartOfDay();
+            List<Object[]> rawTrend = venteRepo.monthlyCaTrend(societeId, sixMonthsAgo);
+
+            // Build a full 6-month array, filling zero for missing months
+            Map<String, BigDecimal> trendByMonth = new LinkedHashMap<>();
+            for (Object[] r : rawTrend) {
+                int yr = ((Number) r[0]).intValue();
+                int mo = ((Number) r[1]).intValue();
+                trendByMonth.put(String.format("%04d-%02d", yr, mo), toBigDecimal(r[2]));
+            }
+
+            List<HomeDashboardDTO.MonthlyTrendPoint> trend = new ArrayList<>(6);
+            String[] FR_MONTHS = {"Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"};
+            for (int i = 5; i >= 0; i--) {
+                YearMonth ym = YearMonth.from(now.toLocalDate()).minusMonths(i);
+                String key   = String.format("%04d-%02d", ym.getYear(), ym.getMonthValue());
+                String label = FR_MONTHS[ym.getMonthValue() - 1] + " " + String.valueOf(ym.getYear()).substring(2);
+                trend.add(new HomeDashboardDTO.MonthlyTrendPoint(key, label,
+                        trendByMonth.getOrDefault(key, BigDecimal.ZERO)));
+            }
+            monthlyTrend = trend;
+
+            List<Object[]> rawProjects = venteRepo.topProjectsByCA(societeId);
+            projectBreakdown = rawProjects.stream()
+                    .map(r -> new HomeDashboardDTO.ProjectBreakdownRow(
+                            r[0] != null ? r[0].toString() : null,
+                            r[1] != null ? r[1].toString() : "—",
+                            toBigDecimal(r[2]),
+                            ((Number) r[3]).longValue()))
+                    .toList();
+        }
+
         return new HomeDashboardDTO(
                 now,
                 activeVentesCount, caActivePipeline, ventesParStatut,
@@ -408,11 +445,18 @@ public class HomeDashboardService {
                 dsoRolling90d, collectionEff90d,
                 caMensuelCible, ventesMensuelCible, quotaAttainmentMtd,
                 upcomingDeliveries,
+                monthlyTrend, projectBreakdown,
                 recentVentes, urgentTasks
         );
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private BigDecimal toBigDecimal(Object o) {
+        if (o == null) return BigDecimal.ZERO;
+        if (o instanceof BigDecimal bd) return bd;
+        return new BigDecimal(o.toString());
+    }
 
     private long toLong(Object o) {
         if (o == null) return 0L;

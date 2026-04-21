@@ -529,4 +529,43 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                                          @Param("to") java.time.LocalDateTime to,
                                          @Param("projectId") UUID projectId,
                                          @Param("agentId") UUID agentId);
+
+    /**
+     * Monthly CA signed trend — last N months (non-ANNULE).
+     * Rows: [year(int), month(int), totalCA(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT EXTRACT(YEAR  FROM created_at)::int AS yr,
+                   EXTRACT(MONTH FROM created_at)::int AS mo,
+                   COALESCE(SUM(prix_vente), 0)         AS ca
+            FROM vente
+            WHERE societe_id = :societeId
+              AND statut <> 'ANNULE'
+              AND created_at >= :from
+            GROUP BY yr, mo
+            ORDER BY yr ASC, mo ASC
+            """, nativeQuery = true)
+    List<Object[]> monthlyCaTrend(@Param("societeId") UUID societeId,
+                                   @Param("from") java.time.LocalDateTime from);
+
+    /**
+     * Top projects by CA signed (non-ANNULE, all time).
+     * Rows: [projectId(UUID), projectName(String), totalCA(BigDecimal), ventesCount(long)].
+     * Requires join through property → project.
+     */
+    @Query(value = """
+            SELECT pr.project_id::text,
+                   p.nom                      AS project_name,
+                   COALESCE(SUM(v.prix_vente), 0) AS total_ca,
+                   COUNT(v.id)                AS ventes_count
+            FROM vente v
+            JOIN property pr ON pr.id = v.property_id
+            JOIN project   p  ON p.id = pr.project_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+            GROUP BY pr.project_id, p.nom
+            ORDER BY total_ca DESC
+            LIMIT 8
+            """, nativeQuery = true)
+    List<Object[]> topProjectsByCA(@Param("societeId") UUID societeId);
 }
