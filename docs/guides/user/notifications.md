@@ -1,59 +1,62 @@
-# Notifications — User Guide
+# Tasks, Notifications, Messages, And Audit Guide
 
-This guide explains the in-app notification centre: what triggers notifications, how to view them, and how to mark them as read.
+This guide explains the platform features that help teams stay coordinated.
 
-## Table of Contents
+## 1. Tasks
 
-1. [What are Notifications](#what-are-notifications)
-2. [Notification Bell](#notification-bell)
-3. [Types of Notifications](#types-of-notifications)
-4. [Marking Notifications as Read](#marking-notifications-as-read)
-5. [Email and SMS Notifications](#email-and-sms-notifications)
+Use tasks to organize:
 
----
+- follow-up calls
+- document requests
+- payment reminders
+- next-step actions on a property or contact
 
-## What are Notifications
+Tasks can be linked to:
 
-The notification centre is an in-app bell notification system. It delivers real-time alerts to CRM users when significant events occur in the system. Notifications are personal — each user sees only notifications relevant to them.
+- a user
+- a contact
+- a property
 
----
+## 2. Notifications
 
-## Notification Bell
+Notifications surface business events that need attention.
 
-The notification bell icon appears in the top-right corner of the application. A red badge shows the number of unread notifications.
+Typical examples:
 
-Click the bell to open the notification dropdown. It shows your most recent unread notifications.
+- due or overdue items
+- workflow completion
+- operational reminders
 
----
+Use them as a signal to open the underlying record and take action.
 
-## Types of Notifications
+## 3. Messages
 
-| Event | Who is notified |
-|-------|----------------|
-| Deposit confirmed | Assigned agent |
-| Deposit cancelled | Assigned agent |
-| Contract signed | Assigned agent |
-| Contract cancelled | Assigned agent |
-| Payment schedule item overdue | Assigned agent and manager |
-| New contact assigned to you | Agent |
+The messages area shows outbound communication activity.
 
----
+Use it to:
 
-## Marking Notifications as Read
+- compose outgoing communication when the flow allows it
+- verify that a message was queued
+- inspect delivery state and history
 
-Open the notification panel and click a notification to mark it as read. Alternatively, click **Mark all as read** at the top of the panel.
+## 4. Audit
 
-Read notifications are not deleted — they remain in your history for reference.
+The audit area is a management and investigation tool.
 
----
+Use it to:
 
-## Email and SMS Notifications
+- understand who changed what
+- reconstruct a workflow timeline
+- investigate unusual contract or deposit behavior
 
-In addition to in-app notifications, the platform can send:
+Audit access is more restricted than general day-to-day CRM usage.
 
-- **Transactional emails** — Payment call-for-funds emails sent to buyers when a payment schedule item is issued or sent.
-- **Reminder SMS** — Payment reminders sent to buyers for overdue installments (if SMS is configured by your administrator).
+## 5. Daily Operating Rhythm
 
-These transactional messages go to **contacts (buyers)**, not to CRM staff. CRM staff receive in-app notifications only.
+Recommended routine:
 
-If you are not receiving transactional emails on behalf of buyers, contact your administrator to verify that the SMTP email configuration is set up correctly.
+1. review the dashboard
+2. check due tasks
+3. check notifications
+4. open the underlying contact, vente, or payment item
+5. verify message or audit history when clarification is needed

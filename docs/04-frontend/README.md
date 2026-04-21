@@ -30,9 +30,9 @@ The application has three separate route trees, each with its own auth guard and
 
 | Guard | Protects | Mechanism |
 |---|---|---|
-| `AuthGuard` | `/app/*` | Checks `hlm_access_token` in localStorage; redirects to `/login` if absent |
-| `AdminGuard` | Admin-only sections within CRM | Checks JWT `roles` claim contains `ROLE_ADMIN` |
-| `SuperAdminGuard` | `/superadmin/*` | Checks JWT `roles` claim contains `ROLE_SUPER_ADMIN` |
+| `AuthGuard` | `/app/*` | Calls the backend session-validation flow through `AuthService.verifySession()` and redirects to `/login` when the `hlm_auth` cookie-backed session is invalid |
+| `AdminGuard` | Admin-only sections within CRM | Validates the current user profile and requires `ROLE_ADMIN` |
+| `SuperAdminGuard` | `/superadmin/*` | Validates the current user profile and requires `ROLE_SUPER_ADMIN` |
 | `PortalGuard` | `/portal/*` (except `/portal/login`) | Calls `PortalAuthService.validateSession()` and redirects to `/portal/login` when the httpOnly portal session cookie is missing or invalid |
 
 Functional guards use the pattern:
@@ -49,14 +49,14 @@ Two interceptors are registered in `app.config.ts`. They must not interfere with
 
 | Interceptor | Token Source | Applied to |
 |---|---|---|
-| CRM Interceptor | `localStorage.getItem('hlm_access_token')` | `/auth/**` and `/api/**` (non-portal) |
+| CRM Interceptor | cookie-backed session plus explicit partial-token header only during societe switching | `/auth/**` and `/api/**` (non-portal) |
 | Portal Interceptor | `withCredentials: true` | `/api/portal/**` only |
 
 ### Token Storage
 
 | Key | Purpose |
 |---|---|
-| `hlm_access_token` | CRM and SUPER_ADMIN JWT |
+| `hlm_auth` | CRM and SUPER_ADMIN JWT stored as an httpOnly cookie |
 | `hlm_portal_auth` | Buyer portal JWT stored as an httpOnly cookie scoped to `/api/portal` |
 | `PortalSessionStore` | In-memory frontend flag indicating a validated portal session in the current SPA runtime |
 
@@ -307,11 +307,10 @@ If the `@angular/cli` minor version is upgraded (e.g., 19.2 → 19.3), all `@ang
 
 | Resource | Method | Backend Path | Notes |
 |---|---|---|---|
-| Login | POST | `/auth/login` | Returns JWT or `requiresSocieteSelection: true` |
-| Switch societe | POST | `/auth/switch-societe` | Uses partial token; returns full JWT |
+| Login | POST | `/auth/login` | Returns a cookie-backed final session or `requiresSocieteSelection: true` with a partial token |
+| Switch societe | POST | `/auth/switch-societe` | Uses partial token; final session is written to `hlm_auth` |
 | Users (admin CRUD) | GET/POST/PUT/DELETE | `/api/users` | NOT `/api/admin/users` — that prefix is SUPER_ADMIN-only |
-| Company members | GET/POST | `/api/mon-espace/utilisateurs` | HR membership; MANAGER read, ADMIN write |
-| Invite | POST | `/api/mon-espace/utilisateurs/invitations` | Rate limited: 10/h per admin |
+| Company members | GET/POST/PATCH/DELETE | `/api/mon-espace/utilisateurs` | Membership lifecycle and invitations |
 | Self profile | GET/PATCH | `/api/me` | Editable: prenom, nomFamille, telephone, poste, langueInterface |
 | Tasks | GET/POST | `/api/tasks` | Default GET filtered by current user's assigneeId |
 | Documents | GET/POST | `/api/documents` | Multipart form upload |

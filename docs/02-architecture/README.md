@@ -99,7 +99,7 @@ The YEM SaaS Platform (codename HLM) is a multi-company real-estate CRM delivere
 
 ### 3.4 Multi-Société Membership
 
-A single `app_user` may belong to multiple sociétés with different roles in each. The login flow (Section 4a) detects this and issues a **partial token** (no `sid` claim) prompting the client to call `POST /auth/switch-societe`. After société selection a full scoped token is issued. This is the only supported multi-société branching path; the Angular login component does not yet present a société-selection UI and relies on a single-membership assumption for most deployments.
+A single `app_user` may belong to multiple sociétés with different roles in each. The login flow (Section 4a) detects this and issues a **partial token** (no `sid` claim) prompting the client to call `POST /auth/switch-societe`. After société selection a full scoped token is issued. This is the supported multi-société branching path in both the backend and the current Angular login UI.
 
 ### 3.5 JWT Claim Map
 
@@ -226,7 +226,7 @@ The buyer portal uses a passwordless email link. No `app_user` record exists for
    - Calls `PortalJwtProvider.generate(contactId, societeId)` → 2-hour JWT with `roles=["ROLE_PORTAL"]`, `sub=contactId`, `sid=societeId`. Note: no `tv` claim.
    - Returns `PortalTokenVerifyResponse(accessToken, contactId, societeId)`.
 
-5. **Frontend stores token as `hlm_portal_token` in `localStorage`.** `portalInterceptor` attaches it to all `/api/portal/` requests (except `/api/portal/auth/`). On 401, `PortalAuthService.logout()` clears the token and redirects to `/portal/login`.
+5. **Frontend relies on the `hlm_portal_auth` httpOnly cookie.** `PortalAuthService` and the portal interceptor use `withCredentials: true` for `/api/portal/` requests (except the public auth endpoints). On 401, `PortalAuthService.logout()` clears portal session state and redirects to `/portal/login`.
 
 6. **`JwtAuthenticationFilter` detects `ROLE_PORTAL`** (via `isPortalToken()`) and skips `UserSecurityCacheService` — portal sessions are stateless (invalidated by TTL or one-time use). Sets `SocieteContext` with the contactId as `userId`.
 
@@ -460,33 +460,34 @@ All guards are Angular 19 functional guards invoked via `canActivate`.
 
 | Guard | File | Logic |
 |---|---|---|
-| `authGuard` | `core/auth/auth.guard.ts` | Checks `AuthService.token` (reads `hlm_access_token`); redirects to `/login` if absent |
-| `adminGuard` | `core/auth/admin.guard.ts` | Checks role = `ROLE_ADMIN`; used on `/app/admin/users` sub-route |
-| `superadminGuard` | `core/auth/superadmin.guard.ts` | Checks role = `ROLE_SUPER_ADMIN`; guards the entire `/superadmin/*` tree |
-| `portalGuard` | `portal/core/portal-auth.guard.ts` | Checks `PortalAuthService.token` (reads `hlm_portal_token`); redirects to `/portal/login` |
+| `authGuard` | `core/auth/auth.guard.ts` | Validates the CRM session through `AuthService.verifySession()`; redirects to `/login` when the `hlm_auth` cookie-backed session is invalid |
+| `adminGuard` | `core/auth/admin.guard.ts` | Validates the current CRM user profile and requires `ROLE_ADMIN`; used on `/app/admin/users` and template routes |
+| `superadminGuard` | `core/auth/superadmin.guard.ts` | Validates the current CRM user profile and requires `ROLE_SUPER_ADMIN`; guards the entire `/superadmin/*` tree |
+| `portalGuard` | `portal/core/portal-auth.guard.ts` | Validates the buyer session through `PortalAuthService.validateSession()`; redirects to `/portal/login` when the `hlm_portal_auth` cookie-backed session is invalid |
 
 ### 8.3 HTTP Interceptors
 
 Two functional interceptors are registered in `app.config.ts` via `provideHttpClient(withInterceptors([...]))`:
 
 **`authInterceptor`** (`core/auth/auth.interceptor.ts`):
-- Reads `hlm_access_token` from `AuthService.token` (localStorage).
-- Attaches `Authorization: Bearer <token>` to all requests **except** `/auth/login` (public endpoint).
-- On 401 from any non-login, non-`/auth/me` endpoint: calls `auth.logout()` (clears token, redirects to `/login`).
+- does not attach a CRM bearer token for normal SPA traffic because the final session lives in the `hlm_auth` httpOnly cookie
+- still allows the dedicated societe-switch flow to send the short-lived partial token explicitly from the service layer
+- on 401 from protected CRM endpoints: clears cached session state and redirects through the auth service
 
 **`portalInterceptor`** (`portal/core/portal.interceptor.ts`):
-- Reads `hlm_portal_token` from `PortalAuthService.token`.
-- Attaches `Authorization: Bearer <token>` only to requests containing `/api/portal/` in the URL, **excluding** `/api/portal/auth/` (public magic-link endpoints).
-- On 401 from a portal API endpoint: calls `auth.logout()` (clears portal token, redirects to `/portal/login`).
+- relies on `withCredentials: true` so the `hlm_portal_auth` cookie is sent to portal endpoints
+- does not mix portal session behavior into CRM routes
+- on 401 from a portal API endpoint: clears portal session state and redirects to `/portal/login`
 
 The two interceptors are independent — CRM token never goes to portal endpoints; portal token never goes to CRM endpoints.
 
-### 8.4 Token Storage
+### 8.4 Session Storage
 
 | Key | Storage | Content |
 |---|---|---|
-| `hlm_access_token` | `localStorage` | JWT for CRM staff (ROLE_ADMIN/MANAGER/AGENT) and SUPER_ADMIN |
-| `hlm_portal_token` | `localStorage` | JWT for buyer portal (ROLE_PORTAL, 2-hour TTL) |
+| `hlm_auth` | httpOnly cookie | final JWT for CRM staff and SUPER_ADMIN |
+| `hlm_portal_auth` | httpOnly cookie scoped to `/api/portal` | final buyer portal JWT |
+| partial societe token | in-memory request flow only | short-lived token used only for `/auth/switch-societe` |
 
 ### 8.5 Local Development Proxy
 
@@ -571,9 +572,9 @@ This path was used by an early bootstrapping flow. No `TenantsController` at `/t
 
 SUPER_ADMIN JWTs omit the `sid` claim entirely. `JwtAuthenticationFilter` handles this by branching on `isSuperAdmin` and calling `SocieteContext.setSuperAdmin(true)` without setting `societeId`. Any service method called by a SUPER_ADMIN request that calls `requireSocieteId()` will throw `CrossSocieteAccessException`. Portal services (e.g., `PortalContractService`) must read `contactId` from `SecurityContextHolder.getAuthentication().getPrincipal()` and the `societeId` from path parameters or JWT `sid` claim, not from `SocieteContext`. This is correctly implemented in the portal module but must be observed by any future service method reachable via SUPER_ADMIN routes.
 
-### 11.3 Multi-Société Selection UI Not Implemented in Angular
+### 11.3 Multi-Société Selection Requires End-To-End Testing When Auth Changes
 
-`AuthService.login()` on the backend correctly issues a partial token and returns a `societes[]` list for users with multiple memberships. `POST /auth/switch-societe` is implemented and tested. However, the Angular `LoginComponent` does not currently render a société-selection step after receiving a partial token response. Users with multiple société memberships will be stuck at login. The backend flow is complete; the missing piece is the Angular UI branch.
+`AuthService.login()` on the backend issues a partial token and returns a `societes[]` list for users with multiple memberships. The Angular `LoginComponent` now supports the société-selection branch and calls `POST /auth/switch-societe` before entering the CRM. This path is more fragile than single-membership login because it spans backend auth, frontend UI state, and cookie issuance, so it should be regression-tested whenever auth code changes.
 
 ### 11.4 Societe Suspension Fields Not Enforced at Request Time
 

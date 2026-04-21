@@ -1,72 +1,102 @@
 # User Guide Overview
 
-Welcome to the YEM SaaS Platform — a CRM and commercial management system for real estate developments. This overview explains who uses the platform, what each role can do, and where to find the right guide for your work.
+This guide introduces the platform from an end-user point of view and helps each role find the right instructions quickly.
 
-## Table of Contents
+## 1. Who Uses The Platform
 
-1. [Who Uses the Platform](#who-uses-the-platform)
-2. [Role Summary](#role-summary)
-3. [Navigation Map](#navigation-map)
-4. [Guide Index](#guide-index)
+| Role | Main mission |
+| --- | --- |
+| `SUPER_ADMIN` | govern societes and support the platform |
+| `ADMIN` | administer the company workspace and advanced CRM features |
+| `MANAGER` | supervise operations and progress commercial workflows |
+| `AGENT` | execute daily sales activity and follow-up |
+| Buyer | consult owned information in the portal |
 
----
+## 2. Main Product Areas
 
-## Who Uses the Platform
+### CRM workspace
 
-The platform serves three types of internal users and one external user type:
+- dashboards
+- projects, immeubles, tranches, and properties
+- contacts and interests
+- reservations, deposits, ventes, contracts, and payments
+- tasks, notifications, messages, audit, and commissions
 
-| User Type | Description |
-|-----------|-------------|
-| **Admin** | Real estate agency manager or system administrator. Has full access to all features. |
-| **Manager** | Senior sales staff. Can manage properties, contacts, deposits, and contracts but cannot delete records or manage user accounts. |
-| **Agent** | Sales representative. Can view most records and create contracts for their own sales. Cannot modify settings or delete data. |
-| **Portal user** | Property buyer (client). Accesses only their own contracts and payment schedule via the client portal. Cannot log into the main CRM. |
+### Administration
 
----
+- users and invitations
+- templates
+- societe settings
+- platform governance for `SUPER_ADMIN`
 
-## Role Summary
+### Buyer portal
 
-| Feature | Admin | Manager | Agent |
-|---------|-------|---------|-------|
-| Manage user accounts | Yes | No | No |
-| Create / edit properties | Yes | Yes | No |
-| Delete properties | Yes | No | No |
-| Create / edit contacts | Yes | Yes | No |
-| Create deposits | Yes | Yes | No |
-| Confirm / cancel deposits | Yes | Yes | No |
-| Create contracts | Yes | Yes | Yes (own sales) |
-| Sign / cancel contracts | Yes | Yes | No |
-| View dashboard (all data) | Yes | Yes | No |
-| View dashboard (own data) | Yes | Yes | Yes |
-| Export GDPR data | Yes | Yes | No |
-| Anonymize a contact | Yes | No | No |
-| Manage commission rules | Yes | No | No |
+- ventes
+- contracts
+- payment schedules
+- property detail
 
----
+## 3. Suggested Reading Order
 
-## Navigation Map
+### For all staff users
 
-After logging in, you land on the **Dashboard**. The main navigation sidebar gives access to:
+1. [getting-started-user.md](getting-started-user.md)
+2. [dashboard.md](dashboard.md)
+3. [sales-pipeline.md](sales-pipeline.md)
 
-- **Dashboard** — KPI summary, conversion rates, revenue figures
-- **Projects** — Real estate development projects
-- **Properties** — Individual units (villas, apartments, lots, etc.)
-- **Contacts** — Prospects and clients
-- **Deposits** — Financial commitments / acomptes
-- **Reservations** — Lightweight property holds
-- **Contracts** — Sale contracts
-- **Messages** — Outbound email and SMS log (Admin only)
+### For commercial teams
 
----
+1. [contacts.md](contacts.md)
+2. [properties.md](properties.md)
+3. [sales-pipeline.md](sales-pipeline.md)
+4. [notifications.md](notifications.md)
 
-## Guide Index
+### For admins and superadmins
 
-| Guide | Audience | Description |
-|-------|---------|-------------|
-| [Getting Started](getting-started-user.md) | All | Log in, navigate the UI, first steps |
-| [Contacts](contacts.md) | Admin, Manager | Create and manage leads and clients |
-| [Properties](properties.md) | Admin, Manager | Catalogue properties and manage their lifecycle |
-| [Sales Pipeline](sales-pipeline.md) | Admin, Manager, Agent | Deposits, reservations, and contracts |
-| [Dashboard](dashboard.md) | All | Understand KPIs and reports |
-| [Client Portal](client-portal.md) | Admin, Manager | Send portal invitations; buyer experience |
-| [GDPR Rights](gdpr-rights.md) | Admin, Manager | Handle data subject requests |
+1. [administration.md](administration.md)
+2. [gdpr-rights.md](gdpr-rights.md)
+
+### For buyer support
+
+1. [client-portal.md](client-portal.md)
+
+## 4. Role Summary
+
+| Capability | SUPER_ADMIN | ADMIN | MANAGER | AGENT | Buyer |
+| --- | --- | --- | --- | --- | --- |
+| Manage societes | Yes | No | No | No | No |
+| Manage users and invitations | Platform level | Yes | Limited | No | No |
+| Configure templates | No | Yes | No | No | No |
+| Create contacts | No | Yes | Yes | No | No |
+| Manage properties | No | Yes | Yes | Read mostly | No |
+| Execute ventes | No | Yes | Yes | Yes | No |
+| Read portal data | Support only | Support only | Support only | Support only | Yes |
+
+## 5. Navigation Map
+
+### CRM sidebar
+
+- dashboard
+- projects
+- properties
+- contacts
+- tasks
+- reservations
+- ventes
+- contracts
+- receivables
+- commissions
+- messages
+- notifications
+- audit
+- users and templates when your role allows it
+
+### Superadmin sidebar
+
+- societes
+- return to the CRM
+
+### Portal header
+
+- my sales
+- my contracts

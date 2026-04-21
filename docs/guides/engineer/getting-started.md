@@ -1,52 +1,56 @@
 # Getting Started For Engineers
 
-This guide gets the current stack running locally.
+This guide is the recommended day-one path for engineers joining the repository.
 
-## 1. Prerequisites
+## 1. What You Are Working On
 
-| Tool | Version |
+The platform is a multi-societe real-estate CRM with:
+
+- a Spring Boot backend
+- an Angular frontend
+- a buyer portal
+- superadmin governance features
+- PostgreSQL-backed business workflows for sales, collections, and compliance
+
+Before writing code, read:
+
+1. [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md)
+2. [../../context/MODULES.md](../../context/MODULES.md)
+3. [../../spec/functional-spec.md](../../spec/functional-spec.md)
+
+## 2. Local Prerequisites
+
+| Tool | Recommended version |
 | --- | --- |
-| Docker + Compose v2 | recent |
+| Docker + Compose v2 | current |
 | Java | 21 |
 | Node.js | 20+ |
-| npm | 10+ recommended |
+| npm | 10+ |
 
-## 2. Start The Stack
+## 3. Fastest Working Setup
 
 ```bash
 cp .env.example .env
-docker compose up -d
+docker compose up -d --wait --wait-timeout 180
 ```
 
-Verify backend health:
+Verify:
 
 ```bash
 curl -s http://localhost:8080/actuator/health
+curl -I http://localhost
 ```
 
-## 3. Seed Login
+## 4. When To Run Services Manually
 
-Admin login:
+### Backend only
 
 ```bash
-curl -s http://localhost:8080/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@demo.ma","password":"Admin123!Secure"}'
+cd hlm-backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-Other seeded users:
-
-- `manager@demo.ma / Manager123!Sec`
-- `agent@demo.ma / Agent123!Secure`
-- `superadmin@yourcompany.com / YourSecure2026!`
-
-## 4. Frontend
-
-Dockerized frontend:
-
-- `http://localhost`
-
-Local Angular dev mode:
+### Frontend only
 
 ```bash
 cd hlm-frontend
@@ -54,62 +58,68 @@ npm ci
 npm start
 ```
 
-Then open:
+Use this mode when iterating heavily on Angular or backend code without restarting the full compose stack.
 
-- `http://localhost:4200`
+## 5. Seed Accounts
 
-## 5. Backend Dev Mode
+| Account | Role |
+| --- | --- |
+| `superadmin@yourcompany.com` / `YourSecure2026!` | `SUPER_ADMIN` |
+| `admin@acme.com` / `Admin123!Secure` | `ROLE_ADMIN` |
+| `manager@demo.ma` / `Manager123!Sec` | `ROLE_MANAGER` |
+| `agent@demo.ma` / `Agent123!Secure` | `ROLE_AGENT` |
 
-```bash
-cd hlm-backend
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
-```
+## 6. Key Behaviors To Understand Early
 
-Useful local profile behavior:
+### Multi-societe login
 
-- local CORS defaults are relaxed for common local origins
-- the app still uses the real schema and auth flow
+- some users may receive a societe selection step after `/auth/login`
+- final staff sessions are cookie-based
+- the intermediate step uses a short-lived partial bearer token
 
-## 6. Important Current Auth Behavior
+### Separate buyer sessions
 
-The backend may return two login shapes:
+- buyers do not authenticate like staff users
+- portal routes use `hlm_portal_auth`
 
-- full bearer token
-- partial token with `requiresSocieteSelection=true`
+### Sales model
 
-That second path is used when a user belongs to more than one societe. In that case the client must call:
+- `vente` is the commercial deal workflow
+- `contract` is the formal contract + payment schedule workflow
 
-```bash
-POST /auth/switch-societe
-Authorization: Bearer <partial token>
-```
-
-with body:
-
-```json
-{
-  "societeId": "uuid"
-}
-```
-
-## 7. Useful Local Commands
+## 7. First Commands To Run
 
 ```bash
 cd hlm-backend && ./mvnw test
-cd hlm-backend && ./mvnw verify
 cd hlm-frontend && npm test -- --watch=false
 cd hlm-frontend && npm run build
 ```
 
-## 8. First Files To Read
+If Docker is available for Testcontainers:
 
-- [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md)
-- [../../context/DATA_MODEL.md](../../context/DATA_MODEL.md)
-- [../../context/SECURITY_BASELINE.md](../../context/SECURITY_BASELINE.md)
-- [../../spec/api-reference.md](../../spec/api-reference.md)
+```bash
+cd hlm-backend && ./mvnw failsafe:integration-test failsafe:verify
+```
 
-## 9. Known Setup Gotchas
+## 8. Day-One Reading Order
 
-- `JWT_SECRET` must be set outside the local profile path.
-- The backend supports multi-societe login, but the current Angular login UI does not yet implement a societe selection screen.
-- `POST /tenants` is not part of the active onboarding flow even though the security configuration still permits it.
+1. [../../context/ARCHITECTURE.md](../../context/ARCHITECTURE.md)
+2. [backend-deep-dive.md](backend-deep-dive.md)
+3. [frontend-deep-dive.md](frontend-deep-dive.md)
+4. [database.md](database.md)
+5. [testing.md](testing.md)
+
+## 9. First Contribution Rules
+
+- keep changes societe-safe
+- update Liquibase for schema changes
+- update docs when workflow or auth behavior changes
+- run the narrowest useful test set before widening
+
+## 10. Common First-Week Pitfalls
+
+- forgetting that some routes are cookie-driven rather than token-in-body driven
+- reading old `tenant` names in migrations as if they were the current runtime model
+- treating `vente` and `contract` as duplicates instead of complementary flows
+- adding schema changes without a matching Liquibase changeset
+- adding IT tests with class-level `@Transactional`

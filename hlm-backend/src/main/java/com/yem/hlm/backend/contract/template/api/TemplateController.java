@@ -133,6 +133,8 @@ public class TemplateController {
 
     /** Placeholder model exposed as {@code model} in the preview template context. */
     public static class SampleModel {
+        // Shared fields
+        public String getTenantName()         { return "ACME Immobilier"; }
         public String getSocieteName()        { return "ACME Immobilier"; }
         public String getProjectName()        { return "Résidence Les Palmiers"; }
         public String getPropertyRef()        { return "APT-001"; }
@@ -140,27 +142,43 @@ public class TemplateController {
         public String getPropertyType()       { return "APPARTEMENT"; }
         public String getAgreedPrice()        { return "1 200 000,00"; }
         public String getListPrice()          { return "1 250 000,00"; }
+        public String getPropertyPrice()      { return "1 200 000,00"; }
+        // Buyer fields
         public String getBuyerDisplayName()   { return "Martin Jean"; }
+        public String getBuyerFullName()      { return "Martin Jean"; }
+        public String getBuyerType()          { return "Personne physique"; }
+        public String getBuyerTypeLabel()     { return "Personne physique"; }
         public String getBuyerPhone()         { return "+212 6 00 00 00 00"; }
         public String getBuyerEmail()         { return "jean.martin@example.com"; }
         public String getBuyerAddress()       { return "123 Rue de la Paix, Casablanca"; }
         public String getBuyerIce()           { return "BE000000000"; }
-        public String getBuyerTypeLabel()     { return "Personne physique"; }
+        // Agent / contract fields
         public String getAgentEmail()         { return "agent@acme.com"; }
         public String getContractRef()        { return "ABC12345"; }
+        public String getContractReference()  { return "ABC12345"; }
         public String getContractStatus()     { return "DRAFT"; }
         public String getSignedAt()           { return null; }
         public String getCanceledAt()         { return null; }
+        public String getCancelledAt()        { return null; }
         public String getCreatedAt()          { return "01/01/2026"; }
         public String getGeneratedAt()        { return "01/01/2026 10:00"; }
+        // Reservation fields
         public String getDepositReference()   { return "RES-001"; }
         public String getDepositStatus()      { return "CONFIRMED"; }
         public String getDepositAmount()      { return "50 000,00 MAD"; }
         public String getDepositDate()        { return "01/01/2026"; }
         public String getDueDate()            { return "15/01/2026"; }
         public String getConfirmedAt()        { return "02/01/2026 09:00"; }
-        public String getCancelledAt()        { return null; }
         public String getNotes()              { return null; }
+        // Call-for-funds fields
+        public String getCallNumber()         { return "1"; }
+        public String getCallStatus()         { return "ISSUED"; }
+        public String getTrancheLabel()       { return "Fondations"; }
+        public String getTranchePercentage()  { return "20"; }
+        public String getTriggerCondition()   { return null; }
+        public String getTrancheDueDate()     { return "15/03/2026"; }
+        public String getIssuedAt()           { return "01/01/2026"; }
+        public String getAmountDue()          { return "240 000,00"; }
     }
 
     // ── DTOs ─────────────────────────────────────────────────────────────────

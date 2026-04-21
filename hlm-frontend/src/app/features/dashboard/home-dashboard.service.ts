@@ -53,9 +53,25 @@ export interface HomeDashboard {
   ventesMensuelCible: number | null;
   quotaAttainmentMtdPct: number | null;
   upcomingDeliveries: UpcomingDeliveryRow[];
+  // Trend & project breakdown
+  monthlyTrend: MonthlyTrendPoint[];
+  projectBreakdown: ProjectBreakdownRow[];
   // Widgets
   recentVentes: RecentVenteRow[];
   urgentTasks: UrgentTaskRow[];
+}
+
+export interface MonthlyTrendPoint {
+  yearMonth: string;
+  label: string;
+  caSigne: number;
+}
+
+export interface ProjectBreakdownRow {
+  projectId: string | null;
+  projectName: string;
+  totalCA: number;
+  ventesCount: number;
 }
 
 export interface UpcomingDeliveryRow {

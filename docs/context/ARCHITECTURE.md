@@ -1,187 +1,232 @@
 # Architecture Overview
 
-This document describes the implemented architecture of the YEM SaaS Platform from the current codebase.
+This document describes the implemented architecture of the current YEM SaaS Platform.
 
-## System Purpose
+## 1. System Intent
 
-The platform supports real-estate sales operations for one or more companies (`societes`) on a shared application stack. It combines:
+The platform supports real-estate commercial operations for multiple societes on a shared application stack.
+It combines:
 
-- CRM workflows for staff users (`ADMIN`, `MANAGER`, `AGENT`)
-- platform-level governance for `SUPER_ADMIN`
-- a buyer-facing portal authenticated by one-time magic links
+- a staff CRM for `ADMIN`, `MANAGER`, and `AGENT`
+- a platform console for `SUPER_ADMIN`
+- a buyer portal authenticated with one-time magic links
 
-The codebase is a monorepo:
+The repository is a monorepo:
 
-| Path | Role |
+| Path | Responsibility |
 | --- | --- |
-| [hlm-backend](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend) | Spring Boot API, business logic, schedulers, Liquibase migrations |
-| [hlm-frontend](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend) | Angular 19 CRM SPA, super-admin UI, client portal |
-| [docs](/home/yem/CRM-HLM/yem-saas-platform/docs) | Context, specifications, guides, runbooks |
-| [scripts](/home/yem/CRM-HLM/yem-saas-platform/scripts) | Smoke tests and API support material |
+| [../../hlm-backend](../../hlm-backend) | API, schedulers, business rules, migrations |
+| [../../hlm-frontend](../../hlm-frontend) | CRM, superadmin UI, portal UI |
+| [../../nginx](../../nginx) | reverse-proxy and TLS reference configuration |
+| [../../docs](../../docs) | context, specifications, guides, and learning material |
 
-## Runtime Topology
+## 2. Runtime Topology
 
 ```text
 Browser
-  |- CRM SPA                 -> /login, /app/*
-  |- Super-admin SPA         -> /superadmin/*
-  |- Buyer portal            -> /portal/*
-  v
-Nginx / Angular dev proxy
-  |- /auth
-  |- /api
-  |- /api/portal
-  v
+  Staff login and CRM      -> /login, /app/*
+  Superadmin console       -> /superadmin/*
+  Buyer portal             -> /portal/*
+        |
+        v
+Nginx or Angular dev proxy
+  /auth
+  /api
+  /api/portal
+        |
+        v
 Spring Boot 3.5.11
-  |- Security filter chain
-  |- REST controllers
-  |- Services / transactions
-  |- JPA repositories
-  |- Schedulers / outbox dispatcher
-  v
+  Security filter chain
+  JWT and cookie handling
+  Controllers
+  Services / transactions
+  Repositories
+  Schedulers / outbox / PDF generation
+        |
+        v
 PostgreSQL 16
-  |- Liquibase-managed schema
-  |- optional defense-in-depth RLS on contact/property
+  Liquibase-managed schema
+  societe-scoped aggregates
+  row-level security policies
 
-Optional infrastructure
-  |- Redis            shared cache for multi-instance deployments
-  |- S3-compatible    object storage for media/documents
-  |- SMTP             outbound email
-  |- Twilio           outbound SMS
-  |- OTLP collector   tracing export
+Optional infrastructure:
+  Redis, MinIO/S3, SMTP/Brevo, Twilio, Prometheus-compatible metrics, OTLP tracing
 ```
 
-## Identity and Scope Model
+## 3. Identity And Access Model
 
-The live model is centered on three records:
+### Core records
 
-| Record | Purpose |
+| Record | Meaning |
 | --- | --- |
-| `app_user` | Platform identity, credentials, lockout state, token version, personal profile |
-| `societe` | Company metadata, quotas, branding, compliance, subscription lifecycle |
-| `app_user_societe` | User membership inside a company, including role and active flag |
+| `app_user` | global identity, password, token version, lockout, profile |
+| `societe` | company, quotas, branding, compliance, subscription, lifecycle |
+| `app_user_societe` | company membership and societe-scoped role |
 
-Important implementation details:
+### Role model
 
-- `SUPER_ADMIN` is stored in `app_user.platform_role`.
-- Company-scoped roles live in `app_user_societe.role`.
-- A user may belong to multiple societes.
-- CRM JWTs carry `sid` for the active societe.
-- Portal JWTs use the buyer contact ID as `sub` and still carry `sid`.
+- `SUPER_ADMIN` is a platform role stored on `app_user.platform_role`
+- `ADMIN`, `MANAGER`, and `AGENT` are societe roles stored on `app_user_societe.role`
+- a user can belong to multiple societes
+- the active societe is carried by the JWT `sid` claim for CRM sessions
 
-## Request Lifecycle
+## 4. Session Architecture
 
-### CRM requests
+### Staff CRM sessions
 
-1. The client calls `/auth/login` with `email` and `password`.
-2. `AuthService` checks login rate limits, lockout state, password validity, and active memberships.
-3. If the user has exactly one active membership, the backend issues a full CRM JWT.
-4. If the user has multiple memberships, the backend issues a short-lived partial token plus the available societes.
-5. The client can exchange that partial token on `POST /auth/switch-societe` for a full scoped JWT.
-6. On subsequent API requests, `JwtAuthenticationFilter` validates the token, rejects partial tokens outside `/auth/switch-societe`, checks token revocation for CRM users, and populates `SecurityContextHolder` plus `SocieteContext`.
-7. Controllers delegate quickly to services.
-8. Transactional service methods trigger `RlsContextAspect`, which sets PostgreSQL session variable `app.current_societe_id`.
-9. Services and repositories apply societe-scoped access rules.
-10. The filter clears `SocieteContext` in a `finally` block.
+1. `POST /auth/login` receives email and password.
+2. `AuthService` performs rate limiting, password validation, lockout checks, and membership lookup.
+3. Single-membership users receive a full staff JWT.
+4. Multi-membership users receive a partial token and a list of available societes.
+5. The client calls `POST /auth/switch-societe` to obtain the final scoped session.
+6. `AuthController` stores the final JWT in the `hlm_auth` httpOnly cookie.
+7. `JwtAuthenticationFilter` extracts the cookie or bearer token, validates it, loads role information, and populates `SecurityContextHolder` plus `SocieteContext`.
 
-### Portal requests
+### Buyer portal sessions
 
-1. The buyer calls `POST /api/portal/auth/request-link` with `email` and `societeKey`.
-2. `PortalAuthService` rate-limits the request, stores only a SHA-256 token hash, and sends a one-time link.
-3. The frontend calls `GET /api/portal/auth/verify?token=...`.
-4. The backend marks the magic-link token as used and returns a separate 2-hour `ROLE_PORTAL` JWT.
-5. Portal controllers only expose contracts, payment schedules, property details, and tenant branding tied to the current buyer contact.
+1. `POST /api/portal/auth/request-link` receives `email` and `societeKey`.
+2. `PortalAuthService` generates a 32-byte token, stores only the SHA-256 hash, and sends the link.
+3. `GET /api/portal/auth/verify?token=...` validates the token, marks it used, and issues a portal JWT.
+4. `PortalAuthController` stores the token in the `hlm_portal_auth` cookie scoped to `/api/portal`.
 
-## Backend Layering
+### Why two cookie types?
 
-The backend is mostly organized by domain, with a consistent controller/service/repository pattern.
+- staff and buyer sessions do not share the same authorities
+- the portal cookie is path-restricted so it cannot bleed into CRM requests
+- portal tokens do not participate in CRM user revocation checks
+
+## 5. Request Lifecycle
+
+### CRM request flow
+
+1. Browser sends request with `hlm_auth`.
+2. `JwtAuthenticationFilter` validates signature, expiry, authorities, `sid`, and token version.
+3. `SocieteContext` is populated with user ID, role, societe ID, and impersonation info when relevant.
+4. `SecurityConfig` and method-level `@PreAuthorize` checks authorize the route.
+5. Controller delegates quickly to a service.
+6. Service reads `societeId` from the current context and calls repositories with societe-scoped predicates.
+7. `RlsContextAspect` sets `SET LOCAL app.current_societe_id` inside the active transaction.
+8. PostgreSQL enforces RLS as a final barrier.
+9. The filter clears ThreadLocals in a `finally` block.
+
+### Portal request flow
+
+1. Browser sends request with `hlm_portal_auth`.
+2. `JwtAuthenticationFilter` recognizes `ROLE_PORTAL`.
+3. `SocieteContext` is still populated with `sid`, but the principal is the buyer contact ID.
+4. Portal controllers and services apply buyer-specific ownership checks before returning data.
+
+## 6. Application Layering
+
+The backend is domain-oriented but follows a consistent layered style:
 
 ```text
-api/        HTTP contract and DTOs
-service/    business rules, orchestration, transactions
-repo/       Spring Data JPA repositories
-domain/     entities and enums
+Controller
+  -> request validation and transport concerns
+Service
+  -> business rules, transactions, orchestration
+Repository
+  -> JPA access with societe-scoped queries
+Entity / DTO
+  -> persistence state and transport contracts
 ```
 
-Cross-cutting modules include:
+Cross-cutting flows live in dedicated modules:
 
-- `auth`: JWT, Spring Security, revocation, lockout, rate limiting
-- `common`: error handling, validation, generic pagination, correlation filter
-- `societe`: context handling, super-admin company management, membership model
-- `admin`: bootstrap of the first `SUPER_ADMIN`
+- `auth` for cookies, JWT parsing, revocation, rate limiting, and lockout
+- `societe` for context propagation, impersonation, RLS, and membership lookup
+- `common` for validation, error contracts, and shared utilities
+- `outbox`, `notification`, and `gdpr` for asynchronous or compliance-heavy concerns
 
-## Frontend Surfaces
+## 7. Frontend Surface Map
 
-The Angular app exposes three route trees:
+### CRM
 
-| Prefix | Audience | Notes |
-| --- | --- | --- |
-| `/app/*` | CRM users | Property, contact, reservation, contract, dashboard, task, messaging, audit, admin users |
-| `/superadmin/*` | `SUPER_ADMIN` | Societe creation, editing, membership view, impersonation |
-| `/portal/*` | Buyer contacts | Contract list, property view, payment schedule |
+- dashboard, cash, and receivables views
+- projects, immeubles, tranches, and properties
+- contacts, reservations, deposits, ventes, contracts, and schedules
+- commissions, notifications, messages, tasks, and audit activity
+- admin-only user and template management
 
-Current route inventory is defined in [app.routes.ts](/home/yem/CRM-HLM/yem-saas-platform/hlm-frontend/src/app/app.routes.ts).
+### Superadmin
 
-## Asynchronous and Scheduled Components
+- societe list, create, detail, edit, logo, compliance, stats, and member inspection
+- impersonation entry point back into the CRM
 
-| Component | Behavior |
-| --- | --- |
-| `OutboundDispatcherService` | Polls `outbound_message`, claims batches with `FOR UPDATE SKIP LOCKED`, retries failed sends; guarded by `@SchedulerLock(name="outbox_dispatcher")` via ShedLock |
-| `DepositWorkflowScheduler` | Expires overdue pending deposits and produces due reminders |
-| `ReservationExpiryScheduler` | Expires active reservations after their expiry date |
-| `ReminderService` | Marks payment items overdue and emits reminders |
-| `PortalTokenCleanupScheduler` | Deletes expired or already-used portal tokens |
-| `DataRetentionScheduler` | Runs GDPR retention sweeps |
+### Portal
 
-Schedulers that operate across companies use `SocieteContextHelper.runAsSystem(...)` and pass societe IDs explicitly where needed.
+- login and verification screens
+- vente list and detail
+- contract list
+- payment schedule views
+- property detail view
 
-`ShedLockConfig` (changeset 052 `shedlock` table) prevents duplicate scheduler runs in multi-instance deployments.
-
-### @Async Context Propagation
-
-`SocieteContextTaskDecorator` propagates all five ThreadLocal values to `@Async` worker threads:
-
-- `societeId`
-- `userId`
-- `role`
-- `superAdmin`
-- `impersonatedBy`
-
-Wired via `AsyncConfig` (`ThreadPoolTaskExecutor`). Without this decorator, `@Async` methods would see a null `SocieteContext`, causing `requireSocieteId()` to throw.
-
-## Data Isolation Model
+## 8. Data Isolation Strategy
 
 Isolation is implemented in three layers:
 
-- **Application layer**: repository calls are scoped by `societeId`; services call `requireSocieteId()` as first step
-- **Framework layer**: `SecurityConfig` separates platform, CRM, and portal routes; method-level `@PreAuthorize` refines permissions
-- **Database layer**: `RlsContextAspect` sets `app.current_societe_id` as a PostgreSQL transaction-local variable; RLS policies enforce isolation
+### Application layer
 
-Wave 4 (changeset 051) extended RLS to all 13 domain tables:
-`contact`, `property`, `project`, `property_reservation`, `sale_contract`, `deposit`, `commission_rule`, `task`, `document`, `notification`, `property_media`, `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder`
+- services must obtain the active societe from context
+- repository queries always include `societeId`
+- controllers never trust client-provided societe identifiers for scoping
 
-RLS policy logic:
-- nil-UUID `00000000-0000-0000-0000-000000000000` → all rows visible (system/scheduler bypass)
-- real UUID → only rows where `societe_id` matches
-- unset or `NULL` → no rows visible
+### Framework layer
 
-## AOP Ordering — Transaction vs RLS
+- route families are separated in `SecurityConfig`
+- `SUPER_ADMIN` routes are isolated under `/api/admin/**`
+- portal routes require `ROLE_PORTAL`
 
-Critical ordering enforced by `TransactionOrderConfig`:
+### Database layer
 
-- `@EnableTransactionManagement(order = LOWEST_PRECEDENCE - 10)` → `TransactionInterceptor` is the **outer** proxy
-- `RlsContextAspect` at `@Order(LOWEST_PRECEDENCE - 1)` → fires **inside** the open transaction
+- `RlsContextAspect` sets `app.current_societe_id` inside the current transaction
+- PostgreSQL RLS policies filter rows by `societe_id`
+- system-mode schedulers can use the nil UUID bypass when explicitly designed to do so
 
-This ordering is mandatory. Reversing it causes `RlsContextAspect` to run the `SET LOCAL app.current_societe_id` call on a standalone connection (no transaction), which is immediately discarded. The subsequent Hibernate transaction would then run against a connection with no `current_societe_id` set, violating isolation.
+## 9. Concurrency And Consistency
 
-Important nuance:
+### Optimistic locking
 
-- the migration history still contains older `tenant` artifacts used for data transition, but the runtime code uses `societe`
+Mutable entities such as `societe`, `contact`, `property`, and `vente` use `@Version` to detect lost updates.
 
-## Notable Consistency Findings
+### Schedulers and distributed coordination
 
-The current architecture also contains some legacy edges that matter for maintainers:
+- `OutboundDispatcherScheduler` dispatches queued messages
+- `DepositWorkflowScheduler` manages deposit and reminder progression
+- `PortalTokenCleanupScheduler` removes expired or used portal tokens
+- `DataRetentionScheduler` runs privacy retention tasks
+- ShedLock prevents duplicate execution in multi-instance deployments
 
-- `SecurityConfig` still permits `POST /tenants`, but there is no active tenant-bootstrap controller in the current backend.
-- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) is on `/api/users` (moved from `/api/admin/users` — the `/api/admin/**` prefix is SUPER_ADMIN-only in `SecurityConfig`). The HR membership surface is `/api/mon-espace/utilisateurs`.
-- The Angular login flow currently assumes every successful `/auth/login` returns a full token and does not yet implement the multi-societe selection step exposed by the backend.
+### Async context propagation
+
+`SocieteContextTaskDecorator` propagates the active context into `@Async` work so background tasks do not lose scoping information.
+
+## 10. Storage And Document Architecture
+
+- generic documents and vente-specific documents use the media storage abstraction
+- property media uses the same storage strategy
+- the default implementation is local disk
+- S3-compatible object storage is enabled by configuration
+- PDFs are rendered from Thymeleaf templates through OpenHTMLToPDF
+
+## 11. Deployment Shapes
+
+### Local developer stack
+
+- Docker Compose starts PostgreSQL, Redis, MinIO, backend, and frontend
+- Angular `ng serve` can also be used for UI iteration
+
+### Reverse-proxied production
+
+- Nginx terminates TLS
+- Spring Boot usually runs on plain HTTP behind the proxy
+- `FORWARD_HEADERS_STRATEGY=FRAMEWORK` ensures secure redirects and cookie behavior
+- secure cookies and exact CORS origins must be configured explicitly
+
+## 12. Architectural Themes Worth Preserving
+
+- one repository, three user surfaces, one consistent security model
+- separate auth mechanisms for staff and buyers
+- explicit societe scoping at every layer
+- asynchronous delivery for messages and reminders
+- code-first documentation grounded in controllers, entities, and route maps

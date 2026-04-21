@@ -138,6 +138,12 @@ public record HomeDashboardDTO(
         /** Up to 10 upcoming tranche deliveries within the next 90 days. */
         List<UpcomingDeliveryRow> upcomingDeliveries,
 
+        // ── Trend & project breakdown ─────────────────────────────────────────
+        /** Monthly CA signed for the last 6 months (oldest → newest). Empty for AGENT. */
+        List<MonthlyTrendPoint> monthlyTrend,
+        /** Top 8 projects by total CA signed (all time, non-ANNULE). Empty for AGENT. */
+        List<ProjectBreakdownRow> projectBreakdown,
+
         // ── Widgets ───────────────────────────────────────────────────────────
         /** Up to 5 recent ventes for the widget. */
         List<RecentVenteRow> recentVentes,
@@ -167,6 +173,21 @@ public record HomeDashboardDTO(
     public record AgentLeaderboardRow(
             java.util.UUID agentId,
             String agentName,
+            BigDecimal totalCA,
+            long ventesCount
+    ) {}
+
+    public record MonthlyTrendPoint(
+            /** "YYYY-MM" — e.g. "2026-03" */
+            String yearMonth,
+            /** Short label — e.g. "Mar 26" */
+            String label,
+            BigDecimal caSigne
+    ) {}
+
+    public record ProjectBreakdownRow(
+            String projectId,
+            String projectName,
             BigDecimal totalCA,
             long ventesCount
     ) {}

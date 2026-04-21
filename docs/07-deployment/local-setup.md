@@ -113,12 +113,14 @@ curl -s http://localhost:8080/auth/login \
 A successful login returns:
 ```json
 {
-  "accessToken": "eyJ...",
+  "accessToken": "",
   "tokenType": "Bearer",
   "expiresIn": 3600,
   "requiresSocieteSelection": false
 }
 ```
+
+The empty `accessToken` is expected for final browser sessions because the actual JWT is stored in the `hlm_auth` httpOnly cookie.
 
 ---
 

@@ -1,391 +1,377 @@
 # Data Model
 
-This document reconstructs the current domain model from JPA entities and Liquibase changesets.
+This document summarizes the live data model as implemented in JPA entities and Liquibase migrations.
 
-## Scope Notes
+## 1. Modeling Principles
 
-- The current business schema is company-centric and uses `societe_id`.
-- Liquibase history still contains early `tenant`-era migrations used to evolve existing installs.
-- The backend code should be treated as the authoritative view of active fields and relationships.
+- the business runtime is societe-centric
+- every tenant-scoped aggregate carries `societe_id`
+- schema evolution is additive through Liquibase changesets
+- some migration history still contains `tenant` terminology, but the runtime model uses `societe`
 
-## Core Entity Graph
-
-```mermaid
-erDiagram
-    app_user ||--o{ app_user_societe : belongs_to
-    societe ||--o{ app_user_societe : has_members
-
-    societe ||--o{ project : owns
-    societe ||--o{ property : owns
-    societe ||--o{ contact : owns
-    societe ||--o{ deposit : owns
-    societe ||--o{ reservation : owns
-    societe ||--o{ sale_contract : owns
-    societe ||--o{ task : owns
-    societe ||--o{ document : owns
-    societe ||--o{ notification : owns
-    societe ||--o{ outbound_message : owns
-    societe ||--o{ commission_rule : owns
-
-    project ||--o{ property : groups
-    contact ||--o| prospect_detail : enriches
-    contact ||--o| client_detail : enriches
-    contact ||--o{ contact_interest : has
-    property ||--o{ contact_interest : referenced_by
-
-    contact ||--o{ deposit : places
-    property ||--o{ deposit : secured_by
-    app_user ||--o{ deposit : handled_by
-
-    contact ||--o{ reservation : reserves
-    property ||--o{ reservation : held_by
-    app_user ||--o{ reservation : created_by
-
-    project ||--o{ sale_contract : contains
-    property ||--o{ sale_contract : sold_by
-    contact ||--o{ sale_contract : buys
-    app_user ||--o{ sale_contract : agent
-
-    sale_contract ||--o{ payment_schedule_item : has
-    payment_schedule_item ||--o{ schedule_payment : receives
-    payment_schedule_item ||--o{ schedule_item_reminder : tracks
-```
-
-## Identity and Access
+## 2. Identity And Company Aggregates
 
 ### `app_user`
 
-Global platform user identity.
+Global identity record.
 
-Key fields inferred from code:
+Key concerns:
 
-- `id`
-- `email`
-- `password_hash`
-- `enabled`
-- `platform_role`
-- `token_version`
-- `failed_login_attempts`
-- `locked_until`
-- invitation and profile fields such as `prenom`, `nom_famille`, `telephone`, `poste`, `langue_interface`
-- GDPR-related fields such as CGU consent and anonymization state
-- `version` for optimistic locking
-
-Behavioral notes:
-
-- Auth lookup uses `findFirstByEmail(...)` for compatibility with pre-dedup data, but the model now expects global email uniqueness.
-- Disabling a user or changing role increments `token_version`.
+- email and password hash
+- enablement and lockout state
+- `platform_role` for `SUPER_ADMIN`
+- `token_version` for revocation
+- user profile data such as name, phone, language, and position
+- GDPR flags and anonymization metadata
 
 ### `societe`
 
-Company record managed by `SUPER_ADMIN`.
+Company aggregate managed by `SUPER_ADMIN`.
 
-Key fields:
+Major field groups:
 
-- identity and legal metadata: `nom`, `key`, `forme_juridique`, `siret_ice`, `rc`, `if_number`
-- location and branding: addresses, phones, `logo_url`, colors, language, currency
-- compliance data: DPO fields, declaration numbers, legal basis, retention settings
-- licensing data: approval numbers, expiration dates, activity type
-- subscription and quota data: `plan_abonnement`, `max_utilisateurs`, `max_biens`, `max_contacts`, `max_projets`
-- lifecycle fields: `actif`, suspension timestamps and reasons
-- `version` for optimistic locking
+- legal identity: commercial name, RC, IF, TVA, CNSS, ICE
+- contact and location: address, city, region, phones, contact email, website
+- compliance: DPO fields, declaration numbers, retention defaults, legal basis
+- licensing: approvals, guarantees, insurance, activity type, intervention zones
+- branding: logo, colors, language, currency, legal mentions
+- commercial governance: quotas, plan, trial flag, revenue and sales targets
+- lifecycle: active flag, suspension reason, subscription dates
 
 ### `app_user_societe`
 
-Join table between users and companies.
+Membership bridge between users and societes.
 
-Key characteristics:
+Important behaviors:
 
-- composite primary key `(user_id, societe_id)`
-- `role` constrained to `ADMIN`, `MANAGER`, or `AGENT`
-- `actif` soft-removal flag
-- audit fields such as add/remove timestamps and actor IDs
+- composite key on `(user_id, societe_id)`
+- stores societe role: `ADMIN`, `MANAGER`, or `AGENT`
+- supports active / inactive lifecycle
+- powers multi-societe login selection
 
-This table is the source of company-scoped authorization.
-
-## CRM Master Data
+## 3. CRM Catalog And Inventory
 
 ### `project`
 
 Represents a real-estate program or development.
 
-Key rules:
+Highlights:
 
-- `name` is unique per societe
-- status is `ACTIVE` or `ARCHIVED`
-- archived projects remain referentially intact and are not hard-deleted
+- unique name per societe
+- KPI-bearing entity used by dashboards
+- archival instead of hard delete
+
+### `immeuble`
+
+Structured building under a project.
+
+Use cases:
+
+- group units by building
+- improve dashboard slicing
+- support more professional inventory modeling than a raw text building name
+
+### `tranche`
+
+Delivery or rollout phase under a project.
+
+Use cases:
+
+- bulk generation workflows
+- phased delivery reporting
+- tranche-level KPI views
 
 ### `property`
 
-Represents an inventory unit.
+Represents a unit or lot in the inventory.
 
-Key fields:
+Key dimensions:
 
-- `type`, `status`, `reference_code`, `title`, `price`, `currency`
-- address and descriptive fields
-- type-specific attributes such as surfaces, bedrooms, floors, zoning, servicing
-- `project_id`
-- lifecycle timestamps: `published_at`, `reserved_at`, `sold_at`, `deleted_at`
-- `version`
+- classification: type, status, reference code, title
+- commercial data: price, estimated value, commission rate, currency
+- location: address, city, region, geo coordinates
+- legal metadata: title deed, cadastral reference, owner, legal status
+- type-specific fields: surface, land area, bedrooms, bathrooms, floor, zoning, serviceability
+- hierarchy: project, optional immeuble, optional tranche
+- editorial lifecycle: listed for sale, deleted at, reserved at, sold at
 
-Key constraints and behaviors:
+Main status values:
 
-- `reference_code` is unique per societe
-- the service validates required fields by `PropertyType`
-- deletion is soft deletion
-- RLS is enabled on this table
+- `DRAFT`
+- `ACTIVE`
+- `RESERVED`
+- `SOLD`
+- `WITHDRAWN`
+- `ARCHIVED`
+
+## 4. Customer And Lead Management
 
 ### `contact`
 
-Unified contact record for prospects and clients.
+Unified person or organization record used across prospecting and sales.
 
-Key fields:
+Important field groups:
 
-- `contact_type`
-- `status`
-- qualification fields such as `qualified` and `temp_client_until`
-- identity and communication fields
-- GDPR fields: consent flags, dates, processing basis, retention days, `anonymized_at`
-- `version`
+- identity: first name, last name, full name, phone, email
+- classification: `contact_type`, `status`, qualification flags
+- business notes and ownership metadata
+- privacy: consent, processing basis, retention override, anonymized timestamp
 
-Key rules:
+Key statuses:
 
-- service prevents duplicate email inside the same societe
-- RLS is enabled on this table
-- a new contact always gets a `ProspectDetail` row through the current service implementation
+- `PROSPECT`
+- `QUALIFIED_PROSPECT`
+- `CLIENT`
+- `ACTIVE_CLIENT`
+- `COMPLETED_CLIENT`
+- `REFERRAL`
+- `LOST`
 
 ### `prospect_detail`
 
-One-to-one extension for prospect enrichment:
+One-to-one enrichment record for qualified prospects.
 
-- `budget_min`
-- `budget_max`
-- `source`
-- `notes`
+Typical data:
+
+- budget range
+- lead source
+- notes
 
 ### `client_detail`
 
-One-to-one extension for client identity:
+One-to-one enrichment record for formal client information.
 
-- `client_kind`
-- `company_name`
-- `ice`
-- `siret`
+Typical data:
+
+- client kind
+- company identity values
+- fiscal identifiers
 
 ### `contact_interest`
 
-Bridge between contacts and properties.
+Join table linking contacts to properties of interest.
 
-Key rule:
+Purpose:
 
-- uniqueness on `(societe_id, contact_id, property_id)` is enforced by the current model and service logic
+- capture expressed buyer interest
+- drive sales follow-up
+- support contact-centric and property-centric relationship lookups
 
-## Commercial Workflow Entities
+## 5. Sales Pipeline Aggregates
 
-### `reservation`
+### `property_reservation`
 
-Short-lived property hold before deposit.
+Short-lived non-financial hold on a property.
 
-Key fields:
+Core fields:
 
-- `contact_id`
-- `property_id`
-- `reserved_by_user_id`
-- `reservation_price`
-- `reservation_date`
-- `expiry_date`
-- `status`
-- `converted_deposit_id`
+- contact
+- property
+- reserved by
+- reservation price
+- reservation date and expiry date
+- status
+
+Main statuses:
+
+- `ACTIVE`
+- `EXPIRED`
+- `CANCELLED`
+- `CONVERTED_TO_DEPOSIT`
 
 ### `deposit`
 
-Financial commitment against a property.
+Financial reservation record.
 
-Key fields:
+Core fields:
 
-- `contact_id`
-- `property_id`
-- `agent_id`
-- `amount`, `currency`
-- `deposit_date`, `due_date`
-- `reference`
-- `status`
-- `confirmed_at`, `cancelled_at`
+- contact
+- property
+- agent
+- amount and currency
+- due date and confirmation dates
+- reference
+- status
 
-Key invariants enforced by service logic:
+Main statuses:
 
-- property must be `ACTIVE`
-- property-level conflicts are guarded with row locking
-- duplicate active holds are blocked
+- `PENDING`
+- `CONFIRMED`
+- `CANCELLED`
+- `EXPIRED`
+
+### `vente`
+
+Commercial sale pipeline record.
+
+Purpose:
+
+- manage progression from compromis to livraison
+- track financing, notary, deadlines, probability, and contract readiness
+- host vente-specific documents and milestones
+
+Important fields:
+
+- `vente_ref`
+- property and contact links
+- agent link
+- legal and financing dates
+- probability and expected closing date
+- contract generation and signing state
+
+Main statuses:
+
+- `COMPROMIS`
+- `FINANCEMENT`
+- `ACTE_NOTARIE`
+- `LIVRE`
+- `ANNULE`
 
 ### `sale_contract`
 
-Sales agreement tied to project, property, buyer, and agent.
+Formal contract entity used by the contract and payment modules.
 
-Key fields:
+Purpose:
 
-- `project_id`
-- `property_id`
-- `buyer_contact_id`
-- `agent_id`
-- `status`
-- `agreed_price`
-- `list_price`
-- `source_deposit_id`
-- buyer snapshot fields captured at signing time
-- `signed_at`, `canceled_at`
-- `version`
+- represent the official contract lifecycle
+- expose PDFs and schedule management
+- preserve buyer snapshot data
 
-Important constraint:
+Main statuses:
 
-- a partial unique index prevents more than one active signed contract per property
+- `DRAFT`
+- `SIGNED`
+- `CANCELED`
 
-### `commission_rule`
-
-Commission configuration at societe or project scope.
-
-Key fields:
-
-- optional `project_id`
-- percentage and/or fixed amount settings
-
-Behavior:
-
-- project-specific rules override societe-wide defaults
-
-### `commercial_audit_event`
-
-Append-only audit table for business workflow events.
-
-## Finance and Collections
+## 6. Collections, Payments, And Commissions
 
 ### `payment_schedule_item`
 
-Installment or call-for-funds row tied to a contract.
+Represents one planned payment milestone under a contract.
 
-Key fields:
+Responsibilities:
 
-- `contract_id`
-- denormalized `project_id` and `property_id`
-- `sequence`
-- `label`
-- `amount`
-- `due_date`
-- `status`
-- `issued_at`, `sent_at`, `canceled_at`
+- due dates and amounts
+- issue/send/cancel lifecycle
+- payment aggregation
+- overdue status
 
 ### `schedule_payment`
 
-Recorded payment against a schedule item.
+Actual payment registration against a schedule item.
 
-Key fields:
+Purpose:
 
-- `schedule_item_id`
-- `amount_paid`
-- `paid_at`
-- `channel`
-- `payment_reference`
+- support partial payment
+- preserve payer, amount, and payment date history
 
 ### `schedule_item_reminder`
 
-Idempotency guard for reminder sends.
+Reminder tracking table for collection follow-up.
 
-## Communication, Files, and Tasks
+Purpose:
 
-### `notification`
+- avoid duplicate reminders
+- record reminder execution and channel usage
 
-In-app bell notification addressed to a CRM user.
+### `commission_rule`
 
-Key fields:
+Commission configuration at societe or project level.
 
-- `recipient_user_id`
-- `type`
-- `reference_id`
-- `payload`
-- `read`
+Purpose:
 
-### `outbound_message`
+- define fixed or percentage rules
+- override societe defaults per project
 
-Transactional outbox row for email or SMS.
-
-Key fields:
-
-- `channel`
-- `status`
-- `recipient`
-- `subject`
-- `body`
-- retry counters and `next_retry_at`
-
-### `document`
-
-Generic attachment linked to a business entity.
-
-Key fields:
-
-- `entity_type`
-- `entity_id`
-- file metadata
-- `uploaded_by`
-
-### `property_media`
-
-Property-specific media record.
+## 7. Collaboration, Communication, And Files
 
 ### `task`
 
-Follow-up item optionally linked to a contact or property.
+Follow-up work item.
 
-Key fields:
+Key traits:
 
-- `assignee_id`
-- `contact_id`
-- `property_id`
-- `title`
-- `description`
-- `due_date`
-- `status`
+- linked to assignee and creator
+- optional contact or property association
+- due date, priority, and status-driven workflow
 
-## Portal
+Main statuses:
+
+- `OPEN`
+- `IN_PROGRESS`
+- `DONE`
+- `CANCELED`
+
+### `notification`
+
+In-app event delivered to a user.
+
+Typical events:
+
+- overdue reminders
+- operational workflow updates
+- task and collection-related alerts
+
+### `outbound_message`
+
+Queued outbound email or SMS record.
+
+Purpose:
+
+- decouple user action from provider delivery
+- support retries, failure tracking, and operational reporting
+
+### `document`
+
+Generic attachment linked to supported business entities.
+
+Supported entity families:
+
+- contact
+- property
+- reservation
+- deposit
+- contract
+- project
+- vente
+
+### `property_media`
+
+Media record for property visuals and downloadable assets.
+
+## 8. Portal Authentication And Audit
 
 ### `portal_token`
 
-One-time magic-link token store.
+Stores hashed one-time portal access links.
 
-Key implementation details:
+Important traits:
 
-- only the token hash is stored
-- token has expiry and used-state fields
-- portal JWT is generated only after successful one-time verification
+- raw token is never stored
+- TTL-based cleanup
+- one-time use enforcement
 
-## High-Value Constraints
+### `commercial_audit_event`
 
-The following constraints materially shape the system:
+Append-only operational history for workflow events.
 
-| Area | Evidence in code |
-| --- | --- |
-| Membership uniqueness | `app_user_societe` composite primary key |
-| Project uniqueness | unique project name per societe |
-| Property identity | unique property reference per societe |
-| One signed contract per property | partial unique index on signed contract rows |
-| Optimistic concurrency | `@Version` on mutable entities such as `User`, `Societe`, `Property`, `Contact`, `SaleContract` |
-| RLS coverage | all 13 domain tables (Wave 4, changeset 051): `contact`, `property`, `project`, `property_reservation`, `sale_contract`, `deposit`, `commission_rule`, `task`, `document`, `notification`, `property_media`, `payment_schedule_item`, `schedule_payment`, `schedule_item_reminder` |
+Purpose:
 
-## Wave 4 Additions (changeset 051-052)
+- investigation
+- timeline reconstruction
+- user-facing audit visibility
 
-| Feature | Implementation |
-| --- | --- |
-| RLS on all domain tables | `RlsContextAspect` + changeset 051; nil-UUID bypass for system schedulers |
-| ShedLock | `shedlock` table (changeset 052); `@SchedulerLock` on `OutboundDispatcherScheduler.poll()` |
-| Quota enforcement | `QuotaService.enforceUserQuota()` checks `Societe.maxUtilisateurs` vs active memberships |
-| Invitation rate limiting | `RateLimiterService.checkInvitation(adminId)` — 10 req/h per admin |
-| Self-service profile | `GET/PATCH /api/me` → `UserProfileController` |
-| Redis caches wired | `PROJECTS_CACHE` (60s TTL), `SOCIETES_CACHE` (120s TTL) in `RedisCacheConfig` |
+## 9. Data Isolation Coverage
 
-## Gaps and Clarifications
+RLS and service-level scoping cover the main tenant-scoped tables, including:
 
-The schema contains fields whose enforcement is not equally visible in the service layer:
+- contacts and contact extensions
+- projects, immeubles, tranches, and properties
+- reservations, deposits, ventes, contracts, and payments
+- tasks, documents, notifications, and media
 
-- `max_utilisateurs` is enforced at service layer (Wave 4 `QuotaService`).
-- `max_biens`, `max_contacts`, and `max_projets` exist in the model, but no matching enforcement was found in the current property, contact, or project services.
-- Societe suspension fields exist, but no request-time blocking of suspended societes was found in the current auth or domain service flow.
+## 10. Modeling Nuances To Keep In Mind
+
+- `vente` and `sale_contract` coexist because one focuses on pipeline progression while the other focuses on formal contract and schedule operations
+- some indexes still contain legacy `tenant` naming even though the runtime semantics are societe-based
+- privacy and compliance data is embedded in both company and contact/user aggregates, not isolated into a standalone compliance module

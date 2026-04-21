@@ -271,13 +271,12 @@ Automated GDPR sweeps run via `DataRetentionScheduler`. The scheduler uses the n
 
 ---
 
-## 11. Known Security Gaps
+## 11. Current Security Considerations
 
-The following gaps exist in the current implementation and have not yet been addressed:
+The following implementation realities still deserve attention:
 
-| Gap | Location | Impact |
+| Consideration | Location | Impact |
 |---|---|---|
-| Societe suspension not enforced at request time | `AuthService.login()` and domain service layer | A user belonging to a suspended societe can still log in and access resources |
-| `max_biens`, `max_contacts`, `max_projets` not enforced at service layer | `PropertyService`, `ContactService`, `ProjectService` | Quota fields exist in `Societe` entity but no enforcement; only `max_utilisateurs` is actively enforced by `QuotaService` |
-| `SocieteContext.role` slot not populated | `JwtAuthenticationFilter` | The role slot in `SocieteContext` is not set by the current filter; role is read from `SecurityContextHolder` instead |
-| `POST /tenants` endpoint permitted without controller | `SecurityConfig` | `SecurityConfig.permitAll()` includes `/tenants` but no active controller exists at that path |
+| Societe suspension is not revalidated on every authenticated request after session issuance | login-time membership checks and request-time filters | a session established before deactivation may remain usable until revocation or expiry |
+| `max_biens`, `max_contacts`, and `max_projets` are data fields before they are universal enforcement rules | service layer across inventory and CRM modules | quota expectations can be documented before every limit is technically enforced |
+| Auth and session changes must be tested across CRM, superadmin, and portal surfaces | cookie helpers, filters, guards, and frontend auth services | a secure change in one surface can still regress another if only one route family is tested |

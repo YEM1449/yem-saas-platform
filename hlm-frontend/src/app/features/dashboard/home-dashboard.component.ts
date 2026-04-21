@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard } from './home-dashboard.service';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow } from './home-dashboard.service';
+import { MiniBarChartComponent } from './mini-bar-chart.component';
 import {
   DashboardCockpitService,
   CockpitBundle,
@@ -27,6 +28,7 @@ import { AuthService } from '../../core/auth/auth.service';
     KpiDeltaChipComponent, SparklineComponent, FunnelComponent, AlertsPanelComponent,
     PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
     InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
+    MiniBarChartComponent,
   ],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
@@ -40,6 +42,8 @@ export class HomeDashboardComponent implements OnInit {
   bundle  = signal<CockpitBundle | null>(null);
   loading = signal(true);
   error   = signal('');
+
+  activeTab: 'synthese' | 'dirigeant' | 'commercial' | 'projets' | 'operationnel' = 'synthese';
 
   readonly today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -240,4 +244,30 @@ export class HomeDashboardComponent implements OnInit {
   isSupplyHealthy(m: number | null): boolean { return m != null && m < 12; }
   isSupplyElevated(m: number | null): boolean { return m != null && m >= 12 && m < 24; }
   isSupplyCritical(m: number | null): boolean { return m != null && m >= 24; }
+
+  // ── Project breakdown helpers ──────────────────────────────────────────────
+
+  projectBarWidth(row: ProjectBreakdownRow, allRows: ProjectBreakdownRow[]): string {
+    const max = Math.max(...allRows.map(r => r.totalCA), 1);
+    return Math.max((row.totalCA / max) * 100, 2) + '%';
+  }
+
+  totalProjectsCA(rows: ProjectBreakdownRow[]): number {
+    return rows.reduce((acc, r) => acc + r.totalCA, 0);
+  }
+
+  projectSharePct(row: ProjectBreakdownRow, allRows: ProjectBreakdownRow[]): string {
+    const total = this.totalProjectsCA(allRows);
+    if (total === 0) return '0%';
+    return ((row.totalCA / total) * 100).toFixed(0) + '%';
+  }
+
+  readonly PROJECT_COLORS = [
+    '#2563eb','#7c3aed','#059669','#d97706','#dc2626',
+    '#0891b2','#65a30d','#c026d3','#ea580c','#0f172a',
+  ];
+
+  projectColor(i: number): string {
+    return this.PROJECT_COLORS[i % this.PROJECT_COLORS.length];
+  }
 }

@@ -1,133 +1,79 @@
-# Architectural Decisions
+# Design Decisions
 
-These decisions are visible in the current codebase and materially shape maintenance work.
+This document captures the major architectural choices visible in the current implementation.
+For immutable historical records, also see the ADRs in [../adr](../adr).
 
-## 1. Multi-Societe Membership Instead of Single-Company Users
+## 1. Shared Schema Multi-Societe Model
 
-The platform uses:
+- Decision: use one PostgreSQL schema with `societe_id` on tenant-scoped aggregates
+- Why: operational simplicity, shared reporting, and lower infrastructure overhead than database-per-tenant
+- Consequence: isolation must be enforced rigorously in code, tests, and RLS
+- Related ADR: [../adr/001-multi-societe-not-multi-tenant.md](../adr/001-multi-societe-not-multi-tenant.md)
 
-- `app_user` for platform identity
-- `societe` for company identity
-- `app_user_societe` for role-bearing membership
+## 2. Separate Platform Role From Societe Role
 
-Why it matters:
+- Decision: keep `SUPER_ADMIN` on `app_user.platform_role` and business roles on `app_user_societe`
+- Why: platform governance and company operations have different trust boundaries
+- Consequence: session issuance and authorization logic must merge two role sources safely
 
-- one user can belong to multiple societes
-- `SUPER_ADMIN` exists outside normal company membership
-- login can require societe selection before issuing a full JWT
+## 3. Cookie-Based Final Sessions
 
-## 2. Stateless JWTs With Bounded Server-Side Revocation
+- Decision: store final JWTs in httpOnly cookies instead of exposing them to the SPA
+- Why: reduce XSS token theft risk and simplify browser session behavior
+- Consequence: frontend session validation happens through backend calls such as `/auth/me` and portal tenant info
 
-The system deliberately avoids server sessions while still supporting forced logout and role changes.
+## 4. Partial Token For Multi-Societe Selection
 
-Implementation pattern:
+- Decision: return a short-lived bearer token only for the societe-selection step
+- Why: allow a user to finish login without exposing the final staff session token to JavaScript
+- Consequence: `/auth/switch-societe` remains `permitAll` but validates the partial token internally
 
-- short-lived JWT
-- `tv` claim
-- cache-backed `UserSecurityCacheService`
+## 5. Separate Portal Authentication Stack
 
-This is simpler than maintaining a per-token denylist and is already covered by integration tests.
+- Decision: buyer access uses portal-specific magic links, JWTs, and cookies
+- Why: buyers are not staff users and should not share the CRM session model
+- Consequence: portal authorization logic is intentionally isolated and lighter than CRM revocation logic
+- Related ADR: [../adr/003-jwt-tokenversion-revocation.md](../adr/003-jwt-tokenversion-revocation.md)
 
-## 3. Partial Tokens for Multi-Societe Login
+## 6. ThreadLocal Societe Context Plus RLS
 
-The backend does not guess a company when a user has multiple memberships.
+- Decision: combine `SocieteContext` in application code with PostgreSQL RLS in the database
+- Why: application code needs the active scope for orchestration, while the database provides a last-resort safety net
+- Consequence: AOP ordering and async propagation become critical implementation details
 
-Instead it returns:
+## 7. Transaction Before RLS Aspect
 
-- a short-lived partial token
-- `requiresSocieteSelection=true`
-- the list of eligible societes
+- Decision: ensure transaction interception wraps `RlsContextAspect`
+- Why: `SET LOCAL` only matters inside an open transaction
+- Consequence: changing AOP order can silently break row-level security behavior
+- Related ADR: [../adr/004-optimistic-locking-version-field.md](../adr/004-optimistic-locking-version-field.md)
 
-This is a meaningful product and security choice because downstream access control depends on a single active `sid`.
+## 8. Domain-Oriented Backend Modules
 
-## 4. Application-Layer Isolation With Limited Database RLS
+- Decision: organize backend code by business domain rather than horizontal layers only
+- Why: localize rules, DTOs, repositories, and services around a bounded business area
+- Consequence: cross-cutting concerns such as auth, common errors, and societe context must stay disciplined to avoid duplication
 
-Primary isolation is implemented in services and repositories using `SocieteContext`.
+## 9. Keep `vente` And `contract` As Complementary Aggregates
 
-RLS exists only as defense in depth for:
+- Decision: preserve the commercial pipeline aggregate (`vente`) separately from the formal contract aggregate (`sale_contract`)
+- Why: users need a negotiation and delivery workflow that is richer than the legal contract record alone
+- Consequence: documentation and onboarding must explain the distinction clearly to avoid confusion
 
-- `contact`
-- `property`
+## 10. Outbox For Reliable Delivery
 
-This keeps the current code straightforward while still adding a database backstop for high-risk tables.
+- Decision: queue outbound messages in the database and dispatch them asynchronously
+- Why: sending email or SMS should not make business transactions brittle
+- Consequence: monitoring, retries, and idempotency matter as much as delivery providers themselves
 
-## 5. ThreadLocal Request Context
+## 11. S3-Compatible Storage Abstraction
 
-The application stores active request scope in `SocieteContext`, a static `ThreadLocal`.
+- Decision: hide storage vendor details behind a media storage interface
+- Why: allow local disk for development and S3-compatible providers in production without controller changes
+- Consequence: provider-specific behavior must be handled at the storage adapter layer
 
-Why the code chose this:
+## 12. Compliance Data Lives In The Domain Model
 
-- easy access from deep service layers
-- fits the synchronous servlet request model
-- lightweight compared with propagating company scope through every method signature
-
-Operational requirement:
-
-- the context must always be cleared in `JwtAuthenticationFilter`
-
-## 6. Transactional Outbox for Delivery Channels
-
-Most email and SMS sending is modeled as database work first, delivery second.
-
-Benefits:
-
-- business transactions do not depend on SMTP or SMS availability
-- messages are retried
-- multiple app instances can safely process the same outbox table
-
-Exception:
-
-- portal magic-link emails are sent directly because the link must be generated immediately and the flow is not modeled as a larger business transaction
-
-## 7. Soft Delete and Reversible State Over Hard Delete
-
-High-value business records prefer state transitions over physical deletion.
-
-Examples:
-
-- properties are soft-deleted
-- projects are archived
-- reservations and deposits are canceled or expired
-- contracts are canceled rather than removed
-
-This preserves referential integrity and historical reporting.
-
-## 8. Buyer Snapshots Captured at Contract Signature
-
-Signed contracts store immutable buyer snapshot fields copied from the contact.
-
-This separates:
-
-- operational CRM data that may later be rectified or anonymized
-- signed legal record data that must remain historically stable
-
-## 9. Optimistic Locking on Mutable Administrative Records
-
-Entities such as `User`, `Societe`, `Property`, `Contact`, and `SaleContract` carry version fields.
-
-This is a clear choice toward:
-
-- preventing silent lost updates
-- surfacing `CONCURRENT_UPDATE` instead of overwriting changes
-
-## 10. Local File Storage First, Object Storage Optional
-
-The default media path is local filesystem storage.
-
-Object storage is opt-in through configuration.
-
-This keeps local development simple while still allowing S3-compatible deployments without changing application code.
-
-## 11. Legacy Paths Are Kept Longer Than Legacy Concepts
-
-The codebase still contains some transitional seams:
-
-- old tenant-era migration history
-- `CrossTenantAccessException` naming
-- `/api/admin/users` alongside `/api/mon-espace/utilisateurs`
-- `/api/societes/**` as a legacy alias
-
-The current maintenance strategy is evolution over rewrite:
-
-- keep compatibility where cheap
-- route new work through `societe` terminology and the newer company-management surface
+- Decision: GDPR and local compliance metadata is embedded in contacts, users, and societes instead of being delegated to a separate privacy service
+- Why: privacy constraints directly affect the business lifecycle and user experience
+- Consequence: feature teams must treat compliance fields as core data, not as optional afterthoughts

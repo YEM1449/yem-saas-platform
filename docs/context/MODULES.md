@@ -1,97 +1,138 @@
 # Module Reference
 
-This document maps the main responsibilities of the current codebase.
+This document maps the main responsibilities of the current backend and frontend modules.
 
-## Backend Modules
+## 1. Backend Module Inventory
 
-| Module | Primary Responsibility | Main Entry Points | Notes |
-| --- | --- | --- | --- |
-| `auth` | Login, JWT, revocation, lockout, Spring Security | `/auth/*`, `/auth/me` | Supports partial tokens and societe switching |
-| `societe` | Company admin model and super-admin management | `/api/admin/societes/*` | Owns `SocieteContext`, membership model, impersonation |
-| `admin` | First `SUPER_ADMIN` bootstrap | startup only | Activated by `APP_BOOTSTRAP_ENABLED=true` |
-| `usermanagement` | Active company member management | `/api/mon-espace/utilisateurs/*` | Invitations, role changes, removals, GDPR export/anonymize |
-| `user` | Legacy admin-user API surface | `/api/users/*` | Path was moved from `/api/admin/users` to avoid the `SUPER_ADMIN`-only security block; frontend uses this path |
-| `project` | Project catalog and KPIs | `/api/projects/*` | Archive instead of hard delete |
-| `property` | Inventory CRUD and CSV import | `/api/properties/*`, `/dashboard/properties/*` | Type-specific validation, soft delete |
-| `contact` | Contact lifecycle, interests, timeline | `/api/contacts/*` | Prospect and client states plus GDPR fields |
-| `reservation` | Lightweight property holds | `/api/reservations/*` | Can convert to deposit |
-| `deposit` | Financial reservation workflow | `/api/deposits/*` | Locks property rows, drives contact/property transitions |
-| `contract` | Sales contract lifecycle and PDFs | `/api/contracts/*` | Signed contracts capture buyer snapshots |
-| `payments` | Schedule items, payments, reminders, cash dashboard | `/api/contracts/{id}/schedule`, `/api/schedule-items/*`, `/api/dashboard/commercial/cash` | Partial payment support |
-| `commission` | Commission reporting and rule management | `/api/commissions*`, `/api/commission-rules*` | Project rule overrides societe default |
-| `dashboard` | Commercial and receivables dashboards | `/api/dashboard/*` | Includes SSE refresh stream |
-| `notification` | In-app notifications | `/api/notifications/*` | Deduplicates some notification types via persistence rules |
-| `outbox` | Message composition and async delivery | `/api/messages/*` | Dispatcher sends email and SMS outside the main transaction |
-| `media` | Property media storage | `/api/properties/{id}/media`, `/api/media/*` | Local filesystem by default, object storage optional |
-| `document` | Generic attachment upload/list/download | `/api/documents/*` | Works across contact, property, deposit, reservation, contract |
-| `task` | Follow-up task management | `/api/tasks/*` | Default list is current user’s tasks |
-| `portal` | Buyer portal auth and data views | `/api/portal/*` | Separate token type and role |
-| `gdpr` | Contact privacy export, anonymization, privacy notice | `/api/gdpr/*` | User GDPR logic lives partly under `usermanagement` |
-| `audit` | Commercial workflow audit | `/api/audit/commercial` | Append-only operational history |
-| `common` | Shared DTOs, errors, validation, rate limiting | internal | Used across all modules |
-
-## Cross-Module Workflow Ownership
-
-### Authentication and session
-
-- `AuthService` owns CRM login and societe selection.
-- `JwtAuthenticationFilter` owns token parsing and `SocieteContext` population.
-- `UserSecurityCacheService` turns JWT revocation into a cache-backed check.
-
-### CRM lead-to-sale path
-
-- `ContactService` creates and qualifies contacts.
-- `ReservationService` creates non-financial holds.
-- `DepositService` creates and confirms deposits.
-- `SaleContractService` creates, signs, and cancels contracts.
-- `PaymentScheduleService` and `CallForFundsWorkflowService` handle post-signature collections.
-
-### Client portal
-
-- `PortalAuthService` owns magic-link issuance and verification.
-- `PortalContractService` authorizes all buyer-facing portal reads.
-
-### Company administration
-
-- `SocieteController` and `SocieteService` are platform-level tools for `SUPER_ADMIN`.
-- `UserManagementController` and `UserManagementService` are company-level membership operations.
-
-## Frontend Modules
-
-| Frontend Area | Route Prefix | Responsibility |
+| Module | Responsibility | Representative APIs |
 | --- | --- | --- |
-| Login and activation | `/login`, `/activation` | CRM login and invitation activation |
-| CRM shell | `/app/*` | Main staff experience |
-| Super-admin shell | `/superadmin/*` | Company administration |
-| Portal shell | `/portal/*` | Buyer-facing experience |
+| `admin` | first `SUPER_ADMIN` bootstrap | startup-only bootstrap logic |
+| `auth` | login, invitation activation, JWT issuance, cookies, revocation, lockout | `/auth/*`, `/auth/me` |
+| `audit` | append-only commercial audit timeline | `/api/audit/commercial` |
+| `commission` | commission reporting and rule management | `/api/commissions*`, `/api/commission-rules*` |
+| `common` | shared DTOs, errors, validation, rate limiting, OpenAPI support | internal |
+| `contact` | contact lifecycle, qualification, interests, timeline | `/api/contacts*` |
+| `contract` | contract lifecycle and PDF generation | `/api/contracts*` |
+| `dashboard` | home, commercial, cockpit, KPI, and receivables dashboards | `/api/dashboard*`, `/api/kpis*` |
+| `deposit` | deposit workflow and reservation PDF generation | `/api/deposits*` |
+| `document` | generic business attachments | `/api/documents*` |
+| `gdpr` | contact privacy exports, anonymization, and retention actions | `/api/gdpr*` |
+| `immeuble` | building management inside projects | `/api/immeubles*` |
+| `media` | property media upload, download, and storage abstraction | `/api/properties/{id}/media`, `/api/media/*` |
+| `notification` | in-app notifications | `/api/notifications*` |
+| `outbox` | outbound message creation and dispatch | `/api/messages*` |
+| `payments` | payment schedules, payments, reminders, cash dashboard | `/api/contracts/{id}/schedule`, `/api/schedule-items*` |
+| `portal` | portal authentication and buyer-facing reads | `/api/portal*` |
+| `project` | real-estate program management and project KPIs | `/api/projects*` |
+| `property` | inventory CRUD, status changes, and import | `/api/properties*`, `/dashboard/properties*` |
+| `reminder` | reminder orchestration for due items | scheduler/service support |
+| `reservation` | lightweight property holds | `/api/reservations*` |
+| `societe` | company administration, impersonation, context propagation, RLS | `/api/admin/societes*`, `/api/end-impersonation` |
+| `task` | follow-up and task management | `/api/tasks*` |
+| `tranche` | tranche generation and tranche status management | `/api/projects/*/tranches*` |
+| `user` | legacy user/admin surface and self profile | `/api/users*`, `/api/me` |
+| `usermanagement` | richer member invitation and lifecycle management | `/api/mon-espace/utilisateurs*` |
+| `vente` | commercial sale pipeline | `/api/ventes*` |
 
-### CRM features exposed in the current route map
+## 2. Cross-Cutting Backend Ownership
 
-- dashboard
-- projects
-- properties
-- prospects
-- contacts
-- reservations
-- contracts
-- payment schedule
-- receivables
-- commissions
-- messages
-- notifications
-- audit
-- tasks
-- admin users
+### Authentication and session management
 
-## Module-Level Notes Worth Preserving
+- `AuthService` authenticates staff users and handles multi-societe selection
+- `JwtAuthenticationFilter` turns cookies or bearer headers into the active security context
+- `UserSecurityCacheService` accelerates token revocation checks
+- `PortalAuthService` owns the portal magic-link workflow
 
-### `user` versus `usermanagement`
+### Multi-societe isolation
 
-Two user-management surfaces exist in the backend:
+- `SocieteContext` carries current request scope
+- `SocieteContextHelper` centralizes access and system-mode helpers
+- `RlsContextAspect` writes the current societe into PostgreSQL transaction-local state
+- `SocieteContextTaskDecorator` propagates scope to async work
 
-- [UserManagementController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/usermanagement/UserManagementController.java) is the active, richer company-member flow used by the frontend.
-- [AdminUserController](/home/yem/CRM-HLM/yem-saas-platform/hlm-backend/src/main/java/com/yem/hlm/backend/user/api/AdminUserController.java) is on `/api/users` (moved from `/api/admin/users` — the `/api/admin/**` prefix is reserved for `SUPER_ADMIN` only).
+### Delivery and automation
 
-### `societe` versus `tenant`
+- `OutboundDispatcherService` sends queued email and SMS records
+- `DocumentGenerationService` and contract PDF services produce formal documents
+- schedulers under `deposit`, `gdpr`, `outbox`, and `portal` keep the system moving without user action
 
-The runtime code uses `societe`, but some migration history, exception names, and older docs still mention `tenant`. Maintain new code against the current `societe` naming unless you are touching migration-compatibility paths.
+## 3. Backend Module Relationships
+
+### Commercial lifecycle chain
+
+```text
+contact
+  -> reservation
+  -> deposit
+  -> vente
+  -> contract
+  -> payment schedule
+  -> notifications / outbox / portal
+```
+
+### Administrative lifecycle chain
+
+```text
+societe
+  -> app_user_societe
+  -> usermanagement / user
+  -> permissions
+  -> branding / quotas / compliance
+```
+
+## 4. Frontend Feature Areas
+
+| Area | Route prefix | Responsibility |
+| --- | --- | --- |
+| Login and activation | `/login`, `/activation` | staff sign-in, invitation activation, societe selection |
+| CRM shell | `/app/*` | daily staff work and operational reporting |
+| Superadmin shell | `/superadmin/*` | platform administration |
+| Portal shell | `/portal/*` | buyer-facing self-service |
+
+### CRM feature modules
+
+| Feature | Primary route |
+| --- | --- |
+| dashboard | `/app/dashboard*` |
+| projects | `/app/projects*` |
+| properties | `/app/properties*` |
+| contacts | `/app/contacts*` |
+| immeubles | `/app/immeubles` |
+| reservations | `/app/reservations*` |
+| ventes | `/app/ventes*` |
+| contracts and schedule | `/app/contracts*` |
+| tasks | `/app/tasks` |
+| notifications | `/app/notifications` |
+| messages | `/app/messages` |
+| commissions | `/app/commissions` |
+| audit | `/app/audit` |
+| admin users | `/app/admin/users` |
+| templates | `/app/templates*` |
+
+### Portal feature modules
+
+- portal login and verification
+- vente list and detail
+- contracts list
+- payment schedule detail
+- property detail
+
+## 5. Module Notes That Matter To Maintainers
+
+### `user` and `usermanagement` both exist for a reason
+
+- `user` provides older or narrower admin-oriented endpoints under `/api/users`
+- `usermanagement` provides the richer company-member lifecycle used for invitations, role changes, and GDPR-related member actions
+- both need to remain consistent when security or membership rules evolve
+
+### `vente` and `contract` serve different business views
+
+- `vente` is the pipeline record used to move a deal through compromis, financing, notary, and delivery
+- `contract` is the formal contract and schedule subsystem
+- user guides and APIs must explain that they complement each other rather than duplicate each other
+
+### `property`, `immeuble`, and `tranche` form the inventory hierarchy
+
+- not every property uses every level
+- professional inventory workflows increasingly rely on these relationships
+- docs and onboarding should treat this as a first-class model, not as optional noise

@@ -1,159 +1,79 @@
-# Contacts — User Guide
+# Contacts Guide
 
-This guide covers creating and managing contacts (prospects and clients), tracking their status through the sales workflow, and recording their property interests.
+Contacts are the entry point to most commercial workflows.
 
-## Table of Contents
+## 1. What A Contact Represents
 
-1. [Contact Types and Statuses](#contact-types-and-statuses)
-2. [Creating a Contact](#creating-a-contact)
-3. [Converting a Contact to Prospect](#converting-a-contact-to-prospect)
-4. [Converting a Contact to Client](#converting-a-contact-to-client)
-5. [Updating Contact Status](#updating-contact-status)
-6. [Recording Property Interests](#recording-property-interests)
-7. [Contact Timeline](#contact-timeline)
-8. [Finding Contacts](#finding-contacts)
+A contact can be:
 
----
+- an early prospect
+- a qualified prospect
+- a client in progress
+- a completed client
+- a referral source
 
-## Contact Types and Statuses
+## 2. Creating A Contact
 
-Contacts move through two type classifications and a detailed status workflow.
+Authorized users can create a contact with the core identity information:
 
-### Contact Type
+- first name
+- last name
+- phone and or email
+- notes and basic context
 
-| Type | When it applies |
-|------|----------------|
-| **Prospect** | Person who has not yet committed financially |
-| **Temp Client** | Prospect with a pending (unconfirmed) deposit — temporary for up to 7 days |
-| **Client** | Person with a confirmed deposit or signed contract |
+Good practice:
 
-### Contact Status
+- capture enough information to enable follow-up
+- avoid duplicate emails inside the same societe
 
-The status tracks where the contact is in the sales funnel:
+## 3. Qualification Workflow
 
-| Status | Meaning |
-|--------|---------|
-| PROSPECT | Initial lead, qualification not yet done |
-| QUALIFIED_PROSPECT | Lead evaluated; budget and preferences confirmed |
-| CLIENT | Active buyer with a confirmed commitment |
-| ACTIVE_CLIENT | Buyer with an ongoing transaction |
-| COMPLETED_CLIENT | Transaction completed successfully |
-| REFERRAL | Completed client who has referred others |
-| LOST | Contact dropped out of the funnel |
+Use the prospect conversion flow when the lead becomes actionable.
 
-### Allowed Status Transitions
+Typical enrichment:
 
-```
-PROSPECT → QUALIFIED_PROSPECT or LOST
-QUALIFIED_PROSPECT → PROSPECT, CLIENT, or LOST
-CLIENT → ACTIVE_CLIENT, COMPLETED_CLIENT, or LOST
-ACTIVE_CLIENT → COMPLETED_CLIENT or LOST
-COMPLETED_CLIENT → REFERRAL
-LOST → PROSPECT (re-engage)
+- budget range
+- acquisition source
+- notes about the project or property need
+
+## 4. Contact Status Model
+
+```text
+PROSPECT -> QUALIFIED_PROSPECT -> CLIENT -> ACTIVE_CLIENT -> COMPLETED_CLIENT
+                                           \-> LOST
+COMPLETED_CLIENT -> REFERRAL
 ```
 
----
+Not every transition should be done manually. Some sales events move the contact forward automatically.
 
-## Creating a Contact
+## 5. Property Interests
 
-1. Go to **Contacts** in the sidebar.
-2. Click **New Contact**.
-3. Fill in:
-   - **Full name** (required)
-   - **Email** (required, must be unique within your agency)
-   - **Phone** (optional)
-   - **Consent given** — Check this if the contact has given GDPR consent for data processing
-   - **Consent method** — How they gave consent (web form, email, verbal, written)
-4. Click **Save**.
+Use interests to connect a contact to the properties they are considering.
 
-The contact is created with status **PROSPECT** by default.
+Benefits:
 
----
+- better sales follow-up
+- easier matching between leads and inventory
+- better context in the contact timeline
 
-## Converting a Contact to Prospect
+## 6. Timeline
 
-Once you qualify a lead, convert them to a Prospect with detailed preferences:
+The contact timeline brings together:
 
-1. Open the contact's record.
-2. Click **Convert to Prospect**.
-3. Fill in qualification details:
-   - **Budget** — Maximum budget in local currency
-   - **Preferred surface area** — Minimum m²
-   - **Location preferences** — Preferred neighbourhoods or cities
-   - **Source** — How they found you (referral, website, exhibition, etc.)
-   - **Notes** — Any other qualification notes
-4. Click **Save**.
+- workflow events
+- notifications
+- outbound communication traces
+- status changes
 
-The contact status advances to **QUALIFIED_PROSPECT**.
+Use it when you need the full history before calling or updating the client.
 
----
+## 7. GDPR Considerations
 
-## Converting a Contact to Client
+Contacts also carry privacy data such as:
 
-When a contact has made a formal commitment (deposit confirmed), convert them to a Client:
+- consent state
+- processing basis
+- retention settings
+- anonymization state
 
-1. Open the contact's record.
-2. Click **Convert to Client**.
-3. Fill in client details:
-   - **Client kind** — Individual, company, joint purchase, etc.
-   - **Financing type** — Cash, mortgage, etc.
-   - **Notary** — Assigned notary name and details
-4. Click **Save**.
-
-The contact type changes to **CLIENT**.
-
----
-
-## Updating Contact Status
-
-1. Open the contact's record.
-2. Click the status dropdown or **Update Status** button.
-3. Select the new status.
-4. Add a note (optional).
-5. Click **Save**.
-
-Invalid transitions (e.g., REFERRAL → PROSPECT) are blocked by the system with an error message.
-
----
-
-## Recording Property Interests
-
-Track which properties a contact has expressed interest in:
-
-1. Open the contact's record.
-2. Click the **Interests** tab.
-3. Click **Add Interest**.
-4. Select the property.
-5. Set the interest status: **ACTIVE**, **CONVERTED**, or **DROPPED**.
-6. Click **Save**.
-
-Property interests feed the dashboard's "prospects by source" funnel and help agents prioritise follow-up.
-
----
-
-## Contact Timeline
-
-The contact timeline shows a chronological history of all activity:
-
-- Status changes
-- Deposits created and confirmed
-- Reservations created and status updates
-- Contracts created and signed
-- Property interests added
-
-Open a contact's record and click the **Timeline** tab to view the full history.
-
----
-
-## Finding Contacts
-
-Use the search and filter bar at the top of the Contacts list:
-
-| Filter | Options |
-|--------|---------|
-| Search | Name or email (partial match) |
-| Status | PROSPECT, QUALIFIED_PROSPECT, CLIENT, etc. |
-| Type | PROSPECT, CLIENT |
-| Date range | Creation date |
-
-Contacts from other tenants (agencies) are never visible, even with admin access.
+See [gdpr-rights.md](gdpr-rights.md) for the privacy workflow.

@@ -49,12 +49,65 @@
 @if (snap(); as s) {
 
   <!-- ════════════════════════════════════════════════════════════
-       SECTION 0 — COCKPIT ALERTS (admin/manager only)
+       TAB NAVIGATION
+       ════════════════════════════════════════════════════════════ -->
+  <nav class="db-tab-nav">
+    <button class="db-tab" [class.db-tab-active]="activeTab === 'synthese'"
+            (click)="activeTab = 'synthese'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+        <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+      Synthèse
+    </button>
+    @if (isAdminOrManager) {
+      <button class="db-tab" [class.db-tab-active]="activeTab === 'dirigeant'"
+              (click)="activeTab = 'dirigeant'">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="4" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M2 12.5c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        Dirigeant
+      </button>
+      <button class="db-tab" [class.db-tab-active]="activeTab === 'commercial'"
+              (click)="activeTab = 'commercial'">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1.5 11L5 7l3 2.5L10.5 5 13 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Commercial
+      </button>
+      <button class="db-tab" [class.db-tab-active]="activeTab === 'projets'"
+              (click)="activeTab = 'projets'">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.4"/>
+          <rect x="5.5" y="3" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.4"/>
+          <rect x="10" y="1" width="3" height="12" rx="1" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        Projets & Tendances
+      </button>
+    }
+    <button class="db-tab" [class.db-tab-active]="activeTab === 'operationnel'"
+            (click)="activeTab = 'operationnel'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M6 2.5l1 1.5 1.5-.5L7.5 5l1 1.5-1.5-.5L6 7.5 5.5 6 4 6.5 5 5l-1-1.5L5.5 4z"
+              stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+      Opérationnel
+    </button>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════
+       SECTION 0 — COCKPIT ALERTS (admin/manager only, all tabs)
        ════════════════════════════════════════════════════════════ -->
   @if (isAdminOrManager && bundle()) {
     <app-alerts-panel [alerts]="alertsList()" class="cockpit-alerts"></app-alerts-panel>
     <app-insights-panel [insights]="insightsList()" class="cockpit-insights"></app-insights-panel>
   }
+
+  @if (activeTab === 'synthese') {
 
   <!-- ════════════════════════════════════════════════════════════
        SECTION 1 — KPI HERO ROW (CA + Trend + Taux d'absorption)
@@ -341,6 +394,10 @@
       </div>
     </div>
   }
+
+  } <!-- end synthese tab -->
+
+  @if (activeTab === 'dirigeant') {
 
   <!-- ════════════════════════════════════════════════════════════
        SECTION 3.5 — OWNER KPIs (admin/manager only)
@@ -644,6 +701,10 @@
     </div>
   }
 
+  } <!-- end dirigeant tab -->
+
+  @if (activeTab === 'commercial') {
+
   <!-- ════════════════════════════════════════════════════════════
        SECTION 3.7 — PIPELINE + FORECAST + AGENTS (cockpit Wave B)
        ════════════════════════════════════════════════════════════ -->
@@ -658,6 +719,10 @@
       <app-discount-analytics [data]="discountData()"></app-discount-analytics>
     </div>
   }
+
+  } <!-- end commercial tab -->
+
+  @if (activeTab === 'operationnel') {
 
   <!-- ════════════════════════════════════════════════════════════
        SECTION 4 — ENTONNOIR + STOCK (2 colonnes)
@@ -1022,5 +1087,120 @@
       }
     </div>
   </div>
+
+  } <!-- end operationnel tab -->
+
+  <!-- ════════════════════════════════════════════════════════════
+       PROJETS & TENDANCES TAB
+       ════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'projets' && isAdminOrManager) {
+    <div class="section-row">
+      <div class="section-head">
+        <span class="section-label">Tendance CA — 6 derniers mois</span>
+      </div>
+      <div class="trend-card">
+        <div class="trend-chart-area">
+          <app-mini-bar-chart [points]="s.monthlyTrend"></app-mini-bar-chart>
+        </div>
+        <div class="trend-summary">
+          @if (s.monthlyTrend.length > 1) {
+            @let last = s.monthlyTrend[s.monthlyTrend.length - 1];
+            @let prev = s.monthlyTrend[s.monthlyTrend.length - 2];
+            <div class="trend-stat">
+              <div class="trend-stat-val">{{ formatAmount(last.caSigne) }}</div>
+              <div class="trend-stat-lbl">{{ last.label }} (mois courant)</div>
+            </div>
+            @if (prev.caSigne > 0) {
+              <div class="trend-stat">
+                <div class="trend-stat-val"
+                     [class.val-green]="last.caSigne >= prev.caSigne"
+                     [class.val-red]="last.caSigne < prev.caSigne">
+                  @if (last.caSigne >= prev.caSigne) { ↑ } @else { ↓ }
+                  {{ absNum(moisTrend(last.caSigne, prev.caSigne)) }}%
+                </div>
+                <div class="trend-stat-lbl">vs {{ prev.label }}</div>
+              </div>
+            }
+            <div class="trend-stat">
+              <div class="trend-stat-val">{{ formatAmount(s.caYtd) }}</div>
+              <div class="trend-stat-lbl">CA signé YTD</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (s.projectBreakdown.length > 0) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Top projets par CA signé</span>
+          <a routerLink="/app/projects" class="section-link">Tous les projets →</a>
+        </div>
+        <div class="project-bd-list">
+          @for (p of s.projectBreakdown; track p.projectId; let i = $index) {
+            <div class="pbd-row">
+              <div class="pbd-rank" [style.background]="projectColor(i)">{{ i + 1 }}</div>
+              <div class="pbd-body">
+                <div class="pbd-header">
+                  <span class="pbd-name">{{ p.projectName }}</span>
+                  <span class="pbd-ventes">{{ p.ventesCount }} vente{{ p.ventesCount !== 1 ? 's' : '' }}</span>
+                  <span class="pbd-pct">{{ projectSharePct(p, s.projectBreakdown) }}</span>
+                  <span class="pbd-ca">{{ formatAmount(p.totalCA) }}</span>
+                </div>
+                <div class="pbd-bar-wrap">
+                  <div class="pbd-bar" [style.width]="projectBarWidth(p, s.projectBreakdown)"
+                       [style.background]="projectColor(i)"></div>
+                </div>
+              </div>
+              @if (p.projectId) {
+                <a [routerLink]="['/app/projects', p.projectId]" class="pbd-link">→</a>
+              }
+            </div>
+          }
+          <div class="pbd-total">
+            <span>Total portefeuille</span>
+            <strong>{{ formatAmount(totalProjectsCA(s.projectBreakdown)) }}</strong>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="widget-empty" style="margin-top:24px">
+        Aucun projet avec des ventes enregistrées
+      </div>
+    }
+
+    @if (s.upcomingDeliveries.length > 0) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Livraisons planifiées — 90 prochains jours</span>
+          <a routerLink="/app/projects" class="section-link">Projets →</a>
+        </div>
+        <div class="deliveries-strip" style="margin-top:0">
+          @for (d of s.upcomingDeliveries; track d.trancheId) {
+            <a [routerLink]="['/app/projects', d.projectId]" class="delivery-chip"
+               [class.delivery-urgent]="d.daysUntilDelivery <= 30">
+              <div class="delivery-date">
+                <span class="delivery-days">J{{ d.daysUntilDelivery >= 0 ? '+' + d.daysUntilDelivery : d.daysUntilDelivery }}</span>
+                <span class="delivery-iso">{{ d.dateLivraisonPrevue | date:'dd/MM/yy' }}</span>
+              </div>
+              <div class="delivery-body">
+                <div class="delivery-project">{{ d.projectName }}</div>
+                <div class="delivery-tranche">{{ d.trancheLabel }}</div>
+                @if (d.totalUnits > 0) {
+                  <div class="delivery-progress">
+                    <div class="delivery-progress-bar">
+                      <div class="delivery-progress-fill"
+                           [style.width]="(d.soldUnits / d.totalUnits * 100) + '%'"></div>
+                    </div>
+                    <span class="delivery-progress-lbl">{{ d.soldUnits }}/{{ d.totalUnits }} vendus</span>
+                  </div>
+                }
+              </div>
+            </a>
+          }
+        </div>
+      </div>
+    }
+  }
 
 }

@@ -49,8 +49,7 @@ Authorization: Bearer <partial-token>
 { "societeId": "<uuid>" }
 ```
 
-This returns a full scoped JWT. Note: the current Angular login UI does not yet implement this
-selection step — it assumes single-societe users.
+This completes the final scoped session for the selected societe. The current Angular login UI supports this selection step and will continue into the CRM after the cookie-backed session is issued.
 
 **Q: How does token revocation work?**
 
