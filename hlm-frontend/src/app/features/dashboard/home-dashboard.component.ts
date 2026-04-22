@@ -3,6 +3,11 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
+import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
+import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
+import { PricePerSqmComponent } from './cockpit/price-per-sqm.component';
+import { TimeToCloseComponent } from './cockpit/time-to-close.component';
+import { PortfolioValueComponent } from './cockpit/portfolio-value.component';
 import {
   DashboardCockpitService,
   CockpitBundle,
@@ -28,7 +33,8 @@ import { AuthService } from '../../core/auth/auth.service';
     KpiDeltaChipComponent, SparklineComponent, FunnelComponent, AlertsPanelComponent,
     PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
     InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
-    MiniBarChartComponent,
+    MiniBarChartComponent, SalesByTypeComponent, InventoryAgingComponent,
+    PricePerSqmComponent, TimeToCloseComponent, PortfolioValueComponent,
   ],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
@@ -95,6 +101,7 @@ export class HomeDashboardComponent implements OnInit {
   inventoryData()       { return this.bundle()?.inventory ?? null; }
   discountData()        { return this.bundle()?.discount ?? null; }
   insightsList()        { return this.bundle()?.insights ?? []; }
+  salesIntelData()      { return this.bundle()?.salesIntelligence ?? null; }
 
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';

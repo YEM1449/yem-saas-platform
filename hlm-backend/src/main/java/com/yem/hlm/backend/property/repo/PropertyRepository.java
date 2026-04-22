@@ -256,4 +256,76 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
             @Param("societeId")  UUID societeId,
             @Param("trancheId")  UUID trancheId,
             @Param("statuses")   java.util.List<com.yem.hlm.backend.property.domain.PropertyStatus> statuses);
+
+    // =========================================================================
+    // Sales intelligence — inventory analytics
+    // =========================================================================
+
+    /**
+     * Total unsold inventory value (ACTIVE + RESERVED) and total portfolio value.
+     * Row: [unsoldValue(BigDecimal), activeCount(Long), reservedCount(Long),
+     *       portfolioValue(BigDecimal), avgListPriceActive(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT
+                COALESCE(SUM(CASE WHEN status IN ('ACTIVE','RESERVED') THEN price ELSE 0 END), 0),
+                COUNT(CASE WHEN status = 'ACTIVE'   THEN 1 END),
+                COUNT(CASE WHEN status = 'RESERVED' THEN 1 END),
+                COALESCE(SUM(CASE WHEN status NOT IN ('DRAFT') THEN price ELSE 0 END), 0),
+                COALESCE(AVG(CASE WHEN status = 'ACTIVE' THEN price END), 0)
+            FROM property
+            WHERE societe_id = :societeId
+              AND deleted_at IS NULL
+              AND price IS NOT NULL
+            """, nativeQuery = true)
+    Object[] inventoryValueSummary(@Param("societeId") UUID societeId);
+
+    /**
+     * Inventory aging for ACTIVE properties: how long since created_at (proxy for listing date).
+     * Rows: [bucket(String), count(Long), totalValue(BigDecimal)].
+     * Buckets: FRESH (≤30d), SHORT (31-90d), MEDIUM (91-180d), LONG (181-365d), STALE (>365d).
+     */
+    @Query(value = """
+            SELECT bucket, COUNT(*), COALESCE(SUM(price),0) AS total_value
+            FROM (
+                SELECT price,
+                       CASE
+                           WHEN CURRENT_DATE - created_at::date <= 30   THEN 'FRESH'
+                           WHEN CURRENT_DATE - created_at::date <= 90   THEN 'SHORT'
+                           WHEN CURRENT_DATE - created_at::date <= 180  THEN 'MEDIUM'
+                           WHEN CURRENT_DATE - created_at::date <= 365  THEN 'LONG'
+                           ELSE 'STALE'
+                       END AS bucket
+                FROM property
+                WHERE societe_id = :societeId
+                  AND status = 'ACTIVE'
+                  AND deleted_at IS NULL
+            ) sub
+            GROUP BY bucket
+            ORDER BY MIN(CURRENT_DATE - (SELECT created_at::date FROM property
+                         WHERE societe_id = :societeId AND status='ACTIVE'
+                         AND deleted_at IS NULL LIMIT 1))
+            """, nativeQuery = true)
+    List<Object[]> inventoryAgingBuckets(@Param("societeId") UUID societeId);
+
+    /**
+     * Average price per sqm by property type (for non-DRAFT, non-deleted with surface).
+     * Rows: [type(String), avgPricePerSqm(Double), minPrice(BigDecimal), maxPrice(BigDecimal), count(Long)].
+     */
+    @Query(value = """
+            SELECT type::text,
+                   AVG(price / surface_area_sqm)   AS avg_price_sqm,
+                   MIN(price)                       AS min_price,
+                   MAX(price)                       AS max_price,
+                   COUNT(*)                         AS cnt
+            FROM property
+            WHERE societe_id = :societeId
+              AND status NOT IN ('DRAFT')
+              AND deleted_at IS NULL
+              AND price IS NOT NULL AND price > 0
+              AND surface_area_sqm IS NOT NULL AND surface_area_sqm > 0
+            GROUP BY type
+            ORDER BY avg_price_sqm DESC
+            """, nativeQuery = true)
+    List<Object[]> avgPricePerSqmByType(@Param("societeId") UUID societeId);
 }

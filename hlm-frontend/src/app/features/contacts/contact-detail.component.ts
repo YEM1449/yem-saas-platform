@@ -310,7 +310,7 @@ export class ContactDetailComponent implements OnInit {
   private loadProperties(): void {
     this.propertiesLoading = true;
     this.propertiesError = '';
-    this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
+    this.propertySvc.list().subscribe({
       next: (data) => { this.properties = data; this.propertiesLoading = false; this.propertiesLoaded = true; },
       error: (err: HttpErrorResponse) => {
         this.propertiesLoading = false;
@@ -320,9 +320,13 @@ export class ContactDetailComponent implements OnInit {
     });
   }
 
+  get activeProperties(): Property[] {
+    return this.properties.filter((p) => p.status === 'ACTIVE');
+  }
+
   get availableForInterest(): Property[] {
     const taken = new Set(this.interests.map((i) => i.propertyId));
-    return this.properties.filter((p) => !taken.has(p.id));
+    return this.properties.filter((p) => !taken.has(p.id) && p.status === 'ACTIVE');
   }
 
   propertyLabel(id: string): string {

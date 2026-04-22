@@ -290,7 +290,7 @@
             <label>Bien <span class="required">*</span></label>
             <select [(ngModel)]="reservationPropertyId">
               <option value="">— Sélectionner un bien —</option>
-              @for (p of properties; track p.id) {
+              @for (p of activeProperties; track p.id) {
                 <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
               }
             </select>
@@ -409,7 +409,7 @@
             <label>Bien <span class="required">*</span></label>
             <select [(ngModel)]="depositPropertyId">
               <option value="">— Sélectionner un bien —</option>
-              @for (p of properties; track p.id) {
+              @for (p of activeProperties; track p.id) {
                 <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
               }
             </select>

@@ -568,4 +568,79 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             LIMIT 8
             """, nativeQuery = true)
     List<Object[]> topProjectsByCA(@Param("societeId") UUID societeId);
+
+    /**
+     * Revenue and unit breakdown by property type (non-ANNULE ventes with joined property).
+     * Rows: [propertyType(String), ventesCount(Long), totalCA(BigDecimal),
+     *        avgPrix(BigDecimal), avgSurface(Double), avgPricePerSqm(Double)].
+     */
+    @Query(value = """
+            SELECT p.type::text,
+                   COUNT(v.id)                                                 AS ventes_count,
+                   COALESCE(SUM(v.prix_vente), 0)                              AS total_ca,
+                   COALESCE(AVG(v.prix_vente), 0)                              AS avg_prix,
+                   AVG(p.surface_area_sqm)                                     AS avg_surface,
+                   COALESCE(
+                       AVG(CASE WHEN p.surface_area_sqm > 0
+                           THEN v.prix_vente / p.surface_area_sqm END), 0)    AS avg_price_per_sqm
+            FROM vente v
+            JOIN property p ON p.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price > 0
+            GROUP BY p.type
+            ORDER BY total_ca DESC
+            """, nativeQuery = true)
+    List<Object[]> salesBreakdownByType(@Param("societeId") UUID societeId);
+
+    /**
+     * Distribution of time-to-close (days from created_at to LIVRE updated_at).
+     * Rows: [bucket(String), count(Long), avgDays(Double)].
+     * Buckets: LT_30, D30_60, D61_90, D91_180, GT_180.
+     */
+    @Query(value = """
+            SELECT bucket,
+                   COUNT(*) AS cnt,
+                   AVG(days_to_close) AS avg_days
+            FROM (
+                SELECT EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 AS days_to_close,
+                       CASE
+                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 30  THEN 'LT_30'
+                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 60  THEN 'D30_60'
+                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 90  THEN 'D61_90'
+                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 180 THEN 'D91_180'
+                           ELSE 'GT_180'
+                       END AS bucket
+                FROM vente
+                WHERE societe_id = :societeId
+                  AND statut = 'LIVRE'
+            ) sub
+            GROUP BY bucket
+            ORDER BY MIN(days_to_close)
+            """, nativeQuery = true)
+    List<Object[]> timeToCloseBuckets(@Param("societeId") UUID societeId);
+
+    /**
+     * Average price per sqm by project (for delivered and active ventes).
+     * Rows: [projectId(UUID), projectName(String), avgPricePerSqm(Double), sampleSize(Long)].
+     */
+    @Query(value = """
+            SELECT pr.project_id::text,
+                   p.nom AS project_name,
+                   COALESCE(AVG(CASE WHEN prop.surface_area_sqm > 0
+                               THEN v.prix_vente / prop.surface_area_sqm END), 0) AS avg_price_sqm,
+                   COUNT(v.id) AS sample_size
+            FROM vente v
+            JOIN property prop ON prop.id = v.property_id
+            JOIN project p ON p.id = prop.project_id
+            JOIN property pr ON pr.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND prop.surface_area_sqm > 0
+            GROUP BY pr.project_id, p.nom
+            HAVING COUNT(v.id) >= 1
+            ORDER BY avg_price_sqm DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> avgPricePerSqmByProject(@Param("societeId") UUID societeId);
 }

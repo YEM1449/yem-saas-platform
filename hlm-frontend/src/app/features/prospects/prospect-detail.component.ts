@@ -122,12 +122,9 @@ export class ProspectDetailComponent implements OnInit {
   }
 
   loadProperties(): void {
-    // Fetch only ACTIVE properties server-side — avoids loading RESERVED/SOLD
-    // properties that cannot be booked, and eliminates the client-side filter race
-    // condition where a just-reserved property still appears in the dropdown.
     this.propertiesLoading = true;
     this.propertiesError = '';
-    this.propertySvc.list({ status: 'ACTIVE' }).subscribe({
+    this.propertySvc.list().subscribe({
       next: (data) => {
         this.properties = data;
         this.propertiesLoading = false;
@@ -154,13 +151,11 @@ export class ProspectDetailComponent implements OnInit {
 
   get availableProperties(): Property[] {
     const interestedIds = new Set(this.interests.map((i) => i.propertyId));
-    return this.properties.filter((p) => !interestedIds.has(p.id));
+    return this.properties.filter((p) => !interestedIds.has(p.id) && p.status === 'ACTIVE');
   }
 
-  // All loaded properties are ACTIVE (server-side filter in loadProperties).
-  // This getter is kept for template readability.
   get activeProperties(): Property[] {
-    return this.properties;
+    return this.properties.filter((p) => p.status === 'ACTIVE');
   }
 
   addInterest(): void {

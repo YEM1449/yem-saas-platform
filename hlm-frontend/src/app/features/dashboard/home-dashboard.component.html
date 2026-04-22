@@ -399,6 +399,17 @@
 
   @if (activeTab === 'dirigeant') {
 
+  <!-- Portfolio & Inventory Value KPIs -->
+  @if (salesIntelData()) {
+    <div class="section-row">
+      <div class="section-head">
+        <span class="section-label">Valorisation du portefeuille</span>
+        <span class="section-sublabel">Valeur catalogue · stock invendu · prix moyen</span>
+      </div>
+      <app-portfolio-value [si]="salesIntelData()"></app-portfolio-value>
+    </div>
+  }
+
   <!-- ════════════════════════════════════════════════════════════
        SECTION 3.5 — OWNER KPIs (admin/manager only)
        ════════════════════════════════════════════════════════════ -->
@@ -706,13 +717,24 @@
   @if (activeTab === 'commercial') {
 
   <!-- ════════════════════════════════════════════════════════════
-       SECTION 3.7 — PIPELINE + FORECAST + AGENTS (cockpit Wave B)
+       COMMERCIAL — Sales performance full view
        ════════════════════════════════════════════════════════════ -->
   @if (isAdminOrManager && bundle()) {
     <div class="two-col-row">
       <app-pipeline-analysis [data]="pipelineData()"></app-pipeline-analysis>
       <app-forecast-widget [data]="forecastData()"></app-forecast-widget>
     </div>
+
+    @if (salesIntelData()) {
+      <div class="two-col-row">
+        <app-sales-by-type [rows]="salesIntelData()!.salesByType"></app-sales-by-type>
+        <app-time-to-close
+          [rows]="salesIntelData()!.timeToCloseBuckets"
+          [avgDays]="salesIntelData()!.avgDaysToClose">
+        </app-time-to-close>
+      </div>
+    }
+
     <app-agent-performance [data]="agentPerformanceData()" class="cockpit-agents-row"></app-agent-performance>
     <div class="two-col-row">
       <app-inventory-intelligence [data]="inventoryData()"></app-inventory-intelligence>
@@ -1094,6 +1116,25 @@
        PROJETS & TENDANCES TAB
        ════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'projets' && isAdminOrManager) {
+
+    <!-- Inventory intelligence section -->
+    @if (salesIntelData()) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Intelligence inventaire</span>
+          <span class="section-sublabel">Valeur du stock · ancienneté · prix au m²</span>
+        </div>
+        <div class="two-col-row" style="margin-bottom:0">
+          <app-inventory-aging [rows]="salesIntelData()!.inventoryAging"></app-inventory-aging>
+          <app-price-per-sqm
+            [byType]="salesIntelData()!.pricePerSqmByType"
+            [byProject]="salesIntelData()!.pricePerSqmByProject"
+            [globalAvg]="salesIntelData()!.globalAvgPricePerSqm">
+          </app-price-per-sqm>
+        </div>
+      </div>
+    }
+
     <div class="section-row">
       <div class="section-head">
         <span class="section-label">Tendance CA — 6 derniers mois</span>
