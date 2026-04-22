@@ -8,8 +8,10 @@ import com.yem.hlm.backend.dashboard.api.dto.FunnelDTO;
 import com.yem.hlm.backend.dashboard.api.dto.InventoryIntelligenceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.KpiComparisonDTO;
 import com.yem.hlm.backend.dashboard.api.dto.PipelineAnalysisDTO;
+import com.yem.hlm.backend.dashboard.api.dto.SalesIntelligenceDTO;
 import com.yem.hlm.backend.dashboard.api.dto.SmartInsightDTO;
 import com.yem.hlm.backend.dashboard.service.DashboardCockpitService;
+import com.yem.hlm.backend.dashboard.service.SalesIntelligenceService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +36,16 @@ import java.util.UUID;
 @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
 public class DashboardCockpitController {
 
-    private final DashboardCockpitService svc;
-    private final SocieteContextHelper    ctx;
+    private final DashboardCockpitService  svc;
+    private final SalesIntelligenceService salesIntel;
+    private final SocieteContextHelper     ctx;
 
-    public DashboardCockpitController(DashboardCockpitService svc, SocieteContextHelper ctx) {
-        this.svc = svc;
-        this.ctx = ctx;
+    public DashboardCockpitController(DashboardCockpitService svc,
+                                       SalesIntelligenceService salesIntel,
+                                       SocieteContextHelper ctx) {
+        this.svc        = svc;
+        this.salesIntel = salesIntel;
+        this.ctx        = ctx;
     }
 
     @GetMapping("/kpi-comparison")
@@ -94,5 +100,15 @@ public class DashboardCockpitController {
     public ResponseEntity<List<SmartInsightDTO>> insights() {
         UUID societeId = ctx.requireSocieteId();
         return ResponseEntity.ok(svc.getInsights(societeId));
+    }
+
+    /**
+     * Investor-grade sales intelligence: inventory valuation, type breakdown,
+     * time-to-close distribution, inventory aging, and price/sqm analytics.
+     */
+    @GetMapping("/sales-intelligence")
+    public ResponseEntity<SalesIntelligenceDTO> salesIntelligence() {
+        UUID societeId = ctx.requireSocieteId();
+        return ResponseEntity.ok(salesIntel.getSnapshot(societeId));
     }
 }

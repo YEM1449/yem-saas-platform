@@ -309,7 +309,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                    COUNT(*) FILTER (WHERE v.statut = 'LIVRE'),
                    COALESCE(SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE'), 0),
                    COUNT(*) FILTER (WHERE v.statut = 'ANNULE'),
-                   AVG(EXTRACT(EPOCH FROM (v.updated_at - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
+                   AVG(EXTRACT(EPOCH FROM (COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
                    COUNT(*) FILTER (WHERE v.statut NOT IN ('LIVRE','ANNULE'))
             FROM vente v
             JOIN app_user u ON u.id = v.agent_id
@@ -568,4 +568,86 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             LIMIT 8
             """, nativeQuery = true)
     List<Object[]> topProjectsByCA(@Param("societeId") UUID societeId);
+
+    /**
+     * Revenue and unit breakdown by property type (non-ANNULE ventes with joined property).
+     * Rows: [propertyType(String), ventesCount(Long), totalCA(BigDecimal),
+     *        avgPrix(BigDecimal), avgSurface(Double), avgPricePerSqm(Double)].
+     */
+    @Query(value = """
+            SELECT p.type::text,
+                   COUNT(v.id)                                                 AS ventes_count,
+                   COALESCE(SUM(v.prix_vente), 0)                              AS total_ca,
+                   COALESCE(AVG(v.prix_vente), 0)                              AS avg_prix,
+                   AVG(p.surface_area_sqm)                                     AS avg_surface,
+                   COALESCE(
+                       AVG(CASE WHEN p.surface_area_sqm > 0
+                           THEN v.prix_vente / p.surface_area_sqm END), 0)    AS avg_price_per_sqm
+            FROM vente v
+            JOIN property p ON p.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND p.price > 0
+            GROUP BY p.type
+            ORDER BY total_ca DESC
+            """, nativeQuery = true)
+    List<Object[]> salesBreakdownByType(@Param("societeId") UUID societeId);
+
+    /**
+     * Distribution of time-to-close (days from created_at to the immutable close marker).
+     * Close marker priority: date_livraison_reelle (user-supplied date) → stage_entry_date
+     * (timestamp stamped by VenteService.updateStatut() when LIVRE was recorded; LIVRE is
+     * terminal so it never changes after delivery). updated_at is intentionally excluded
+     * because post-delivery edits (notes, financing fields) would silently inflate durations.
+     * Rows: [bucket(String), count(Long), avgDays(Double)].
+     * Buckets: LT_30, D30_60, D61_90, D91_180, GT_180.
+     */
+    @Query(value = """
+            SELECT bucket,
+                   COUNT(*) AS cnt,
+                   AVG(days_to_close) AS avg_days
+            FROM (
+                SELECT EXTRACT(EPOCH FROM (
+                           COALESCE(date_livraison_reelle::timestamp, stage_entry_date)
+                           - created_at
+                       )) / 86400.0 AS days_to_close,
+                       CASE
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 30  THEN 'LT_30'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 60  THEN 'D30_60'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 90  THEN 'D61_90'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 180 THEN 'D91_180'
+                           ELSE 'GT_180'
+                       END AS bucket
+                FROM vente
+                WHERE societe_id = :societeId
+                  AND statut = 'LIVRE'
+            ) sub
+            GROUP BY bucket
+            ORDER BY MIN(days_to_close)
+            """, nativeQuery = true)
+    List<Object[]> timeToCloseBuckets(@Param("societeId") UUID societeId);
+
+    /**
+     * Average price per sqm by project (for delivered and active ventes).
+     * Rows: [projectId(UUID), projectName(String), avgPricePerSqm(Double), sampleSize(Long)].
+     */
+    @Query(value = """
+            SELECT pr.project_id::text,
+                   p.nom AS project_name,
+                   COALESCE(AVG(CASE WHEN prop.surface_area_sqm > 0
+                               THEN v.prix_vente / prop.surface_area_sqm END), 0) AS avg_price_sqm,
+                   COUNT(v.id) AS sample_size
+            FROM vente v
+            JOIN property prop ON prop.id = v.property_id
+            JOIN project p ON p.id = prop.project_id
+            JOIN property pr ON pr.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND prop.surface_area_sqm > 0
+            GROUP BY pr.project_id, p.nom
+            HAVING COUNT(v.id) >= 1
+            ORDER BY avg_price_sqm DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> avgPricePerSqmByProject(@Param("societeId") UUID societeId);
 }

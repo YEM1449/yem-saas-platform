@@ -170,6 +170,61 @@ export interface SmartInsight {
   actionRoute: string | null;
 }
 
+// ── Sales intelligence (BI enrichment layer) ─────────────────────────────
+export interface SalesByTypeRow {
+  propertyType: string;
+  ventesCount: number;
+  totalCA: number;
+  avgPrix: number;
+  avgSurfaceSqm: number | null;
+  avgPricePerSqm: number | null;
+}
+
+export interface TimeToCloseRow {
+  bucket: string;
+  bucketLabel: string;
+  count: number;
+  avgDays: number | null;
+}
+
+export interface InventoryAgingRow {
+  bucket: string;
+  bucketLabel: string;
+  count: number;
+  totalValue: number;
+}
+
+export interface PricePerSqmRow {
+  propertyType: string;
+  avgPricePerSqm: number | null;
+  minPrice: number;
+  maxPrice: number;
+  count: number;
+}
+
+export interface PricePerSqmProjectRow {
+  projectId: string | null;
+  projectName: string;
+  avgPricePerSqm: number | null;
+  sampleSize: number;
+}
+
+export interface SalesIntelligence {
+  asOf: string;
+  unsoldInventoryValue: number;
+  totalPortfolioValue: number;
+  activeUnitsCount: number;
+  reservedUnitsCount: number;
+  avgListPriceActive: number;
+  salesByType: SalesByTypeRow[];
+  avgDaysToClose: number | null;
+  timeToCloseBuckets: TimeToCloseRow[];
+  inventoryAging: InventoryAgingRow[];
+  globalAvgPricePerSqm: number | null;
+  pricePerSqmByType: PricePerSqmRow[];
+  pricePerSqmByProject: PricePerSqmProjectRow[];
+}
+
 export interface CockpitBundle {
   kpi: KpiComparison | null;
   funnel: FunnelSnapshot | null;
@@ -180,6 +235,7 @@ export interface CockpitBundle {
   inventory: InventoryIntelligence | null;
   discount: DiscountAnalytics | null;
   insights: SmartInsight[];
+  salesIntelligence: SalesIntelligence | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -223,6 +279,10 @@ export class DashboardCockpitService {
     return this.http.get<SmartInsight[]>(`${this.base}/insights`);
   }
 
+  getSalesIntelligence(): Observable<SalesIntelligence> {
+    return this.http.get<SalesIntelligence>(`${this.base}/sales-intelligence`);
+  }
+
   /** Single call used by the home dashboard — degrades gracefully on per-endpoint failure. */
   getBundle(): Observable<CockpitBundle> {
     return forkJoin({
@@ -235,6 +295,7 @@ export class DashboardCockpitService {
       inventory:        this.getInventoryIntelligence().pipe(catchError(() => of(null))),
       discount:         this.getDiscountAnalytics().pipe(catchError(() => of(null))),
       insights:         this.getInsights().pipe(catchError(() => of([] as SmartInsight[]))),
+      salesIntelligence: this.getSalesIntelligence().pipe(catchError(() => of(null))),
     });
   }
 }
