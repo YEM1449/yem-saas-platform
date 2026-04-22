@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow } from './home-dashboard.service';
+import { Router, RouterLink } from '@angular/router';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, ShareholderKpi, ProjectDirectorKpi } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
 import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
 import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
@@ -42,14 +42,20 @@ import { AuthService } from '../../core/auth/auth.service';
 export class HomeDashboardComponent implements OnInit {
   private svc     = inject(HomeDashboardService);
   private cockpit = inject(DashboardCockpitService);
+  private router  = inject(Router);
   readonly auth   = inject(AuthService);
 
-  snap    = signal<HomeDashboard | null>(null);
-  bundle  = signal<CockpitBundle | null>(null);
-  loading = signal(true);
-  error   = signal('');
+  snap               = signal<HomeDashboard | null>(null);
+  bundle             = signal<CockpitBundle | null>(null);
+  loading            = signal(true);
+  error              = signal('');
+  shareholderKpi     = signal<ShareholderKpi | null>(null);
+  projectDirectorKpi = signal<ProjectDirectorKpi | null>(null);
 
-  activeTab: 'synthese' | 'dirigeant' | 'commercial' | 'projets' | 'operationnel' = 'synthese';
+  private shareholderLoaded     = false;
+  private projectDirectorLoaded = false;
+
+  activeTab: 'synthese' | 'dirigeant' | 'commercial' | 'projets' | 'operationnel' | 'actionnaire' | 'chef-projet' = 'synthese';
 
   readonly today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -63,6 +69,47 @@ export class HomeDashboardComponent implements OnInit {
   get userName(): string {
     const u = this.auth.user;
     return u?.prenom ?? u?.email?.split('@')[0] ?? '';
+  }
+
+  // ── Drill-through navigation helpers ──────────────────────────────────────
+
+  drillVentes(statut?: string): void {
+    const queryParams = statut ? { statut } : {};
+    this.router.navigate(['/app/ventes'], { queryParams });
+  }
+
+  drillByAgent(agentId: string): void {
+    this.router.navigate(['/app/ventes'], { queryParams: { agentId } });
+  }
+
+  drillProperties(status: string): void {
+    this.router.navigate(['/app/properties'], { queryParams: { status } });
+  }
+
+  drillByProject(projectId: string, status?: string): void {
+    const queryParams: Record<string, string> = { projectId };
+    if (status) queryParams['status'] = status;
+    this.router.navigate(['/app/properties'], { queryParams });
+  }
+
+  goToProject(projectId: string | null): void {
+    if (projectId) this.router.navigate(['/app/projects', projectId]);
+  }
+
+  drillReceivables(): void {
+    this.router.navigate(['/app/dashboard/receivables']);
+  }
+
+  switchTab(tab: HomeDashboardComponent['activeTab']): void {
+    this.activeTab = tab;
+    if (tab === 'actionnaire' && !this.shareholderLoaded) {
+      this.shareholderLoaded = true;
+      this.svc.getShareholderKpis().subscribe(k => this.shareholderKpi.set(k));
+    }
+    if (tab === 'chef-projet' && !this.projectDirectorLoaded) {
+      this.projectDirectorLoaded = true;
+      this.svc.getProjectDirectorKpis().subscribe(k => this.projectDirectorKpi.set(k));
+    }
   }
 
   ngOnInit(): void { this.load(); }

@@ -109,6 +109,39 @@ export interface UrgentTaskRow {
   contactId: string | null;
 }
 
+export interface ShareholderKpi {
+  portfolioValueAtMarket: number;
+  soldValue: number;
+  projectedCompletionExposure: number;
+  concentrationByProject: ProjectConcentrationRow[];
+  generatedAt: string;
+}
+
+export interface ProjectConcentrationRow {
+  projectId: string;
+  projectName: string;
+  unitCount: number;
+  pctOfPortfolio: number;
+}
+
+export interface ProjectDirectorKpi {
+  projects: ProjectProgressRow[];
+  generatedAt: string;
+}
+
+export interface ProjectProgressRow {
+  projectId: string;
+  projectName: string;
+  totalUnits: number;
+  soldUnits: number;
+  reservedUnits: number;
+  availableUnits: number;
+  soldPct: number;
+  reservedPct: number;
+  deliveryPlanned: string | null;
+  deliveryOnTrack: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HomeDashboardService {
   private http = inject(HttpClient);
@@ -116,5 +149,13 @@ export class HomeDashboardService {
 
   getSnapshot(): Observable<HomeDashboard> {
     return this.http.get<HomeDashboard>(this.base);
+  }
+
+  getShareholderKpis(): Observable<ShareholderKpi> {
+    return this.http.get<ShareholderKpi>(`${this.base}/shareholder`);
+  }
+
+  getProjectDirectorKpis(): Observable<ProjectDirectorKpi> {
+    return this.http.get<ProjectDirectorKpi>(`${this.base}/project-director`);
   }
 }

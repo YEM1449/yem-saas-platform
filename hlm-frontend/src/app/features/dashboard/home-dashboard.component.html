@@ -87,6 +87,22 @@
         </svg>
         Projets & Tendances
       </button>
+      <button class="db-tab" [class.db-tab-active]="activeTab === 'actionnaire'"
+              (click)="switchTab('actionnaire')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Actionnaire
+      </button>
+      <button class="db-tab" [class.db-tab-active]="activeTab === 'chef-projet'"
+              (click)="switchTab('chef-projet')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M4 5h6M4 7.5h4M4 10h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Chef de projet
+      </button>
     }
     <button class="db-tab" [class.db-tab-active]="activeTab === 'operationnel'"
             (click)="activeTab = 'operationnel'">
@@ -115,7 +131,7 @@
   <div class="hero-row">
 
     <!-- CA Pipeline Actif -->
-    <div class="hero-card hero-pipeline">
+    <div class="hero-card hero-pipeline clickable-card" (click)="drillVentes()" title="Voir toutes les ventes actives">
       <div class="hero-icon">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <path d="M3 17l5-6 4 4 4-7 5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -143,7 +159,7 @@
     </div>
 
     <!-- CA ce mois + tendance -->
-    <div class="hero-card hero-mois">
+    <div class="hero-card hero-mois clickable-card" (click)="drillVentes()" title="Voir les ventes">
       <div class="hero-icon">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <rect x="3" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
@@ -182,7 +198,7 @@
     </div>
 
     <!-- CA Livré (réalisé) -->
-    <div class="hero-card hero-livre">
+    <div class="hero-card hero-livre clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
       <div class="hero-icon">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
@@ -197,7 +213,7 @@
     </div>
 
     <!-- Taux d'absorption -->
-    <div class="hero-card hero-absorption">
+    <div class="hero-card hero-absorption clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
       <div class="hero-icon">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <path d="M11 3v5M11 14v5M3 11h5M14 11h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -463,7 +479,7 @@
           <div class="owner-kpi-hint">Sur les 30 derniers jours</div>
         </div>
 
-        <div class="owner-kpi-card">
+        <div class="owner-kpi-card clickable-card" (click)="drillReceivables()" title="Détail des encaissements">
           <div class="owner-kpi-label">
             Encaissé ce mois
             @if (encaisseDelta()) {
@@ -503,7 +519,7 @@
             </thead>
             <tbody>
               @for (a of s.topAgents; track a.agentId; let i = $index) {
-                <tr>
+                <tr class="clickable-row" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
                   <td class="lb-rank">{{ i + 1 }}</td>
                   <td class="lb-name">{{ a.agentName }}</td>
                   <td class="lb-ventes">{{ a.ventesCount }}</td>
@@ -789,7 +805,7 @@
         @if (s.activeVentesCount > 0) {
           <div class="pipeline-stages">
             @for (entry of pipelineEntries(s.ventesParStatut); track entry.statut) {
-              <div class="pipeline-stage-row">
+              <div class="pipeline-stage-row clickable-row" (click)="drillVentes(entry.statut)" title="Voir les ventes {{ statutLabel(entry.statut) }}">
                 <div class="pipeline-stage-dot" [style.background]="statutColor(entry.statut)"></div>
                 <div class="pipeline-stage-label">{{ statutLabel(entry.statut) }}</div>
                 <div class="pipeline-stage-bar-wrap">
@@ -829,19 +845,19 @@
 
       <!-- 4 status cells -->
       <div class="stock-grid">
-        <div class="stock-cell stock-draft">
+        <div class="stock-cell stock-draft clickable-card" (click)="drillProperties('DRAFT')" title="Voir les biens brouillon">
           <div class="stock-val">{{ s.biensDraftCount }}</div>
           <div class="stock-lbl">Brouillon</div>
         </div>
-        <div class="stock-cell stock-active">
+        <div class="stock-cell stock-active clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
           <div class="stock-val">{{ s.biensActifsCount }}</div>
           <div class="stock-lbl">Disponible</div>
         </div>
-        <div class="stock-cell stock-reserved">
+        <div class="stock-cell stock-reserved clickable-card" (click)="drillProperties('RESERVED')" title="Voir les biens réservés">
           <div class="stock-val">{{ s.biensReservesCount }}</div>
           <div class="stock-lbl">Réservé</div>
         </div>
-        <div class="stock-cell stock-sold">
+        <div class="stock-cell stock-sold clickable-card" (click)="drillProperties('SOLD')" title="Voir les biens vendus">
           <div class="stock-val">{{ s.biensVendusCount }}</div>
           <div class="stock-lbl">Vendu</div>
         </div>
@@ -1179,7 +1195,8 @@
         </div>
         <div class="project-bd-list">
           @for (p of s.projectBreakdown; track p.projectId; let i = $index) {
-            <div class="pbd-row">
+            <div class="pbd-row" [class.clickable-row]="!!p.projectId"
+                 (click)="goToProject(p.projectId)">
               <div class="pbd-rank" [style.background]="projectColor(i)">{{ i + 1 }}</div>
               <div class="pbd-body">
                 <div class="pbd-header">
@@ -1240,6 +1257,147 @@
             </a>
           }
         </div>
+      </div>
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB — ACTIONNAIRE
+       ════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'actionnaire' && isAdminOrManager) {
+    @if (!shareholderKpi()) {
+      <div class="skeleton-stack" style="margin-top:16px">
+        <div class="skeleton-grid">
+          <span class="skeleton skeleton-card"></span>
+          <span class="skeleton skeleton-card"></span>
+          <span class="skeleton skeleton-card"></span>
+        </div>
+        <span class="skeleton skeleton-card" style="height:160px;margin-top:4px"></span>
+      </div>
+    } @else {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Portefeuille actionnaire</span>
+          <span class="db-asof">Màj {{ shareholderKpi()!.generatedAt | date:'HH:mm' }}</span>
+        </div>
+        <div class="shareholder-kpi-row">
+          <div class="sh-kpi-card sh-kpi-portfolio">
+            <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.portfolioValueAtMarket) }}</div>
+            <div class="sh-kpi-lbl">Valeur inventaire au prix liste</div>
+            <div class="sh-kpi-sub">Biens ACTIF + RÉSERVÉ</div>
+          </div>
+          <div class="sh-kpi-card sh-kpi-sold">
+            <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.soldValue) }}</div>
+            <div class="sh-kpi-lbl">CA livré (LIVRE)</div>
+            <div class="sh-kpi-sub">Revenu réalisé</div>
+          </div>
+          <div class="sh-kpi-card sh-kpi-exposure">
+            <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.projectedCompletionExposure) }}</div>
+            <div class="sh-kpi-lbl">Exposition pipeline</div>
+            <div class="sh-kpi-sub">Compromis + Financement + Acte</div>
+          </div>
+        </div>
+      </div>
+
+      @if (shareholderKpi()!.concentrationByProject.length > 0) {
+        <div class="section-row">
+          <div class="section-head">
+            <span class="section-label">Concentration par projet</span>
+          </div>
+          <div class="sh-concentration-list">
+            @for (row of shareholderKpi()!.concentrationByProject; track row.projectId; let i = $index) {
+              <div class="sh-conc-row clickable-row" (click)="drillByProject(row.projectId)"
+                   title="Voir les biens de ce projet">
+                <div class="sh-conc-meta">
+                  <span class="sh-conc-name">{{ row.projectName }}</span>
+                  <span class="sh-conc-units">{{ row.unitCount }} unité{{ row.unitCount !== 1 ? 's' : '' }}</span>
+                  <span class="sh-conc-pct">{{ row.pctOfPortfolio.toFixed(1) }}%</span>
+                </div>
+                <div class="sh-conc-bar-wrap">
+                  <div class="sh-conc-bar"
+                       [style.width]="row.pctOfPortfolio + '%'"
+                       [style.background]="projectColor(i)"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB — CHEF DE PROJET
+       ════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'chef-projet' && isAdminOrManager) {
+    @if (!projectDirectorKpi()) {
+      <div class="skeleton-stack" style="margin-top:16px">
+        <span class="skeleton skeleton-card" style="height:220px"></span>
+      </div>
+    } @else {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Avancement commercial par projet</span>
+          <span class="db-asof">Màj {{ projectDirectorKpi()!.generatedAt | date:'HH:mm' }}</span>
+        </div>
+        @if (projectDirectorKpi()!.projects.length > 0) {
+          <div class="pd-table-wrap">
+            <table class="pd-table">
+              <thead>
+                <tr>
+                  <th class="pd-th">Projet</th>
+                  <th class="pd-th pd-th-r">Total</th>
+                  <th class="pd-th pd-th-r">Vendus</th>
+                  <th class="pd-th pd-th-r">Réservés</th>
+                  <th class="pd-th pd-th-r">Dispo</th>
+                  <th class="pd-th">Livraison</th>
+                  <th class="pd-th pd-th-c">État</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of projectDirectorKpi()!.projects; track p.projectId) {
+                  <tr class="pd-tr">
+                    <td class="pd-td">
+                      <a [routerLink]="['/app/projects', p.projectId]" class="pd-project-link">
+                        {{ p.projectName }}
+                      </a>
+                    </td>
+                    <td class="pd-td pd-td-r">{{ p.totalUnits }}</td>
+                    <td class="pd-td pd-td-r">
+                      <span class="pd-num-bold">{{ p.soldUnits }}</span>
+                      <span class="pd-pct">{{ p.soldPct.toFixed(0) }}%</span>
+                    </td>
+                    <td class="pd-td pd-td-r">
+                      <span>{{ p.reservedUnits }}</span>
+                      <span class="pd-pct">{{ p.reservedPct.toFixed(0) }}%</span>
+                    </td>
+                    <td class="pd-td pd-td-r pd-td-avail clickable-card"
+                        (click)="drillByProject(p.projectId, 'ACTIVE')"
+                        title="Voir les biens disponibles">
+                      {{ p.availableUnits }}
+                    </td>
+                    <td class="pd-td pd-td-date">
+                      @if (p.deliveryPlanned) {
+                        {{ p.deliveryPlanned | date:'dd/MM/yy' }}
+                      } @else {
+                        <span class="pd-no-date">—</span>
+                      }
+                    </td>
+                    <td class="pd-td pd-td-c">
+                      @if (p.deliveryOnTrack) {
+                        <span class="pd-status-ok" title="Dans les délais">&#10003;</span>
+                      } @else {
+                        <span class="pd-status-late" title="En retard">!</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="widget-empty">Aucun projet avec des données de progression</div>
+        }
       </div>
     }
   }

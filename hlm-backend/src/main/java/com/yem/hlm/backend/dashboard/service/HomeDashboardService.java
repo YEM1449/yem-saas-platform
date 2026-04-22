@@ -472,4 +472,115 @@ public class HomeDashboardService {
         if (o instanceof java.util.Date d) return d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         return null;
     }
+
+    // ── Shareholder KPIs ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO getShareholderKpis(UUID societeId) {
+        List<Object[]> rows = propertyRepo.inventoryByProjectStatusWithValues(societeId);
+
+        Map<UUID, String>  nameMap  = new LinkedHashMap<>();
+        Map<UUID, long[]>  unitMap  = new LinkedHashMap<>();
+        BigDecimal portfolioValue   = BigDecimal.ZERO;
+
+        for (Object[] r : rows) {
+            if (r[0] == null) continue;
+            UUID   projectId = (UUID) r[0];
+            String projName  = r[1] != null ? r[1].toString() : "—";
+            String status    = r[2] != null ? r[2].toString() : "";
+            long   count     = toLong(r[3]);
+            BigDecimal priceSum = toBigDecimal(r[4]);
+
+            nameMap.putIfAbsent(projectId, projName);
+            unitMap.computeIfAbsent(projectId, k -> new long[1]);
+            unitMap.get(projectId)[0] += count;
+
+            if ("ACTIVE".equals(status) || "RESERVED".equals(status)) {
+                portfolioValue = portfolioValue.add(priceSum);
+            }
+        }
+
+        long totalAllUnits = unitMap.values().stream().mapToLong(a -> a[0]).sum();
+
+        List<com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO.ProjectConcentrationRow> concentration =
+                nameMap.entrySet().stream()
+                        .map(e -> {
+                            long cnt = unitMap.get(e.getKey())[0];
+                            double pct = totalAllUnits > 0
+                                    ? Math.round(cnt * 1000.0 / totalAllUnits) / 10.0
+                                    : 0.0;
+                            return new com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO.ProjectConcentrationRow(
+                                    e.getKey(), e.getValue(), cnt, pct);
+                        })
+                        .filter(row -> row.unitCount() > 0)
+                        .sorted(java.util.Comparator.comparingDouble(
+                                com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO.ProjectConcentrationRow::pctOfPortfolio).reversed())
+                        .toList();
+
+        BigDecimal soldValue = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        if (soldValue == null) soldValue = BigDecimal.ZERO;
+
+        BigDecimal projectedExposure = venteRepo.sumPrixVente(societeId, TERMINAL);
+        if (projectedExposure == null) projectedExposure = BigDecimal.ZERO;
+
+        return new com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO(
+                portfolioValue, soldValue, projectedExposure, concentration, LocalDateTime.now());
+    }
+
+    // ── Project Director KPIs ─────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO getProjectDirectorKpis(UUID societeId) {
+        List<Object[]> rows = propertyRepo.inventoryByProjectAndStatus(societeId);
+
+        Map<UUID, String> nameMap  = new LinkedHashMap<>();
+        Map<UUID, long[]> countMap = new LinkedHashMap<>(); // [total, sold, reserved, active]
+
+        for (Object[] r : rows) {
+            if (r[0] == null) continue;
+            UUID   projectId = (UUID) r[0];
+            String projName  = r[1] != null ? r[1].toString() : "—";
+            String status    = r[2] != null ? r[2].toString() : "";
+            long   count     = toLong(r[3]);
+
+            nameMap.putIfAbsent(projectId, projName);
+            countMap.computeIfAbsent(projectId, k -> new long[4]);
+            long[] c = countMap.get(projectId);
+            c[0] += count;
+            if ("SOLD".equals(status))     c[1] += count;
+            if ("RESERVED".equals(status)) c[2] += count;
+            if ("ACTIVE".equals(status))   c[3] += count;
+        }
+
+        // Earliest delivery per project
+        Map<UUID, LocalDate> deliveryMap = new java.util.HashMap<>();
+        trancheRepo.findEarliestDeliveryPerProject(societeId).forEach(r -> {
+            if (r[0] == null) return;
+            UUID projectId = UUID.fromString(r[0].toString());
+            LocalDate date = toLocalDate(r[1]);
+            if (date != null) deliveryMap.put(projectId, date);
+        });
+
+        LocalDate today = LocalDate.now();
+        List<com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO.ProjectProgressRow> projects =
+                nameMap.entrySet().stream()
+                        .map(e -> {
+                            UUID   pid      = e.getKey();
+                            long[] c        = countMap.get(pid);
+                            long total      = c[0], sold = c[1], reserved = c[2], available = c[3];
+                            double soldPct  = total > 0 ? Math.round(sold * 1000.0 / total) / 10.0 : 0.0;
+                            double resvPct  = total > 0 ? Math.round(reserved * 1000.0 / total) / 10.0 : 0.0;
+                            LocalDate dlv   = deliveryMap.get(pid);
+                            boolean onTrack = dlv == null || !dlv.isBefore(today);
+                            return new com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO.ProjectProgressRow(
+                                    pid, e.getValue(), total, sold, reserved, available,
+                                    soldPct, resvPct, dlv, onTrack);
+                        })
+                        .filter(row -> row.totalUnits() > 0)
+                        .sorted(java.util.Comparator.comparingDouble(
+                                com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO.ProjectProgressRow::soldPct).reversed())
+                        .toList();
+
+        return new com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO(projects, LocalDateTime.now());
+    }
 }

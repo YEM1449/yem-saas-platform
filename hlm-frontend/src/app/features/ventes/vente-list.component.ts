@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { VenteService, Vente, VenteStatut, ContractStatus, CreateVenteRequest } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -23,6 +24,7 @@ export class VenteListComponent implements OnInit {
   private auth        = inject(AuthService);
   private contactSvc  = inject(ContactService);
   private propertySvc = inject(PropertyService);
+  private route       = inject(ActivatedRoute);
 
   ventes  = signal<Vente[]>([]);
   loading = signal(true);
@@ -69,6 +71,10 @@ export class VenteListComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(take(1)).subscribe(params => {
+      const statut = params.get('statut');
+      if (statut) this.filterStatut = statut;
+    });
     this.svc.list().subscribe({
       next:  (data) => { this.ventes.set(data); this.loading.set(false); },
       error: ()     => { this.error.set('Erreur lors du chargement des ventes.'); this.loading.set(false); },
