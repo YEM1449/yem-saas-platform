@@ -155,6 +155,13 @@
           <app-sparkline [data]="ventesSparkline()" color="#6366f1"
                          ariaLabel="Ventes créées sur 12 semaines"></app-sparkline>
         }
+        <div class="kdt">
+          <span class="kdt-text">CA moyen/vente : {{ avgPipelineDeal(s) }}</span>
+          @if (s.ventesStalleesCount > 0) {
+            <span class="kdt-pill bench-bad">{{ s.ventesStalleesCount }} bloquées</span>
+          }
+          <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">Ventes →</span>
+        </div>
       </div>
     </div>
 
@@ -194,6 +201,12 @@
           <app-sparkline [data]="caSparkline()" color="#10b981"
                          ariaLabel="CA signé sur 12 semaines"></app-sparkline>
         }
+        <div class="kdt">
+          <span class="kdt-text">Projeté annuel : {{ annualizedCA(s) }}</span>
+          @if (s.quotaAttainmentMtdPct != null) {
+            <span class="kdt-pill" [class]="quotaStatusClass(s)">{{ s.quotaAttainmentMtdPct | number:'1.0-0' }}% objectif</span>
+          }
+        </div>
       </div>
     </div>
 
@@ -209,6 +222,10 @@
         <div class="hero-value">{{ formatAmount(s.caLivre) }}</div>
         <div class="hero-label">CA Réalisé (Livré)</div>
         <div class="hero-sub">Ventes acte + livraison effectives</div>
+        <div class="kdt">
+          <span class="kdt-text">{{ livraisonRatioPct(s) }} du total réalisé</span>
+          <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes('LIVRE')">Livrées →</span>
+        </div>
       </div>
     </div>
 
@@ -238,6 +255,10 @@
           <span class="hero-sub" style="white-space:nowrap">{{ s.biensVendusCount }}/{{ s.stockCommercialise }}</span>
         </div>
         <div class="hero-sub">{{ absorptionLabel(s.tauxAbsorption) }}</div>
+        <div class="kdt">
+          <span class="kdt-text">{{ s.stockCommercialise - s.biensVendusCount }} biens non vendus</span>
+          <span class="kdt-pill" [class]="absorptionBenchClass(s)">Cible : &gt;70%</span>
+        </div>
       </div>
     </div>
 
@@ -258,6 +279,9 @@
       <div class="ops-chip-body">
         <div class="ops-val">{{ s.activeProspectsCount }}</div>
         <div class="ops-lbl">Prospects</div>
+        @if (s.conversionRate30d != null) {
+          <div class="kdt-sub">Conversion 30j : {{ s.conversionRate30d | number:'1.0-0' }}%</div>
+        }
       </div>
     </a>
 
@@ -282,6 +306,9 @@
             <span class="ops-sublbl text-warning">{{ s.reservationsExpirantBientot }} expirent bientôt</span>
           }
         </div>
+        @if (s.reservationsExpirantBientot > 0) {
+          <div class="kdt-sub">Renouveler avant expiration</div>
+        }
       </div>
     </a>
 
@@ -306,6 +333,9 @@
               <span class="ops-sublbl text-danger">{{ s.echeancesEnRetardCount }} en retard</span>
             }
           </div>
+          @if (s.echeancesEnRetardCount > 0) {
+            <div class="kdt-sub">{{ formatAmount(s.echeancesEnRetardMontant) }} impayés</div>
+          }
         </div>
       </div>
     }
@@ -329,6 +359,15 @@
             <span class="ops-sublbl text-danger">{{ s.overdueTasksCount }} en retard</span>
           } @else if (isAgent && s.tasksDueTodayCount > 0) {
             <span class="ops-sublbl text-warning">{{ s.tasksDueTodayCount }} aujourd'hui</span>
+          }
+        </div>
+        <div class="kdt-sub">
+          @if (s.overdueTasksCount > 0) {
+            {{ s.overdueTasksCount }} en retard
+          } @else if (s.tasksDueTodayCount > 0) {
+            {{ s.tasksDueTodayCount }} aujourd'hui
+          } @else {
+            À jour ✓
           }
         </div>
       </div>
@@ -372,6 +411,13 @@
           </div>
           <div class="fin-value">{{ formatAmount(s.echeancesA30JoursMontant) }}</div>
           <div class="fin-hint">Échéances dues dans les 30 prochains jours</div>
+          @if (s.dsoRolling90d != null) {
+            <div class="kdt">
+              <span class="kdt-text">DSO rolling : {{ s.dsoRolling90d | number:'1.0-0' }}j</span>
+              <span class="kdt-pill" [class]="dsoStatusClass(s)">{{ dsoLabel(s) }}</span>
+              <span class="kdt-action" (click)="drillReceivables()">Détail →</span>
+            </div>
+          }
         </div>
 
         <div class="fin-card {{ s.echeancesEnRetardCount > 0 ? 'fin-overdue' : 'fin-ok' }}">
@@ -393,6 +439,15 @@
             @if (s.echeancesEnRetardCount === 0) { Aucun impayé en retard ✓ }
             @else { Échéances dont la date est dépassée }
           </div>
+          <div class="kdt">
+            @if (s.echeancesEnRetardCount > 0) {
+              <span class="kdt-text">{{ s.echeancesEnRetardCount }} débiteur{{ s.echeancesEnRetardCount > 1 ? 's' : '' }}</span>
+              <span class="kdt-pill bench-bad">Relances requises</span>
+            } @else {
+              <span class="kdt-pill bench-good">✓ Sain</span>
+            }
+            <a routerLink="/app/reports/creances" class="kdt-action">Créances →</a>
+          </div>
         </div>
 
         <div class="fin-card fin-realise">
@@ -405,6 +460,10 @@
           </div>
           <div class="fin-value fin-value-green">{{ formatAmount(s.caLivre) }}</div>
           <div class="fin-hint">Ventes définitivement finalisées</div>
+          <div class="kdt">
+            <span class="kdt-text">{{ livraisonRatioPct(s) }} réalisé</span>
+            <a routerLink="/app/reports/creances" class="kdt-action">Rapport →</a>
+          </div>
         </div>
 
       </div>
@@ -448,6 +507,10 @@
             }
           </div>
           <div class="owner-kpi-hint">Ventes annulées sur ventes créées</div>
+          <div class="kdt">
+            <span class="kdt-text">Cible : &lt;10% · Critique : &gt;20%</span>
+            <span class="kdt-pill" [class]="cancellationStatusClass(s)">{{ cancellationLabel(s) }}</span>
+          </div>
         </div>
 
         <div class="owner-kpi-card">
@@ -456,6 +519,10 @@
             {{ formatAmount(s.avgTicketLivre) }}
           </div>
           <div class="owner-kpi-hint">Prix moyen des ventes finalisées</div>
+          <div class="kdt">
+            <span class="kdt-text">Pipeline actif : {{ avgPipelineDeal(s) }} moy.</span>
+            <span class="kdt-action" (click)="drillVentes()">Ventes →</span>
+          </div>
         </div>
 
         <div class="owner-kpi-card">
@@ -477,6 +544,10 @@
             }
           </div>
           <div class="owner-kpi-hint">Sur les 30 derniers jours</div>
+          <div class="kdt">
+            <span class="kdt-text">Cible : &gt;50%</span>
+            <span class="kdt-pill" [class]="conversionStatusClass(s)">{{ conversionLabel(s) }}</span>
+          </div>
         </div>
 
         <div class="owner-kpi-card clickable-card" (click)="drillReceivables()" title="Détail des encaissements">
@@ -493,6 +564,13 @@
             {{ formatAmount(s.encaisseMoisCourant) }}
           </div>
           <div class="owner-kpi-hint">Échéances payées du mois en cours</div>
+          <div class="kdt">
+            @if (s.collectionEfficiency90d != null) {
+              <span class="kdt-text">Efficacité 90j : {{ s.collectionEfficiency90d | number:'1.0-0' }}%</span>
+              <span class="kdt-pill" [class]="collectionStatusClass(s)">{{ collectionLabel(s) }}</span>
+            }
+            <span class="kdt-action" (click)="$event.stopPropagation(); drillReceivables()">Détail →</span>
+          </div>
         </div>
 
       </div>
@@ -515,6 +593,8 @@
                 <th class="lb-name">Agent</th>
                 <th class="lb-ventes">Ventes</th>
                 <th class="lb-ca">CA signé</th>
+                <th class="lb-avg">CA moy./vente</th>
+                <th class="lb-share">Part</th>
               </tr>
             </thead>
             <tbody>
@@ -524,6 +604,15 @@
                   <td class="lb-name">{{ a.agentName }}</td>
                   <td class="lb-ventes">{{ a.ventesCount }}</td>
                   <td class="lb-ca">{{ formatAmount(a.totalCA) }}</td>
+                  <td class="lb-avg">{{ agentAvgDeal(a) }}</td>
+                  <td class="lb-share">
+                    <div class="agent-share-bar-wrap">
+                      <div class="agent-share-bar-bg">
+                        <div class="agent-share-bar" [style.width]="agentShareWidth(a, s.topAgents)"></div>
+                      </div>
+                      <span style="font-size:.7rem;color:#6b7280;white-space:nowrap">{{ agentShareWidth(a, s.topAgents) }}</span>
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -577,6 +666,15 @@
             <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
             <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
           </div>
+          @if (s.quotaAttainmentMtdPct != null) {
+            <div class="kdt">
+              <span class="kdt-text">Rythme attendu J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} : {{ pacingExpectedPct() }}%</span>
+              <span class="kdt-pill"
+                    [class]="isPacingOnTrack(s.quotaAttainmentMtdPct) ? 'bench-good' : isPacingBehind(s.quotaAttainmentMtdPct) ? 'bench-warn' : 'bench-bad'">
+                {{ pacingVerdict(s.quotaAttainmentMtdPct) }}
+              </span>
+            </div>
+          }
         </div>
       } @else {
         <div class="pacing-card pacing-untargeted">
@@ -610,6 +708,12 @@
               Pas de référence n-1
             }
           </div>
+          <div class="kdt">
+            <span class="kdt-text">Projeté fin d'année : {{ projectedYearEndCA(s) }}</span>
+            @if (s.caYoYPct != null) {
+              <span class="kdt-pill" [class]="s.caYoYPct >= 0 ? 'bench-good' : 'bench-bad'">{{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ absNum(s.caYoYPct) | number:'1.0-0' }}% n-1</span>
+            }
+          </div>
         </div>
 
         <!-- Velocity -->
@@ -622,6 +726,14 @@
             <span class="exec-unit">/sem</span>
           </div>
           <div class="exec-hint">Moyenne 4 dernières semaines</div>
+          <div class="kdt">
+            @if (stockDaysToEmpty(s) != null) {
+              <span class="kdt-text">Stock actif épuisé dans : {{ stockDaysToEmpty(s) }} j</span>
+              <span class="kdt-pill" [class]="stockDaysToEmpty(s)! < 180 ? 'bench-good' : stockDaysToEmpty(s)! < 540 ? 'bench-warn' : 'bench-bad'">{{ stockDaysToEmpty(s)! < 180 ? 'Rapide' : stockDaysToEmpty(s)! < 540 ? 'Normal' : 'Lent' }}</span>
+            } @else {
+              <span class="kdt-text">Rythme de vente hebdomadaire</span>
+            }
+          </div>
         </div>
 
         <!-- Months of supply -->
@@ -639,6 +751,12 @@
             } @else { — }
           </div>
           <div class="exec-hint">Stock actif / rythme mensuel 90j</div>
+          <div class="kdt">
+            <span class="kdt-text">Optimal : &lt;6 mois · Critique : &gt;18 mois</span>
+            @if (s.monthsOfSupply != null) {
+              <span class="kdt-pill" [class]="isSupplyHealthy(s.monthsOfSupply) ? 'bench-good' : isSupplyElevated(s.monthsOfSupply) ? 'bench-warn' : 'bench-bad'">{{ isSupplyHealthy(s.monthsOfSupply) ? 'Sain' : isSupplyElevated(s.monthsOfSupply) ? 'Élevé' : 'Critique' }}</span>
+            }
+          </div>
         </div>
 
         <!-- Win rate -->
@@ -655,6 +773,12 @@
             } @else { — }
           </div>
           <div class="exec-hint">Livrées / (Livrées + Annulées)</div>
+          <div class="kdt">
+            <span class="kdt-text">Benchmark : &gt;80% excellent</span>
+            @if (s.winRate90d != null) {
+              <span class="kdt-pill" [class]="winRateStatusClass(s)">{{ winRateLabel(s) }}</span>
+            }
+          </div>
         </div>
 
         <!-- DSO -->
@@ -672,6 +796,13 @@
             } @else { — }
           </div>
           <div class="exec-hint">Impayés ÷ rythme quotidien encaissé 90j</div>
+          <div class="kdt">
+            <span class="kdt-text">Benchmark : &lt;15j excellent · &gt;45j critique</span>
+            @if (s.dsoRolling90d != null) {
+              <span class="kdt-pill" [class]="dsoStatusClass(s)">{{ dsoLabel(s) }}</span>
+            }
+            <span class="kdt-action" (click)="drillReceivables()">Créances →</span>
+          </div>
         </div>
 
         <!-- Collection efficiency -->
@@ -688,6 +819,12 @@
             } @else { — }
           </div>
           <div class="exec-hint">Encaissé ÷ exigible 90 derniers jours</div>
+          <div class="kdt">
+            <span class="kdt-text">Cible : &gt;90% · Critique : &lt;75%</span>
+            @if (s.collectionEfficiency90d != null) {
+              <span class="kdt-pill" [class]="collectionStatusClass(s)">{{ collectionLabel(s) }}</span>
+            }
+          </div>
         </div>
 
       </div>
@@ -807,7 +944,12 @@
             @for (entry of pipelineEntries(s.ventesParStatut); track entry.statut) {
               <div class="pipeline-stage-row clickable-row" (click)="drillVentes(entry.statut)" title="Voir les ventes {{ statutLabel(entry.statut) }}">
                 <div class="pipeline-stage-dot" [style.background]="statutColor(entry.statut)"></div>
-                <div class="pipeline-stage-label">{{ statutLabel(entry.statut) }}</div>
+                <div class="pipeline-stage-label">
+                  {{ statutLabel(entry.statut) }}
+                  @if (s.activeVentesCount > 0 && entry.count > 0) {
+                    <div class="kdt-sub">{{ formatAmountShort(s.caActivePipeline / s.activeVentesCount * entry.count) }} estimé</div>
+                  }
+                </div>
                 <div class="pipeline-stage-bar-wrap">
                   <div class="pipeline-stage-bar"
                        [style.width]="(entry.count / s.activeVentesCount * 100) + '%'"
@@ -848,18 +990,26 @@
         <div class="stock-cell stock-draft clickable-card" (click)="drillProperties('DRAFT')" title="Voir les biens brouillon">
           <div class="stock-val">{{ s.biensDraftCount }}</div>
           <div class="stock-lbl">Brouillon</div>
+          <div class="kdt-sub">Publier pour commercialiser</div>
         </div>
         <div class="stock-cell stock-active clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
           <div class="stock-val">{{ s.biensActifsCount }}</div>
           <div class="stock-lbl">Disponible</div>
+          <div class="kdt-sub">{{ absorptionLabel(s.tauxAbsorption) }}</div>
         </div>
         <div class="stock-cell stock-reserved clickable-card" (click)="drillProperties('RESERVED')" title="Voir les biens réservés">
           <div class="stock-val">{{ s.biensReservesCount }}</div>
           <div class="stock-lbl">Réservé</div>
+          @if (s.reservationsExpirantBientot > 0) {
+            <div class="kdt-sub">Confirmer avant expiration</div>
+          } @else {
+            <div class="kdt-sub">Conversions en attente</div>
+          }
         </div>
         <div class="stock-cell stock-sold clickable-card" (click)="drillProperties('SOLD')" title="Voir les biens vendus">
           <div class="stock-val">{{ s.biensVendusCount }}</div>
           <div class="stock-lbl">Vendu</div>
+          <div class="kdt-sub">Livrées effectives</div>
         </div>
       </div>
 
@@ -1182,6 +1332,14 @@
               <div class="trend-stat-val">{{ formatAmount(s.caYtd) }}</div>
               <div class="trend-stat-lbl">CA signé YTD</div>
             </div>
+            <div class="kdt">
+              <span class="kdt-text">Projeté fin d'année : {{ projectedYearEndCA(s) }}</span>
+              @if (moisTrend(last.caSigne, prev.caSigne) != null) {
+                <span class="kdt-pill" [class]="last.caSigne >= prev.caSigne ? 'bench-good' : 'bench-bad'">
+                  {{ last.caSigne >= prev.caSigne ? '↑' : '↓' }} {{ absNum(moisTrend(last.caSigne, prev.caSigne)) }}% vs mois préc.
+                </span>
+              }
+            </div>
           }
         </div>
       </div>
@@ -1202,6 +1360,9 @@
                 <div class="pbd-header">
                   <span class="pbd-name">{{ p.projectName }}</span>
                   <span class="pbd-ventes">{{ p.ventesCount }} vente{{ p.ventesCount !== 1 ? 's' : '' }}</span>
+                  @if (p.ventesCount > 0) {
+                    <span class="pbd-avg" style="font-size:.7rem;color:#9ca3af">({{ formatAmount(p.totalCA / p.ventesCount) }}/vente)</span>
+                  }
                   <span class="pbd-pct">{{ projectSharePct(p, s.projectBreakdown) }}</span>
                   <span class="pbd-ca">{{ formatAmount(p.totalCA) }}</span>
                 </div>
@@ -1285,16 +1446,34 @@
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.portfolioValueAtMarket) }}</div>
             <div class="sh-kpi-lbl">Valeur inventaire au prix liste</div>
             <div class="sh-kpi-sub">Biens ACTIF + RÉSERVÉ</div>
+            <div class="kdt">
+              <span class="kdt-text">Stock disponible à la vente</span>
+              <span class="kdt-action" (click)="drillProperties('ACTIVE')">Inventaire →</span>
+            </div>
           </div>
           <div class="sh-kpi-card sh-kpi-sold">
+            @let shTotal = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.soldValue) }}</div>
             <div class="sh-kpi-lbl">CA livré (LIVRE)</div>
             <div class="sh-kpi-sub">Revenu réalisé</div>
+            <div class="kdt">
+              @if (shTotal > 0) {
+                <span class="kdt-text">{{ (shareholderKpi()!.soldValue / shTotal * 100).toFixed(0) }}% du portefeuille total réalisé</span>
+              }
+              <span class="kdt-action" (click)="drillVentes('LIVRE')">Livrées →</span>
+            </div>
           </div>
           <div class="sh-kpi-card sh-kpi-exposure">
+            @let shTotal2 = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.projectedCompletionExposure) }}</div>
             <div class="sh-kpi-lbl">Exposition pipeline</div>
             <div class="sh-kpi-sub">Compromis + Financement + Acte</div>
+            <div class="kdt">
+              <span class="kdt-text">Ventes en attente de finalisation</span>
+              @if (shTotal2 > 0 && (shareholderKpi()!.projectedCompletionExposure / shTotal2 * 100) > 20) {
+                <span class="kdt-pill bench-warn">Risque &gt;20%</span>
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -1352,6 +1531,7 @@
                   <th class="pd-th pd-th-r">Dispo</th>
                   <th class="pd-th">Livraison</th>
                   <th class="pd-th pd-th-c">État</th>
+                  <th class="pd-th pd-th-c">Risque</th>
                 </tr>
               </thead>
               <tbody>
@@ -1388,6 +1568,15 @@
                         <span class="pd-status-ok" title="Dans les délais">&#10003;</span>
                       } @else {
                         <span class="pd-status-late" title="En retard">!</span>
+                      }
+                    </td>
+                    <td class="pd-td pd-td-c">
+                      @if (projectDeliveryRisk(p) === 'high') {
+                        <span class="kdt-pill bench-bad">Critique</span>
+                      } @else if (projectDeliveryRisk(p) === 'medium') {
+                        <span class="kdt-pill bench-warn">Attention</span>
+                      } @else {
+                        <span class="kdt-pill bench-good">&#10003;</span>
                       }
                     </td>
                   </tr>
