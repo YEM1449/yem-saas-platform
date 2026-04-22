@@ -93,14 +93,15 @@ public class SalesIntelligenceService {
                     r != null ? toDouble(r[2]) : null
             ));
         }
-        Double avgDaysToClose = rawTtc.stream()
+        long ttcTotalCount = rawTtc.stream()
                 .filter(r -> toDouble(r[2]) != null)
-                .mapToDouble(r -> toDouble(r[2]))
-                .average()
-                .isPresent()
-                ? rawTtc.stream().filter(r -> toDouble(r[2]) != null)
-                    .mapToDouble(r -> toDouble(r[2])).average().getAsDouble()
-                : null;
+                .mapToLong(r -> toLong(r[1]))
+                .sum();
+        Double avgDaysToClose = ttcTotalCount == 0 ? null :
+                rawTtc.stream()
+                        .filter(r -> toDouble(r[2]) != null)
+                        .mapToDouble(r -> toLong(r[1]) * toDouble(r[2]))
+                        .sum() / ttcTotalCount;
 
         // ── Inventory aging ────────────────────────────────────────────────────
         List<Object[]> rawAging = propertyRepo.inventoryAgingBuckets(societeId);
@@ -140,16 +141,15 @@ public class SalesIntelligenceService {
                 ))
                 .toList();
 
-        Double globalAvgSqm = priceByType.stream()
+        long sqmTotalCount = priceByType.stream()
                 .filter(r -> r.avgPricePerSqm() != null && r.avgPricePerSqm() > 0)
-                .mapToDouble(SalesIntelligenceDTO.PricePerSqmRow::avgPricePerSqm)
-                .average()
-                .isPresent()
-                ? priceByType.stream()
-                    .filter(r -> r.avgPricePerSqm() != null && r.avgPricePerSqm() > 0)
-                    .mapToDouble(SalesIntelligenceDTO.PricePerSqmRow::avgPricePerSqm)
-                    .average().getAsDouble()
-                : null;
+                .mapToLong(SalesIntelligenceDTO.PricePerSqmRow::count)
+                .sum();
+        Double globalAvgSqm = sqmTotalCount == 0 ? null :
+                priceByType.stream()
+                        .filter(r -> r.avgPricePerSqm() != null && r.avgPricePerSqm() > 0)
+                        .mapToDouble(r -> r.count() * r.avgPricePerSqm())
+                        .sum() / sqmTotalCount;
 
         return new SalesIntelligenceDTO(
                 now,

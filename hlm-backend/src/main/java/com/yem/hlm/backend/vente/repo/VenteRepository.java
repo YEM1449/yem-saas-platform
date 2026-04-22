@@ -309,7 +309,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                    COUNT(*) FILTER (WHERE v.statut = 'LIVRE'),
                    COALESCE(SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE'), 0),
                    COUNT(*) FILTER (WHERE v.statut = 'ANNULE'),
-                   AVG(EXTRACT(EPOCH FROM (v.updated_at - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
+                   AVG(EXTRACT(EPOCH FROM (COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
                    COUNT(*) FILTER (WHERE v.statut NOT IN ('LIVRE','ANNULE'))
             FROM vente v
             JOIN app_user u ON u.id = v.agent_id
@@ -594,7 +594,11 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Object[]> salesBreakdownByType(@Param("societeId") UUID societeId);
 
     /**
-     * Distribution of time-to-close (days from created_at to LIVRE updated_at).
+     * Distribution of time-to-close (days from created_at to the immutable close marker).
+     * Close marker priority: date_livraison_reelle (user-supplied date) → stage_entry_date
+     * (timestamp stamped by VenteService.updateStatut() when LIVRE was recorded; LIVRE is
+     * terminal so it never changes after delivery). updated_at is intentionally excluded
+     * because post-delivery edits (notes, financing fields) would silently inflate durations.
      * Rows: [bucket(String), count(Long), avgDays(Double)].
      * Buckets: LT_30, D30_60, D61_90, D91_180, GT_180.
      */
@@ -603,12 +607,15 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                    COUNT(*) AS cnt,
                    AVG(days_to_close) AS avg_days
             FROM (
-                SELECT EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 AS days_to_close,
+                SELECT EXTRACT(EPOCH FROM (
+                           COALESCE(date_livraison_reelle::timestamp, stage_entry_date)
+                           - created_at
+                       )) / 86400.0 AS days_to_close,
                        CASE
-                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 30  THEN 'LT_30'
-                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 60  THEN 'D30_60'
-                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 90  THEN 'D61_90'
-                           WHEN EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400.0 < 180 THEN 'D91_180'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 30  THEN 'LT_30'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 60  THEN 'D30_60'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 90  THEN 'D61_90'
+                           WHEN EXTRACT(EPOCH FROM (COALESCE(date_livraison_reelle::timestamp, stage_entry_date) - created_at)) / 86400.0 < 180 THEN 'D91_180'
                            ELSE 'GT_180'
                        END AS bucket
                 FROM vente
