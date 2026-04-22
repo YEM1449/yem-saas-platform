@@ -69,4 +69,18 @@ public interface TrancheRepository extends JpaRepository<Tranche, UUID> {
     List<Object[]> findUpcomingDeliveries(@Param("societeId") UUID societeId,
                                           @Param("fromDate") java.time.LocalDate fromDate,
                                           @Param("toDate") java.time.LocalDate toDate);
+
+    /**
+     * Returns the earliest planned delivery date per project.
+     * Row: [projectId UUID, minDateLivraisonPrevue Date].
+     * Used by Project Director KPI tab.
+     */
+    @Query(value = """
+            SELECT t.project_id, MIN(t.date_livraison_prevue)
+            FROM tranche t
+            WHERE t.societe_id = :societeId
+              AND t.date_livraison_prevue IS NOT NULL
+            GROUP BY t.project_id
+            """, nativeQuery = true)
+    List<Object[]> findEarliestDeliveryPerProject(@Param("societeId") UUID societeId);
 }

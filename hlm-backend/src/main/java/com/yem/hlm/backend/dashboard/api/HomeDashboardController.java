@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.dashboard.api;
 
 import com.yem.hlm.backend.dashboard.api.dto.HomeDashboardDTO;
+import com.yem.hlm.backend.dashboard.api.dto.ProjectDirectorKpiDTO;
+import com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO;
 import com.yem.hlm.backend.dashboard.service.HomeDashboardService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,5 +45,17 @@ public class HomeDashboardController {
         UUID actorId   = ctx.requireUserId();
         String role    = ctx.getRole();
         return ResponseEntity.ok(svc.getSnapshot(societeId, actorId, role));
+    }
+
+    @GetMapping("/shareholder")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ShareholderKpiDTO getShareholderKpis() {
+        return svc.getShareholderKpis(ctx.requireSocieteId());
+    }
+
+    @GetMapping("/project-director")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ProjectDirectorKpiDTO getProjectDirectorKpis() {
+        return svc.getProjectDirectorKpis(ctx.requireSocieteId());
     }
 }

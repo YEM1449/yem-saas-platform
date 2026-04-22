@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow } from './home-dashboard.service';
+import { Router, RouterLink } from '@angular/router';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
 import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
 import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
@@ -42,14 +42,20 @@ import { AuthService } from '../../core/auth/auth.service';
 export class HomeDashboardComponent implements OnInit {
   private svc     = inject(HomeDashboardService);
   private cockpit = inject(DashboardCockpitService);
+  private router  = inject(Router);
   readonly auth   = inject(AuthService);
 
-  snap    = signal<HomeDashboard | null>(null);
-  bundle  = signal<CockpitBundle | null>(null);
-  loading = signal(true);
-  error   = signal('');
+  snap               = signal<HomeDashboard | null>(null);
+  bundle             = signal<CockpitBundle | null>(null);
+  loading            = signal(true);
+  error              = signal('');
+  shareholderKpi     = signal<ShareholderKpi | null>(null);
+  projectDirectorKpi = signal<ProjectDirectorKpi | null>(null);
 
-  activeTab: 'synthese' | 'dirigeant' | 'commercial' | 'projets' | 'operationnel' = 'synthese';
+  private shareholderLoaded     = false;
+  private projectDirectorLoaded = false;
+
+  activeTab: 'synthese' | 'dirigeant' | 'commercial' | 'projets' | 'operationnel' | 'actionnaire' | 'chef-projet' = 'synthese';
 
   readonly today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -63,6 +69,53 @@ export class HomeDashboardComponent implements OnInit {
   get userName(): string {
     const u = this.auth.user;
     return u?.prenom ?? u?.email?.split('@')[0] ?? '';
+  }
+
+  // ── Drill-through navigation helpers ──────────────────────────────────────
+
+  drillVentes(statut?: string): void {
+    const queryParams = statut ? { statut } : {};
+    this.router.navigate(['/app/ventes'], { queryParams });
+  }
+
+  drillByAgent(agentId: string): void {
+    this.router.navigate(['/app/ventes'], { queryParams: { agentId } });
+  }
+
+  drillProperties(status: string): void {
+    this.router.navigate(['/app/properties'], { queryParams: { status } });
+  }
+
+  drillByProject(projectId: string, status?: string): void {
+    const queryParams: Record<string, string> = { projectId };
+    if (status) queryParams['status'] = status;
+    this.router.navigate(['/app/properties'], { queryParams });
+  }
+
+  goToProject(projectId: string | null): void {
+    if (projectId) this.router.navigate(['/app/projects', projectId]);
+  }
+
+  drillReceivables(): void {
+    this.router.navigate(['/app/dashboard/receivables']);
+  }
+
+  switchTab(tab: HomeDashboardComponent['activeTab']): void {
+    this.activeTab = tab;
+    if (tab === 'actionnaire' && !this.shareholderLoaded) {
+      this.shareholderLoaded = true;
+      this.svc.getShareholderKpis().subscribe({
+        next:  k  => this.shareholderKpi.set(k),
+        error: () => { this.shareholderLoaded = false; },
+      });
+    }
+    if (tab === 'chef-projet' && !this.projectDirectorLoaded) {
+      this.projectDirectorLoaded = true;
+      this.svc.getProjectDirectorKpis().subscribe({
+        next:  k  => this.projectDirectorKpi.set(k),
+        error: () => { this.projectDirectorLoaded = false; },
+      });
+    }
   }
 
   ngOnInit(): void { this.load(); }
@@ -276,5 +329,148 @@ export class HomeDashboardComponent implements OnInit {
 
   projectColor(i: number): string {
     return this.PROJECT_COLORS[i % this.PROJECT_COLORS.length];
+  }
+
+  // ── Decision Tag helpers (Wave 18) ─────────────────────────────────────────
+
+  avgPipelineDeal(s: HomeDashboard): string {
+    if (!s.activeVentesCount) return '—';
+    return this.formatAmount(s.caActivePipeline / s.activeVentesCount);
+  }
+
+  annualizedCA(s: HomeDashboard): string {
+    return this.formatAmount(s.caSigneMoisCourant * 12);
+  }
+
+  livraisonRatioPct(s: HomeDashboard): string {
+    const total = s.caActivePipeline + s.caLivre;
+    if (!total) return '—';
+    return ((s.caLivre / total) * 100).toFixed(0) + '%';
+  }
+
+  projectedYearEndCA(s: HomeDashboard): string {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000) + 1;
+    if (!dayOfYear || !s.caYtd) return '—';
+    return this.formatAmount((s.caYtd / dayOfYear) * 365);
+  }
+
+  stockDaysToEmpty(s: HomeDashboard): number | null {
+    if (!s.salesVelocityPerWeek) return null;
+    return Math.round(s.biensActifsCount / (s.salesVelocityPerWeek / 7));
+  }
+
+  absorptionBenchClass(s: HomeDashboard): string {
+    const cls = this.absorptionClass(s.tauxAbsorption);
+    if (cls === 'bar-success') return 'bench-good';
+    if (cls === 'bar-warning') return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  dsoStatusClass(s: HomeDashboard): string {
+    const d = s.dsoRolling90d;
+    if (d == null) return 'bench-info';
+    if (d <= 15) return 'bench-good';
+    if (d <= 45) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  dsoLabel(s: HomeDashboard): string {
+    const d = s.dsoRolling90d;
+    if (d == null) return '—';
+    if (d <= 15) return 'Excellent';
+    if (d <= 45) return 'Correct';
+    return 'Critique';
+  }
+
+  winRateStatusClass(s: HomeDashboard): string {
+    const w = s.winRate90d;
+    if (w == null) return 'bench-info';
+    if (w >= 80) return 'bench-good';
+    if (w >= 40) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  winRateLabel(s: HomeDashboard): string {
+    const w = s.winRate90d;
+    if (w == null) return '—';
+    if (w >= 80) return 'Excellent';
+    if (w >= 40) return 'Correct';
+    return 'Critique';
+  }
+
+  collectionStatusClass(s: HomeDashboard): string {
+    const c = s.collectionEfficiency90d;
+    if (c == null) return 'bench-info';
+    if (c >= 90) return 'bench-good';
+    if (c >= 75) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  collectionLabel(s: HomeDashboard): string {
+    const c = s.collectionEfficiency90d;
+    if (c == null) return '—';
+    if (c >= 90) return '✓ Cible';
+    if (c >= 75) return 'Correct';
+    return 'À améliorer';
+  }
+
+  cancellationStatusClass(s: HomeDashboard): string {
+    const r = s.cancellationRate90d;
+    if (r == null || r <= 10) return 'bench-good';
+    if (r <= 20) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  cancellationLabel(s: HomeDashboard): string {
+    const r = s.cancellationRate90d;
+    if (r == null || r <= 10) return 'Normal';
+    if (r <= 20) return 'Attention';
+    return 'Critique';
+  }
+
+  conversionStatusClass(s: HomeDashboard): string {
+    const c = s.conversionRate30d;
+    if (c == null) return 'bench-info';
+    if (c >= 50) return 'bench-good';
+    if (c >= 25) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  conversionLabel(s: HomeDashboard): string {
+    const c = s.conversionRate30d;
+    if (c == null) return '—';
+    if (c >= 50) return 'Bonne';
+    if (c >= 25) return 'Correcte';
+    return 'Faible';
+  }
+
+  quotaStatusClass(s: HomeDashboard): string {
+    const pct = s.quotaAttainmentMtdPct;
+    if (pct == null) return 'bench-info';
+    const exp = this.pacingExpectedPct();
+    if (pct >= exp - 10) return 'bench-good';
+    if (pct >= exp - 25) return 'bench-warn';
+    return 'bench-bad';
+  }
+
+  agentAvgDeal(a: AgentLeaderboardRow): string {
+    if (!a.ventesCount) return '—';
+    return this.formatAmount(a.totalCA / a.ventesCount);
+  }
+
+  agentShareWidth(a: AgentLeaderboardRow, agents: AgentLeaderboardRow[]): string {
+    const total = agents.reduce((sum, ag) => sum + ag.totalCA, 0);
+    if (!total) return '0%';
+    return ((a.totalCA / total) * 100).toFixed(0) + '%';
+  }
+
+  projectDeliveryRisk(p: ProjectProgressRow): 'low' | 'medium' | 'high' {
+    if (!p.deliveryPlanned) return 'low';
+    const days = Math.ceil((new Date(p.deliveryPlanned).getTime() - Date.now()) / 86_400_000);
+    if (days <= 60 && p.soldPct < 60) return 'high';
+    if (days <= 90 && p.soldPct < 80) return 'medium';
+    return 'low';
   }
 }

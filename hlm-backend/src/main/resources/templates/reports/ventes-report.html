@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Rapport commercial &#8212; Ventes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #222; padding: 18mm 16mm; }
+
+    .doc-header { border-bottom: 3px solid #1a4480; padding-bottom: 10px; margin-bottom: 20px; }
+    .doc-header table { width: 100%; border-collapse: collapse; }
+    .company-name { font-size: 14pt; font-weight: bold; color: #1a4480; }
+    .doc-title { font-size: 16pt; font-weight: bold; color: #1a4480; text-align: right; }
+    .doc-subtitle { font-size: 9pt; color: #555; text-align: right; margin-top: 3px; }
+
+    .summary-row { display: table; width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    .summary-cell { display: table-cell; width: 33%; background: #f0f4fc; border: 1px solid #d0daf0;
+                    padding: 10px 14px; vertical-align: top; }
+    .summary-label { font-size: 8pt; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
+    .summary-value { font-size: 13pt; font-weight: bold; color: #1a4480; margin-top: 3px; }
+
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    table.data-table thead th { background: #1a4480; color: #fff; padding: 7px 8px;
+                                 text-align: left; font-weight: bold; font-size: 8.5pt; white-space: nowrap; }
+    table.data-table tbody tr:nth-child(even) td { background: #f7f9ff; }
+    table.data-table tbody td { padding: 6px 8px; border-bottom: 1px solid #e0e6f0;
+                                 vertical-align: top; }
+    .statut-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
+    .statut-COMPROMIS    { background: #e0e7ff; color: #3730a3; }
+    .statut-FINANCEMENT  { background: #fef3c7; color: #92400e; }
+    .statut-ACTE_NOTARIE { background: #dbeafe; color: #1e40af; }
+    .statut-LIVRE        { background: #d1fae5; color: #065f46; }
+    .statut-ANNULE       { background: #fee2e2; color: #991b1b; }
+    .amount { text-align: right; font-weight: bold; color: #1a4480; }
+    .muted { color: #888; }
+    .total-row td { background: #edf2fb; font-weight: bold; border-top: 2px solid #1a4480; }
+    .footer { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 8px;
+               font-size: 8pt; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="doc-header">
+    <table>
+      <tr>
+        <td><div class="company-name" th:text="${societeNom}">Société</div></td>
+        <td>
+          <div class="doc-title">RAPPORT COMMERCIAL</div>
+          <div class="doc-subtitle" th:if="${from != null or to != null}">
+            Période :
+            <span th:if="${from != null}" th:text="${#temporals.format(from, 'dd/MM/yyyy')}"></span>
+            <span th:if="${from != null and to != null}">&#8212;</span>
+            <span th:if="${to != null}" th:text="${#temporals.format(to, 'dd/MM/yyyy')}"></span>
+          </div>
+          <div class="doc-subtitle" th:if="${from == null and to == null}">Toutes périodes</div>
+          <div class="doc-subtitle">
+            Généré le <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy à HH:mm')}"></span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-row">
+    <div class="summary-cell">
+      <div class="summary-label">Nombre de ventes</div>
+      <div class="summary-value" th:text="${#lists.size(ventes)}">0</div>
+    </div>
+    <div class="summary-cell">
+      <div class="summary-label">CA total (MAD)</div>
+      <div class="summary-value" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}">0</div>
+    </div>
+    <div class="summary-cell">
+      <div class="summary-label">Filtre statut</div>
+      <div class="summary-value" th:text="${statutFilter != null ? statutFilter : 'Tous'}">Tous</div>
+    </div>
+  </div>
+
+  <!-- Data table -->
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Acquéreur</th>
+        <th>Statut</th>
+        <th>Prix (MAD)</th>
+        <th>Date compromis</th>
+        <th>Livraison prévue</th>
+        <th>Agent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="v : ${ventes}">
+        <td th:text="${v.venteRef}"></td>
+        <td th:text="${v.contact.fullName}"></td>
+        <td>
+          <span class="statut-badge"
+                th:classappend="${'statut-' + v.statut.name()}"
+                th:text="${v.statut.name()}"></span>
+        </td>
+        <td class="amount"
+            th:text="${v.prixVente != null ? #numbers.formatDecimal(v.prixVente, 0, 'COMMA', 0, 'POINT') : '&#8212;'}"></td>
+        <td th:text="${v.dateCompromis != null ? #temporals.format(v.dateCompromis,'dd/MM/yyyy') : ''}"></td>
+        <td th:text="${v.dateLivraisonPrevue != null ? #temporals.format(v.dateLivraisonPrevue,'dd/MM/yyyy') : ''}"></td>
+        <td th:text="${(v.agent.prenom != null ? v.agent.prenom : '') + ' ' + (v.agent.nomFamille != null ? v.agent.nomFamille : '')}"></td>
+      </tr>
+      <tr class="total-row" th:if="${#lists.size(ventes) > 0}">
+        <td colspan="3">Total</td>
+        <td class="amount" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td colspan="3"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div th:if="${#lists.isEmpty(ventes)}" style="text-align:center;padding:30px;color:#888;">
+    Aucune vente pour les critères sélectionnés.
+  </div>
+
+  <div class="footer">
+    Généré le <span th:text="${#temporals.format(generatedAt, 'dd/MM/yyyy à HH:mm')}"></span>
+    &#160;&#8212;&#160; Confidentiel, usage interne
+  </div>
+
+</body>
+</html>

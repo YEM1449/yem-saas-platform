@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { VenteService, Vente, VenteStatut, ContractStatus, CreateVenteRequest } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -23,12 +24,14 @@ export class VenteListComponent implements OnInit {
   private auth        = inject(AuthService);
   private contactSvc  = inject(ContactService);
   private propertySvc = inject(PropertyService);
+  private route       = inject(ActivatedRoute);
 
   ventes  = signal<Vente[]>([]);
   loading = signal(true);
   error   = signal('');
   showCreate = false;
-  filterStatut = '';
+  filterStatut  = '';
+  filterAgentId = '';
 
   // ── Create form state ──────────────────────────────────────────────────────
   contacts: Contact[] = [];
@@ -52,8 +55,11 @@ export class VenteListComponent implements OnInit {
   }
 
   get filtered(): Vente[] {
-    if (!this.filterStatut) return this.ventes();
-    return this.ventes().filter(v => v.statut === this.filterStatut as VenteStatut);
+    return this.ventes().filter(v => {
+      if (this.filterStatut  && v.statut   !== this.filterStatut as VenteStatut) return false;
+      if (this.filterAgentId && v.agentId  !== this.filterAgentId)               return false;
+      return true;
+    });
   }
 
   countStatut(s: VenteStatut): number {
@@ -69,6 +75,12 @@ export class VenteListComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(take(1)).subscribe(params => {
+      const statut  = params.get('statut');
+      const agentId = params.get('agentId');
+      if (statut)  this.filterStatut  = statut;
+      if (agentId) this.filterAgentId = agentId;
+    });
     this.svc.list().subscribe({
       next:  (data) => { this.ventes.set(data); this.loading.set(false); },
       error: ()     => { this.error.set('Erreur lors du chargement des ventes.'); this.loading.set(false); },

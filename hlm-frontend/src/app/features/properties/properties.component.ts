@@ -1,7 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { PropertyService } from './property.service';
@@ -49,6 +50,7 @@ export class PropertiesComponent implements OnInit {
   private projectSvc  = inject(ProjectService);
   private immeubleSvc = inject(ImmeubleService);
   private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
   private auth        = inject(AuthService);
 
   properties: Property[]  = [];
@@ -191,6 +193,14 @@ export class PropertiesComponent implements OnInit {
   ngOnInit(): void {
     const saved = localStorage.getItem('properties_view_mode');
     if (saved === 'list' || saved === 'cards') this.viewMode = saved;
+    this.route.queryParamMap.pipe(take(1)).subscribe(params => {
+      const status    = params.get('status');
+      const projectId = params.get('projectId');
+      const type      = params.get('type');
+      if (status)    this.filterStatus    = status;
+      if (projectId) this.filterProjectId = projectId;
+      if (type)      this.filterType      = type;
+    });
     this.loadList();
     this.loadProjects();
   }

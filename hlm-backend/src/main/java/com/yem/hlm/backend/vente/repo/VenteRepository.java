@@ -650,4 +650,41 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             LIMIT 10
             """, nativeQuery = true)
     List<Object[]> avgPricePerSqmByProject(@Param("societeId") UUID societeId);
+
+    /**
+     * Filtered vente list for report export.
+     * All parameters except societeId are optional (null = no filter).
+     * Uses CAST pattern for nullable LocalDateTime params to avoid PostgreSQL type-inference errors.
+     */
+    @Query("""
+            SELECT v FROM Vente v
+            WHERE v.societeId = :societeId
+              AND (:statut IS NULL OR v.statut = :statut)
+              AND (CAST(:fromDt AS LocalDateTime) IS NULL OR v.createdAt >= :fromDt)
+              AND (CAST(:toDt AS LocalDateTime) IS NULL OR v.createdAt <= :toDt)
+            ORDER BY v.createdAt DESC
+            """)
+    List<Vente> findForReport(@Param("societeId") UUID societeId,
+                              @Param("statut") VenteStatut statut,
+                              @Param("fromDt") java.time.LocalDateTime fromDt,
+                              @Param("toDt") java.time.LocalDateTime toDt);
+
+    /**
+     * Agent leaderboard for report export — no top-N limit, date-filtered.
+     * Rows: [agentId(UUID), prenom(String), nomFamille(String), totalCA(BigDecimal), ventesCount(Long)].
+     */
+    @Query("""
+            SELECT v.agent.id, v.agent.prenom, v.agent.nomFamille,
+                   COALESCE(SUM(v.prixVente), 0), COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut <> com.yem.hlm.backend.vente.domain.VenteStatut.ANNULE
+              AND (CAST(:fromDt AS LocalDateTime) IS NULL OR v.createdAt >= :fromDt)
+              AND (CAST(:toDt AS LocalDateTime) IS NULL OR v.createdAt <= :toDt)
+            GROUP BY v.agent.id, v.agent.prenom, v.agent.nomFamille
+            ORDER BY SUM(v.prixVente) DESC
+            """)
+    List<Object[]> agentsLeaderboardForReport(@Param("societeId") UUID societeId,
+                                              @Param("fromDt") java.time.LocalDateTime fromDt,
+                                              @Param("toDt") java.time.LocalDateTime toDt);
 }
