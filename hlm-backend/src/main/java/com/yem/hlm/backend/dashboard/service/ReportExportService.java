@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,15 +44,14 @@ public class ReportExportService {
                 .map(Vente::getPrixVente)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Map<String, Object> vars = Map.of(
-                "ventes",       ventes,
-                "societeNom",   societeNom,
-                "from",         from,
-                "to",           to,
-                "statutFilter", statut != null ? statut.name() : null,
-                "total",        total,
-                "generatedAt",  LocalDateTime.now()
-        );
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("ventes",       ventes);
+        vars.put("societeNom",   societeNom);
+        vars.put("from",         from);
+        vars.put("to",           to);
+        vars.put("statutFilter", statut != null ? statut.name() : null);
+        vars.put("total",        total);
+        vars.put("generatedAt",  LocalDateTime.now());
         return docGenService.renderToPdf("reports/ventes-report", vars);
     }
 
@@ -96,15 +96,14 @@ public class ReportExportService {
                 .mapToLong(a -> ((Number) a.get("ventesCount")).longValue())
                 .sum();
 
-        Map<String, Object> vars = Map.of(
-                "agents",       agents,
-                "societeNom",   societeNom,
-                "from",         from,
-                "to",           to,
-                "totalCA",      totalCA,
-                "totalVentes",  totalVentes,
-                "generatedAt",  LocalDateTime.now()
-        );
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("agents",      agents);
+        vars.put("societeNom",  societeNom);
+        vars.put("from",        from);
+        vars.put("to",          to);
+        vars.put("totalCA",     totalCA);
+        vars.put("totalVentes", totalVentes);
+        vars.put("generatedAt", LocalDateTime.now());
         return docGenService.renderToPdf("reports/agents-report", vars);
     }
 

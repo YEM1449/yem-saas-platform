@@ -104,11 +104,17 @@ export class HomeDashboardComponent implements OnInit {
     this.activeTab = tab;
     if (tab === 'actionnaire' && !this.shareholderLoaded) {
       this.shareholderLoaded = true;
-      this.svc.getShareholderKpis().subscribe(k => this.shareholderKpi.set(k));
+      this.svc.getShareholderKpis().subscribe({
+        next:  k  => this.shareholderKpi.set(k),
+        error: () => { this.shareholderLoaded = false; },
+      });
     }
     if (tab === 'chef-projet' && !this.projectDirectorLoaded) {
       this.projectDirectorLoaded = true;
-      this.svc.getProjectDirectorKpis().subscribe(k => this.projectDirectorKpi.set(k));
+      this.svc.getProjectDirectorKpis().subscribe({
+        next:  k  => this.projectDirectorKpi.set(k),
+        error: () => { this.projectDirectorLoaded = false; },
+      });
     }
   }
 
