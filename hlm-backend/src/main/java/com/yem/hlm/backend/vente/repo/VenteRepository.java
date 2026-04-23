@@ -585,7 +585,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
      */
     @Query(value = """
             SELECT pr.project_id::text,
-                   p.nom                      AS project_name,
+                   p.name                     AS project_name,
                    COALESCE(SUM(v.prix_vente), 0) AS total_ca,
                    COUNT(v.id)                AS ventes_count
             FROM vente v
@@ -593,7 +593,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             JOIN project   p  ON p.id = pr.project_id
             WHERE v.societe_id = :societeId
               AND v.statut <> 'ANNULE'
-            GROUP BY pr.project_id, p.nom
+            GROUP BY pr.project_id, p.name
             ORDER BY total_ca DESC
             LIMIT 8
             """, nativeQuery = true)
@@ -662,19 +662,18 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
      * Rows: [projectId(UUID), projectName(String), avgPricePerSqm(Double), sampleSize(Long)].
      */
     @Query(value = """
-            SELECT pr.project_id::text,
-                   p.nom AS project_name,
+            SELECT prop.project_id::text,
+                   p.name AS project_name,
                    COALESCE(AVG(CASE WHEN prop.surface_area_sqm > 0
                                THEN v.prix_vente / prop.surface_area_sqm END), 0) AS avg_price_sqm,
                    COUNT(v.id) AS sample_size
             FROM vente v
             JOIN property prop ON prop.id = v.property_id
             JOIN project p ON p.id = prop.project_id
-            JOIN property pr ON pr.id = v.property_id
             WHERE v.societe_id = :societeId
               AND v.statut <> 'ANNULE'
               AND prop.surface_area_sqm > 0
-            GROUP BY pr.project_id, p.nom
+            GROUP BY prop.project_id, p.name
             HAVING COUNT(v.id) >= 1
             ORDER BY avg_price_sqm DESC
             LIMIT 10

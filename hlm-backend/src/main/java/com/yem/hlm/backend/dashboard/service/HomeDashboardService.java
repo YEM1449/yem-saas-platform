@@ -482,7 +482,17 @@ public class HomeDashboardService {
     private BigDecimal toBigDecimal(Object o) {
         if (o == null) return BigDecimal.ZERO;
         if (o instanceof BigDecimal bd) return bd;
-        return new BigDecimal(o.toString());
+        if (o instanceof Long l)    return BigDecimal.valueOf(l);
+        if (o instanceof Integer i) return BigDecimal.valueOf(i);
+        if (o instanceof Number n) {
+            double v = n.doubleValue();
+            return Double.isFinite(v) ? BigDecimal.valueOf(v) : BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(o.toString());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
     }
 
     private long toLong(Object o) {
