@@ -183,6 +183,22 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                                 @Param("to") java.time.LocalDateTime to,
                                 @Param("excluded") List<VenteStatut> excluded);
 
+    /** Same, scoped to one agent — for role-aware pacing metrics. */
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.agent.id  = :agentId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+              AND v.statut NOT IN :excluded
+            """)
+    long countInPeriodExcludingForAgent(@Param("societeId") UUID societeId,
+                                        @Param("agentId") UUID agentId,
+                                        @Param("from") java.time.LocalDateTime from,
+                                        @Param("to") java.time.LocalDateTime to,
+                                        @Param("excluded") List<VenteStatut> excluded);
+
     @Query("""
             SELECT COUNT(v)
             FROM Vente v

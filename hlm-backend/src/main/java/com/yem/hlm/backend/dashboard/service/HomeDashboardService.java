@@ -156,7 +156,7 @@ public class HomeDashboardService {
         if (caLivre == null) caLivre = BigDecimal.ZERO;
 
         long ventesSigneesMoisCourantCount = isAgent
-                ? venteRepo.countInPeriodExcluding(societeId, moisFrom, moisTo, ANNULE_ONLY)
+                ? venteRepo.countInPeriodExcludingForAgent(societeId, actorId, moisFrom, moisTo, ANNULE_ONLY)
                 : venteRepo.countInPeriodExcluding(societeId, moisFrom, moisTo, ANNULE_ONLY);
 
         long ventesStalleesCount = isAgent ? 0L :

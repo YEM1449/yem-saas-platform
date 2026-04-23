@@ -26,6 +26,9 @@ export default defineConfig({
     {
       name: 'auth-tests',
       testMatch: /(auth|superadmin)\.spec\.ts/,
+      // superadmin.spec.ts has one describe that uses storageState set by setup;
+      // depend on setup so the auth file exists before this project runs.
+      dependencies: ['setup'],
     },
     {
       name: 'crm-tests',
