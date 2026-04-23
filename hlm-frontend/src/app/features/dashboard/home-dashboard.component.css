@@ -100,7 +100,6 @@
   align-items: flex-start;
   transition: box-shadow .15s, transform .15s;
   position: relative;
-  overflow: hidden;
 }
 .hero-card::before {
   content: '';
