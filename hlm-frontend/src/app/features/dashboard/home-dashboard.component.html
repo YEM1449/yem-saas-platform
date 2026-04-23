@@ -402,7 +402,7 @@
       </div>
       <div class="finance-row">
 
-        <div class="fin-card fin-incoming">
+        <div class="fin-card fin-incoming clickable-card" (click)="drillReceivables()" title="Voir les créances">
           <div class="fin-card-top">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v12M4 6l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -420,7 +420,7 @@
           }
         </div>
 
-        <div class="fin-card {{ s.echeancesEnRetardCount > 0 ? 'fin-overdue' : 'fin-ok' }}">
+        <div class="fin-card clickable-card {{ s.echeancesEnRetardCount > 0 ? 'fin-overdue' : 'fin-ok' }}" (click)="drillReceivables()" title="Voir les créances">
           <div class="fin-card-top">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
@@ -446,11 +446,11 @@
             } @else {
               <span class="kdt-pill bench-good">✓ Sain</span>
             }
-            <a routerLink="/app/reports/creances" class="kdt-action">Créances →</a>
+            <a routerLink="/app/reports/creances" class="kdt-action" (click)="$event.stopPropagation()">Créances →</a>
           </div>
         </div>
 
-        <div class="fin-card fin-realise">
+        <div class="fin-card fin-realise clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
           <div class="fin-card-top">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
@@ -462,7 +462,7 @@
           <div class="fin-hint">Ventes définitivement finalisées</div>
           <div class="kdt">
             <span class="kdt-text">{{ livraisonRatioPct(s) }} réalisé</span>
-            <a routerLink="/app/reports/creances" class="kdt-action">Rapport →</a>
+            <a routerLink="/app/reports/creances" class="kdt-action" (click)="$event.stopPropagation()">Rapport →</a>
           </div>
         </div>
 
@@ -495,7 +495,7 @@
       </div>
       <div class="owner-kpi-grid">
 
-        <div class="owner-kpi-card">
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes('ANNULE')" title="Voir les ventes annulées">
           <div class="owner-kpi-label">Taux d'annulation</div>
           <div class="owner-kpi-value"
                [class.owner-kpi-warn]="(s.cancellationRate90d ?? 0) >= 10"
@@ -513,7 +513,7 @@
           </div>
         </div>
 
-        <div class="owner-kpi-card">
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
           <div class="owner-kpi-label">Ticket moyen (livré)</div>
           <div class="owner-kpi-value">
             {{ formatAmount(s.avgTicketLivre) }}
@@ -521,11 +521,11 @@
           <div class="owner-kpi-hint">Prix moyen des ventes finalisées</div>
           <div class="kdt">
             <span class="kdt-text">Pipeline actif : {{ avgPipelineDeal(s) }} moy.</span>
-            <span class="kdt-action" (click)="drillVentes()">Ventes →</span>
+            <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">Ventes →</span>
           </div>
         </div>
 
-        <div class="owner-kpi-card">
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
           <div class="owner-kpi-label">
             Conversion réservation → vente
             @if (reservationsDelta()) {
@@ -635,7 +635,7 @@
 
       <!-- Pacing gauge: MTD CA vs monthly target -->
       @if (s.caMensuelCible != null && s.caMensuelCible > 0) {
-        <div class="pacing-card">
+        <div class="pacing-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
           <div class="pacing-head">
             <div>
               <div class="pacing-label">Objectif mensuel CA signé</div>
@@ -689,7 +689,7 @@
       <div class="exec-kpi-grid">
 
         <!-- CA YTD -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
           <div class="exec-card-head">
             <span class="exec-label">CA signé YTD</span>
             @if (s.caYoYPct != null) {
@@ -717,7 +717,7 @@
         </div>
 
         <!-- Velocity -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
           <div class="exec-card-head">
             <span class="exec-label">Velocity ventes</span>
           </div>
@@ -737,7 +737,7 @@
         </div>
 
         <!-- Months of supply -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
           <div class="exec-card-head">
             <span class="exec-label">Mois de stock</span>
           </div>
@@ -760,7 +760,7 @@
         </div>
 
         <!-- Win rate -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
           <div class="exec-card-head">
             <span class="exec-label">Taux de succès 90j</span>
           </div>
@@ -782,7 +782,7 @@
         </div>
 
         <!-- DSO -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillReceivables()" title="Voir les créances">
           <div class="exec-card-head">
             <span class="exec-label">DSO (retard moyen)</span>
           </div>
@@ -806,7 +806,7 @@
         </div>
 
         <!-- Collection efficiency -->
-        <div class="exec-card">
+        <div class="exec-card clickable-card" (click)="drillReceivables()" title="Voir les créances">
           <div class="exec-card-head">
             <span class="exec-label">Efficacité recouvrement</span>
           </div>
@@ -1305,7 +1305,7 @@
       <div class="section-head">
         <span class="section-label">Tendance CA — 6 derniers mois</span>
       </div>
-      <div class="trend-card">
+      <div class="trend-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
         <div class="trend-chart-area">
           <app-mini-bar-chart [points]="s.monthlyTrend"></app-mini-bar-chart>
         </div>
@@ -1442,7 +1442,7 @@
           <span class="db-asof">Màj {{ shareholderKpi()!.generatedAt | date:'HH:mm' }}</span>
         </div>
         <div class="shareholder-kpi-row">
-          <div class="sh-kpi-card sh-kpi-portfolio">
+          <div class="sh-kpi-card sh-kpi-portfolio clickable-card" (click)="drillProperties('ACTIVE')" title="Voir l'inventaire des biens">
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.portfolioValueAtMarket) }}</div>
             <div class="sh-kpi-lbl">Valeur inventaire au prix liste</div>
             <div class="sh-kpi-sub">Biens ACTIF + RÉSERVÉ</div>
@@ -1451,7 +1451,7 @@
               <span class="kdt-action" (click)="drillProperties('ACTIVE')">Inventaire →</span>
             </div>
           </div>
-          <div class="sh-kpi-card sh-kpi-sold">
+          <div class="sh-kpi-card sh-kpi-sold clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
             @let shTotal = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.soldValue) }}</div>
             <div class="sh-kpi-lbl">CA livré (LIVRE)</div>
@@ -1463,7 +1463,7 @@
               <span class="kdt-action" (click)="drillVentes('LIVRE')">Livrées →</span>
             </div>
           </div>
-          <div class="sh-kpi-card sh-kpi-exposure">
+          <div class="sh-kpi-card sh-kpi-exposure clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
             @let shTotal2 = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.projectedCompletionExposure) }}</div>
             <div class="sh-kpi-lbl">Exposition pipeline</div>
