@@ -12,7 +12,8 @@ import java.util.UUID;
 
 public interface UserProjectAccessRepository extends JpaRepository<UserProjectAccess, UserProjectAccessId> {
 
-    List<UserProjectAccess> findBySocieteIdAndUserId(UUID societeId, UUID userId);
+    @Query("SELECT a FROM UserProjectAccess a WHERE a.societeId = :societeId AND a.id.userId = :userId")
+    List<UserProjectAccess> findBySocieteIdAndUserId(@Param("societeId") UUID societeId, @Param("userId") UUID userId);
 
     @Query("SELECT a.id.projectId FROM UserProjectAccess a WHERE a.societeId = :societeId AND a.id.userId = :userId")
     List<UUID> findProjectIdsBySocieteIdAndUserId(@Param("societeId") UUID societeId, @Param("userId") UUID userId);
