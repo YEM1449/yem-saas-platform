@@ -521,7 +521,7 @@
           <div class="owner-kpi-hint">Prix moyen des ventes finalisées</div>
           <div class="kdt">
             <span class="kdt-text">Pipeline actif : {{ avgPipelineDeal(s) }} moy.</span>
-            <span class="kdt-action" (click)="drillVentes()">Ventes →</span>
+            <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">Ventes →</span>
           </div>
         </div>
 
