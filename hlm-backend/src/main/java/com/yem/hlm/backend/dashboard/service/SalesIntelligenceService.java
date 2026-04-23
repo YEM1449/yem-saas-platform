@@ -58,7 +58,8 @@ public class SalesIntelligenceService {
         LocalDateTime now = LocalDateTime.now();
 
         // ── Inventory value ────────────────────────────────────────────────────
-        Object[] invSummary = propertyRepo.inventoryValueSummary(societeId);
+        List<Object[]> invRows = propertyRepo.inventoryValueSummary(societeId);
+        Object[] invSummary = invRows.isEmpty() ? new Object[5] : invRows.get(0);
         BigDecimal unsoldValue        = toBD(invSummary[0]);
         long       activeCount        = toLong(invSummary[1]);
         long       reservedCount      = toLong(invSummary[2]);
@@ -166,7 +167,17 @@ public class SalesIntelligenceService {
     private static BigDecimal toBD(Object o) {
         if (o == null) return BigDecimal.ZERO;
         if (o instanceof BigDecimal bd) return bd;
-        return new BigDecimal(o.toString());
+        if (o instanceof Long l)    return BigDecimal.valueOf(l);
+        if (o instanceof Integer i) return BigDecimal.valueOf(i);
+        if (o instanceof Number n) {
+            double v = n.doubleValue();
+            return Double.isFinite(v) ? BigDecimal.valueOf(v) : BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(o.toString());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
     }
 
     private static long toLong(Object o) {
