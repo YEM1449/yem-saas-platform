@@ -131,9 +131,8 @@ export class HomeDashboardComponent implements OnInit {
       next:  s  => { this.snap.set(s); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger le tableau de bord.'); this.loading.set(false); },
     });
-    if (this.isAdminOrManager) {
-      this.cockpit.getBundle().subscribe(b => this.bundle.set(b));
-    }
+    // Always load — backend enforces RBAC (403 → catchError → null per endpoint)
+    this.cockpit.getBundle().subscribe(b => this.bundle.set(b));
   }
 
   // ── Cockpit helpers (KPI deltas + sparklines + alerts) ─────────────────────

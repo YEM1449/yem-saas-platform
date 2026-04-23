@@ -263,8 +263,8 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     /**
      * Total unsold inventory value (ACTIVE + RESERVED) and total portfolio value.
-     * Row: [unsoldValue(BigDecimal), activeCount(Long), reservedCount(Long),
-     *       portfolioValue(BigDecimal), avgListPriceActive(BigDecimal)].
+     * Returns a single-row list. Rows: [unsoldValue(BigDecimal), activeCount(Long),
+     * reservedCount(Long), portfolioValue(BigDecimal), avgListPriceActive(BigDecimal)].
      */
     @Query(value = """
             SELECT
@@ -278,7 +278,7 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
               AND deleted_at IS NULL
               AND price IS NOT NULL
             """, nativeQuery = true)
-    Object[] inventoryValueSummary(@Param("societeId") UUID societeId);
+    List<Object[]> inventoryValueSummary(@Param("societeId") UUID societeId);
 
     /**
      * Inventory aging for ACTIVE properties: how long since created_at (proxy for listing date).

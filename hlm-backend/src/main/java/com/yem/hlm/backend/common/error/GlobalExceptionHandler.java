@@ -163,6 +163,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * NumberFormatException is a data-processing error, not a client input error.
+     * Returns 500 so it is never mis-classified as a validation failure.
+     */
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<ErrorResponse> handleNumberFormat(
+            NumberFormatException ex,
+            HttpServletRequest request
+    ) {
+        log.error("Number format error on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ErrorCode.INTERNAL_ERROR,
+                "An unexpected error occurred",
+                request.getRequestURI()
+        ));
+    }
+
+    /**
      * Handle invalid business arguments (e.g., computed vente price is negative).
      * Returns 400 so the frontend can display the server message directly.
      */
