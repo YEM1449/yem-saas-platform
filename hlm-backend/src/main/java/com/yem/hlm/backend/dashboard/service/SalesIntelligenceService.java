@@ -167,6 +167,8 @@ public class SalesIntelligenceService {
     private static BigDecimal toBD(Object o) {
         if (o == null) return BigDecimal.ZERO;
         if (o instanceof BigDecimal bd) return bd;
+        if (o instanceof Long l)    return BigDecimal.valueOf(l);
+        if (o instanceof Integer i) return BigDecimal.valueOf(i);
         if (o instanceof Number n) {
             double v = n.doubleValue();
             return Double.isFinite(v) ? BigDecimal.valueOf(v) : BigDecimal.ZERO;
