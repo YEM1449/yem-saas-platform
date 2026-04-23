@@ -101,7 +101,8 @@
   border-radius: 12px;
   transition: box-shadow .15s;
 }
-.kpi-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.kpi-card { cursor: pointer; }
+.kpi-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
 
 /* Accent variants */
 .kpi-card.accent-green  { border-left: 3px solid #10b981; }
