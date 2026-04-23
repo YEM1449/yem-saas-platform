@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -47,6 +47,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
   private svc     = inject(CommercialDashboardService);
   private auth    = inject(AuthService);
   private projSvc = inject(ProjectService);
+  private router  = inject(Router);
 
   summary: CommercialDashboardSummary | null = null;
   projects: Project[] = [];
@@ -86,6 +87,17 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
 
   get totalActivePipeline(): number {
     return this.pipelineEntries.reduce((s, e) => s + e.count, 0);
+  }
+
+  goVentes(statut?: string): void {
+    const extras = statut ? { queryParams: { statut } } : {};
+    this.router.navigate(['/app/ventes'], extras);
+  }
+
+  goReservations(): void { this.router.navigate(['/app/reservations']); }
+  goProperties(status?: string): void {
+    const extras = status ? { queryParams: { status } } : {};
+    this.router.navigate(['/app/properties'], extras);
   }
 
   statutLabel(s: string): string {
