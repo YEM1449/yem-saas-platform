@@ -12,6 +12,29 @@ import {
 } from './admin-user.model';
 import { PageResponse } from '../../core/models/page-response.model';
 
+export interface UserQuotaResponse {
+  userId: string;
+  month: string;
+  caCible: number | null;
+  ventesCountCible: number | null;
+  updatedAt: string | null;
+}
+
+export interface UserQuotaRequest {
+  month: string;
+  caCible: number | null;
+  ventesCountCible: number | null;
+}
+
+export interface ProjectAccessResponse {
+  userId: string;
+  projectIds: string[];
+}
+
+export interface ProjectAccessRequest {
+  projectIds: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
   private http = inject(HttpClient);
@@ -61,5 +84,23 @@ export class AdminUserService {
 
   anonymiser(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/anonymiser`);
+  }
+
+  getQuota(userId: string, month?: string): Observable<UserQuotaResponse> {
+    let p = new HttpParams();
+    if (month) p = p.set('month', month);
+    return this.http.get<UserQuotaResponse>(`${this.base}/${userId}/quota`, { params: p });
+  }
+
+  upsertQuota(userId: string, req: UserQuotaRequest): Observable<UserQuotaResponse> {
+    return this.http.put<UserQuotaResponse>(`${this.base}/${userId}/quota`, req);
+  }
+
+  getProjectAccess(userId: string): Observable<ProjectAccessResponse> {
+    return this.http.get<ProjectAccessResponse>(`${this.base}/${userId}/project-access`);
+  }
+
+  setProjectAccess(userId: string, req: ProjectAccessRequest): Observable<ProjectAccessResponse> {
+    return this.http.put<ProjectAccessResponse>(`${this.base}/${userId}/project-access`, req);
   }
 }

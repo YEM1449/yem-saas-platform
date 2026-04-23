@@ -5,6 +5,7 @@ import com.yem.hlm.backend.common.ratelimit.RateLimiterService;
 import com.yem.hlm.backend.common.security.SocieteRoleValidator;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.usermanagement.dto.*;
+import com.yem.hlm.backend.usermanagement.UserSettingsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,19 +34,22 @@ public class UserManagementController {
     private final SocieteRoleValidator roleValidator;
     private final SocieteContextHelper societeContextHelper;
     private final RateLimiterService rateLimiterService;
+    private final UserSettingsService userSettingsService;
 
     public UserManagementController(UserManagementService userManagementService,
                                     InvitationService invitationService,
                                     UserGdprService userGdprService,
                                     SocieteRoleValidator roleValidator,
                                     SocieteContextHelper societeContextHelper,
-                                    RateLimiterService rateLimiterService) {
+                                    RateLimiterService rateLimiterService,
+                                    UserSettingsService userSettingsService) {
         this.userManagementService = userManagementService;
         this.invitationService = invitationService;
         this.userGdprService = userGdprService;
         this.roleValidator = roleValidator;
         this.societeContextHelper = societeContextHelper;
         this.rateLimiterService = rateLimiterService;
+        this.userSettingsService = userSettingsService;
     }
 
     // ── Lister les membres — ADMIN and MANAGER can see the team ───────────────
@@ -182,6 +186,48 @@ public class UserManagementController {
     public UserGdprService.UserDataExport exportDonnees(@PathVariable UUID userId) {
         UUID societeId = societeContextHelper.requireSocieteId();
         return userGdprService.exportUserData(userId, societeId);
+    }
+
+    // ── Objectifs mensuels (quota) — ADMIN only ───────────────────────────────
+
+    @Operation(summary = "Obtenir les objectifs mensuels d'un utilisateur")
+    @GetMapping("/{userId}/quota")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public UserQuotaResponse getQuota(@PathVariable UUID userId,
+                                      @RequestParam(defaultValue = "") String month) {
+        UUID societeId = societeContextHelper.requireSocieteId();
+        String effectiveMonth = month.isBlank()
+                ? java.time.YearMonth.now().toString()
+                : month;
+        return userSettingsService.getQuota(userId, societeId, effectiveMonth);
+    }
+
+    @Operation(summary = "Définir ou mettre à jour les objectifs mensuels d'un utilisateur")
+    @PutMapping("/{userId}/quota")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public UserQuotaResponse upsertQuota(@PathVariable UUID userId,
+                                         @Valid @RequestBody UserQuotaRequest req) {
+        UUID societeId = societeContextHelper.requireSocieteId();
+        return userSettingsService.upsertQuota(userId, societeId, req);
+    }
+
+    // ── Accès projets — ADMIN only ────────────────────────────────────────────
+
+    @Operation(summary = "Obtenir les projets accessibles à un utilisateur (liste vide = accès total)")
+    @GetMapping("/{userId}/project-access")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ProjectAccessResponse getProjectAccess(@PathVariable UUID userId) {
+        UUID societeId = societeContextHelper.requireSocieteId();
+        return userSettingsService.getProjectAccess(userId, societeId);
+    }
+
+    @Operation(summary = "Définir les projets accessibles à un utilisateur (liste vide = accès total)")
+    @PutMapping("/{userId}/project-access")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ProjectAccessResponse setProjectAccess(@PathVariable UUID userId,
+                                                  @RequestBody ProjectAccessRequest req) {
+        UUID societeId = societeContextHelper.requireSocieteId();
+        return userSettingsService.setProjectAccess(userId, societeId, req);
     }
 
     // ── RGPD Art. 17 — Anonymisation — ADMIN only ────────────────────────────

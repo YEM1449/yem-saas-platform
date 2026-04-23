@@ -1,0 +1,103 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 070-user-quota-and-project-access
+      author: yem
+      changes:
+
+        # ── user_quota: per-user per-month CA + ventes-count targets ─────────────
+        - createTable:
+            tableName: user_quota
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: societe_id
+                  type: UUID
+                  constraints: { nullable: false, foreignKeyName: fk_user_quota_societe, references: societe(id) }
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints: { nullable: false, foreignKeyName: fk_user_quota_user, references: app_user(id) }
+              - column:
+                  name: year_month
+                  type: VARCHAR(7)
+                  constraints: { nullable: false }
+              - column:
+                  name: ca_cible
+                  type: NUMERIC(15,2)
+              - column:
+                  name: ventes_count_cible
+                  type: BIGINT
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - addUniqueConstraint:
+            tableName: user_quota
+            columnNames: societe_id, user_id, year_month
+            constraintName: uq_user_quota_user_month
+
+        - createIndex:
+            tableName: user_quota
+            indexName: idx_user_quota_societe_user
+            columns:
+              - column: { name: societe_id }
+              - column: { name: user_id }
+
+        - sql:
+            sql: |
+              ALTER TABLE user_quota ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY user_quota_isolation ON user_quota
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );
+
+        # ── user_project_access: restrict which projects a user/manager can see ──
+        - createTable:
+            tableName: user_project_access
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints: { nullable: false, foreignKeyName: fk_upa_user, references: app_user(id) }
+              - column:
+                  name: project_id
+                  type: UUID
+                  constraints: { nullable: false, foreignKeyName: fk_upa_project, references: project(id) }
+              - column:
+                  name: societe_id
+                  type: UUID
+                  constraints: { nullable: false, foreignKeyName: fk_upa_societe, references: societe(id) }
+              - column:
+                  name: granted_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - addPrimaryKey:
+            tableName: user_project_access
+            columnNames: user_id, project_id
+            constraintName: pk_user_project_access
+
+        - createIndex:
+            tableName: user_project_access
+            indexName: idx_upa_societe_user
+            columns:
+              - column: { name: societe_id }
+              - column: { name: user_id }
+
+        - sql:
+            sql: |
+              ALTER TABLE user_project_access ENABLE ROW LEVEL SECURITY;
+              CREATE POLICY upa_isolation ON user_project_access
+                USING (
+                  societe_id = current_setting('app.current_societe_id', true)::uuid
+                  OR current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                );

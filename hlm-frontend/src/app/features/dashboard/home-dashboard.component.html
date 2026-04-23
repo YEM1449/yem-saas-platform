@@ -666,6 +666,38 @@
             <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
             <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
           </div>
+
+          <!-- Ventes-count pacing row (shown when ventesMensuelCible is set) -->
+          @if (s.ventesMensuelCible != null && s.ventesMensuelCible > 0) {
+            <div class="pacing-sub-row">
+              <div class="pacing-head" style="margin-top:10px">
+                <div>
+                  <div class="pacing-label">Objectif ventes signées</div>
+                  <div class="pacing-value" style="font-size:1rem">
+                    {{ s.ventesSigneesMoisCourantCount }}
+                    <span class="pacing-target">/ {{ s.ventesMensuelCible }}</span>
+                  </div>
+                </div>
+                @if (s.quotaVentesAttainmentMtdPct != null) {
+                  <span class="pacing-pct"
+                        [class.good]="isPacingOnTrack(s.quotaVentesAttainmentMtdPct)"
+                        [class.warn]="isPacingBehind(s.quotaVentesAttainmentMtdPct)"
+                        [class.bad]="isPacingCritical(s.quotaVentesAttainmentMtdPct)">
+                    {{ s.quotaVentesAttainmentMtdPct }}%
+                  </span>
+                }
+              </div>
+              <div class="pacing-bar">
+                <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+                <div class="pacing-fill"
+                     [class.good]="isPacingOnTrack(s.quotaVentesAttainmentMtdPct)"
+                     [class.warn]="isPacingBehind(s.quotaVentesAttainmentMtdPct)"
+                     [class.bad]="isPacingCritical(s.quotaVentesAttainmentMtdPct)"
+                     [style.width]="pacingWidth(s.quotaVentesAttainmentMtdPct)"></div>
+              </div>
+            </div>
+          }
+
           @if (s.quotaAttainmentMtdPct != null) {
             <div class="kdt">
               <span class="kdt-text">Rythme attendu J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} : {{ pacingExpectedPct() }}%</span>

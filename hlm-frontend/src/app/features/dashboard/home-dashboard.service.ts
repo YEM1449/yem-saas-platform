@@ -52,6 +52,8 @@ export interface HomeDashboard {
   caMensuelCible: number | null;
   ventesMensuelCible: number | null;
   quotaAttainmentMtdPct: number | null;
+  ventesSigneesMoisCourantCount: number;
+  quotaVentesAttainmentMtdPct: number | null;
   upcomingDeliveries: UpcomingDeliveryRow[];
   // Trend & project breakdown
   monthlyTrend: MonthlyTrendPoint[];

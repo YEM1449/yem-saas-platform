@@ -14,6 +14,8 @@ import com.yem.hlm.backend.task.domain.Task;
 import com.yem.hlm.backend.task.domain.TaskStatus;
 import com.yem.hlm.backend.task.repo.TaskRepository;
 import com.yem.hlm.backend.tranche.repo.TrancheRepository;
+import com.yem.hlm.backend.usermanagement.UserQuotaRepository;
+import com.yem.hlm.backend.usermanagement.domain.UserQuota;
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
@@ -64,6 +66,7 @@ public class HomeDashboardService {
     private final ReservationRepository   reservationRepo;
     private final SocieteRepository       societeRepo;
     private final TrancheRepository       trancheRepo;
+    private final UserQuotaRepository     quotaRepo;
 
     public HomeDashboardService(VenteRepository venteRepo,
                                 VenteEcheanceRepository echeanceRepo,
@@ -72,7 +75,8 @@ public class HomeDashboardService {
                                 PropertyRepository propertyRepo,
                                 ReservationRepository reservationRepo,
                                 SocieteRepository societeRepo,
-                                TrancheRepository trancheRepo) {
+                                TrancheRepository trancheRepo,
+                                UserQuotaRepository quotaRepo) {
         this.venteRepo       = venteRepo;
         this.echeanceRepo    = echeanceRepo;
         this.taskRepo        = taskRepo;
@@ -81,6 +85,7 @@ public class HomeDashboardService {
         this.reservationRepo = reservationRepo;
         this.societeRepo     = societeRepo;
         this.trancheRepo     = trancheRepo;
+        this.quotaRepo       = quotaRepo;
     }
 
     @Cacheable(
@@ -149,6 +154,10 @@ public class HomeDashboardService {
 
         BigDecimal caLivre = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE);
         if (caLivre == null) caLivre = BigDecimal.ZERO;
+
+        long ventesSigneesMoisCourantCount = isAgent
+                ? venteRepo.countInPeriodExcluding(societeId, moisFrom, moisTo, ANNULE_ONLY)
+                : venteRepo.countInPeriodExcluding(societeId, moisFrom, moisTo, ANNULE_ONLY);
 
         long ventesStalleesCount = isAgent ? 0L :
                 venteRepo.countStalledVentes(societeId,
@@ -277,6 +286,7 @@ public class HomeDashboardService {
         BigDecimal caMensuelCible      = null;
         Long ventesMensuelCible        = null;
         BigDecimal quotaAttainmentMtd  = null;
+        BigDecimal quotaVentesAttainmentMtd = null;
         List<HomeDashboardDTO.UpcomingDeliveryRow> upcomingDeliveries = List.of();
 
         if (!isAgent) {
@@ -347,19 +357,35 @@ public class HomeDashboardService {
                 }
             }
 
-            // Société targets + quota attainment MTD
-            Societe societe = societeRepo.findById(societeId).orElse(null);
-            if (societe != null) {
-                caMensuelCible = societe.getCaMensuelCible();
-                if (societe.getVentesMensuelCible() != null) {
-                    ventesMensuelCible = societe.getVentesMensuelCible().longValue();
+            // Per-user quota lookup: prefer user-specific target, fall back to société-wide
+            String currentYearMonth = currentMonth.toString(); // "YYYY-MM"
+            UserQuota userQuota = quotaRepo.findBySocieteIdAndUserIdAndYearMonth(
+                    societeId, actorId, currentYearMonth).orElse(null);
+
+            if (userQuota != null) {
+                caMensuelCible     = userQuota.getCaCible();
+                ventesMensuelCible = userQuota.getVentesCountCible();
+            } else {
+                Societe societe = societeRepo.findById(societeId).orElse(null);
+                if (societe != null) {
+                    caMensuelCible = societe.getCaMensuelCible();
+                    if (societe.getVentesMensuelCible() != null) {
+                        ventesMensuelCible = societe.getVentesMensuelCible().longValue();
+                    }
                 }
-                if (caMensuelCible != null && caMensuelCible.signum() > 0) {
-                    quotaAttainmentMtd = caSigneMoisCourant
-                            .divide(caMensuelCible, 4, RoundingMode.HALF_UP)
-                            .multiply(BigDecimal.valueOf(100))
-                            .setScale(1, RoundingMode.HALF_UP);
-                }
+            }
+
+            if (caMensuelCible != null && caMensuelCible.signum() > 0) {
+                quotaAttainmentMtd = caSigneMoisCourant
+                        .divide(caMensuelCible, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP);
+            }
+            if (ventesMensuelCible != null && ventesMensuelCible > 0) {
+                quotaVentesAttainmentMtd = BigDecimal.valueOf(ventesSigneesMoisCourantCount)
+                        .divide(BigDecimal.valueOf(ventesMensuelCible), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(1, RoundingMode.HALF_UP);
             }
 
             // Upcoming deliveries: next 90 days, excluding LIVREE
@@ -444,6 +470,7 @@ public class HomeDashboardService {
                 monthsOfSupply, salesVelocityPerWeek, winRate90d,
                 dsoRolling90d, collectionEff90d,
                 caMensuelCible, ventesMensuelCible, quotaAttainmentMtd,
+                ventesSigneesMoisCourantCount, quotaVentesAttainmentMtd,
                 upcomingDeliveries,
                 monthlyTrend, projectBreakdown,
                 recentVentes, urgentTasks

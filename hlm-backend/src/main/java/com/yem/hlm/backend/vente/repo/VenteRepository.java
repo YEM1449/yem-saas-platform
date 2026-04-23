@@ -169,6 +169,20 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                               @Param("from") java.time.LocalDateTime from,
                               @Param("to") java.time.LocalDateTime to);
 
+    /** Count ventes created in [from, to) excluding given statuts (e.g. ANNULE). */
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.createdAt >= :from
+              AND v.createdAt < :to
+              AND v.statut NOT IN :excluded
+            """)
+    long countInPeriodExcluding(@Param("societeId") UUID societeId,
+                                @Param("from") java.time.LocalDateTime from,
+                                @Param("to") java.time.LocalDateTime to,
+                                @Param("excluded") List<VenteStatut> excluded);
+
     @Query("""
             SELECT COUNT(v)
             FROM Vente v
