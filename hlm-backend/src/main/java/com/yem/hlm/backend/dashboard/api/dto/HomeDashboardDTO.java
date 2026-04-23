@@ -135,6 +135,13 @@ public record HomeDashboardDTO(
          * Null when target not configured or 0.
          */
         BigDecimal quotaAttainmentMtdPct,
+        /** Count of non-ANNULE ventes created in the current calendar month. */
+        Long ventesSigneesMoisCourantCount,
+        /**
+         * Ventes-count pacing % = ventesSigneesMoisCourantCount / ventesMensuelCible × 100.
+         * Null when target not configured or 0.
+         */
+        BigDecimal quotaVentesAttainmentMtdPct,
         /** Up to 10 upcoming tranche deliveries within the next 90 days. */
         List<UpcomingDeliveryRow> upcomingDeliveries,
 

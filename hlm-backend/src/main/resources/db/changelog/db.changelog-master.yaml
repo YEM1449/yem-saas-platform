@@ -139,3 +139,5 @@ databaseChangeLog:
       file: db/changelog/changes/068-vente-legal-financing-notary.yaml
   - include:
       file: db/changelog/changes/069-vente-document-portal-upload.yaml
+  - include:
+      file: db/changelog/changes/070-user-quota-and-project-access.yaml

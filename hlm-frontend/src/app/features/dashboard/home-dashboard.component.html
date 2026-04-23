@@ -633,39 +633,83 @@
         <span class="section-sublabel">CA, velocity, santé financière et livraisons</span>
       </div>
 
-      <!-- Pacing gauge: MTD CA vs monthly target -->
-      @if (s.caMensuelCible != null && s.caMensuelCible > 0) {
+      <!-- Pacing gauge: MTD CA and/or ventes-count vs monthly targets -->
+      @let hasCATarget     = s.caMensuelCible != null && s.caMensuelCible > 0;
+      @let hasVentesTarget = s.ventesMensuelCible != null && s.ventesMensuelCible > 0;
+
+      @if (hasCATarget || hasVentesTarget) {
         <div class="pacing-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
-          <div class="pacing-head">
-            <div>
-              <div class="pacing-label">Objectif mensuel CA signé</div>
-              <div class="pacing-value">
-                {{ formatAmount(s.caSigneMoisCourant) }}
-                <span class="pacing-target">/ {{ formatAmount(s.caMensuelCible) }}</span>
+
+          <!-- CA pacing row — only when CA target is configured -->
+          @if (hasCATarget) {
+            <div class="pacing-head">
+              <div>
+                <div class="pacing-label">Objectif mensuel CA signé</div>
+                <div class="pacing-value">
+                  {{ formatAmount(s.caSigneMoisCourant) }}
+                  <span class="pacing-target">/ {{ formatAmount(s.caMensuelCible) }}</span>
+                </div>
               </div>
+              @if (s.quotaAttainmentMtdPct != null) {
+                <span class="pacing-pct"
+                      [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
+                      [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
+                      [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)">
+                  {{ s.quotaAttainmentMtdPct }}%
+                </span>
+              }
             </div>
-            @if (s.quotaAttainmentMtdPct != null) {
-              <span class="pacing-pct"
-                    [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
-                    [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
-                    [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)">
-                {{ s.quotaAttainmentMtdPct }}%
-              </span>
-            }
-          </div>
-          <div class="pacing-bar">
-            <!-- Expected trajectory marker (day_of_month / days_in_month * 100) -->
-            <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
-            <div class="pacing-fill"
-                 [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
-                 [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
-                 [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)"
-                 [style.width]="pacingWidth(s.quotaAttainmentMtdPct)"></div>
-          </div>
-          <div class="pacing-legend">
-            <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
-            <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
-          </div>
+            <div class="pacing-bar">
+              <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+              <div class="pacing-fill"
+                   [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
+                   [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
+                   [class.bad]="isPacingCritical(s.quotaAttainmentMtdPct)"
+                   [style.width]="pacingWidth(s.quotaAttainmentMtdPct)"></div>
+            </div>
+            <div class="pacing-legend">
+              <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
+              <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
+            </div>
+          }
+
+          <!-- Ventes-count pacing row — independent of CA target -->
+          @if (hasVentesTarget) {
+            <div class="pacing-sub-row" [style.margin-top]="hasCATarget ? '10px' : '0'">
+              <div class="pacing-head">
+                <div>
+                  <div class="pacing-label">Objectif ventes signées</div>
+                  <div class="pacing-value" style="font-size:1rem">
+                    {{ s.ventesSigneesMoisCourantCount }}
+                    <span class="pacing-target">/ {{ s.ventesMensuelCible }}</span>
+                  </div>
+                </div>
+                @if (s.quotaVentesAttainmentMtdPct != null) {
+                  <span class="pacing-pct"
+                        [class.good]="isPacingOnTrack(s.quotaVentesAttainmentMtdPct)"
+                        [class.warn]="isPacingBehind(s.quotaVentesAttainmentMtdPct)"
+                        [class.bad]="isPacingCritical(s.quotaVentesAttainmentMtdPct)">
+                    {{ s.quotaVentesAttainmentMtdPct }}%
+                  </span>
+                }
+              </div>
+              <div class="pacing-bar">
+                <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+                <div class="pacing-fill"
+                     [class.good]="isPacingOnTrack(s.quotaVentesAttainmentMtdPct)"
+                     [class.warn]="isPacingBehind(s.quotaVentesAttainmentMtdPct)"
+                     [class.bad]="isPacingCritical(s.quotaVentesAttainmentMtdPct)"
+                     [style.width]="pacingWidth(s.quotaVentesAttainmentMtdPct)"></div>
+              </div>
+              @if (!hasCATarget) {
+                <div class="pacing-legend">
+                  <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
+                  <span>{{ pacingVerdict(s.quotaVentesAttainmentMtdPct) }}</span>
+                </div>
+              }
+            </div>
+          }
+
           @if (s.quotaAttainmentMtdPct != null) {
             <div class="kdt">
               <span class="kdt-text">Rythme attendu J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} : {{ pacingExpectedPct() }}%</span>
@@ -680,7 +724,7 @@
         <div class="pacing-card pacing-untargeted">
           <div class="pacing-empty">
             <strong>Aucun objectif mensuel configuré.</strong>
-            Définissez <code>caMensuelCible</code> sur la société pour activer le suivi du rythme (pacing).
+            Définissez vos objectifs via Paramètres → Objectifs mensuels pour activer le suivi du rythme (pacing).
           </div>
         </div>
       }

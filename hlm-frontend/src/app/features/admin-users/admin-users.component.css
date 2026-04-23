@@ -71,8 +71,9 @@ td select {
   font-size: 0.72rem;
 }
 .btn-small:hover { background: #f3f4f6; }
-.btn-green  { border-color: #86efac; background: #f0fdf4; color: #166534; }
-.btn-danger { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+.btn-green    { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.btn-danger   { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+.btn-settings { border-color: #c4b5fd; background: #f5f3ff; color: #5b21b6; }
 
 .pagination {
   display: flex;

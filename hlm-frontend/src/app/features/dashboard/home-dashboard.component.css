@@ -945,6 +945,7 @@
 .pacing-fill.bad{background:linear-gradient(90deg,#ef4444,#dc2626)}
 .pacing-marker{position:absolute;top:-3px;bottom:-3px;width:2px;background:#111827;z-index:2;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 .pacing-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted,#6b7280)}
+.pacing-sub-row{border-top:1px solid var(--border,#e5e7eb);padding-top:10px}
 .pacing-untargeted{border-style:dashed;background:#fafafa}
 .pacing-empty{font-size:13px;color:var(--text-muted,#6b7280);line-height:1.5}
 .pacing-empty strong{display:block;color:var(--text,#111827);margin-bottom:4px}

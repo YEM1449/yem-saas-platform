@@ -69,6 +69,7 @@
             @if (m.compteBloque) {
               <button (click)="debloquer(m)" class="btn-small btn-green">{{ 'admin.activate' | translate }}</button>
             }
+            <button (click)="openSettings(m)" class="btn-small btn-settings" title="Objectifs et accès projets">Paramètres</button>
             <button (click)="exportDonnees(m)" class="btn-small">Export RGPD</button>
             <button (click)="anonymiser(m)" class="btn-small btn-danger">Anonymiser</button>
             <button (click)="retirer(m)" class="btn-small btn-danger">{{ 'admin.deactivate' | translate }}</button>
@@ -89,5 +90,12 @@
   <app-user-invite-dialog
     (invited)="onInvited($event)"
     (cancelled)="showInviteDialog = false"
+  />
+}
+
+@if (settingsTarget) {
+  <app-user-settings-dialog
+    [membre]="settingsTarget"
+    (close)="closeSettings()"
   />
 }

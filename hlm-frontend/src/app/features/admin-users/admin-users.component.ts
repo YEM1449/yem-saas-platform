@@ -6,13 +6,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AdminUserService } from './admin-user.service';
 import { MembreDto, MembreStatut } from './admin-user.model';
 import { UserInviteDialogComponent } from './user-invite-dialog.component';
+import { UserSettingsDialogComponent } from './user-settings-dialog.component';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserInviteDialogComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, UserInviteDialogComponent, UserSettingsDialogComponent, TranslateModule],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
 })
@@ -36,8 +37,9 @@ export class AdminUsersComponent implements OnInit {
   totalPages = 0;
   totalElements = 0;
 
-  // Dialog
-  showInviteDialog = false;
+  // Dialogs
+  showInviteDialog    = false;
+  settingsTarget: MembreDto | null = null;
 
   // GDPR export
   exportData: string | null = null;
@@ -148,6 +150,9 @@ export class AdminUsersComponent implements OnInit {
   get assignableRoles(): string[] {
     return this.auth.user?.role === 'ROLE_ADMIN' ? ['MANAGER', 'AGENT'] : ['ADMIN', 'MANAGER', 'AGENT'];
   }
+
+  openSettings(m: MembreDto): void { this.settingsTarget = m; }
+  closeSettings(): void { this.settingsTarget = null; }
 
   private extractError(err: HttpErrorResponse): string {
     if (err.status === 401) return 'Session expirée.';
