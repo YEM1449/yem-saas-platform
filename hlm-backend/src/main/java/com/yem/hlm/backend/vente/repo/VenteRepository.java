@@ -681,6 +681,57 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Object[]> avgPricePerSqmByProject(@Param("societeId") UUID societeId);
 
     /**
+     * Pipeline aging per active statut — how long deals have been open since creation.
+     * Excludes terminal statuts (LIVRE, ANNULE).
+     * Rows: [statut(String), count(Long), avgDays(Double), maxDays(Double), stalled30dCount(Long), totalValue(BigDecimal)].
+     * avgDays/maxDays = days since vente.created_at. stalled30dCount = deals older than 30 days.
+     */
+    @Query(value = """
+            SELECT statut,
+                   COUNT(*)                                                                        AS cnt,
+                   AVG(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400.0)                        AS avg_days,
+                   MAX(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400.0)                        AS max_days,
+                   COUNT(CASE WHEN EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400.0 > 30
+                               THEN 1 END)                                                        AS stalled_30d,
+                   COALESCE(SUM(prix_vente), 0)                                                   AS total_value
+            FROM vente
+            WHERE societe_id = :societeId
+              AND statut NOT IN ('LIVRE','ANNULE')
+            GROUP BY statut
+            ORDER BY CASE statut
+                       WHEN 'COMPROMIS'    THEN 1
+                       WHEN 'FINANCEMENT'  THEN 2
+                       WHEN 'ACTE_NOTARIE' THEN 3
+                       ELSE 4
+                     END
+            """, nativeQuery = true)
+    List<Object[]> pipelineAgingByStatut(@Param("societeId") UUID societeId);
+
+    /**
+     * Average days to close and average ticket per property type (LIVRE ventes only).
+     * Uses COALESCE(date_livraison_reelle::timestamp, stage_entry_date) as close marker,
+     * consistent with timeToCloseBuckets. Only includes ventes with a valid close timestamp.
+     * Rows: [type(String), soldCount(Long), avgPrix(Double), avgDaysToClose(Double)].
+     */
+    @Query(value = """
+            SELECT p.type::text,
+                   COUNT(v.id)                                                          AS sold_count,
+                   AVG(v.prix_vente)                                                    AS avg_prix,
+                   AVG(EXTRACT(EPOCH FROM (
+                           COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date)
+                           - v.created_at
+                       )) / 86400.0)                                                    AS avg_days_to_close
+            FROM vente v
+            JOIN property p ON p.id = v.property_id
+            WHERE v.societe_id = :societeId
+              AND v.statut = 'LIVRE'
+              AND COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) IS NOT NULL
+            GROUP BY p.type
+            ORDER BY avg_days_to_close ASC NULLS LAST
+            """, nativeQuery = true)
+    List<Object[]> avgDaysToCloseByPropertyType(@Param("societeId") UUID societeId);
+
+    /**
      * CA and vente count grouped by tranche (via property.tranche_id).
      * Rows: [trancheId(text), trancheLabel(String), projectId(text), projectName(String),
      *        totalCA(BigDecimal), ventesCount(Long)].

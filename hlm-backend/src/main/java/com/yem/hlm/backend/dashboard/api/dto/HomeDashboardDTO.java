@@ -149,6 +149,14 @@ public record HomeDashboardDTO(
         /** Per-type counts (active/reserved/sold/draft/total) with absorption rate. */
         List<InventoryTypeRow> inventoryByType,
 
+        // ── Pipeline stage aging ──────────────────────────────────────────────
+        /** Aging metrics per active vente statut (COMPROMIS/FINANCEMENT/ACTE_NOTARIE). Empty for AGENT. */
+        List<PipelineStageAgingRow> pipelineStageAging,
+
+        // ── Per-type velocity ─────────────────────────────────────────────────
+        /** Avg days-to-close + avg ticket per property type (LIVRE ventes only). Empty for AGENT. */
+        List<TypeVelocityRow> typeVelocity,
+
         // ── Trend & project breakdown ─────────────────────────────────────────
         /** Monthly CA signed for the last 6 months (oldest → newest). Empty for AGENT. */
         List<MonthlyTrendPoint> monthlyTrend,
@@ -245,5 +253,31 @@ public record HomeDashboardDTO(
             String projectName,
             BigDecimal totalCA,
             long ventesCount
+    ) {}
+
+    /**
+     * Aging metrics for one active pipeline stage (COMPROMIS / FINANCEMENT / ACTE_NOTARIE).
+     * avgDays / maxDays = days since vente.createdAt (proxy for time in pipeline).
+     * stalled30dCount = ventes in this stage for more than 30 days.
+     */
+    public record PipelineStageAgingRow(
+            String statut,
+            long count,
+            double avgDays,
+            double maxDays,
+            long stalled30dCount,
+            BigDecimal totalValue
+    ) {}
+
+    /**
+     * Per-property-type velocity for LIVRE ventes.
+     * avgDaysToClose uses COALESCE(date_livraison_reelle, stage_entry_date) − created_at.
+     * null when no LIVRE ventes exist for the type.
+     */
+    public record TypeVelocityRow(
+            String type,
+            long soldCount,
+            BigDecimal avgPrix,
+            Double avgDaysToClose
     ) {}
 }

@@ -57,6 +57,9 @@ export interface HomeDashboard {
   upcomingDeliveries: UpcomingDeliveryRow[];
   // Inventory by type
   inventoryByType: InventoryTypeRow[];
+  // Pipeline aging + type velocity
+  pipelineStageAging: PipelineStageAgingRow[];
+  typeVelocity: TypeVelocityRow[];
   // Trend & project/tranche/immeuble breakdown
   monthlyTrend: MonthlyTrendPoint[];
   projectBreakdown: ProjectBreakdownRow[];
@@ -88,6 +91,22 @@ export interface InventoryTypeRow {
   draftCount: number;
   totalCount: number;
   absorptionRate: number | null;
+}
+
+export interface PipelineStageAgingRow {
+  statut: string;
+  count: number;
+  avgDays: number;
+  maxDays: number;
+  stalled30dCount: number;
+  totalValue: number;
+}
+
+export interface TypeVelocityRow {
+  type: string;
+  soldCount: number;
+  avgPrix: number;
+  avgDaysToClose: number | null;
 }
 
 export interface TrancheBreakdownRow {

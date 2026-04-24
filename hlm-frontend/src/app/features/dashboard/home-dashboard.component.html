@@ -70,6 +70,9 @@
           <path d="M2 12.5c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
         </svg>
         Dirigeant
+        @if (snap() && snap()!.pipelineStageAging.length > 0 && pipelineTotalStalled(snap()!.pipelineStageAging) > 0) {
+          <span class="tab-badge tab-badge-warn">{{ pipelineTotalStalled(snap()!.pipelineStageAging) }}</span>
+        }
       </button>
       <button class="db-tab" [class.db-tab-active]="activeTab === 'commercial'"
               (click)="activeTab = 'commercial'">
@@ -77,6 +80,9 @@
           <path d="M1.5 11L5 7l3 2.5L10.5 5 13 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Commercial
+        @if (snap() && snap()!.ventesStalleesCount > 0) {
+          <span class="tab-badge tab-badge-warn">{{ snap()!.ventesStalleesCount }}</span>
+        }
       </button>
       <button class="db-tab" [class.db-tab-active]="activeTab === 'projets'"
               (click)="activeTab = 'projets'">
@@ -85,7 +91,7 @@
           <rect x="5.5" y="3" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.4"/>
           <rect x="10" y="1" width="3" height="12" rx="1" stroke="currentColor" stroke-width="1.4"/>
         </svg>
-        Projets & Tendances
+        Projets
       </button>
       <button class="db-tab" [class.db-tab-active]="activeTab === 'actionnaire'"
               (click)="switchTab('actionnaire')">
@@ -112,6 +118,9 @@
         <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/>
       </svg>
       Opérationnel
+      @if (snap() && snap()!.overdueTasksCount > 0) {
+        <span class="tab-badge tab-badge-danger">{{ snap()!.overdueTasksCount }}</span>
+      }
     </button>
   </nav>
 
@@ -676,6 +685,103 @@
           </table>
         </div>
       }
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
+       SECTION 3.55 — PIPELINE HEALTH (admin/manager only)
+       Stage-by-stage aging: deals, value, avg age, max age, stalled.
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager && s.pipelineStageAging.length > 0) {
+    <div class="section-row">
+      <div class="section-head">
+        <span class="section-label">Santé du pipeline — par étape</span>
+        <span class="section-sublabel">Ancienneté depuis création · {{ pipelineTotalCount(s.pipelineStageAging) }} deal{{ pipelineTotalCount(s.pipelineStageAging) !== 1 ? 's' : '' }} actifs · {{ pipelineTotalStalled(s.pipelineStageAging) }} bloqués &gt;30j</span>
+        <a routerLink="/app/ventes" class="section-link">Pipeline complet →</a>
+      </div>
+
+      <div class="pipeline-aging-table">
+
+        <!-- Header -->
+        <div class="pa-head">
+          <span class="pa-col-stage">Étape</span>
+          <span class="pa-col-num">Deals</span>
+          <span class="pa-col-val">Valeur totale</span>
+          <span class="pa-col-days">Âge moyen</span>
+          <span class="pa-col-days">Âge max</span>
+          <span class="pa-col-stalled">Bloqués &gt;30j</span>
+          <span class="pa-col-bar">Profil d'ancienneté</span>
+        </div>
+
+        @for (row of s.pipelineStageAging; track row.statut) {
+          <div class="pa-row clickable-row" (click)="drillVentes(row.statut)">
+
+            <div class="pa-col-stage">
+              <span class="pa-statut-chip pa-chip-{{ row.statut | lowercase }}">
+                {{ statutLabel(row.statut) }}
+              </span>
+            </div>
+
+            <span class="pa-col-num pa-count">{{ row.count }}</span>
+
+            <span class="pa-col-val">{{ formatAmountShort(row.totalValue) }}</span>
+
+            <span class="pa-col-days {{ agingClass(row.avgDays) }}">
+              {{ row.avgDays | number:'1.0-0' }}&nbsp;j
+            </span>
+
+            <span class="pa-col-days pa-max-days">
+              {{ row.maxDays | number:'1.0-0' }}&nbsp;j
+            </span>
+
+            <div class="pa-col-stalled">
+              @if (row.stalled30dCount === 0) {
+                <span class="stalled-ok">✓ aucun</span>
+              } @else {
+                <span class="{{ stalledClass(row.stalled30dCount, row.count) }}">
+                  {{ row.stalled30dCount }} / {{ row.count }}
+                </span>
+              }
+            </div>
+
+            <!-- Age profile bar: fill = avg/60 days capped at 100% -->
+            <div class="pa-col-bar">
+              <div class="pa-bar-track">
+                <div class="pa-bar-avg {{ agingClass(row.avgDays) }}"
+                     [style.width]="agingBarPct(row.avgDays) + '%'"
+                     [title]="'Âge moyen : ' + (row.avgDays | number:'1.0-0') + 'j'">
+                </div>
+                <div class="pa-bar-max"
+                     [style.left]="agingBarPct(row.maxDays) + '%'"
+                     [title]="'Âge max : ' + (row.maxDays | number:'1.0-0') + 'j'">
+                </div>
+              </div>
+              <span class="pa-bar-label">/ 60j</span>
+            </div>
+
+          </div>
+        }
+
+        <!-- Footer totals -->
+        <div class="pa-footer">
+          <span class="pa-col-stage" style="font-weight:700">Total pipeline</span>
+          <span class="pa-col-num pa-count">{{ pipelineTotalCount(s.pipelineStageAging) }}</span>
+          <span class="pa-col-val">{{ formatAmountShort(pipelineTotalValue(s.pipelineStageAging)) }}</span>
+          <span class="pa-col-days {{ agingClass(pipelineWeightedAvgDays(s.pipelineStageAging)) }}">
+            {{ pipelineWeightedAvgDays(s.pipelineStageAging) | number:'1.0-0' }}&nbsp;j moy.
+          </span>
+          <span class="pa-col-days"></span>
+          <div class="pa-col-stalled">
+            @if (pipelineTotalStalled(s.pipelineStageAging) > 0) {
+              <span class="stalled-bad">{{ pipelineTotalStalled(s.pipelineStageAging) }} total bloqués</span>
+            } @else {
+              <span class="stalled-ok">Pipeline sain ✓</span>
+            }
+          </div>
+          <span class="pa-col-bar"></span>
+        </div>
+
+      </div>
     </div>
   }
 
@@ -1388,25 +1494,27 @@
     @if (s.inventoryByType.length > 0) {
       <div class="section-row">
         <div class="section-head">
-          <span class="section-label">Stock par type de bien</span>
-          <span class="section-sublabel">Unités actives · réservées · vendues · taux d'absorption par type</span>
+          <span class="section-label">Analyse par type de bien</span>
+          <span class="section-sublabel">Stock · absorption · ticket moyen · vélocité (délai moyen LIVRE)</span>
+          <a routerLink="/app/properties" class="section-link">Stock complet →</a>
         </div>
-        <div class="type-matrix">
+        <div class="type-matrix type-matrix-wide">
           <div class="type-matrix-head">
             <span class="tm-col-type">Type</span>
             <span class="tm-col-num">Actifs</span>
             <span class="tm-col-num">Réservés</span>
             <span class="tm-col-num">Vendus</span>
-            <span class="tm-col-num">Total</span>
             <span class="tm-col-abs">Absorption</span>
+            <span class="tm-col-vel">Ticket moy.</span>
+            <span class="tm-col-vel tm-vel-days">Délai moy.</span>
           </div>
           @for (row of sortedInventoryTypes(s.inventoryByType); track row.type) {
+            @let vel = velocityForType(row.type, s.typeVelocity);
             <div class="tm-row">
               <span class="tm-col-type tm-type-label">{{ typeLabel(row.type) }}</span>
               <span class="tm-col-num tm-active">{{ row.activeCount }}</span>
               <span class="tm-col-num tm-reserved">{{ row.reservedCount }}</span>
               <span class="tm-col-num tm-sold">{{ row.soldCount }}</span>
-              <span class="tm-col-num tm-total">{{ row.totalCount }}</span>
               <div class="tm-col-abs">
                 @if (row.absorptionRate != null) {
                   <div class="tm-abs-bar-wrap">
@@ -1420,6 +1528,20 @@
                   <span class="tm-abs-pct" style="color:#9ca3af">—</span>
                 }
               </div>
+              <span class="tm-col-vel">
+                @if (vel && vel.avgPrix) { {{ formatAmountShort(vel.avgPrix) }} }
+                @else { <span style="color:#9ca3af">—</span> }
+              </span>
+              <span class="tm-col-vel tm-vel-days {{ velocityDaysClass(vel?.avgDaysToClose) }}">
+                @if (vel?.avgDaysToClose != null) {
+                  {{ vel!.avgDaysToClose | number:'1.0-0' }}&nbsp;j
+                  @if (vel!.soldCount > 0) {
+                    <span class="tm-vel-count">({{ vel!.soldCount }} ventes)</span>
+                  }
+                } @else {
+                  <span style="color:#9ca3af">—</span>
+                }
+              </span>
             </div>
           }
           <div class="tm-footer">
@@ -1427,7 +1549,6 @@
             <span class="tm-col-num tm-active">{{ s.biensActifsCount }}</span>
             <span class="tm-col-num tm-reserved">{{ s.biensReservesCount }}</span>
             <span class="tm-col-num tm-sold">{{ s.biensVendusCount }}</span>
-            <span class="tm-col-num tm-total">{{ s.stockCommercialise }}</span>
             <div class="tm-col-abs">
               @if (s.tauxAbsorption != null) {
                 <span class="tm-abs-pct {{ absorptionClass(s.tauxAbsorption) === 'bar-success' ? 'val-green' : absorptionClass(s.tauxAbsorption) === 'bar-warning' ? 'val-amber' : 'val-red' }}">
@@ -1435,9 +1556,14 @@
                 </span>
               }
             </div>
+            <span class="tm-col-vel">{{ formatAmountShort(s.avgTicketLivre) }}</span>
+            <span class="tm-col-vel tm-vel-days">
+              @if (bundle()?.salesIntelligence?.avgDaysToClose != null) {
+                {{ bundle()!.salesIntelligence!.avgDaysToClose | number:'1.0-0' }}&nbsp;j moy.
+              }
+            </span>
           </div>
         </div>
-        <a routerLink="/app/properties" class="section-link" style="margin-top:8px;display:block">Voir le stock →</a>
       </div>
     }
 

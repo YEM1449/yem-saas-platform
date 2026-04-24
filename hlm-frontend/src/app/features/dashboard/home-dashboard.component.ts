@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, InventoryTypeRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, InventoryTypeRow, PipelineStageAgingRow, TypeVelocityRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
 import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
 import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
@@ -385,6 +385,57 @@ export class HomeDashboardComponent implements OnInit {
       const ai = order.indexOf(a.type), bi = order.indexOf(b.type);
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
+  }
+
+  // ── Pipeline stage aging helpers ──────────────────────────────────────────
+
+  agingClass(avgDays: number): string {
+    if (avgDays <= 15) return 'aging-ok';
+    if (avgDays <= 30) return 'aging-warn';
+    return 'aging-bad';
+  }
+
+  stalledClass(stalled: number, total: number): string {
+    if (stalled === 0) return 'stalled-ok';
+    const pct = stalled / total;
+    return pct >= 0.5 ? 'stalled-bad' : 'stalled-warn';
+  }
+
+  pipelineTotalValue(rows: PipelineStageAgingRow[]): number {
+    return rows.reduce((s, r) => s + r.totalValue, 0);
+  }
+
+  pipelineTotalCount(rows: PipelineStageAgingRow[]): number {
+    return rows.reduce((s, r) => s + r.count, 0);
+  }
+
+  pipelineTotalStalled(rows: PipelineStageAgingRow[]): number {
+    return rows.reduce((s, r) => s + r.stalled30dCount, 0);
+  }
+
+  pipelineWeightedAvgDays(rows: PipelineStageAgingRow[]): number {
+    const total = this.pipelineTotalCount(rows);
+    if (!total) return 0;
+    return rows.reduce((s, r) => s + r.avgDays * r.count, 0) / total;
+  }
+
+  /** Cap days at 60 to produce 0-100 bar width percentage */
+  agingBarPct(days: number): number {
+    return Math.min(days / 60, 1) * 100;
+  }
+
+  // ── Type velocity helpers ──────────────────────────────────────────────────
+
+  /** Look up velocity row for a given type key */
+  velocityForType(type: string, rows: TypeVelocityRow[]): TypeVelocityRow | undefined {
+    return rows.find(r => r.type === type);
+  }
+
+  velocityDaysClass(days: number | null | undefined): string {
+    if (days == null) return '';
+    if (days <= 30)  return 'vel-fast';
+    if (days <= 90)  return 'vel-normal';
+    return 'vel-slow';
   }
 
   // ── Decision Tag helpers (Wave 18) ─────────────────────────────────────────
