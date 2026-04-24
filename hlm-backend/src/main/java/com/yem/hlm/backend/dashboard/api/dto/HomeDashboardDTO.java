@@ -145,11 +145,19 @@ public record HomeDashboardDTO(
         /** Up to 10 upcoming tranche deliveries within the next 90 days. */
         List<UpcomingDeliveryRow> upcomingDeliveries,
 
+        // ── Inventory by type (quantitative breakdown) ───────────────────────
+        /** Per-type counts (active/reserved/sold/draft/total) with absorption rate. */
+        List<InventoryTypeRow> inventoryByType,
+
         // ── Trend & project breakdown ─────────────────────────────────────────
         /** Monthly CA signed for the last 6 months (oldest → newest). Empty for AGENT. */
         List<MonthlyTrendPoint> monthlyTrend,
         /** Top 8 projects by total CA signed (all time, non-ANNULE). Empty for AGENT. */
         List<ProjectBreakdownRow> projectBreakdown,
+        /** CA and vente count per tranche (via property.tranche_id). Empty for AGENT. */
+        List<TrancheBreakdownRow> trancheBreakdown,
+        /** CA and vente count per immeuble (via property.immeuble_id). Empty for AGENT. */
+        List<ImmeubleBreakdownRow> immeubleBreakdown,
 
         // ── Widgets ───────────────────────────────────────────────────────────
         /** Up to 5 recent ventes for the widget. */
@@ -208,5 +216,34 @@ public record HomeDashboardDTO(
             long daysUntilDelivery,
             long totalUnits,
             long soldUnits
+    ) {}
+
+    public record InventoryTypeRow(
+            String type,
+            long activeCount,
+            long reservedCount,
+            long soldCount,
+            long draftCount,
+            long totalCount,
+            /** absorptionRate = soldCount / (activeCount + reservedCount + soldCount) × 100; null when 0 */
+            BigDecimal absorptionRate
+    ) {}
+
+    public record TrancheBreakdownRow(
+            String trancheId,
+            String trancheLabel,
+            String projectId,
+            String projectName,
+            BigDecimal totalCA,
+            long ventesCount
+    ) {}
+
+    public record ImmeubleBreakdownRow(
+            String immeubleId,
+            String immeubleNom,
+            String projectId,
+            String projectName,
+            BigDecimal totalCA,
+            long ventesCount
     ) {}
 }

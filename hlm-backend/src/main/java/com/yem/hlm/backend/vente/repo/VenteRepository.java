@@ -681,6 +681,56 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Object[]> avgPricePerSqmByProject(@Param("societeId") UUID societeId);
 
     /**
+     * CA and vente count grouped by tranche (via property.tranche_id).
+     * Rows: [trancheId(text), trancheLabel(String), projectId(text), projectName(String),
+     *        totalCA(BigDecimal), ventesCount(Long)].
+     * Only includes ventes whose property is linked to a tranche.
+     */
+    @Query(value = """
+            SELECT prop.tranche_id::text,
+                   COALESCE(NULLIF(t.nom, ''), 'Tranche ' || t.numero::text) AS tranche_label,
+                   t.project_id::text,
+                   p.name                                                   AS project_name,
+                   COALESCE(SUM(v.prix_vente), 0)                           AS total_ca,
+                   COUNT(v.id)                                              AS ventes_count
+            FROM vente v
+            JOIN property prop ON prop.id = v.property_id
+            JOIN tranche  t    ON t.id    = prop.tranche_id
+            JOIN project  p    ON p.id    = t.project_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND prop.tranche_id IS NOT NULL
+            GROUP BY prop.tranche_id, t.nom, t.numero, t.project_id, p.name
+            ORDER BY p.name ASC, total_ca DESC
+            """, nativeQuery = true)
+    List<Object[]> salesByTranche(@Param("societeId") UUID societeId);
+
+    /**
+     * CA and vente count grouped by immeuble (via property.immeuble_id).
+     * Rows: [immeubleId(text), immeubleNom(String), projectId(text), projectName(String),
+     *        totalCA(BigDecimal), ventesCount(Long)].
+     * Only includes ventes whose property is linked to an immeuble.
+     */
+    @Query(value = """
+            SELECT prop.immeuble_id::text,
+                   i.nom                              AS immeuble_nom,
+                   i.project_id::text,
+                   p.name                             AS project_name,
+                   COALESCE(SUM(v.prix_vente), 0)     AS total_ca,
+                   COUNT(v.id)                        AS ventes_count
+            FROM vente v
+            JOIN property prop ON prop.id = v.property_id
+            JOIN immeuble i    ON i.id    = prop.immeuble_id
+            JOIN project  p    ON p.id    = i.project_id
+            WHERE v.societe_id = :societeId
+              AND v.statut <> 'ANNULE'
+              AND prop.immeuble_id IS NOT NULL
+            GROUP BY prop.immeuble_id, i.nom, i.project_id, p.name
+            ORDER BY p.name ASC, total_ca DESC
+            """, nativeQuery = true)
+    List<Object[]> salesByImmeuble(@Param("societeId") UUID societeId);
+
+    /**
      * Filtered vente list for report export.
      * All parameters except societeId are optional (null = no filter).
      * Uses CAST pattern for nullable LocalDateTime params to avoid PostgreSQL type-inference errors.

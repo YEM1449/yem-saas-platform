@@ -197,6 +197,20 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     long countBySocieteIdAndDeletedAtIsNull(UUID societeId);
 
+    /**
+     * Count of non-deleted properties grouped by (type, status).
+     * Rows: [type(String), status(String), count(Long)].
+     * Used to build per-type absorption KPIs without joining ventes.
+     */
+    @Query("""
+            SELECT p.type, p.status, COUNT(p)
+            FROM Property p
+            WHERE p.societeId = :societeId AND p.deletedAt IS NULL
+            GROUP BY p.type, p.status
+            ORDER BY p.type ASC, p.status ASC
+            """)
+    List<Object[]> inventoryByTypeAndStatus(@Param("societeId") UUID societeId);
+
     @Query("""
             SELECT p.project.id, p.project.name, p.status, COUNT(p), COALESCE(SUM(p.price), 0)
             FROM Property p

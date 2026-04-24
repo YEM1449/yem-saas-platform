@@ -55,9 +55,13 @@ export interface HomeDashboard {
   ventesSigneesMoisCourantCount: number;
   quotaVentesAttainmentMtdPct: number | null;
   upcomingDeliveries: UpcomingDeliveryRow[];
-  // Trend & project breakdown
+  // Inventory by type
+  inventoryByType: InventoryTypeRow[];
+  // Trend & project/tranche/immeuble breakdown
   monthlyTrend: MonthlyTrendPoint[];
   projectBreakdown: ProjectBreakdownRow[];
+  trancheBreakdown: TrancheBreakdownRow[];
+  immeubleBreakdown: ImmeubleBreakdownRow[];
   // Widgets
   recentVentes: RecentVenteRow[];
   urgentTasks: UrgentTaskRow[];
@@ -70,6 +74,34 @@ export interface MonthlyTrendPoint {
 }
 
 export interface ProjectBreakdownRow {
+  projectId: string | null;
+  projectName: string;
+  totalCA: number;
+  ventesCount: number;
+}
+
+export interface InventoryTypeRow {
+  type: string;
+  activeCount: number;
+  reservedCount: number;
+  soldCount: number;
+  draftCount: number;
+  totalCount: number;
+  absorptionRate: number | null;
+}
+
+export interface TrancheBreakdownRow {
+  trancheId: string | null;
+  trancheLabel: string;
+  projectId: string | null;
+  projectName: string;
+  totalCA: number;
+  ventesCount: number;
+}
+
+export interface ImmeubleBreakdownRow {
+  immeubleId: string | null;
+  immeubleNom: string;
   projectId: string | null;
   projectName: string;
   totalCA: number;
