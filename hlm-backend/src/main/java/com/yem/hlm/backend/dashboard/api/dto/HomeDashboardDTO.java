@@ -145,6 +145,10 @@ public record HomeDashboardDTO(
         /** Up to 10 upcoming tranche deliveries within the next 90 days. */
         List<UpcomingDeliveryRow> upcomingDeliveries,
 
+        // ── Inventory by type (quantitative breakdown) ───────────────────────
+        /** Per-type counts (active/reserved/sold/draft/total) with absorption rate. */
+        List<InventoryTypeRow> inventoryByType,
+
         // ── Trend & project breakdown ─────────────────────────────────────────
         /** Monthly CA signed for the last 6 months (oldest → newest). Empty for AGENT. */
         List<MonthlyTrendPoint> monthlyTrend,
@@ -212,6 +216,17 @@ public record HomeDashboardDTO(
             long daysUntilDelivery,
             long totalUnits,
             long soldUnits
+    ) {}
+
+    public record InventoryTypeRow(
+            String type,
+            long activeCount,
+            long reservedCount,
+            long soldCount,
+            long draftCount,
+            long totalCount,
+            /** absorptionRate = soldCount / (activeCount + reservedCount + soldCount) × 100; null when 0 */
+            BigDecimal absorptionRate
     ) {}
 
     public record TrancheBreakdownRow(

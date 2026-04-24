@@ -392,6 +392,63 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
+       SECTION 2.5 — QUANTITATIVE STOCK & ACTIVITY STRIP
+       Count-based KPIs: units, velocity, pipeline depth.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="qkpi-strip">
+
+    <a routerLink="/app/properties" [queryParams]="{status:'ACTIVE'}" class="qkpi-card">
+      <div class="qkpi-value">{{ s.biensActifsCount }}</div>
+      <div class="qkpi-label">Biens disponibles</div>
+      <div class="qkpi-sub">unités actives à vendre</div>
+    </a>
+
+    <a routerLink="/app/properties" [queryParams]="{status:'RESERVED'}" class="qkpi-card">
+      <div class="qkpi-value">{{ s.biensReservesCount }}</div>
+      <div class="qkpi-label">Biens réservés</div>
+      <div class="qkpi-sub">en cours de confirmation</div>
+    </a>
+
+    <a routerLink="/app/properties" [queryParams]="{status:'SOLD'}" class="qkpi-card qkpi-sold">
+      <div class="qkpi-value">{{ s.biensVendusCount }}</div>
+      <div class="qkpi-label">Biens vendus</div>
+      <div class="qkpi-sub">
+        @if (s.tauxAbsorption != null) {
+          {{ s.tauxAbsorption | number:'1.0-1' }}% du stock commercialisé
+        } @else {
+          sur {{ s.stockCommercialise }} commercialisés
+        }
+      </div>
+    </a>
+
+    <a routerLink="/app/ventes" class="qkpi-card">
+      <div class="qkpi-value">{{ s.ventesSigneesMoisCourantCount }}</div>
+      <div class="qkpi-label">Ventes signées ce mois</div>
+      <div class="qkpi-sub">
+        {{ s.salesVelocityPerWeek | number:'1.1-1' }} / semaine (4 sem.)
+      </div>
+    </a>
+
+    <a routerLink="/app/ventes" class="qkpi-card">
+      <div class="qkpi-value">{{ s.activeVentesCount }}</div>
+      <div class="qkpi-label">Ventes en cours</div>
+      <div class="qkpi-sub">pipeline actif (non finalisées)</div>
+    </a>
+
+    @if (s.monthsOfSupply != null) {
+      <a routerLink="/app/properties" class="qkpi-card"
+         [class.qkpi-good]="isSupplyHealthy(s.monthsOfSupply)"
+         [class.qkpi-warn]="isSupplyElevated(s.monthsOfSupply)"
+         [class.qkpi-bad]="isSupplyCritical(s.monthsOfSupply)">
+        <div class="qkpi-value">{{ s.monthsOfSupply | number:'1.1-1' }}<span class="qkpi-unit">mois</span></div>
+        <div class="qkpi-label">Stock restant</div>
+        <div class="qkpi-sub">au rythme actuel des ventes</div>
+      </a>
+    }
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
        SECTION 3 — FINANCIAL PULSE (admin/manager only)
        ════════════════════════════════════════════════════════════ -->
   @if (isAdminOrManager) {
@@ -1326,6 +1383,63 @@
        PROJETS & TENDANCES TAB
        ════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'projets' && isAdminOrManager) {
+
+    <!-- ── Stock par type de bien ──────────────────────────────────────── -->
+    @if (s.inventoryByType.length > 0) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Stock par type de bien</span>
+          <span class="section-sublabel">Unités actives · réservées · vendues · taux d'absorption par type</span>
+        </div>
+        <div class="type-matrix">
+          <div class="type-matrix-head">
+            <span class="tm-col-type">Type</span>
+            <span class="tm-col-num">Actifs</span>
+            <span class="tm-col-num">Réservés</span>
+            <span class="tm-col-num">Vendus</span>
+            <span class="tm-col-num">Total</span>
+            <span class="tm-col-abs">Absorption</span>
+          </div>
+          @for (row of sortedInventoryTypes(s.inventoryByType); track row.type) {
+            <div class="tm-row">
+              <span class="tm-col-type tm-type-label">{{ typeLabel(row.type) }}</span>
+              <span class="tm-col-num tm-active">{{ row.activeCount }}</span>
+              <span class="tm-col-num tm-reserved">{{ row.reservedCount }}</span>
+              <span class="tm-col-num tm-sold">{{ row.soldCount }}</span>
+              <span class="tm-col-num tm-total">{{ row.totalCount }}</span>
+              <div class="tm-col-abs">
+                @if (row.absorptionRate != null) {
+                  <div class="tm-abs-bar-wrap">
+                    <div class="tm-abs-bar {{ typeAbsorptionClass(row.absorptionRate) }}"
+                         [style.width]="typeAbsorptionWidth(row)"></div>
+                  </div>
+                  <span class="tm-abs-pct {{ typeAbsorptionClass(row.absorptionRate) === 'bar-success' ? 'val-green' : typeAbsorptionClass(row.absorptionRate) === 'bar-warning' ? 'val-amber' : 'val-red' }}">
+                    {{ row.absorptionRate | number:'1.0-1' }}%
+                  </span>
+                } @else {
+                  <span class="tm-abs-pct" style="color:#9ca3af">—</span>
+                }
+              </div>
+            </div>
+          }
+          <div class="tm-footer">
+            <span class="tm-col-type">Total catalogue</span>
+            <span class="tm-col-num tm-active">{{ s.biensActifsCount }}</span>
+            <span class="tm-col-num tm-reserved">{{ s.biensReservesCount }}</span>
+            <span class="tm-col-num tm-sold">{{ s.biensVendusCount }}</span>
+            <span class="tm-col-num tm-total">{{ s.stockCommercialise }}</span>
+            <div class="tm-col-abs">
+              @if (s.tauxAbsorption != null) {
+                <span class="tm-abs-pct {{ absorptionClass(s.tauxAbsorption) === 'bar-success' ? 'val-green' : absorptionClass(s.tauxAbsorption) === 'bar-warning' ? 'val-amber' : 'val-red' }}">
+                  {{ s.tauxAbsorption | number:'1.0-1' }}%
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+        <a routerLink="/app/properties" class="section-link" style="margin-top:8px;display:block">Voir le stock →</a>
+      </div>
+    }
 
     <!-- Inventory intelligence section -->
     @if (salesIntelData()) {

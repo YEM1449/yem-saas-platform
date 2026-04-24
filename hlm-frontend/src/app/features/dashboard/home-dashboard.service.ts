@@ -55,6 +55,8 @@ export interface HomeDashboard {
   ventesSigneesMoisCourantCount: number;
   quotaVentesAttainmentMtdPct: number | null;
   upcomingDeliveries: UpcomingDeliveryRow[];
+  // Inventory by type
+  inventoryByType: InventoryTypeRow[];
   // Trend & project/tranche/immeuble breakdown
   monthlyTrend: MonthlyTrendPoint[];
   projectBreakdown: ProjectBreakdownRow[];
@@ -76,6 +78,16 @@ export interface ProjectBreakdownRow {
   projectName: string;
   totalCA: number;
   ventesCount: number;
+}
+
+export interface InventoryTypeRow {
+  type: string;
+  activeCount: number;
+  reservedCount: number;
+  soldCount: number;
+  draftCount: number;
+  totalCount: number;
+  absorptionRate: number | null;
 }
 
 export interface TrancheBreakdownRow {

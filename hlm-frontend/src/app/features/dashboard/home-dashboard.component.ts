@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, InventoryTypeRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
 import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
 import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
@@ -352,6 +352,39 @@ export class HomeDashboardComponent implements OnInit {
       map.get(r.projectName)!.push(r);
     }
     return Array.from(map.entries()).map(([projectName, items]) => ({ projectName, items }));
+  }
+
+  // ── Inventory-by-type helpers ──────────────────────────────────────────────
+
+  private static readonly TYPE_LABELS: Record<string, string> = {
+    APPARTEMENT: 'Appartement', VILLA: 'Villa', DUPLEX: 'Duplex',
+    STUDIO: 'Studio', T2: 'T2', T3: 'T3',
+    COMMERCE: 'Commerce', LOT: 'Lot', TERRAIN_VIERGE: 'Terrain vierge', PARKING: 'Parking',
+  };
+
+  typeLabel(type: string): string {
+    return HomeDashboardComponent.TYPE_LABELS[type] ?? type;
+  }
+
+  typeAbsorptionWidth(row: InventoryTypeRow): string {
+    if (!row.absorptionRate) return '0%';
+    return Math.min(row.absorptionRate, 100) + '%';
+  }
+
+  typeAbsorptionClass(rate: number | null): string {
+    if (rate == null) return '';
+    if (rate >= 70) return 'bar-success';
+    if (rate >= 40) return 'bar-warning';
+    return 'bar-danger';
+  }
+
+  /** Sort types: residential first, then commercial/land/parking */
+  sortedInventoryTypes(rows: InventoryTypeRow[]): InventoryTypeRow[] {
+    const order = ['APPARTEMENT','T2','T3','STUDIO','VILLA','DUPLEX','COMMERCE','LOT','TERRAIN_VIERGE','PARKING'];
+    return [...rows].sort((a, b) => {
+      const ai = order.indexOf(a.type), bi = order.indexOf(b.type);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
   }
 
   // ── Decision Tag helpers (Wave 18) ─────────────────────────────────────────

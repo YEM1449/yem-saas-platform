@@ -133,6 +133,33 @@ public class HomeDashboardService {
                     .setScale(1, RoundingMode.HALF_UP);
         }
 
+        // ── 2b. Inventory by type (quantitative breakdown) ───────────────────
+        // Aggregate (type, status, count) rows into per-type InventoryTypeRow objects.
+        Map<String, Map<String, Long>> typeStatusMap = new java.util.LinkedHashMap<>();
+        for (Object[] r : propertyRepo.inventoryByTypeAndStatus(societeId)) {
+            String type   = r[0].toString();
+            String status = r[1].toString();
+            long   count  = toLong(r[2]);
+            typeStatusMap.computeIfAbsent(type, k -> new java.util.LinkedHashMap<>())
+                         .put(status, count);
+        }
+        List<HomeDashboardDTO.InventoryTypeRow> inventoryByType = typeStatusMap.entrySet().stream()
+                .map(e -> {
+                    Map<String, Long> sm = e.getValue();
+                    long active   = sm.getOrDefault("ACTIVE",   0L);
+                    long reserved = sm.getOrDefault("RESERVED", 0L);
+                    long sold     = sm.getOrDefault("SOLD",     0L);
+                    long draft    = sm.getOrDefault("DRAFT",    0L);
+                    long total    = active + reserved + sold + draft;
+                    long denom    = active + reserved + sold;
+                    BigDecimal absRate = denom > 0
+                            ? BigDecimal.valueOf(sold).divide(BigDecimal.valueOf(denom), 4, RoundingMode.HALF_UP)
+                                    .multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP)
+                            : null;
+                    return new HomeDashboardDTO.InventoryTypeRow(e.getKey(), active, reserved, sold, draft, total, absRate);
+                })
+                .toList();
+
         // ── 3. CA mensuel (trend) + CA Livré + Ventes stallées ───────────────
         YearMonth currentMonth  = YearMonth.from(now.toLocalDate());
         YearMonth previousMonth = currentMonth.minusMonths(1);
@@ -494,6 +521,7 @@ public class HomeDashboardService {
                 caMensuelCible, ventesMensuelCible, quotaAttainmentMtd,
                 ventesSigneesMoisCourantCount, quotaVentesAttainmentMtd,
                 upcomingDeliveries,
+                inventoryByType,
                 monthlyTrend, projectBreakdown, trancheBreakdown, immeubleBreakdown,
                 recentVentes, urgentTasks
         );
