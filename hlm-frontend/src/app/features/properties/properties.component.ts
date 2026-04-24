@@ -76,7 +76,11 @@ export class PropertiesComponent implements OnInit {
   submitError = '';
 
   // ── View mode ───────────────────────────────────────────────────────────
-  viewMode: 'cards' | 'list' = 'cards';
+  viewMode: 'cards' | 'list' | 'building' = 'cards';
+
+  // ── Building stack state ─────────────────────────────────────────────────
+  stackImmeubleId: string | null = null;
+  stackSelectedId: string | null = null;
 
   // ── Multi-select ────────────────────────────────────────────────────────
   selectedIds   = new Set<string>();
@@ -164,11 +168,68 @@ export class PropertiesComponent implements OnInit {
   }
 
   // ── View toggle ──────────────────────────────────────────────────────────
-  setView(mode: 'cards' | 'list'): void {
+  setView(mode: 'cards' | 'list' | 'building'): void {
     this.viewMode = mode;
     localStorage.setItem('properties_view_mode', mode);
     this.selectedIds.clear();
+    if (mode === 'building' && !this.stackImmeubleId && this.immeubles.length > 0) {
+      this.stackImmeubleId = this.immeubles[0].id;
+    }
   }
+
+  // ── Building stack helpers ───────────────────────────────────────────────
+  get stackImmeuble(): Immeuble | null {
+    if (!this.stackImmeubleId) return null;
+    return this.immeubles.find(i => i.id === this.stackImmeubleId) ?? null;
+  }
+
+  get stackProperties(): Property[] {
+    if (!this.stackImmeubleId) return [];
+    return this.properties.filter(p => p.immeubleId === this.stackImmeubleId);
+  }
+
+  get stackFloors(): { floor: number; label: string; units: Property[] }[] {
+    const units = this.stackProperties;
+    if (!units.length) return [];
+    const map = new Map<number, Property[]>();
+    for (const p of units) {
+      const f = p.floorNumber ?? 0;
+      if (!map.has(f)) map.set(f, []);
+      map.get(f)!.push(p);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b - a)
+      .map(([floor, us]) => ({
+        floor,
+        label: floor === 0 ? 'RDC' : `Ét. ${floor}`,
+        units: [...us].sort((a, b) => a.referenceCode.localeCompare(b.referenceCode)),
+      }));
+  }
+
+  get stackSelectedProp(): Property | null {
+    if (!this.stackSelectedId) return null;
+    return this.properties.find(p => p.id === this.stackSelectedId) ?? null;
+  }
+
+  stackCountForBuilding(immId: string): number {
+    return this.properties.filter(p => p.immeubleId === immId).length;
+  }
+
+  stackAvailableCount(immId: string): number {
+    return this.properties.filter(p => p.immeubleId === immId && p.status === 'ACTIVE').length;
+  }
+
+  selectStackBuilding(id: string): void {
+    this.stackImmeubleId = id;
+    this.stackSelectedId = null;
+  }
+
+  selectStackTile(p: Property, event: Event): void {
+    event.stopPropagation();
+    this.stackSelectedId = this.stackSelectedId === p.id ? null : p.id;
+  }
+
+  closeStackDetail(): void { this.stackSelectedId = null; }
 
   // ── Bulk action ──────────────────────────────────────────────────────────
   bulkAction(status: string): void {
@@ -193,7 +254,7 @@ export class PropertiesComponent implements OnInit {
 
   ngOnInit(): void {
     const saved = localStorage.getItem('properties_view_mode');
-    if (saved === 'list' || saved === 'cards') this.viewMode = saved;
+    if (saved === 'list' || saved === 'cards' || saved === 'building') this.viewMode = saved;
     this.route.queryParamMap.pipe(take(1)).subscribe(params => {
       const status    = params.get('status');
       const projectId = params.get('projectId');
@@ -236,9 +297,16 @@ export class PropertiesComponent implements OnInit {
 
   onFilterProjectChange(): void {
     this.filterImmeubleId = '';
+    this.stackImmeubleId = null;
+    this.stackSelectedId = null;
     if (this.filterProjectId) {
       this.immeubleSvc.list(this.filterProjectId).subscribe({
-        next: (data) => this.immeubles = data,
+        next: (data) => {
+          this.immeubles = data;
+          if (this.viewMode === 'building' && data.length > 0) {
+            this.stackImmeubleId = data[0].id;
+          }
+        },
         error: () => this.immeubles = [],
       });
     } else {
