@@ -2,6 +2,217 @@
    HOME DASHBOARD — Tableau de bord consultant immobilier
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Hero "Month at a Glance" Card ──────────────────────────────────────── */
+.hero-month-card {
+  position: relative;
+  background: var(--paper, #fdfbf5);
+  border: 1px solid var(--line, #e8dec5);
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+}
+
+.hero-month-deco {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  color: var(--brand, #16a34a);
+  opacity: .05;
+  pointer-events: none;
+}
+
+.hero-month-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  position: relative;
+}
+
+.hero-month-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-3, #9a8e77);
+  margin-bottom: 10px;
+}
+
+/* Left column */
+.hero-month-ca {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-month-value {
+  font-size: 3.25rem;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  color: var(--ink, #2d241a);
+  line-height: 1;
+}
+.hero-month-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-3, #9a8e77);
+  letter-spacing: .02em;
+}
+
+/* Progress bar */
+.hero-month-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.hero-month-track {
+  flex: 1;
+  height: 8px;
+  background: var(--line, #e8dec5);
+  border-radius: 9999px;
+  overflow: visible;
+  position: relative;
+}
+.hero-month-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand, #16a34a), var(--brand-l, #4ade80));
+  border-radius: 9999px;
+  transition: width 600ms ease;
+  max-width: 100%;
+}
+.hero-month-target-tick {
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--ink-3, #9a8e77);
+  opacity: .4;
+  border-radius: 1px;
+}
+.hero-month-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2, #5a4e3d);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Trend meta */
+.hero-month-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--ink-2, #5a4e3d);
+  flex-wrap: wrap;
+}
+.hero-trend-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.hero-trend-up   { background: var(--brand-tint, #e8f6ec); color: var(--brand-d, #15803d); }
+.hero-trend-down { background: var(--accent-tint, #fbeade); color: var(--accent, #c2410c); }
+.hero-month-dot  { color: var(--ink-3, #9a8e77); }
+.hero-month-vs,
+.hero-month-meta-txt { color: var(--ink-2, #5a4e3d); }
+
+/* Right column — pipeline stage flow */
+.hero-stage-bar {
+  display: flex;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--line, #e8dec5);
+  border: 1px solid var(--line, #e8dec5);
+}
+.hero-stage-seg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-right: 1px solid rgba(0,0,0,.08);
+  transition: flex 400ms ease;
+  min-width: 0;
+  overflow: hidden;
+}
+.hero-stage-seg:last-child { border-right: none; }
+.hero-stage-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0,0,0,.1);
+}
+.hero-stage-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  opacity: .9;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+/* Legend row */
+.hero-stage-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.hero-stage-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 80px;
+}
+.hero-stage-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.hero-stage-leg-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-3, #9a8e77);
+}
+.hero-stage-leg-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2, #5a4e3d);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.hero-stage-empty {
+  font-size: 13px;
+  color: var(--ink-3, #9a8e77);
+  padding: 20px 0;
+}
+
+@media (max-width: 860px) {
+  .hero-month-grid { grid-template-columns: 1fr; gap: 20px; }
+  .hero-month-value { font-size: 2.5rem; }
+  .hero-month-card { padding: 20px; }
+}
+
 /* ── Cockpit (Wave A) ────────────────────────────────────────────────────── */
 .cockpit-alerts { display: block; margin-bottom: 18px; }
 .cockpit-funnel-row { margin-top: 18px; }
