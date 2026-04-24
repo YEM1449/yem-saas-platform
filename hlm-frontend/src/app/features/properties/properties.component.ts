@@ -12,6 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ProjectService } from '../projects/project.service';
 import { Project } from '../../core/models/project.model';
 import { ImmeubleService, Immeuble } from '../immeubles/immeuble.service';
+import { HlmCardComponent } from '../../core/components/hlm-card.component';
 
 interface CreatePropertyForm {
   projectId: string;
@@ -41,7 +42,7 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, TranslateModule, DecimalPipe, HlmCardComponent],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })

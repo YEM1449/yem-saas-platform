@@ -1,8 +1,31 @@
 /* ================================================================
    Shell — Sidebar + Content layout
+   Responsive: sidebar on md+ (≥960px), bottom nav on xs/sm (<960px)
    ================================================================ */
 
-/* Full-height flex container */
+/* ── Impersonation Banner ─────────────────────────────────────── */
+.impersonation-banner {
+  background: #e74c3c;
+  color: #fff;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+}
+.impersonation-btn {
+  margin-left: 16px;
+  background: #fff;
+  color: #e74c3c;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ── Full-height flex container ───────────────────────────────── */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -13,7 +36,7 @@
 .sidebar {
   width: 232px;
   flex-shrink: 0;
-  background: #0f172a;       /* dark navy */
+  background: #0f172a;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -21,7 +44,6 @@
   border-right: 1px solid rgba(255,255,255,.06);
 }
 
-/* Brand */
 .sidebar-logo {
   max-height: 36px;
   max-width: 160px;
@@ -44,6 +66,24 @@
   letter-spacing: -0.02em;
 }
 
+/* Mobile close button — hidden on desktop, shown on mobile */
+.sidebar-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-radius: 6px;
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+}
+.sidebar-close-btn:hover { background: rgba(255,255,255,.14); }
+
 /* Nav scroll area */
 .sidebar-nav {
   flex: 1;
@@ -56,21 +96,6 @@
 .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
 
-/* Section labels (legacy span.nav-section kept for compatibility) */
-.nav-section {
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.28);
-  padding: 14px 12px 4px;
-  display: block;
-  flex-shrink: 0;
-}
-/* First section label — less top padding */
-.nav-section:first-child { padding-top: 4px; }
-
-/* Section divider labels used in new nav structure */
 .nav-section-label {
   font-size: 0.625rem;
   font-weight: 600;
@@ -94,11 +119,11 @@
   font-weight: 500;
   color: rgba(255,255,255,.55);
   text-decoration: none;
-  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  transition: background 140ms ease, color 140ms ease;
   margin-bottom: 1px;
   flex-shrink: 0;
-  /* Signature left-accent on active (overridden below) */
   border-left: 2px solid transparent;
+  min-height: var(--touch-min, 44px);
 }
 .nav-item:hover {
   background: rgba(255,255,255,.07);
@@ -106,14 +131,14 @@
   text-decoration: none;
 }
 .nav-item:focus-visible {
-  outline: 2px solid rgba(96,165,250,.7);
+  outline: 2px solid var(--color-accent, #F57F17);
   outline-offset: 1px;
 }
 .nav-item.nav-active {
   background: rgba(37,99,235,.3);
   color: #fff;
-  border-left-color: #60a5fa;  /* signature accent — the one visual motif */
-  padding-left: 10px;           /* compensate for the 2px border */
+  border-left-color: #60a5fa;
+  padding-left: 10px;
 }
 
 .nav-icon {
@@ -181,7 +206,7 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-  min-height: 36px;   /* accessible touch target */
+  min-height: var(--touch-min, 44px);
   padding: 7px 12px;
   background: transparent;
   border: 1px solid rgba(255,255,255,.1);
@@ -200,7 +225,7 @@
   border-color: rgba(255,255,255,.18);
 }
 .logout-btn:focus-visible {
-  outline: 2px solid rgba(96,165,250,.7);
+  outline: 2px solid var(--color-accent, #F57F17);
   outline-offset: 1px;
 }
 
@@ -215,3 +240,186 @@
 .main-content::-webkit-scrollbar-track { background: transparent; }
 .main-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 .main-content::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── Mobile Top App Bar ───────────────────────────────────────── */
+.mobile-topbar {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height, 56px);
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  z-index: var(--z-sticky, 200);
+}
+
+.hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min, 44px);
+  height: var(--touch-min, 44px);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.75);
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.hamburger-btn:hover { background: rgba(255,255,255,.08); }
+.hamburger-btn:focus-visible {
+  outline: 2px solid var(--color-accent, #F57F17);
+  outline-offset: 1px;
+}
+
+.mobile-brand {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  min-width: 0;
+}
+.mobile-logo {
+  max-height: 28px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+.mobile-avatar {
+  width: 32px;
+  height: 32px;
+  background: rgba(37,99,235,.65);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ── Sidebar Backdrop ─────────────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+  z-index: calc(var(--z-overlay, 300) - 1);
+}
+
+/* ── Bottom Nav ───────────────────────────────────────────────── */
+.bottom-nav {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--nav-height, 56px) + var(--safe-bottom, 0px));
+  padding-bottom: var(--safe-bottom, 0px);
+  background: #0f172a;
+  border-top: 1px solid rgba(255,255,255,.1);
+  z-index: var(--z-sticky, 200);
+  align-items: stretch;
+}
+
+.bnav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--touch-min, 44px);
+  padding: 6px 4px 4px;
+  color: rgba(255,255,255,.4);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  transition: color 140ms ease;
+}
+.bnav-item:hover { color: rgba(255,255,255,.75); }
+.bnav-item:focus-visible {
+  outline: 2px solid var(--color-accent, #F57F17);
+  outline-offset: -2px;
+}
+.bnav-item.bnav-active { color: #93c5fd; }
+.bnav-item svg { opacity: .55; transition: opacity 140ms ease; }
+.bnav-item:hover svg,
+.bnav-item.bnav-active svg { opacity: 1; }
+
+/* ── Mobile Breakpoint (<960px) ───────────────────────────────── */
+@media (max-width: 959px) {
+  /* Show mobile UI elements */
+  .mobile-topbar  { display: flex; }
+  .bottom-nav     { display: flex; }
+  .sidebar-close-btn { display: flex; }
+  .sidebar-backdrop { display: block; }
+
+  /* Push layout below the fixed top bar */
+  .app-layout {
+    height: calc(100vh - var(--nav-height, 56px));
+    margin-top: var(--nav-height, 56px);
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: var(--nav-height, 56px);
+    left: 0;
+    bottom: 0;
+    height: auto;
+    width: 280px;
+    z-index: var(--z-overlay, 300);
+    transform: translateX(-100%);
+    transition: transform 260ms cubic-bezier(.4,0,.2,1);
+  }
+
+  .sidebar-mobile-open .sidebar {
+    transform: translateX(0);
+  }
+
+  /* More padding so content clears the bottom nav */
+  .main-content {
+    padding: 16px;
+    padding-bottom: calc(var(--nav-height, 56px) + var(--safe-bottom, 0px) + 16px);
+  }
+}
+
+/* ── Desktop (≥960px) — enforce sidebar-only mode ────────────── */
+@media (min-width: 960px) {
+  .mobile-topbar  { display: none !important; }
+  .bottom-nav     { display: none !important; }
+  .sidebar-backdrop { display: none !important; }
+  .sidebar-close-btn { display: none !important; }
+
+  /* Restore desktop layout dimensions */
+  .app-layout {
+    height: 100vh;
+    margin-top: 0;
+  }
+  .sidebar {
+    position: static;
+    transform: none !important;
+    width: 232px;
+    height: 100vh;
+  }
+  .main-content {
+    padding: 28px 32px;
+    padding-bottom: 28px;
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { KeepAliveService } from '../../core/keep-alive.service';
@@ -23,6 +23,8 @@ export class ShellComponent implements OnInit, OnDestroy {
   private societeSvc = inject(SocieteService);
   private polling = inject(NotificationPollingService);
 
+  sidebarOpen = false;
+
   ngOnInit(): void {
     this.keepAlive.start();
     this.polling.start();
@@ -32,6 +34,14 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.keepAlive.stop();
     this.polling.stop();
   }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth >= 960) this.sidebarOpen = false;
+  }
+
+  toggleSidebar(): void { this.sidebarOpen = !this.sidebarOpen; }
+  closeSidebar(): void  { this.sidebarOpen = false; }
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';

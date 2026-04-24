@@ -83,56 +83,104 @@
 }
 
 @if (!loading() && filtered.length > 0) {
-  <div class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Référence</th>
-          <th>Acquéreur</th>
-          <th>Statut</th>
-          <th>Contrat</th>
-          <th>Prix de vente</th>
-          <th>Date compromis</th>
-          <th>Créée le</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (v of filtered; track v.id) {
+
+  <!-- ── Desktop table view (≥960px) ─────────────────────────── -->
+  <div class="pipeline-table-view">
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
           <tr>
-            <td>
-              <span class="ref-badge">{{ v.venteRef }}</span>
-            </td>
-            <td>
-              <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
-                {{ v.contactFullName || '—' }}
-              </a>
-            </td>
-            <td>
-              <span class="badge" [class]="statutClass(v.statut)"
-                    [title]="STATUT_DESC[v.statut]">{{ statutLabel(v.statut) }}</span>
-            </td>
-            <td>
-              <span class="badge" [class]="contractStatusClass(v.contractStatus)"
-                    [title]="contractStatusLabel(v.contractStatus)">
-                {{ contractStatusLabel(v.contractStatus) }}
-              </span>
-            </td>
-            <td class="td-num">
-              {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}
-            </td>
-            <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
-            <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">
-                Détail
-              </a>
-            </td>
+            <th>Référence</th>
+            <th>Acquéreur</th>
+            <th>Statut</th>
+            <th>Contrat</th>
+            <th>Prix de vente</th>
+            <th>Date compromis</th>
+            <th>Créée le</th>
+            <th></th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (v of filtered; track v.id) {
+            <tr>
+              <td>
+                <span class="ref-badge">{{ v.venteRef }}</span>
+              </td>
+              <td>
+                <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
+                  {{ v.contactFullName || '—' }}
+                </a>
+              </td>
+              <td>
+                <span class="badge" [class]="statutClass(v.statut)"
+                      [title]="STATUT_DESC[v.statut]">{{ statutLabel(v.statut) }}</span>
+              </td>
+              <td>
+                <span class="badge" [class]="contractStatusClass(v.contractStatus)"
+                      [title]="contractStatusLabel(v.contractStatus)">
+                  {{ contractStatusLabel(v.contractStatus) }}
+                </span>
+              </td>
+              <td class="td-num">
+                {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}
+              </td>
+              <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
+              <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">
+                  Détail
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
+
+  <!-- ── Mobile accordion view (<960px) ───────────────────────── -->
+  <div class="pipeline-accordion">
+    @for (group of groupedByStatut; track group.statut) {
+      <div class="acc-group">
+        <button class="acc-header"
+                (click)="toggleAccordion(group.statut)"
+                [attr.aria-expanded]="openStatuts.has(group.statut)">
+          <span class="badge" [class]="statutClass(group.statut)">
+            {{ statutLabel(group.statut) }}
+          </span>
+          <span class="acc-count">{{ group.items.length }}</span>
+          <svg class="acc-chevron" [class.acc-chevron--open]="openStatuts.has(group.statut)"
+               width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        @if (openStatuts.has(group.statut)) {
+          <div class="acc-body">
+            @for (v of group.items; track v.id) {
+              <a class="pipeline-card" [routerLink]="['/app/ventes', v.id]">
+                <div class="pipeline-card-top">
+                  <span class="ref-badge">{{ v.venteRef }}</span>
+                  <span class="pipeline-card-price">
+                    {{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}
+                  </span>
+                </div>
+                <div class="pipeline-card-name">{{ v.contactFullName || '—' }}</div>
+                <div class="pipeline-card-meta">
+                  <span class="badge" [class]="contractStatusClass(v.contractStatus)">
+                    {{ contractStatusLabel(v.contractStatus) }}
+                  </span>
+                  <span class="pipeline-card-date">{{ v.createdAt | date:'dd/MM/yy' }}</span>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
 }
 
 <!-- ── Create vente dialog ─────────────────────────────────────────────── -->

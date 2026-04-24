@@ -223,8 +223,10 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
 @if (!loading && filtered.length > 0 && viewMode === 'cards') {
   <div class="property-grid">
     @for (p of filtered; track p.id) {
-      <div class="property-card" [class.property-card--selected]="isSelected(p.id)"
-           (click)="goToDetail(p.id)">
+      <hlm-card class="property-card"
+                [clickable]="true"
+                [selected]="isSelected(p.id)"
+                (click)="goToDetail(p.id)">
 
         <!-- Checkbox overlay (top-left) -->
         @if (canCreate) {
@@ -302,7 +304,7 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
           </svg>
         </div>
 
-      </div>
+      </hlm-card>
     }
   </div>
 }

@@ -83,11 +83,9 @@
   margin-bottom: 16px;
 }
 
-@media (max-width: 1100px) {
+/* 2col on all mobile (xs + sm); 4col restored at md */
+@media (max-width: 959px) {
   .hero-row { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 640px) {
-  .hero-row { grid-template-columns: 1fr; }
 }
 
 .hero-card {
@@ -1204,3 +1202,21 @@
 .vel-fast{color:#059669;font-weight:700}
 .vel-normal{color:#2563eb;font-weight:600}
 .vel-slow{color:#d97706;font-weight:600}
+
+/* ── Mobile dashboard responsive overrides ───────────────────── */
+@media (max-width: 959px) {
+  /* Tab nav: horizontally scrollable strip on mobile */
+  .db-tab-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .db-tab-nav::-webkit-scrollbar { display: none; }
+
+  /* Reduce header font on small screens */
+  .db-title { font-size: 1.25rem; }
+
+  /* skeleton-grid: 2col on mobile to match hero-row */
+  .skeleton-grid { grid-template-columns: repeat(2, 1fr); }
+}
