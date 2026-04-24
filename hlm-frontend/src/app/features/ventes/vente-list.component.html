@@ -180,7 +180,7 @@
   </div>
 }
 
-@if (!loading() && filtered.length > 0) {
+@if (!loading() && filtered.length > 0 && viewMode === 'table') {
 
   <!-- ── Desktop table view (≥960px) ─────────────────────────── -->
   <div class="pipeline-table-view">

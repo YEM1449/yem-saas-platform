@@ -45,7 +45,7 @@
   align-items: center;
   padding: 14px 0;
   height: 100vh;
-  overflow: hidden;
+  overflow: visible;
   z-index: 10;
 }
 
@@ -90,7 +90,7 @@
   align-items: center;
   gap: 2px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   padding: 0 0 8px;
   width: 100%;
 }
