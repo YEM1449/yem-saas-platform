@@ -183,6 +183,44 @@
   /* ── Touch Target ──────────────────────────────────────────── */
   --touch-target: 44px;    /* WCAG 2.5.5 minimum */
 
+  /* ── Warm Sand Palette (Moroccan-inspired UI Kit) ──────────── */
+  --sand:          #faf6ec;   /* page background */
+  --paper:         #fdfbf5;   /* card / surface */
+  --line:          #e8dec5;   /* border */
+  --ink:           #2d241a;   /* primary text — espresso */
+  --ink-2:         #5a4e3d;   /* secondary text */
+  --ink-3:         #9a8e77;   /* muted text */
+
+  /* Brand green */
+  --brand:         #16a34a;
+  --brand-d:       #15803d;
+  --brand-l:       #4ade80;
+  --brand-tint:    #e8f6ec;
+  --brand-bd:      #bde0c7;
+
+  /* Terracotta accent — RÉSERVÉ / contrast CTAs */
+  --accent:        #c2410c;
+  --accent-d:      #9a3412;
+  --accent-tint:   #fbeade;
+  --accent-bd:     #f2c9a6;
+
+  /* Warm semantic */
+  --warn:          #b45309;
+  --warn-bg:       #fef6e7;
+  --warn-bd:       #f3d7a0;
+  --info:          #0e7490;
+  --info-bg:       #e6f5f8;
+  --info-bd:       #b6dde6;
+
+  /* Pipeline stage palette */
+  --stage-res:     #c2410c;
+  --stage-com:     #a16207;
+  --stage-act:     #15803d;
+  --stage-liv:     #1d4ed8;
+
+  /* Rail */
+  --rail-active:   #e8f6ec;
+
   /* ── Mobile Design System v3 — Brand & Layout ─────────────── */
   /* Vert Promoteur brand tokens (used by new components; legacy --c-* untouched) */
   --color-primary:    #1B5E20;

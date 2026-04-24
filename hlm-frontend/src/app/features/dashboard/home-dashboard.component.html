@@ -49,6 +49,91 @@
 @if (snap(); as s) {
 
   <!-- ════════════════════════════════════════════════════════════
+       HERO — Month at a Glance
+       ════════════════════════════════════════════════════════════ -->
+  <div class="hero-month-card">
+    <!-- Decorative zellige SVG -->
+    <svg class="hero-month-deco" viewBox="0 0 100 100" fill="none"
+         stroke="currentColor" stroke-width=".8" aria-hidden="true">
+      <path d="M50 5l15 15-15 15-15-15zM50 65l15 15-15 15-15-15z
+               M5 50l15-15 15 15-15 15zM65 50l15-15 15 15-15 15z"/>
+      <circle cx="50" cy="50" r="10"/>
+      <path d="M50 20v20M50 60v20M20 50h20M60 50h20"/>
+    </svg>
+
+    <div class="hero-month-grid">
+      <!-- Left: CA number + progress -->
+      <div class="hero-month-left">
+        <div class="hero-month-eyebrow">
+          Chiffre d'affaires · {{ currentMonthLabel() }}
+        </div>
+        <div class="hero-month-ca">
+          <span class="hero-month-value">{{ formatAmountShort(s.caSigneMoisCourant) }}</span>
+          <span class="hero-month-unit">MAD</span>
+        </div>
+        @if (s.caMensuelCible && s.caMensuelCible > 0) {
+          <div class="hero-month-progress-row">
+            <div class="hero-month-track">
+              <div class="hero-month-fill"
+                   [style.width]="quotaProgressPct(s) + '%'"></div>
+              <div class="hero-month-target-tick"></div>
+            </div>
+            <span class="hero-month-pct">
+              {{ quotaProgressPct(s) }}% de {{ formatAmountShort(s.caMensuelCible) }}
+            </span>
+          </div>
+        }
+        <div class="hero-month-meta">
+          @if (moisTrend(s.caSigneMoisCourant, s.caSigneMoisPrecedent); as t) {
+            <span class="hero-trend-pill" [class.hero-trend-up]="t >= 0"
+                  [class.hero-trend-down]="t < 0">
+              {{ t >= 0 ? '↑' : '↓' }} {{ t < 0 ? -t : t }}%
+            </span>
+            <span class="hero-month-vs">vs {{ formatAmountShort(s.caSigneMoisPrecedent) }} le mois passé</span>
+          }
+          <span class="hero-month-dot">·</span>
+          <span class="hero-month-meta-txt">
+            {{ s.activeVentesCount }} vente{{ s.activeVentesCount !== 1 ? 's' : '' }} actives
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: pipeline stage flow -->
+      <div class="hero-month-right">
+        <div class="hero-month-eyebrow">Où en est le pipeline ?</div>
+        @if (pipelineStageFlow(s).length > 0) {
+          <div class="hero-stage-bar">
+            @for (stage of pipelineStageFlow(s); track stage.key) {
+              <div class="hero-stage-seg"
+                   [style.flex]="stage.flex"
+                   [style.background]="stage.color"
+                   [title]="stage.label + ' · ' + stage.count + ' vente(s)'">
+                <span class="hero-stage-label">{{ stage.label }}</span>
+                <span class="hero-stage-count">{{ stage.count }}</span>
+              </div>
+            }
+          </div>
+          <div class="hero-stage-legend">
+            @for (stage of pipelineStageFlow(s); track stage.key) {
+              <div class="hero-stage-leg-item">
+                <span class="hero-stage-dot" [style.background]="stage.color"></span>
+                <span class="hero-stage-leg-label">{{ stage.label }}</span>
+                @if (stage.amount > 0) {
+                  <span class="hero-stage-leg-value">
+                    {{ formatAmountShort(stage.amount) }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="hero-stage-empty">Aucune vente active en ce moment.</div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
        TAB NAVIGATION
        ════════════════════════════════════════════════════════════ -->
   <nav class="db-tab-nav">

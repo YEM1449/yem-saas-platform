@@ -241,6 +241,50 @@ export class HomeDashboardComponent implements OnInit {
 
   isOverdue(d: string): boolean { return new Date(d) < new Date(); }
 
+  // ── Hero "Month at a Glance" helpers ──────────────────────────────────────
+
+  currentMonthLabel(): string {
+    return new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  }
+
+  quotaProgressPct(s: HomeDashboard): number {
+    if (!s.caMensuelCible || s.caMensuelCible <= 0) return 0;
+    return Math.min(Math.round((s.caSigneMoisCourant / s.caMensuelCible) * 100), 100);
+  }
+
+  private readonly STAGE_FLOW_ORDER = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE'];
+  private readonly STAGE_FLOW_LABELS: Record<string, string> = {
+    COMPROMIS:    'Compromis',
+    FINANCEMENT:  'Financement',
+    ACTE_NOTARIE: 'Acte',
+    LIVRE:        'Livraison',
+  };
+  private readonly STAGE_FLOW_COLORS: Record<string, string> = {
+    COMPROMIS:    '#c2410c',
+    FINANCEMENT:  '#a16207',
+    ACTE_NOTARIE: '#15803d',
+    LIVRE:        '#1d4ed8',
+  };
+
+  pipelineStageFlow(s: HomeDashboard): { key: string; label: string; count: number; amount: number; color: string; flex: number }[] {
+    const agingMap = new Map(s.pipelineStageAging.map(r => [r.statut, r]));
+    const statuts = s.ventesParStatut ?? {};
+    const result = this.STAGE_FLOW_ORDER
+      .filter(k => (statuts[k] ?? 0) > 0 || agingMap.has(k))
+      .map(k => ({
+        key:    k,
+        label:  this.STAGE_FLOW_LABELS[k] ?? k,
+        count:  statuts[k] ?? agingMap.get(k)?.count ?? 0,
+        amount: agingMap.get(k)?.totalValue ?? 0,
+        color:  this.STAGE_FLOW_COLORS[k] ?? '#64748b',
+        flex:   0,
+      }));
+    if (result.length === 0) return result;
+    const totalCount = result.reduce((a, r) => a + r.count, 0);
+    result.forEach(r => { r.flex = Math.max((r.count / totalCount), 0.08); });
+    return result;
+  }
+
   // ── Alert counts ───────────────────────────────────────────────────────────
 
   totalAlerts(s: HomeDashboard): number {

@@ -49,6 +49,9 @@ export class VenteListComponent implements OnInit {
 
   readonly statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
 
+  /** View mode: table (default) or kanban board */
+  viewMode: 'table' | 'kanban' = 'table';
+
   /** Statuts whose accordion panel is expanded on mobile. */
   openStatuts = new Set<VenteStatut>(['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE']);
 
@@ -80,6 +83,43 @@ export class VenteListComponent implements OnInit {
 
   countStatut(s: VenteStatut): number {
     return this.ventes().filter(v => v.statut === s).length;
+  }
+
+  readonly KANBAN_COLUMNS: { key: VenteStatut; label: string; hint: string; color: string }[] = [
+    { key: 'COMPROMIS',    label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
+    { key: 'FINANCEMENT',  label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
+    { key: 'ACTE_NOTARIE', label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
+    { key: 'LIVRE',        label: 'Livré',         hint: 'Remise des clés',           color: '#1d4ed8' },
+  ];
+
+  get kanbanBoard(): { col: { key: VenteStatut; label: string; hint: string; color: string }; items: Vente[] }[] {
+    return this.KANBAN_COLUMNS.map(col => ({
+      col,
+      items: this.filtered.filter(v => v.statut === col.key),
+    }));
+  }
+
+  totalKanban(): number {
+    return this.kanbanBoard.reduce((a, c) => a + c.items.length, 0);
+  }
+
+  totalCA(items: Vente[]): number {
+    return items.reduce((a, v) => a + (v.prixVente ?? 0), 0);
+  }
+
+  formatCAShort(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.', ',') + ' M';
+    if (n >= 1_000)     return Math.round(n / 1_000) + ' K';
+    return n.toLocaleString('fr-FR');
+  }
+
+  ageDays(v: Vente): number {
+    return Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86_400_000);
+  }
+
+  initials(name: string | null | undefined): string {
+    if (!name) return '?';
+    return name.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
   }
 
   readonly STATUT_DESC: Record<VenteStatut, string> = {
