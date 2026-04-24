@@ -1,18 +1,61 @@
 <!-- Impersonation warning banner -->
 @if (isImpersonating) {
-  <div style="background:#e74c3c;color:#fff;text-align:center;padding:8px 16px;font-size:14px;position:sticky;top:0;z-index:9999;">
+  <div class="impersonation-banner">
     ⚠ {{ 'impersonation.banner' | translate }} <strong>{{ impersonationTarget }}</strong>
-    <button (click)="endImpersonation()" style="margin-left:16px;background:#fff;color:#e74c3c;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">
+    <button class="impersonation-btn" (click)="endImpersonation()">
       {{ 'impersonation.return' | translate }}
     </button>
   </div>
 }
 
-<!-- Modern sidebar layout for HLM CRM -->
-<div class="app-layout">
+<!-- Mobile top app bar (hidden on md+) -->
+<header class="mobile-topbar">
+  <button class="hamburger-btn" (click)="toggleSidebar()"
+          [attr.aria-expanded]="sidebarOpen" aria-label="Menu">
+    @if (sidebarOpen) {
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    } @else {
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    }
+  </button>
+
+  <span class="mobile-brand">
+    @if (societeLogoUrl) {
+      <img [src]="societeLogoUrl" alt="Logo" class="mobile-logo" />
+    } @else {
+      <svg width="18" height="18" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="3" y="8" width="16" height="12" rx="1.5" stroke="#93c5fd" stroke-width="1.5"/>
+        <path d="M8 20v-5h6v5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      <span>{{ 'app.name' | translate }}</span>
+    }
+  </span>
+
+  <span class="mobile-avatar" aria-hidden="true">{{ userInitial }}</span>
+</header>
+
+<!-- Sidebar backdrop (mobile only, shown when sidebar is open) -->
+@if (sidebarOpen) {
+  <div class="sidebar-backdrop" (click)="closeSidebar()" aria-hidden="true"></div>
+}
+
+<!-- Main layout -->
+<div class="app-layout" [class.sidebar-mobile-open]="sidebarOpen">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->
   <aside class="sidebar">
+
+    <!-- Mobile close button (hidden on desktop) -->
+    <button class="sidebar-close-btn" (click)="closeSidebar()" aria-label="Fermer le menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
 
     <!-- Brand -->
     <div class="sidebar-brand">
@@ -20,8 +63,7 @@
         <img [src]="societeLogoUrl" alt="Logo" class="sidebar-logo" />
       } @else {
         <span class="brand-icon">
-          <!-- Building icon -->
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
             <rect x="3" y="8" width="16" height="12" rx="1.5" stroke="#93c5fd" stroke-width="1.5"/>
             <path d="M8 20v-5h6v5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M3 8l8-5 8 5" stroke="#93c5fd" stroke-width="1.5" stroke-linejoin="round"/>
@@ -38,8 +80,8 @@
       <div class="nav-section-label">{{ 'nav.pipeline' | translate }}</div>
 
       <a routerLink="/app/dashboard" routerLinkActive="nav-active" class="nav-item"
-         [routerLinkActiveOptions]="{ exact: false }">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+         [routerLinkActiveOptions]="{ exact: false }" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <rect x="2" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
           <rect x="8" y="7" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/>
           <rect x="14" y="3" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.5"/>
@@ -47,8 +89,8 @@
         {{ 'nav.dashboard' | translate }}
       </a>
 
-      <a routerLink="/app/projects" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/projects" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <rect x="3" y="5" width="14" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M7 5V3.5a.5.5 0 011 0V5M13 5V3.5a.5.5 0 00-1 0V5"
                 stroke="currentColor" stroke-width="1.5"/>
@@ -57,8 +99,8 @@
         {{ 'nav.projects' | translate }}
       </a>
 
-      <a routerLink="/app/properties" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/properties" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M3 10.5 10 3.5l7 7V17a1 1 0 01-1 1H5a1 1 0 01-1-1v-6.5z"
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 18V12h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -66,8 +108,8 @@
         {{ 'nav.properties' | translate }}
       </a>
 
-      <a routerLink="/app/contacts" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/contacts" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <circle cx="7.5" cy="6.5" r="2.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M2 16c0-2.761 2.462-5 5.5-5s5.5 2.239 5.5 5"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -76,16 +118,16 @@
         Contacts
       </a>
 
-      <a routerLink="/app/tasks" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/tasks" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M5 10l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
         </svg>
         {{ 'nav.tasks' | translate }}
       </a>
 
-      <a routerLink="/app/reservations" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/reservations" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M14 2H6a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z"
                 stroke="currentColor" stroke-width="1.5"/>
           <path d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -93,16 +135,16 @@
         {{ 'nav.reservations' | translate }}
       </a>
 
-      <a routerLink="/app/ventes" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/ventes" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M10 2l2 6h6l-5 3.6 1.9 6L10 14l-4.9 3.6L7 11.6 2 8h6z"
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
         </svg>
         Ventes
       </a>
 
-      <a routerLink="/app/contracts" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/contracts" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M5 3h10a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
                 stroke="currentColor" stroke-width="1.5"/>
           <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -113,15 +155,15 @@
       <!-- ANALYTIQUE section -->
       <div class="nav-section-label">{{ 'nav.analytics' | translate }}</div>
 
-      <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M3 5h14M3 10h14M3 15h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         {{ 'nav.receivables' | translate }}
       </a>
 
-      <a routerLink="/app/commissions" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/commissions" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M7.5 12.5c0 1.1.9 2 2 2H11a1.5 1.5 0 000-3H9a1.5 1.5 0 010-3h1.5a2 2 0 012 2M10 5.5V7m0 9v1.5"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -129,8 +171,8 @@
         {{ 'nav.commissions' | translate }}
       </a>
 
-      <a routerLink="/app/messages" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/messages" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H5L2 17V5a1 1 0 011-1z"
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M7 8h6M7 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -138,8 +180,8 @@
         {{ 'nav.messages' | translate }}
       </a>
 
-      <a routerLink="/app/notifications" routerLinkActive="nav-active" class="nav-item">
-        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+      <a routerLink="/app/notifications" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M10 2.5a6 6 0 016 6v3.5l1.5 2h-15L4 12V8.5a6 6 0 016-6z"
                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 15.5a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -151,16 +193,16 @@
       @if (isAdminOrManager) {
         <div class="nav-section-label">Rapports</div>
 
-        <a routerLink="/app/reports/ventes" routerLinkActive="nav-active" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+        <a routerLink="/app/reports/ventes" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
             <path d="M7 7h6M7 10h4M7 13h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
           Rapport ventes
         </a>
 
-        <a routerLink="/app/reports/agents" routerLinkActive="nav-active" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+        <a routerLink="/app/reports/agents" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
             <path d="M2 17c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             <path d="M13 10l1.5 1.5L17 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -168,8 +210,8 @@
           Rapport agents
         </a>
 
-        <a routerLink="/app/reports/creances" routerLinkActive="nav-active" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+        <a routerLink="/app/reports/creances" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M3 17l4-5 3 3 4-6 4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
           </svg>
@@ -181,8 +223,8 @@
       @if (isAdminOrManager) {
         <div class="nav-section-label">{{ 'nav.admin' | translate }}</div>
 
-        <a routerLink="/app/audit" routerLinkActive="nav-active" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+        <a routerLink="/app/audit" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M4 5h12M4 10h12M4 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             <circle cx="16" cy="15" r="2.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M18 17l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -191,8 +233,8 @@
         </a>
 
         @if (isAdmin) {
-          <a routerLink="/app/admin/users" routerLinkActive="nav-active" class="nav-item">
-            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <a routerLink="/app/admin/users" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
               <path d="M2 17c0-3.314 2.686-6 6-6s6 2.686 6 6"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -201,8 +243,8 @@
             </svg>
             {{ 'nav.users' | translate }}
           </a>
-          <a routerLink="/app/templates" routerLinkActive="nav-active" class="nav-item">
-            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <a routerLink="/app/templates" routerLinkActive="nav-active" class="nav-item" (click)="closeSidebar()">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M5 3h10a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
                     stroke="currentColor" stroke-width="1.5"/>
               <path d="M7 7h6M7 10h4M7 13h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -227,7 +269,7 @@
       </div>
       <app-language-switcher />
       <button class="logout-btn" (click)="logout()" title="Sign out" data-testid="logout-button">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
           <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -243,6 +285,56 @@
   </main>
 
 </div>
+
+<!-- ── Bottom Nav (mobile only, <960px) ──────────────── -->
+<nav class="bottom-nav" aria-label="Navigation principale">
+
+  <a routerLink="/app/dashboard" routerLinkActive="bnav-active" class="bnav-item"
+     [routerLinkActiveOptions]="{ exact: false }">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="2" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="8" y="7" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="14" y="3" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <span>Tableau de bord</span>
+  </a>
+
+  <a routerLink="/app/properties" routerLinkActive="bnav-active" class="bnav-item">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M3 10.5 10 3.5l7 7V17a1 1 0 01-1 1H5a1 1 0 01-1-1v-6.5z"
+            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8 18V12h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+    <span>Lots</span>
+  </a>
+
+  <a routerLink="/app/ventes" routerLinkActive="bnav-active" class="bnav-item">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 2l2 6h6l-5 3.6 1.9 6L10 14l-4.9 3.6L7 11.6 2 8h6z"
+            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+    <span>Pipeline</span>
+  </a>
+
+  <a routerLink="/app/contacts" routerLinkActive="bnav-active" class="bnav-item">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="7.5" cy="6.5" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M2 16c0-2.761 2.462-5 5.5-5s5.5 2.239 5.5 5"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14 9l1.5 1.5L18 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Acquéreurs</span>
+  </a>
+
+  <button class="bnav-item bnav-menu-btn" (click)="toggleSidebar()"
+          [class.bnav-active]="sidebarOpen" aria-label="Menu">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>Menu</span>
+  </button>
+
+</nav>
 
 <!-- Task due-date notification toasts (max 3, amber border, bottom-right) -->
 <app-notification-toast />

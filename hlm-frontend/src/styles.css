@@ -517,6 +517,30 @@ select.form-control   { cursor: pointer; }
   background: var(--c-surface);
 }
 
+/* ── Mobile bottom-sheet: all modals slide up on xs (<600px) ──── */
+@keyframes hlm-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (max-width: 599px) {
+  /* Backdrop aligns to bottom edge, no horizontal padding */
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  /* Both .modal (global) and .modal-box (component-scoped) become sheets */
+  .modal,
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    animation: hlm-slide-up 260ms cubic-bezier(.4, 0, .2, 1);
+    margin: 0;
+  }
+}
+
 /* ── 14. Info / Code Panels ────────────────────────────────────── */
 .info-panel {
   background: var(--c-bg);
@@ -889,4 +913,44 @@ select.form-control   { cursor: pointer; }
   .portal-summary-row { grid-template-columns: 1fr 1fr; }
   .portal-card-row { flex-direction: column; gap: var(--sp-1, 4px); }
   .portal-label { width: auto; }
+}
+
+/* ── Document upload zone ──────────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--c-border-strong, #cbd5e1);
+  border-radius: var(--r-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--tr, 150ms ease), background var(--tr, 150ms ease);
+  background: var(--c-surface, #fff);
+}
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--c-primary, #2563eb);
+  background: var(--c-primary-light, #eff6ff);
+}
+.upload-zone-icon {
+  width: 40px; height: 40px;
+  margin: 0 auto 12px;
+  color: var(--c-text-muted, #94a3b8);
+}
+.upload-zone-label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--c-text-secondary, #475569);
+}
+.upload-zone-hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--c-text-muted, #94a3b8);
+  margin-top: 4px;
+}
+/* Mobile: compact button-style trigger; dashed border becomes solid */
+@media (max-width: 599px) {
+  .upload-zone {
+    padding: 16px;
+    border-style: solid;
+    border-width: 1px;
+  }
+  .upload-zone-label { color: var(--c-primary, #2563eb); }
 }

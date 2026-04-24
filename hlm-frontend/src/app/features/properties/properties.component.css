@@ -105,25 +105,9 @@
   margin-bottom: 80px; /* space for bulk bar */
 }
 
+/* hlm-card handles: background, radius, shadow, overflow, position, cursor, hover lift */
 .property-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--c-card, #fff);
-  border: 1px solid var(--c-border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
-  overflow: hidden;
-  position: relative;
-}
-.property-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,.08);
-  transform: translateY(-1px);
-  border-color: var(--c-primary, #3b82f6);
-}
-.property-card--selected {
-  border-color: var(--c-primary, #3b82f6) !important;
-  box-shadow: 0 0 0 2px rgba(59,130,246,.15) !important;
+  /* Ensure the hlm-card fills the grid cell */
 }
 
 /* ── Card checkbox overlay ──────────────────────────────────── */

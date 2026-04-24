@@ -149,3 +149,35 @@
 .stepper-vertical {
   padding-bottom: 0;
 }
+
+/* ── Auto-vertical on xs (<600px) ────────────────────────────── */
+@media (max-width: 599px) {
+  .stepper:not(.stepper-vertical) {
+    flex-direction: column;
+    align-items: flex-start;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+  .stepper:not(.stepper-vertical) .stepper-step {
+    flex: unset;
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: 16px;
+  }
+  .stepper:not(.stepper-vertical) .step-label {
+    position: static;
+    transform: none;
+    margin-top: 0;
+    margin-left: 10px;
+    line-height: 28px;
+    white-space: normal;
+  }
+  .stepper:not(.stepper-vertical) .step-connector {
+    width: 2px;
+    height: 20px;
+    flex: unset;
+    margin: 2px 13px;
+    align-self: auto;
+    margin-top: 0;
+  }
+}

@@ -4,10 +4,33 @@
    distinct from the staff CRM dark sidebar.
    ================================================================ */
 
-/* ── Full-height layout ─────────────────────────────────────────── */
+/* ── Portal theme: Bleu Acquéreur ────────────────────────────────
+   Overrides the CRM design tokens inside the portal shell so the
+   buyer-facing surface has a distinct blue brand identity.
+   ────────────────────────────────────────────────────────────── */
 :host {
   display: block;
   min-height: 100vh;
+
+  /* Portal brand palette — bleu acquéreur */
+  --c-primary:       #0D47A1;
+  --c-primary-hover: #1565C0;
+  --c-primary-light: #E3F2FD;
+  --c-primary-50:    #E3F2FD;
+  --c-primary-100:   #BBDEFB;
+  --c-primary-200:   #90CAF9;
+  --c-primary-300:   #64B5F6;
+  --c-primary-400:   #42A5F5;
+  --c-primary-500:   #2196F3;
+  --c-primary-600:   #1E88E5;
+  --c-primary-700:   #1565C0;
+  --c-primary-800:   #0D47A1;
+  --c-primary-900:   #0A3473;
+
+  /* Portal design-system aliases */
+  --color-primary:    #0D47A1;
+  --color-primary-50: #E3F2FD;
+  --color-accent:     #FF6F00;  /* amber for CTAs */
 }
 
 .portal-layout {

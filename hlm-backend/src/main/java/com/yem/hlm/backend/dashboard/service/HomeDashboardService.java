@@ -446,10 +446,12 @@ public class HomeDashboardService {
         }
 
         // ── 13. Monthly CA trend (last 6 months) + project/tranche/immeuble breakdown ──
-        List<HomeDashboardDTO.MonthlyTrendPoint>   monthlyTrend       = List.of();
-        List<HomeDashboardDTO.ProjectBreakdownRow> projectBreakdown   = List.of();
-        List<HomeDashboardDTO.TrancheBreakdownRow> trancheBreakdown   = List.of();
+        List<HomeDashboardDTO.MonthlyTrendPoint>    monthlyTrend      = List.of();
+        List<HomeDashboardDTO.ProjectBreakdownRow>  projectBreakdown  = List.of();
+        List<HomeDashboardDTO.TrancheBreakdownRow>  trancheBreakdown  = List.of();
         List<HomeDashboardDTO.ImmeubleBreakdownRow> immeubleBreakdown = List.of();
+        List<HomeDashboardDTO.PipelineStageAgingRow> pipelineStageAging = List.of();
+        List<HomeDashboardDTO.TypeVelocityRow>       typeVelocity       = List.of();
 
         if (!isAgent) {
             LocalDateTime sixMonthsAgo = now.minusMonths(6).withDayOfMonth(1).toLocalDate().atStartOfDay();
@@ -502,6 +504,26 @@ public class HomeDashboardService {
                             toBigDecimal(r[4]),
                             ((Number) r[5]).longValue()))
                     .toList();
+
+            // Pipeline stage aging — avg/max days + stalled count per active statut
+            pipelineStageAging = venteRepo.pipelineAgingByStatut(societeId).stream()
+                    .map(r -> new HomeDashboardDTO.PipelineStageAgingRow(
+                            r[0].toString(),
+                            ((Number) r[1]).longValue(),
+                            r[2] != null ? ((Number) r[2]).doubleValue() : 0d,
+                            r[3] != null ? ((Number) r[3]).doubleValue() : 0d,
+                            ((Number) r[4]).longValue(),
+                            toBigDecimal(r[5])))
+                    .toList();
+
+            // Per-type velocity — avg days-to-close + avg ticket from LIVRE ventes
+            typeVelocity = venteRepo.avgDaysToCloseByPropertyType(societeId).stream()
+                    .map(r -> new HomeDashboardDTO.TypeVelocityRow(
+                            r[0].toString(),
+                            ((Number) r[1]).longValue(),
+                            toBigDecimal(r[2]),
+                            r[3] != null ? ((Number) r[3]).doubleValue() : null))
+                    .toList();
         }
 
         return new HomeDashboardDTO(
@@ -522,6 +544,7 @@ public class HomeDashboardService {
                 ventesSigneesMoisCourantCount, quotaVentesAttainmentMtd,
                 upcomingDeliveries,
                 inventoryByType,
+                pipelineStageAging, typeVelocity,
                 monthlyTrend, projectBreakdown, trancheBreakdown, immeubleBreakdown,
                 recentVentes, urgentTasks
         );

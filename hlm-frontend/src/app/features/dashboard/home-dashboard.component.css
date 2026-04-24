@@ -83,11 +83,9 @@
   margin-bottom: 16px;
 }
 
-@media (max-width: 1100px) {
+/* 2col on all mobile (xs + sm); 4col restored at md */
+@media (max-width: 959px) {
   .hero-row { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 640px) {
-  .hero-row { grid-template-columns: 1fr; }
 }
 
 .hero-card {
@@ -1125,3 +1123,100 @@
 .agent-share-bar-wrap{display:flex;align-items:center;gap:5px}
 .agent-share-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;min-width:36px;overflow:hidden}
 .agent-share-bar{height:4px;background:#6366f1;border-radius:2px;transition:width .4s ease}
+
+/* ── Tab alert badges ────────────────────────────────────────────────────── */
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-weight:700;line-height:1;margin-left:2px}
+.tab-badge-warn{background:#fef3c7;color:#b45309}
+.tab-badge-danger{background:#fee2e2;color:#b91c1c}
+.db-tab-active .tab-badge-warn{background:#fbbf24;color:#fff}
+.db-tab-active .tab-badge-danger{background:#ef4444;color:#fff}
+
+/* ── Quantitative KPI strip ─────────────────────────────────────────────── */
+.qkpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:1200px){.qkpi-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.qkpi-strip{grid-template-columns:repeat(2,1fr)}}
+.qkpi-card{display:flex;flex-direction:column;gap:4px;padding:14px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;text-decoration:none;color:inherit;transition:box-shadow .15s,transform .1s;cursor:pointer}
+.qkpi-card:hover{box-shadow:0 4px 12px rgba(15,23,42,.08);transform:translateY(-1px);border-color:#c7d2fe}
+.qkpi-value{font-size:24px;font-weight:700;color:#1e293b;font-variant-numeric:tabular-nums;line-height:1.1}
+.qkpi-unit{font-size:14px;font-weight:500;color:#64748b;margin-left:3px}
+.qkpi-label{font-size:12px;font-weight:600;color:#475569}
+.qkpi-sub{font-size:10px;color:#94a3b8;line-height:1.3}
+.qkpi-sold{border-top:3px solid #10b981}
+.qkpi-sold .qkpi-value{color:#059669}
+.qkpi-good{border-top:3px solid #10b981;background:linear-gradient(135deg,#f0fdf4 0%,#fff 60%)}
+.qkpi-good .qkpi-value{color:#059669}
+.qkpi-warn{border-top:3px solid #f59e0b;background:linear-gradient(135deg,#fffbeb 0%,#fff 60%)}
+.qkpi-warn .qkpi-value{color:#b45309}
+.qkpi-bad{border-top:3px solid #ef4444;background:linear-gradient(135deg,#fef2f2 0%,#fff 60%)}
+.qkpi-bad .qkpi-value{color:#dc2626}
+
+/* ── Pipeline aging table ───────────────────────────────────────────────── */
+.pipeline-aging-table{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.pa-head{display:grid;grid-template-columns:160px 70px 130px 90px 90px 120px 1fr;gap:0;padding:9px 16px;background:#f8fafc;border-bottom:2px solid #e2e8f0;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.pa-row{display:grid;grid-template-columns:160px 70px 130px 90px 90px 120px 1fr;gap:0;padding:11px 16px;border-bottom:1px solid #f1f5f9;align-items:center}
+.pa-row:last-child{border-bottom:none}
+.pa-row:hover{background:#f8fafc}
+.pa-footer{display:grid;grid-template-columns:160px 70px 130px 90px 90px 120px 1fr;gap:0;padding:10px 16px;background:#eff6ff;border-top:2px solid #dbeafe;align-items:center;font-size:12px;font-weight:600;color:#1e40af}
+.pa-col-stage{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#1e293b}
+.pa-col-num{font-size:13px;font-weight:700;color:#1e293b;font-variant-numeric:tabular-nums}
+.pa-col-val{font-size:12px;font-weight:600;color:#1e293b;font-variant-numeric:tabular-nums}
+.pa-col-days{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.pa-col-stalled{font-size:12px;font-variant-numeric:tabular-nums}
+.pa-col-bar{display:flex;align-items:center;gap:8px;padding-right:4px}
+.pa-count{font-size:15px;font-weight:700}
+.pa-max-days{color:#94a3b8;font-size:12px}
+/* Statut chips */
+.pa-statut-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.pa-chip-compromis{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.pa-chip-financement{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.pa-chip-acte_notarie{background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff}
+/* Aging bar */
+.pa-bar-track{flex:1;height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden;position:relative;min-width:60px}
+.pa-bar-avg{height:100%;border-radius:999px;transition:width .4s ease;opacity:.75}
+.pa-bar-max{position:absolute;top:1px;width:3px;height:6px;background:#94a3b8;border-radius:1px;transition:left .4s ease}
+.pa-bar-label{font-size:10px;color:#94a3b8;white-space:nowrap;flex-shrink:0}
+/* Aging color classes */
+.aging-ok{color:#059669}
+.aging-warn{color:#d97706}
+.aging-bad{color:#dc2626}
+.pa-bar-avg.aging-ok{background:#10b981}
+.pa-bar-avg.aging-warn{background:#f59e0b}
+.pa-bar-avg.aging-bad{background:#ef4444}
+/* Stalled color classes */
+.stalled-ok{color:#059669;font-weight:600;font-size:11px}
+.stalled-warn{color:#d97706;font-weight:700;font-size:12px}
+.stalled-bad{color:#dc2626;font-weight:700;font-size:12px}
+@media(max-width:900px){
+  .pa-head,.pa-row,.pa-footer{grid-template-columns:140px 60px 110px 80px 80px 100px 1fr}
+  .pa-col-bar{display:none}
+  .pa-head span:last-child{display:none}
+}
+
+/* ── Type matrix velocity columns ───────────────────────────────────────── */
+.type-matrix-wide{display:block;overflow-x:auto}
+.type-matrix-wide table{min-width:760px}
+.tm-col-vel{min-width:90px;text-align:right}
+.tm-vel-days{min-width:110px}
+.tm-vel-count{font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px}
+/* Velocity color classes */
+.vel-fast{color:#059669;font-weight:700}
+.vel-normal{color:#2563eb;font-weight:600}
+.vel-slow{color:#d97706;font-weight:600}
+
+/* ── Mobile dashboard responsive overrides ───────────────────── */
+@media (max-width: 959px) {
+  /* Tab nav: horizontally scrollable strip on mobile */
+  .db-tab-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .db-tab-nav::-webkit-scrollbar { display: none; }
+
+  /* Reduce header font on small screens */
+  .db-title { font-size: 1.25rem; }
+
+  /* skeleton-grid: 2col on mobile to match hero-row */
+  .skeleton-grid { grid-template-columns: repeat(2, 1fr); }
+}

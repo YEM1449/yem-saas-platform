@@ -182,4 +182,29 @@
 
   /* ── Touch Target ──────────────────────────────────────────── */
   --touch-target: 44px;    /* WCAG 2.5.5 minimum */
+
+  /* ── Mobile Design System v3 — Brand & Layout ─────────────── */
+  /* Vert Promoteur brand tokens (used by new components; legacy --c-* untouched) */
+  --color-primary:    #1B5E20;
+  --color-primary-50: #E8F5E9;
+  --color-accent:     #F57F17;
+  --color-surface:    #FAFAFA;
+  --color-on-surface: #212121;
+  --color-muted:      #757575;
+  --color-border:     rgba(0,0,0,.12);
+  --color-danger:     #C62828;
+  --color-success:    #2E7D32;
+
+  /* Radius aliases matching mission naming */
+  --radius-sm: var(--r-sm);   /* 4px  */
+  --radius-md: var(--r-md);   /* 8px  */
+  --radius-lg: var(--r-xl);   /* 16px */
+
+  /* Card shadow */
+  --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+
+  /* Touch / Navigation */
+  --touch-min:   44px;
+  --nav-height:  56px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }

@@ -49,6 +49,22 @@ export class VenteListComponent implements OnInit {
 
   readonly statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
 
+  /** Statuts whose accordion panel is expanded on mobile. */
+  openStatuts = new Set<VenteStatut>(['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE']);
+
+  /** Ventes grouped by statut for the mobile accordion view. */
+  get groupedByStatut(): { statut: VenteStatut; items: Vente[] }[] {
+    return this.statuts
+      .map(s => ({ statut: s, items: this.filtered.filter(v => v.statut === s) }))
+      .filter(g => g.items.length > 0);
+  }
+
+  toggleAccordion(statut: VenteStatut): void {
+    const s = new Set(this.openStatuts);
+    if (s.has(statut)) s.delete(statut); else s.add(statut);
+    this.openStatuts = s;
+  }
+
   get canWrite(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
