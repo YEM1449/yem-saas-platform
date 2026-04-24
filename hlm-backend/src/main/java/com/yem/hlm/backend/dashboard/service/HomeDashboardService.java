@@ -418,9 +418,11 @@ public class HomeDashboardService {
                     .divide(BigDecimal.valueOf(4), 1, RoundingMode.HALF_UP);
         }
 
-        // ── 13. Monthly CA trend (last 6 months) + project breakdown ─────────
-        List<HomeDashboardDTO.MonthlyTrendPoint> monthlyTrend = List.of();
-        List<HomeDashboardDTO.ProjectBreakdownRow> projectBreakdown = List.of();
+        // ── 13. Monthly CA trend (last 6 months) + project/tranche/immeuble breakdown ──
+        List<HomeDashboardDTO.MonthlyTrendPoint>   monthlyTrend       = List.of();
+        List<HomeDashboardDTO.ProjectBreakdownRow> projectBreakdown   = List.of();
+        List<HomeDashboardDTO.TrancheBreakdownRow> trancheBreakdown   = List.of();
+        List<HomeDashboardDTO.ImmeubleBreakdownRow> immeubleBreakdown = List.of();
 
         if (!isAgent) {
             LocalDateTime sixMonthsAgo = now.minusMonths(6).withDayOfMonth(1).toLocalDate().atStartOfDay();
@@ -453,6 +455,26 @@ public class HomeDashboardService {
                             toBigDecimal(r[2]),
                             ((Number) r[3]).longValue()))
                     .toList();
+
+            trancheBreakdown = venteRepo.salesByTranche(societeId).stream()
+                    .map(r -> new HomeDashboardDTO.TrancheBreakdownRow(
+                            r[0] != null ? r[0].toString() : null,
+                            r[1] != null ? r[1].toString() : "—",
+                            r[2] != null ? r[2].toString() : null,
+                            r[3] != null ? r[3].toString() : "—",
+                            toBigDecimal(r[4]),
+                            ((Number) r[5]).longValue()))
+                    .toList();
+
+            immeubleBreakdown = venteRepo.salesByImmeuble(societeId).stream()
+                    .map(r -> new HomeDashboardDTO.ImmeubleBreakdownRow(
+                            r[0] != null ? r[0].toString() : null,
+                            r[1] != null ? r[1].toString() : "—",
+                            r[2] != null ? r[2].toString() : null,
+                            r[3] != null ? r[3].toString() : "—",
+                            toBigDecimal(r[4]),
+                            ((Number) r[5]).longValue()))
+                    .toList();
         }
 
         return new HomeDashboardDTO(
@@ -472,7 +494,7 @@ public class HomeDashboardService {
                 caMensuelCible, ventesMensuelCible, quotaAttainmentMtd,
                 ventesSigneesMoisCourantCount, quotaVentesAttainmentMtd,
                 upcomingDeliveries,
-                monthlyTrend, projectBreakdown,
+                monthlyTrend, projectBreakdown, trancheBreakdown, immeubleBreakdown,
                 recentVentes, urgentTasks
         );
     }

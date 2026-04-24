@@ -1432,6 +1432,80 @@
       </div>
     }
 
+    <!-- ── Ventes par tranche ──────────────────────────────────────────── -->
+    @if (s.trancheBreakdown.length > 0) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Ventes par tranche</span>
+          <span class="section-sublabel">CA signé (hors ANNULE) · regroupé par projet</span>
+        </div>
+        @for (group of groupByProject(s.trancheBreakdown); track group.projectName) {
+          <div class="bd-group">
+            <div class="bd-group-header">{{ group.projectName }}</div>
+            <div class="bd-list">
+              @for (row of group.items; track row.trancheId; let i = $index) {
+                <div class="pbd-row">
+                  <div class="pbd-rank" [style.background]="projectColor(i)">T{{ i + 1 }}</div>
+                  <div class="pbd-body">
+                    <div class="pbd-header">
+                      <span class="pbd-name">{{ row.trancheLabel }}</span>
+                      <span class="pbd-ventes">{{ row.ventesCount }} vente{{ row.ventesCount !== 1 ? 's' : '' }}</span>
+                      @if (row.ventesCount > 0) {
+                        <span class="pbd-avg" style="font-size:.7rem;color:#9ca3af">({{ formatAmount(row.totalCA / row.ventesCount) }}/vente)</span>
+                      }
+                      <span class="pbd-pct">{{ bdSharePct(row.totalCA, group.items) }}</span>
+                      <span class="pbd-ca">{{ formatAmount(row.totalCA) }}</span>
+                    </div>
+                    <div class="pbd-bar-wrap">
+                      <div class="pbd-bar" [style.width]="bdBarWidth(row.totalCA, group.items)"
+                           [style.background]="projectColor(i)"></div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Ventes par immeuble ─────────────────────────────────────────── -->
+    @if (s.immeubleBreakdown.length > 0) {
+      <div class="section-row">
+        <div class="section-head">
+          <span class="section-label">Ventes par immeuble</span>
+          <span class="section-sublabel">CA signé (hors ANNULE) · regroupé par projet</span>
+        </div>
+        @for (group of groupByProject(s.immeubleBreakdown); track group.projectName) {
+          <div class="bd-group">
+            <div class="bd-group-header">{{ group.projectName }}</div>
+            <div class="bd-list">
+              @for (row of group.items; track row.immeubleId; let i = $index) {
+                <div class="pbd-row">
+                  <div class="pbd-rank" [style.background]="projectColor(i)">{{ i + 1 }}</div>
+                  <div class="pbd-body">
+                    <div class="pbd-header">
+                      <span class="pbd-name">{{ row.immeubleNom }}</span>
+                      <span class="pbd-ventes">{{ row.ventesCount }} vente{{ row.ventesCount !== 1 ? 's' : '' }}</span>
+                      @if (row.ventesCount > 0) {
+                        <span class="pbd-avg" style="font-size:.7rem;color:#9ca3af">({{ formatAmount(row.totalCA / row.ventesCount) }}/vente)</span>
+                      }
+                      <span class="pbd-pct">{{ bdSharePct(row.totalCA, group.items) }}</span>
+                      <span class="pbd-ca">{{ formatAmount(row.totalCA) }}</span>
+                    </div>
+                    <div class="pbd-bar-wrap">
+                      <div class="pbd-bar" [style.width]="bdBarWidth(row.totalCA, group.items)"
+                           [style.background]="projectColor(i)"></div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
     @if (s.upcomingDeliveries.length > 0) {
       <div class="section-row">
         <div class="section-head">

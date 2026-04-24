@@ -150,6 +150,10 @@ public record HomeDashboardDTO(
         List<MonthlyTrendPoint> monthlyTrend,
         /** Top 8 projects by total CA signed (all time, non-ANNULE). Empty for AGENT. */
         List<ProjectBreakdownRow> projectBreakdown,
+        /** CA and vente count per tranche (via property.tranche_id). Empty for AGENT. */
+        List<TrancheBreakdownRow> trancheBreakdown,
+        /** CA and vente count per immeuble (via property.immeuble_id). Empty for AGENT. */
+        List<ImmeubleBreakdownRow> immeubleBreakdown,
 
         // ── Widgets ───────────────────────────────────────────────────────────
         /** Up to 5 recent ventes for the widget. */
@@ -208,5 +212,23 @@ public record HomeDashboardDTO(
             long daysUntilDelivery,
             long totalUnits,
             long soldUnits
+    ) {}
+
+    public record TrancheBreakdownRow(
+            String trancheId,
+            String trancheLabel,
+            String projectId,
+            String projectName,
+            BigDecimal totalCA,
+            long ventesCount
+    ) {}
+
+    public record ImmeubleBreakdownRow(
+            String immeubleId,
+            String immeubleNom,
+            String projectId,
+            String projectName,
+            BigDecimal totalCA,
+            long ventesCount
     ) {}
 }

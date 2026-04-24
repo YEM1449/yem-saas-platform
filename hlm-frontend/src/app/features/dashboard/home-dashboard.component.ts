@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
+import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
 import { SalesByTypeComponent } from './cockpit/sales-by-type.component';
 import { InventoryAgingComponent } from './cockpit/inventory-aging.component';
@@ -329,6 +329,29 @@ export class HomeDashboardComponent implements OnInit {
 
   projectColor(i: number): string {
     return this.PROJECT_COLORS[i % this.PROJECT_COLORS.length];
+  }
+
+  // ── Tranche / immeuble breakdown helpers ──────────────────────────────────
+
+  bdBarWidth(ca: number, allRows: { totalCA: number }[]): string {
+    const max = Math.max(...allRows.map(r => r.totalCA), 1);
+    return Math.max((ca / max) * 100, 2) + '%';
+  }
+
+  bdSharePct(ca: number, allRows: { totalCA: number }[]): string {
+    const total = allRows.reduce((s, r) => s + r.totalCA, 0);
+    if (total === 0) return '0%';
+    return ((ca / total) * 100).toFixed(0) + '%';
+  }
+
+  /** Group rows by projectName, preserving insertion order */
+  groupByProject<T extends { projectName: string }>(rows: T[]): { projectName: string; items: T[] }[] {
+    const map = new Map<string, T[]>();
+    for (const r of rows) {
+      if (!map.has(r.projectName)) map.set(r.projectName, []);
+      map.get(r.projectName)!.push(r);
+    }
+    return Array.from(map.entries()).map(([projectName, items]) => ({ projectName, items }));
   }
 
   // ── Decision Tag helpers (Wave 18) ─────────────────────────────────────────
