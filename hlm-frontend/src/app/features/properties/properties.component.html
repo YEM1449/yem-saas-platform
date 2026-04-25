@@ -117,7 +117,6 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
     <div class="view-toggle">
       <button class="view-btn" [class.view-btn--active]="viewMode === 'cards'"
               (click)="setView('cards')" title="Vue cartes">
-        <!-- Grid icon -->
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
           <rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
@@ -127,9 +126,17 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
       </button>
       <button class="view-btn" [class.view-btn--active]="viewMode === 'list'"
               (click)="setView('list')" title="Vue liste">
-        <!-- List icon -->
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M1.5 3.5h12M1.5 7.5h12M1.5 11.5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="view-btn" [class.view-btn--active]="viewMode === 'building'"
+              (click)="setView('building')" title="Vue immeuble (par étage)">
+        <!-- Building stack icon -->
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <rect x="2" y="2" width="11" height="2.5" rx=".8" stroke="currentColor" stroke-width="1.3"/>
+          <rect x="2" y="6.25" width="11" height="2.5" rx=".8" stroke="currentColor" stroke-width="1.3"/>
+          <rect x="2" y="10.5" width="11" height="2.5" rx=".8" stroke="currentColor" stroke-width="1.3"/>
         </svg>
       </button>
     </div>
@@ -424,6 +431,164 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
         }
       </tbody>
     </table>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- ── BUILDING STACK VIEW ──────────────────────────────────── -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (!loading && viewMode === 'building') {
+  <div class="building-stack-wrap">
+
+    @if (immeubles.length === 0) {
+      <!-- No buildings loaded: prompt to select a project -->
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon">🏢</div>
+          <p class="empty-state-title">Sélectionnez un projet</p>
+          <p class="empty-state-desc">Choisissez un projet dans les filtres pour afficher ses immeubles étage par étage.</p>
+        </div>
+      </div>
+    } @else {
+
+      <!-- Building selector chips -->
+      <div class="building-selector">
+        @for (imm of immeubles; track imm.id) {
+          <button class="building-chip"
+                  [class.building-chip--active]="stackImmeubleId === imm.id"
+                  (click)="selectStackBuilding(imm.id)">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="10" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M4.5 4.5h1M7.5 4.5h1M4.5 7h1M7.5 7h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            {{ imm.nom }}
+            <span class="building-chip-meta">
+              {{ stackCountForBuilding(imm.id) }} lots
+              @if (stackAvailableCount(imm.id) > 0) {
+                <span class="building-chip-avail">· {{ stackAvailableCount(imm.id) }} dispo</span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+
+      <!-- Stack layout: floors + optional detail panel -->
+      <div class="building-stack-layout" [class.has-detail]="stackSelectedId">
+
+        <!-- Floor plan grid -->
+        <div class="building-stack-grid" (click)="closeStackDetail()">
+
+          @if (stackFloors.length === 0) {
+            <div class="stack-empty">Aucun lot dans cet immeuble</div>
+          } @else {
+
+            <!-- Summary row -->
+            <div class="stack-summary">
+              <span class="stack-summary-name">{{ stackImmeuble?.nom }}</span>
+              <span class="stack-summary-count">{{ stackProperties.length }} lots · {{ stackFloors.length }} niveaux</span>
+            </div>
+
+            <!-- Legend -->
+            <div class="stack-legend">
+              <span class="legend-item legend-active">Disponible</span>
+              <span class="legend-item legend-reserved">Réservé</span>
+              <span class="legend-item legend-sold">Vendu</span>
+              <span class="legend-item legend-draft">Brouillon</span>
+              <span class="legend-item legend-withdrawn">Retiré</span>
+            </div>
+
+            <!-- Floor rows (top → ground) -->
+            @for (row of stackFloors; track row.floor) {
+              <div class="stack-floor">
+                <div class="stack-floor-label">{{ row.label }}</div>
+                <div class="stack-tiles">
+                  @for (p of row.units; track p.id) {
+                    <button class="stack-tile"
+                            [attr.data-status]="p.status"
+                            [class.stack-tile--selected]="stackSelectedId === p.id"
+                            (click)="selectStackTile(p, $event)"
+                            [title]="p.referenceCode + ' · ' + statusLabel(p.status) + (p.surfaceAreaSqm ? ' · ' + p.surfaceAreaSqm + ' m²' : '')">
+                      <span class="stack-tile-ref">{{ p.referenceCode.split('-').pop() }}</span>
+                      @if (p.surfaceAreaSqm) {
+                        <span class="stack-tile-surf">{{ p.surfaceAreaSqm }}m²</span>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Detail panel (slides in when tile selected) -->
+        @if (stackSelectedProp; as p) {
+          <aside class="building-detail-panel" (click)="$event.stopPropagation()">
+            <div class="detail-panel-header">
+              <span class="detail-panel-ref">{{ p.referenceCode }}</span>
+              <button class="detail-close" (click)="closeStackDetail()" aria-label="Fermer">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="detail-panel-body">
+              <h3 class="detail-title">{{ p.title }}</h3>
+              <div class="detail-badge-row">
+                <span [class]="badgeClass(p.status)">{{ statusLabel(p.status) }}</span>
+                <span class="prop-type-tag">{{ typeLabel(p.type) }}</span>
+              </div>
+
+              <div class="detail-specs">
+                @if (p.floorNumber !== null && p.floorNumber !== undefined) {
+                  <div class="detail-spec">
+                    <span class="detail-spec-label">Étage</span>
+                    <span class="detail-spec-value">{{ p.floorNumber === 0 ? 'RDC' : 'Ét. ' + p.floorNumber }}</span>
+                  </div>
+                }
+                @if (p.surfaceAreaSqm) {
+                  <div class="detail-spec">
+                    <span class="detail-spec-label">Surface</span>
+                    <span class="detail-spec-value">{{ p.surfaceAreaSqm }} m²</span>
+                  </div>
+                }
+                @if (p.bedrooms) {
+                  <div class="detail-spec">
+                    <span class="detail-spec-label">Chambres</span>
+                    <span class="detail-spec-value">{{ p.bedrooms }}</span>
+                  </div>
+                }
+                @if (p.bathrooms) {
+                  <div class="detail-spec">
+                    <span class="detail-spec-label">S. de bain</span>
+                    <span class="detail-spec-value">{{ p.bathrooms }}</span>
+                  </div>
+                }
+                @if (p.price !== null) {
+                  <div class="detail-spec detail-spec--price">
+                    <span class="detail-spec-label">Prix</span>
+                    <span class="detail-spec-value detail-price">{{ p.price | number:'1.0-0' }}&nbsp;{{ p.currency ?? 'MAD' }}</span>
+                  </div>
+                }
+                @if (p.immeubleName || p.buildingName) {
+                  <div class="detail-spec">
+                    <span class="detail-spec-label">Immeuble</span>
+                    <span class="detail-spec-value">{{ p.immeubleName ?? p.buildingName }}</span>
+                  </div>
+                }
+              </div>
+
+              <button class="btn btn-primary btn-sm detail-cta" (click)="goToDetail(p.id)">
+                Voir la fiche
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </aside>
+        }
+
+      </div>
+    }
   </div>
 }
 

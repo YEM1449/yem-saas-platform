@@ -489,6 +489,7 @@
 
 /* ── Mobile Breakpoint (<960px) ───────────────────────────────── */
 @media (max-width: 959px) {
+  .rail-toggle-btn { display: none; }
   .mobile-topbar  { display: flex; }
   .bottom-nav     { display: flex; }
   .sidebar-close-btn { display: flex; }
@@ -612,6 +613,153 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* ── Rail expand / collapse toggle button ────────────────────── */
+.rail-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 3px auto 2px;
+  background: transparent;
+  border: 1px solid var(--line, #e8dec5);
+  border-radius: 6px;
+  color: var(--ink-3, #9a8e77);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.rail-toggle-btn:hover {
+  background: var(--sand, #faf6ec);
+  color: var(--ink, #2d241a);
+}
+.rail-toggle-icon { transition: transform 220ms ease; }
+.rail-toggle-label { display: none; }
+
+/* ── Rail expanded state (desktop) ───────────────────────────── */
+.sidebar { transition: width 240ms cubic-bezier(.4,0,.2,1); }
+
+.sidebar.rail-expanded {
+  width: 220px;
+  align-items: stretch;
+}
+
+.sidebar.rail-expanded .sidebar-brand {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 2px 12px 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line, #e8dec5);
+  gap: 9px;
+  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+}
+.sidebar.rail-expanded .rail-letter { display: none; }
+.sidebar.rail-expanded .brand-icon  { display: flex; }
+.sidebar.rail-expanded .brand-name {
+  display: block;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--ink, #2d241a);
+  letter-spacing: -0.02em;
+}
+
+.sidebar.rail-expanded .sidebar-nav {
+  align-items: stretch;
+  padding: 4px 8px 8px;
+}
+.sidebar.rail-expanded .nav-section-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3, #9a8e77);
+  padding: 12px 4px 3px;
+}
+.sidebar.rail-expanded .nav-section-label:first-child { padding-top: 4px; }
+
+.sidebar.rail-expanded .nav-item {
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 7px 10px;
+  gap: 9px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  justify-content: flex-start;
+  color: var(--ink-2, #5a4e3d);
+}
+.sidebar.rail-expanded .nav-item.nav-active::before { display: none; }
+.sidebar.rail-expanded .nav-item.nav-active {
+  border-left: 2px solid var(--brand, #16a34a);
+  padding-left: 8px;
+}
+.sidebar.rail-expanded .nav-item[title]:hover::after { display: none; }
+.sidebar.rail-expanded .nav-icon { width: 16px; height: 16px; }
+
+/* Toggle button in expanded state: full-width row with label */
+.sidebar.rail-expanded .rail-toggle-btn {
+  width: auto;
+  min-height: 32px;
+  padding: 0 10px;
+  margin: 2px 8px;
+  justify-content: space-between;
+  border-color: transparent;
+}
+.sidebar.rail-expanded .rail-toggle-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-3, #9a8e77);
+}
+.sidebar.rail-expanded .rail-toggle-icon { transform: rotate(180deg); }
+
+/* Footer in expanded state */
+.sidebar.rail-expanded .sidebar-footer {
+  align-items: stretch;
+  padding: 8px 8px 6px;
+  gap: 4px;
+}
+.sidebar.rail-expanded .user-info {
+  padding: 4px 4px;
+  gap: 8px;
+  justify-content: flex-start;
+}
+.sidebar.rail-expanded .user-details { display: flex; flex-direction: column; min-width: 0; }
+.sidebar.rail-expanded .user-email {
+  font-size: 0.75rem;
+  color: var(--ink-2, #5a4e3d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar.rail-expanded .user-role {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-3, #9a8e77);
+}
+.sidebar.rail-expanded .logout-btn {
+  width: 100%;
+  height: auto;
+  min-height: 34px;
+  padding: 6px 10px;
+  justify-content: flex-start;
+  border: 1px solid var(--line, #e8dec5);
+  color: var(--ink-2, #5a4e3d);
+  font-size: 0.8125rem;
+  gap: 7px;
+}
+.sidebar.rail-expanded .logout-btn svg { width: 14px; height: 14px; }
 
 /* ── Desktop (≥960px) ─────────────────────────────────────────── */
 @media (min-width: 960px) {
