@@ -40,7 +40,7 @@ export class AdvancePipelineDialogComponent {
 
   readonly motifAnnulationOptions: { value: MotifAnnulation; label: string }[] = [
     { value: 'CREDIT_REFUSE',    label: 'Crédit refusé' },
-    { value: 'DESISTEMENT_SRU',  label: 'Rétractation SRU (Art. L271-1)' },
+    { value: 'DESISTEMENT_ACHETEUR', label: 'Désistement acheteur' },
     { value: 'CSP_NON_REALISEE', label: 'Condition suspensive non réalisée' },
     { value: 'ACCORD_PARTIES',   label: 'Accord entre parties' },
     { value: 'LITIGE',           label: 'Litige' },

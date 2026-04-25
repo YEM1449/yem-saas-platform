@@ -233,7 +233,8 @@ public class Project3dService {
             case DRAFT, ACTIVE     -> "DISPONIBLE";
             case RESERVED          -> "RESERVE";
             case SOLD              -> "VENDU";
-            case WITHDRAWN, ARCHIVED -> "LIVRE";
+            case WITHDRAWN -> "RETIRE";
+            case ARCHIVED  -> "LIVRE";
         };
     }
 

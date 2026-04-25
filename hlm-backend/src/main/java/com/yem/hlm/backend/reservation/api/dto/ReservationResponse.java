@@ -19,6 +19,7 @@ public record ReservationResponse(
         LocalDateTime expiryDate,
         ReservationStatus status,
         String notes,
+        String raisonAnnulation,
         UUID convertedDepositId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

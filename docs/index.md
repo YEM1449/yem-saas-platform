@@ -36,6 +36,7 @@ Legacy duplicate user guides and deprecated AI context files were removed so the
 | --- | --- |
 | [spec/requirements-spec.md](spec/requirements-spec.md) | personas, goals, functional and non-functional requirements |
 | [spec/functional-spec.md](spec/functional-spec.md) | end-to-end workflows, role permissions, business rules, state transitions |
+| [spec/business-rules-audit.md](spec/business-rules-audit.md) | audited current rule set plus recommended professional real-estate target rules |
 | [spec/technical-spec.md](spec/technical-spec.md) | stack, deployment model, configuration, integrations, testing, security controls |
 | [spec/api-reference.md](spec/api-reference.md) | API contract by route family, auth expectations, request / response patterns |
 

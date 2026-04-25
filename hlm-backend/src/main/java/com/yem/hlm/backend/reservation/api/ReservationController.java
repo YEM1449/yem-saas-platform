@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.reservation.api;
 
 import com.yem.hlm.backend.deposit.api.dto.DepositResponse;
+import com.yem.hlm.backend.reservation.api.dto.CancelReservationRequest;
 import com.yem.hlm.backend.reservation.api.dto.ConvertReservationToDepositRequest;
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
 import com.yem.hlm.backend.reservation.api.dto.ReservationDetailResponse;
@@ -60,11 +61,13 @@ public class ReservationController {
         return reservationService.list(contactId);
     }
 
-    /** Cancel an ACTIVE reservation — ADMIN/MANAGER only. */
+    /** Cancel an ACTIVE reservation — ADMIN/MANAGER only. Optional body: {@code raisonAnnulation}. */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ReservationResponse cancel(@PathVariable UUID id) {
-        return reservationService.cancel(id);
+    public ReservationResponse cancel(
+            @PathVariable UUID id,
+            @RequestBody(required = false) CancelReservationRequest request) {
+        return reservationService.cancel(id, request);
     }
 
     /**

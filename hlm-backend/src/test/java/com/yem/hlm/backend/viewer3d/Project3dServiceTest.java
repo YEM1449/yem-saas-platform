@@ -79,8 +79,7 @@ class Project3dServiceTest {
 
     @Test
     void upsertModel_throwsProjectNotFound_whenProjectBelongsToOtherSociete() {
-        Project project = stubProject();
-        project.setSocieteId(UUID.randomUUID()); // different société
+        Project project = stubProject(UUID.randomUUID()); // different société
         when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
 
         assertThatThrownBy(() -> service.upsertModel(PROJECT_ID,
@@ -132,12 +131,8 @@ class Project3dServiceTest {
         Lot3dMapping mapping = new Lot3dMapping(SOCIETE_ID, PROJECT_ID, propId,
                 "Appart_A101", null, null);
 
-        Property property = new Property();
-        property.setId(propId);
-        property.setStatus(PropertyStatus.RESERVED);
-        property.setType(PropertyType.APPARTEMENT);
-        property.setSurfaceAreaSqm(new BigDecimal("72.50"));
-        property.setPrice(new BigDecimal("285000"));
+        Property property = stubProperty(propId, PropertyStatus.RESERVED,
+                PropertyType.APPARTEMENT, new BigDecimal("72.50"), new BigDecimal("285000"));
 
         when(mappingRepository.findBySocieteIdAndProjetId(SOCIETE_ID, PROJECT_ID))
                 .thenReturn(List.of(mapping));
@@ -156,9 +151,7 @@ class Project3dServiceTest {
         UUID propId = UUID.randomUUID();
         Lot3dMapping mapping = new Lot3dMapping(SOCIETE_ID, PROJECT_ID, propId, "Mesh1", null, null);
 
-        Property property = new Property();
-        property.setId(propId);
-        property.setStatus(PropertyStatus.ACTIVE);
+        Property property = stubProperty(propId, PropertyStatus.ACTIVE, null, null, null);
 
         when(mappingRepository.findBySocieteIdAndProjetId(SOCIETE_ID, PROJECT_ID))
                 .thenReturn(List.of(mapping));
@@ -171,13 +164,11 @@ class Project3dServiceTest {
     }
 
     @Test
-    void getStatusSnapshot_displaysLivre_forWithdrawnProperty() {
+    void getStatusSnapshot_displaysRetire_forWithdrawnProperty() {
         UUID propId = UUID.randomUUID();
         Lot3dMapping mapping = new Lot3dMapping(SOCIETE_ID, PROJECT_ID, propId, "Mesh2", null, null);
 
-        Property property = new Property();
-        property.setId(propId);
-        property.setStatus(PropertyStatus.WITHDRAWN);
+        Property property = stubProperty(propId, PropertyStatus.WITHDRAWN, null, null, null);
 
         when(mappingRepository.findBySocieteIdAndProjetId(SOCIETE_ID, PROJECT_ID))
                 .thenReturn(List.of(mapping));
@@ -186,7 +177,7 @@ class Project3dServiceTest {
 
         List<Lot3dStatusDto> statuses = service.getStatusSnapshot(PROJECT_ID);
 
-        assertThat(statuses.get(0).statut()).isEqualTo("LIVRE");
+        assertThat(statuses.get(0).statut()).isEqualTo("RETIRE");
     }
 
     // ── generateUploadUrl ─────────────────────────────────────────────────────
@@ -215,10 +206,8 @@ class Project3dServiceTest {
 
     @Test
     void generateUploadUrl_rejectsFileSizeAbove50Mb() {
-        // 50 MB + 1 byte fails at @Max(52_428_800) validation; here we test project not found
-        // since service trusts the @Valid controller binding for size — test project isolation
-        Project project = stubProject();
-        project.setSocieteId(UUID.randomUUID()); // wrong société
+        // Service checks societeId matches context; wrong société → ProjectNotFoundException
+        Project project = stubProject(UUID.randomUUID()); // wrong société
         when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
 
         assertThatThrownBy(() -> service.generateUploadUrl(PROJECT_ID,
@@ -229,9 +218,13 @@ class Project3dServiceTest {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private Project stubProject() {
-        Project p = new Project();
-        p.setId(PROJECT_ID);
-        p.setSocieteId(SOCIETE_ID);
+        return stubProject(SOCIETE_ID);
+    }
+
+    private Project stubProject(UUID societeId) {
+        Project p = mock(Project.class);
+        lenient().when(p.getId()).thenReturn(PROJECT_ID);
+        when(p.getSocieteId()).thenReturn(societeId);
         return p;
     }
 
@@ -239,5 +232,16 @@ class Project3dServiceTest {
         Project3dModel m = new Project3dModel(SOCIETE_ID, PROJECT_ID,
                 "models/s/p/file.glb", true, USER_ID);
         return m;
+    }
+
+    private Property stubProperty(UUID id, PropertyStatus status,
+                                   PropertyType type, BigDecimal surface, BigDecimal price) {
+        Property p = mock(Property.class);
+        when(p.getId()).thenReturn(id);
+        when(p.getStatus()).thenReturn(status);
+        if (type    != null) when(p.getType()).thenReturn(type);
+        if (surface != null) when(p.getSurfaceAreaSqm()).thenReturn(surface);
+        if (price   != null) when(p.getPrice()).thenReturn(price);
+        return p;
     }
 }

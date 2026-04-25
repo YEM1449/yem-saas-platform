@@ -122,6 +122,7 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
     const reserve    = statuses.filter(s => s.statut === 'RESERVE').length;
     const vendu      = statuses.filter(s => s.statut === 'VENDU').length;
     const livre      = statuses.filter(s => s.statut === 'LIVRE').length;
+    const retire     = statuses.filter(s => s.statut === 'RETIRE').length;
 
     const sum = (arr: LotStatusSnapshot[]) =>
       arr.reduce((acc, s) => acc + (s.prix ?? 0), 0);
@@ -138,6 +139,7 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
       { label: 'Réservés',        value: String(reserve),    sub: pct(reserve),    color: '#F59E0B' },
       { label: 'Vendus',          value: String(vendu),      sub: pct(vendu),       color: '#10B981' },
       { label: 'Livrés',          value: String(livre),      sub: pct(livre),       color: '#6B7280' },
+      ...(retire > 0 ? [{ label: 'Retirés', value: String(retire), sub: pct(retire), color: '#EF4444' }] : []),
       { label: 'CA réalisé',      value: caRealise   > 0 ? fmt(caRealise)   : '—' },
       { label: 'CA prévisionnel', value: caPrevision > 0 ? fmt(caPrevision) : '—' },
     ];

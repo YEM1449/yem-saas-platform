@@ -188,12 +188,7 @@
 			<version>2.27.21</version>
 		</dependency>
 
-		<!-- AWS SDK v2 S3 Presigner — generates short-lived pre-signed GET URLs (3D model delivery) -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3-presigner</artifactId>
-			<version>2.27.21</version>
-		</dependency>
+		<!-- S3Presigner classes are bundled inside software.amazon.awssdk:s3 at 2.27.21+ — no separate artifact needed -->
 
 		<!-- OpenTelemetry — distributed tracing bridge (no OTLP exporter by default) -->
 		<!-- opentelemetry-exporter-otlp omitted: it spawns BatchSpanProcessor/BatchLogRecord -->

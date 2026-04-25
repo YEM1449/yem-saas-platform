@@ -14,6 +14,9 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
+import com.yem.hlm.backend.notification.domain.NotificationType;
+import com.yem.hlm.backend.notification.service.NotificationService;
+import com.yem.hlm.backend.reservation.api.dto.CancelReservationRequest;
 import com.yem.hlm.backend.reservation.api.dto.ConvertReservationToDepositRequest;
 import com.yem.hlm.backend.reservation.api.dto.CreateReservationRequest;
 import com.yem.hlm.backend.reservation.api.dto.ReservationDetailResponse;
@@ -51,6 +54,7 @@ public class ReservationService {
     private final ReservationRefGenerator refGenerator;
     private final VenteRepository venteRepository;
     private final TrancheRepository trancheRepository;
+    private final NotificationService notificationService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -63,7 +67,8 @@ public class ReservationService {
             ApplicationEventPublisher eventPublisher,
             ReservationRefGenerator refGenerator,
             VenteRepository venteRepository,
-            TrancheRepository trancheRepository
+            TrancheRepository trancheRepository,
+            NotificationService notificationService
     ) {
         this.reservationRepository = reservationRepository;
         this.contactRepository = contactRepository;
@@ -76,6 +81,7 @@ public class ReservationService {
         this.refGenerator = refGenerator;
         this.venteRepository = venteRepository;
         this.trancheRepository = trancheRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -243,9 +249,10 @@ public class ReservationService {
 
     /**
      * Cancels an ACTIVE reservation and releases the property back to ACTIVE.
+     * The optional {@code request.raisonAnnulation()} is persisted for traceability.
      */
     @Transactional
-    public ReservationResponse cancel(UUID id) {
+    public ReservationResponse cancel(UUID id, CancelReservationRequest request) {
         UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
 
@@ -258,12 +265,15 @@ public class ReservationService {
         }
 
         reservation.setStatus(ReservationStatus.CANCELLED);
+        if (request != null && request.raisonAnnulation() != null && !request.raisonAnnulation().isBlank()) {
+            reservation.setRaisonAnnulation(request.raisonAnnulation().strip());
+        }
         Reservation saved = reservationRepository.save(reservation);
 
         releasePropertyIfStillReserved(societeId, reservation.getPropertyId());
 
         auditService.record(societeId, AuditEventType.RESERVATION_CANCELLED, actorUserId,
-                "RESERVATION", saved.getId(), null);
+                "RESERVATION", saved.getId(), saved.getRaisonAnnulation());
 
         return toResponse(saved);
     }
@@ -342,6 +352,27 @@ public class ReservationService {
         }
     }
 
+    /**
+     * Called by the scheduler: notifies agents of reservations expiring within 48h.
+     * Uses a per-reservation flag to send the warning at most once.
+     */
+    @Transactional
+    public void runExpirySoonCheck() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Reservation> expiringSoon = reservationRepository
+                .findExpiringSoonUnnotified(now, now.plusHours(48));
+        for (Reservation r : expiringSoon) {
+            notificationService.notify(
+                    r.getSocieteId(),
+                    r.getReservedByUser(),
+                    NotificationType.RESERVATION_EXPIRING_SOON,
+                    r.getId(),
+                    r.getReservationRef());
+            r.setNotifiedExpiringSoon(true);
+            reservationRepository.save(r);
+        }
+    }
+
     // ---- Pipeline metrics ----
 
     public long countActiveReservations(UUID societeId) {
@@ -398,6 +429,7 @@ public class ReservationService {
                 r.getExpiryDate(),
                 r.getStatus(),
                 r.getNotes(),
+                r.getRaisonAnnulation(),
                 r.getConvertedDepositId(),
                 r.getCreatedAt(),
                 r.getUpdatedAt()

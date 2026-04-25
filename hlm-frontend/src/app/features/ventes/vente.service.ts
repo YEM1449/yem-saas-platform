@@ -11,7 +11,7 @@ export type ContractStatus = 'PENDING' | 'GENERATED' | 'SIGNED';
 export type TypeFinancement = 'COMPTANT' | 'CREDIT_IMMOBILIER' | 'PTZ' | 'MIXTE';
 export type MotifAnnulation =
   | 'CREDIT_REFUSE'
-  | 'DESISTEMENT_SRU'
+  | 'DESISTEMENT_ACHETEUR'
   | 'CSP_NON_REALISEE'
   | 'ACCORD_PARTIES'
   | 'LITIGE'
@@ -54,8 +54,8 @@ export interface Vente {
   statut: VenteStatut;
   contractStatus: ContractStatus;
   // French legal deadlines
-  dateFinDelaiSru: string | null;
-  dateLimiteConditionCredit: string | null;
+  dateFinDelaiReflexion: string | null;
+  dateLimiteFinancement: string | null;
   // Financing risk
   typeFinancement: TypeFinancement | null;
   montantCredit: number | null;
@@ -113,7 +113,7 @@ export interface UpdateFinancingRequest {
   montantCredit?: number | null;
   banqueCredit?: string | null;
   creditObtenu?: boolean | null;
-  dateLimiteConditionCredit?: string | null;
+  dateLimiteFinancement?: string | null;
   notaireAcquereurNom?: string | null;
   notaireAcquereurEmail?: string | null;
   datePvReception?: string | null;

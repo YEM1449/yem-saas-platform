@@ -11,7 +11,7 @@ public record UpdateFinancingRequest(
         BigDecimal montantCredit,
         String banqueCredit,
         Boolean creditObtenu,
-        LocalDate dateLimiteConditionCredit,
+        LocalDate dateLimiteFinancement,
         String notaireAcquereurNom,
         String notaireAcquereurEmail,
         LocalDate datePvReception,

@@ -145,3 +145,7 @@ databaseChangeLog:
       file: db/changelog/changes/071-project-3d-model.yaml
   - include:
       file: db/changelog/changes/072-lot-3d-mapping.yaml
+  - include:
+      file: db/changelog/changes/073-vente-legal-fields-rename.yaml
+  - include:
+      file: db/changelog/changes/074-reservation-cancel-reason.yaml

@@ -196,7 +196,7 @@ export class VenteDetailComponent implements OnInit {
       montantCredit:             v.montantCredit,
       banqueCredit:              v.banqueCredit,
       creditObtenu:              v.creditObtenu,
-      dateLimiteConditionCredit: v.dateLimiteConditionCredit,
+      dateLimiteFinancement: v.dateLimiteFinancement,
       notaireAcquereurNom:       v.notaireAcquereurNom,
       notaireAcquereurEmail:     v.notaireAcquereurEmail,
     };
@@ -291,7 +291,7 @@ export class VenteDetailComponent implements OnInit {
     if (!m) return '—';
     const labels: Record<MotifAnnulation, string> = {
       CREDIT_REFUSE:    'Crédit refusé',
-      DESISTEMENT_SRU:  'Rétractation SRU (Art. L271-1)',
+      DESISTEMENT_ACHETEUR: 'Désistement acheteur',
       CSP_NON_REALISEE: 'Condition suspensive non réalisée',
       ACCORD_PARTIES:   'Accord entre parties',
       LITIGE:           'Litige',

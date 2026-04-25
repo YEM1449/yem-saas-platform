@@ -26,13 +26,14 @@ public class ReservationExpiryScheduler {
         this.societeContextHelper = societeContextHelper;
     }
 
-    /** Runs every hour — check for expired reservations and release properties. */
+    /** Runs every hour — expire overdue reservations and warn about those expiring within 48h. */
     @Scheduled(cron = "${app.reservation.expiry-cron:0 0 * * * *}")
     public void runExpiryCheck() {
         societeContextHelper.runAsSystem(() -> {
             log.info("Reservation expiry check starting");
             try {
                 reservationService.runExpiryCheck();
+                reservationService.runExpirySoonCheck();
             } catch (Exception e) {
                 log.error("Reservation expiry check failed", e);
             }

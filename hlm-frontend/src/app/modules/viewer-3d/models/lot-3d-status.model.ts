@@ -1,4 +1,4 @@
-export type LotDisplayStatus = 'DISPONIBLE' | 'RESERVE' | 'VENDU' | 'LIVRE';
+export type LotDisplayStatus = 'DISPONIBLE' | 'RESERVE' | 'VENDU' | 'LIVRE' | 'RETIRE';
 
 /** Colour tokens per lot status — matches design system */
 export const LOT_STATUS_COLORS: Record<LotDisplayStatus, string> = {
@@ -6,6 +6,7 @@ export const LOT_STATUS_COLORS: Record<LotDisplayStatus, string> = {
   RESERVE:    '#F59E0B',
   VENDU:      '#10B981',
   LIVRE:      '#6B7280',
+  RETIRE:     '#EF4444',
 };
 
 export const LOT_STATUS_LABELS: Record<LotDisplayStatus, string> = {
@@ -13,6 +14,7 @@ export const LOT_STATUS_LABELS: Record<LotDisplayStatus, string> = {
   RESERVE:    'Réservé',
   VENDU:      'Vendu',
   LIVRE:      'Livré',
+  RETIRE:     'Retiré',
 };
 
 export interface LotStatusSnapshot {
