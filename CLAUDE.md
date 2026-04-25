@@ -196,9 +196,9 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Wave 11: UX + Performance Sprint (F1–F10) ✅ (items below)
 - Wave 12: Owner KPIs + Template builder + UI polish ✅ (items below)
 - Portal magic-link pipeline fix ✅ (2026-04-14, items below)
-- Wave 13: 3D Visualiseur ✅ (2026-04-24, items below) <!-- ✅ CHECKPOINT: feat(3d): backend entities+APIs+migrations + Angular module + Three.js scene + lot interaction + dashboard 3D tab -->
+- Wave 13: 3D Visualiseur ✅ (2026-04-25, items below) <!-- ✅ CHECKPOINT: feat(3d): upload-url workflow, generatePresignedPutUrl, model-upload-admin component, 10 Mockito + 13 IT + 10 E2E tests, *ngIf→@if fix -->
 
-### Wave 13 — 3D Visualiseur + Dashboard 3D Tab (complete, 2026-04-24)
+### Wave 13 — 3D Visualiseur + Dashboard 3D Tab (complete, 2026-04-25)
 
 | Item | Files |
 |---|---|
@@ -210,7 +210,12 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 | Backend: DTOs — `Create3dModelRequest`, `Project3dModelResponse`, `Lot3dMappingDto`, `Lot3dStatusDto`, `BulkMappingRequest` | `viewer3d/api/dto/` |
 | Backend: `Project3dController` — POST/GET /api/projects/{id}/3d-model, GET /3d-properties-status, PUT /mappings | `viewer3d/api/Project3dController.java` |
 | Backend: `PortalProject3dController` — ROLE_PORTAL read-only, access-checked per contact vente | `viewer3d/api/PortalProject3dController.java` |
-| Backend: S3 pre-signed URL — `generatePresignedUrl(key, ttl)` on `MediaStorageService` + `ObjectStorageMediaStorage` | `MediaStorageService.java`, `ObjectStorageMediaStorage.java` |
+| Backend: S3 pre-signed URL — `generatePresignedUrl(key, ttl)` + `generatePresignedPutUrl(key, ttl)` on `MediaStorageService` + `ObjectStorageMediaStorage` | `MediaStorageService.java`, `ObjectStorageMediaStorage.java` |
+| Backend: `POST /api/projects/{id}/3d-model/upload-url` — two-step GLB upload (step 1); validates dracoCompressed=true, returns pre-signed PUT URL + fileKey | `Project3dController.java`, `UploadUrlRequest`, `UploadUrlResponse` |
+| Tests: `Project3dServiceTest` (10 Mockito), `Project3dControllerIT` (13 Testcontainers) | `viewer3d/` test directory |
+| Frontend: `ModelUploadAdminComponent` — two-step upload UI, progress bar, .glb + 50 MB validation, error/done states | `model-upload-admin/` |
+| Frontend: `Viewer3dApiService.requestUploadUrl()` + `confirmUpload()` | `viewer-3d-api.service.ts` |
+| E2E: `viewer-3d.spec.ts` (10 Playwright tests) registered in playwright.config.ts | `e2e/viewer-3d.spec.ts` |
 | Backend: `LOT_STATUS_3D_CACHE` (10 s TTL) added to `CacheConfig` | `CacheConfig.java` |
 | Backend: `Project3dModelNotFoundException` (404) registered in `GlobalExceptionHandler` | both files |
 | Backend: `s3-presigner:2.27.21` added to pom.xml | `pom.xml` |
