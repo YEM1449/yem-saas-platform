@@ -104,6 +104,36 @@ Business expectations:
 - sold and reserved states are primarily driven by commercial workflows
 - deleted property behavior is soft-delete oriented
 
+### 2D plan de commercialisation
+
+The project detail page exposes a 2D floor-stack view of all buildings, organized by tranche.
+
+Expected functional behavior:
+
+- a tab bar switches between "Aperçu" (KPIs and documents) and "Plan de commercialisation" (2D view)
+- each tranche is browsable through a prev/next pager with dot indicators
+- when a tranche has more than one building, a tab row selects the active building
+- each building renders as a vertical stack of floor rows, highest floor at top, RDC at bottom
+- each unit is a coloured card showing reference code, surface, and price
+- a legend bar shows live counts per status and a computed absorption rate
+- clicking a legend chip filters the floor stack to only units of that status
+- clicking a unit card opens a detail panel showing price, prix/m², exposition, parkings, chambres, and a parcours juridique stepper
+- the parcours juridique stepper highlights the current legal stage based on property status
+- for available or reserved units, the panel offers a quick link to create a vente
+- for any unit, the panel links to the full property detail page
+
+Status colour rules:
+
+| Display | Underlying property status | Visual |
+| --- | --- | --- |
+| Disponible | ACTIVE | solid green |
+| Brouillon | DRAFT | warm beige diagonal hatch |
+| Réservé | RESERVED | solid orange-red |
+| Vendu | SOLD | solid dark charcoal |
+| Retiré | WITHDRAWN, ARCHIVED | neutral grey diagonal hatch |
+
+Absorption formula: `(SOLD + RESERVED) / (total − DRAFT) × 100`
+
 ### Contacts and interests
 
 Authorized staff can:

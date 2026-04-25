@@ -197,6 +197,40 @@
   color: var(--c-text, #1e293b);
 }
 
+/* ── Detail Tabs ────────────────────────────────────────────── */
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--c-border, #e2e8f0);
+  padding-bottom: 0;
+}
+
+.detail-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-muted, #94a3b8);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  border-radius: 6px 6px 0 0;
+  transition: color .15s, border-color .15s;
+}
+
+.detail-tab:hover { color: var(--c-text-secondary, #475569); }
+
+.detail-tab.tab-active {
+  color: var(--c-primary, #6366f1);
+  border-bottom-color: var(--c-primary, #6366f1);
+  font-weight: 600;
+}
+
 /* ── Spinner small ──────────────────────────────────────────── */
 .spinner-sm {
   width: 16px;

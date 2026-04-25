@@ -99,7 +99,7 @@ service/
 ### Migration workflow
 
 - Liquibase changelog master file includes additive changesets
-- current migration history runs through changeset `069`
+- current migration history runs through changeset `074`
 - schema changes must ship through new changesets, never ad-hoc manual edits
 
 ## 6. Security Design
@@ -274,7 +274,47 @@ WITHDRAWN, ARCHIVED -> LIVRE
 
 The `Dashboard3dTabComponent` imports `html2canvas` and `jspdf` via dynamic `import()` to keep them out of the main bundle. The export captures the current `div.viewer-wrapper` DOM node.
 
-## 15. Technical Constraints
+## 15. 2D Building View
+
+### Component overview
+
+`BuildingViewComponent` (`features/projects/building-view/`) is a standalone Angular component embedded as a tab in `ProjectDetailComponent`. It receives `projectId` as an `@Input` and manages its own data loading.
+
+### Data loading strategy
+
+```text
+forkJoin(
+  TrancheService.listByProject(projectId),
+  ImmeubleService.list(projectId)
+) → filter immeubles by trancheId → PropertyService.list({ immeubleId })
+  → groupBy(floorNumber) → sort floors descending
+```
+
+Immeubles are filtered client-side against `tranche.id` using the `trancheId` field now exposed by `ImmeubleResponse`. If no immeuble matches a tranche (e.g. data pre-dates changeset 059), all immeubles are shown as a fallback.
+
+### DTO changes (no schema change)
+
+- `ImmeubleResponse` now includes `UUID trancheId` mapped from `Immeuble.getTrancheId()`.
+- `PropertyResponse` now includes `String orientation` and `UUID trancheId` mapped from the respective entity getters added in changeset 059.
+- Frontend `Immeuble` interface and `Property` interface carry the same new nullable fields.
+
+### Status colour contract
+
+| CSS class | Hex | PropertyStatus |
+| --- | --- | --- |
+| `.status-active` | `#22c55e` solid | ACTIVE |
+| `.status-draft` | beige diagonal hatch | DRAFT |
+| `.status-reserved` | `#ea580c` solid | RESERVED |
+| `.status-sold` | `#1e293b` solid | SOLD |
+| `.status-withdrawn` | grey diagonal hatch | WITHDRAWN, ARCHIVED |
+
+Diagonal hatch is implemented with `repeating-linear-gradient(45deg, …)` in CSS — no image assets required.
+
+### Absorption rate
+
+`Math.round((SOLD + RESERVED) / (total − DRAFT) × 100)` — computed locally from the loaded property array, refreshed on each building selection.
+
+## 16. Technical Constraints
 
 - RLS relies on correct AOP ordering
 - schema changes must remain additive and traceable

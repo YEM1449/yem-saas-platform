@@ -23,6 +23,7 @@ This audit is based on the current implementation in the main business modules, 
 - [../../hlm-backend/src/main/java/com/yem/hlm/backend/dashboard/service/DashboardCockpitService.java](../../hlm-backend/src/main/java/com/yem/hlm/backend/dashboard/service/DashboardCockpitService.java)
 - [../../hlm-backend/src/main/java/com/yem/hlm/backend/viewer3d/service/Project3dService.java](../../hlm-backend/src/main/java/com/yem/hlm/backend/viewer3d/service/Project3dService.java)
 - [../../hlm-frontend/src/app/modules/viewer-3d/components/project-viewer-3d/project-viewer-3d.component.ts](../../hlm-frontend/src/app/modules/viewer-3d/components/project-viewer-3d/project-viewer-3d.component.ts)
+- [../../hlm-frontend/src/app/features/projects/building-view/building-view.component.ts](../../hlm-frontend/src/app/features/projects/building-view/building-view.component.ts)
 - [../../hlm-frontend/src/app/features/dashboard/dashboard-cockpit.service.ts](../../hlm-frontend/src/app/features/dashboard/dashboard-cockpit.service.ts)
 
 Reading guide:
@@ -187,16 +188,19 @@ Current rules:
 - immeuble names are unique per project
 - tranches advance forward-only and cannot skip stages
 - tranche KPIs are computed from live unit statuses
+- a 2D plan de commercialisation view renders each building as a floor stack with unit cards colour-coded by status; tranche pager navigates between tranches; absorption rate is computed live as `(SOLD + RESERVED) / (total − DRAFT)`
 
 Audit:
 
 - the hierarchy is suitable for developer inventory management
 - tranche progression is a strong start, but still operationally light
+- the 2D view provides immediate stock visibility without requiring a 3D model upload
 
 Professional target:
 
 - add project-level commercial settings: reservation validity, deposit minimum, currency, allowed property types, approval rules
 - add tranche readiness gates: legal readiness, construction readiness, marketing readiness, delivery readiness
+- expose absorption trend over time (not only current snapshot) so sales ops can track velocity per tranche
 - add building metadata useful in real sales operations: entrance, block, orientation, elevator, parking stack, annexes
 - add project and tranche closure rules so teams cannot sell from a non-commercial tranche by mistake
 

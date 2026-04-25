@@ -13,6 +13,7 @@ export interface Immeuble {
   description: string | null;
   createdAt: string;
   updatedAt: string;
+  trancheId: string | null;
 }
 
 export interface CreateImmeubleRequest {

@@ -92,86 +92,117 @@
 
   </div><!-- /project-hero -->
 
-  <!-- ── KPI Cards ─────────────────────────────────────────────── -->
-  @if (loadingKpi) {
-    <div class="loading-wrap" style="padding:12px"><div class="spinner spinner-sm"></div>Chargement des KPIs…</div>
-  }
-  @if (kpiError) {
-    <div class="alert alert-error" style="margin-bottom:16px">{{ kpiError }}</div>
-  }
-  @if (!loadingKpi && kpi) {
-    <div class="kpi-row">
-      <div class="kpi-card">
-        <span class="kpi-num">{{ kpi.totalProperties }}</span>
-        <span class="kpi-lbl">Biens au total</span>
-      </div>
-      <div class="kpi-card kpi-card-blue">
-        <span class="kpi-num">{{ kpi.depositsCount }}</span>
-        <span class="kpi-lbl">Acomptes</span>
-      </div>
-      <div class="kpi-card kpi-card-green">
-        <span class="kpi-num">{{ kpi.salesCount }}</span>
-        <span class="kpi-lbl">Ventes confirmées</span>
-      </div>
-      <div class="kpi-card kpi-card-purple">
-        <span class="kpi-num">{{ kpi.salesTotalAmount | number:'1.0-0' }}</span>
-        <span class="kpi-lbl">CA ventes (MAD)</span>
-      </div>
-      <div class="kpi-card kpi-card-amber">
-        <span class="kpi-num">{{ kpi.depositsTotalAmount | number:'1.0-0' }}</span>
-        <span class="kpi-lbl">Montant acomptes (MAD)</span>
-      </div>
-    </div>
-
-    <!-- Property status breakdown progress bars -->
-    @if (statusEntries.length > 0) {
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-body">
-          <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par statut</h3>
-          <div class="breakdown-list">
-            @for (entry of statusEntries; track entry.label) {
-              <div class="breakdown-row">
-                <span class="breakdown-label">{{ statusLabel(entry.label) }}</span>
-                <div class="breakdown-bar-wrap">
-                  <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
-                       [style.background]="statusColor(entry.label)"></div>
-                </div>
-                <span class="breakdown-count">{{ entry.value }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- Property type breakdown -->
-    @if (typeEntries.length > 0) {
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-body">
-          <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par type</h3>
-          <div class="breakdown-list">
-            @for (entry of typeEntries; track entry.label) {
-              <div class="breakdown-row">
-                <span class="breakdown-label">{{ entry.label }}</span>
-                <div class="breakdown-bar-wrap">
-                  <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
-                       style="background:#6366f1"></div>
-                </div>
-                <span class="breakdown-count">{{ entry.value }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    }
-  }
-
-  <!-- ── Documents ─────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-body">
-      <h3 class="card-title" style="margin-bottom:12px">{{ 'projects.documents' | translate }}</h3>
-      <app-document-list entityType="PROJECT" [entityId]="projectId" />
-    </div>
+  <!-- ── Tab bar ───────────────────────────────────────────────── -->
+  <div class="detail-tabs">
+    <button class="detail-tab" [class.tab-active]="activeTab === 'apercu'" (click)="activeTab = 'apercu'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="8.5" y="1" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="1" y="8.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="8.5" y="8.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Aperçu
+    </button>
+    <button class="detail-tab" [class.tab-active]="activeTab === 'plan'" (click)="activeTab = 'plan'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="4" width="12" height="9" rx="1.2" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M4 4V2.5C4 1.67 4.67 1 5.5 1h3c.83 0 1.5.67 1.5 1.5V4" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M4 8h6M4 10.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Plan de commercialisation
+    </button>
   </div>
+
+  <!-- ══ APERÇU tab ═══════════════════════════════════════════ -->
+  @if (activeTab === 'apercu') {
+
+    <!-- ── KPI Cards ─────────────────────────────────────────────── -->
+    @if (loadingKpi) {
+      <div class="loading-wrap" style="padding:12px"><div class="spinner spinner-sm"></div>Chargement des KPIs…</div>
+    }
+    @if (kpiError) {
+      <div class="alert alert-error" style="margin-bottom:16px">{{ kpiError }}</div>
+    }
+    @if (!loadingKpi && kpi) {
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <span class="kpi-num">{{ kpi.totalProperties }}</span>
+          <span class="kpi-lbl">Biens au total</span>
+        </div>
+        <div class="kpi-card kpi-card-blue">
+          <span class="kpi-num">{{ kpi.depositsCount }}</span>
+          <span class="kpi-lbl">Acomptes</span>
+        </div>
+        <div class="kpi-card kpi-card-green">
+          <span class="kpi-num">{{ kpi.salesCount }}</span>
+          <span class="kpi-lbl">Ventes confirmées</span>
+        </div>
+        <div class="kpi-card kpi-card-purple">
+          <span class="kpi-num">{{ kpi.salesTotalAmount | number:'1.0-0' }}</span>
+          <span class="kpi-lbl">CA ventes (MAD)</span>
+        </div>
+        <div class="kpi-card kpi-card-amber">
+          <span class="kpi-num">{{ kpi.depositsTotalAmount | number:'1.0-0' }}</span>
+          <span class="kpi-lbl">Montant acomptes (MAD)</span>
+        </div>
+      </div>
+
+      <!-- Property status breakdown progress bars -->
+      @if (statusEntries.length > 0) {
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-body">
+            <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par statut</h3>
+            <div class="breakdown-list">
+              @for (entry of statusEntries; track entry.label) {
+                <div class="breakdown-row">
+                  <span class="breakdown-label">{{ statusLabel(entry.label) }}</span>
+                  <div class="breakdown-bar-wrap">
+                    <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
+                         [style.background]="statusColor(entry.label)"></div>
+                  </div>
+                  <span class="breakdown-count">{{ entry.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Property type breakdown -->
+      @if (typeEntries.length > 0) {
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-body">
+            <h3 class="card-title" style="margin-bottom:12px">Répartition des biens par type</h3>
+            <div class="breakdown-list">
+              @for (entry of typeEntries; track entry.label) {
+                <div class="breakdown-row">
+                  <span class="breakdown-label">{{ entry.label }}</span>
+                  <div class="breakdown-bar-wrap">
+                    <div class="breakdown-bar" [style.width.%]="barWidth(entry.value)"
+                         style="background:#6366f1"></div>
+                  </div>
+                  <span class="breakdown-count">{{ entry.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ── Documents ─────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title" style="margin-bottom:12px">{{ 'projects.documents' | translate }}</h3>
+        <app-document-list entityType="PROJECT" [entityId]="projectId" />
+      </div>
+    </div>
+
+  }
+
+  <!-- ══ PLAN DE COMMERCIALISATION tab ═════════════════════════ -->
+  @if (activeTab === 'plan') {
+    <app-building-view [projectId]="projectId" />
+  }
 
 }

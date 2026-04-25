@@ -142,7 +142,9 @@ class PropertyControllerTest {
                 null, // deletedAt
                 null, // publishedAt
                 null, // soldAt
-                null  // reservedAt
+                null, // reservedAt
+                null, // orientation
+                null  // trancheId
         );
     }
 }

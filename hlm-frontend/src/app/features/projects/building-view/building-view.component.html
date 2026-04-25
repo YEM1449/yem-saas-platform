@@ -1,0 +1,224 @@
+<!-- ── Loading / Error ─────────────────────────────────────────── -->
+@if (loadingTranches) {
+  <div class="bv-loading"><div class="spinner spinner-sm"></div>Chargement du plan…</div>
+} @else if (error) {
+  <div class="alert alert-error">{{ error }}</div>
+} @else if (!allImmeubles.length) {
+  <div class="bv-empty">
+    <svg class="bv-empty-icon" viewBox="0 0 48 48" fill="none">
+      <rect x="6" y="14" width="36" height="28" rx="2" stroke="currentColor" stroke-width="2"/>
+      <path d="M16 42V28h16v14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M6 20l18-12 18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="bv-empty-title">Aucun bâtiment pour ce projet</p>
+    <p class="bv-empty-hint">Utilisez le générateur de projet pour créer les tranches et bâtiments.</p>
+  </div>
+} @else {
+
+  <!-- ── Status legend bar ──────────────────────────────────────── -->
+  <div class="bv-legend-bar">
+    <button class="bv-legend-chip chip-active"    [class.chip-on]="statusFilter === 'ACTIVE'"    (click)="toggleFilter('ACTIVE')">
+      <span class="chip-dot dot-active"></span>Disponible <strong>{{ stats.disponible }}</strong>
+    </button>
+    <button class="bv-legend-chip chip-reserved"  [class.chip-on]="statusFilter === 'RESERVED'"  (click)="toggleFilter('RESERVED')">
+      <span class="chip-dot dot-reserved"></span>Réservé <strong>{{ stats.reserve }}</strong>
+    </button>
+    <button class="bv-legend-chip chip-sold"      [class.chip-on]="statusFilter === 'SOLD'"      (click)="toggleFilter('SOLD')">
+      <span class="chip-dot dot-sold"></span>Vendu <strong>{{ stats.vendu }}</strong>
+    </button>
+    <button class="bv-legend-chip chip-draft"     [class.chip-on]="statusFilter === 'DRAFT'"     (click)="toggleFilter('DRAFT')">
+      <span class="chip-dot dot-draft"></span>Brouillon <strong>{{ stats.brouillon }}</strong>
+    </button>
+    <button class="bv-legend-chip chip-withdrawn" [class.chip-on]="statusFilter === 'WITHDRAWN'" (click)="toggleFilter('WITHDRAWN')">
+      <span class="chip-dot dot-withdrawn"></span>Retiré <strong>{{ stats.retire }}</strong>
+    </button>
+    <div class="bv-legend-sep"></div>
+    <span class="bv-absorption">Absorption&nbsp;: <strong>{{ stats.absorption }}%</strong></span>
+  </div>
+
+  <!-- ── Tranche pager ─────────────────────────────────────────── -->
+  @if (tranches.length > 0) {
+    <div class="bv-tranche-pager">
+      <button class="bv-pager-arrow" (click)="prevTranche()" [disabled]="trancheIdx === 0" aria-label="Tranche précédente">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="bv-pager-center">
+        <span class="bv-pager-label">
+          Tranche {{ selectedTranche?.numero ?? (trancheIdx + 1) }}
+          @if (selectedTranche?.nom) { — {{ selectedTranche!.nom }} }
+        </span>
+        @if (tranches.length > 1) {
+          <div class="bv-pager-dots">
+            @for (t of tranches; track t.id; let i = $index) {
+              <button class="bv-pager-dot" [class.dot-active]="i === trancheIdx"
+                      (click)="selectTranche(i)" [attr.aria-label]="'Tranche ' + (i + 1)"></button>
+            }
+          </div>
+        }
+      </div>
+      <button class="bv-pager-arrow" (click)="nextTranche()" [disabled]="trancheIdx === tranches.length - 1" aria-label="Tranche suivante">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- ── Building tabs ─────────────────────────────────────────── -->
+  @if (trancheImmeubles.length > 1) {
+    <div class="bv-building-tabs">
+      @for (imm of trancheImmeubles; track imm.id) {
+        <button class="bv-building-tab" [class.tab-active]="selectedImmeuble?.id === imm.id"
+                (click)="selectImmeuble(imm)">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="1" y="4" width="10" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M1 6l5-4 5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          {{ imm.nom }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ── Main canvas ────────────────────────────────────────────── -->
+  <div class="bv-canvas" [class.canvas-split]="!!selectedProperty">
+
+    <!-- Floor stack -->
+    <div class="bv-stack-wrap">
+      @if (loadingBuilding) {
+        <div class="bv-loading"><div class="spinner spinner-sm"></div></div>
+      } @else if (!floors.length) {
+        <p class="bv-empty-stack">Aucun bien enregistré dans ce bâtiment.</p>
+      } @else {
+        <!-- horizontal scroll container -->
+        <div class="bv-stack">
+          @for (floor of filteredFloors; track floor.number) {
+            <div class="bv-floor-row">
+              <div class="bv-floor-label">
+                <span class="bv-floor-name">{{ floor.label }}</span>
+                <span class="bv-floor-count">{{ floor.units.length }}&nbsp;bien{{ floor.units.length > 1 ? 's' : '' }}</span>
+              </div>
+              <div class="bv-floor-units">
+                @for (unit of floor.units; track unit.id) {
+                  <button class="bv-unit-card {{ statusClass(unit.status) }}"
+                          [class.unit-selected]="selectedProperty?.id === unit.id"
+                          (click)="selectProperty(unit)"
+                          [title]="unit.referenceCode + ' — ' + statusLabel(unit.status)">
+                    <span class="bv-unit-ref">{{ unit.referenceCode }}</span>
+                    @if (unit.surfaceAreaSqm) {
+                      <span class="bv-unit-surface">{{ unit.surfaceAreaSqm }}m²</span>
+                    }
+                    @if (unit.price) {
+                      <span class="bv-unit-price">{{ formatPrice(unit.price) }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ── Property detail panel ──────────────────────────────── -->
+    @if (selectedProperty) {
+      <aside class="bv-detail-panel">
+
+        <!-- Header row -->
+        <div class="bv-panel-header">
+          <div class="bv-panel-badge {{ statusClass(selectedProperty.status) }}">
+            {{ floorBadgeLabel(selectedProperty) }}
+          </div>
+          <div class="bv-panel-title-block">
+            <h3 class="bv-panel-title">Bien {{ selectedProperty.referenceCode }}</h3>
+            <p class="bv-panel-subtitle">
+              {{ typeLabel(selectedProperty.type) }}
+              @if (selectedProperty.surfaceAreaSqm) {&nbsp;·&nbsp;{{ selectedProperty.surfaceAreaSqm }}&nbsp;m²}
+            </p>
+          </div>
+          <span class="bv-status-pill {{ statusClass(selectedProperty.status) }}">
+            {{ statusLabel(selectedProperty.status) }}
+          </span>
+          <button class="bv-panel-close" (click)="selectedProperty = null" aria-label="Fermer">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Metrics grid -->
+        <div class="bv-metrics-grid">
+          <div class="bv-metric">
+            <span class="bv-metric-label">PRIX</span>
+            <span class="bv-metric-value">{{ formatPrice(selectedProperty.price) }}&nbsp;MAD</span>
+          </div>
+          <div class="bv-metric">
+            <span class="bv-metric-label">PRIX&nbsp;/&nbsp;M²</span>
+            <span class="bv-metric-value">{{ pricePerSqm(selectedProperty) }}&nbsp;MAD</span>
+          </div>
+          @if (selectedProperty.orientation) {
+            <div class="bv-metric">
+              <span class="bv-metric-label">EXPOSITION</span>
+              <span class="bv-metric-value">{{ selectedProperty.orientation }}</span>
+            </div>
+          }
+          @if (selectedProperty.parkingSpaces !== null) {
+            <div class="bv-metric">
+              <span class="bv-metric-label">PARKINGS</span>
+              <span class="bv-metric-value">{{ selectedProperty.parkingSpaces }}</span>
+            </div>
+          }
+          @if (selectedProperty.bedrooms !== null) {
+            <div class="bv-metric">
+              <span class="bv-metric-label">CHAMBRES</span>
+              <span class="bv-metric-value">{{ selectedProperty.bedrooms }}</span>
+            </div>
+          }
+          @if (selectedProperty.surfaceAreaSqm) {
+            <div class="bv-metric">
+              <span class="bv-metric-label">SURFACE</span>
+              <span class="bv-metric-value">{{ selectedProperty.surfaceAreaSqm }}&nbsp;m²</span>
+            </div>
+          }
+        </div>
+
+        <!-- Parcours juridique -->
+        <div class="bv-pipeline-section">
+          <p class="bv-pipeline-label">PARCOURS JURIDIQUE</p>
+          <div class="bv-pipeline">
+            @for (step of ['Réservation', 'Compromis', 'Acte', 'Livraison']; track step; let i = $index) {
+              <div class="bv-pipe-step"
+                   [class.pipe-done]="pipelineStep(selectedProperty.status) > i"
+                   [class.pipe-active]="pipelineStep(selectedProperty.status) === i + 1">
+                <div class="bv-pipe-node"></div>
+                <span class="bv-pipe-lbl">{{ step }}</span>
+              </div>
+              @if (i < 3) {
+                <div class="bv-pipe-line" [class.line-done]="pipelineStep(selectedProperty.status) > i"></div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bv-panel-actions">
+          @if (selectedProperty.status === 'ACTIVE' || selectedProperty.status === 'RESERVED') {
+            <a class="btn btn-sm btn-primary"
+               [routerLink]="['/app/ventes/new']"
+               [queryParams]="{ propertyId: selectedProperty.id }">
+              + Créer vente
+            </a>
+          }
+          <a class="btn btn-sm btn-secondary"
+             [routerLink]="['/app/properties', selectedProperty.id]">
+            Fiche bien
+          </a>
+        </div>
+
+      </aside>
+    }
+  </div><!-- /bv-canvas -->
+
+}

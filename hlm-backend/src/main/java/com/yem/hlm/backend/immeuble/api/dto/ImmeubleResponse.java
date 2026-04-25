@@ -14,7 +14,8 @@ public record ImmeubleResponse(
         Integer nbEtages,
         String description,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        UUID trancheId
 ) {
     public static ImmeubleResponse from(Immeuble i) {
         return new ImmeubleResponse(
@@ -26,7 +27,8 @@ public record ImmeubleResponse(
                 i.getNbEtages(),
                 i.getDescription(),
                 i.getCreatedAt(),
-                i.getUpdatedAt()
+                i.getUpdatedAt(),
+                i.getTrancheId()
         );
     }
 }
