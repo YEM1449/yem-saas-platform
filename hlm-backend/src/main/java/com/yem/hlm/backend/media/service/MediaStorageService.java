@@ -69,4 +69,17 @@ public interface MediaStorageService {
         // ObjectStorageMediaStorage overrides with a real S3 pre-signed URL.
         return "/api/media/" + fileKey + "/download";
     }
+
+    /**
+     * Generates a pre-signed PUT URL allowing a client to upload an object directly to R2/S3.
+     * The URL expires after {@code ttl}. The local fallback is not usable for actual uploads —
+     * callers should only invoke this when object-storage is configured.
+     *
+     * @param fileKey target object key (e.g. {@code models/{sid}/{pid}/{uuid}.glb})
+     * @param ttl     how long the URL should remain valid
+     * @return a URL string the caller can PUT to without any authentication header
+     */
+    default String generatePresignedPutUrl(String fileKey, java.time.Duration ttl) throws java.io.IOException {
+        return "/api/media/upload?key=" + fileKey;
+    }
 }

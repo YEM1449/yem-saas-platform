@@ -24,6 +24,8 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -226,6 +228,27 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
                 .build();
 
         PresignedGetObjectRequest presigned = presigner.presignGetObject(presignRequest);
+        return presigned.url().toString();
+    }
+
+    // ── presigned PUT URL ─────────────────────────────────────────────────────
+
+    /**
+     * Generates a pre-signed PUT URL for direct client-to-R2 upload (two-step workflow).
+     * Content-type is fixed to {@code model/gltf-binary} (.glb files only).
+     */
+    @Override
+    public String generatePresignedPutUrl(String fileKey, Duration ttl) {
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(ttl)
+                .putObjectRequest(PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(fileKey)
+                        .contentType("model/gltf-binary")
+                        .build())
+                .build();
+
+        PresignedPutObjectRequest presigned = presigner.presignPutObject(presignRequest);
         return presigned.url().toString();
     }
 

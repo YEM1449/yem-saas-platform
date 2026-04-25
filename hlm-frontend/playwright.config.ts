@@ -62,6 +62,13 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // viewer-3d.spec.ts: 3D visualiser E2E — API smoke + UI fallback checks
+    {
+      name: 'viewer-3d-tests',
+      testMatch: /viewer-3d\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

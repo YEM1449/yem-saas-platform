@@ -1,0 +1,61 @@
+<section class="upload-admin" aria-label="Upload modèle 3D">
+
+  @if (step() === 'done') {
+    <div class="upload-success" role="status">
+      <span class="icon">✓</span>
+      <span>Modèle 3D mis à jour avec succès.</span>
+      <button class="btn-secondary" (click)="reset()">Remplacer</button>
+    </div>
+  } @else if (step() === 'error') {
+    <div class="upload-error" role="alert">
+      <span class="icon">✗</span>
+      <span>{{ errorMsg() }}</span>
+      <button class="btn-secondary" (click)="reset()">Réessayer</button>
+    </div>
+  } @else {
+    <div class="upload-form">
+      <label class="file-zone" [class.has-file]="selectedFile()">
+        <input
+          type="file"
+          accept=".glb"
+          data-testid="glb-file-input"
+          [disabled]="step() !== 'idle'"
+          (change)="onFileSelected($event)"
+        />
+        @if (selectedFile()) {
+          <span class="file-name">{{ selectedFile()!.name }}</span>
+          <span class="file-size">({{ (selectedFile()!.size / 1_048_576) | number:'1.1-1' }} Mo)</span>
+        } @else {
+          <span class="prompt">Glisser-déposer un fichier <strong>.glb</strong> ou cliquer pour sélectionner</span>
+          <span class="constraint">Draco obligatoire · Max 50 Mo</span>
+        }
+      </label>
+
+      @if (step() === 'idle' && selectedFile()) {
+        <button
+          class="btn-primary"
+          data-testid="start-upload-btn"
+          (click)="startUpload()"
+        >
+          Uploader le modèle
+        </button>
+      }
+
+      @if (step() === 'requesting') {
+        <p class="upload-status">Génération de l'URL d'upload…</p>
+      }
+
+      @if (step() === 'uploading') {
+        <div class="progress-wrap" role="progressbar" [attr.aria-valuenow]="progress()">
+          <div class="progress-bar" [style.width.%]="progress()"></div>
+          <span class="progress-label">{{ progress() }}%</span>
+        </div>
+      }
+
+      @if (step() === 'confirming') {
+        <p class="upload-status">Enregistrement des métadonnées…</p>
+      }
+    </div>
+  }
+
+</section>

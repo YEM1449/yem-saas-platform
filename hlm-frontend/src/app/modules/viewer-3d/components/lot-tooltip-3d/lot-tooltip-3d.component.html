@@ -3,16 +3,22 @@
     <span class="lot-ref">{{ mapping?.lotRef ?? '—' }}</span>
     <span class="status-chip" [style.background]="statusColor">{{ statusLabel }}</span>
   </div>
-  <div class="tooltip-row" *ngIf="mapping?.typology">
-    <span class="label">Typologie</span>
-    <span class="value">{{ mapping.typology }}</span>
-  </div>
-  <div class="tooltip-row" *ngIf="status?.surface">
-    <span class="label">Surface</span>
-    <span class="value">{{ status.surface | number:'1.0-1' }} m²</span>
-  </div>
-  <div class="tooltip-row" *ngIf="status?.prix">
-    <span class="label">Prix</span>
-    <span class="value price">{{ formattedPrice }}</span>
-  </div>
+  @if (mapping?.typology) {
+    <div class="tooltip-row">
+      <span class="label">Typologie</span>
+      <span class="value">{{ mapping.typology }}</span>
+    </div>
+  }
+  @if (status?.surface) {
+    <div class="tooltip-row">
+      <span class="label">Surface</span>
+      <span class="value">{{ status.surface | number:'1.0-1' }} m²</span>
+    </div>
+  }
+  @if (status?.prix) {
+    <div class="tooltip-row">
+      <span class="label">Prix</span>
+      <span class="value price">{{ formattedPrice }}</span>
+    </div>
+  }
 </div>

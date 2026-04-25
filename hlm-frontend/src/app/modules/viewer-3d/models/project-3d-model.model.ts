@@ -18,6 +18,12 @@ export interface Project3dModel {
   mappings:        Lot3dMappingEntry[];
 }
 
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  fileKey:   string;
+  expiresAt: string;
+}
+
 export interface LoadProgress {
   loaded: number;
   total:  number;

@@ -34,7 +34,16 @@ public class Project3dController {
         this.service = service;
     }
 
-    @Operation(summary = "Upload or replace the 3D model for a project")
+    @Operation(summary = "Request a pre-signed PUT URL for direct GLB upload to R2 (step 1 of 2)")
+    @PostMapping("/api/projects/{projetId}/3d-model/upload-url")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public UploadUrlResponse generateUploadUrl(
+            @PathVariable UUID projetId,
+            @Valid @RequestBody UploadUrlRequest req) throws IOException {
+        return service.generateUploadUrl(projetId, req);
+    }
+
+    @Operation(summary = "Confirm GLB upload and store model metadata (step 2 of 2)")
     @PostMapping("/api/projects/{projetId}/3d-model")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Project3dModelResponse> upsert(

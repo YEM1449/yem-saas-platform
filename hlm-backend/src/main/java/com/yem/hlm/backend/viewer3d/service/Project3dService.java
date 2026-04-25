@@ -135,6 +135,33 @@ public class Project3dService {
                 .toList();
     }
 
+    // ── POST /api/projects/{projetId}/3d-model/upload-url ────────────────────
+
+    static final Duration UPLOAD_URL_TTL = Duration.ofMinutes(10);
+
+    /**
+     * Generates a pre-signed PUT URL so the client can upload the GLB directly to R2
+     * without routing the file through the backend (two-step upload workflow).
+     * The client must call {@link #upsertModel} with the returned {@code fileKey} after upload.
+     */
+    public UploadUrlResponse generateUploadUrl(UUID projetId, UploadUrlRequest req) throws IOException {
+        UUID societeId = requireSocieteId();
+
+        if (!req.dracoCompressed()) {
+            throw new IllegalArgumentException(
+                    "Le modèle 3D doit être compressé avec Draco avant l'upload.");
+        }
+
+        projectRepository.findById(projetId)
+                .filter(p -> societeId.equals(p.getSocieteId()))
+                .orElseThrow(() -> new ProjectNotFoundException(projetId));
+
+        String fileKey = String.format("models/%s/%s/%s.glb", societeId, projetId, UUID.randomUUID());
+        String uploadUrl = storageService.generatePresignedPutUrl(fileKey, UPLOAD_URL_TTL);
+
+        return new UploadUrlResponse(uploadUrl, fileKey, Instant.now().plus(UPLOAD_URL_TTL));
+    }
+
     // ── PUT /api/projects/{projetId}/3d-model/mappings ───────────────────────
 
     @Transactional
