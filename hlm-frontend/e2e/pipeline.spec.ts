@@ -48,6 +48,12 @@ async function createTestVente(
   expect(propRes.status()).toBe(201);
   const prop = await propRes.json() as { id: string };
 
+  // 2b. Activate property — vente creation requires ACTIVE or RESERVED status
+  const activateRes = await page.request.patch(`${API_BASE}/api/properties/${prop.id}/status`, {
+    data: { status: 'ACTIVE' },
+  });
+  expect(activateRes.status()).toBe(200);
+
   // 3. Contact
   const contRes = await page.request.post(`${API_BASE}/api/contacts`, {
     data: {

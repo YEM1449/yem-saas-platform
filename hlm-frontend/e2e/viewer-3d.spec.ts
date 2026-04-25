@@ -1,27 +1,26 @@
 import { test, expect, Page } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:8080';
+const API_BASE = process.env['PLAYWRIGHT_API_BASE'] ?? '';
 
-/** Create a project via API and return its id */
-async function createProject(adminToken: string): Promise<string> {
+/** Create a project via page.request (shares auth cookies with browser context) */
+async function createProject(page: Page): Promise<string> {
   const uid = Date.now();
-  const res = await fetch(`${BASE_URL}/api/projects`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-    body: JSON.stringify({
+  const res = await page.request.post(`${API_BASE}/api/projects`, {
+    data: {
       name: `3D E2E Project ${uid}`,
       description: 'E2E test project',
       adresse: '1 rue Test',
       ville: 'Paris',
       codePostal: '75001',
-    }),
+    },
   });
+  expect(res.status()).toBe(201);
   const data = await res.json() as { id: string };
   return data.id;
 }
 
-/** Log in via the UI and return the admin JWT from localStorage */
-async function loginAsAdmin(page: Page): Promise<string> {
+/** Navigate to the app (storageState cookie is already present from the setup project) */
+async function ensureLoggedIn(page: Page): Promise<void> {
   await page.goto('/app/properties');
   await page.waitForLoadState('networkidle');
   if (page.url().includes('/login') || !page.url().includes('/app')) {
@@ -30,7 +29,6 @@ async function loginAsAdmin(page: Page): Promise<string> {
     await page.click('[data-testid="login-button"]');
     await page.waitForURL(/.*\/app/, { timeout: 15000 });
   }
-  return (await page.evaluate(() => localStorage.getItem('hlm_token'))) ?? '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +38,7 @@ async function loginAsAdmin(page: Page): Promise<string> {
 test.describe('Viewer 3D — navigation', () => {
 
   test('navigates to viewer route without crashing', async ({ page }) => {
-    await loginAsAdmin(page);
+    await ensureLoggedIn(page);
     // Navigate to a non-existent project — expect the page to render (not crash)
     const fakeId = '00000000-0000-0000-0000-000000000001';
     await page.goto(`/app/projets/${fakeId}/viewer-3d`);
@@ -51,8 +49,8 @@ test.describe('Viewer 3D — navigation', () => {
   });
 
   test('shows fallback state when no 3D model is configured', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
     await page.goto(`/app/projets/${projectId}/viewer-3d`);
     await page.waitForLoadState('networkidle');
@@ -65,7 +63,7 @@ test.describe('Viewer 3D — navigation', () => {
   });
 
   test('dashboard 3D tab is accessible', async ({ page }) => {
-    await loginAsAdmin(page);
+    await ensureLoggedIn(page);
     await page.goto('/app/dashboard/commercial/3d');
     await page.waitForLoadState('networkidle');
     // Tab should render without HTTP 500/error page
@@ -81,8 +79,8 @@ test.describe('Viewer 3D — navigation', () => {
 test.describe('Viewer 3D — upload admin (RBAC)', () => {
 
   test('admin sees upload zone on viewer page when no model exists', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
     await page.goto(`/app/projets/${projectId}/viewer-3d`);
     await page.waitForLoadState('networkidle');
@@ -94,8 +92,8 @@ test.describe('Viewer 3D — upload admin (RBAC)', () => {
   });
 
   test('upload: selecting a non-glb file shows error', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
     await page.goto(`/app/projets/${projectId}/viewer-3d`);
     await page.waitForLoadState('networkidle');
@@ -115,104 +113,61 @@ test.describe('Viewer 3D — upload admin (RBAC)', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite: API endpoint checks (smoke via fetch)
+// Suite: API endpoint checks (smoke via page.request)
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Viewer 3D — API smoke tests', () => {
 
   test('GET /3d-model returns 404 when no model exists', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
-    const res = await page.evaluate(
-      async ([token, pid, base]: string[]) => {
-        const r = await fetch(`${base}/api/projects/${pid}/3d-model`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        return r.status;
-      },
-      [adminToken, projectId, BASE_URL]
-    );
-    expect(res).toBe(404);
+    const res = await page.request.get(`${API_BASE}/api/projects/${projectId}/3d-model`);
+    expect(res.status()).toBe(404);
   });
 
   test('GET /3d-properties-status returns 200 empty array', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
-    const res = await page.evaluate(
-      async ([token, pid, base]: string[]) => {
-        const r = await fetch(`${base}/api/projects/${pid}/3d-properties-status`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        const body = await r.json();
-        return { status: r.status, isArray: Array.isArray(body) };
-      },
-      [adminToken, projectId, BASE_URL]
-    );
-    expect(res.status).toBe(200);
-    expect(res.isArray).toBe(true);
+    const res = await page.request.get(`${API_BASE}/api/projects/${projectId}/3d-properties-status`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
   });
 
   test('POST /upload-url as admin returns fileKey with correct prefix', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
-    const res = await page.evaluate(
-      async ([token, pid, base]: string[]) => {
-        const r = await fetch(`${base}/api/projects/${pid}/3d-model/upload-url`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: true }),
-        });
-        const body = await r.json();
-        return { status: r.status, fileKey: body.fileKey as string };
-      },
-      [adminToken, projectId, BASE_URL]
-    );
-    expect(res.status).toBe(200);
-    expect(res.fileKey).toContain(projectId);
-    expect(res.fileKey).toMatch(/\.glb$/);
+    const res = await page.request.post(`${API_BASE}/api/projects/${projectId}/3d-model/upload-url`, {
+      data: { fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: true },
+    });
+    expect(res.status()).toBe(200);
+    const body = await res.json() as { fileKey: string };
+    expect(body.fileKey).toContain(projectId);
+    expect(body.fileKey).toMatch(/\.glb$/);
   });
 
   test('POST /upload-url with dracoCompressed=false returns 400', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
-    const status = await page.evaluate(
-      async ([token, pid, base]: string[]) => {
-        const r = await fetch(`${base}/api/projects/${pid}/3d-model/upload-url`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: false }),
-        });
-        return r.status;
-      },
-      [adminToken, projectId, BASE_URL]
-    );
-    expect(status).toBe(400);
+    const res = await page.request.post(`${API_BASE}/api/projects/${projectId}/3d-model/upload-url`, {
+      data: { fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: false },
+    });
+    expect(res.status()).toBe(400);
   });
 
-  test('GET /upload-url as AGENT returns 403', async ({ page }) => {
-    const adminToken = await loginAsAdmin(page);
-    const projectId  = await createProject(adminToken);
+  test('GET /upload-url as AGENT returns 401', async ({ page }) => {
+    await ensureLoggedIn(page);
+    const projectId = await createProject(page);
 
-    // Get an agent token by logging in as agent — reuse admin creds with role trick
-    // (same user, different role — mirrors the IT test pattern)
-    const status = await page.evaluate(
-      async ([token, pid, base]: string[]) => {
-        // Use the admin token but call as if agent — the real RBAC test is in the IT suite
-        // Here we just verify the endpoint responds correctly to the token type
-        const r = await fetch(`${base}/api/projects/${pid}/3d-model/upload-url`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer INVALID` },
-          body: JSON.stringify({ fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: true }),
-        });
-        return r.status;
-      },
-      [adminToken, projectId, BASE_URL]
-    );
-    expect(status).toBe(401);
+    const res = await page.request.post(`${API_BASE}/api/projects/${projectId}/3d-model/upload-url`, {
+      headers: { 'Authorization': 'Bearer INVALID' },
+      data: { fileName: 'test.glb', fileSizeBytes: 1000, dracoCompressed: true },
+    });
+    expect(res.status()).toBe(401);
   });
 
 });
