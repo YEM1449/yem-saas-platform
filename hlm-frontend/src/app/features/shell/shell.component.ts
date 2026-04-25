@@ -23,9 +23,11 @@ export class ShellComponent implements OnInit, OnDestroy {
   private societeSvc = inject(SocieteService);
   private polling = inject(NotificationPollingService);
 
-  sidebarOpen = false;
+  sidebarOpen  = false;
+  railExpanded = false;
 
   ngOnInit(): void {
+    this.railExpanded = localStorage.getItem('rail_expanded') === '1';
     this.keepAlive.start();
     this.polling.start();
   }
@@ -42,6 +44,11 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void { this.sidebarOpen = !this.sidebarOpen; }
   closeSidebar(): void  { this.sidebarOpen = false; }
+
+  toggleRail(): void {
+    this.railExpanded = !this.railExpanded;
+    localStorage.setItem('rail_expanded', this.railExpanded ? '1' : '0');
+  }
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';
