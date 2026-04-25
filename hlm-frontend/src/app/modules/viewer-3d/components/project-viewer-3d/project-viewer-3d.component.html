@@ -19,12 +19,19 @@
 
   <!-- ── Error / fallback state ────────────────────────────────────────────── -->
   @if (state() === 'error') {
-    <div class="viewer-overlay error-state">
+    <div class="viewer-overlay error-state" data-testid="viewer-error">
       <div class="error-icon" aria-hidden="true">⚠</div>
       <p class="error-msg">{{ errorMessage() }}</p>
       <a class="btn-fallback" [routerLink]="['/app/properties']" [queryParams]="{projectId: (route.snapshot.params['projetId'])}">
         Voir la liste des lots
       </a>
+    </div>
+  }
+
+  <!-- ── No model state (admin upload) ────────────────────────────────────── -->
+  @if (state() === 'no-model') {
+    <div class="viewer-overlay no-model-state" data-testid="viewer-no-model">
+      <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
     </div>
   }
 

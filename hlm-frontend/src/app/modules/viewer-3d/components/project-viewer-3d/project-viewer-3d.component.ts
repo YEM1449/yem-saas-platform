@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { interval, Subscription, switchMap, takeUntil, Subject, EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import * as THREE from 'three';
 
 import { ThreeEngineService }  from '../../services/three-engine.service';
@@ -14,11 +15,13 @@ import { ModelLoaderService, LoadEvent } from '../../services/model-loader.servi
 import { LotMappingService }   from '../../services/lot-mapping.service';
 import { Viewer3dApiService }  from '../../services/viewer-3d-api.service';
 import { LotTooltip3dComponent } from '../lot-tooltip-3d/lot-tooltip-3d.component';
+import { ModelUploadAdminComponent } from '../model-upload-admin/model-upload-admin.component';
 
 import { Project3dModel, Lot3dMappingEntry } from '../../models/project-3d-model.model';
 import { LotStatusSnapshot, LOT_STATUS_COLORS, LOT_STATUS_LABELS, LotDisplayStatus } from '../../models/lot-3d-status.model';
+import { AuthService } from '../../../../core/auth/auth.service';
 
-type ViewerState = 'loading' | 'loaded' | 'error';
+type ViewerState = 'loading' | 'loaded' | 'error' | 'no-model';
 
 /** Entries for the colour legend strip */
 const LEGEND_ITEMS = (Object.keys(LOT_STATUS_COLORS) as LotDisplayStatus[]).map(k => ({
@@ -44,7 +47,7 @@ const LEGEND_ITEMS = (Object.keys(LOT_STATUS_COLORS) as LotDisplayStatus[]).map(
 @Component({
   selector: 'app-project-viewer-3d',
   standalone: true,
-  imports: [CommonModule, RouterLink, LotTooltip3dComponent],
+  imports: [CommonModule, RouterLink, LotTooltip3dComponent, ModelUploadAdminComponent],
   templateUrl: './project-viewer-3d.component.html',
   styleUrl:    './project-viewer-3d.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,7 +76,7 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   /** The most recent status snapshot (used by focusedLot and parent drill-down). */
   statuses: LotStatusSnapshot[] = [];
 
-  private projetId!: string;
+  projetId!: string;
   private modelMeta!: Project3dModel;
   private destroy$ = new Subject<void>();
   private subs     = new Subscription();
@@ -97,9 +100,13 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
       : this.api.getModel(this.projetId);
 
     modelObs.pipe(
-      catchError(err => {
-        this.state.set('error');
-        this.errorMessage.set('Impossible de charger le modèle 3D. Vérifiez votre connexion et réessayez.');
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 404 && !this.portalMode) {
+          this.state.set('no-model');
+        } else {
+          this.state.set('error');
+          this.errorMessage.set('Impossible de charger le modèle 3D. Vérifiez votre connexion et réessayez.');
+        }
         this.cdr.markForCheck();
         return EMPTY;
       }),
@@ -235,7 +242,7 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private fetchAndApplyStatus(): void {
-    this.fetchStatusObs().pipe(takeUntil(this.destroy$)).subscribe(s => this.applyStatuses(s));
+    this.fetchStatusObs().pipe(takeUntil(this.destroy$)).subscribe((s: LotStatusSnapshot[]) => this.applyStatuses(s));
   }
 
   private applyStatuses(statuses: LotStatusSnapshot[]): void {
@@ -267,5 +274,11 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
       this.hoveredStatus.set(this.statuses.find(s => s.meshId === m.meshId) ?? null);
     }
     this.cdr.markForCheck();
+  }
+
+  onModelUploaded(model: Project3dModel): void {
+    this.modelMeta = model;
+    this.state.set('loading');
+    this.loadGlb(model);
   }
 }

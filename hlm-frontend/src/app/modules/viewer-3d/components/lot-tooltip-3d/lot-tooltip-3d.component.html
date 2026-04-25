@@ -1,21 +1,21 @@
 <div class="tooltip-3d" [style.left.px]="x + 16" [style.top.px]="y - 8">
   <div class="tooltip-header">
-    <span class="lot-ref">{{ mapping?.lotRef ?? '—' }}</span>
+    <span class="lot-ref">{{ mapping.lotRef }}</span>
     <span class="status-chip" [style.background]="statusColor">{{ statusLabel }}</span>
   </div>
-  @if (mapping?.typology) {
+  @if (mapping.typology) {
     <div class="tooltip-row">
       <span class="label">Typologie</span>
       <span class="value">{{ mapping.typology }}</span>
     </div>
   }
-  @if (status?.surface) {
+  @if (status.surface) {
     <div class="tooltip-row">
       <span class="label">Surface</span>
       <span class="value">{{ status.surface | number:'1.0-1' }} m²</span>
     </div>
   }
-  @if (status?.prix) {
+  @if (status.prix) {
     <div class="tooltip-row">
       <span class="label">Prix</span>
       <span class="value price">{{ formattedPrice }}</span>

@@ -2,6 +2,7 @@ import {
   Component, Input, Output, EventEmitter,
   signal, inject, ChangeDetectionStrategy,
 } from '@angular/core';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { Viewer3dApiService } from '../../services/viewer-3d-api.service';
 import { Project3dModel } from '../../models/project-3d-model.model';
 import { firstValueFrom } from 'rxjs';
@@ -11,6 +12,7 @@ type UploadStep = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 
 @Component({
   selector: 'app-model-upload-admin',
   standalone: true,
+  imports: [CommonModule, DecimalPipe],
   templateUrl: './model-upload-admin.component.html',
   styleUrl: './model-upload-admin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
