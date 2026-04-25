@@ -85,10 +85,12 @@ test.describe('Viewer 3D — upload admin (RBAC)', () => {
     await page.goto(`/app/projets/${projectId}/viewer-3d`);
     await page.waitForLoadState('networkidle');
 
-    // The upload component should be visible for admins with no model
+    // The upload component should be visible for admins with no model.
+    // Both elements may be present simultaneously (overlay + hidden file input),
+    // so use .first() to avoid Playwright strict-mode violation.
     await expect(page.locator('[data-testid="glb-file-input"]').or(
       page.locator('[data-testid="viewer-no-model"]')
-    )).toBeVisible({ timeout: 10000 });
+    ).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('upload: selecting a non-glb file shows error', async ({ page }) => {
