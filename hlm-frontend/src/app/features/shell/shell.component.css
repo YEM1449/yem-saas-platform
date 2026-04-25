@@ -487,13 +487,42 @@
 .bnav-item:hover svg,
 .bnav-item.bnav-active svg { opacity: 1; }
 
+/* ── Rail toggle button (desktop-only control) ────────────────── */
+/* Base declaration comes BEFORE the mobile media block so the    */
+/* display:none inside that block takes cascade precedence.       */
+.rail-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--ink-3, #9a8e77);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.rail-toggle-btn:hover {
+  background: rgba(0,0,0,.04);
+  color: var(--ink, #2d241a);
+}
+.rail-toggle-btn:focus-visible {
+  outline: 2px solid var(--brand, #16a34a);
+  outline-offset: 2px;
+}
+.rail-toggle-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
 /* ── Mobile Breakpoint (<960px) ───────────────────────────────── */
 @media (max-width: 959px) {
-  .mobile-topbar  { display: flex; }
-  .bottom-nav     { display: flex; }
+  .mobile-topbar    { display: flex; }
+  .bottom-nav       { display: flex; }
   .sidebar-close-btn { display: flex; }
   .sidebar-backdrop { display: block; }
-  .shell-topbar   { display: none; }
+  .shell-topbar     { display: none; }
+  .rail-toggle-btn  { display: none; }
 
   .app-layout {
     height: calc(100vh - var(--nav-height, 56px));
@@ -633,5 +662,81 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  /* ── Rail expanded state (desktop only — P1: never applied on mobile) ── */
+  .sidebar.rail-expanded { width: 220px; }
+
+  .sidebar.rail-expanded .sidebar-brand {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 14px 10px 10px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--line, #e8dec5);
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .sidebar.rail-expanded .rail-letter { display: none; }
+  .sidebar.rail-expanded .brand-icon  { display: flex; }
+  .sidebar.rail-expanded .brand-name  {
+    display: block;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--ink, #2d241a);
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar.rail-expanded .sidebar-nav { align-items: stretch; padding: 8px 8px 0; }
+  .sidebar.rail-expanded .nav-section-label { display: block; }
+
+  .sidebar.rail-expanded .nav-item {
+    width: auto;
+    height: auto;
+    min-height: 38px;
+    padding: 0 10px;
+    gap: 9px;
+    font-size: 0.875rem;
+    justify-content: flex-start;
+    border-radius: 8px;
+  }
+  .sidebar.rail-expanded .nav-item.nav-active::before { display: none; }
+  .sidebar.rail-expanded .nav-item.nav-active {
+    border-left: 2px solid var(--brand, #16a34a);
+    padding-left: 8px;
+  }
+  .sidebar.rail-expanded .nav-item[title]:hover::after { display: none; }
+
+  .sidebar.rail-expanded .sidebar-footer {
+    align-items: stretch;
+    padding: 10px;
+    gap: 4px;
+  }
+  .sidebar.rail-expanded .user-info {
+    justify-content: flex-start;
+    padding: 4px 6px;
+    gap: 8px;
+  }
+  .sidebar.rail-expanded .user-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .sidebar.rail-expanded .logout-btn {
+    width: 100%;
+    height: auto;
+    min-height: 36px;
+    padding: 6px 10px;
+    justify-content: flex-start;
+    font-size: 0.8125rem;
+    gap: 7px;
+  }
+  .sidebar.rail-expanded .rail-toggle-btn {
+    width: 100%;
+    justify-content: flex-end;
+    padding-right: 6px;
   }
 }
