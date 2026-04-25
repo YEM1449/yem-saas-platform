@@ -1,0 +1,219 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.viewer-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  outline: none;
+  background: #F8FAFC;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────────── */
+.three-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+
+  &:active { cursor: grabbing; }
+  &.hidden  { display: none; }
+}
+
+/* ── Loading / Error overlays ────────────────────────────────────────────── */
+.viewer-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.skeleton-scene {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 400% 400%;
+  animation: shimmer 1.6s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 0 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.load-status {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.92);
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.load-label {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+  margin: 0;
+}
+
+.progress-bar-track {
+  width: 200px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #3B82F6;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.progress-pct {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────── */
+.error-state {
+  background: #fff;
+}
+
+.error-icon {
+  font-size: 40px;
+  color: #F59E0B;
+}
+
+.error-msg {
+  font-size: 14px;
+  color: #475569;
+  text-align: center;
+  max-width: 320px;
+  margin: 0;
+}
+
+.btn-fallback {
+  display: inline-block;
+  padding: 8px 20px;
+  background: #3B82F6;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s;
+
+  &:hover { background: #2563EB; }
+}
+
+/* ── Colour legend ───────────────────────────────────────────────────────── */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 20;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  min-width: 120px;
+
+  &.hidden { display: none; }
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label { color: #334155; font-weight: 500; }
+
+.legend-toggle {
+  align-self: flex-end;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+
+  &:hover { color: #475569; }
+}
+
+.legend-peek {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .legend {
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+}

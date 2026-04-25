@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: 072-lot-3d-mapping
+      author: yem
+      comment: "Lot 3D mapping — links GLB mesh names to property (lot) records for colour-coding and click-through"
+      changes:
+        - createTable:
+            tableName: lot_3d_mapping
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lot3dmapping_societe
+                    references: societe(id)
+              - column:
+                  name: projet_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lot3dmapping_projet
+                    references: project(id)
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lot3dmapping_property
+                    references: property(id)
+              - column:
+                  name: mesh_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: immeuble_mesh_id
+                  type: varchar(255)
+              - column:
+                  name: tranche_mesh_id
+                  type: varchar(255)
+
+        - addUniqueConstraint:
+            tableName: lot_3d_mapping
+            columnNames: societe_id, projet_id, mesh_id
+            constraintName: uk_lot3dmapping_societe_projet_mesh
+
+        - createIndex:
+            tableName: lot_3d_mapping
+            indexName: idx_lot3dmapping_projet_societe
+            columns:
+              - column:
+                  name: projet_id
+              - column:
+                  name: societe_id
+
+        - createIndex:
+            tableName: lot_3d_mapping
+            indexName: idx_lot3dmapping_property
+            columns:
+              - column:
+                  name: property_id
+
+        - sql:
+            comment: "Enable RLS on lot_3d_mapping"
+            sql: "ALTER TABLE lot_3d_mapping ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy"
+            sql: >-
+              CREATE POLICY lot3dmapping_societe_isolation ON lot_3d_mapping
+              USING (
+                societe_id = NULLIF(current_setting('app.current_societe_id', TRUE), '')::uuid
+                OR societe_id = '00000000-0000-0000-0000-000000000000'::uuid
+              )

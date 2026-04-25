@@ -1,0 +1,53 @@
+<div class="dashboard-3d-host" (lot-selected)="onLotSelected($event)">
+
+  <!-- ── Toolbar ────────────────────────────────────────────────────────── -->
+  <div class="d3-toolbar">
+    <div class="filter-group">
+      <label for="filter-statut" class="filter-label">Statut</label>
+      <select id="filter-statut" class="filter-select" [(ngModel)]="filteredStatut">
+        <option value="">Tous</option>
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="toolbar-actions">
+      <button class="btn-ghost" (click)="toggleKpi()" [attr.aria-expanded]="kpiVisible()">
+        {{ kpiVisible() ? 'Masquer KPIs' : 'Afficher KPIs' }}
+      </button>
+      <button class="btn-export" (click)="exportPdf()" [disabled]="exporting()" aria-label="Exporter vue PDF">
+        @if (exporting()) { <span class="btn-spinner"></span> }
+        Exporter PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Viewer + KPI overlay ──────────────────────────────────────────── -->
+  <div class="viewer-wrapper">
+    <app-project-viewer-3d
+      [projetIdInput]="projetId"
+      class="viewer-3d-fill"
+    ></app-project-viewer-3d>
+
+    <!-- KPI overlay panel (floating, dismissible) -->
+    @if (kpiVisible() && kpis().length) {
+      <div class="kpi-overlay" role="complementary" aria-label="Indicateurs clés du projet">
+        <div class="kpi-header">
+          <span class="kpi-title">KPIs Projet</span>
+          <button class="kpi-close" (click)="toggleKpi()" aria-label="Fermer le panneau KPI">×</button>
+        </div>
+        <div class="kpi-grid">
+          @for (kpi of kpis(); track kpi.label) {
+            <div class="kpi-card" [style.border-top-color]="kpi.color ?? '#e2e8f0'">
+              <span class="kpi-value">{{ kpi.value }}</span>
+              <span class="kpi-label">{{ kpi.label }}</span>
+              @if (kpi.sub) { <span class="kpi-sub">{{ kpi.sub }}</span> }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+</div>

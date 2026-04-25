@@ -21,10 +21,14 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Duration;
 import java.util.UUID;
 
 /**
@@ -67,6 +71,7 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
 
     private final String bucket;
     private final S3Client s3Client;
+    private final S3Presigner presigner;
 
     /**
      * Builds the S3Client eagerly at construction time so the application fails fast
@@ -99,6 +104,18 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
         }
 
         this.s3Client = builder.build();
+
+        // Build a matching S3Presigner so pre-signed URLs use the same endpoint + credentials
+        S3Presigner.Builder presignerBuilder = S3Presigner.builder()
+                .region(Region.of(props.region()))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
+                .serviceConfiguration(s3Config);
+
+        if (props.endpoint() != null && !props.endpoint().isBlank()) {
+            presignerBuilder.endpointOverride(URI.create(props.endpoint()));
+        }
+        this.presigner = presignerBuilder.build();
 
         ensureBucketExists();
         log.info("[OBJ-STORE] Ready — endpoint={} bucket={}",
@@ -192,12 +209,35 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
         log.debug("[OBJ-STORE] Deleted key={}", fileKey);
     }
 
+    // ── presigned URL ─────────────────────────────────────────────────────────
+
+    /**
+     * Generates a pre-signed GET URL for the given R2 object key.
+     * The URL is valid for {@code ttl} and requires no authentication header.
+     */
+    @Override
+    public String generatePresignedUrl(String fileKey, Duration ttl) {
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(ttl)
+                .getObjectRequest(GetObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(fileKey)
+                        .build())
+                .build();
+
+        PresignedGetObjectRequest presigned = presigner.presignGetObject(presignRequest);
+        return presigned.url().toString();
+    }
+
     // ── shutdown ──────────────────────────────────────────────────────────────
 
     @PreDestroy
     void shutdown() {
         if (s3Client != null) {
             s3Client.close();
+        }
+        if (presigner != null) {
+            presigner.close();
         }
     }
 

@@ -232,7 +232,53 @@ Authorized users can:
 - review commercial workflow history
 - inspect operational events for troubleshooting and governance
 
-## 9. Dashboard And Reporting Workflows
+## 9. 3D Building Visualiser Workflows
+
+### Interactive viewer
+
+Authorized staff can open a 3D view of any project that has an uploaded GLB model.
+
+Expected functional behavior:
+
+- the scene loads the building model progressively with a visible progress bar
+- every mesh representing a lot is coloured according to the current commercial status of the mapped property
+- hovering a mesh displays an infobulle with lot reference, status, typology, surface, and price
+- clicking a mesh on a DISPONIBLE lot opens the vente creation flow pre-filled with the lot reference
+- the viewer polls for status changes every 30 seconds and repaints affected meshes without rebuilding the scene
+- a colour legend strip is always visible and can be toggled
+- Tab and Shift+Tab cycle focus across lots for keyboard-only users
+
+Status colour rules:
+
+| Display status | Underlying property status | Colour |
+| --- | --- | --- |
+| DISPONIBLE | DRAFT, ACTIVE | blue |
+| RESERVÉ | RESERVED | amber |
+| VENDU | SOLD | green |
+| LIVRÉ | WITHDRAWN, ARCHIVED | grey |
+
+### Dashboard 3D tab
+
+The commercial dashboard includes a 3D tab embedding the viewer with additional controls.
+
+Expected functional behavior:
+
+- a KPI overlay panel shows aggregated counts and revenue figures for the project
+- the overlay can be shown or hidden without leaving the view
+- a status filter narrows the displayed information to one category
+- an admin can export the current view as a PDF
+
+### Portal 3D view
+
+Buyers with an active vente on a project can view the building in read-only mode through the portal.
+
+Expected functional behavior:
+
+- no click action triggers a commercial operation
+- the buyer sees the same colour coding as staff
+- access is denied with a 404 if the buyer has no vente linked to the project
+
+## 10. Dashboard And Reporting Workflows
 
 The platform exposes:
 
@@ -249,7 +295,7 @@ Functional expectations:
 - agents see appropriately scoped data
 - dashboards are fast enough to serve as operational decision tools, not just reporting exports
 
-## 10. Buyer Portal Workflows
+## 11. Buyer Portal Workflows
 
 Buyers can:
 
@@ -266,7 +312,7 @@ Functional limits:
 - no access to other buyers’ data
 - no editing of broad business records
 
-## 11. Privacy And Compliance Workflows
+## 12. Privacy And Compliance Workflows
 
 Authorized users can:
 
@@ -280,7 +326,7 @@ Business caveat:
 
 - some records cannot be erased without breaking legal or contractual integrity, so anonymization follows explicit blocking rules
 
-## 12. Functional Integrity Rules
+## 13. Functional Integrity Rules
 
 - all tenant-scoped business actions must operate within the active societe
 - user-facing lifecycle transitions must obey status rules

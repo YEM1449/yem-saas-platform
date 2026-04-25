@@ -52,4 +52,21 @@ public interface MediaStorageService {
      * @param fileKey key returned by {@link #store}
      */
     void delete(String fileKey) throws IOException;
+
+    /**
+     * Generates a pre-signed URL granting temporary read access to the object.
+     *
+     * <p>The default implementation falls back to constructing a backend-proxied download URL
+     * (suitable for local development). Production deployments backed by
+     * {@link ObjectStorageMediaStorage} override this to return a real S3 pre-signed URL.
+     *
+     * @param fileKey object key returned by {@link #store}
+     * @param ttl     how long the URL should remain valid
+     * @return a URL string the caller can GET without any authentication header
+     */
+    default String generatePresignedUrl(String fileKey, java.time.Duration ttl) throws java.io.IOException {
+        // Local fallback: return a relative backend download path.
+        // ObjectStorageMediaStorage overrides with a real S3 pre-signed URL.
+        return "/api/media/" + fileKey + "/download";
+    }
 }

@@ -49,6 +49,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/three/examples/jsm/libs/draco/gltf",
+                "output": "assets/draco"
               }
             ],
             "styles": [

@@ -33,6 +33,7 @@ This document maps the main responsibilities of the current backend and frontend
 | `user` | legacy user/admin surface and self profile | `/api/users*`, `/api/me` |
 | `usermanagement` | richer member invitation and lifecycle management | `/api/mon-espace/utilisateurs*` |
 | `vente` | commercial sale pipeline | `/api/ventes*` |
+| `viewer3d` | 3D building model metadata, mesh-to-lot mapping, and lot status snapshot | `/api/projects/*/3d-model`, `/api/projects/*/3d-properties-status`, `/api/portal/projects/*/3d-model`, `/api/portal/projects/*/3d-properties-status` |
 
 ## 2. Cross-Cutting Backend Ownership
 
@@ -108,6 +109,7 @@ societe
 | audit | `/app/audit` |
 | admin users | `/app/admin/users` |
 | templates | `/app/templates*` |
+| 3D viewer | `/app/projets/:projetId/viewer-3d`, `/app/dashboard/commercial/3d` |
 
 ### Portal feature modules
 
@@ -116,6 +118,7 @@ societe
 - contracts list
 - payment schedule detail
 - property detail
+- 3D building viewer (read-only, access-guarded by buyer vente ownership)
 
 ## 5. Module Notes That Matter To Maintainers
 
@@ -136,3 +139,9 @@ societe
 - not every property uses every level
 - professional inventory workflows increasingly rely on these relationships
 - docs and onboarding should treat this as a first-class model, not as optional noise
+
+### `viewer3d` is a read-only projection of existing inventory data
+
+- the module does not own commercial state — it reads from `property` status via a cached snapshot
+- the mesh-to-lot mapping table is the only 3D-specific data; all business logic stays in existing modules
+- portal access for the viewer reuses the same vente-ownership check pattern used elsewhere in the portal module

@@ -50,6 +50,7 @@ For each module:
 17. [17-object-storage.md](17-object-storage.md)
 18. [18-rate-limiting-and-lockout.md](18-rate-limiting-and-lockout.md)
 19. [19-observability-otel.md](19-observability-otel.md)
+20. [20-3d-visualiseur.md](20-3d-visualiseur.md)
 
 ## 4. Companion Documents
 
@@ -67,4 +68,5 @@ By the end of the course you should be able to:
 - trace a request from browser to database
 - implement a new feature without breaking scoping or auth
 - understand how sales, contracts, payments, and portal access fit together
+- understand how a Three.js viewer integrates with Angular and the live data model
 - make documentation and code evolve together

@@ -48,6 +48,7 @@ import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
 import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
+import com.yem.hlm.backend.viewer3d.service.Project3dModelNotFoundException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
@@ -223,7 +224,8 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             VenteNotFoundException.class,
             VenteEcheanceNotFoundException.class,
-            TrancheNotFoundException.class
+            TrancheNotFoundException.class,
+            Project3dModelNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,

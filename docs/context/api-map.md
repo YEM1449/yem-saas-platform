@@ -53,6 +53,9 @@ This is the high-level route map for the live application. Use [../spec/api-refe
 - `/api/properties*`
 - `/api/properties/{id}/media`
 - `/api/media/*`
+- `/api/projects/*/3d-model` (model metadata and pre-signed GLB URL)
+- `/api/projects/*/3d-model/mappings` (mesh-to-lot mapping, ADMIN only)
+- `/api/projects/*/3d-properties-status` (lot status snapshot, 10 s cached)
 
 ### Customer and pipeline
 
@@ -97,6 +100,8 @@ This is the high-level route map for the live application. Use [../spec/api-refe
 | `/api/portal/ventes*` | buyer-visible vente records and vente documents |
 | `/api/portal/contracts*` | buyer-visible contracts and payment schedules |
 | `/api/portal/properties*` | buyer-visible property detail |
+| `/api/portal/projects/*/3d-model` | buyer 3D model metadata; access-guarded by vente ownership |
+| `/api/portal/projects/*/3d-properties-status` | buyer lot status snapshot; same ownership guard |
 
 ## 7. API Conventions Worth Preserving
 
