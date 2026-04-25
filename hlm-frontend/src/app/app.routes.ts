@@ -24,6 +24,18 @@ export const routes: Routes = [
       { path: 'projects', loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },
       { path: 'projects/new', loadComponent: () => import('./features/projects/project-create-wizard/project-create-wizard.component').then(m => m.ProjectCreateWizardComponent) },
       { path: 'projects/:id', loadComponent: () => import('./features/projects/project-detail.component').then(m => m.ProjectDetailComponent) },
+      // 3D viewer — lazy-loaded module; does NOT pollute parent bundle
+      {
+        path: 'projets/:projetId/viewer-3d',
+        loadChildren: () => import('./modules/viewer-3d/viewer-3d.routes').then(m => m.VIEWER_3D_ROUTES),
+        canActivate: [authGuard],
+      },
+      // Dashboard 3D tab (child of /dashboard/commercial)
+      {
+        path: 'dashboard/commercial/3d',
+        loadComponent: () => import('./modules/viewer-3d/components/dashboard-3d-tab/dashboard-3d-tab.component').then(m => m.Dashboard3dTabComponent),
+        canActivate: [authGuard],
+      },
       { path: 'admin/users', canActivate: [adminGuard], loadComponent: () => import('./features/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
       { path: 'contracts', loadComponent: () => import('./features/contracts/contracts.component').then(m => m.ContractsComponent) },
       { path: 'contracts/:id', loadComponent: () => import('./features/contracts/contract-detail.component').then(m => m.ContractDetailComponent) },

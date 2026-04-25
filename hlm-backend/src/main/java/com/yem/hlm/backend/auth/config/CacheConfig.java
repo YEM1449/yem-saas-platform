@@ -66,6 +66,12 @@ public class CacheConfig {
      */
     public static final String SOCIETES_CACHE = "societes";
 
+    /**
+     * 3D lot status snapshot — polled every 30 s by the viewer; short TTL avoids N+1 on 200+ lots.
+     * TTL: 10 s. Max 500 entries (keyed on societeId + projetId).
+     */
+    public static final String LOT_STATUS_3D_CACHE = "lotStatus3d";
+
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager manager = new CaffeineCacheManager();
@@ -124,6 +130,13 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .maximumSize(200)
                         .expireAfterWrite(120, TimeUnit.SECONDS)
+                        .build());
+
+        // 3D lot status snapshot — 10 s TTL, up to 500 entries (societeId + projetId)
+        manager.registerCustomCache(LOT_STATUS_3D_CACHE,
+                Caffeine.newBuilder()
+                        .maximumSize(500)
+                        .expireAfterWrite(10, TimeUnit.SECONDS)
                         .build());
 
         return manager;

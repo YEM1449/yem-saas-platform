@@ -5,7 +5,9 @@ import com.yem.hlm.backend.contact.domain.ContactStatus;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.contact.service.ContactNotFoundException;
 import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
+import com.yem.hlm.backend.property.service.InvalidPropertyStatusTransitionException;
 import com.yem.hlm.backend.property.service.PropertyCommercialWorkflowService;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
 import com.yem.hlm.backend.reservation.domain.Reservation;
@@ -23,6 +25,7 @@ import com.yem.hlm.backend.vente.domain.*;
 import com.yem.hlm.backend.vente.repo.VenteDocumentRepository;
 import com.yem.hlm.backend.vente.repo.VenteEcheanceRepository;
 import com.yem.hlm.backend.vente.repo.VenteRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -50,6 +53,12 @@ import java.util.UUID;
 @Service
 @Transactional
 public class VenteService {
+
+    @Value("${app.vente.default-reflection-period-days:10}")
+    private int defaultReflectionPeriodDays;
+
+    @Value("${app.vente.default-financing-period-days:45}")
+    private int defaultFinancingPeriodDays;
 
     private final VenteRepository venteRepository;
     private final VenteEcheanceRepository echeanceRepository;
@@ -185,9 +194,18 @@ public class VenteService {
                 request.dateLivraisonPrevue()
         );
 
-        // Mark property as SOLD
-        propertyWorkflow.sell(property, LocalDateTime.now());
-        propertyRepository.save(property);
+        // Property must be ACTIVE or RESERVED to start a vente.
+        // If ACTIVE (direct creation path), reserve it now.
+        // If already RESERVED (from deposit/reservation workflow), keep it RESERVED.
+        // Property becomes SOLD only at ACTE_NOTARIE stage (see updateStatut).
+        if (property.getStatus() == PropertyStatus.ACTIVE) {
+            propertyWorkflow.reserve(property, LocalDateTime.now());
+            propertyRepository.save(property);
+        } else if (property.getStatus() != PropertyStatus.RESERVED) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Property must be ACTIVE or RESERVED to start a vente; current status: "
+                    + property.getStatus());
+        }
 
         // Advance contact to ACTIVE_CLIENT (sale underway)
         advanceContactStatus(contact, ContactStatus.ACTIVE_CLIENT);
@@ -198,10 +216,10 @@ public class VenteService {
         vente.setReservationId(reservationId);
         vente.setPrixVente(finalPrice);
         vente.setDateCompromis(request.dateCompromis());
-        // Auto-populate French legal deadlines from dateCompromis
+        // Auto-populate legal milestone dates from dateCompromis using configurable periods
         if (request.dateCompromis() != null) {
-            vente.setDateFinDelaiSru(request.dateCompromis().plusDays(10));
-            vente.setDateLimiteConditionCredit(request.dateCompromis().plusDays(45));
+            vente.setDateFinDelaiReflexion(request.dateCompromis().plusDays(defaultReflectionPeriodDays));
+            vente.setDateLimiteFinancement(request.dateCompromis().plusDays(defaultFinancingPeriodDays));
         }
         vente.setDateLivraisonPrevue(request.dateLivraisonPrevue());
         vente.setNotes(request.notes());
@@ -293,6 +311,24 @@ public class VenteService {
                     .map(p -> p.getTrancheId()).orElse(null);
             eventPublisher.publishEvent(
                     new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
+        }
+
+        // Drive property status from vente stage:
+        // ACTE_NOTARIE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
+        Property property = propertyRepository
+                .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
+        if (property != null) {
+            if (request.statut() == VenteStatut.ACTE_NOTARIE) {
+                propertyWorkflow.sell(property, LocalDateTime.now());
+                propertyRepository.save(property);
+            } else if (request.statut() == VenteStatut.ANNULE) {
+                if (property.getStatus() == PropertyStatus.RESERVED) {
+                    propertyWorkflow.releaseReservation(property);
+                } else if (property.getStatus() == PropertyStatus.SOLD) {
+                    propertyWorkflow.cancelSaleToAvailable(property);
+                }
+                propertyRepository.save(property);
+            }
         }
 
         return toResponse(venteRepository.save(vente));
@@ -417,7 +453,7 @@ public class VenteService {
         if (request.montantCredit()               != null) vente.setMontantCredit(request.montantCredit());
         if (request.banqueCredit()                != null) vente.setBanqueCredit(request.banqueCredit());
         if (request.creditObtenu()                != null) vente.setCreditObtenu(request.creditObtenu());
-        if (request.dateLimiteConditionCredit()   != null) vente.setDateLimiteConditionCredit(request.dateLimiteConditionCredit());
+        if (request.dateLimiteFinancement()        != null) vente.setDateLimiteFinancement(request.dateLimiteFinancement());
         if (request.notaireAcquereurNom()         != null) vente.setNotaireAcquereurNom(request.notaireAcquereurNom());
         if (request.notaireAcquereurEmail()       != null) vente.setNotaireAcquereurEmail(request.notaireAcquereurEmail());
         if (request.datePvReception()             != null) vente.setDatePvReception(request.datePvReception());
@@ -563,8 +599,8 @@ public class VenteService {
                 v.getId(), v.getVenteRef(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
                 v.getReservationId(), v.getStatut(), v.getContractStatus(),
-                // Legal deadlines
-                v.getDateFinDelaiSru(), v.getDateLimiteConditionCredit(),
+                // Legal milestone dates
+                v.getDateFinDelaiReflexion(), v.getDateLimiteFinancement(),
                 // Financing
                 v.getTypeFinancement(), v.getMontantCredit(), v.getBanqueCredit(), v.isCreditObtenu(),
                 // Cancellation

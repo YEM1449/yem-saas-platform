@@ -81,7 +81,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **060**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **075**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -128,8 +128,13 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 063 | Vente contract status — contract_status column on vente table |
 | 064 | Vente ref counter — vente_ref_counter table, vente_ref column on vente table |
 | 065 | Project professional fields — maitre_ouvrage, date_ouverture_commercialisation, tva_taux, surface_terrain_m2, prix_moyen_m2_cible |
+| 066–070 | Pipeline intelligence, commercial targets, legal financing, portal docs, user quota |
+| 071 | project_3d_model table (GLB file key + upload metadata, RLS, unique per societe+projet) |
+| 072 | lot_3d_mapping table (mesh↔lot links, RLS, unique per societe+projet+mesh) |
+| 073 | Vente legal field rename — `date_fin_delai_sru` → `date_fin_delai_reflexion`, `date_limite_condition_credit` → `date_limite_financement` |
+| 074 | Reservation hardening — `raison_annulation VARCHAR(100)` + `notified_expiring_soon BOOLEAN` on `property_reservation` |
 
-Next available changeset: **066**
+Next available changeset: **075**
 
 ## CI Pipeline Map
 
@@ -193,6 +198,94 @@ See `tasks/IMPLEMENTATION_PLAN.md` — Wave 10 complete:
 - Wave 11: UX + Performance Sprint (F1–F10) ✅ (items below)
 - Wave 12: Owner KPIs + Template builder + UI polish ✅ (items below)
 - Portal magic-link pipeline fix ✅ (2026-04-14, items below)
+- Wave 13: 3D Visualiseur ✅ (2026-04-25, items below) <!-- ✅ CHECKPOINT: feat(3d): upload-url workflow, generatePresignedPutUrl, model-upload-admin component, 10 Mockito + 13 IT + 10 E2E tests, *ngIf→@if fix -->
+- Wave 14: Business Rules Hardening ✅ (2026-04-25, items below)
+- Wave 15: 2D Plan de Commercialisation ✅ (2026-04-25, items below)
+
+### Wave 13 — 3D Visualiseur + Dashboard 3D Tab (complete, 2026-04-25)
+
+| Item | Files |
+|---|---|
+| DB: `project_3d_model` table (GLB key, RLS, unique societe+projet) | `071-project-3d-model.yaml` |
+| DB: `lot_3d_mapping` table (mesh↔lot, RLS, unique societe+projet+mesh) | `072-lot-3d-mapping.yaml` |
+| Backend: `Project3dModel` + `Lot3dMapping` JPA entities | `viewer3d/domain/` |
+| Backend: Repos + 2 new methods on `PropertyRepository` (bulk fetch + portal access check) | `viewer3d/repo/`, `PropertyRepository.java` |
+| Backend: `Project3dService` — upsert, getModel, getStatusSnapshot (10 s Caffeine), bulkUpsert, portalAccessCheck | `viewer3d/service/Project3dService.java` |
+| Backend: DTOs — `Create3dModelRequest`, `Project3dModelResponse`, `Lot3dMappingDto`, `Lot3dStatusDto`, `BulkMappingRequest` | `viewer3d/api/dto/` |
+| Backend: `Project3dController` — POST/GET /api/projects/{id}/3d-model, GET /3d-properties-status, PUT /mappings | `viewer3d/api/Project3dController.java` |
+| Backend: `PortalProject3dController` — ROLE_PORTAL read-only, access-checked per contact vente | `viewer3d/api/PortalProject3dController.java` |
+| Backend: S3 pre-signed URL — `generatePresignedUrl(key, ttl)` + `generatePresignedPutUrl(key, ttl)` on `MediaStorageService` + `ObjectStorageMediaStorage` | `MediaStorageService.java`, `ObjectStorageMediaStorage.java` |
+| Backend: `POST /api/projects/{id}/3d-model/upload-url` — two-step GLB upload (step 1); validates dracoCompressed=true, returns pre-signed PUT URL + fileKey | `Project3dController.java`, `UploadUrlRequest`, `UploadUrlResponse` |
+| Tests: `Project3dServiceTest` (10 Mockito), `Project3dControllerIT` (13 Testcontainers) | `viewer3d/` test directory |
+| Frontend: `ModelUploadAdminComponent` — two-step upload UI, progress bar, .glb + 50 MB validation, error/done states | `model-upload-admin/` |
+| Frontend: `Viewer3dApiService.requestUploadUrl()` + `confirmUpload()` | `viewer-3d-api.service.ts` |
+| E2E: `viewer-3d.spec.ts` (10 Playwright tests) registered in playwright.config.ts | `e2e/viewer-3d.spec.ts` |
+| Backend: `LOT_STATUS_3D_CACHE` (10 s TTL) added to `CacheConfig` | `CacheConfig.java` |
+| Backend: `Project3dModelNotFoundException` (404) registered in `GlobalExceptionHandler` | both files |
+| Backend: `s3-presigner:2.27.21` added to pom.xml | `pom.xml` |
+| Frontend: `three@0.165.1` + `@types/three@0.165.0` + Draco assets in `angular.json` | `package.json`, `angular.json` |
+| Frontend: `modules/viewer-3d/` — models, services (ThreeEngineService, ModelLoaderService, LotMappingService, Viewer3dApiService) | `modules/viewer-3d/services/` |
+| Frontend: `ProjectViewer3dComponent` — loading skeleton, GLB streaming, colour-coding, 30 s poll, hover tooltip, click→CustomEvent, keyboard Tab nav, portal read-only guard | `project-viewer-3d/` |
+| Frontend: `LotTooltip3dComponent` — floating overlay with ref/surface/price | `lot-tooltip-3d/` |
+| Frontend: `Dashboard3dTabComponent` — statut filter, KPI overlay panel, PDF export | `dashboard-3d-tab/` |
+| Frontend: routes wired in `app.routes.ts` — `/app/projets/:projetId/viewer-3d` + `/app/dashboard/commercial/3d` | `app.routes.ts` |
+
+**3D status colour mapping** (PropertyStatus → display):
+- DRAFT, ACTIVE → DISPONIBLE (#3B82F6)
+- RESERVED → RESERVE (#F59E0B)
+- SOLD → VENDU (#10B981)
+- WITHDRAWN, ARCHIVED → LIVRE (#6B7280)
+
+**Portal 3D access rule**: `PortalProject3dController` returns 404 unless the portal user (contactId) has ≥1 vente for a property mapped in this project's `lot_3d_mapping`.
+
+**Adding a dashboard 3D tab to any page**: embed `<app-dashboard-3d-tab [projetId]="...">` — standalone component, lazy-loads Three.js.
+
+---
+
+### Wave 14 — Business Rules Hardening (complete, 2026-04-25)
+
+Five P1 production fixes. 102 unit tests pass. Changeset 073–074.
+
+| Item | Files |
+|---|---|
+| Property lifecycle fix — `VenteService.create()` keeps property `RESERVED` (not `SOLD`); `ACTE_NOTARIE` triggers `SOLD`; `ANNULE` releases back to `ACTIVE` | `VenteService.java`, `PropertyCommercialWorkflowService.java` |
+| French SRU field rename (changeset 073) — `date_fin_delai_sru` → `date_fin_delai_reflexion`, `date_limite_condition_credit` → `date_limite_financement`; `DESISTEMENT_SRU` → `DESISTEMENT_ACHETEUR`; periods from `@Value` config | `Vente.java`, `VenteResponse.java`, `UpdateFinancingRequest.java`, `073-vente-rename.yaml` |
+| 3D viewer — `WITHDRAWN` → `RETIRE` (was `LIVRE`); added `retire` count to Dashboard3dTab | `Project3dService.java:236`, `lot-3d-status.model.ts`, `dashboard-3d-tab.component.ts` |
+| Quota enforcement — `QuotaService.enforceBienQuota/enforceContactQuota/enforceProjectQuota` wired into `PropertyService`, `ContactService`, `ProjectService`, `ProjectGenerationService` | `QuotaService.java`, error codes `QUOTA_BIENS_ATTEINT`, `QUOTA_CONTACTS_ATTEINT`, `QUOTA_PROJETS_ATTEINT` |
+| Reservation cancellation reason + expiry warning (changeset 074) — `raison_annulation`, `notified_expiring_soon`; `CancelReservationRequest`; `RESERVATION_EXPIRING_SOON` notification; `runExpirySoonCheck()` scheduler | `Reservation.java`, `ReservationService.java`, `ReservationExpiryScheduler.java`, `074-reservation-hardening.yaml` |
+| Audit doc enhancement — `business-rules-audit.md` §6.3, §7.3, §9 updated; §11–14 added (financial controls, Moroccan legal, alert governance, implementation log) | `docs/spec/business-rules-audit.md` |
+
+**Frontend updates**: `vente.service.ts` fields + labels; `advance-pipeline-dialog` form labels; `reservation.service.ts` `raisonAnnulation`.
+
+---
+
+### Wave 15 — 2D Plan de Commercialisation (complete, 2026-04-25)
+
+Floor-stack building view embedded in project detail as a tab. No new DB changeset (DTO-only backend changes).
+
+| Item | Files |
+|---|---|
+| Backend: `ImmeubleResponse` now exposes `trancheId` | `immeuble/api/dto/ImmeubleResponse.java` |
+| Backend: `PropertyResponse` now exposes `orientation` + `trancheId` | `property/api/dto/PropertyResponse.java` |
+| Frontend: `Immeuble` interface adds `trancheId: string \| null` | `features/immeubles/immeuble.service.ts` |
+| Frontend: `Property` interface adds `orientation: string \| null` + `trancheId: string \| null` | `core/models/property.model.ts` |
+| Frontend: `BuildingViewComponent` — tranche pager, building tabs, floor stack, status legend bar, absorption %, clickable unit cards, property detail panel, parcours juridique stepper | `features/projects/building-view/` (3 files) |
+| Frontend: `ProjectDetailComponent` — "Aperçu" / "Plan de commercialisation" tab bar; building view embedded in plan tab | `project-detail.component.ts/.html/.css` |
+
+**Status colour mapping** (2D view, matches HLM UI Kit v2):
+- ACTIVE → Disponible (solid green #22c55e)
+- DRAFT → Brouillon (beige diagonal hatch)
+- RESERVED → Réservé (solid orange-red #ea580c)
+- SOLD → Vendu (solid dark #1e293b)
+- WITHDRAWN / ARCHIVED → Retiré (gray diagonal hatch)
+
+**Absorption formula**: `(SOLD + RESERVED) / (total − DRAFT) × 100`
+
+**Data flow**: `forkJoin(tranches, immeubles)` on init → filter immeubles by `trancheId` → `PropertyService.list({ immeubleId })` on building select → `groupBy(floorNumber)` → floors sorted descending.
+
+**Detail panel**: floor-badge (status-coloured), prix, prix/m², exposition, parkings, chambres, parcours juridique 4-step stepper (RESERVED→step1, SOLD→step2), "Créer vente" + "Fiche bien" action buttons.
+
+---
 
 ### Portal Magic-Link Pipeline Fix (complete, 2026-04-14)
 

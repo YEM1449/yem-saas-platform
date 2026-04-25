@@ -15,6 +15,7 @@ import com.yem.hlm.backend.project.repo.ProjectRepository;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.auth.config.CacheConfig;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -45,10 +46,14 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MediaStorageService storageService;
+    private final QuotaService quotaService;
 
-    public ProjectService(ProjectRepository projectRepository, MediaStorageService storageService) {
+    public ProjectService(ProjectRepository projectRepository,
+                          MediaStorageService storageService,
+                          QuotaService quotaService) {
         this.projectRepository = projectRepository;
         this.storageService = storageService;
+        this.quotaService = quotaService;
     }
 
     /**
@@ -60,6 +65,7 @@ public class ProjectService {
     @CacheEvict(value = CacheConfig.PROJECTS_CACHE, allEntries = true)
     public ProjectResponse create(ProjectCreateRequest request) {
         UUID societeId = requireSocieteId();
+        quotaService.enforceProjectQuota(societeId);
 
         if (projectRepository.existsBySocieteIdAndName(societeId, request.name())) {
             throw new ProjectNameAlreadyExistsException(request.name());

@@ -33,6 +33,12 @@ async function createVenteWithContact(
   expect(propRes.status()).toBe(201);
   const prop = await propRes.json() as { id: string };
 
+  // Activate property — vente creation requires ACTIVE or RESERVED status
+  const activateRes = await page.request.patch(`${API_BASE}/api/properties/${prop.id}/status`, {
+    data: { status: 'ACTIVE' },
+  });
+  expect(activateRes.status()).toBe(200);
+
   const contactEmail = `portal-buyer-${ts}@example.com`;
   const contRes = await page.request.post(`${API_BASE}/api/contacts`, {
     data: {

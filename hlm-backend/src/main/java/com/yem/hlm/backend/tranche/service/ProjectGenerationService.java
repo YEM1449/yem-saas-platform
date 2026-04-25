@@ -11,6 +11,7 @@ import com.yem.hlm.backend.project.service.ProjectNameAlreadyExistsException;
 import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.tranche.api.dto.*;
 import com.yem.hlm.backend.tranche.domain.Tranche;
@@ -52,6 +53,7 @@ public class ProjectGenerationService {
     private final PropertyRepository   propertyRepo;
     private final JdbcTemplate         jdbc;
     private final CacheManager         cacheManager;
+    private final QuotaService         quotaService;
 
     public ProjectGenerationService(
             ProjectRepository projectRepo,
@@ -59,13 +61,15 @@ public class ProjectGenerationService {
             ImmeubleRepository immeubleRepo,
             PropertyRepository propertyRepo,
             JdbcTemplate jdbc,
-            CacheManager cacheManager) {
+            CacheManager cacheManager,
+            QuotaService quotaService) {
         this.projectRepo  = projectRepo;
         this.trancheRepo  = trancheRepo;
         this.immeubleRepo = immeubleRepo;
         this.propertyRepo = propertyRepo;
         this.jdbc         = jdbc;
         this.cacheManager = cacheManager;
+        this.quotaService = quotaService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -75,6 +79,8 @@ public class ProjectGenerationService {
     public ProjectGenerationResponse generate(ProjectGenerationRequest req) {
         UUID societeId = requireSocieteId();
         UUID userId    = requireUserId();
+        quotaService.enforceProjectQuota(societeId);
+        quotaService.enforceBienQuota(societeId);
 
         // 1. Project name uniqueness
         if (projectRepo.existsBySocieteIdAndName(societeId, req.projectNom())) {

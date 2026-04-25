@@ -57,7 +57,9 @@ public record PropertyResponse(
         LocalDateTime deletedAt,
         LocalDateTime publishedAt,
         LocalDateTime soldAt,
-        LocalDateTime reservedAt
+        LocalDateTime reservedAt,
+        String orientation,
+        UUID trancheId
 ) {
     public static PropertyResponse from(Property p) {
         return new PropertyResponse(
@@ -76,7 +78,8 @@ public record PropertyResponse(
                 p.getImmeubleId(), p.getImmeubleName(),
                 p.getCreatedBy(), p.getUpdatedBy(),
                 p.getCreatedAt(), p.getUpdatedAt(), p.getDeletedAt(), p.getPublishedAt(),
-                p.getSoldAt(), p.getReservedAt()
+                p.getSoldAt(), p.getReservedAt(),
+                p.getOrientation(), p.getTrancheId()
         );
     }
 }

@@ -17,6 +17,7 @@ export interface Reservation {
   expiryDate: string;
   status: ReservationStatus;
   notes: string | null;
+  raisonAnnulation: string | null;
   convertedDepositId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -135,8 +136,11 @@ export class ReservationService {
     return this.http.post<Reservation>(`${this.apiUrl}/api/reservations`, req);
   }
 
-  cancel(id: string): Observable<Reservation> {
-    return this.http.post<Reservation>(`${this.apiUrl}/api/reservations/${id}/cancel`, {});
+  cancel(id: string, raisonAnnulation?: string | null): Observable<Reservation> {
+    return this.http.post<Reservation>(
+      `${this.apiUrl}/api/reservations/${id}/cancel`,
+      raisonAnnulation ? { raisonAnnulation } : {}
+    );
   }
 
   convertToDeposit(id: string, req: ConvertToDepositRequest): Observable<DepositResponse> {

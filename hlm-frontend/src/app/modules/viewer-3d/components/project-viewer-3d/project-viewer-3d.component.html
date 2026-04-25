@@ -1,0 +1,71 @@
+<div class="viewer-host" (keydown)="onKeyDown($event)" tabindex="0" aria-label="Visualiseur 3D du projet — utilisez Tab pour naviguer entre les lots">
+
+  <!-- ── Loading state ────────────────────────────────────────────────────── -->
+  @if (state() === 'loading') {
+    <div class="viewer-overlay">
+      <div class="skeleton-scene"></div>
+      <div class="load-status">
+        <div class="spinner" role="status" aria-label="Chargement du modèle 3D…"></div>
+        <p class="load-label">Chargement du modèle 3D…</p>
+        @if (loadProgress() > 0) {
+          <div class="progress-bar-track" role="progressbar" [attr.aria-valuenow]="loadProgress()" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar-fill" [style.width.%]="loadProgress()"></div>
+          </div>
+          <span class="progress-pct">{{ loadProgress() }}%</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Error / fallback state ────────────────────────────────────────────── -->
+  @if (state() === 'error') {
+    <div class="viewer-overlay error-state" data-testid="viewer-error">
+      <div class="error-icon" aria-hidden="true">⚠</div>
+      <p class="error-msg">{{ errorMessage() }}</p>
+      <a class="btn-fallback" [routerLink]="['/app/properties']" [queryParams]="{projectId: (route.snapshot.params['projetId'])}">
+        Voir la liste des lots
+      </a>
+    </div>
+  }
+
+  <!-- ── No model state (admin upload) ────────────────────────────────────── -->
+  @if (state() === 'no-model') {
+    <div class="viewer-overlay no-model-state" data-testid="viewer-no-model">
+      <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
+    </div>
+  }
+
+  <!-- ── 3D Canvas ─────────────────────────────────────────────────────────── -->
+  <canvas #canvas class="three-canvas" [class.hidden]="state() !== 'loaded'"
+          aria-label="Vue 3D interactive — cliquez sur un lot pour plus de détails"></canvas>
+
+  <!-- ── Tooltip overlay ───────────────────────────────────────────────────── -->
+  @if (hoveredMapping() && hoveredStatus()) {
+    <app-lot-tooltip-3d
+      [mapping]="hoveredMapping()!"
+      [status]="hoveredStatus()!"
+      [x]="tooltipX"
+      [y]="tooltipY"
+    ></app-lot-tooltip-3d>
+  }
+
+  <!-- ── Colour legend ─────────────────────────────────────────────────────── -->
+  @if (state() === 'loaded') {
+    <div class="legend" [class.hidden]="!legendVisible()" role="region" aria-label="Légende des statuts">
+      @for (item of legendItems; track item.status) {
+        <div class="legend-item">
+          <span class="legend-dot" [style.background]="item.color" aria-hidden="true"></span>
+          <span class="legend-label">{{ item.label }}</span>
+        </div>
+      }
+      <button class="legend-toggle" (click)="toggleLegend()" [attr.aria-label]="legendVisible() ? 'Masquer la légende' : 'Afficher la légende'">
+        {{ legendVisible() ? '×' : '?' }}
+      </button>
+    </div>
+
+    @if (!legendVisible()) {
+      <button class="legend-peek" (click)="toggleLegend()" aria-label="Afficher la légende des statuts">?</button>
+    }
+  }
+
+</div>

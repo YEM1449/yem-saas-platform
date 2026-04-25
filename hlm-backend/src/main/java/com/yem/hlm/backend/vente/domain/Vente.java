@@ -121,17 +121,17 @@ public class Vente {
     @Column(name = "contract_status", nullable = false, length = 20)
     private ContractStatus contractStatus = ContractStatus.PENDING;
 
-    // ── French Legal Deadlines ────────────────────────────────────────────
+    // ── Legal Milestones (jurisdiction-configurable) ──────────────────────
 
-    /** SRU cooling-off deadline = dateCompromis + 10 days (Art. L271-1 Code de la Construction). Auto-populated on create. */
+    /** Buyer reflection/cooling-off deadline. Auto-populated as dateCompromis + configurable period. */
     @Setter
-    @Column(name = "date_fin_delai_sru")
-    private LocalDate dateFinDelaiSru;
+    @Column(name = "date_fin_delai_reflexion")
+    private LocalDate dateFinDelaiReflexion;
 
-    /** Condition suspensive crédit deadline = dateCompromis + 45 days by default, overridable. */
+    /** Financing condition deadline. Defaults to dateCompromis + configurable period; overridable. */
     @Setter
-    @Column(name = "date_limite_condition_credit")
-    private LocalDate dateLimiteConditionCredit;
+    @Column(name = "date_limite_financement")
+    private LocalDate dateLimiteFinancement;
 
     // ── Financing Risk ────────────────────────────────────────────────────
 

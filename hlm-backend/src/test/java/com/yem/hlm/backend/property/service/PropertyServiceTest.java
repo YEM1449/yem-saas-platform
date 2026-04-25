@@ -49,6 +49,9 @@ class PropertyServiceTest {
     @Mock
     private ImmeubleRepository immeubleRepository;
 
+    @Mock
+    private com.yem.hlm.backend.societe.QuotaService quotaService;
+
     @InjectMocks
     private PropertyService propertyService;
 

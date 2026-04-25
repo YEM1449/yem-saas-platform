@@ -44,6 +44,7 @@ class ContactServiceTest {
     @Mock DepositService depositService;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock CommercialAuditService auditService;
+    @Mock com.yem.hlm.backend.societe.QuotaService quotaService;
 
     @InjectMocks ContactService service;
 

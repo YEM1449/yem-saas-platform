@@ -342,4 +342,28 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
             ORDER BY avg_price_sqm DESC
             """, nativeQuery = true)
     List<Object[]> avgPricePerSqmByType(@Param("societeId") UUID societeId);
+
+    // ===== 3D Viewer queries (added for viewer3d module — do not modify existing methods above) =====
+
+    /** Bulk fetch by ID set — société-scoped, soft-delete aware. Used by Project3dService. */
+    @Query("SELECT p FROM Property p WHERE p.societeId = :societeId AND p.id IN :ids AND p.deletedAt IS NULL")
+    List<Property> findAllBySocieteIdAndIdInAndDeletedAtIsNull(
+            @Param("societeId") UUID societeId,
+            @Param("ids") java.util.Collection<UUID> ids);
+
+    /**
+     * Returns true if the given contact has at least one vente whose propertyId is
+     * in the provided set — used for portal 3D access validation.
+     */
+    @Query(value = """
+            SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.contact_id = :contactId
+              AND v.property_id IN :propertyIds
+            """, nativeQuery = true)
+    boolean existsBySocieteIdAndContactVente(
+            @Param("societeId") UUID societeId,
+            @Param("propertyIds") java.util.Collection<UUID> propertyIds,
+            @Param("contactId") UUID contactId);
 }

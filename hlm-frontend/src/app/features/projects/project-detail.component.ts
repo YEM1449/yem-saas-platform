@@ -9,6 +9,7 @@ import { Project, ProjectKpi } from '../../core/models/project.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { DocumentListComponent } from '../documents/document-list.component';
+import { BuildingViewComponent } from './building-view/building-view.component';
 import { environment } from '../../../environments/environment';
 
 interface DocumentItem {
@@ -21,7 +22,7 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DocumentListComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, DocumentListComponent, BuildingViewComponent],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })
@@ -30,6 +31,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   auth = inject(AuthService);
+
+  activeTab: 'apercu' | 'plan' = 'apercu';
 
   project: Project | null = null;
   kpi: ProjectKpi | null = null;

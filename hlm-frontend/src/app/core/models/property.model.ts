@@ -47,6 +47,8 @@ export interface Property {
   publishedAt: string | null;
   soldAt: string | null;
   reservedAt: string | null;
+  orientation: string | null;
+  trancheId: string | null;
 }
 
 export interface PropertyMedia {

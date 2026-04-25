@@ -24,9 +24,9 @@ public record VenteResponse(
         UUID reservationId,
         VenteStatut statut,
         ContractStatus contractStatus,
-        // French legal deadlines
-        LocalDate dateFinDelaiSru,
-        LocalDate dateLimiteConditionCredit,
+        // Legal milestone dates
+        LocalDate dateFinDelaiReflexion,
+        LocalDate dateLimiteFinancement,
         // Financing risk
         TypeFinancement typeFinancement,
         BigDecimal montantCredit,

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 073-rename-vente-legal-fields
+      author: yem
+      comment: >
+        Rename French-law-specific column names to jurisdiction-neutral equivalents.
+        date_fin_delai_sru (Art. L271-1 Code de la Construction) → date_fin_delai_reflexion
+        date_limite_condition_credit → date_limite_financement
+        These fields track configurable milestone dates, not French-residential-law deadlines.
+      changes:
+        - renameColumn:
+            tableName: vente
+            oldColumnName: date_fin_delai_sru
+            newColumnName: date_fin_delai_reflexion
+            columnDataType: date
+        - renameColumn:
+            tableName: vente
+            oldColumnName: date_limite_condition_credit
+            newColumnName: date_limite_financement
+            columnDataType: date

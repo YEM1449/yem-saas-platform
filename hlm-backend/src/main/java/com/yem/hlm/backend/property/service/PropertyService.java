@@ -15,6 +15,7 @@ import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.societe.CrossSocieteAccessException;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,21 +43,25 @@ public class PropertyService {
     private final ProjectActiveGuard projectActiveGuard;
     private final PropertyCommercialWorkflowService propertyCommercialWorkflowService;
     private final ImmeubleRepository immeubleRepository;
+    private final QuotaService quotaService;
 
     public PropertyService(PropertyRepository propertyRepository,
                            ProjectActiveGuard projectActiveGuard,
                            PropertyCommercialWorkflowService propertyCommercialWorkflowService,
-                           ImmeubleRepository immeubleRepository) {
+                           ImmeubleRepository immeubleRepository,
+                           QuotaService quotaService) {
         this.propertyRepository = propertyRepository;
         this.projectActiveGuard = projectActiveGuard;
         this.propertyCommercialWorkflowService = propertyCommercialWorkflowService;
         this.immeubleRepository = immeubleRepository;
+        this.quotaService = quotaService;
     }
 
     @Transactional
     public PropertyResponse create(PropertyCreateRequest request) {
         UUID societeId = requireSocieteId();
         UUID userId = requireUserId();
+        quotaService.enforceBienQuota(societeId);
 
         // Validate reference code uniqueness
         if (propertyRepository.existsBySocieteIdAndReferenceCode(societeId, request.referenceCode())) {

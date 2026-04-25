@@ -78,6 +78,16 @@ public class Reservation {
     @Column(name = "reservation_ref", nullable = false, length = 25, updatable = false)
     private String reservationRef;
 
+    /** Reason provided by the agent when manually cancelling. */
+    @Setter
+    @Column(name = "raison_annulation", length = 100)
+    private String raisonAnnulation;
+
+    /** True once an expiry-warning notification has been sent (prevents duplicates). */
+    @Setter
+    @Column(name = "notified_expiring_soon", nullable = false)
+    private boolean notifiedExpiringSoon = false;
+
     /** Set when this reservation is converted to a deposit. */
     @Setter
     @Column(name = "converted_deposit_id")

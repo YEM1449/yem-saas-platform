@@ -4,8 +4,8 @@ package com.yem.hlm.backend.vente.domain;
 public enum MotifAnnulation {
     /** Mortgage application was rejected by the bank. */
     CREDIT_REFUSE,
-    /** Buyer exercised the 10-day SRU cooling-off right (Art. L271-1). */
-    DESISTEMENT_SRU,
+    /** Buyer exercised the contractual cooling-off / reflection period. */
+    DESISTEMENT_ACHETEUR,
     /** Condition suspensive (mortgage or other) not fulfilled within the deadline. */
     CSP_NON_REALISEE,
     /** Both parties mutually agreed to cancel. */

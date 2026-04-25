@@ -15,6 +15,7 @@ import com.yem.hlm.backend.contact.repo.ProspectDetailRepository;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.property.service.PropertyNotFoundException;
+import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ public class ContactService {
     private final DepositService depositService;
     private final ApplicationEventPublisher eventPublisher;
     private final CommercialAuditService auditService;
+    private final QuotaService quotaService;
 
     public ContactService(
             ContactRepository contactRepository,
@@ -44,7 +46,8 @@ public class ContactService {
             PropertyRepository propertyRepository,
             DepositService depositService,
             ApplicationEventPublisher eventPublisher,
-            CommercialAuditService auditService
+            CommercialAuditService auditService,
+            QuotaService quotaService
     ) {
         this.contactRepository = contactRepository;
         this.contactInterestRepository = contactInterestRepository;
@@ -53,11 +56,13 @@ public class ContactService {
         this.depositService = depositService;
         this.eventPublisher = eventPublisher;
         this.auditService = auditService;
+        this.quotaService = quotaService;
     }
 
     public ContactResponse create(CreateContactRequest req) {
         UUID societeId = requireSocieteId();
         UUID actorUserId = requireUserId();
+        quotaService.enforceContactQuota(societeId);
 
         if (req.email() != null && contactRepository.existsBySocieteIdAndEmail(societeId, req.email())) {
             throw new ContactEmailAlreadyExistsException(req.email());

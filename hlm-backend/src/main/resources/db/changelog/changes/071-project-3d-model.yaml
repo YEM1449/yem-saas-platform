@@ -1,0 +1,75 @@
+databaseChangeLog:
+  - changeSet:
+      id: 071-project-3d-model
+      author: yem
+      comment: "Project 3D model metadata — stores GLB file key and upload info per project"
+      changes:
+        - createTable:
+            tableName: project_3d_model
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_project3dmodel_societe
+                    references: societe(id)
+              - column:
+                  name: projet_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_project3dmodel_projet
+                    references: project(id)
+              - column:
+                  name: glb_file_key
+                  type: varchar(1024)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: draco_compressed
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: uploaded_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: uploaded_by_user_id
+                  type: uuid
+
+        - addUniqueConstraint:
+            tableName: project_3d_model
+            columnNames: societe_id, projet_id
+            constraintName: uk_project3dmodel_societe_projet
+
+        - createIndex:
+            tableName: project_3d_model
+            indexName: idx_project3dmodel_projet_societe
+            columns:
+              - column:
+                  name: projet_id
+              - column:
+                  name: societe_id
+
+        - sql:
+            comment: "Enable RLS on project_3d_model (same pattern as all other domain tables)"
+            sql: "ALTER TABLE project_3d_model ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy — nil-UUID sentinel bypasses for system context"
+            sql: >-
+              CREATE POLICY project3dmodel_societe_isolation ON project_3d_model
+              USING (
+                societe_id = NULLIF(current_setting('app.current_societe_id', TRUE), '')::uuid
+                OR societe_id = '00000000-0000-0000-0000-000000000000'::uuid
+              )

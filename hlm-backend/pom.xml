@@ -188,6 +188,8 @@
 			<version>2.27.21</version>
 		</dependency>
 
+		<!-- S3Presigner classes are bundled inside software.amazon.awssdk:s3 at 2.27.21+ — no separate artifact needed -->
+
 		<!-- OpenTelemetry — distributed tracing bridge (no OTLP exporter by default) -->
 		<!-- opentelemetry-exporter-otlp omitted: it spawns BatchSpanProcessor/BatchLogRecord -->
 		<!-- background threads that leak on shutdown. Add back when an OTEL collector is wired. -->

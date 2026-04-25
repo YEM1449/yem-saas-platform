@@ -36,6 +36,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
                              @Param("now") LocalDateTime now,
                              @Param("horizon") LocalDateTime horizon);
 
+    /** Find ACTIVE reservations expiring within the given window that haven't been warned yet (for expiry notifications). */
+    @Query("SELECT r FROM Reservation r WHERE r.status = 'ACTIVE' AND r.notifiedExpiringSoon = false AND r.expiryDate BETWEEN :now AND :horizon")
+    List<Reservation> findExpiringSoonUnnotified(@Param("now") LocalDateTime now,
+                                                 @Param("horizon") LocalDateTime horizon);
+
     /**
      * Count reservations created in [from, to). Used by the home dashboard
      * conversion-rate KPI (ventes 30d / reservations 30d).

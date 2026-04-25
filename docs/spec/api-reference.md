@@ -108,6 +108,41 @@ Capabilities:
 - property creation, update, status update, import, and soft deletion
 - media upload and download
 
+### 3D building viewer
+
+Route family: `/api/projects/{projetId}`
+
+| Method | Path | Roles | Notes |
+| --- | --- | --- | --- |
+| `POST` | `/api/projects/{projetId}/3d-model` | ADMIN, MANAGER | upload model metadata and register the GLB file key |
+| `GET` | `/api/projects/{projetId}/3d-model` | ADMIN, MANAGER, AGENT | returns metadata plus a 15-minute pre-signed GLB URL |
+| `PUT` | `/api/projects/{projetId}/3d-model/mappings` | ADMIN | bulk-replace the mesh-to-lot mapping table for this project |
+| `GET` | `/api/projects/{projetId}/3d-properties-status` | ADMIN, MANAGER, AGENT | returns the current lot status snapshot (10 s cached) |
+
+Response shape for `GET .../3d-model`:
+
+```json
+{
+  "id": "uuid",
+  "projetId": "uuid",
+  "glbPresignedUrl": "https://...",
+  "dracoCompressed": true,
+  "mappings": [
+    { "meshId": "LOT-A1-T3", "lotId": "uuid", "lotRef": "A1-T3", "immeubleMeshId": "BAT-A", "trancheMeshId": "TR1" }
+  ]
+}
+```
+
+Response shape for `GET .../3d-properties-status`:
+
+```json
+[
+  { "meshId": "LOT-A1-T3", "lotId": "uuid", "statut": "DISPONIBLE", "typology": "T3", "surface": 68.5, "prix": 195000 }
+]
+```
+
+Display status values: `DISPONIBLE`, `RESERVE`, `VENDU`, `LIVRE`.
+
 ### Reservation and deposit
 
 Route families:
@@ -190,6 +225,15 @@ Capabilities:
 - `GET /api/portal/contracts`
 - `GET /api/portal/contracts/{id}/payments`
 - `GET /api/portal/properties/{id}`
+
+### Portal 3D viewer
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/portal/projects/{projetId}/3d-model` | returns model metadata and pre-signed GLB URL; 404 if buyer has no vente linked to the project |
+| `GET` | `/api/portal/projects/{projetId}/3d-properties-status` | returns lot status snapshot; same 404 guard |
+
+Both endpoints verify access by checking that the authenticated buyer (`contactId` from JWT sub) has at least one vente whose property belongs to the requested project.
 
 ## 6. Error Contract
 

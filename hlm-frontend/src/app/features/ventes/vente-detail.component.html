@@ -122,27 +122,27 @@
               </svg>
             </dt>
             <dd>
-              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateFinDelaiSru)"
-                    title="Délai légal de rétractation SRU — Art. L271-1 du Code de la construction">
-                {{ (v.dateFinDelaiSru | date:'dd/MM/yyyy') || '—' }}
-                @if (daysUntil(v.dateFinDelaiSru); as d) {
+              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateFinDelaiReflexion)"
+                    title="Délai de réflexion / rétractation acheteur">
+                {{ (v.dateFinDelaiReflexion | date:'dd/MM/yyyy') || '—' }}
+                @if (daysUntil(v.dateFinDelaiReflexion); as d) {
                   &nbsp;({{ d > 0 ? d + 'j restants' : 'expiré' }})
                 }
               </span>
             </dd>
 
-            <dt title="Date limite pour obtenir le crédit immobilier — condition suspensive légale">
-              Cond. crédit
+            <dt title="Date limite pour obtenir le financement — condition suspensive">
+              Limite financement
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="vertical-align:0;margin-left:3px;opacity:.5">
                 <circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1"/>
                 <path d="M5.5 4.5v3M5.5 3.5v.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               </svg>
             </dt>
             <dd>
-              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateLimiteConditionCredit)"
-                    title="Condition suspensive d'obtention de crédit — si refus bancaire avant cette date, la vente peut être annulée sans pénalité">
-                {{ (v.dateLimiteConditionCredit | date:'dd/MM/yyyy') || '—' }}
-                @if (daysUntil(v.dateLimiteConditionCredit); as d) {
+              <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateLimiteFinancement)"
+                    title="Condition suspensive d'obtention du financement">
+                {{ (v.dateLimiteFinancement | date:'dd/MM/yyyy') || '—' }}
+                @if (daysUntil(v.dateLimiteFinancement); as d) {
                   &nbsp;({{ d > 0 ? d + 'j restants' : 'expiré' }})
                 }
               </span>
@@ -460,8 +460,8 @@
                    placeholder="Ex : BNP, Crédit Agricole…" data-testid="financing-banque"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Cond. suspensive — date limite</label>
-            <input class="form-control" type="date" [(ngModel)]="financing.dateLimiteConditionCredit"
+            <label class="form-label">Limite financement</label>
+            <input class="form-control" type="date" [(ngModel)]="financing.dateLimiteFinancement"
                    data-testid="financing-date-csp"/>
           </div>
           <div class="form-group">

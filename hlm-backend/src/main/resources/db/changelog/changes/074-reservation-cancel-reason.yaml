@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 074-reservation-cancel-reason
+      author: yem
+      changes:
+        - addColumn:
+            tableName: property_reservation
+            columns:
+              - column:
+                  name: raison_annulation
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: notified_expiring_soon
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
