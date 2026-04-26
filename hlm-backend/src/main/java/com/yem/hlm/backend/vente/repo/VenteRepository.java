@@ -409,15 +409,15 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             FROM vente v
             WHERE v.societe_id = :societeId
               AND v.statut NOT IN ('LIVRE', 'ANNULE')
-              AND v.date_fin_delai_sru IS NOT NULL
-              AND v.date_fin_delai_sru BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
+              AND v.date_fin_delai_reflexion IS NOT NULL
+              AND v.date_fin_delai_reflexion BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
             UNION ALL
             SELECT 'CREDIT' AS alert_type, COUNT(*) AS cnt
             FROM vente v
             WHERE v.societe_id = :societeId
               AND v.statut NOT IN ('LIVRE', 'ANNULE')
-              AND v.date_limite_condition_credit IS NOT NULL
-              AND v.date_limite_condition_credit BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
+              AND v.date_limite_financement IS NOT NULL
+              AND v.date_limite_financement BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
             """, nativeQuery = true)
     List<Object[]> countExpiringDeadlines(@Param("societeId") UUID societeId,
                                           @Param("daysAhead") int daysAhead);
