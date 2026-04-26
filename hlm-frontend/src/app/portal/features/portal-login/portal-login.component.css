@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37,99,235,.10) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(22,163,74,.10) 0%, transparent 70%),
     var(--c-bg, #f8fafc);
   padding: var(--sp-6, 24px) var(--sp-4, 16px);
 }
@@ -43,11 +43,11 @@
   justify-content: center;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  background: linear-gradient(135deg, var(--c-primary-600, #16a34a), var(--c-primary-800, #166534));
   border-radius: var(--r-xl, 16px);
   color: #fff;
   margin-bottom: var(--sp-4, 16px);
-  box-shadow: 0 6px 16px rgba(37,99,235,.35);
+  box-shadow: 0 6px 16px rgba(22,163,74,.35);
 }
 
 .portal-login-title {
@@ -106,8 +106,8 @@
 .portal-form-group input:hover { border-color: var(--c-border-strong, #cbd5e1); }
 
 .portal-form-group input:focus {
-  border-color: var(--c-primary-400, #60a5fa);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  border-color: var(--c-primary-400, #4ade80);
+  box-shadow: 0 0 0 3px rgba(22,163,74,.15);
 }
 
 /* ── Primary button ───────────────────────────────────────────── */
@@ -123,7 +123,7 @@
   font-weight: var(--fw-semibold, 600);
   font-family: var(--font, inherit);
   color: #fff;
-  background: var(--c-primary, #2563eb);
+  background: var(--c-primary, #16a34a);
   border: none;
   border-radius: var(--r-md, 8px);
   cursor: pointer;
@@ -132,13 +132,13 @@
 }
 
 .portal-btn-primary:hover:not(:disabled) {
-  background: var(--c-primary-hover, #1d4ed8);
-  box-shadow: 0 6px 16px rgba(37,99,235,.35);
+  background: var(--c-primary-hover, #15803d);
+  box-shadow: 0 6px 16px rgba(22,163,74,.35);
   transform: translateY(-1px);
 }
 
 .portal-btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
-.portal-btn-primary:focus-visible { outline: 3px solid rgba(37,99,235,.4); outline-offset: 2px; }
+.portal-btn-primary:focus-visible { outline: 3px solid rgba(22,163,74,.4); outline-offset: 2px; }
 .portal-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
 /* ── Secondary button ─────────────────────────────────────────── */
@@ -163,11 +163,11 @@
 
 .portal-btn-secondary:hover {
   border-color: var(--c-primary-300, #93c5fd);
-  color: var(--c-primary, #2563eb);
+  color: var(--c-primary, #16a34a);
   background: var(--c-primary-50, #eff6ff);
 }
 
-.portal-btn-secondary:focus-visible { outline: 3px solid rgba(37,99,235,.3); outline-offset: 2px; }
+.portal-btn-secondary:focus-visible { outline: 3px solid rgba(22,163,74,.3); outline-offset: 2px; }
 
 /* ── Alert banners ────────────────────────────────────────────── */
 .portal-alert {
@@ -213,7 +213,7 @@
   height: 32px;
   border-width: 3px;
   border-color: var(--c-primary-100, #dbeafe);
-  border-top-color: var(--c-primary, #2563eb);
+  border-top-color: var(--c-primary, #16a34a);
 }
 
 @keyframes portal-login-spin { to { transform: rotate(360deg); } }

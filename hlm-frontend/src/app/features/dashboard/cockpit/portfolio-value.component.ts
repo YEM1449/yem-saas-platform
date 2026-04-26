@@ -80,14 +80,14 @@ import { SalesIntelligence } from '../dashboard-cockpit.service';
     .pv-row { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:14px; }
     .pv-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; display:flex; gap:12px; align-items:flex-start; }
     .pv-icon { width:36px; height:36px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#64748b; flex-shrink:0; }
-    .pv-portfolio .pv-icon { background:#eff6ff; color:#2563eb; }
+    .pv-portfolio .pv-icon { background:#eff6ff; color:#16a34a; }
     .pv-unsold .pv-icon { background:#fffbeb; color:#d97706; }
     .pv-avgprice .pv-icon { background:#f0fdf4; color:#15803d; }
     .pv-sqm .pv-icon { background:#f5f3ff; color:#7c3aed; }
     .pv-body { flex:1; min-width:0; }
     .pv-val { font-size:19px; font-weight:700; color:#1e293b; }
     .pv-val-amber { color:#d97706; }
-    .pv-val-blue { color:#2563eb; }
+    .pv-val-blue { color:#16a34a; }
     .pv-val-purple { color:#7c3aed; }
     .pv-label { font-size:12px; font-weight:600; color:#374151; margin-top:3px; }
     .pv-hint { font-size:11px; color:#94a3b8; margin-top:2px; }

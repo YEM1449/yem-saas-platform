@@ -3,7 +3,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--c-primary, #2563eb);
+  color: var(--c-primary, #16a34a);
   font-size: 13px;
   text-decoration: none;
   margin-bottom: 14px;
@@ -59,7 +59,7 @@
 .badge-draft     { background: #f1f5f9; color: #475569; }
 .badge-active    { background: #dcfce7; color: #15803d; }
 .badge-reserved  { background: #fef3c7; color: #b45309; }
-.badge-sold      { background: #dbeafe; color: #1d4ed8; }
+.badge-sold      { background: #dbeafe; color: #15803d; }
 .badge-withdrawn,
 .badge-archived  { background: #fce7f3; color: #be185d; }
 
@@ -75,7 +75,7 @@
   padding: 3px 10px;
   border-radius: 99px;
   background: #eff6ff;
-  color: #2563eb;
+  color: #16a34a;
   font-size: 11px;
   font-weight: 600;
 }
@@ -201,7 +201,7 @@ dd { margin: 0; font-size: 13px; color: var(--c-text, #1e293b); }
 .spinner {
   width: 20px; height: 20px;
   border: 2px solid var(--c-border, #e2e8f0);
-  border-top-color: var(--c-primary, #2563eb);
+  border-top-color: var(--c-primary, #16a34a);
   border-radius: 50%;
   animation: spin .7s linear infinite;
 }
@@ -212,7 +212,7 @@ dd { margin: 0; font-size: 13px; color: var(--c-text, #1e293b); }
 /* ── Media gallery ──────────────────────────────────────────── */
 .btn-upload {
   cursor: pointer;
-  background: var(--c-primary, #2563eb);
+  background: var(--c-primary, #16a34a);
   color: #fff;
   border-radius: 6px;
   padding: 4px 12px;

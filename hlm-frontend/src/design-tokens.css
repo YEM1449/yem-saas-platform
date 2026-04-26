@@ -16,17 +16,17 @@
 
   /* ── Color Palette ─────────────────────────────────────────── */
 
-  /* Brand blues */
-  --c-primary-50:   #eff6ff;
-  --c-primary-100:  #dbeafe;
-  --c-primary-200:  #bfdbfe;
-  --c-primary-300:  #93c5fd;
-  --c-primary-400:  #60a5fa;
-  --c-primary-500:  #3b82f6;
-  --c-primary-600:  #2563eb;   /* --c-primary */
-  --c-primary-700:  #1d4ed8;   /* --c-primary-hover */
-  --c-primary-800:  #1e40af;
-  --c-primary-900:  #1e3a8a;
+  /* Brand greens (HLM canonical — single source of truth) */
+  --c-primary-50:   #f0fdf4;
+  --c-primary-100:  #dcfce7;
+  --c-primary-200:  #bbf7d0;
+  --c-primary-300:  #86efac;
+  --c-primary-400:  #4ade80;
+  --c-primary-500:  #22c55e;
+  --c-primary-600:  #16a34a;   /* --c-primary */
+  --c-primary-700:  #15803d;   /* --c-primary-hover */
+  --c-primary-800:  #166534;
+  --c-primary-900:  #14532d;
 
   /* Semantic aliases */
   --c-primary:        var(--c-primary-600);
@@ -84,7 +84,7 @@
   --c-sidebar-bg:     #0f172a;
   --c-sidebar-border: rgba(255,255,255,.06);
   --c-sidebar-text:   rgba(255,255,255,.55);
-  --c-sidebar-active: rgba(37,99,235,.45);
+  --c-sidebar-active: rgba(22,163,74,.45);
 
   /* ── Spacing Scale (4px base) ──────────────────────────────── */
   --sp-0:    0;
@@ -178,7 +178,9 @@
   --z-tooltip: 600;
 
   /* ── Focus Ring ────────────────────────────────────────────── */
-  --focus-ring: 0 0 0 3px rgba(37,99,235,.25);
+  --focus-ring:        0 0 0 3px rgba(22,163,74,.22);
+  --focus-ring-soft:   0 0 0 3px rgba(22,163,74,.12);
+  --focus-ring-strong: 0 0 0 3px rgba(22,163,74,.35);
 
   /* ── Touch Target ──────────────────────────────────────────── */
   --touch-target: 44px;    /* WCAG 2.5.5 minimum */
@@ -212,11 +214,12 @@
   --info-bg:       #e6f5f8;
   --info-bd:       #b6dde6;
 
-  /* Pipeline stage palette */
-  --stage-res:     #c2410c;
-  --stage-com:     #a16207;
-  --stage-act:     #15803d;
-  --stage-liv:     #1d4ed8;
+  /* Pipeline stage palette — distinct hues for the 4 vente steps
+     (RES = COMPROMIS, COM = FINANCEMENT, ACT = ACTE_NOTARIÉ, LIV = LIVRÉ) */
+  --stage-res:     #c2410c;   /* terracotta */
+  --stage-com:     #a16207;   /* mustard    */
+  --stage-act:     #15803d;   /* forest     */
+  --stage-liv:     #6b7280;   /* slate — matches --status-livre */
 
   /* Rail */
   --rail-active:   #e8f6ec;

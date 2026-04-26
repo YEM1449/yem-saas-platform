@@ -6,7 +6,7 @@
 
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
 .kpi-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px}
-.kpi-outstanding{border-top:3px solid #2563eb}
+.kpi-outstanding{border-top:3px solid #16a34a}
 .kpi-overdue{border-top:3px solid #ef4444}
 .kpi-rate{border-top:3px solid #10b981}
 .kpi-days{border-top:3px solid #f59e0b}

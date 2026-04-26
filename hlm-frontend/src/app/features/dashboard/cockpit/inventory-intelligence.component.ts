@@ -115,7 +115,7 @@ import { InventoryIntelligence } from '../dashboard-cockpit.service';
     .stat-res { background:#fef3c7; }
     .stat-res .stock-num { color:#92400e; }
     .stat-sold { background:#eff6ff; }
-    .stat-sold .stock-num { color:#1d4ed8; }
+    .stat-sold .stock-num { color:#15803d; }
     .stat-withd { background:#f3f4f6; }
     .stat-withd .stock-num { color:#6b7280; }
     .absorption-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; }

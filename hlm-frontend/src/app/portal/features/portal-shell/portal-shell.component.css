@@ -76,11 +76,11 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  background: linear-gradient(135deg, var(--c-primary-600, #16a34a), var(--c-primary-800, #166534));
   border-radius: var(--r-md, 8px);
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(37,99,235,.35);
+  box-shadow: 0 2px 6px rgba(22,163,74,.35);
 }
 
 .portal-brand-name {
@@ -122,13 +122,13 @@
 }
 
 .portal-nav-link.active {
-  color: var(--c-primary, #2563eb);
+  color: var(--c-primary, #16a34a);
   background: var(--c-primary-50, #eff6ff);
   font-weight: var(--fw-semibold, 600);
 }
 
 .portal-nav-link.active svg {
-  stroke: var(--c-primary, #2563eb);
+  stroke: var(--c-primary, #16a34a);
 }
 
 /* ── Header actions (logout) ────────────────────────────────────── */
@@ -163,7 +163,7 @@
 }
 
 .portal-logout-btn:focus-visible {
-  outline: 2px solid var(--c-primary, #2563eb);
+  outline: 2px solid var(--c-primary, #16a34a);
   outline-offset: 2px;
 }
 

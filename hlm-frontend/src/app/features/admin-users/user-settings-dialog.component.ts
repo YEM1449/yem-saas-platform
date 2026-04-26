@@ -35,7 +35,7 @@ type Tab = 'objectifs' | 'projets';
     .project-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer; padding: 0.2rem 0.25rem; border-radius: 4px; }
     .project-row:hover { background: #f9fafb; }
     .project-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: #6366f1; cursor: pointer; flex-shrink: 0; }
-    .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.8rem; color: #1d4ed8; }
+    .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.8rem; color: #15803d; }
     .actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f3f4f6; }
     .btn-primary { background: #6366f1; color: #fff; border: none; padding: 0.45rem 1.1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
     .btn-primary:disabled { opacity: 0.6; cursor: default; }

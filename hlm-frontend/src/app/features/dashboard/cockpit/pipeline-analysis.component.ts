@@ -99,7 +99,7 @@ import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
     .statut-badge { padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:#f3f4f6; color:#374151; }
     .statut-badge[data-statut="COMPROMIS"] { background:#eef2ff; color:#4f46e5; }
     .statut-badge[data-statut="FINANCEMENT"] { background:#fef3c7; color:#b45309; }
-    .statut-badge[data-statut="ACTE_NOTARIE"] { background:#dbeafe; color:#1d4ed8; }
+    .statut-badge[data-statut="ACTE_NOTARIE"] { background:#dbeafe; color:#15803d; }
     .statut-badge.sm { font-size:10px; padding:1px 6px; }
     .risk-section { margin-top:16px; }
     .risk-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }

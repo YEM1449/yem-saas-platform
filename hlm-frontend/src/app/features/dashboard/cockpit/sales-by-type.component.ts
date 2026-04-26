@@ -8,7 +8,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  APPARTEMENT: '#2563eb', VILLA: '#7c3aed', STUDIO: '#059669',
+  APPARTEMENT: '#16a34a', VILLA: '#7c3aed', STUDIO: '#059669',
   DUPLEX: '#d97706', T3: '#0891b2', T2: '#65a30d', PARKING: '#94a3b8',
 };
 

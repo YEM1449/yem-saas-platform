@@ -89,7 +89,7 @@ export class VenteListComponent implements OnInit {
     { key: 'COMPROMIS',    label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
     { key: 'FINANCEMENT',  label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
     { key: 'ACTE_NOTARIE', label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
-    { key: 'LIVRE',        label: 'Livré',         hint: 'Remise des clés',           color: '#1d4ed8' },
+    { key: 'LIVRE',        label: 'Livré',         hint: 'Remise des clés',           color: '#15803d' },
   ];
 
   get kanbanBoard(): { col: { key: VenteStatut; label: string; hint: string; color: string }; items: Vente[] }[] {

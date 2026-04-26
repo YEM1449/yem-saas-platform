@@ -50,7 +50,7 @@
             <div style="display:flex;gap:12px;flex-wrap:wrap">
               @for (pt of PROJECT_TYPES; track pt.value) {
                 <label class="radio-card"
-                       [style.border-color]="step1.get('projectType')?.value === pt.value ? 'var(--color-primary,#2563eb)' : ''"
+                       [style.border-color]="step1.get('projectType')?.value === pt.value ? 'var(--color-primary,#16a34a)' : ''"
                        [style.background]="step1.get('projectType')?.value === pt.value ? 'var(--color-primary-light,#eff6ff)' : ''"
                        style="flex:1;min-width:200px;cursor:pointer;padding:14px 16px;border:2px solid #e2e8f0;border-radius:8px;display:flex;align-items:flex-start;gap:10px">
                   <input type="radio" formControlName="projectType" [value]="pt.value" style="margin-top:2px" />

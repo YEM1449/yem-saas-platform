@@ -41,7 +41,7 @@ import { MonthlyTrendPoint } from './home-dashboard.service';
       width: 100%; min-height: 4px; border-radius: 3px 3px 0 0;
       background: #bfdbfe; transition: height .3s ease;
     }
-    .mbc-bar.mbc-bar-current { background: #2563eb; }
+    .mbc-bar.mbc-bar-current { background: #16a34a; }
     .mbc-bar.mbc-bar-zero    { background: #e5e7eb; min-height: 4px; }
     .mbc-label {
       font-size: 10px; color: #94a3b8; margin-top: 4px;

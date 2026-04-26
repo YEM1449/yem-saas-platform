@@ -43,7 +43,7 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, var(--c-primary-600, #2563eb), var(--c-primary-800, #1e40af));
+  background: linear-gradient(135deg, var(--c-primary-600, #16a34a), var(--c-primary-800, #166534));
   border-radius: var(--r-lg, 12px);
   color: #fff;
   margin-bottom: var(--sp-4, 16px);
@@ -73,7 +73,7 @@
   width: 44px;
   height: 44px;
   border: 3px solid var(--c-primary-100, #dbeafe);
-  border-top-color: var(--c-primary, #2563eb);
+  border-top-color: var(--c-primary, #16a34a);
   border-radius: 50%;
   animation: portal-spin 0.8s linear infinite;
   flex-shrink: 0;
@@ -85,7 +85,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .portal-spinner { animation: none; border-top-color: var(--c-primary, #2563eb); }
+  .portal-spinner { animation: none; border-top-color: var(--c-primary, #16a34a); }
 }
 
 /* ── Error icon ───────────────────────────────────────────────── */
@@ -125,7 +125,7 @@
   font-weight: var(--fw-semibold, 600);
   font-family: var(--font, inherit);
   color: #fff;
-  background: var(--c-primary, #2563eb);
+  background: var(--c-primary, #16a34a);
   border: none;
   border-radius: var(--r-md, 8px);
   cursor: pointer;
@@ -134,7 +134,7 @@
 }
 
 .portal-btn-primary:hover {
-  background: var(--c-primary-hover, #1d4ed8);
+  background: var(--c-primary-hover, #15803d);
   box-shadow: 0 4px 12px rgba(37, 99, 235, .35);
   transform: translateY(-1px);
 }
