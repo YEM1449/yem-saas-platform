@@ -11,7 +11,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
     label: 'Contrat de vente',
     icon: '📑',
     desc: 'Acte de vente immobilière — signé par l\'acquéreur et l\'agent commercial. Inclut les conditions financières, les garanties légales et les clauses suspensives.',
-    color: '#1d4ed8',
+    color: '#15803d',
   },
   RESERVATION: {
     label: 'Bon de réservation',
@@ -112,7 +112,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
     }
     .template-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1); transform: translateY(-2px); }
 
-    .card-accent-bar { height: 4px; background: var(--accent, #2563eb); }
+    .card-accent-bar { height: 4px; background: var(--accent, #16a34a); }
     .card-body { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
     .card-header { display: flex; align-items: flex-start; gap: 12px; }
     .type-icon { font-size: 28px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
@@ -120,7 +120,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
     .type-label { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 5px; }
 
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
-    .badge-custom  { background: #dbeafe; color: #1d4ed8; }
+    .badge-custom  { background: #dbeafe; color: #15803d; }
     .badge-default { background: #f1f5f9; color: #64748b; }
 
     .type-desc   { font-size: 12.5px; color: #64748b; line-height: 1.6; margin: 0; flex: 1; }
@@ -136,8 +136,8 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
       padding: 7px 14px; border-radius: 6px; font-size: 12.5px;
       font-weight: 500; cursor: pointer; border: none; text-decoration: none;
     }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary { background: #16a34a; color: #fff; }
+    .btn-primary:hover { background: #15803d; }
     .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
     .btn-outline:hover { background: #f8fafc; }
     .btn-ghost-danger { background: transparent; color: #dc2626; border: 1px solid #fecaca; font-size: 12.5px; }

@@ -8,7 +8,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS = [
-  '#2563eb','#7c3aed','#059669','#d97706','#0891b2','#65a30d','#94a3b8',
+  '#16a34a','#7c3aed','#059669','#d97706','#0891b2','#65a30d','#94a3b8',
 ];
 
 @Component({
@@ -76,7 +76,7 @@ const TYPE_COLORS = [
     .widget-title { font-size:14px; font-weight:700; color:#111827; }
     .widget-sub { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
     .global-row { margin-bottom:12px; }
-    .global-val { font-size:22px; font-weight:700; color:#2563eb; }
+    .global-val { font-size:22px; font-weight:700; color:#16a34a; }
     .global-unit { font-size:13px; font-weight:400; color:#6b7280; margin-left:4px; }
     .section-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#9ca3af; margin-bottom:8px; }
     .sqm-list, .proj-list { display:flex; flex-direction:column; gap:7px; }

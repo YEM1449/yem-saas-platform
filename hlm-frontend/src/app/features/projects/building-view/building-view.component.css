@@ -88,19 +88,19 @@
   flex-shrink: 0;
 }
 
-/* Status dot colours */
-.dot-active    { background: #22c55e; }
-.dot-reserved  { background: #ea580c; }
-.dot-sold      { background: #1e293b; }
-.dot-draft     { background: repeating-linear-gradient(45deg, #c8a96e 0px, #c8a96e 2px, #f5ebe0 2px, #f5ebe0 5px); border: 1px solid #c8a96e; }
-.dot-withdrawn { background: repeating-linear-gradient(45deg, #94a3b8 0px, #94a3b8 2px, #e2e8f0 2px, #e2e8f0 5px); border: 1px solid #94a3b8; }
+/* Status dot colours — share --status-* tokens with badges + 3D viewer */
+.dot-active    { background: var(--status-disponible, #3b82f6); }
+.dot-reserved  { background: var(--status-reserve, #d97706); }
+.dot-sold      { background: var(--status-vendu, #16a34a); }
+.dot-draft     { background: repeating-linear-gradient(45deg, var(--status-brouillon, #c8a96e) 0px, var(--status-brouillon, #c8a96e) 2px, #f5ebe0 2px, #f5ebe0 5px); border: 1px solid var(--status-brouillon, #c8a96e); }
+.dot-withdrawn { background: repeating-linear-gradient(45deg, var(--status-retire, #ef4444) 0px, var(--status-retire, #ef4444) 2px, var(--status-retire-bg, #fee2e2) 2px, var(--status-retire-bg, #fee2e2) 5px); border: 1px solid var(--status-retire, #ef4444); }
 
 /* Active filter highlight */
-.chip-active.chip-on    { border-color: #22c55e; background: #f0fdf4; }
-.chip-reserved.chip-on  { border-color: #ea580c; background: #fff7ed; }
-.chip-sold.chip-on      { border-color: #1e293b; background: #f8fafc; }
-.chip-draft.chip-on     { border-color: #c8a96e; background: #fdf6ee; }
-.chip-withdrawn.chip-on { border-color: #94a3b8; background: #f1f5f9; }
+.chip-active.chip-on    { border-color: var(--status-disponible); background: var(--status-disponible-bg); }
+.chip-reserved.chip-on  { border-color: var(--status-reserve);    background: var(--status-reserve-bg); }
+.chip-sold.chip-on      { border-color: var(--status-vendu);      background: var(--status-vendu-bg); }
+.chip-draft.chip-on     { border-color: var(--status-brouillon);  background: var(--status-brouillon-bg); }
+.chip-withdrawn.chip-on { border-color: var(--status-retire);     background: var(--status-retire-bg); }
 
 .bv-legend-sep {
   flex: 1;
@@ -316,9 +316,9 @@
   transform: translateY(-2px);
 }
 
-/* Status variants */
+/* Unit-card status variants — share --status-* tokens with badges + 3D viewer */
 .status-active {
-  background: #22c55e;
+  background: var(--status-disponible, #3b82f6);
   color: #fff;
 }
 
@@ -328,28 +328,28 @@
     #f5ebe0 0px, #f5ebe0 5px,
     #e8d5be 5px, #e8d5be 6px
   );
-  color: #78350f;
-  border-color: #c8a96e !important;
+  color: var(--status-brouillon-fg, #78350f);
+  border-color: var(--status-brouillon, #c8a96e) !important;
 }
 
 .status-reserved {
-  background: #ea580c;
+  background: var(--status-reserve, #d97706);
   color: #fff;
 }
 
 .status-sold {
-  background: #1e293b;
+  background: var(--status-vendu, #16a34a);
   color: #fff;
 }
 
 .status-withdrawn {
   background: repeating-linear-gradient(
     45deg,
-    #f1f5f9 0px, #f1f5f9 5px,
-    #e2e8f0 5px, #e2e8f0 6px
+    var(--status-retire-bg, #fee2e2) 0px, var(--status-retire-bg, #fee2e2) 5px,
+    var(--status-retire-bd, #fecaca) 5px, var(--status-retire-bd, #fecaca) 6px
   );
-  color: #64748b;
-  border-color: #94a3b8 !important;
+  color: var(--status-retire-fg, #991b1b);
+  border-color: var(--status-retire, #ef4444) !important;
 }
 
 .bv-unit-ref {
@@ -415,11 +415,11 @@
 }
 
 /* Badge inherits status colour text from parent status class */
-.bv-panel-badge.status-active   { background: #22c55e; color: #fff; }
-.bv-panel-badge.status-reserved { background: #ea580c; color: #fff; }
-.bv-panel-badge.status-sold     { background: #1e293b; color: #fff; }
-.bv-panel-badge.status-draft    { background: #f5ebe0; color: #78350f; border: 1.5px solid #c8a96e; }
-.bv-panel-badge.status-withdrawn{ background: #f1f5f9; color: #64748b; border: 1.5px solid #94a3b8; }
+.bv-panel-badge.status-active   { background: var(--status-disponible);    color: #fff; }
+.bv-panel-badge.status-reserved { background: var(--status-reserve);       color: #fff; }
+.bv-panel-badge.status-sold     { background: var(--status-vendu);         color: #fff; }
+.bv-panel-badge.status-draft    { background: var(--status-brouillon-bg);  color: var(--status-brouillon-fg); border: 1.5px solid var(--status-brouillon); }
+.bv-panel-badge.status-withdrawn{ background: var(--status-retire-bg);     color: var(--status-retire-fg);    border: 1.5px solid var(--status-retire); }
 
 .bv-panel-title-block { flex: 1; min-width: 0; }
 
@@ -448,11 +448,11 @@
   flex-shrink: 0;
 }
 
-.bv-status-pill.status-active   { background: #dcfce7; color: #166534; }
-.bv-status-pill.status-reserved { background: #ffedd5; color: #9a3412; }
-.bv-status-pill.status-sold     { background: #1e293b; color: #fff; }
-.bv-status-pill.status-draft    { background: #fef3c7; color: #92400e; }
-.bv-status-pill.status-withdrawn{ background: #f1f5f9; color: #64748b; }
+.bv-status-pill.status-active   { background: var(--status-disponible-bg); color: var(--status-disponible-fg); }
+.bv-status-pill.status-reserved { background: var(--status-reserve-bg);    color: var(--status-reserve-fg); }
+.bv-status-pill.status-sold     { background: var(--status-vendu-bg);      color: var(--status-vendu-fg); }
+.bv-status-pill.status-draft    { background: var(--status-brouillon-bg); color: var(--status-brouillon-fg); }
+.bv-status-pill.status-withdrawn{ background: var(--status-retire-bg);    color: var(--status-retire-fg); }
 
 .bv-panel-close {
   display: flex;

@@ -324,7 +324,7 @@
 
 /* Accent colors per card type */
 .hero-pipeline::before  { background: linear-gradient(90deg, #6366f1, #818cf8); }
-.hero-mois::before      { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.hero-mois::before      { background: linear-gradient(90deg, #3b82f6, #4ade80); }
 .hero-livre::before     { background: linear-gradient(90deg, #10b981, #34d399); }
 .hero-absorption::before{ background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
@@ -338,7 +338,7 @@
   flex-shrink: 0;
 }
 .hero-pipeline  .hero-icon { background: #ede9fe; color: #6d28d9; }
-.hero-mois      .hero-icon { background: #dbeafe; color: #1d4ed8; }
+.hero-mois      .hero-icon { background: #dbeafe; color: #15803d; }
 .hero-livre     .hero-icon { background: #d1fae5; color: #065f46; }
 .hero-absorption .hero-icon { background: #fef3c7; color: #92400e; }
 
@@ -457,7 +457,7 @@
 }
 .ops-prospects    .ops-chip-icon { background: #ede9fe; color: #7c3aed; }
 .ops-reservations .ops-chip-icon { background: #fef3c7; color: #92400e; }
-.ops-echeances    .ops-chip-icon { background: #dbeafe; color: #1d4ed8; }
+.ops-echeances    .ops-chip-icon { background: #dbeafe; color: #15803d; }
 .ops-tasks        .ops-chip-icon { background: #d1fae5; color: #065f46; }
 .ops-stalled      .ops-chip-icon { background: #fee2e2; color: #991b1b; }
 
@@ -533,7 +533,7 @@
 .tm-abs-bar.bar-warning{background:#f59e0b}
 .tm-abs-bar.bar-danger{background:#ef4444}
 .tm-abs-pct{font-size:.75rem;font-weight:700;white-space:nowrap;min-width:36px;text-align:right}
-.tm-active{color:#2563eb}
+.tm-active{color:#16a34a}
 .tm-reserved{color:#d97706}
 .tm-sold{color:#059669}
 .tm-total{color:#374151}
@@ -1220,7 +1220,7 @@
 .deliveries-card{background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .deliveries-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border,#e5e7eb);background:linear-gradient(90deg,#eff6ff 0%,#fff 100%)}
 .deliveries-title{font-size:13px;font-weight:700;color:#1e40af}
-.deliveries-link{font-size:12px;color:#2563eb;text-decoration:none;font-weight:600}
+.deliveries-link{font-size:12px;color:#16a34a;text-decoration:none;font-weight:600}
 .deliveries-link:hover{text-decoration:underline}
 .deliveries-strip{display:flex;gap:12px;padding:14px 16px;overflow-x:auto;scroll-snap-type:x mandatory}
 .deliveries-strip::-webkit-scrollbar{height:6px}
@@ -1244,7 +1244,7 @@
 .db-tab-nav{display:flex;gap:4px;margin-bottom:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:4px;flex-wrap:wrap}
 .db-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;background:transparent;border-radius:7px;font-size:13px;font-weight:500;color:#64748b;cursor:pointer;transition:all .15s;white-space:nowrap}
 .db-tab:hover{background:#fff;color:#1e293b;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.db-tab.db-tab-active{background:#fff;color:#2563eb;font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.db-tab.db-tab-active{background:#fff;color:#16a34a;font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.1)}
 .db-tab svg{flex-shrink:0}
 
 /* ── Trend card ──────────────────────────────────────────────────────────── */
@@ -1264,24 +1264,24 @@
 .pbd-name{font-size:13px;font-weight:600;color:#1e293b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pbd-ventes{font-size:11px;color:#64748b;white-space:nowrap}
 .pbd-pct{font-size:11px;background:#f1f5f9;color:#475569;padding:1px 6px;border-radius:99px;white-space:nowrap}
-.pbd-ca{font-size:13px;font-weight:700;color:#2563eb;white-space:nowrap;margin-left:auto}
+.pbd-ca{font-size:13px;font-weight:700;color:#16a34a;white-space:nowrap;margin-left:auto}
 .pbd-bar-wrap{height:6px;background:#f1f5f9;border-radius:999px;overflow:hidden}
 .pbd-bar{height:100%;border-radius:999px;transition:width .3s ease;opacity:.8}
 .pbd-link{font-size:14px;color:#94a3b8;text-decoration:none;padding:4px;flex-shrink:0}
-.pbd-link:hover{color:#2563eb}
+.pbd-link:hover{color:#16a34a}
 .pbd-total{border-top:1px solid #f1f5f9;margin-top:4px;padding-top:10px;display:flex;justify-content:space-between;font-size:13px;color:#64748b}
 .pbd-total strong{color:#1e293b}
 
 /* ── Tranche / immeuble grouped breakdown ───────────────────────────────── */
 .bd-group{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:10px}
 .bd-group:last-child{margin-bottom:0}
-.bd-group-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#2563eb;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #eff6ff}
+.bd-group-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #eff6ff}
 .bd-list{display:flex;flex-direction:column;gap:8px}
 
 /* ── Shareholder tab ─────────────────────────────────────────────────────── */
 .shareholder-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:4px}
 .sh-kpi-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 22px}
-.sh-kpi-portfolio{border-top:3px solid #2563eb}
+.sh-kpi-portfolio{border-top:3px solid #16a34a}
 .sh-kpi-sold{border-top:3px solid #10b981}
 .sh-kpi-exposure{border-top:3px solid #f59e0b}
 .sh-kpi-val{font-size:22px;font-weight:700;color:#1e293b;font-variant-numeric:tabular-nums}
@@ -1292,7 +1292,7 @@
 .sh-conc-meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .sh-conc-name{font-size:13px;font-weight:600;color:#1e293b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sh-conc-units{font-size:11px;color:#64748b;white-space:nowrap}
-.sh-conc-pct{font-size:12px;font-weight:700;color:#2563eb;white-space:nowrap;min-width:42px;text-align:right}
+.sh-conc-pct{font-size:12px;font-weight:700;color:#16a34a;white-space:nowrap;min-width:42px;text-align:right}
 .sh-conc-bar-wrap{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
 .sh-conc-bar{height:100%;border-radius:999px;transition:width .4s ease;opacity:.8}
 
@@ -1307,11 +1307,11 @@
 .pd-td-r{text-align:right}
 .pd-td-c{text-align:center}
 .pd-tr:last-child .pd-td{border-bottom:none}
-.pd-project-link{color:#2563eb;text-decoration:none;font-weight:600}
+.pd-project-link{color:#16a34a;text-decoration:none;font-weight:600}
 .pd-project-link:hover{text-decoration:underline}
 .pd-num-bold{font-weight:600;color:#1e293b;margin-right:4px}
 .pd-pct{font-size:11px;color:#94a3b8}
-.pd-td-avail{color:#2563eb;font-weight:600;cursor:pointer}
+.pd-td-avail{color:#16a34a;font-weight:600;cursor:pointer}
 .pd-td-avail:hover{background:#eff6ff !important}
 .pd-td-date{white-space:nowrap;color:#475569}
 .pd-no-date{color:#d1d5db}
@@ -1325,7 +1325,7 @@
 .bench-good{background:#dcfce7;color:#15803d}
 .bench-warn{background:#fef9c3;color:#854d0e}
 .bench-bad{background:#fee2e2;color:#b91c1c}
-.bench-info{background:#eff6ff;color:#1d4ed8}
+.bench-info{background:#eff6ff;color:#15803d}
 .kdt-action{color:#6366f1;font-size:.68rem;font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0}
 .kdt-action:hover{text-decoration:underline}
 /* Inline context line for compact ops chips */
@@ -1378,7 +1378,7 @@
 .pa-max-days{color:#94a3b8;font-size:12px}
 /* Statut chips */
 .pa-statut-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.pa-chip-compromis{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.pa-chip-compromis{background:#eff6ff;color:#15803d;border:1px solid #bfdbfe}
 .pa-chip-financement{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
 .pa-chip-acte_notarie{background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff}
 /* Aging bar */
@@ -1411,7 +1411,7 @@
 .tm-vel-count{font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px}
 /* Velocity color classes */
 .vel-fast{color:#059669;font-weight:700}
-.vel-normal{color:#2563eb;font-weight:600}
+.vel-normal{color:#16a34a;font-weight:600}
 .vel-slow{color:#d97706;font-weight:600}
 
 /* ── Mobile dashboard responsive overrides ───────────────────── */

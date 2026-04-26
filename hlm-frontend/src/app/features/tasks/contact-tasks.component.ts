@@ -52,7 +52,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
     .task-title { flex: 1; }
     .task-due { color: #9ca3af; font-size: 0.72rem; }
     .badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
-    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-blue { background: #dbeafe; color: #15803d; }
     .badge-amber { background: #fef3c7; color: #92400e; }
     .badge-green { background: #dcfce7; color: #166534; }
     .badge-gray { background: #f3f4f6; color: #6b7280; }

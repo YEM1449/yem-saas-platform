@@ -123,7 +123,7 @@ import { DashboardAlert } from '../dashboard-cockpit.service';
     .alert-cta {
       align-self: center;
       font-size: 12px; font-weight: 600;
-      color: #1d4ed8; text-decoration: none;
+      color: #15803d; text-decoration: none;
       white-space: nowrap;
       padding: 6px 10px; border-radius: 6px;
       transition: background 120ms ease;

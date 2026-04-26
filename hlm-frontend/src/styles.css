@@ -5,56 +5,85 @@
    ================================================================ */
 @import './design-tokens.css';
 
-/* ── 1. Design Tokens (CSS Custom Properties) ─────────────────── */
+/* ── 1. Design Tokens — App-Level Surface + Aliases ───────────────
+   The full token system lives in design-tokens.css.  This block only:
+   1. Maps the warm-sand surface palette (`--c-bg`, `--c-surface`, …)
+      that the CRM ships with — overrides the cool-slate defaults.
+   2. Defines status tokens for property/contract/payment lifecycles
+      so badges, the 2D building view, and the 3D viewer can share
+      one source of truth.
+   3. Aliases (`--primary`, `--text`, `--border`, …) so legacy
+      components written against an older token guess still resolve
+      to the canonical brand colors instead of leaking purple/blue
+      fallbacks.
+   ──────────────────────────────────────────────────────────────── */
 :root {
-  /* Primary — brand green */
-  --c-primary:        #16a34a;
-  --c-primary-hover:  #15803d;
-  --c-primary-light:  #f0fdf4;
-
-  /* Semantic */
-  --c-success:        #16a34a;
-  --c-success-light:  #f0fdf4;
-  --c-success-border: #bbf7d0;
-  --c-warning:        #d97706;
-  --c-warning-light:  #fffbeb;
-  --c-warning-border: #fde68a;
-  --c-danger:         #dc2626;
-  --c-danger-light:   #fef2f2;
-  --c-danger-border:  #fecaca;
-  --c-info:           #0284c7;
-  --c-info-light:     #f0f9ff;
-
-  /* Surface / Background — warm sand palette */
+  /* Surface / Background — warm sand palette (overrides slate defaults) */
   --c-bg:             #faf6ec;
   --c-surface:        #fdfbf5;
+  --c-surface-raised: #ffffff;
   --c-border:         #e8dec5;
   --c-border-strong:  #d4c9a8;
+  --c-border-focus:   var(--c-primary-400);
 
-  /* Text — warm espresso */
+  /* Text — warm espresso (overrides slate defaults) */
   --c-text:           #2d241a;
   --c-text-secondary: #5a4e3d;
   --c-text-muted:     #9a8e77;
 
-  /* Typography */
-  --font:             'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono:        'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  /* ── Status palette — single source of truth ─────────────────
+     Mirrors the 3D viewer convention (real-estate standard:
+     green = closed deal, blue = available inventory).  Used by:
+       • .badge-* classes below
+       • building-view.component.css (2D plan)
+       • lot-3d-status.model.ts (3D viewer hex constants) */
+  --status-disponible:      #3b82f6;   /* ACTIVE / DISPONIBLE  — blue   */
+  --status-disponible-bg:   #dbeafe;
+  --status-disponible-bd:   #bfdbfe;
+  --status-disponible-fg:   #1e40af;
 
-  /* Radii */
-  --r-sm:   4px;
-  --r-md:   8px;
-  --r-lg:   12px;
-  --r-xl:   16px;
-  --r-pill: 9999px;
+  --status-reserve:         #d97706;   /* RESERVED / RÉSERVÉ   — amber  */
+  --status-reserve-bg:      #fef3c7;
+  --status-reserve-bd:      #fde68a;
+  --status-reserve-fg:      #92400e;
 
-  /* Shadows */
-  --sh-xs: 0 1px 2px rgba(0,0,0,.05);
-  --sh-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --sh-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
-  --sh-lg: 0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.04);
+  --status-vendu:           #16a34a;   /* SOLD / VENDU         — green  */
+  --status-vendu-bg:        #dcfce7;
+  --status-vendu-bd:        #bbf7d0;
+  --status-vendu-fg:        #15803d;
 
-  /* Transitions */
-  --tr: 150ms ease;
+  --status-livre:           #6b7280;   /* DELIVERED / LIVRÉ    — slate  */
+  --status-livre-bg:        #f1f5f9;
+  --status-livre-bd:        #e2e8f0;
+  --status-livre-fg:        #334155;
+
+  --status-retire:          #ef4444;   /* WITHDRAWN / RETIRÉ   — red    */
+  --status-retire-bg:       #fee2e2;
+  --status-retire-bd:       #fecaca;
+  --status-retire-fg:       #991b1b;
+
+  --status-brouillon:       #c8a96e;   /* DRAFT / BROUILLON    — sand   */
+  --status-brouillon-bg:    #fdf6ee;
+  --status-brouillon-bd:    #ead8b6;
+  --status-brouillon-fg:    #78532e;
+
+  /* ── Legacy-name aliases ─────────────────────────────────────
+     A few components were written against tokens we never defined
+     (--primary, --text, --border, etc.) and fell back to indigo /
+     slate guesses.  Aliasing keeps them on-brand without touching
+     30+ files. */
+  --primary:       var(--c-primary);
+  --primary-50:    var(--c-primary-50);
+  --primary-600:   var(--c-primary-600);
+  --primary-700:   var(--c-primary-700);
+  --text:          var(--c-text);
+  --text-muted:    var(--c-text-muted);
+  --text-secondary:var(--c-text-secondary);
+  --border:        var(--c-border);
+  --border-strong: var(--c-border-strong);
+  --surface:       var(--c-surface);
+  --bg:            var(--c-bg);
+  --bg-hover:      var(--c-neutral-100);
 }
 
 /* ── 2. Base Reset ─────────────────────────────────────────────── */
@@ -180,12 +209,31 @@ a:hover { text-decoration: underline; }
 }
 .btn-secondary:hover:not(:disabled) { background: var(--c-bg); text-decoration: none; }
 
+/* .btn-danger — soft default for inline/secondary destructive actions
+   (e.g. "Annuler la réservation").  Use .btn-danger-strong for primary
+   destructive CTAs that need the same visual weight as .btn-primary. */
 .btn-danger {
   background: var(--c-danger-light);
   color: var(--c-danger);
   border-color: var(--c-danger-border);
 }
 .btn-danger:hover:not(:disabled) { background: var(--c-danger-border); }
+
+.btn-danger-strong {
+  background: var(--c-danger);
+  color: #fff;
+  border-color: var(--c-danger);
+}
+.btn-danger-strong:hover:not(:disabled) {
+  background: var(--c-danger-hover, #b91c1c);
+  border-color: var(--c-danger-hover, #b91c1c);
+  text-decoration: none;
+}
+.btn-danger-strong:focus-visible {
+  outline: 2px solid var(--c-danger);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.22);
+}
 
 .btn-ghost {
   background: transparent;
@@ -226,7 +274,7 @@ a:hover { text-decoration: underline; }
 }
 .form-control:focus {
   border-color: var(--c-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  box-shadow: var(--focus-ring-soft);
 }
 .form-control::placeholder { color: var(--c-text-muted); }
 
@@ -266,7 +314,7 @@ select.form-control   { cursor: pointer; }
 }
 .search-input:focus {
   border-color: var(--c-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  box-shadow: var(--focus-ring-soft);
 }
 .search-input::placeholder { color: var(--c-text-muted); }
 
@@ -316,13 +364,19 @@ select.form-control   { cursor: pointer; }
   white-space: nowrap;
 }
 
-/* Property status */
-.badge-draft      { background: #f1f5f9; color: #475569; }
-.badge-active     { background: #dcfce7; color: #15803d; }
-.badge-reserved   { background: #fef3c7; color: #92400e; }
-.badge-sold       { background: #dbeafe; color: #1e40af; }
-.badge-withdrawn  { background: #fee2e2; color: #991b1b; }
-.badge-archived   { background: #f1f5f9; color: #64748b; }
+/* Property status — colors mirror --status-* tokens (3D + 2D + badge align)
+   ACTIVE  → DISPONIBLE (blue)   — available inventory
+   RESERVED→ RÉSERVÉ    (amber)  — pending hold
+   SOLD    → VENDU      (green)  — closed deal
+   WITHDRAWN → RETIRÉ   (red)    — pulled from market
+   ARCHIVED  → LIVRÉ    (slate)  — delivered / closed lifecycle
+   DRAFT     → BROUILLON (sand)  — not yet published */
+.badge-draft      { background: var(--status-brouillon-bg); color: var(--status-brouillon-fg); }
+.badge-active     { background: var(--status-disponible-bg); color: var(--status-disponible-fg); }
+.badge-reserved   { background: var(--status-reserve-bg);    color: var(--status-reserve-fg); }
+.badge-sold       { background: var(--status-vendu-bg);      color: var(--status-vendu-fg); }
+.badge-withdrawn  { background: var(--status-retire-bg);     color: var(--status-retire-fg); }
+.badge-archived   { background: var(--status-livre-bg);      color: var(--status-livre-fg); }
 
 /* Contract status */
 .badge-signed     { background: #dcfce7; color: #15803d; }
@@ -759,7 +813,7 @@ select.form-control   { cursor: pointer; }
   font-weight: var(--fw-semibold, 600);
   font-family: var(--font, inherit);
   color: #fff;
-  background: var(--c-primary, #2563eb);
+  background: var(--c-primary, #16a34a);
   border: none;
   border-radius: var(--r-md, 8px);
   cursor: pointer;
@@ -769,14 +823,14 @@ select.form-control   { cursor: pointer; }
   white-space: nowrap;
 }
 .portal-btn-primary:hover {
-  background: var(--c-primary-hover, #1d4ed8);
-  box-shadow: 0 4px 12px rgba(37,99,235,.3);
+  background: var(--c-primary-hover, #15803d);
+  box-shadow: 0 4px 12px rgba(22,163,74,.3);
   transform: translateY(-1px);
   text-decoration: none;
   color: #fff;
 }
 .portal-btn-primary:focus-visible {
-  outline: 3px solid rgba(37,99,235,.4);
+  outline: 3px solid rgba(22,163,74,.4);
   outline-offset: 2px;
 }
 
@@ -801,13 +855,13 @@ select.form-control   { cursor: pointer; }
   white-space: nowrap;
 }
 .portal-btn-secondary:hover {
-  border-color: var(--c-primary-400, #60a5fa);
-  color: var(--c-primary, #2563eb);
-  background: var(--c-primary-50, #eff6ff);
+  border-color: var(--c-primary-400, #4ade80);
+  color: var(--c-primary, #16a34a);
+  background: var(--c-primary-50, #f0fdf4);
   text-decoration: none;
 }
 .portal-btn-secondary:focus-visible {
-  outline: 3px solid rgba(37,99,235,.3);
+  outline: 3px solid rgba(22,163,74,.3);
   outline-offset: 2px;
 }
 
@@ -824,7 +878,7 @@ select.form-control   { cursor: pointer; }
   padding: var(--sp-1-5, 6px) 0;
   transition: color var(--tr, 150ms ease);
 }
-.portal-back-link:hover { color: var(--c-primary, #2563eb); text-decoration: none; }
+.portal-back-link:hover { color: var(--c-primary, #16a34a); text-decoration: none; }
 .portal-section-nav { margin-bottom: var(--sp-1, 4px); }
 
 /* ── Portal summary row (payment totals) ────────────────────────── */
@@ -927,8 +981,8 @@ select.form-control   { cursor: pointer; }
 }
 .upload-zone:hover,
 .upload-zone.drag-over {
-  border-color: var(--c-primary, #2563eb);
-  background: var(--c-primary-light, #eff6ff);
+  border-color: var(--c-primary, #16a34a);
+  background: var(--c-primary-light, #f0fdf4);
 }
 .upload-zone-icon {
   width: 40px; height: 40px;
@@ -952,5 +1006,5 @@ select.form-control   { cursor: pointer; }
     border-style: solid;
     border-width: 1px;
   }
-  .upload-zone-label { color: var(--c-primary, #2563eb); }
+  .upload-zone-label { color: var(--c-primary, #16a34a); }
 }

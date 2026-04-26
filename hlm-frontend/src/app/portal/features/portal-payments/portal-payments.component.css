@@ -46,7 +46,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--c-primary-100, #dbeafe);
-  color: var(--c-primary, #2563eb);
+  color: var(--c-primary, #16a34a);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--fw-bold, 700);
   display: flex;

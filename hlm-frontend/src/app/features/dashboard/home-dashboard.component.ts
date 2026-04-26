@@ -263,7 +263,7 @@ export class HomeDashboardComponent implements OnInit {
     COMPROMIS:    '#c2410c',
     FINANCEMENT:  '#a16207',
     ACTE_NOTARIE: '#15803d',
-    LIVRE:        '#1d4ed8',
+    LIVRE:        '#15803d',
   };
 
   pipelineStageFlow(s: HomeDashboard): { key: string; label: string; count: number; amount: number; color: string; flex: number }[] {
@@ -367,7 +367,7 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   readonly PROJECT_COLORS = [
-    '#2563eb','#7c3aed','#059669','#d97706','#dc2626',
+    '#16a34a','#7c3aed','#059669','#d97706','#dc2626',
     '#0891b2','#65a30d','#c026d3','#ea580c','#0f172a',
   ];
 
