@@ -153,9 +153,10 @@
 }
 
 @if (loading()) {
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    Chargement…
+  <div class="skeleton-stack" data-testid="ventes-loading-state" aria-label="Chargement des ventes…">
+    @for (i of [1,2,3,4,5]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
   </div>
 }
 

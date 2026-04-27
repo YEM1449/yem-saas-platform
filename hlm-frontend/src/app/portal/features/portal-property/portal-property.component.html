@@ -13,9 +13,12 @@
   <h2 class="portal-section-title">Mon Bien Immobilier</h2>
 
   @if (loading()) {
-    <div class="portal-loading">
-      <div class="spinner"></div>
-      Chargement…
+    <div class="skeleton-stack" data-testid="portal-property-loading-state" aria-label="Chargement de votre bien…">
+      <span class="skeleton skeleton-card" style="height:200px"></span>
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
     </div>
   } @else if (error()) {
     <div class="portal-error">{{ error() }}</div>

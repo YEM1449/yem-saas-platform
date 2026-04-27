@@ -55,7 +55,11 @@
   }
 
   @if (loading()) {
-    <div class="report-loading">Chargement…</div>
+    <div class="skeleton-stack" data-testid="agents-report-loading-state" aria-label="Chargement du classement agents…">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
+    </div>
   } @else if (agents().length === 0) {
     <div class="report-empty">Aucune donnée agent disponible.</div>
   } @else {

@@ -22,7 +22,16 @@
   }
 
   @if (loading()) {
-    <div class="report-loading">Chargement…</div>
+    <div class="skeleton-stack" data-testid="creances-loading-state" aria-label="Chargement du rapport créances…">
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+      @for (i of [1,2,3,4,5]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
+    </div>
   }
 
   @if (!loading() && data()) {

@@ -4,7 +4,15 @@
   </div>
 
   @if (loading) {
-    <div class="loading-state">Chargement...</div>
+    <div class="skeleton-stack" data-testid="societe-detail-loading-state" aria-label="Chargement de la société…">
+      <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+      <span class="skeleton skeleton-card" style="height:160px"></span>
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+    </div>
   }
 
   @if (error) {
@@ -142,7 +150,12 @@
     @if (activeTab === 'stats') {
       <div class="tab-content">
         @if (loadingStats) {
-          <div class="loading-state">Chargement des statistiques...</div>
+          <div class="skeleton-grid" aria-label="Chargement des statistiques…">
+            <span class="skeleton skeleton-card"></span>
+            <span class="skeleton skeleton-card"></span>
+            <span class="skeleton skeleton-card"></span>
+            <span class="skeleton skeleton-card"></span>
+          </div>
         }
         @if (!loadingStats && stats) {
           <div class="stats-grid">
@@ -203,7 +216,12 @@
     @if (activeTab === 'compliance') {
       <div class="tab-content">
         @if (loadingCompliance) {
-          <div class="loading-state">Chargement...</div>
+          <div class="skeleton-stack" aria-label="Chargement de la conformité…">
+            <span class="skeleton skeleton-card" style="height:120px"></span>
+            <span class="skeleton skeleton-row"></span>
+            <span class="skeleton skeleton-row"></span>
+            <span class="skeleton skeleton-row"></span>
+          </div>
         }
         @if (!loadingCompliance && compliance) {
           <div class="compliance-header">

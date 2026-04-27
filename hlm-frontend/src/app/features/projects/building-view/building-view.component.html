@@ -1,6 +1,10 @@
 <!-- ── Loading / Error ─────────────────────────────────────────── -->
 @if (loadingTranches) {
-  <div class="bv-loading"><div class="spinner spinner-sm"></div>Chargement du plan…</div>
+  <div class="skeleton-stack" data-testid="building-view-loading-state" aria-label="Chargement du plan de commercialisation…">
+    <span class="skeleton skeleton-text-lg skeleton-w-25"></span>
+    <span class="skeleton skeleton-card" style="height:48px"></span>
+    <span class="skeleton skeleton-card" style="height:340px"></span>
+  </div>
 } @else if (error) {
   <div class="alert alert-error">{{ error }}</div>
 } @else if (!allImmeubles.length) {

@@ -42,7 +42,16 @@
 
   <!-- ── Loading / empty ── -->
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="payment-schedule-loading-state" [attr.aria-label]="'common.loading' | translate">
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+      @for (i of [1,2,3,4,5]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
+    </div>
   }
   @if (!loading && error) { <div class="alert alert-error">{{ error }}</div> }
   @if (!loading && !error && items.length === 0) {

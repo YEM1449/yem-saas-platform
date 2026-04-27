@@ -18,7 +18,13 @@
   </div>
 
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="audit-loading-state" [attr.aria-label]="'common.loading' | translate">
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+    </div>
   } @else if (error) {
     <div class="alert alert-error">{{ error }}</div>
   } @else if (events.length === 0) {

@@ -7,7 +7,14 @@
 
 <!-- Loading -->
 @if (loading()) {
-  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+  <div class="skeleton-stack" data-testid="reservation-detail-loading-state" aria-label="Chargement de la réservation…">
+    <span class="skeleton skeleton-text-lg skeleton-w-75"></span>
+    <span class="skeleton skeleton-card" style="height:120px"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+  </div>
 }
 
 <!-- Error -->
