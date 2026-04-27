@@ -15,7 +15,12 @@
   @if (uploadError) { <div class="alert alert-error">{{ uploadError }}</div> }
 
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="documents-loading-state" [attr.aria-label]="'common.loading' | translate">
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+      <span class="skeleton skeleton-row"></span>
+    </div>
   }
 
   @if (!loading && documents.length === 0) {

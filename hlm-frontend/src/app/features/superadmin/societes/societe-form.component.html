@@ -4,7 +4,11 @@
   </div>
 
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="societe-form-loading-state" [attr.aria-label]="'common.loading' | translate">
+      <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+      <span class="skeleton skeleton-card" style="height:200px"></span>
+      <span class="skeleton skeleton-card" style="height:160px"></span>
+    </div>
   }
 
   @if (error) {

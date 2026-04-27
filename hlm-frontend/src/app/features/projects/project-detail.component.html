@@ -1,6 +1,15 @@
 <!-- ── Loading / Error ───────────────────────────────────────── -->
 @if (loadingProject) {
-  <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+  <div class="skeleton-stack" data-testid="project-detail-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <span class="skeleton skeleton-card" style="height:200px"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+  </div>
 }
 @if (projectError) {
   <div class="alert alert-error">{{ projectError }}</div>
@@ -118,7 +127,12 @@
 
     <!-- ── KPI Cards ─────────────────────────────────────────────── -->
     @if (loadingKpi) {
-      <div class="loading-wrap" style="padding:12px"><div class="spinner spinner-sm"></div>Chargement des KPIs…</div>
+      <div class="skeleton-grid" aria-label="Chargement des KPIs…">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
     }
     @if (kpiError) {
       <div class="alert alert-error" style="margin-bottom:16px">{{ kpiError }}</div>

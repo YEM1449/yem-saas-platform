@@ -30,7 +30,11 @@
 
 <!-- Loading -->
 @if (loading()) {
-  <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+  <div class="skeleton-stack" data-testid="vente-create-loading-state" aria-label="Chargement du formulaire de vente…">
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <span class="skeleton skeleton-card" style="height:140px"></span>
+    <span class="skeleton skeleton-card" style="height:200px"></span>
+  </div>
 }
 
 <!-- Prefill error -->

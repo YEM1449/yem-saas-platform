@@ -13,9 +13,15 @@
   <h2 class="portal-section-title">Échéancier de paiement</h2>
 
   @if (loading()) {
-    <div class="portal-loading">
-      <div class="spinner"></div>
-      Chargement de l'échéancier…
+    <div class="skeleton-stack" data-testid="portal-payments-loading-state" aria-label="Chargement de l'échéancier…">
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+      @for (i of [1,2,3,4,5]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
     </div>
   } @else if (error()) {
     <div class="portal-error">{{ error() }}</div>

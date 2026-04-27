@@ -9,7 +9,14 @@
   </div>
 
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="cash-dashboard-loading-state" [attr.aria-label]="'common.loading' | translate">
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+      <span class="skeleton skeleton-card" style="height:240px"></span>
+    </div>
   }
   @if (error) { <div class="alert alert-error">{{ error }}</div> }
 

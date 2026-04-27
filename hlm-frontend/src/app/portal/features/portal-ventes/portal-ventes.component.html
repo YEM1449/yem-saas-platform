@@ -7,9 +7,10 @@
   </div>
 
   @if (loading()) {
-    <div class="portal-loading">
-      <div class="spinner"></div>
-      Chargement de votre dossier…
+    <div class="skeleton-stack" data-testid="portal-ventes-loading-state" aria-label="Chargement de votre dossier…">
+      <span class="skeleton skeleton-card" style="height:88px"></span>
+      <span class="skeleton skeleton-card" style="height:200px"></span>
+      <span class="skeleton skeleton-card" style="height:160px"></span>
     </div>
   }
 

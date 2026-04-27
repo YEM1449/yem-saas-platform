@@ -6,9 +6,10 @@
   </div>
 
   @if (loading()) {
-    <div class="portal-loading">
-      <div class="spinner"></div>
-      Chargement de vos contrats…
+    <div class="skeleton-stack" data-testid="portal-contracts-loading-state" aria-label="Chargement de vos contrats…">
+      @for (i of [1,2,3]; track i) {
+        <span class="skeleton skeleton-card" style="height:120px"></span>
+      }
     </div>
   } @else if (error()) {
     <div class="portal-error">{{ error() }}</div>

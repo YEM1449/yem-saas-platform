@@ -1,7 +1,14 @@
 <p><a routerLink="/app/contacts">&larr; Retour aux contacts</a></p>
 
 @if (loading) {
-  <p>Chargement…</p>
+  <div class="skeleton-stack" data-testid="contact-detail-loading-state" aria-label="Chargement du contact…">
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <span class="skeleton skeleton-card" style="height:140px"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
+  </div>
 }
 
 @if (error) {
@@ -226,7 +233,11 @@
 
     <!-- Interests list -->
     @if (interestsLoading) {
-      <p class="muted">Chargement…</p>
+      <div class="skeleton-stack" aria-label="Chargement des biens d'intérêt…">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
     }
 
     @if (!interestsLoading && interests.length === 0 && interestsLoaded) {
@@ -317,7 +328,11 @@
 
     <!-- Reservations list -->
     @if (reservationsLoading) {
-      <p class="muted">Chargement…</p>
+      <div class="skeleton-stack" aria-label="Chargement des réservations…">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
     }
 
     @if (!reservationsLoading && reservations.length === 0 && reservationsLoaded) {
@@ -436,7 +451,11 @@
 
     <!-- Deposits list -->
     @if (depositsLoading) {
-      <p class="muted">Chargement…</p>
+      <div class="skeleton-stack" aria-label="Chargement des dépôts…">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
     }
 
     @if (!depositsLoading && deposits.length === 0 && depositsLoaded) {
@@ -498,7 +517,13 @@
 
   <!-- ═══════════════════════════ VENTES ════════════════════════════════════ -->
   @if (activeTab === 'ventes') {
-    @if (ventesLoading) { <p class="muted">Chargement…</p> }
+    @if (ventesLoading) {
+      <div class="skeleton-stack" aria-label="Chargement des ventes…">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
+    }
     @if (ventesError) { <p class="error">{{ ventesError }}</p> }
     @if (!ventesLoading && ventesLoaded && ventes.length === 0) {
       <p class="empty">Aucune vente associée à ce contact.</p>
@@ -540,7 +565,12 @@
   <!-- ═══════════════════════════ TIMELINE ═══════════════════════════════════ -->
   @if (activeTab === 'timeline') {
     @if (timelineLoading) {
-      <p class="muted">Chargement…</p>
+      <div class="skeleton-stack" aria-label="Chargement de la timeline…">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
     }
     @if (timelineError) {
       <p class="error">{{ timelineError }}</p>

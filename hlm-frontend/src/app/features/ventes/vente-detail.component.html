@@ -2,14 +2,20 @@
 
 <!-- Loading / error -->
 @if (!vente()) {
-  <div class="loading-wrap">
-    @if (error()) {
-      <div class="alert alert-error">{{ error() }}</div>
-    } @else {
-      <div class="spinner"></div>
-      Chargement…
-    }
-  </div>
+  @if (error()) {
+    <div class="alert alert-error">{{ error() }}</div>
+  } @else {
+    <div class="skeleton-stack" data-testid="vente-detail-loading-state" aria-label="Chargement de la vente…">
+      <span class="skeleton skeleton-text-lg skeleton-w-75"></span>
+      <span class="skeleton skeleton-card" style="height:80px"></span>
+      <div class="skeleton-grid">
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+        <span class="skeleton skeleton-card"></span>
+      </div>
+      <span class="skeleton skeleton-card" style="height:240px"></span>
+    </div>
+  }
 }
 
 @if (vente(); as v) {

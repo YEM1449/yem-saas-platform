@@ -52,7 +52,11 @@
 
   <!-- Members table -->
   @if (loading) {
-    <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+    <div class="skeleton-stack" data-testid="societe-members-loading-state" [attr.aria-label]="'common.loading' | translate">
+      @for (i of [1,2,3,4,5]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
+    </div>
   }
 
   @if (!loading) {

@@ -30,9 +30,10 @@
   }
 
   @if (venteContractsLoading) {
-    <div class="loading-wrap">
-      <div class="spinner"></div>
-      Chargement…
+    <div class="skeleton-stack" data-testid="vente-contracts-loading-state" aria-label="Chargement des contrats…">
+      @for (i of [1,2,3,4]; track i) {
+        <span class="skeleton skeleton-row"></span>
+      }
     </div>
   }
 
@@ -139,9 +140,10 @@
 
 <!-- Loading -->
 @if (loading) {
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    {{ 'common.loading' | translate }}
+  <div class="skeleton-stack" data-testid="legacy-contracts-loading-state" [attr.aria-label]="'common.loading' | translate">
+    @for (i of [1,2,3,4]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
   </div>
 }
 

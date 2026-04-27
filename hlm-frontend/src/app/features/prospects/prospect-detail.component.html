@@ -7,9 +7,13 @@
 </a>
 
 @if (loading) {
-  <div class="loading-wrap" style="margin-top:40px">
-    <div class="spinner"></div>
-    Chargement du contact…
+  <div class="skeleton-stack" data-testid="prospect-detail-loading-state" aria-label="Chargement du contact…" style="margin-top:24px">
+    <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
+    <span class="skeleton skeleton-card" style="height:140px"></span>
+    <div class="skeleton-grid">
+      <span class="skeleton skeleton-card"></span>
+      <span class="skeleton skeleton-card"></span>
+    </div>
   </div>
 }
 
@@ -120,7 +124,10 @@
           </div>
 
           @if (interestsLoading) {
-            <div class="loading-wrap loading-sm"><div class="spinner spinner-sm"></div></div>
+            <div class="skeleton-stack" aria-label="Chargement des biens d'intérêt…">
+              <span class="skeleton skeleton-row"></span>
+              <span class="skeleton skeleton-row"></span>
+            </div>
           }
 
           @if (!interestsLoading && interests.length === 0) {
@@ -309,8 +316,9 @@
 
       <!-- ── Deposits list ──────────────────────────────────── -->
       @if (depositsLoading) {
-        <div class="loading-wrap loading-sm" style="margin-top:12px">
-          <div class="spinner spinner-sm"></div>
+        <div class="skeleton-stack" aria-label="Chargement des dépôts…" style="margin-top:12px">
+          <span class="skeleton skeleton-row"></span>
+          <span class="skeleton skeleton-row"></span>
         </div>
       }
 

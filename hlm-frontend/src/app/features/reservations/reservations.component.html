@@ -26,7 +26,12 @@
 
 <!-- Loading -->
 @if (loading) {
-  <div class="loading-wrap"><div class="spinner"></div>{{ 'common.loading' | translate }}</div>
+  <div class="skeleton-stack" data-testid="reservations-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <span class="skeleton skeleton-row"></span>
+    <span class="skeleton skeleton-row"></span>
+    <span class="skeleton skeleton-row"></span>
+    <span class="skeleton skeleton-row"></span>
+  </div>
 }
 
 <!-- Empty state -->

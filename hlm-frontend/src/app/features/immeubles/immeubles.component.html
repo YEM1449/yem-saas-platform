@@ -31,7 +31,11 @@
 }
 
 @if (loading) {
-  <div class="loading-wrap"><div class="spinner"></div> Chargement...</div>
+  <div class="skeleton-stack" data-testid="immeubles-loading-state" aria-label="Chargement des immeubles…">
+    @for (i of [1,2,3,4]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
+  </div>
 }
 
 @if (!loading && !error && immeubles.length === 0) {

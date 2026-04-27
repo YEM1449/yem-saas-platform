@@ -185,9 +185,10 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
 
 <!-- ── Loading ──────────────────────────────────────────────── -->
 @if (loading) {
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    {{ 'common.loading' | translate }}
+  <div class="skeleton-stack" data-testid="properties-loading-state" [attr.aria-label]="'common.loading' | translate">
+    @for (i of [1,2,3,4,5,6,7]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
   </div>
 }
 

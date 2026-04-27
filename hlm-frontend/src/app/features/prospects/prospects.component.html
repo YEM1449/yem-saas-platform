@@ -42,9 +42,10 @@
 
 <!-- ── Loading ──────────────────────────────────────────────── -->
 @if (loading) {
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    {{ 'common.loading' | translate }}
+  <div class="skeleton-stack" data-testid="prospects-loading-state" [attr.aria-label]="'common.loading' | translate">
+    @for (i of [1,2,3,4,5,6]; track i) {
+      <span class="skeleton skeleton-row"></span>
+    }
   </div>
 }
 
