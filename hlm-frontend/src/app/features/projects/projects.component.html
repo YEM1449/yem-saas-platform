@@ -28,14 +28,14 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" placeholder="Rechercher un projet…"
+    <input class="search-input" type="search" [placeholder]="'projects.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
 
-  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus">
-    <option value="">Tous les statuts</option>
-    <option value="ACTIVE">Actifs</option>
-    <option value="ARCHIVED">Archivés</option>
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" [attr.aria-label]="'projects.statusFilter' | translate">
+    <option value="">{{ 'common.allStatuses' | translate }}</option>
+    <option value="ACTIVE">{{ 'common.active' | translate }}</option>
+    <option value="ARCHIVED">{{ 'common.inactive' | translate }}</option>
   </select>
 
   @if (!loading) {
@@ -80,8 +80,8 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔍</div>
-      <p class="empty-state-title">Aucun projet trouvé</p>
-      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">Effacer les filtres</button>
+      <p class="empty-state-title">{{ 'projects.noProjectsFound' | translate }}</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">{{ 'common.clearFilters' | translate }}</button>
     </div>
   </div>
 }

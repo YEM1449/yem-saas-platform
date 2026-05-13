@@ -46,9 +46,10 @@
 <!-- ── Toolbar ────────────────────────────────────────────────── -->
 <div class="toolbar">
   <select [(ngModel)]="filterStatut" class="form-control" style="width:220px;height:34px"
-          title="Filtrer par statut de la vente"
+          [title]="'ventes.statusFilter' | translate"
+          [attr.aria-label]="'ventes.statusFilter' | translate"
           [disabled]="viewMode === 'kanban'">
-    <option value="">Tous les statuts</option>
+    <option value="">{{ 'common.allStatuses' | translate }}</option>
     @for (s of statuts; track s) {
       <option [value]="s">{{ statutLabel(s) }}{{ countStatut(s) > 0 ? ' (' + countStatut(s) + ')' : '' }}</option>
     }
@@ -133,7 +134,7 @@
 
           @if (col.items.length === 0) {
             <div class="kanban-col-empty">
-              <span>Aucune vente</span>
+              <span>{{ 'ventes.noVentes' | translate }}</span>
             </div>
           }
         </div>
@@ -189,24 +190,26 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Référence</th>
-            <th>Acquéreur</th>
-            <th>Statut</th>
-            <th>Contrat</th>
-            <th>Prix de vente</th>
-            <th>Date compromis</th>
-            <th>Créée le</th>
+            <th>{{ 'common.reference' | translate }}</th>
+            <th>{{ 'ventes.buyer' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'ventes.contractSection' | translate }}</th>
+            <th>{{ 'ventes.salePrice' | translate }}</th>
+            <th>{{ 'ventes.dateCompromis' | translate }}</th>
+            <th>{{ 'ventes.createdAt' | translate }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (v of filtered; track v.id) {
-            <tr>
+            <tr class="clickable" [routerLink]="['/app/ventes', v.id]">
               <td>
                 <span class="ref-badge">{{ v.venteRef }}</span>
               </td>
               <td>
-                <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
+                <a [routerLink]="['/app/contacts', v.contactId]"
+                   class="link-subtle"
+                   (click)="$event.stopPropagation()">
                   {{ v.contactFullName || '—' }}
                 </a>
               </td>
@@ -225,10 +228,10 @@
               </td>
               <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
               <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
-              <td>
-                <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">
-                  Détail
-                </a>
+              <td class="td-chevron" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </td>
             </tr>
           }
@@ -287,65 +290,65 @@
   <div class="modal-backdrop" (click)="cancelCreate()">
     <div class="modal-box dialog-create" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">Nouvelle vente</h2>
-        <button class="modal-close" (click)="cancelCreate()" aria-label="Fermer">&times;</button>
+        <h2 class="modal-title">{{ 'ventes.create' | translate }}</h2>
+        <button class="modal-close" (click)="cancelCreate()" [attr.aria-label]="'common.close' | translate">&times;</button>
       </div>
       <div class="modal-body">
         @if (createError) {
           <p class="alert alert-error" style="margin-bottom:12px">{{ createError }}</p>
         }
         <div class="form-group">
-          <label class="form-label">Acquéreur <span class="required">*</span></label>
+          <label class="form-label">{{ 'ventes.buyer' | translate }} <span class="required">*</span></label>
           <select class="form-control" [(ngModel)]="createContactId" data-testid="create-contact">
-            <option value="">— Sélectionner un contact —</option>
+            <option value="">{{ 'common.selectContact' | translate }}</option>
             @for (c of contacts; track c.id) {
               <option [value]="c.id">{{ c.fullName }}</option>
             }
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Bien immobilier <span class="required">*</span></label>
+          <label class="form-label">{{ 'ventes.property' | translate }} <span class="required">*</span></label>
           <select class="form-control" [(ngModel)]="createPropertyId"
                   (ngModelChange)="onPropertyChange()"
                   data-testid="create-property">
-            <option value="">— Sélectionner un bien —</option>
+            <option value="">{{ 'common.selectProperty' | translate }}</option>
             @for (p of properties; track p.id) {
               <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
             }
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Prix de vente (MAD) <span class="required">*</span></label>
+          <label class="form-label">{{ 'ventes.priceLabelMad' | translate }} <span class="required">*</span></label>
           @if (suggestedPrice) {
-            <div class="field-hint" style="margin-bottom:4px;color:var(--color-success,#16a34a);font-size:12px">
-              Prix catalogue : {{ suggestedPrice | number:'1.0-0' }} MAD (pré-rempli automatiquement)
+            <div class="field-hint" style="margin-bottom:4px;color:var(--c-primary,#16a34a);font-size:12px">
+              {{ 'ventes.catalogPricePrefilled' | translate: { price: (suggestedPrice | number:'1.0-0') } }}
             </div>
           }
           <input class="form-control" type="number" min="1"
-                 [(ngModel)]="createPrixVente" placeholder="Ex: 1 500 000"
+                 [(ngModel)]="createPrixVente" [placeholder]="'ventes.pricePlaceholder' | translate"
                  data-testid="create-prix-vente" />
         </div>
         <div class="form-group">
-          <label class="form-label">Date de compromis</label>
+          <label class="form-label">{{ 'ventes.dateCompromis' | translate }}</label>
           <input class="form-control" type="date"
                  [(ngModel)]="createDateCompromis"
                  data-testid="create-date-compromis" />
         </div>
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label">{{ 'common.notes' | translate }}</label>
           <textarea class="form-control" rows="3" maxlength="2000"
-                    [(ngModel)]="createNotes" placeholder="Remarques…"
+                    [(ngModel)]="createNotes" [placeholder]="'common.notesPlaceholder' | translate"
                     data-testid="create-notes"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancelCreate()"
-                data-testid="create-cancel">Annuler</button>
+                data-testid="create-cancel">{{ 'common.cancel' | translate }}</button>
         <button class="btn btn-primary"
                 [disabled]="!createContactId || !createPropertyId || creating"
                 (click)="submitCreate()"
                 data-testid="create-submit">
-          {{ creating ? 'Création…' : 'Créer la vente' }}
+          {{ creating ? ('common.creating' | translate) : ('ventes.createSubmit' | translate) }}
         </button>
       </div>
     </div>
