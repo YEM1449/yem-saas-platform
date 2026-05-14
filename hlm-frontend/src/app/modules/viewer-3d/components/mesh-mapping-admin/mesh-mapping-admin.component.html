@@ -1,0 +1,268 @@
+<!-- Mesh ↔ Property pairing admin UI ────────────────────────────────────── -->
+<a [routerLink]="['/app/projets', projetId, 'viewer-3d']" class="back-link">
+  {{ 'common.back' | translate }}
+</a>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ 'viewer3d.mappingTitle' | translate }}</h1>
+    <p class="page-subtitle">{{ 'viewer3d.mappingSubtitle' | translate }}</p>
+  </div>
+  <div class="page-header-actions">
+    <span class="stat-chip" *ngIf="!loading() && !error()">
+      <strong>{{ mappedCount() }}</strong>&nbsp;/&nbsp;{{ allMeshes().length }}&nbsp;{{ 'viewer3d.mappedLabel' | translate }}
+    </span>
+    @if (canUndoAutoPair()) {
+      <button class="btn btn-secondary btn-sm" (click)="undoAutoPair()"
+              [title]="'viewer3d.undoAutoPairHint' | translate">
+        ↶ {{ 'viewer3d.undoAutoPair' | translate }}
+      </button>
+    }
+    <button class="btn btn-secondary"
+            [disabled]="loading() || saving() || allMeshes().length === 0"
+            (click)="runAutoPair()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M2 7l3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      {{ 'viewer3d.autoPair' | translate }}
+    </button>
+    <button class="btn btn-primary"
+            [disabled]="!isDirty() || saving()"
+            (click)="save()"
+            data-testid="mapping-save">
+      @if (saving()) { {{ 'common.saving' | translate }} }
+      @else if (saved()) { ✓ {{ 'common.success' | translate }} }
+      @else { {{ 'common.save' | translate }} }
+    </button>
+  </div>
+</div>
+
+<!-- Loading skeleton ------------------------------------------------------- -->
+@if (loading()) {
+  <div class="skeleton-stack" data-testid="mapping-loading-state"
+       [attr.aria-label]="'common.loading' | translate">
+    <span class="skeleton skeleton-card" style="height:480px"></span>
+  </div>
+}
+
+<!-- Error / no-model empty states ----------------------------------------- -->
+@if (!loading() && error() === 'NO_MODEL') {
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">🧊</div>
+      <p class="empty-state-title">{{ 'viewer3d.noModelTitle' | translate }}</p>
+      <p class="empty-state-desc">{{ 'viewer3d.noModelDesc' | translate }}</p>
+      <a [routerLink]="['/app/projets', projetId]"
+         class="btn btn-primary">{{ 'viewer3d.goUpload' | translate }}</a>
+    </div>
+  </div>
+}
+@if (!loading() && error() && error() !== 'NO_MODEL') {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+<!-- Main split view ------------------------------------------------------- -->
+@if (!loading() && !error()) {
+  <div class="mapping-grid">
+
+    <!-- 3D viewer panel -->
+    <div class="viewer-panel" aria-label="Aperçu 3D">
+      <canvas #canvas class="viewer-canvas" tabindex="0"></canvas>
+      <div class="viewer-legend" aria-hidden="true">
+        <span class="legend-chip"><span class="dot dot-mapped"></span>{{ 'viewer3d.legendMapped' | translate }}</span>
+        <span class="legend-chip"><span class="dot dot-unmapped"></span>{{ 'viewer3d.legendUnmapped' | translate }}</span>
+        <span class="legend-chip"><span class="dot dot-selected"></span>{{ 'viewer3d.legendSelected' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <aside class="side-panel" aria-label="Liste des mesh">
+      <div class="side-panel-toolbar">
+        <div class="search-wrap" style="flex:1">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <input class="search-input"
+                 type="search"
+                 [placeholder]="'viewer3d.searchMesh' | translate"
+                 [ngModel]="filterText()"
+                 (ngModelChange)="filterText.set($event)" />
+        </div>
+        <label class="toggle-hide-mapped">
+          <input type="checkbox"
+                 [checked]="hideMapped()"
+                 (change)="hideMapped.set($any($event.target).checked)" />
+          <span>{{ 'viewer3d.hideMapped' | translate }}</span>
+        </label>
+      </div>
+
+      <!-- Per-mesh rows -->
+      @if (visibleRows().length === 0) {
+        <div class="side-panel-empty">
+          <p class="text-muted">{{ 'common.noResultsTitle' | translate }}</p>
+        </div>
+      }
+
+      <ul class="mesh-list" role="list">
+        @for (meshName of visibleRows(); track meshName) {
+          <li class="mesh-row"
+              [id]="'row-' + meshName"
+              [class.selected]="selectedMesh() === meshName"
+              [class.mapped]="!!draft().get(meshName)">
+            <button type="button"
+                    class="mesh-focus-btn"
+                    [attr.aria-label]="'viewer3d.focusMesh' | translate"
+                    (click)="focusMesh(meshName)">
+              <span class="mesh-name" [title]="meshName">{{ meshName }}</span>
+              <span class="mesh-status">
+                @if (draft().get(meshName)) {
+                  <span class="status-pill status-pill-mapped" [title]="propertyLabel(draft().get(meshName))">
+                    {{ propertyLabel(draft().get(meshName)) }}
+                  </span>
+                } @else {
+                  <span class="status-pill status-pill-unmapped">
+                    {{ 'viewer3d.unmapped' | translate }}
+                  </span>
+                }
+              </span>
+            </button>
+
+            <select class="form-control mesh-picker"
+                    [ngModel]="draft().get(meshName) || ''"
+                    (ngModelChange)="setMapping(meshName, $event || null)"
+                    [attr.aria-label]="'viewer3d.pickProperty' | translate">
+              <option value="">— {{ 'viewer3d.noLink' | translate }} —</option>
+              @for (p of availableForMesh(meshName); track p.id) {
+                <option [value]="p.id">{{ p.referenceCode }} — {{ p.title }}</option>
+              }
+            </select>
+
+            <!-- Advanced toggle: hierarchy (parent building / tranche) -->
+            <button type="button"
+                    class="advanced-toggle"
+                    [class.expanded]="expandedRows().has(meshName)"
+                    (click)="toggleExpand(meshName)"
+                    [attr.aria-expanded]="expandedRows().has(meshName)">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <path d="M2.5 4l2.5 2.5L7.5 4" stroke="currentColor" stroke-width="1.4"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ 'viewer3d.hierarchyAdvanced' | translate }}
+              @if (getHierarchy(meshName).immeubleMeshId || getHierarchy(meshName).trancheMeshId) {
+                <span class="hier-dot" aria-hidden="true">●</span>
+              }
+            </button>
+
+            @if (expandedRows().has(meshName)) {
+              <div class="hier-grid">
+                <label class="hier-label">
+                  <span>{{ 'viewer3d.parentBuilding' | translate }}</span>
+                  <select class="form-control"
+                          [ngModel]="getHierarchy(meshName).immeubleMeshId || ''"
+                          (ngModelChange)="setHierarchy(meshName, 'immeubleMeshId', $event || null)">
+                    <option value="">— {{ 'common.none' | translate }} —</option>
+                    @for (m of parentCandidates(meshName, 'building'); track m) {
+                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'building') ? ' ·' + (' viewer3d.auto' | translate) : '' }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="hier-label">
+                  <span>{{ 'viewer3d.parentTranche' | translate }}</span>
+                  <select class="form-control"
+                          [ngModel]="getHierarchy(meshName).trancheMeshId || ''"
+                          (ngModelChange)="setHierarchy(meshName, 'trancheMeshId', $event || null)">
+                    <option value="">— {{ 'common.none' | translate }} —</option>
+                    @for (m of parentCandidates(meshName, 'tranche'); track m) {
+                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'tranche') ? ' ·' + (' viewer3d.auto' | translate) : '' }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="side-panel-footer">
+        <button class="btn btn-danger btn-sm" (click)="clearAll()"
+                [disabled]="mappedCount() === 0">
+          {{ 'viewer3d.clearAll' | translate }}
+        </button>
+        <span class="text-muted text-sm">
+          {{ unmappedCount() }} {{ 'viewer3d.unmappedRemaining' | translate }}
+        </span>
+      </div>
+    </aside>
+  </div>
+}
+
+<!-- Auto-pair preview modal ------------------------------------------------ -->
+@if (autoPairPreview() !== null) {
+  <div class="modal-backdrop" (click)="cancelAutoPair()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">{{ 'viewer3d.autoPairPreviewTitle' | translate }}</h2>
+        <button class="modal-close" (click)="cancelAutoPair()"
+                [attr.aria-label]="'common.close' | translate">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted text-sm" style="margin:0 0 12px">
+          {{ 'viewer3d.autoPairPreviewDesc' | translate }}
+        </p>
+        <div class="autopair-table-wrap">
+          <table class="data-table autopair-table">
+            <thead>
+              <tr>
+                <th style="width:32px"></th>
+                <th>{{ 'viewer3d.meshName' | translate }}</th>
+                <th>{{ 'viewer3d.proposedProperty' | translate }}</th>
+                <th>{{ 'viewer3d.matchStrategy' | translate }}</th>
+                <th class="text-right">{{ 'viewer3d.confidence' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of autoPairPreview(); track p.meshName) {
+                <tr [class.unchecked]="!isProposalAccepted(p.meshName)">
+                  <td>
+                    <input type="checkbox"
+                           [checked]="isProposalAccepted(p.meshName)"
+                           (change)="toggleProposal(p.meshName)"
+                           [attr.aria-label]="'viewer3d.toggleProposal' | translate" />
+                  </td>
+                  <td class="td-mono">{{ p.meshName }}</td>
+                  <td>
+                    <strong>{{ p.propertyRef }}</strong>
+                    <span class="text-muted">— {{ p.propertyTitle }}</span>
+                  </td>
+                  <td>
+                    <span [class]="strategyClass(p.strategy)">{{ strategyLabel(p.strategy) }}</span>
+                  </td>
+                  <td class="text-right">
+                    <span class="confidence-pill"
+                          [class.high]="p.confidence >= 0.8"
+                          [class.med]="p.confidence >= 0.5 && p.confidence < 0.8"
+                          [class.low]="p.confidence < 0.5">
+                      {{ (p.confidence * 100) | number:'1.0-0' }}%
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelAutoPair()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button class="btn btn-primary" (click)="applyAutoPair()"
+                [disabled]="acceptedProposalCount() === 0">
+          {{ 'viewer3d.applyN' | translate: { n: acceptedProposalCount() } }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

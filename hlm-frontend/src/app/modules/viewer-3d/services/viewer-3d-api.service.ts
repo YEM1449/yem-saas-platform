@@ -53,4 +53,23 @@ export class Viewer3dApiService {
       `${this.base}/api/portal/projects/${projetId}/3d-properties-status`
     );
   }
+
+  /**
+   * PUT /api/projects/{id}/3d-model/mappings — bulk upsert mesh↔property links (ADMIN only).
+   * Send the full desired mapping state; backend replaces the set for the project.
+   */
+  updateMappings(
+    projetId: string,
+    mappings: Array<{
+      meshId:          string;
+      propertyId:      string;
+      immeubleMeshId?: string | null;
+      trancheMeshId?:  string | null;
+    }>
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.base}/api/projects/${projetId}/3d-model/mappings`,
+      { mappings }
+    );
+  }
 }
