@@ -8,4 +8,12 @@ export const VIEWER_3D_ROUTES: Routes = [
         m => m.ProjectViewer3dComponent
       ),
   },
+  {
+    path: 'mappings',
+    loadComponent: () =>
+      import('./components/mesh-mapping-admin/mesh-mapping-admin.component').then(
+        m => m.MeshMappingAdminComponent
+      ),
+    data: { requiresRole: 'ADMIN' },
+  },
 ];

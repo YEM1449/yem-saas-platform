@@ -91,7 +91,13 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
     private mapping:    LotMappingService,
     private api:        Viewer3dApiService,
     private cdr:        ChangeDetectorRef,
+    private auth:       AuthService,
   ) {}
+
+  /** True for CRM ROLE_ADMIN users — used to gate the "Configure mappings" CTA. */
+  get isAdmin(): boolean {
+    return this.auth.user?.role === 'ROLE_ADMIN';
+  }
 
   ngOnInit(): void {
     this.projetId = this.projetIdInput ?? this.route.snapshot.params['projetId'];

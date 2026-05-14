@@ -206,6 +206,32 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+/* Admin-only floating CTA → opens the mesh↔property mapping page */
+.mapping-cta {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--c-primary, #16a34a);
+  color: #fff;
+  border-radius: var(--r-pill, 9999px);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(22,163,74,0.25);
+  z-index: 20;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.mapping-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(22,163,74,0.3);
+  text-decoration: none;
+  color: #fff;
+}
+
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .legend {

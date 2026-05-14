@@ -94,6 +94,56 @@ export class ThreeEngineService implements OnDestroy {
     this.meshes = meshes;
   }
 
+  /** Names of every raycast-eligible mesh — useful for the mapping admin UI. */
+  getMeshNames(): string[] {
+    return this.meshes.map(m => m.name).filter(n => !!n);
+  }
+
+  /**
+   * Returns the Three.js Mesh with the given name, if any.
+   * Used by the mapping UI to focus the camera on a specific mesh when picked from the side panel.
+   */
+  getMeshByName(name: string): THREE.Mesh | undefined {
+    return this.meshes.find(m => m.name === name);
+  }
+
+  /**
+   * Paints a single mesh a flat tint (overrides its current colour) — used by the mapping
+   * UI to show "mapped" vs "unmapped" state without going through LotMappingService.
+   * Pass `null` to restore the mesh's MeshStandardMaterial default colour (0x888888).
+   */
+  paintMesh(name: string, hex: number | null): void {
+    const mesh = this.getMeshByName(name);
+    if (!mesh) return;
+    const mat = mesh.material as THREE.MeshStandardMaterial;
+    if (mat && 'color' in mat) {
+      mat.color.set(hex ?? 0x888888);
+    }
+  }
+
+  /**
+   * Frames the camera on a target mesh's bounding box.
+   * Animates over ~400ms via OrbitControls.update() — falls back to instant set
+   * when the mesh has no geometry yet.
+   */
+  focusOnMesh(name: string): void {
+    const mesh = this.getMeshByName(name);
+    if (!mesh || !mesh.geometry) return;
+    mesh.geometry.computeBoundingBox();
+    const box = mesh.geometry.boundingBox?.clone();
+    if (!box) return;
+    box.applyMatrix4(mesh.matrixWorld);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const radius = Math.max(size.x, size.y, size.z) * 1.8;
+    this.controls.target.copy(center);
+    const dir = this.camera.position.clone().sub(center).normalize();
+    this.camera.position.copy(center).addScaledVector(dir, radius || 30);
+    this.controls.update();
+  }
+
   /** Cleanly disposes everything — call from ngOnDestroy of the host component. */
   dispose(): void {
     cancelAnimationFrame(this.rafId);
