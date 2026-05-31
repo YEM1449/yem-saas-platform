@@ -11,11 +11,13 @@ import { Contact } from '../../core/models/contact.model';
 import { PropertyService } from '../properties/property.service';
 import { Property } from '../../core/models/property.model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { UiButtonComponent, UiEmptyStateComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-vente-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe, TranslateModule,
+            UiButtonComponent, UiEmptyStateComponent],
   templateUrl: './vente-list.component.html',
   styleUrl: './vente-list.component.css',
 })

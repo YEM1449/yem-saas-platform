@@ -220,6 +220,25 @@
   @if (activeTab === 'synthese') {
 
   <!-- ════════════════════════════════════════════════════════════
+       PRIORITÉS DU JOUR — director triage worklist (leads the view).
+       Synthesised, one-click-actionable; not another KPI grid.
+       ════════════════════════════════════════════════════════════ -->
+  @if (isAdminOrManager && dayPriorities().length > 0) {
+    <section class="priorities-band" aria-label="Priorités du jour">
+      <h2 class="priorities-title">Ce qui demande votre attention</h2>
+      <ul class="priorities-list">
+        @for (p of dayPriorities(); track p.text) {
+          <li class="priority-row priority-{{ p.severity }}">
+            <span class="priority-icon" aria-hidden="true">{{ p.icon }}</span>
+            <span class="priority-text">{{ p.text }}</span>
+            <button class="priority-cta" (click)="p.nav()">{{ p.cta }} →</button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════
        SECTION 1 — KPI HERO ROW (CA + Trend + Taux d'absorption)
        ════════════════════════════════════════════════════════════ -->
   <div class="hero-row">

@@ -67,6 +67,14 @@ export class PropertiesComponent implements OnInit {
   filterType       = '';
   filterStatus     = '';
 
+  // ── Agent matching refinements (client-side, on the loaded list) ─────────
+  // The questions an agent actually asks finding a unit for a buyer:
+  // "what's available, in this budget, cheapest first".
+  availableOnly = false;
+  priceMin: number | null = null;
+  priceMax: number | null = null;
+  sortBy: 'default' | 'price-asc' | 'price-desc' | 'surface-desc' = 'default';
+
   importLoading  = false;
   importResult: ImportResult | null = null;
   importError    = '';
@@ -117,13 +125,48 @@ export class PropertiesComponent implements OnInit {
 
   get filtered(): Property[] {
     const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.properties;
-    return this.properties.filter(p =>
-      (p.title ?? '').toLowerCase().includes(q) ||
-      p.referenceCode.toLowerCase().includes(q)  ||
-      (p.city  ?? '').toLowerCase().includes(q)  ||
-      p.type.toLowerCase().includes(q)
-    );
+    const list = this.properties.filter(p => {
+      if (q && !(
+        (p.title ?? '').toLowerCase().includes(q) ||
+        p.referenceCode.toLowerCase().includes(q) ||
+        (p.city  ?? '').toLowerCase().includes(q) ||
+        p.type.toLowerCase().includes(q)
+      )) return false;
+      if (this.availableOnly && p.status !== 'ACTIVE') return false;
+      if (this.priceMin != null && (p.price ?? 0) < this.priceMin) return false;
+      if (this.priceMax != null && (p.price ?? Number.MAX_SAFE_INTEGER) > this.priceMax) return false;
+      return true;
+    });
+    switch (this.sortBy) {
+      case 'price-asc':    return [...list].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+      case 'price-desc':   return [...list].sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+      case 'surface-desc': return [...list].sort((a, b) => (b.surfaceAreaSqm ?? 0) - (a.surfaceAreaSqm ?? 0));
+      default:             return list;
+    }
+  }
+
+  /** Live availability snapshot of the current result set — count + price range. */
+  get availableSummary(): { count: number; min: number | null; max: number | null } {
+    const prices = this.filtered
+      .filter(p => p.status === 'ACTIVE' && p.price != null)
+      .map(p => p.price!);
+    if (prices.length === 0) return { count: 0, min: null, max: null };
+    return { count: prices.length, min: Math.min(...prices), max: Math.max(...prices) };
+  }
+
+  hasRefinements(): boolean {
+    return this.availableOnly || this.priceMin != null || this.priceMax != null || this.sortBy !== 'default';
+  }
+
+  clearRefinements(): void {
+    this.availableOnly = false;
+    this.priceMin = null;
+    this.priceMax = null;
+    this.sortBy = 'default';
+  }
+
+  formatPrice(n: number): string {
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' MAD';
   }
 
   // ── Selection helpers ────────────────────────────────────────────────────

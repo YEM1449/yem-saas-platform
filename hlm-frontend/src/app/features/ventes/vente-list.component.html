@@ -166,20 +166,13 @@
 }
 
 @if (!loading() && filtered.length === 0) {
-  <div class="card">
-    <div class="empty-state">
-      <div class="empty-state-icon">🏠</div>
-      <p class="empty-state-title">
-        @if (filterStatut) { Aucune vente avec ce statut }
-        @else { Aucune vente enregistrée }
-      </p>
-      @if (canWrite && !filterStatut) {
-        <button class="btn btn-primary" (click)="openCreate()">
-          Créer la première vente
-        </button>
-      }
-    </div>
-  </div>
+  <ui-empty-state
+    icon="🏠"
+    [title]="filterStatut ? 'Aucune vente avec ce statut' : 'Aucune vente enregistrée'">
+    @if (canWrite && !filterStatut) {
+      <ui-button variant="primary" (click)="openCreate()">Créer la première vente</ui-button>
+    }
+  </ui-empty-state>
 }
 
 @if (!loading() && filtered.length > 0 && viewMode === 'table') {
