@@ -153,10 +153,23 @@
           </thead>
           <tbody>
             @for (c of filteredList; track c.id) {
+              <!--
+                Row-click is a MOUSE convenience only. The canonical detail-navigation
+                target — for keyboard, screen reader, and any non-pointer input — is
+                the <a class="row-link"> wrapping the contact name in the first cell.
+                It is focus-visible-styled and receives Enter/Space natively because
+                it is a real anchor. The <tr [routerLink]> stays so a click anywhere
+                on the row also navigates, but it is never the only path.
+              -->
               <tr class="clickable" [routerLink]="['/app/contacts', c.id]">
                 <td class="contact-name-cell">
-                  <span class="contact-avatar-sm" [style.background]="avatarColor(c)">{{ initials(c) }}</span>
-                  {{ c.fullName }}
+                  <a [routerLink]="['/app/contacts', c.id]"
+                     class="row-link"
+                     [attr.aria-label]="('contacts.viewDetailAria' | translate: { name: c.fullName })"
+                     (click)="$event.stopPropagation()">
+                    <span class="contact-avatar-sm" [style.background]="avatarColor(c)" aria-hidden="true">{{ initials(c) }}</span>
+                    <span class="row-link-text">{{ c.fullName }}</span>
+                  </a>
                 </td>
                 <td class="td-muted">{{ c.email ?? '—' }}</td>
                 <td class="td-muted">{{ c.phone ?? '—' }}</td>
