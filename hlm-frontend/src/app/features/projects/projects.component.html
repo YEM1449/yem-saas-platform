@@ -111,6 +111,36 @@
           </span>
         </div>
 
+        <!-- Card body: what a developer scans for — size, sold, value -->
+        @if (unitsOf(p) !== null) {
+          <div class="project-card-stats">
+            <div class="pstat">
+              <span class="pstat-val">{{ unitsOf(p) }}</span>
+              <span class="pstat-lbl">lots</span>
+            </div>
+            <div class="pstat">
+              <span class="pstat-val">{{ availableOf(p) }}</span>
+              <span class="pstat-lbl">disponibles</span>
+            </div>
+            <div class="pstat">
+              <span class="pstat-val">{{ salesValueOf(p) > 0 ? formatValueShort(salesValueOf(p)) + ' MAD' : '—' }}</span>
+              <span class="pstat-lbl">ventes</span>
+            </div>
+          </div>
+          @if (absorptionOf(p) !== null) {
+            <div class="project-absorption">
+              <div class="pabs-head">
+                <span class="pabs-lbl">Absorption</span>
+                <span class="pabs-pct">{{ absorptionOf(p) }}%</span>
+              </div>
+              <div class="pabs-track">
+                <div class="pabs-fill {{ absorptionToneClass(absorptionOf(p)) }}"
+                     [style.width.%]="absorptionOf(p)"></div>
+              </div>
+            </div>
+          }
+        }
+
         <!-- Card footer: dates -->
         <div class="project-card-footer">
           <span class="project-card-age">

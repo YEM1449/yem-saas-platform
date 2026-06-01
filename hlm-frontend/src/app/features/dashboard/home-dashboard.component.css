@@ -1484,3 +1484,40 @@
   .priority-text { flex-basis: 100%; order: 2; }
   .priority-cta { order: 3; margin-left: auto; }
 }
+
+/* ── Anchor strip — synthese's only metrics (aggressive consolidation) ──
+   Four orienting numbers in one quiet row; detail lives in the tabs.
+   Each cell is a link to where the real work happens. */
+.anchor-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.anchor-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px 18px;
+  border-right: 1px solid var(--c-border, #e2e8f0);
+  text-decoration: none;
+  transition: background .12s ease;
+}
+.anchor-stat:last-child { border-right: none; }
+.anchor-stat:hover { background: var(--c-neutral-50, #f8fafc); }
+.anchor-val { font-size: 1.55rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.anchor-unit { font-size: 0.85rem; font-weight: 600; color: var(--c-text-secondary, #475569); }
+.anchor-lbl { font-size: 0.8rem; font-weight: 600; color: var(--c-text-secondary, #475569); }
+.anchor-sub { font-size: 0.75rem; color: var(--c-text-muted, #94a3b8); }
+.anchor-stat-alert .anchor-val { color: var(--c-danger, #dc2626); }
+.anchor-stat-alert { background: var(--c-danger-light, #fef2f2); }
+.anchor-stat-alert:hover { background: #fde8e8; }
+
+@media (max-width: 720px) {
+  .anchor-stat { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+  .anchor-stat:last-child { border-bottom: none; }
+}

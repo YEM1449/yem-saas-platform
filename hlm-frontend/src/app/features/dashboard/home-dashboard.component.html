@@ -238,407 +238,44 @@
     </section>
   }
 
-  <!-- ════════════════════════════════════════════════════════════
-       SECTION 1 — KPI HERO ROW (CA + Trend + Taux d'absorption)
-       ════════════════════════════════════════════════════════════ -->
-  <div class="hero-row">
-
-    <!-- CA Pipeline Actif -->
-    <div class="hero-card hero-pipeline clickable-card" (click)="drillVentes()" title="Voir toutes les ventes actives">
-      <div class="hero-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <path d="M3 17l5-6 4 4 4-7 5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="hero-body">
-        <div class="hero-value-row">
-          <div class="hero-value">{{ formatAmount(s.caActivePipeline) }}</div>
-          @if (isAdminOrManager && ventesDelta()) {
-            <app-kpi-delta-chip
-              [delta]="ventesDelta()"
-              [previousLabel]="'30j précédents : ' + ventesDelta()!.previous + ' ventes'">
-            </app-kpi-delta-chip>
-          }
-        </div>
-        <div class="hero-label">CA Pipeline Actif</div>
-        <div class="hero-sub">
-          {{ s.activeVentesCount }} vente{{ s.activeVentesCount !== 1 ? 's' : '' }} en cours
-        </div>
-        @if (isAdminOrManager && ventesSparkline().length > 0) {
-          <app-sparkline [data]="ventesSparkline()" color="#6366f1"
-                         ariaLabel="Ventes créées sur 12 semaines"></app-sparkline>
-        }
-        <div class="kdt">
-          <span class="kdt-text">CA moyen/vente : {{ avgPipelineDeal(s) }}</span>
-          @if (s.ventesStalleesCount > 0) {
-            <span class="kdt-pill bench-bad">{{ s.ventesStalleesCount }} bloquées</span>
-          }
-          <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">Ventes →</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- CA ce mois + tendance -->
-    <div class="hero-card hero-mois clickable-card" (click)="drillVentes()" title="Voir les ventes">
-      <div class="hero-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="3" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-          <path d="M3 9h16M8 3v4M14 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="hero-body">
-        <div class="hero-value-row">
-          <div class="hero-value">{{ formatAmount(s.caSigneMoisCourant) }}</div>
-          @if (isAdminOrManager && caDelta()) {
-            <app-kpi-delta-chip
-              [delta]="caDelta()"
-              [previousLabel]="formatDeltaPrev(caDelta())">
-            </app-kpi-delta-chip>
-          } @else {
-            @if (moisTrend(s.caSigneMoisCourant, s.caSigneMoisPrecedent); as t) {
-              <span class="trend-chip {{ t >= 0 ? 'trend-up' : 'trend-down' }}">
-                {{ t >= 0 ? '↑' : '↓' }} {{ t < 0 ? -t : t }}%
-              </span>
-            }
-          }
-        </div>
-        <div class="hero-label">CA ce mois</div>
-        <div class="hero-sub">
-          @if (s.caSigneMoisPrecedent > 0) {
-            Mois précédent : {{ formatAmount(s.caSigneMoisPrecedent) }}
-          } @else {
-            Premier mois enregistré
-          }
-        </div>
-        @if (isAdminOrManager && caSparkline().length > 0) {
-          <app-sparkline [data]="caSparkline()" color="#10b981"
-                         ariaLabel="CA signé sur 12 semaines"></app-sparkline>
-        }
-        <div class="kdt">
-          <span class="kdt-text">Projeté annuel : {{ annualizedCA(s) }}</span>
-          @if (s.quotaAttainmentMtdPct != null) {
-            <span class="kdt-pill" [class]="quotaStatusClass(s)">{{ s.quotaAttainmentMtdPct | number:'1.0-0' }}% objectif</span>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- CA Livré (réalisé) -->
-    <div class="hero-card hero-livre clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
-      <div class="hero-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-          <path d="M7.5 11.5l2.5 2.5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="hero-body">
-        <div class="hero-value">{{ formatAmount(s.caLivre) }}</div>
-        <div class="hero-label">CA Réalisé (Livré)</div>
-        <div class="hero-sub">Ventes acte + livraison effectives</div>
-        <div class="kdt">
-          <span class="kdt-text">{{ livraisonRatioPct(s) }} du total réalisé</span>
-          <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes('LIVRE')">Livrées →</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Taux d'absorption -->
-    <div class="hero-card hero-absorption clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
-      <div class="hero-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <path d="M11 3v5M11 14v5M3 11h5M14 11h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="11" cy="11" r="3.5" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </div>
-      <div class="hero-body">
-        <div class="hero-value">
-          @if (s.tauxAbsorption != null) {
-            <span [class]="absorptionClass(s.tauxAbsorption) === 'bar-success' ? 'val-green' :
-                            absorptionClass(s.tauxAbsorption) === 'bar-warning' ? 'val-amber' : 'val-red'">
-              {{ s.tauxAbsorption | number:'1.0-1' }}%
-            </span>
-          } @else { — }
-        </div>
-        <div class="hero-label">Taux d'Absorption</div>
-        <div class="absorption-bar-row">
-          <div class="absorption-bar-mini">
-            <div class="absorption-fill {{ absorptionClass(s.tauxAbsorption) }}"
-                 [style.width]="absorptionWidth(s.tauxAbsorption)"></div>
-          </div>
-          <span class="hero-sub" style="white-space:nowrap">{{ s.biensVendusCount }}/{{ s.stockCommercialise }}</span>
-        </div>
-        <div class="hero-sub">{{ absorptionLabel(s.tauxAbsorption) }}</div>
-        <div class="kdt">
-          <span class="kdt-text">{{ s.stockCommercialise - s.biensVendusCount }} biens non vendus</span>
-          <span class="kdt-pill" [class]="absorptionBenchClass(s)">Cible : &gt;70%</span>
-        </div>
-      </div>
-    </div>
-
-  </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       SECTION 2 — OPERATIONAL KPIs (small chips row)
+       SECTION 1 — ANCHOR STRIP (aggressive consolidation).
+       Four orienting metrics, nothing more. The detailed cards that
+       used to crowd this view now live in their domain tabs
+       (Dirigeant / Commercial / Projets / Opérationnel) and on the
+       linked list pages — every stat below drills straight there.
        ════════════════════════════════════════════════════════════ -->
-  <div class="ops-row">
+  <div class="anchor-strip">
 
-    <a routerLink="/app/contacts" class="ops-chip ops-prospects">
-      <div class="ops-chip-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M2.5 14c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="ops-chip-body">
-        <div class="ops-val">{{ s.activeProspectsCount }}</div>
-        <div class="ops-lbl">Prospects</div>
-        @if (s.conversionRate30d != null) {
-          <div class="kdt-sub">Conversion 30j : {{ s.conversionRate30d | number:'1.0-0' }}%</div>
-        }
-      </div>
+    <a routerLink="/app/ventes" class="anchor-stat">
+      <span class="anchor-val">{{ formatAmountShort(s.caActivePipeline) }}<span class="anchor-unit"> MAD</span></span>
+      <span class="anchor-lbl">Pipeline actif</span>
+      <span class="anchor-sub">{{ s.activeVentesCount }} vente{{ s.activeVentesCount !== 1 ? 's' : '' }} en cours</span>
     </a>
 
-    <a routerLink="/app/reservations" class="ops-chip ops-reservations"
-       [class.ops-alert]="s.reservationsExpirantBientot > 0">
-      <div class="ops-chip-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M2 7h12M10 1v3M6 1v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="ops-chip-body">
-        <div class="ops-val">
-          {{ s.activeReservationsCount }}
-          @if (s.reservationsExpirantBientot > 0) {
-            <span class="alert-dot"></span>
-          }
-        </div>
-        <div class="ops-lbl">
-          Réservations
-          @if (s.reservationsExpirantBientot > 0) {
-            <span class="ops-sublbl text-warning">{{ s.reservationsExpirantBientot }} expirent bientôt</span>
-          }
-        </div>
-        @if (s.reservationsExpirantBientot > 0) {
-          <div class="kdt-sub">Renouveler avant expiration</div>
-        }
-      </div>
+    <a routerLink="/app/properties" class="anchor-stat">
+      <span class="anchor-val">@if (s.tauxAbsorption != null) { {{ s.tauxAbsorption | number:'1.0-1' }}% } @else { — }</span>
+      <span class="anchor-lbl">Taux d'absorption</span>
+      <span class="anchor-sub">{{ s.biensVendusCount }}/{{ s.stockCommercialise }} commercialisés</span>
+    </a>
+
+    <a routerLink="/app/properties" [queryParams]="{status:'ACTIVE'}" class="anchor-stat">
+      <span class="anchor-val">{{ s.biensActifsCount }}</span>
+      <span class="anchor-lbl">Biens disponibles</span>
+      <span class="anchor-sub">unités actives à vendre</span>
     </a>
 
     @if (isAdminOrManager) {
-      <div class="ops-chip ops-echeances {{ s.echeancesEnRetardCount > 0 ? 'ops-alert' : '' }}">
-        <div class="ops-chip-icon">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M8 5v4l2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="ops-chip-body">
-          <div class="ops-val">
-            {{ formatAmountShort(s.echeancesA30JoursMontant) }}
-            @if (s.echeancesEnRetardCount > 0) {
-              <span class="alert-dot"></span>
-            }
-          </div>
-          <div class="ops-lbl">
-            Échéances 30j
-            @if (s.echeancesEnRetardCount > 0) {
-              <span class="ops-sublbl text-danger">{{ s.echeancesEnRetardCount }} en retard</span>
-            }
-          </div>
-          @if (s.echeancesEnRetardCount > 0) {
-            <div class="kdt-sub">{{ formatAmount(s.echeancesEnRetardMontant) }} impayés</div>
-          }
-        </div>
-      </div>
-    }
-
-    <a routerLink="/app/tasks" class="ops-chip ops-tasks"
-       [class.ops-alert]="s.overdueTasksCount > 0">
-      <div class="ops-chip-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M6 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-        </svg>
-      </div>
-      <div class="ops-chip-body">
-        <div class="ops-val">
-          {{ s.openTasksCount }}
-          @if (s.overdueTasksCount > 0) { <span class="alert-dot"></span> }
-        </div>
-        <div class="ops-lbl">
-          Tâches
-          @if (s.overdueTasksCount > 0) {
-            <span class="ops-sublbl text-danger">{{ s.overdueTasksCount }} en retard</span>
-          } @else if (isAgent && s.tasksDueTodayCount > 0) {
-            <span class="ops-sublbl text-warning">{{ s.tasksDueTodayCount }} aujourd'hui</span>
-          }
-        </div>
-        <div class="kdt-sub">
-          @if (s.overdueTasksCount > 0) {
-            {{ s.overdueTasksCount }} en retard
-          } @else if (s.tasksDueTodayCount > 0) {
-            {{ s.tasksDueTodayCount }} aujourd'hui
-          } @else {
-            À jour ✓
-          }
-        </div>
-      </div>
-    </a>
-
-    @if (isAdminOrManager && s.ventesStalleesCount > 0) {
-      <a routerLink="/app/ventes" class="ops-chip ops-stalled ops-alert">
-        <div class="ops-chip-icon">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M8 5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="8" cy="11" r="0.8" fill="currentColor"/>
-          </svg>
-        </div>
-        <div class="ops-chip-body">
-          <div class="ops-val">{{ s.ventesStalleesCount }}</div>
-          <div class="ops-lbl">Ventes bloquées<span class="ops-sublbl text-danger">&gt;30 jours</span></div>
-        </div>
+      <a routerLink="/app/dashboard/receivables" class="anchor-stat"
+         [class.anchor-stat-alert]="s.echeancesEnRetardCount > 0">
+        <span class="anchor-val">{{ formatAmountShort(s.echeancesA30JoursMontant) }}<span class="anchor-unit"> MAD</span></span>
+        <span class="anchor-lbl">Encaissements 30j</span>
+        <span class="anchor-sub">@if (s.echeancesEnRetardCount > 0) { {{ s.echeancesEnRetardCount }} en retard } @else { à recouvrer }</span>
       </a>
     }
 
   </div>
-
-  <!-- ════════════════════════════════════════════════════════════
-       SECTION 2.5 — QUANTITATIVE STOCK & ACTIVITY STRIP
-       Count-based KPIs: units, velocity, pipeline depth.
-       ════════════════════════════════════════════════════════════ -->
-  <div class="qkpi-strip">
-
-    <a routerLink="/app/properties" [queryParams]="{status:'ACTIVE'}" class="qkpi-card">
-      <div class="qkpi-value">{{ s.biensActifsCount }}</div>
-      <div class="qkpi-label">Biens disponibles</div>
-      <div class="qkpi-sub">unités actives à vendre</div>
-    </a>
-
-    <a routerLink="/app/properties" [queryParams]="{status:'RESERVED'}" class="qkpi-card">
-      <div class="qkpi-value">{{ s.biensReservesCount }}</div>
-      <div class="qkpi-label">Biens réservés</div>
-      <div class="qkpi-sub">en cours de confirmation</div>
-    </a>
-
-    <a routerLink="/app/properties" [queryParams]="{status:'SOLD'}" class="qkpi-card qkpi-sold">
-      <div class="qkpi-value">{{ s.biensVendusCount }}</div>
-      <div class="qkpi-label">Biens vendus</div>
-      <div class="qkpi-sub">
-        @if (s.tauxAbsorption != null) {
-          {{ s.tauxAbsorption | number:'1.0-1' }}% du stock commercialisé
-        } @else {
-          sur {{ s.stockCommercialise }} commercialisés
-        }
-      </div>
-    </a>
-
-    <a routerLink="/app/ventes" class="qkpi-card">
-      <div class="qkpi-value">{{ s.ventesSigneesMoisCourantCount }}</div>
-      <div class="qkpi-label">Ventes signées ce mois</div>
-      <div class="qkpi-sub">
-        {{ s.salesVelocityPerWeek | number:'1.1-1' }} / semaine (4 sem.)
-      </div>
-    </a>
-
-    <a routerLink="/app/ventes" class="qkpi-card">
-      <div class="qkpi-value">{{ s.activeVentesCount }}</div>
-      <div class="qkpi-label">Ventes en cours</div>
-      <div class="qkpi-sub">pipeline actif (non finalisées)</div>
-    </a>
-
-    @if (s.monthsOfSupply != null) {
-      <a routerLink="/app/properties" class="qkpi-card"
-         [class.qkpi-good]="isSupplyHealthy(s.monthsOfSupply)"
-         [class.qkpi-warn]="isSupplyElevated(s.monthsOfSupply)"
-         [class.qkpi-bad]="isSupplyCritical(s.monthsOfSupply)">
-        <div class="qkpi-value">{{ s.monthsOfSupply | number:'1.1-1' }}<span class="qkpi-unit">mois</span></div>
-        <div class="qkpi-label">Stock restant</div>
-        <div class="qkpi-sub">au rythme actuel des ventes</div>
-      </a>
-    }
-
-  </div>
-
-  <!-- ════════════════════════════════════════════════════════════
-       SECTION 3 — FINANCIAL PULSE (admin/manager only)
-       ════════════════════════════════════════════════════════════ -->
-  @if (isAdminOrManager) {
-    <div class="section-row">
-      <div class="section-head">
-        <span class="section-label">Pulse financier</span>
-        <a routerLink="/app/dashboard/receivables" class="section-link">Détail encaissements →</a>
-      </div>
-      <div class="finance-row">
-
-        <div class="fin-card fin-incoming clickable-card" (click)="drillReceivables()" title="Voir les créances">
-          <div class="fin-card-top">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2v12M4 6l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Encaissements à 30 jours</span>
-          </div>
-          <div class="fin-value">{{ formatAmount(s.echeancesA30JoursMontant) }}</div>
-          <div class="fin-hint">Échéances dues dans les 30 prochains jours</div>
-          @if (s.dsoRolling90d != null) {
-            <div class="kdt">
-              <span class="kdt-text">DSO rolling : {{ s.dsoRolling90d | number:'1.0-0' }}j</span>
-              <span class="kdt-pill" [class]="dsoStatusClass(s)">{{ dsoLabel(s) }}</span>
-              <span class="kdt-action" (click)="drillReceivables()">Détail →</span>
-            </div>
-          }
-        </div>
-
-        <div class="fin-card clickable-card {{ s.echeancesEnRetardCount > 0 ? 'fin-overdue' : 'fin-ok' }}" (click)="drillReceivables()" title="Voir les créances">
-          <div class="fin-card-top">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M8 5v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="8" cy="11" r=".8" fill="currentColor"/>
-            </svg>
-            <span>Impayés en retard</span>
-          </div>
-          <div class="fin-value">
-            {{ formatAmount(s.echeancesEnRetardMontant) }}
-            @if (s.echeancesEnRetardCount > 0) {
-              <span class="fin-count">({{ s.echeancesEnRetardCount }})</span>
-            }
-          </div>
-          <div class="fin-hint">
-            @if (s.echeancesEnRetardCount === 0) { Aucun impayé en retard ✓ }
-            @else { Échéances dont la date est dépassée }
-          </div>
-          <div class="kdt">
-            @if (s.echeancesEnRetardCount > 0) {
-              <span class="kdt-text">{{ s.echeancesEnRetardCount }} débiteur{{ s.echeancesEnRetardCount > 1 ? 's' : '' }}</span>
-              <span class="kdt-pill bench-bad">Relances requises</span>
-            } @else {
-              <span class="kdt-pill bench-good">✓ Sain</span>
-            }
-            <a routerLink="/app/reports/creances" class="kdt-action" (click)="$event.stopPropagation()">Créances →</a>
-          </div>
-        </div>
-
-        <div class="fin-card fin-realise clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
-          <div class="fin-card-top">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M5.5 8.5l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>CA Total Livré</span>
-          </div>
-          <div class="fin-value fin-value-green">{{ formatAmount(s.caLivre) }}</div>
-          <div class="fin-hint">Ventes définitivement finalisées</div>
-          <div class="kdt">
-            <span class="kdt-text">{{ livraisonRatioPct(s) }} réalisé</span>
-            <a routerLink="/app/reports/creances" class="kdt-action" (click)="$event.stopPropagation()">Rapport →</a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  }
 
   } <!-- end synthese tab -->
 

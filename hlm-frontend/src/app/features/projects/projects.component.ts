@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ProjectService } from './project.service';
-import { Project } from '../../core/models/project.model';
+import { Project, ProjectKpi } from '../../core/models/project.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -69,7 +71,7 @@ export class ProjectsComponent implements OnInit {
     this.loading = true;
     this.error   = '';
     this.svc.list().subscribe({
-      next: (data) => { this.projects = data; this.loading = false; },
+      next: (data) => { this.projects = data; this.loading = false; this.loadKpis(); },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
@@ -78,6 +80,55 @@ export class ProjectsComponent implements OnInit {
         else                          this.error = body?.message ?? `Failed to load projects (${err.status})`;
       },
     });
+  }
+
+  // ── Per-project KPIs (enriches the cards: lots · absorption · sales) ──────
+  // A scannable project card should answer "how big, how sold, how much" at a
+  // glance — not just a name and a creation date.
+  projectKpis = new Map<string, ProjectKpi>();
+
+  private loadKpis(): void {
+    if (this.projects.length === 0) return;
+    forkJoin(
+      this.projects.map(p => this.svc.getKpis(p.id).pipe(catchError(() => of(null))))
+    ).subscribe(results => {
+      results.forEach((k, i) => { if (k) this.projectKpis.set(this.projects[i].id, k); });
+    });
+  }
+
+  unitsOf(p: Project): number | null {
+    return this.projectKpis.get(p.id)?.totalProperties ?? null;
+  }
+
+  availableOf(p: Project): number {
+    return this.projectKpis.get(p.id)?.statusBreakdown?.['ACTIVE'] ?? 0;
+  }
+
+  salesValueOf(p: Project): number {
+    return this.projectKpis.get(p.id)?.salesTotalAmount ?? 0;
+  }
+
+  /** (sold + reserved) / commercialised, where commercialised excludes DRAFT. */
+  absorptionOf(p: Project): number | null {
+    const k = this.projectKpis.get(p.id);
+    if (!k) return null;
+    const sb = k.statusBreakdown ?? {};
+    const commercialised = k.totalProperties - (sb['DRAFT'] ?? 0);
+    if (commercialised <= 0) return null;
+    return Math.round((((sb['SOLD'] ?? 0) + (sb['RESERVED'] ?? 0)) / commercialised) * 100);
+  }
+
+  absorptionToneClass(pct: number | null): string {
+    if (pct == null) return '';
+    if (pct >= 70) return 'pabs-good';
+    if (pct >= 40) return 'pabs-mid';
+    return 'pabs-low';
+  }
+
+  formatValueShort(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + ' M';
+    if (n >= 1_000)     return Math.round(n / 1_000) + ' k';
+    return String(n);
   }
 
   openModal(): void {
