@@ -189,7 +189,7 @@ export class HomeDashboardComponent implements OnInit {
         severity: 'critical', icon: '💸',
         text: `${s.echeancesEnRetardCount} échéance${s.echeancesEnRetardCount > 1 ? 's' : ''} en retard · ${this.formatAmount(s.echeancesEnRetardMontant)} à recouvrer`,
         cta: 'Encaissements',
-        nav: () => this.router.navigate(['/app/ventes'], { queryParams: { echeances: 'retard' } }),
+        nav: () => this.drillReceivables(),
       });
     }
 

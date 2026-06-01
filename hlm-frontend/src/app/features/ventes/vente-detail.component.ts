@@ -371,7 +371,17 @@ export class VenteDetailComponent implements OnInit {
     }
     const valid = candidates.filter((c): c is { label: string; date: string } => !!c.date);
     if (valid.length === 0) return null;
-    valid.sort((a, b) => a.date.localeCompare(b.date));
+    // Prefer the soonest still-pending deadline: an expired informational date
+    // (e.g. a reflection period that already ended) must never out-rank an
+    // actionable future obligation like the financing deadline. Rank future
+    // dates ahead of past ones, then by date ascending within each group.
+    const today = new Date().toISOString().slice(0, 10);
+    valid.sort((a, b) => {
+      const aPast = a.date < today;
+      const bPast = b.date < today;
+      if (aPast !== bPast) return aPast ? 1 : -1;
+      return a.date.localeCompare(b.date);
+    });
     const chosen = valid[0];
     return {
       label: chosen.label,
