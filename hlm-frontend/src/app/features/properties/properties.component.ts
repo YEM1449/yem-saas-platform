@@ -145,13 +145,19 @@ export class PropertiesComponent implements OnInit {
     }
   }
 
-  /** Live availability snapshot of the current result set — count + price range. */
+  /** Live availability snapshot of the current result set — count of available
+   *  units, plus the price range over the priced ones (unpriced/0 excluded so
+   *  the floor isn't a misleading "0 MAD"). */
   get availableSummary(): { count: number; min: number | null; max: number | null } {
-    const prices = this.filtered
-      .filter(p => p.status === 'ACTIVE' && p.price != null)
-      .map(p => p.price!);
-    if (prices.length === 0) return { count: 0, min: null, max: null };
-    return { count: prices.length, min: Math.min(...prices), max: Math.max(...prices) };
+    const available = this.filtered.filter(p => p.status === 'ACTIVE');
+    const prices = available
+      .map(p => p.price)
+      .filter((x): x is number => x != null && x > 0);
+    return {
+      count: available.length,
+      min: prices.length ? Math.min(...prices) : null,
+      max: prices.length ? Math.max(...prices) : null,
+    };
   }
 
   hasRefinements(): boolean {

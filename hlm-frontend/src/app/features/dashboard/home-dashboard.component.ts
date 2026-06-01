@@ -14,7 +14,6 @@ import {
   KpiDelta,
 } from './dashboard-cockpit.service';
 import { KpiDeltaChipComponent } from './cockpit/kpi-delta-chip.component';
-import { SparklineComponent } from './cockpit/sparkline.component';
 import { FunnelComponent } from './cockpit/funnel.component';
 import { AlertsPanelComponent } from './cockpit/alerts-panel.component';
 import { PipelineAnalysisComponent } from './cockpit/pipeline-analysis.component';
@@ -39,7 +38,7 @@ interface DayPriority {
   standalone: true,
   imports: [
     CommonModule, RouterLink, DatePipe, DecimalPipe,
-    KpiDeltaChipComponent, SparklineComponent, FunnelComponent, AlertsPanelComponent,
+    KpiDeltaChipComponent, FunnelComponent, AlertsPanelComponent,
     PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
     InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
     MiniBarChartComponent, SalesByTypeComponent, InventoryAgingComponent,

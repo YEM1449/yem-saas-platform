@@ -134,3 +134,30 @@
 }
 
 .project-card:hover .project-card-arrow { opacity: 1; }
+
+/* ── Project card stats — the developer's scan: size · sold · value ──── */
+.project-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 0;
+  margin: 12px 0 0;
+  border-top: 1px solid var(--c-border, #e2e8f0);
+}
+.pstat { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pstat-val {
+  font-size: 1.05rem; font-weight: 700; color: var(--c-text, #0f172a);
+  line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pstat-lbl { font-size: 0.7rem; color: var(--c-text-muted, #94a3b8); text-transform: uppercase; letter-spacing: .03em; }
+
+.project-absorption { margin-top: 4px; }
+.pabs-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.pabs-lbl { font-size: 0.72rem; color: var(--c-text-secondary, #475569); font-weight: 600; }
+.pabs-pct { font-size: 0.8rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.pabs-track { height: 6px; background: var(--c-neutral-100, #f1f5f9); border-radius: 999px; overflow: hidden; }
+.pabs-fill { height: 100%; border-radius: 999px; background: var(--c-neutral-400, #94a3b8); transition: width .4s ease; }
+.pabs-fill.pabs-good { background: var(--c-success, #16a34a); }
+.pabs-fill.pabs-mid  { background: var(--c-warning, #d97706); }
+.pabs-fill.pabs-low  { background: var(--c-danger, #dc2626); }
+@media (prefers-reduced-motion: reduce) { .pabs-fill { transition: none; } }
