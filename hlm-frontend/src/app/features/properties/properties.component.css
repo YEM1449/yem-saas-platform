@@ -523,3 +523,59 @@
 }
 .bulk-cancel:hover:not(:disabled) { background: rgba(255,255,255,.2); color: #fff; }
 .bulk-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Agent matching bar ──────────────────────────────────────────
+   The agent's "find a unit for this buyer" controls: availability,
+   budget range, sort, and a live count + price range of what's open.
+   Quiet and dense — a working filter strip, not a hero. */
+.match-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: var(--c-neutral-50, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  font-size: 0.85rem;
+}
+.match-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none; color: var(--c-text-secondary, #475569);
+}
+.match-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.match-dot {
+  width: 34px; height: 18px; border-radius: 999px;
+  background: var(--c-neutral-300, #cbd5e1); position: relative; transition: background .15s ease;
+}
+.match-dot::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s ease;
+}
+.match-toggle-on { color: var(--c-text, #0f172a); font-weight: 600; }
+.match-toggle-on .match-dot { background: var(--c-primary, #16a34a); }
+.match-toggle-on .match-dot::after { transform: translateX(16px); }
+
+.match-budget, .match-sort { display: inline-flex; align-items: center; gap: 8px; }
+.match-label { color: var(--c-text-muted, #94a3b8); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em; }
+.match-price {
+  width: 92px; padding: 5px 8px; font-size: 0.85rem;
+  border: 1px solid var(--c-border-strong, #cbd5e1); border-radius: var(--r-sm, 6px);
+  background: #fff; color: var(--c-text, #0f172a);
+}
+.match-price:focus { outline: none; border-color: var(--c-primary, #16a34a); }
+.match-dash { color: var(--c-text-muted, #94a3b8); }
+.match-unit { color: var(--c-text-muted, #94a3b8); font-size: 0.78rem; }
+
+.match-summary {
+  margin-left: auto;
+  color: var(--c-text-secondary, #475569);
+  white-space: nowrap;
+}
+.match-summary strong { color: var(--c-primary-700, #15803d); }
+.match-clear { white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .match-summary { margin-left: 0; flex-basis: 100%; }
+}

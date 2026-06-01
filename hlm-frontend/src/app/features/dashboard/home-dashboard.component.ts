@@ -25,6 +25,15 @@ import { DiscountAnalyticsComponent } from './cockpit/discount-analytics.compone
 import { InsightsPanelComponent } from './cockpit/insights-panel.component';
 import { AuthService } from '../../core/auth/auth.service';
 
+/** One actionable line in the director's morning triage worklist. */
+interface DayPriority {
+  severity: 'critical' | 'warning' | 'info';
+  icon: string;
+  text: string;
+  cta: string;
+  nav: () => void;
+}
+
 @Component({
   selector: 'app-home-dashboard',
   standalone: true,
@@ -155,6 +164,77 @@ export class HomeDashboardComponent implements OnInit {
   discountData()        { return this.bundle()?.discount ?? null; }
   insightsList()        { return this.bundle()?.insights ?? []; }
   salesIntelData()      { return this.bundle()?.salesIntelligence ?? null; }
+
+  // ── Director morning triage (workflow-first) ──────────────────────────────
+  // One synthesised worklist of the decisions a director acts on first, pulled
+  // from signals otherwise scattered across tabs (collections, the single most
+  // stalled deal, weakest-absorbing project, overdue tasks). Each line drills
+  // straight to where the work happens — a worklist, not another KPI grid.
+
+  /** The weakest-absorbing project with meaningful stock, or null. */
+  private weakestAbsorptionProject() {
+    const byProject = this.inventoryData()?.byProject ?? [];
+    const candidates = byProject.filter(p => p.total >= 5 && p.absorptionRate != null && p.absorptionRate < 35);
+    if (candidates.length === 0) return null;
+    return candidates.reduce((min, p) => (p.absorptionRate! < min.absorptionRate! ? p : min));
+  }
+
+  dayPriorities(): DayPriority[] {
+    const s = this.snap();
+    if (!s) return [];
+    const out: DayPriority[] = [];
+
+    if (s.echeancesEnRetardCount > 0) {
+      out.push({
+        severity: 'critical', icon: '💸',
+        text: `${s.echeancesEnRetardCount} échéance${s.echeancesEnRetardCount > 1 ? 's' : ''} en retard · ${this.formatAmount(s.echeancesEnRetardMontant)} à recouvrer`,
+        cta: 'Encaissements',
+        nav: () => this.drillReceivables(),
+      });
+    }
+
+    const atRisk = this.pipelineData()?.atRiskDeals ?? [];
+    if (atRisk.length > 0) {
+      const d = atRisk[0];
+      out.push({
+        severity: 'critical', icon: '⏳',
+        text: `Vente ${d.venteRef} — ${d.contactFullName} sans progression depuis ${d.agingDays} j (${this.formatAmount(d.prixVente)})`,
+        cta: 'Ouvrir',
+        nav: () => this.router.navigate(['/app/ventes', d.venteId]),
+      });
+    }
+
+    if (s.ventesStalleesCount > 0) {
+      out.push({
+        severity: 'warning', icon: '🛑',
+        text: `${s.ventesStalleesCount} vente${s.ventesStalleesCount > 1 ? 's' : ''} bloquée${s.ventesStalleesCount > 1 ? 's' : ''} dans le pipeline`,
+        cta: 'Voir',
+        nav: () => this.drillVentes(),
+      });
+    }
+
+    const weakest = this.weakestAbsorptionProject();
+    if (weakest) {
+      out.push({
+        severity: 'warning', icon: '📉',
+        text: `${weakest.projectName} sous-absorbé — ${Math.round(weakest.absorptionRate!)}% (${weakest.available}/${weakest.total} dispo)`,
+        cta: 'Analyser',
+        nav: () => this.drillByProject(weakest.projectId),
+      });
+    }
+
+    if (s.overdueTasksCount > 0) {
+      out.push({
+        severity: 'warning', icon: '⏰',
+        text: `${s.overdueTasksCount} tâche${s.overdueTasksCount > 1 ? 's' : ''} en retard`,
+        cta: 'Traiter',
+        nav: () => { this.activeTab = 'operationnel'; },
+      });
+    }
+
+    const rank = { critical: 0, warning: 1, info: 2 };
+    return out.sort((a, b) => rank[a.severity] - rank[b.severity]);
+  }
 
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';

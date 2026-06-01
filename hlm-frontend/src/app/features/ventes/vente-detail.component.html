@@ -52,6 +52,84 @@
     </div>
   </div>
 
+  <!-- ── Deal cockpit band — answers the agent's first 3 questions:
+         next deadline · what's blocking · where's the money ─────── -->
+  <div class="deal-band" [class.deal-band-terminal]="isTerminal(v.statut)">
+
+    <!-- 1. Prochaine échéance -->
+    <section class="deal-col deal-deadline">
+      <h2 class="deal-col-label">Prochaine échéance</h2>
+      @if (nextDeadline(v); as nd) {
+        <div class="deadline-headline" [class]="nd.urgency">
+          @if (nd.days > 0) {
+            <span class="deadline-num">{{ nd.days }}</span><span class="deadline-unit">j restants</span>
+          } @else if (nd.days === 0) {
+            <span class="deadline-num deadline-today">Aujourd’hui</span>
+          } @else {
+            <span class="deadline-num">{{ -nd.days }}</span><span class="deadline-unit">j de retard</span>
+          }
+        </div>
+        <p class="deadline-what">{{ nd.label }}</p>
+        <p class="deadline-when">{{ nd.date | date:'EEEE d MMMM y' }}</p>
+      } @else if (v.statut === 'LIVRE') {
+        <p class="deal-done">✓ Vente livrée @if (v.dateLivraisonReelle) { le {{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }} }</p>
+      } @else if (v.statut === 'ANNULE') {
+        <p class="deal-muted">Vente annulée</p>
+      } @else {
+        <p class="deal-muted">Aucune échéance datée à ce stade</p>
+      }
+    </section>
+
+    <!-- 2. À traiter -->
+    <section class="deal-col deal-todo">
+      <h2 class="deal-col-label">À traiter</h2>
+      <ul class="attention-list">
+        @for (item of attentionItems(v); track item.text) {
+          <li class="attention-item att-{{ item.severity }}">
+            <span class="att-dot" aria-hidden="true"></span>{{ item.text }}
+          </li>
+        }
+      </ul>
+      @if (canWrite && !isTerminal(v.statut)) {
+        <div class="deal-actions">
+          @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+            <button class="btn btn-sm btn-secondary" (click)="generateContract(v.id)" [disabled]="contractGenerating()">
+              {{ contractGenerating() ? 'Génération…' : 'Générer le contrat' }}
+            </button>
+          } @else if (v.contractStatus === 'GENERATED') {
+            <button class="btn btn-sm btn-secondary" (click)="signContract(v.id)" [disabled]="contractSigning()">
+              {{ contractSigning() ? 'Signature…' : 'Signer le contrat' }}
+            </button>
+          }
+          <button class="btn btn-sm btn-primary" (click)="openAdvanceDialog()" data-testid="deal-advance">
+            Avancer le pipeline →
+          </button>
+        </div>
+      }
+    </section>
+
+    <!-- 3. Position financière -->
+    <section class="deal-col deal-money">
+      <h2 class="deal-col-label">Position financière</h2>
+      @if (dealFinancials(v); as f) {
+        <div class="money-headline">{{ formatMad(f.encaisse) }}<span class="money-sub"> encaissé</span></div>
+        @if (f.total > 0) {
+          <div class="money-bar" role="progressbar"
+               [attr.aria-valuenow]="f.pct" aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-label]="'Paiement: ' + f.pct + '%'">
+            <div class="money-fill" [style.width.%]="f.pct"></div>
+          </div>
+          <p class="money-line"><strong>{{ f.pct }}%</strong> du prix · reste {{ formatMad(f.reste) }}</p>
+        } @else {
+          <p class="deal-muted">Prix de vente non défini</p>
+        }
+        @if (f.overdueCount > 0) {
+          <p class="money-overdue">⚠ {{ f.overdueCount }} échéance{{ f.overdueCount > 1 ? 's' : '' }} en retard · {{ formatMad(f.overdueAmount) }}</p>
+        }
+      }
+    </section>
+  </div>
+
   <!-- ── Info + Portal row ───────────────────────────────────── -->
   <div class="detail-grid">
 

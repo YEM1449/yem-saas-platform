@@ -178,6 +178,49 @@ LOT-22,Terrain Résidentiel,TERRAIN,,Rabat,650000,500,0,</pre>
   }
 </div>
 
+<!-- ── Agent matching bar: availability · budget · sort · live range ───── -->
+<div class="match-bar">
+  <label class="match-toggle" [class.match-toggle-on]="availableOnly">
+    <input type="checkbox" [(ngModel)]="availableOnly" />
+    <span class="match-dot" aria-hidden="true"></span>
+    Disponibles uniquement
+  </label>
+
+  <div class="match-budget">
+    <span class="match-label">Budget</span>
+    <input class="match-price" type="number" inputmode="numeric" [(ngModel)]="priceMin"
+           placeholder="min" aria-label="Budget minimum" />
+    <span class="match-dash">–</span>
+    <input class="match-price" type="number" inputmode="numeric" [(ngModel)]="priceMax"
+           placeholder="max" aria-label="Budget maximum" />
+    <span class="match-unit">MAD</span>
+  </div>
+
+  <label class="match-sort">
+    <span class="match-label">Trier</span>
+    <select class="form-control form-control-sm" [(ngModel)]="sortBy">
+      <option value="default">Par défaut</option>
+      <option value="price-asc">Prix croissant</option>
+      <option value="price-desc">Prix décroissant</option>
+      <option value="surface-desc">Surface décroissante</option>
+    </select>
+  </label>
+
+  @if (availableSummary.count > 0) {
+    <span class="match-summary">
+      <strong>{{ availableSummary.count }}</strong> disponible{{ availableSummary.count > 1 ? 's' : '' }}
+      @if (availableSummary.min !== null && availableSummary.max !== null) {
+        · {{ formatPrice(availableSummary.min) }}
+        @if (availableSummary.max !== availableSummary.min) { → {{ formatPrice(availableSummary.max) }} }
+      }
+    </span>
+  }
+
+  @if (hasRefinements()) {
+    <button class="btn btn-sm btn-ghost match-clear" (click)="clearRefinements()">Effacer</button>
+  }
+</div>
+
 <!-- ── Feedback ─────────────────────────────────────────────── -->
 @if (error) {
   <div class="alert alert-error">{{ error }}</div>

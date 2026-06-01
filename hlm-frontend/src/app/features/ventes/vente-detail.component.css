@@ -195,3 +195,88 @@
   vertical-align: middle;
   margin-right: 4px;
 }
+
+/* ── Deal cockpit band ───────────────────────────────────────────
+   Workflow-first synthesis under the stepper. Three columns, each
+   answering one question the agent has on opening a sale. Deliberately
+   flat and dense — a control surface, not a decorative dashboard. */
+.deal-band {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.4fr) minmax(200px, 1fr);
+  gap: 0;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.deal-band-terminal { opacity: 0.92; }
+
+.deal-col {
+  padding: 16px 18px;
+  border-right: 1px solid var(--c-border, #e2e8f0);
+  min-width: 0;
+}
+.deal-col:last-child { border-right: none; }
+
+.deal-col-label {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-muted, #94a3b8);
+}
+
+.deal-muted { color: var(--c-text-muted, #94a3b8); font-size: 0.85rem; margin: 4px 0 0; }
+.deal-done  { color: var(--c-success, #16a34a); font-weight: 600; font-size: 0.9rem; margin: 4px 0 0; }
+
+/* 1. Next deadline — one big number the eye lands on first */
+.deadline-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--c-text, #0f172a);
+}
+.deadline-num { font-size: 1.9rem; font-weight: 700; line-height: 1; text-decoration: none; }
+.deadline-today { font-size: 1.25rem; }
+.deadline-unit { font-size: 0.85rem; color: var(--c-text-secondary, #475569); }
+/* Reuse existing urgency colours; drop the strikethrough on the big number */
+.deal-deadline .deadline-headline.deadline-critical,
+.deal-deadline .deadline-headline.deadline-overdue { color: #b91c1c; }
+.deal-deadline .deadline-headline.deadline-warning { color: #b45309; }
+.deal-deadline .deadline-headline .deadline-num { text-decoration: none; }
+.deadline-what { margin: 8px 0 2px; font-size: 0.85rem; font-weight: 600; color: var(--c-text, #0f172a); }
+.deadline-when { margin: 0; font-size: 0.8rem; color: var(--c-text-secondary, #475569); text-transform: capitalize; }
+
+/* 2. À traiter — ranked blockers + the primary action, where the decision is */
+.attention-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.attention-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--c-text, #0f172a);
+}
+.att-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; background: var(--c-text-muted, #94a3b8); }
+.att-critical .att-dot { background: var(--c-danger, #dc2626); }
+.att-warning  .att-dot { background: var(--c-warning, #d97706); }
+.att-info     .att-dot { background: var(--c-info, #0284c7); }
+.att-critical { font-weight: 600; }
+.deal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 3. Position financière — paid-to-price at a glance */
+.money-headline { font-size: 1.4rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.money-sub { font-size: 0.8rem; font-weight: 500; color: var(--c-text-secondary, #475569); }
+.money-bar { height: 7px; background: var(--c-neutral-100, #f1f5f9); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+.money-fill { height: 100%; background: var(--c-primary, #16a34a); border-radius: 999px; }
+.money-line { margin: 0; font-size: 0.8rem; color: var(--c-text-secondary, #475569); }
+.money-overdue { margin: 8px 0 0; font-size: 0.8rem; font-weight: 600; color: var(--c-danger, #dc2626); }
+
+/* Collapse to a single column on narrow screens */
+@media (max-width: 860px) {
+  .deal-band { grid-template-columns: 1fr; }
+  .deal-col { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+  .deal-col:last-child { border-bottom: none; }
+}

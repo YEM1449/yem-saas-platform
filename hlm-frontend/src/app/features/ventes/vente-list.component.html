@@ -166,20 +166,13 @@
 }
 
 @if (!loading() && filtered.length === 0) {
-  <div class="card">
-    <div class="empty-state">
-      <div class="empty-state-icon">🏠</div>
-      <p class="empty-state-title">
-        @if (filterStatut) { Aucune vente avec ce statut }
-        @else { Aucune vente enregistrée }
-      </p>
-      @if (canWrite && !filterStatut) {
-        <button class="btn btn-primary" (click)="openCreate()">
-          Créer la première vente
-        </button>
-      }
-    </div>
-  </div>
+  <ui-empty-state
+    icon="🏠"
+    [title]="filterStatut ? 'Aucune vente avec ce statut' : 'Aucune vente enregistrée'">
+    @if (canWrite && !filterStatut) {
+      <ui-button variant="primary" (click)="openCreate()">Créer la première vente</ui-button>
+    }
+  </ui-empty-state>
 }
 
 @if (!loading() && filtered.length > 0 && viewMode === 'table') {
@@ -202,6 +195,14 @@
         </thead>
         <tbody>
           @for (v of filtered; track v.id) {
+            <!--
+              Row-click is a MOUSE convenience only. The canonical detail-navigation
+              target — for keyboard, screen reader, and any non-pointer input — is
+              the <a class="row-link-icon"> in the last cell. It carries the
+              aria-label, is focus-visible-styled, and receives Enter/Space natively
+              because it is a real anchor. The <tr [routerLink]> stays so a click
+              anywhere on the row also navigates, but it is never the only path.
+            -->
             <tr class="clickable" [routerLink]="['/app/ventes', v.id]">
               <td>
                 <span class="ref-badge">{{ v.venteRef }}</span>
@@ -228,10 +229,15 @@
               </td>
               <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
               <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
-              <td class="td-chevron" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+              <td class="td-chevron">
+                <a [routerLink]="['/app/ventes', v.id]"
+                   class="row-link-icon"
+                   [attr.aria-label]="('ventes.viewDetailAria' | translate: { ref: v.venteRef })"
+                   (click)="$event.stopPropagation()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
               </td>
             </tr>
           }

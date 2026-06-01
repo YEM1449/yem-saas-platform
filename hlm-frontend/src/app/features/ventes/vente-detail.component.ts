@@ -12,6 +12,31 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
 import { AdvancePipelineDialogComponent } from './advance-pipeline-dialog.component';
 
+/** Synthesised financial position of a sale — paid vs. remaining vs. overdue. */
+interface DealFinancials {
+  total: number;
+  encaisse: number;
+  reste: number;
+  pct: number;
+  overdueCount: number;
+  overdueAmount: number;
+  hasEcheances: boolean;
+}
+
+/** The single most pressing dated obligation on the sale right now. */
+interface NextDeadline {
+  label: string;
+  date: string;
+  days: number;
+  urgency: string;
+}
+
+/** A concrete thing the agent must act on, ranked by severity. */
+interface AttentionItem {
+  text: string;
+  severity: 'critical' | 'warning' | 'info';
+}
+
 @Component({
   selector: 'app-vente-detail',
   standalone: true,
@@ -298,5 +323,134 @@ export class VenteDetailComponent implements OnInit {
       AUTRE:            'Autre',
     };
     return labels[m];
+  }
+
+  // ── Deal cockpit synthesis (workflow-first) ─────────────────────
+  // These three derived views answer the agent's first three questions on
+  // opening a sale: where's the money, what's my next deadline, what's blocking it.
+
+  formatMad(n: number): string {
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' MAD';
+  }
+
+  /** Paid / remaining / overdue position, derived from the échéancier and sale price. */
+  dealFinancials(v: Vente): DealFinancials {
+    const today = new Date().toISOString().slice(0, 10);
+    const encaisse = v.echeances
+      .filter(e => e.statut === 'PAYEE')
+      .reduce((s, e) => s + (e.montant || 0), 0);
+    const total = v.prixVente ?? v.echeances.reduce((s, e) => s + (e.montant || 0), 0);
+    const overdue = v.echeances.filter(e =>
+      e.statut === 'EN_RETARD' || (e.statut === 'EN_ATTENTE' && e.dateEcheance < today));
+    return {
+      total,
+      encaisse,
+      reste: total > 0 ? Math.max(0, total - encaisse) : 0,
+      pct: total > 0 ? Math.round((encaisse / total) * 100) : 0,
+      overdueCount: overdue.length,
+      overdueAmount: overdue.reduce((s, e) => s + (e.montant || 0), 0),
+      hasEcheances: v.echeances.length > 0,
+    };
+  }
+
+  /** The soonest pending legal/closing deadline for the current stage. */
+  nextDeadline(v: Vente): NextDeadline | null {
+    if (this.isTerminal(v.statut)) return null;
+    const candidates: Array<{ label: string; date: string | null }> = [];
+    if (v.statut === 'COMPROMIS' && v.dateFinDelaiReflexion) {
+      candidates.push({ label: 'Fin du délai de rétractation', date: v.dateFinDelaiReflexion });
+    }
+    if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && v.dateLimiteFinancement) {
+      candidates.push({ label: 'Limite d’obtention du financement', date: v.dateLimiteFinancement });
+    }
+    if (v.statut === 'ACTE_NOTARIE' && v.dateLivraisonPrevue) {
+      candidates.push({ label: 'Livraison prévue', date: v.dateLivraisonPrevue });
+    }
+    if (v.expectedClosingDate) {
+      candidates.push({ label: 'Clôture prévue', date: v.expectedClosingDate });
+    }
+    const valid = candidates.filter((c): c is { label: string; date: string } => !!c.date);
+    if (valid.length === 0) return null;
+    // Prefer the soonest still-pending deadline: an expired informational date
+    // (e.g. a reflection period that already ended) must never out-rank an
+    // actionable future obligation like the financing deadline. Rank future
+    // dates ahead of past ones, then by date ascending within each group.
+    const today = new Date().toISOString().slice(0, 10);
+    valid.sort((a, b) => {
+      const aPast = a.date < today;
+      const bPast = b.date < today;
+      if (aPast !== bPast) return aPast ? 1 : -1;
+      return a.date.localeCompare(b.date);
+    });
+    const chosen = valid[0];
+    return {
+      label: chosen.label,
+      date: chosen.date,
+      days: this.daysUntil(chosen.date) ?? 0,
+      urgency: this.deadlineUrgencyClass(chosen.date),
+    };
+  }
+
+  /** Ordered list of concrete blockers/next steps for the current sale state. */
+  attentionItems(v: Vente): AttentionItem[] {
+    const items: AttentionItem[] = [];
+    const fin = this.dealFinancials(v);
+
+    if (v.statut === 'ANNULE') {
+      items.push({
+        text: 'Vente annulée' + (v.motifAnnulation ? ' — ' + this.motifLabel(v.motifAnnulation) : ''),
+        severity: 'info',
+      });
+      return items;
+    }
+
+    if (v.statut === 'LIVRE') {
+      if (fin.reste > 0) items.push({ text: 'Solde restant : ' + this.formatMad(fin.reste), severity: 'warning' });
+      if (!v.datePvReception) items.push({ text: 'PV de réception non saisi', severity: 'warning' });
+      if (!v.dateTitreFoncier) items.push({ text: 'Titre foncier non enregistré', severity: 'info' });
+      if (items.length === 0) items.push({ text: 'Dossier complet', severity: 'info' });
+      return items;
+    }
+
+    const finDays = this.daysUntil(v.dateLimiteFinancement);
+    const needsCredit = v.typeFinancement !== 'COMPTANT';
+
+    if (v.statut === 'COMPROMIS' && v.dateFinDelaiReflexion) {
+      const d = this.daysUntil(v.dateFinDelaiReflexion);
+      if (d !== null && d >= 0) {
+        items.push({ text: `Rétractation acheteur possible ${d} j — vente non sécurisée`, severity: 'info' });
+      }
+    }
+    if (finDays !== null && finDays < 0 && !v.creditObtenu && needsCredit) {
+      items.push({ text: 'Délai de financement dépassé sans accord — risque de caducité', severity: 'critical' });
+    } else if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && !v.creditObtenu && needsCredit) {
+      const crit = finDays !== null && finDays <= 7;
+      items.push({
+        text: v.banqueCredit ? `Accord de crédit en attente (${v.banqueCredit})` : 'Financement à confirmer',
+        severity: crit ? 'critical' : 'warning',
+      });
+    }
+    if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+      items.push({ text: 'Contrat de vente non généré', severity: 'warning' });
+    }
+    if (v.contractStatus === 'GENERATED') {
+      items.push({ text: 'Contrat généré — à faire signer', severity: 'info' });
+    }
+    if (fin.overdueCount > 0) {
+      items.push({
+        text: `${fin.overdueCount} échéance${fin.overdueCount > 1 ? 's' : ''} en retard (${this.formatMad(fin.overdueAmount)})`,
+        severity: 'critical',
+      });
+    }
+    if (!fin.hasEcheances && v.statut !== 'COMPROMIS') {
+      items.push({ text: 'Aucun échéancier de paiement défini', severity: 'info' });
+    }
+
+    if (items.length === 0) {
+      items.push({ text: 'Aucune action en attente — prêt pour l’étape suivante', severity: 'info' });
+    }
+    // Surface the most severe items first.
+    const rank = { critical: 0, warning: 1, info: 2 };
+    return items.sort((a, b) => rank[a.severity] - rank[b.severity]);
   }
 }
