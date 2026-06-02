@@ -2,6 +2,19 @@
 
 Auto-load guide for Claude Code. Captures operating rules, architecture context, and the current implementation backlog.
 
+## Audit Checkpoint — Master Audit (2026-06-03)
+
+Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-report-2026-06-03.md` + `docs/audit/action-plan-2026-06-03.md`. New docs: `docs/adr/005-3d-viewer-threejs.md`, `docs/business-rules/rg-referentiel.md`.
+
+**Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
+
+**Top fixes (P0/P1):**
+- **F-001 (P0, RG-B03 NOT enforced):** `VenteService.create()` allows a 2nd active vente on a property already RESERVED — guard `VenteRepository.existsBySocieteIdAndPropertyIdAndStatutNot` exists but is **never called**; no partial unique index. → call guard (409) + changeset **075** `CREATE UNIQUE INDEX ... ON vente(property_id) WHERE statut <> 'ANNULE'`.
+- **F-002 (P1):** `VenteService` (commercial core) has **0 backend tests** — add `VenteServiceTest` + `VenteControllerIT`.
+- P2: F-003 `CrossSocieteAccessException`→403 (rest is 404); F-004 GLB validated by client flag only (no binary check); F-005 54/64 services untested; F-011 3 frontend specs for 175 TS.
+
+Next available changeset: **075** (unchanged — audit added no DB changes).
+
 ## Architecture Context
 
 **Multi-company (multi-société) real-estate CRM SaaS** platform (codename HLM).
