@@ -150,6 +150,10 @@ app:
       email:    ${APP_BOOTSTRAP_EMAIL:}
       password: ${APP_BOOTSTRAP_PASSWORD:}
 
+  viewer3d:
+    # RG-E05 — validate the actual GLB bytes (magic glTF + Draco extension) at confirm time.
+    validate-glb-binary: ${VIEWER3D_VALIDATE_GLB:true}
+
   rate-limit:
     login:
       capacity: ${RATE_LIMIT_LOGIN_CAPACITY:5}

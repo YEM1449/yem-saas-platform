@@ -44,6 +44,7 @@ public enum ErrorCode {
     INVALID_PROPERTY_TYPE,
     PROPERTY_REFERENCE_CODE_EXISTS,
     INVALID_PERIOD,
+    INVALID_GLB_FILE,           // 422 — uploaded GLB is malformed or not Draco-compressed (RG-E05)
 
     // Project errors (409)
     PROJECT_NAME_EXISTS,

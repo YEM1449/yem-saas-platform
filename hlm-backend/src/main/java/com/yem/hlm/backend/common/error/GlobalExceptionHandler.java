@@ -50,6 +50,7 @@ import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
 import com.yem.hlm.backend.viewer3d.service.Project3dModelNotFoundException;
+import com.yem.hlm.backend.viewer3d.service.InvalidGlbException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
@@ -927,6 +928,23 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Invalid GLB upload (422) ==========
+
+    @ExceptionHandler(InvalidGlbException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidGlb(
+            InvalidGlbException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                422,
+                "Unprocessable Entity",
+                ErrorCode.INVALID_GLB_FILE,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(422).body(error);
     }
 
     // ========== Date coherence errors (422) ==========
