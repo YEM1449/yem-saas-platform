@@ -397,6 +397,12 @@ LIVRE → (terminal)
 ```
 `VenteService.validateTransition()` enforces this. Invalid transitions → HTTP 409 `INVALID_STATUS_TRANSITION`.
 
+**Two distinct "clôtures" (don't confuse them):**
+- **Clôture commerciale = `ACTE_NOTARIE`** — the unit is legally sold. `PropertyCommercialWorkflowService` sets property `SOLD` at this stage (`VenteService.java:200`). The **absorption rate** is based on property `SOLD`, so absorption measures the *commercial* close (acte notarié). `ANNULE` releases the property back to `ACTIVE`.
+- **Clôture livraison = `LIVRE`** — the unit is delivered. `caLivre` ("CA réalisé") counts revenue **only at `LIVRE`** (`HomeDashboardDTO.java:36`). Revenue recognition is at handover, not at the notarial act (conservative).
+- **Terminal states**: only `LIVRE` (won) and `ANNULE` (lost) leave the active pipeline (`statut NOT IN ('LIVRE','ANNULE')`). **`ACTE_NOTARIE` is still "active pipeline."**
+- **Value tunnel** (dashboard Dirigeant tab, frontend-computed from `pipelineData().stages`): *CA en cours* (COMPROMIS+FINANCEMENT) → *CA acté* (ACTE_NOTARIE, clôture commerciale) → *CA livré* (LIVRE, clôture livraison). `expectedClosingDate` is a forecast **date**, not a state.
+
 ### Infrastructure Notes (Production)
 - **R2 EU endpoint**: `MEDIA_OBJECT_STORAGE_ENDPOINT=https://<account-id>.eu.r2.cloudflarestorage.com` — using the global endpoint on an EU bucket causes 403
 - **Frontend URL**: `FRONTEND_BASE_URL=https://yem-hlm.youssouf-mehdi.workers.dev` (default already set in application.yml)

@@ -1623,3 +1623,34 @@
   .ceo-kpi { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
   .ceo-project-ctx { display: none; }
 }
+
+/* ── Tunnel de valeur — clôture commerciale (acté) vs livraison (livré) ── */
+.value-tunnel {
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.vt-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.vt-title { font-size: 0.9rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.vt-note { font-size: 0.75rem; color: var(--c-text-muted, #94a3b8); }
+.vt-stages { display: flex; align-items: stretch; gap: 8px; }
+.vt-stage {
+  flex: 1; min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-sm, 6px);
+  border-left: 3px solid var(--c-neutral-300, #cbd5e1);
+}
+.vt-stage.vt-acte  { border-left-color: var(--c-warning, #d97706); background: var(--c-warning-light, #fffbeb); }
+.vt-stage.vt-livre { border-left-color: var(--c-success, #16a34a); background: var(--c-success-light, #f0fdf4); }
+.vt-amt { font-size: 1.35rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.vt-lbl { font-size: 0.82rem; font-weight: 600; color: var(--c-text-secondary, #475569); margin-top: 4px; }
+.vt-sub { font-size: 0.7rem; color: var(--c-text-muted, #94a3b8); margin-top: 2px; }
+.vt-arrow { align-self: center; color: var(--c-text-muted, #cbd5e1); font-size: 1.1rem; flex-shrink: 0; }
+
+@media (max-width: 720px) {
+  .vt-stages { flex-direction: column; }
+  .vt-arrow { transform: rotate(90deg); align-self: center; }
+}
