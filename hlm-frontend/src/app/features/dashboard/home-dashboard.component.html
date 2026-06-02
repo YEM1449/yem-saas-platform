@@ -289,9 +289,15 @@
   <section class="ceo-cockpit">
     <div class="ceo-kpis">
       <div class="ceo-kpi" [attr.data-tone]="quotaTone()">
-        <div class="ceo-kpi-val">{{ s.quotaAttainmentMtdPct != null ? (s.quotaAttainmentMtdPct | number:'1.0-0') + '%' : '—' }}</div>
-        <div class="ceo-kpi-lbl">Atteinte de l'objectif (mois)</div>
-        <div class="ceo-kpi-target">{{ formatAmount(s.caSigneMoisCourant) }}@if (s.caMensuelCible) { / {{ formatAmount(s.caMensuelCible) }} }</div>
+        @if (s.quotaAttainmentMtdPct != null) {
+          <div class="ceo-kpi-val">{{ s.quotaAttainmentMtdPct | number:'1.0-0' }}%</div>
+          <div class="ceo-kpi-lbl">Atteinte de l'objectif (mois)</div>
+          <div class="ceo-kpi-target">{{ formatAmount(s.caSigneMoisCourant) }} / {{ formatAmount(s.caMensuelCible) }}</div>
+        } @else {
+          <div class="ceo-kpi-val">{{ formatAmount(s.caSigneMoisCourant) }}</div>
+          <div class="ceo-kpi-lbl">CA signé (mois)</div>
+          <div class="ceo-kpi-target">Objectif mensuel non configuré</div>
+        }
       </div>
       <div class="ceo-kpi" [attr.data-tone]="cancellationTone()">
         <div class="ceo-kpi-val">{{ s.cancellationRate90d != null ? (s.cancellationRate90d | number:'1.0-1') + '%' : '—' }}</div>
@@ -347,27 +353,10 @@
   @if (isAdminOrManager) {
     <div class="section-row">
       <div class="section-head">
-        <span class="section-label">Indicateurs propriétaire (90 jours)</span>
+        <span class="section-label">Indicateurs propriétaire complémentaires (90 jours)</span>
+        <span class="section-sublabel">Annulation · absorption · encaissé sont dans le cockpit ci-dessus</span>
       </div>
       <div class="owner-kpi-grid">
-
-        <div class="owner-kpi-card clickable-card" (click)="drillVentes('ANNULE')" title="Voir les ventes annulées">
-          <div class="owner-kpi-label">Taux d'annulation</div>
-          <div class="owner-kpi-value"
-               [class.owner-kpi-warn]="(s.cancellationRate90d ?? 0) >= 10"
-               [class.owner-kpi-bad]="(s.cancellationRate90d ?? 0) >= 20">
-            @if (s.cancellationRate90d != null) {
-              {{ s.cancellationRate90d }}%
-            } @else {
-              <span class="owner-kpi-empty">—</span>
-            }
-          </div>
-          <div class="owner-kpi-hint">Ventes annulées sur ventes créées</div>
-          <div class="kdt">
-            <span class="kdt-text">Cible : &lt;10% · Critique : &gt;20%</span>
-            <span class="kdt-pill" [class]="cancellationStatusClass(s)">{{ cancellationLabel(s) }}</span>
-          </div>
-        </div>
 
         <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
           <div class="owner-kpi-label">Ticket moyen (livré)</div>
@@ -403,29 +392,6 @@
           <div class="kdt">
             <span class="kdt-text">Cible : &gt;50%</span>
             <span class="kdt-pill" [class]="conversionStatusClass(s)">{{ conversionLabel(s) }}</span>
-          </div>
-        </div>
-
-        <div class="owner-kpi-card clickable-card" (click)="drillReceivables()" title="Détail des encaissements">
-          <div class="owner-kpi-label">
-            Encaissé ce mois
-            @if (encaisseDelta()) {
-              <app-kpi-delta-chip
-                [delta]="encaisseDelta()"
-                [previousLabel]="formatDeltaPrev(encaisseDelta())">
-              </app-kpi-delta-chip>
-            }
-          </div>
-          <div class="owner-kpi-value owner-kpi-good">
-            {{ formatAmount(s.encaisseMoisCourant) }}
-          </div>
-          <div class="owner-kpi-hint">Échéances payées du mois en cours</div>
-          <div class="kdt">
-            @if (s.collectionEfficiency90d != null) {
-              <span class="kdt-text">Efficacité 90j : {{ s.collectionEfficiency90d | number:'1.0-0' }}%</span>
-              <span class="kdt-pill" [class]="collectionStatusClass(s)">{{ collectionLabel(s) }}</span>
-            }
-            <span class="kdt-action" (click)="$event.stopPropagation(); drillReceivables()">Détail →</span>
           </div>
         </div>
 

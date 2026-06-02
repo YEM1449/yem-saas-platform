@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-pipeline-analysis',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   template: `
     <div class="widget">
       <div class="widget-header">
@@ -57,26 +56,9 @@ import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
           </table>
         }
 
-        <!-- At-risk deals -->
-        @if (data.atRiskDeals.length > 0) {
-          <div class="risk-section">
-            <div class="risk-head">
-              <span class="risk-title">Dossiers à risque</span>
-              <span class="risk-count">{{ data.atRiskDeals.length }}</span>
-            </div>
-            <div class="risk-list">
-              @for (d of data.atRiskDeals; track d.venteId) {
-                <a [routerLink]="['/app/ventes', d.venteId]" class="risk-row">
-                  <span class="risk-ref">{{ d.venteRef }}</span>
-                  <span class="risk-contact">{{ d.contactFullName }}</span>
-                  <span class="statut-badge sm" [attr.data-statut]="d.statut">{{ label(d.statut) }}</span>
-                  <span class="risk-aging">{{ d.agingDays }}j</span>
-                  <span class="risk-amount">{{ fmt(d.prixVente) }}</span>
-                </a>
-              }
-            </div>
-          </div>
-        }
+        <!-- At-risk deals are owned by the Sales cockpit worklist above this
+             widget ("Affaires à relancer") — not duplicated here. This widget
+             keeps the per-stage pipeline-health breakdown only. -->
       }
     </div>
   `,
