@@ -33,6 +33,7 @@ public enum ErrorCode {
     CONTACT_INTEREST_EXISTS,
     DEPOSIT_ALREADY_EXISTS,
     PROPERTY_ALREADY_RESERVED,
+    PROPERTY_ALREADY_ENGAGED,   // 409 — property already has an active (non-cancelled) vente (RG-B03)
     INVALID_DEPOSIT_STATE,
     INVALID_STATUS_TRANSITION,
 

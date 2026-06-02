@@ -45,6 +45,7 @@ import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
 import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
@@ -350,6 +351,21 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.INVALID_STATUS_TRANSITION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(PropertyAlreadyEngagedException.class)
+    public ResponseEntity<ErrorResponse> handlePropertyAlreadyEngaged(
+            PropertyAlreadyEngagedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.PROPERTY_ALREADY_ENGAGED,
                 ex.getMessage(),
                 request.getRequestURI()
         );

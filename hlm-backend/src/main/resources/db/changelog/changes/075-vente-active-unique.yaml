@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 075-vente-active-unique
+      author: yem
+      comment: >
+        RG-B03 — a property may have at most one active (non-cancelled) vente.
+        Partial unique index is the concurrency-safe backstop for the application
+        guard in VenteService.create(). Excludes ANNULE so a cancelled sale frees
+        the property for a new one. NOTE: if pre-existing data contains duplicate
+        active ventes on the same property (legacy bug before this fix), this
+        changeset will fail — dedupe those rows manually first.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              CREATE UNIQUE INDEX IF NOT EXISTS uk_vente_active_property
+              ON vente (property_id)
+              WHERE statut <> 'ANNULE';
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS uk_vente_active_property;

@@ -194,6 +194,14 @@ public class VenteService {
                 request.dateLivraisonPrevue()
         );
 
+        // RG-B03: a property may have at most one active (non-cancelled) vente at a time.
+        // The DB partial unique index (changeset 075) is the concurrency-safe backstop;
+        // this guard gives a clean 409 with an actionable message.
+        if (venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(
+                societeId, property.getId(), VenteStatut.ANNULE)) {
+            throw new PropertyAlreadyEngagedException(property.getId());
+        }
+
         // Property must be ACTIVE or RESERVED to start a vente.
         // If ACTIVE (direct creation path), reserve it now.
         // If already RESERVED (from deposit/reservation workflow), keep it RESERVED.
