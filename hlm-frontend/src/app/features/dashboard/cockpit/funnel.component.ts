@@ -40,13 +40,17 @@ import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
               </div>
               @if (i > 0) {
                 <div class="funnel-step-meta">
-                  @if (stage.conversionRate != null) {
+                  @if (stage.conversionRate != null && stage.conversionRate >= 0 && stage.conversionRate <= 100) {
                     <span class="funnel-conv"
                           [class.funnel-conv-good]="stage.conversionRate >= 50"
                           [class.funnel-conv-warn]="stage.conversionRate < 25">
-                      {{ stage.conversionRate }}% convertis
+                      {{ stage.conversionRate | number:'1.0-0' }}% convertis
                     </span>
-                    <span class="funnel-drop">−{{ stage.dropOffRate }}% perdus</span>
+                    <span class="funnel-drop">−{{ stage.dropOffRate | number:'1.0-0' }}% perdus</span>
+                  } @else if (stage.conversionRate != null) {
+                    <!-- Later stage exceeds the earlier one (e.g. cumulative "Livrés"
+                         vs point-in-time pipeline): not a valid sequential rate. -->
+                    <span class="funnel-empty" title="Étape cumulative — non comparable à l'étape précédente">cumul — non comparable</span>
                   } @else {
                     <span class="funnel-empty">Pas de référence amont</span>
                   }
