@@ -99,6 +99,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
     return this.auth.user?.role === 'ROLE_ADMIN';
   }
 
+  /** True for CRM users allowed to upload/replace the 3D model (ADMIN or MANAGER). */
+  get canManageModel(): boolean {
+    const role = this.auth.user?.role;
+    return role === 'ROLE_ADMIN' || role === 'ROLE_MANAGER';
+  }
+
   ngOnInit(): void {
     this.projetId = this.projetIdInput ?? this.route.snapshot.params['projetId'];
     const modelObs = this.portalMode

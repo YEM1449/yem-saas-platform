@@ -31,7 +31,15 @@
   <!-- ── No model state (admin upload) ────────────────────────────────────── -->
   @if (state() === 'no-model') {
     <div class="viewer-overlay no-model-state" data-testid="viewer-no-model">
-      <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
+      @if (canManageModel) {
+        <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
+      } @else {
+        <div class="no-model-info" role="status">
+          <div class="no-model-icon" aria-hidden="true">🏗️</div>
+          <p class="no-model-title">Aucun modèle 3D configuré</p>
+          <p class="no-model-hint">La maquette 3D de ce projet n'est pas encore disponible. Contactez un administrateur pour la téléverser.</p>
+        </div>
+      }
     </div>
   }
 
