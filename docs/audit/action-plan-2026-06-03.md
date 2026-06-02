@@ -1,0 +1,97 @@
+# PLAN D'ACTION — YEM HLM POST-AUDIT 2026-06-03
+
+Source : `docs/audit/audit-report-2026-06-03.md`. Chaque item a ID, sévérité, effort, fichiers, priorité.
+
+## CRITÈRES DE PRIORISATION
+- **P0** = Sécurité / intégrité des données : corriger avant tout déploiement.
+- **P1** = Fonctionnel bloquant : le pipeline commercial ne peut pas être fiable sans.
+- **P2** = Qualité importante : prochaine Wave.
+- **P3** = Amélioration : backlog technique.
+
+Effort : XS=<2h, S=<1j, M=<3j, L=<1sem, XL=>1sem.
+
+---
+
+## PHASE A — URGENT (P0) — sous 48h
+
+| # | Faille | Action | Fichiers impactés | Durée | Changeset |
+|---|--------|--------|-------------------|-------|-----------|
+| A-001 | F-001 RG-B03 non appliquée | Appeler `existsBySocieteIdAndPropertyIdAndStatutNot` en tête de `create()` → 409 `PROPERTY_ALREADY_ENGAGED` si une vente non-ANNULE existe pour le bien | `vente/service/VenteService.java`, `common/error/ErrorCode.java`, `GlobalExceptionHandler.java` | S | — |
+| A-002 | F-001 (filet base) | Index unique partiel anti double-vente | `075-vente-active-unique.yaml` : `CREATE UNIQUE INDEX uk_vente_active_property ON vente(property_id) WHERE statut <> 'ANNULE'` | XS | **075** |
+
+> Note : A-001 et A-002 sont complémentaires (garde applicative lisible + garantie base contre les races concurrentes).
+
+---
+
+## PHASE B — CRITIQUE (P1) — Wave 16 (en cours)
+
+| # | Faille | Action | Fichiers impactés | Durée | Changeset |
+|---|--------|--------|-------------------|-------|-----------|
+| B-001 | F-002 Vente non testée | `VenteServiceTest` : transitions valides/invalides (→409), double-vente (→409), avancement contact ACTIVE/COMPLETED, bascule bien SOLD@ACTE_NOTARIE / release@ANNULE | `vente/VenteServiceTest.java` | M | — |
+| B-002 | F-002 Vente non testée (IT) | `VenteControllerIT` : RBAC par rôle, cross-société → 404, 409 double-vente, `PATCH /{id}/statut` machine à états | `vente/VenteControllerIT.java` | M | — |
+| B-003 | F-010 Fallback 3D | Vérifier/implémenter l'état « projet sans modèle 3D » (RG-E10) ; ajouter `model-no-config` + `color-legend` ou confirmer le fallback inline | `modules/viewer-3d/components/` | S | — |
+
+---
+
+## PHASE C — IMPORTANT (P2) — Wave 17
+
+| # | Faille | Action | Fichiers impactés | Durée |
+|---|--------|--------|-------------------|-------|
+| C-001 | F-003 403/404 incohérent | Trancher la sémantique cross-société : convertir `CrossSocieteAccessException` → 404 (non-divulgation) **ou** documenter pourquoi 403 ; aligner les IT | `GlobalExceptionHandler.java`, IT d'isolation | XS |
+| C-002 | F-004 GLB non validé | Validation binaire serveur : Range request R2 octets 0–11 (magic `glTF`), parse chunk JSON pour `KHR_draco_mesh_compression` | `viewer3d/service/Project3dService.java` | S |
+| C-003 | F-006 Listes non paginées | Introduire `Pageable`/`Page<T>` sur les ~36 endpoints `List<>` (commencer par contacts/ventes/properties) | `*Controller.java` | M |
+| C-004 | F-005 Services non testés | Couvrir en priorité `ReservationService`, `ProjectGenerationService`, `AuthService`, `QuotaService` | `src/test/.../*Test.java` | L |
+| C-005 | F-008 Subscriptions | Auditer les composants longue durée (polling, 3D, shell) → `takeUntilDestroyed` systématique | `core/`, `features/`, `modules/viewer-3d/` | M |
+| C-006 | F-011 Front non testé | Specs unitaires sur services core (auth, vente, reservation) + guards | `*.spec.ts` | L |
+
+---
+
+## PHASE D — BACKLOG (P3)
+
+| # | Item | Description | Bénéfice | Effort |
+|---|------|-------------|----------|--------|
+| D-001 | F-007 | Migrer les 2 derniers `*ngIf`/`*ngFor` → `@if`/`@for` | Cohérence Angular 19 | XS |
+| D-002 | F-009 | Remplacer les 232 `style=` inline par classes/tokens | Design system | M |
+| D-003 | F-012 | Décider d'une stratégie soft-delete pour les entités à piste d'audit GDPR | Conformité/traçabilité | M |
+| D-004 | F-013 | Purger/rafraîchir les fichiers `.X-state` périmés ou les retirer du repo | Clarté | XS |
+| D-005 | F-014 | Corriger les chemins divergents dans la doc/prompts (changelog, docs/ai, guides) | DX | XS |
+| D-006 | F-015 | Workflow CD (Render/Cloudflare) + job lint distinct | Automatisation | S |
+
+---
+
+## TESTS À CRÉER
+
+### Backend — scénarios critiques manquants
+| Scénario | Fichier test | Assertion clé | Priorité |
+|----------|-------------|---------------|----------|
+| 2ᵉ vente sur bien déjà engagé → 409 | `VenteServiceTest` / `VenteControllerIT` | `assertThrows(...Conflict...)` / `status().isConflict()` | **P0** |
+| Transition invalide (ex. COMPROMIS→LIVRE) → 409 | `VenteServiceTest` | `InvalidVenteTransitionException` | P1 |
+| Prix modifié après acompte → 422 (RG-B07) | `VenteServiceTest` | statut 422 / exception dédiée | P1 |
+| Annulation vente → statut contact recalculé (RG-B10) | `VenteServiceTest` | contact.statut recalculé | P1 |
+| Accès vente cross-société → 404 | `VenteControllerIT` | `status().isNotFound()` | P1 |
+
+### Playwright E2E — parcours manquants
+| Parcours | Fichier spec | Rôle | Priorité |
+|----------|-------------|------|----------|
+| Agent → réserver bien → panneau s'ouvre | `vente-flow.spec.ts` | AGENT | P1 |
+| Acquéreur → Viewer 3D → son bien surligné | `viewer-3d.spec.ts` (étendre) | PORTAL | P1 |
+| Admin → upload GLB → mapping mesh | `model-upload.spec.ts` | ADMIN | P2 |
+
+---
+
+## DETTE TECHNIQUE (BACKLOG)
+Fonctionnels mais à refactorer avant montée à l'échelle : pagination des listes (C-003), gardes de subscriptions (C-005), inline styles (D-002), stratégie soft-delete (D-003), CD automatisé (D-006).
+
+---
+
+## MÉTRIQUES CIBLES POST-CORRECTION
+
+| Indicateur | Actuel | Cible Wave 17 |
+|------------|--------|----------------|
+| Endpoints sans filtre société | 0 (RLS + requireSocieteId) | 0 |
+| Garde RG-B03 (double-vente) | ❌ absente | ✅ appli + index |
+| `VenteService` testé | ❌ 0 | ✅ unit + IT |
+| Services sans test | 54/64 | < 30/64 |
+| Scénarios E2E critiques couverts | partiels | 100 % pipeline |
+| Subscriptions non gardées | 222 | 0 (longue durée) |
+| Endpoints `List<>` non paginés | ~36 | < 10 |
