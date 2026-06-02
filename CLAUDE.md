@@ -279,7 +279,7 @@ Floor-stack building view embedded in project detail as a tab. No new DB changes
 - SOLD → Vendu (solid dark #1e293b)
 - WITHDRAWN / ARCHIVED → Retiré (gray diagonal hatch)
 
-**Absorption formula**: `(SOLD + RESERVED) / (total − DRAFT) × 100`
+**Absorption formula** (canonical, single source of truth — frontend `core/utils/absorption.ts`, matches backend `HomeDashboardDTO`): `SOLD / (ACTIVE + RESERVED + SOLD) × 100`. Used by project cards, project Aperçu headline, building view, and the dashboard anchor. (Was previously `(SOLD + RESERVED) / (total − DRAFT)` in the building view — unified 2026-06-02.)
 
 **Data flow**: `forkJoin(tranches, immeubles)` on init → filter immeubles by `trancheId` → `PropertyService.list({ immeubleId })` on building select → `groupBy(floorNumber)` → floors sorted descending.
 

@@ -23,6 +23,7 @@ import { InventoryIntelligenceComponent } from './cockpit/inventory-intelligence
 import { DiscountAnalyticsComponent } from './cockpit/discount-analytics.component';
 import { InsightsPanelComponent } from './cockpit/insights-panel.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { KPI_TARGETS, toneFor } from '../../core/config/kpi-targets';
 
 /** One actionable line in the director's morning triage worklist. */
 interface DayPriority {
@@ -234,6 +235,86 @@ export class HomeDashboardComponent implements OnInit {
     const rank = { critical: 0, warning: 1, info: 2 };
     return out.sort((a, b) => rank[a.severity] - rank[b.severity]);
   }
+
+  /** Agent worklist — their own tasks and reservations, not société financials. */
+  agentPriorities(): DayPriority[] {
+    const s = this.snap();
+    if (!s) return [];
+    const out: DayPriority[] = [];
+
+    if (s.overdueTasksCount > 0) {
+      out.push({
+        severity: 'critical', icon: '⏰',
+        text: `${s.overdueTasksCount} tâche${s.overdueTasksCount > 1 ? 's' : ''} en retard`,
+        cta: 'Traiter',
+        nav: () => this.router.navigate(['/app/tasks']),
+      });
+    }
+    if (s.tasksDueTodayCount > 0) {
+      out.push({
+        severity: 'warning', icon: '✅',
+        text: `${s.tasksDueTodayCount} tâche${s.tasksDueTodayCount > 1 ? 's' : ''} à faire aujourd’hui`,
+        cta: 'Voir',
+        nav: () => this.router.navigate(['/app/tasks']),
+      });
+    }
+    if (s.reservationsExpirantBientot > 0) {
+      out.push({
+        severity: 'warning', icon: '⌛',
+        text: `${s.reservationsExpirantBientot} réservation${s.reservationsExpirantBientot > 1 ? 's' : ''} expire${s.reservationsExpirantBientot > 1 ? 'nt' : ''} bientôt`,
+        cta: 'Relancer',
+        nav: () => this.router.navigate(['/app/reservations']),
+      });
+    }
+
+    if (out.length === 0) {
+      out.push({ severity: 'info', icon: '✓', text: 'Vous êtes à jour — aucune action en attente', cta: '', nav: () => {} });
+    }
+    const rank = { critical: 0, warning: 1, info: 2 };
+    return out.sort((a, b) => rank[a.severity] - rank[b.severity]);
+  }
+
+  /** Role-appropriate worklist for the Synthèse landing. */
+  priorities(): DayPriority[] {
+    return this.isAdminOrManager ? this.dayPriorities() : this.agentPriorities();
+  }
+
+  // ── Sales Director cockpit (Commercial tab) ───────────────────────────────
+  salesPipelineWeighted(): number { return this.pipelineData()?.totalWeightedValue ?? 0; }
+  salesForecast30(): number { return this.forecastData()?.next30Days ?? 0; }
+  salesAtRiskCount(): number { return this.pipelineData()?.atRiskDeals?.length ?? 0; }
+  salesAtRiskValue(): number {
+    return (this.pipelineData()?.atRiskDeals ?? []).reduce((s, d) => s + (d.weightedValue || 0), 0);
+  }
+  /** Stalled deals, oldest first — the Sales Director's intervention list. */
+  salesAtRiskList() {
+    return [...(this.pipelineData()?.atRiskDeals ?? [])]
+      .sort((a, b) => b.agingDays - a.agingDays)
+      .slice(0, 5);
+  }
+  /** Overall funnel conversion: last stage / first stage ×100. */
+  salesFunnelConversion(): number | null {
+    const stages = this.funnelData()?.stages ?? [];
+    if (stages.length < 2) return null;
+    const first = stages[0].count;
+    const last = stages[stages.length - 1].count;
+    return first > 0 ? Math.round((last / first) * 100) : null;
+  }
+
+  // ── CEO / Direction cockpit (Dirigeant tab) ───────────────────────────────
+  quotaTone(): string        { return toneFor(this.snap()?.quotaAttainmentMtdPct, KPI_TARGETS.quotaAttainmentPct); }
+  cancellationTone(): string { return toneFor(this.snap()?.cancellationRate90d, KPI_TARGETS.cancellationPct); }
+  ceoAbsorptionTone(): string { return toneFor(this.snap()?.tauxAbsorption, KPI_TARGETS.absorptionPct); }
+  /** Projects dragging the portfolio — below the absorption target, worst first. */
+  ceoUnderperformingProjects() {
+    return (this.inventoryData()?.byProject ?? [])
+      .filter(p => p.total >= 5 && p.absorptionRate != null && p.absorptionRate < KPI_TARGETS.absorptionPct.target)
+      .sort((a, b) => (a.absorptionRate ?? 0) - (b.absorptionRate ?? 0))
+      .slice(0, 5);
+  }
+  readonly ABSORPTION_TARGET = KPI_TARGETS.absorptionPct.target;
+  readonly QUOTA_TARGET = KPI_TARGETS.quotaAttainmentPct.target;
+  readonly CANCELLATION_TARGET = KPI_TARGETS.cancellationPct.target;
 
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';

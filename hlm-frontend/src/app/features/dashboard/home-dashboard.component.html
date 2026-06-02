@@ -223,15 +223,17 @@
        PRIORITÉS DU JOUR — director triage worklist (leads the view).
        Synthesised, one-click-actionable; not another KPI grid.
        ════════════════════════════════════════════════════════════ -->
-  @if (isAdminOrManager && dayPriorities().length > 0) {
+  @if (priorities().length > 0) {
     <section class="priorities-band" aria-label="Priorités du jour">
       <h2 class="priorities-title">Ce qui demande votre attention</h2>
       <ul class="priorities-list">
-        @for (p of dayPriorities(); track p.text) {
+        @for (p of priorities(); track p.text) {
           <li class="priority-row priority-{{ p.severity }}">
             <span class="priority-icon" aria-hidden="true">{{ p.icon }}</span>
             <span class="priority-text">{{ p.text }}</span>
-            <button class="priority-cta" (click)="p.nav()">{{ p.cta }} →</button>
+            @if (p.cta) {
+              <button class="priority-cta" (click)="p.nav()">{{ p.cta }} →</button>
+            }
           </li>
         }
       </ul>
@@ -280,6 +282,53 @@
   } <!-- end synthese tab -->
 
   @if (activeTab === 'dirigeant') {
+
+  <!-- ── Cockpit Direction — atteinte du plan, risque, portefeuille ────
+       The 4 KPIs the CEO acts on, each vs target, then the projects
+       dragging the portfolio (below the absorption target). -->
+  <section class="ceo-cockpit">
+    <div class="ceo-kpis">
+      <div class="ceo-kpi" [attr.data-tone]="quotaTone()">
+        <div class="ceo-kpi-val">{{ s.quotaAttainmentMtdPct != null ? (s.quotaAttainmentMtdPct | number:'1.0-0') + '%' : '—' }}</div>
+        <div class="ceo-kpi-lbl">Atteinte de l'objectif (mois)</div>
+        <div class="ceo-kpi-target">{{ formatAmount(s.caSigneMoisCourant) }}@if (s.caMensuelCible) { / {{ formatAmount(s.caMensuelCible) }} }</div>
+      </div>
+      <div class="ceo-kpi" [attr.data-tone]="cancellationTone()">
+        <div class="ceo-kpi-val">{{ s.cancellationRate90d != null ? (s.cancellationRate90d | number:'1.0-1') + '%' : '—' }}</div>
+        <div class="ceo-kpi-lbl">Taux d'annulation (90 j)</div>
+        <div class="ceo-kpi-target">Cible ≤ {{ CANCELLATION_TARGET }} %</div>
+      </div>
+      <div class="ceo-kpi" [attr.data-tone]="ceoAbsorptionTone()">
+        <div class="ceo-kpi-val">{{ s.tauxAbsorption != null ? (s.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
+        <div class="ceo-kpi-lbl">Absorption du portefeuille</div>
+        <div class="ceo-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} %</div>
+      </div>
+      <div class="ceo-kpi" data-tone="neutral">
+        <div class="ceo-kpi-val">{{ formatAmount(s.encaisseMoisCourant) }}</div>
+        <div class="ceo-kpi-lbl">Encaissé (mois)</div>
+        <div class="ceo-kpi-target">trésorerie recouvrée</div>
+      </div>
+    </div>
+
+    @if (ceoUnderperformingProjects().length > 0) {
+      <div class="ceo-actions">
+        <div class="ceo-actions-head">
+          <span class="ceo-actions-title">Projets sous la cible d'absorption</span>
+          <span class="ceo-actions-note">Cible ≥ {{ ABSORPTION_TARGET }} %</span>
+        </div>
+        <ul class="ceo-projects">
+          @for (p of ceoUnderperformingProjects(); track p.projectId) {
+            <li class="ceo-project-row">
+              <span class="ceo-project-name">{{ p.projectName }}</span>
+              <span class="ceo-project-abs">{{ p.absorptionRate | number:'1.0-1' }} %</span>
+              <span class="ceo-project-ctx">{{ p.available }}/{{ p.total }} dispo</span>
+              <a [routerLink]="['/app/projects', p.projectId]" class="ceo-project-cta">Ouvrir →</a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </section>
 
   <!-- Portfolio & Inventory Value KPIs -->
   @if (salesIntelData()) {
@@ -816,6 +865,56 @@
   } <!-- end dirigeant tab -->
 
   @if (activeTab === 'commercial') {
+
+  <!-- ── Cockpit Directeur des Ventes — pipeline, prévision, risque ────
+       Lead with the 4 KPIs the Sales Director acts on, then the stalled-deal
+       intervention worklist. -->
+  @if (bundle()) {
+    <section class="sd-cockpit">
+      <div class="sd-kpis">
+        <div class="sd-kpi" data-tone="neutral">
+          <div class="sd-kpi-val">{{ formatAmount(salesPipelineWeighted()) }}</div>
+          <div class="sd-kpi-lbl">Pipeline pondéré</div>
+          <div class="sd-kpi-target">probabilisé par étape</div>
+        </div>
+        <div class="sd-kpi" data-tone="neutral">
+          <div class="sd-kpi-val">{{ formatAmount(salesForecast30()) }}</div>
+          <div class="sd-kpi-lbl">Prévision 30 jours</div>
+          <div class="sd-kpi-target">clôtures attendues</div>
+        </div>
+        <div class="sd-kpi" [attr.data-tone]="salesAtRiskCount() > 0 ? 'bad' : 'good'">
+          <div class="sd-kpi-val">{{ salesAtRiskCount() }}</div>
+          <div class="sd-kpi-lbl">Affaires à risque</div>
+          <div class="sd-kpi-target">{{ formatAmount(salesAtRiskValue()) }} pondéré</div>
+        </div>
+        <div class="sd-kpi" data-tone="neutral">
+          <div class="sd-kpi-val">{{ salesFunnelConversion() !== null ? salesFunnelConversion() + '%' : '—' }}</div>
+          <div class="sd-kpi-lbl">Conversion entonnoir</div>
+          <div class="sd-kpi-target">prospect → vente</div>
+        </div>
+      </div>
+
+      @if (salesAtRiskList().length > 0) {
+        <div class="sd-actions">
+          <div class="sd-actions-head">
+            <span class="sd-actions-title">Affaires à relancer — sans progression</span>
+            <a routerLink="/app/ventes" class="sd-actions-link">Toutes les ventes →</a>
+          </div>
+          <ul class="sd-risk">
+            @for (d of salesAtRiskList(); track d.venteId) {
+              <li class="sd-risk-row">
+                <span class="sd-risk-ref">{{ d.venteRef }}</span>
+                <span class="sd-risk-name">{{ d.contactFullName }}</span>
+                <span class="sd-risk-age">{{ d.agingDays }} j</span>
+                <span class="sd-risk-amt">{{ formatAmount(d.prixVente) }}</span>
+                <a [routerLink]="['/app/ventes', d.venteId]" class="sd-risk-cta">Ouvrir →</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+  }
 
   <!-- ════════════════════════════════════════════════════════════
        COMMERCIAL — Sales performance full view

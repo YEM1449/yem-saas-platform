@@ -299,3 +299,53 @@
   flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Commercial Director cockpit — decision KPIs vs target + leak worklist ── */
+.cd-cockpit { margin-bottom: 20px; }
+.cd-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+}
+.cd-kpi {
+  padding: 16px 18px;
+  border-right: 1px solid var(--c-border, #e2e8f0);
+  border-top: 3px solid var(--c-border-strong, #cbd5e1);
+}
+.cd-kpi:last-child { border-right: none; }
+.cd-kpi[data-tone="good"]    { border-top-color: var(--c-success, #16a34a); }
+.cd-kpi[data-tone="mid"]     { border-top-color: var(--c-warning, #d97706); }
+.cd-kpi[data-tone="bad"]     { border-top-color: var(--c-danger, #dc2626); }
+.cd-kpi[data-tone="neutral"] { border-top-color: var(--c-border-strong, #cbd5e1); }
+.cd-kpi-val { font-size: 1.55rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.cd-kpi[data-tone="bad"] .cd-kpi-val  { color: var(--c-danger, #dc2626); }
+.cd-kpi[data-tone="good"] .cd-kpi-val { color: var(--c-success, #16a34a); }
+.cd-kpi-lbl { font-size: 0.82rem; font-weight: 600; color: var(--c-text-secondary, #475569); margin-top: 4px; }
+.cd-kpi-target { font-size: 0.72rem; color: var(--c-text-muted, #94a3b8); margin-top: 2px; }
+
+.cd-actions {
+  margin-top: 12px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  padding: 14px 18px;
+}
+.cd-actions-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.cd-actions-title { font-size: 0.9rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.cd-actions-note { font-size: 0.75rem; color: var(--c-text-muted, #94a3b8); }
+.cd-leak { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.cd-leak-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 6px; }
+.cd-leak-row:nth-child(odd) { background: var(--c-neutral-50, #f8fafc); }
+.cd-leak-name { flex: 1; min-width: 0; font-size: 0.875rem; color: var(--c-text, #0f172a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-leak-pct { font-size: 0.875rem; font-weight: 700; color: var(--c-danger, #dc2626); white-space: nowrap; }
+.cd-leak-ctx { font-size: 0.78rem; color: var(--c-text-muted, #94a3b8); white-space: nowrap; }
+.cd-leak-cta { font-size: 0.78rem; font-weight: 600; color: var(--c-primary, #16a34a); text-decoration: none; white-space: nowrap; }
+.cd-leak-cta:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .cd-kpi { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+}

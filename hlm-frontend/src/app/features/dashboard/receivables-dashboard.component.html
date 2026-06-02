@@ -49,6 +49,54 @@
   }
 
   @if (!loading && !error && data) {
+
+    <!-- ── Cockpit Finance — decisions, not just totals ──────────────
+         Lead with the 4 KPIs the Finance Director acts on, each vs target,
+         then the prioritized dunning worklist (the action for rising DSO). -->
+    <section class="fin-cockpit">
+      <div class="fin-kpis">
+        <div class="fin-kpi" [attr.data-tone]="collectionTone()">
+          <div class="fin-kpi-val">{{ formatPct(data.collectionRate) }}</div>
+          <div class="fin-kpi-lbl">Taux de recouvrement</div>
+          <div class="fin-kpi-target">Cible ≥ {{ COLLECTION_TARGET }} %</div>
+        </div>
+        <div class="fin-kpi" [attr.data-tone]="dsoTone()">
+          <div class="fin-kpi-val">{{ data.avgDaysToPayment !== null ? data.avgDaysToPayment + ' j' : '—' }}</div>
+          <div class="fin-kpi-lbl">DSO — délai d’encaissement</div>
+          <div class="fin-kpi-target">Cible ≤ {{ DSO_TARGET }} j</div>
+        </div>
+        <div class="fin-kpi" [attr.data-tone]="data.totalOverdue > 0 ? 'bad' : 'good'">
+          <div class="fin-kpi-val">{{ formatAmount(data.totalOverdue) }}</div>
+          <div class="fin-kpi-lbl">Impayés en retard</div>
+          <div class="fin-kpi-target">{{ overdueShare() }}</div>
+        </div>
+        <div class="fin-kpi" data-tone="neutral">
+          <div class="fin-kpi-val">{{ formatAmount(data.totalOutstanding) }}</div>
+          <div class="fin-kpi-lbl">Encours total</div>
+          <div class="fin-kpi-target">à recouvrer</div>
+        </div>
+      </div>
+
+      @if (topDebtors().length > 0) {
+        <div class="fin-actions">
+          <div class="fin-actions-head">
+            <span class="fin-actions-title">Relances prioritaires</span>
+            <a routerLink="/app/reports/creances" class="fin-actions-link">Rapport créances →</a>
+          </div>
+          <ul class="fin-debtors">
+            @for (d of topDebtors(); track d.projectId) {
+              <li class="fin-debtor">
+                <span class="fin-debtor-name">{{ d.projectName }}</span>
+                <span class="fin-debtor-amt">{{ formatAmount(d.overdueAmount) }}</span>
+                <a [routerLink]="['/app/reports/creances']" [queryParams]="{ projectId: d.projectId }"
+                   class="fin-debtor-cta">Relancer →</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+
     <p class="as-of">{{ 'dashboard.commercial.asOf' | translate }} {{ data.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
 
     <!-- KPI cards -->

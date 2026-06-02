@@ -21,6 +21,7 @@ import {
   DashboardParams,
 } from '../../core/models/commercial-dashboard.model';
 import { Project } from '../../core/models/project.model';
+import { KPI_TARGETS, toneFor } from '../../core/config/kpi-targets';
 
 // Register only what we use
 Chart.register(BarController, BarElement, CategoryScale, LinearScale,
@@ -334,5 +335,25 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
   formatPct(value: number | null | undefined): string {
     if (value == null) return '—';
     return (value * 100).toFixed(1) + '%';
+  }
+
+  // ── Commercial Director cockpit — decision KPIs vs target ────────────────
+  // Targets come from the shared KPI registry (core/config/kpi-targets).
+  readonly ABSORPTION_TARGET = KPI_TARGETS.absorptionPct.target;
+  readonly DISCOUNT_TARGET = KPI_TARGETS.discountPct.target;
+  readonly CONVERSION_TARGET = KPI_TARGETS.conversionPct.target;
+
+  /** tauxAbsorption is on a 0–100 scale. */
+  absorptionTone(v: number | null): string { return toneFor(v, KPI_TARGETS.absorptionPct); }
+  /** avgDiscountPercent is 0–100; lower is better. */
+  discountTone(v: number | null): string { return toneFor(v, KPI_TARGETS.discountPct); }
+  /** conversionDepositToSaleRate is a 0–1 fraction → convert to % for the registry. */
+  conversionTone(v: number | null): string { return toneFor(v == null ? null : v * 100, KPI_TARGETS.conversionPct); }
+  /** Agents discounting above the target — the leakage worklist. */
+  topDiscounters() {
+    return (this.summary?.discountByAgent ?? [])
+      .filter(r => r.avgDiscountPercent > this.DISCOUNT_TARGET)
+      .sort((a, b) => b.avgDiscountPercent - a.avgDiscountPercent)
+      .slice(0, 5);
   }
 }

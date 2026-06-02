@@ -37,7 +37,7 @@
       <span class="chip-dot dot-withdrawn"></span>Retiré <strong>{{ stats.retire }}</strong>
     </button>
     <div class="bv-legend-sep"></div>
-    <span class="bv-absorption">Absorption&nbsp;: <strong>{{ stats.absorption }}%</strong></span>
+    <span class="bv-absorption">Absorption&nbsp;: <strong>{{ stats.absorption | number:'1.0-1' }}%</strong></span>
   </div>
 
   <!-- ── Tranche pager ─────────────────────────────────────────── -->
