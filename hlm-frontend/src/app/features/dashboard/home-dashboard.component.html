@@ -304,10 +304,11 @@
         <div class="ceo-kpi-lbl">Taux d'annulation (90 j)</div>
         <div class="ceo-kpi-target">Cible ≤ {{ CANCELLATION_TARGET }} %</div>
       </div>
-      <div class="ceo-kpi" [attr.data-tone]="ceoAbsorptionTone()">
+      <div class="ceo-kpi" [attr.data-tone]="ceoAbsorptionTone()"
+           title="Part vendue à l'acte notarié (clôture commerciale)">
         <div class="ceo-kpi-val">{{ s.tauxAbsorption != null ? (s.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
         <div class="ceo-kpi-lbl">Absorption du portefeuille</div>
-        <div class="ceo-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} %</div>
+        <div class="ceo-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} % · vendu à l'acte</div>
       </div>
       <div class="ceo-kpi" data-tone="neutral">
         <div class="ceo-kpi-val">{{ formatAmount(s.encaisseMoisCourant) }}</div>
@@ -334,6 +335,34 @@
         </ul>
       </div>
     }
+  </section>
+
+  <!-- ── Tunnel de valeur — les 3 clôtures du cycle de vente ──────────
+       en cours (signature) → acté (clôture commerciale) → livré (clôture livraison). -->
+  <section class="value-tunnel">
+    <div class="vt-head">
+      <span class="vt-title">Tunnel de valeur</span>
+      <span class="vt-note">de la signature à la livraison</span>
+    </div>
+    <div class="vt-stages">
+      <div class="vt-stage" title="Compromis + financement — pas encore acté">
+        <div class="vt-amt">{{ formatAmount(caEnCours()) }}</div>
+        <div class="vt-lbl">CA en cours</div>
+        <div class="vt-sub">compromis · financement</div>
+      </div>
+      <span class="vt-arrow" aria-hidden="true">→</span>
+      <div class="vt-stage vt-acte" title="Acte notarié signé, non encore livré — clôture commerciale (= base de l'absorption)">
+        <div class="vt-amt">{{ formatAmount(caActe()) }}</div>
+        <div class="vt-lbl">CA acté</div>
+        <div class="vt-sub">acte notarié · clôture commerciale</div>
+      </div>
+      <span class="vt-arrow" aria-hidden="true">→</span>
+      <div class="vt-stage vt-livre" title="Livré — clôture livraison (= CA réalisé)">
+        <div class="vt-amt">{{ formatAmount(s.caLivre) }}</div>
+        <div class="vt-lbl">CA livré</div>
+        <div class="vt-sub">livraison · réalisé</div>
+      </div>
+    </div>
   </section>
 
   <!-- Portfolio & Inventory Value KPIs -->

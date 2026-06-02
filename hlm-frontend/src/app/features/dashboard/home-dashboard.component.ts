@@ -316,6 +316,17 @@ export class HomeDashboardComponent implements OnInit {
   readonly QUOTA_TARGET = KPI_TARGETS.quotaAttainmentPct.target;
   readonly CANCELLATION_TARGET = KPI_TARGETS.cancellationPct.target;
 
+  // ── Tunnel de valeur — les 3 clôtures du cycle (depuis pipelineData) ──────
+  // CA en cours (signature) → CA acté (clôture commerciale, acte notarié)
+  //                         → CA livré (clôture livraison, réalisé).
+  private stageRaw(statut: string): number {
+    return (this.pipelineData()?.stages ?? []).find(st => st.statut === statut)?.rawValue ?? 0;
+  }
+  /** Valeur des ventes encore au compromis/financement (pas encore actées). */
+  caEnCours(): number { return this.stageRaw('COMPROMIS') + this.stageRaw('FINANCEMENT'); }
+  /** Valeur actée (acte notarié signé) mais pas encore livrée — clôture commerciale. */
+  caActe(): number { return this.stageRaw('ACTE_NOTARIE'); }
+
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';
     return this.formatAmount(d.previous);
