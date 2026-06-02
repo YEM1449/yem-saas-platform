@@ -7,6 +7,7 @@ import { ImmeubleService, Immeuble } from '../../immeubles/immeuble.service';
 import { PropertyService } from '../../properties/property.service';
 import { TrancheService, Tranche } from '../tranche.service';
 import { Property } from '../../../core/models/property.model';
+import { absorptionRate } from '../../../core/utils/absorption';
 
 interface FloorRow {
   number: number;
@@ -127,10 +128,10 @@ export class BuildingViewComponent implements OnInit {
     const b   = props.filter(p => p.status === 'DRAFT').length;
     const ret = props.filter(p => p.status === 'WITHDRAWN' || p.status === 'ARCHIVED').length;
     const total = props.length;
-    const stock = total - b;
     this.stats = {
       disponible: d, reserve: r, vendu: v, brouillon: b, retire: ret, total,
-      absorption: stock > 0 ? Math.round((v + r) / stock * 100) : 0,
+      // Canonical absorption (sold / commercialised) — see core/utils/absorption.
+      absorption: absorptionRate(d, r, v) ?? 0,
     };
 
     const byFloor = new Map<number, Property[]>();

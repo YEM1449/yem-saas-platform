@@ -46,6 +46,54 @@
   @if (error) { <div class="alert alert-error">{{ error }}</div> }
 
   @if (!loading && !error && summary) {
+
+    <!-- ── Cockpit Directeur Commercial — decisions vs cible ────────────
+         Absorption, fuite sur remises, pipeline, conversion — each vs its
+         target; then the action worklist (agents au-dessus de la cible de remise). -->
+    <section class="cd-cockpit">
+      <div class="cd-kpis">
+        <div class="cd-kpi" [attr.data-tone]="absorptionTone(summary.tauxAbsorption)">
+          <div class="cd-kpi-val">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
+          <div class="cd-kpi-lbl">Taux d'absorption</div>
+          <div class="cd-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} % · {{ summary.stockCommercialise }} commercialisés</div>
+        </div>
+        <div class="cd-kpi" [attr.data-tone]="discountTone(summary.avgDiscountPercent)">
+          <div class="cd-kpi-val">{{ summary.avgDiscountPercent != null ? (summary.avgDiscountPercent | number:'1.0-1') + '%' : '—' }}</div>
+          <div class="cd-kpi-lbl">Remise moyenne</div>
+          <div class="cd-kpi-target">Cible ≤ {{ DISCOUNT_TARGET }} %@if (summary.maxDiscountPercent != null) { · max {{ summary.maxDiscountPercent | number:'1.0-1' }} % }</div>
+        </div>
+        <div class="cd-kpi" data-tone="neutral">
+          <div class="cd-kpi-val">{{ formatAmount(summary.caActivePipeline) }}</div>
+          <div class="cd-kpi-lbl">Pipeline actif</div>
+          <div class="cd-kpi-target">valeur en cours de signature</div>
+        </div>
+        <div class="cd-kpi" [attr.data-tone]="conversionTone(summary.conversionDepositToSaleRate)">
+          <div class="cd-kpi-val">{{ formatPct(summary.conversionDepositToSaleRate) }}</div>
+          <div class="cd-kpi-lbl">Conversion dépôt → vente</div>
+          <div class="cd-kpi-target">Cible ≥ {{ CONVERSION_TARGET }} %</div>
+        </div>
+      </div>
+
+      @if (topDiscounters().length > 0) {
+        <div class="cd-actions">
+          <div class="cd-actions-head">
+            <span class="cd-actions-title">Fuite sur remises — au-dessus de la cible</span>
+            <span class="cd-actions-note">Cible ≤ {{ DISCOUNT_TARGET }} %</span>
+          </div>
+          <ul class="cd-leak">
+            @for (r of topDiscounters(); track r.agentId) {
+              <li class="cd-leak-row">
+                <span class="cd-leak-name">{{ r.agentEmail }}</span>
+                <span class="cd-leak-pct">{{ r.avgDiscountPercent | number:'1.0-1' }} %</span>
+                <span class="cd-leak-ctx">{{ r.salesCount }} vente{{ r.salesCount > 1 ? 's' : '' }}</span>
+                <a [routerLink]="['/app/ventes']" [queryParams]="{ agentId: r.agentId }" class="cd-leak-cta">Voir →</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+
     <p class="as-of">{{ 'dashboard.commercial.asOf' | translate }} {{ summary.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
 
     <!-- KPI cards -->

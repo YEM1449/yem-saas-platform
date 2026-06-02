@@ -3,6 +3,7 @@ import {
   ViewChild, ElementRef, ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -14,6 +15,7 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { ReceivablesDashboardService, VenteReceivablesSummary } from './receivables-dashboard.service';
 import { ReceivablesDashboard } from '../../core/models/receivables-dashboard.model';
+import { KPI_TARGETS, toneFor } from '../../core/config/kpi-targets';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale,
   DoughnutController, ArcElement, Tooltip, Legend);
@@ -21,7 +23,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
 @Component({
   selector: 'app-receivables-dashboard',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './receivables-dashboard.component.html',
   styleUrl: './receivables-dashboard.component.css',
 })
@@ -42,6 +44,27 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
   get isAdminOrManager(): boolean {
     const role = this.auth.user?.role;
     return role === 'ROLE_ADMIN' || role === 'ROLE_MANAGER';
+  }
+
+  // ── Finance cockpit — decision KPIs vs target + dunning worklist ─────────
+  // Targets come from the shared KPI registry (core/config/kpi-targets).
+  readonly COLLECTION_TARGET = KPI_TARGETS.collectionRate.target;
+  readonly DSO_TARGET = KPI_TARGETS.dsoDays.target;
+
+  collectionTone(): string { return toneFor(this.data?.collectionRate, KPI_TARGETS.collectionRate); }
+  dsoTone(): string        { return toneFor(this.data?.avgDaysToPayment, KPI_TARGETS.dsoDays); }
+  /** Overdue as a share of total outstanding — frames the impayés number. */
+  overdueShare(): string {
+    const out = this.data?.totalOutstanding ?? 0;
+    if (out <= 0) return '—';
+    return Math.round(((this.data?.totalOverdue ?? 0) / out) * 100) + '% de l’encours';
+  }
+  /** Prioritized dunning worklist — projects with the largest overdue balances. */
+  topDebtors() {
+    return [...(this.data?.overdueByProject ?? [])]
+      .filter(d => d.overdueAmount > 0)
+      .sort((a, b) => b.overdueAmount - a.overdueAmount)
+      .slice(0, 5);
   }
 
   ngOnInit(): void {

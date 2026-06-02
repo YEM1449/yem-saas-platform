@@ -116,7 +116,7 @@
           <div class="project-card-stats">
             <div class="pstat">
               <span class="pstat-val">{{ unitsOf(p) }}</span>
-              <span class="pstat-lbl">lots</span>
+              <span class="pstat-lbl">{{ unitsOf(p) === 1 ? 'lot' : 'lots' }}</span>
             </div>
             <div class="pstat">
               <span class="pstat-val">{{ availableOf(p) }}</span>
@@ -131,7 +131,7 @@
             <div class="project-absorption">
               <div class="pabs-head">
                 <span class="pabs-lbl">Absorption</span>
-                <span class="pabs-pct">{{ absorptionOf(p) }}%</span>
+                <span class="pabs-pct">{{ absorptionOf(p) | number:'1.0-1' }}%</span>
               </div>
               <div class="pabs-track">
                 <div class="pabs-fill {{ absorptionToneClass(absorptionOf(p)) }}"

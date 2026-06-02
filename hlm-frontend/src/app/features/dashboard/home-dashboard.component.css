@@ -1521,3 +1521,105 @@
   .anchor-stat { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
   .anchor-stat:last-child { border-bottom: none; }
 }
+
+/* ── Sales Director cockpit (Commercial tab) — same grammar as Finance/Commercial ── */
+.sd-cockpit { margin-bottom: 20px; }
+.sd-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+}
+.sd-kpi {
+  padding: 16px 18px;
+  border-right: 1px solid var(--c-border, #e2e8f0);
+  border-top: 3px solid var(--c-border-strong, #cbd5e1);
+}
+.sd-kpi:last-child { border-right: none; }
+.sd-kpi[data-tone="good"]    { border-top-color: var(--c-success, #16a34a); }
+.sd-kpi[data-tone="bad"]     { border-top-color: var(--c-danger, #dc2626); }
+.sd-kpi[data-tone="neutral"] { border-top-color: var(--c-border-strong, #cbd5e1); }
+.sd-kpi-val { font-size: 1.5rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.sd-kpi[data-tone="bad"] .sd-kpi-val { color: var(--c-danger, #dc2626); }
+.sd-kpi-lbl { font-size: 0.82rem; font-weight: 600; color: var(--c-text-secondary, #475569); margin-top: 4px; }
+.sd-kpi-target { font-size: 0.72rem; color: var(--c-text-muted, #94a3b8); margin-top: 2px; }
+
+.sd-actions {
+  margin-top: 12px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  padding: 14px 18px;
+}
+.sd-actions-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.sd-actions-title { font-size: 0.9rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.sd-actions-link { font-size: 0.78rem; color: var(--c-primary, #16a34a); text-decoration: none; }
+.sd-actions-link:hover { text-decoration: underline; }
+.sd-risk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sd-risk-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 6px; }
+.sd-risk-row:nth-child(odd) { background: var(--c-neutral-50, #f8fafc); }
+.sd-risk-ref { font-size: 0.78rem; font-weight: 700; color: var(--c-text-secondary, #475569); white-space: nowrap; }
+.sd-risk-name { flex: 1; min-width: 0; font-size: 0.875rem; color: var(--c-text, #0f172a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sd-risk-age { font-size: 0.8rem; font-weight: 600; color: var(--c-warning, #d97706); white-space: nowrap; }
+.sd-risk-amt { font-size: 0.82rem; color: var(--c-text-secondary, #475569); white-space: nowrap; }
+.sd-risk-cta { font-size: 0.78rem; font-weight: 600; color: var(--c-primary, #16a34a); text-decoration: none; white-space: nowrap; }
+.sd-risk-cta:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .sd-kpi { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+  .sd-risk-amt, .sd-risk-ref { display: none; }
+}
+
+/* ── CEO / Direction cockpit (Dirigeant tab) — shared cockpit grammar ── */
+.ceo-cockpit { margin-bottom: 20px; }
+.ceo-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+}
+.ceo-kpi {
+  padding: 16px 18px;
+  border-right: 1px solid var(--c-border, #e2e8f0);
+  border-top: 3px solid var(--c-border-strong, #cbd5e1);
+}
+.ceo-kpi:last-child { border-right: none; }
+.ceo-kpi[data-tone="good"]    { border-top-color: var(--c-success, #16a34a); }
+.ceo-kpi[data-tone="mid"]     { border-top-color: var(--c-warning, #d97706); }
+.ceo-kpi[data-tone="bad"]     { border-top-color: var(--c-danger, #dc2626); }
+.ceo-kpi[data-tone="neutral"] { border-top-color: var(--c-border-strong, #cbd5e1); }
+.ceo-kpi-val { font-size: 1.55rem; font-weight: 700; color: var(--c-text, #0f172a); line-height: 1.1; }
+.ceo-kpi[data-tone="bad"] .ceo-kpi-val  { color: var(--c-danger, #dc2626); }
+.ceo-kpi[data-tone="good"] .ceo-kpi-val { color: var(--c-success, #16a34a); }
+.ceo-kpi-lbl { font-size: 0.82rem; font-weight: 600; color: var(--c-text-secondary, #475569); margin-top: 4px; }
+.ceo-kpi-target { font-size: 0.72rem; color: var(--c-text-muted, #94a3b8); margin-top: 2px; }
+
+.ceo-actions {
+  margin-top: 12px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  padding: 14px 18px;
+}
+.ceo-actions-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.ceo-actions-title { font-size: 0.9rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.ceo-actions-note { font-size: 0.75rem; color: var(--c-text-muted, #94a3b8); }
+.ceo-projects { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ceo-project-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 6px; }
+.ceo-project-row:nth-child(odd) { background: var(--c-neutral-50, #f8fafc); }
+.ceo-project-name { flex: 1; min-width: 0; font-size: 0.875rem; color: var(--c-text, #0f172a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ceo-project-abs { font-size: 0.875rem; font-weight: 700; color: var(--c-danger, #dc2626); white-space: nowrap; }
+.ceo-project-ctx { font-size: 0.78rem; color: var(--c-text-muted, #94a3b8); white-space: nowrap; }
+.ceo-project-cta { font-size: 0.78rem; font-weight: 600; color: var(--c-primary, #16a34a); text-decoration: none; white-space: nowrap; }
+.ceo-project-cta:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .ceo-kpi { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
+  .ceo-project-ctx { display: none; }
+}

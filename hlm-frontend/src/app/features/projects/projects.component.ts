@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectService } from './project.service';
+import { absorptionRate, absorptionTone } from '../../core/utils/absorption';
 import { Project, ProjectKpi } from '../../core/models/project.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -88,6 +89,10 @@ export class ProjectsComponent implements OnInit {
   projectKpis = new Map<string, ProjectKpi>();
 
   private loadKpis(): void {
+    // The /kpis endpoint is @PreAuthorize("hasAnyRole('ADMIN','MANAGER')") —
+    // agents get 403. Skip the N per-project requests rather than firing them
+    // only to fail (and the enriched stats aren't shown to agents anyway).
+    if (!this.canWrite) return;
     if (this.projects.length === 0) return;
     forkJoin(
       this.projects.map(p => this.svc.getKpis(p.id).pipe(catchError(() => of(null))))
@@ -108,21 +113,16 @@ export class ProjectsComponent implements OnInit {
     return this.projectKpis.get(p.id)?.salesTotalAmount ?? 0;
   }
 
-  /** (sold + reserved) / commercialised, where commercialised excludes DRAFT. */
+  /** Canonical absorption (sold / commercialised) — see core/utils/absorption. */
   absorptionOf(p: Project): number | null {
-    const k = this.projectKpis.get(p.id);
-    if (!k) return null;
-    const sb = k.statusBreakdown ?? {};
-    const commercialised = k.totalProperties - (sb['DRAFT'] ?? 0);
-    if (commercialised <= 0) return null;
-    return Math.round((((sb['SOLD'] ?? 0) + (sb['RESERVED'] ?? 0)) / commercialised) * 100);
+    const sb = this.projectKpis.get(p.id)?.statusBreakdown;
+    if (!sb) return null;
+    return absorptionRate(sb['ACTIVE'] ?? 0, sb['RESERVED'] ?? 0, sb['SOLD'] ?? 0);
   }
 
   absorptionToneClass(pct: number | null): string {
-    if (pct == null) return '';
-    if (pct >= 70) return 'pabs-good';
-    if (pct >= 40) return 'pabs-mid';
-    return 'pabs-low';
+    const tone = absorptionTone(pct);
+    return tone ? `pabs-${tone}` : '';
   }
 
   formatValueShort(n: number): string {

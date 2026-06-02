@@ -1,10 +1,11 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
+import { absorptionRate, absorptionTone as toneBucket } from '../../core/utils/absorption';
 import { Project, ProjectKpi } from '../../core/models/project.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -22,7 +23,7 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DocumentListComponent, BuildingViewComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RouterLink, DocumentListComponent, BuildingViewComponent],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })
@@ -32,7 +33,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   auth = inject(AuthService);
 
-  activeTab: 'apercu' | 'plan' = 'apercu';
+  activeTab: 'apercu' | 'plan' | 'documents' = 'apercu';
 
   project: Project | null = null;
   kpi: ProjectKpi | null = null;
@@ -61,15 +62,19 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     return this.route.snapshot.paramMap.get('id') ?? '';
   }
 
-  get kpiEntries(): { label: string; value: string }[] {
-    if (!this.kpi) return [];
-    return [
-      { label: 'Total Properties', value: String(this.kpi.totalProperties) },
-      { label: 'Total Deposits', value: String(this.kpi.depositsCount) },
-      { label: 'Deposits Amount', value: this.formatAmount(this.kpi.depositsTotalAmount) },
-      { label: 'Sales (Confirmed)', value: String(this.kpi.salesCount) },
-      { label: 'Sales Amount', value: this.formatAmount(this.kpi.salesTotalAmount) },
-    ];
+  // ── Absorption headline (the project's lead commercial metric) ──────────
+  /** Canonical absorption (sold / commercialised) — see core/utils/absorption. */
+  get absorptionPct(): number | null {
+    const sb = this.kpi?.statusBreakdown;
+    if (!sb) return null;
+    return absorptionRate(sb['ACTIVE'] ?? 0, sb['RESERVED'] ?? 0, sb['SOLD'] ?? 0);
+  }
+  get availableCount(): number { return this.kpi?.statusBreakdown?.['ACTIVE'] ?? 0; }
+  get reservedCount(): number  { return this.kpi?.statusBreakdown?.['RESERVED'] ?? 0; }
+  get soldCount(): number      { return this.kpi?.statusBreakdown?.['SOLD'] ?? 0; }
+  get absorptionTone(): string {
+    const tone = toneBucket(this.absorptionPct);
+    return tone ? `abs-${tone}` : '';
   }
 
   get typeEntries(): { label: string; value: number }[] {
@@ -177,16 +182,20 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
   statusLabel(key: string): string {
     const map: Record<string, string> = {
-      AVAILABLE: 'Disponible', RESERVED: 'Réservé', SOLD: 'Vendu',
-      UNDER_CONSTRUCTION: 'En construction', UNAVAILABLE: 'Indisponible',
+      DRAFT: 'Brouillon', ACTIVE: 'Disponible', RESERVED: 'Réservé',
+      SOLD: 'Vendu', WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
+      // legacy aliases (defensive)
+      AVAILABLE: 'Disponible', UNDER_CONSTRUCTION: 'En construction', UNAVAILABLE: 'Indisponible',
     };
     return map[key] ?? key;
   }
 
   statusColor(key: string): string {
     const map: Record<string, string> = {
-      AVAILABLE: '#10b981', RESERVED: '#f59e0b', SOLD: '#3b82f6',
-      UNDER_CONSTRUCTION: '#8b5cf6', UNAVAILABLE: '#94a3b8',
+      DRAFT: '#cbd5e1', ACTIVE: '#22c55e', RESERVED: '#ea580c',
+      SOLD: '#1e293b', WITHDRAWN: '#94a3b8', ARCHIVED: '#94a3b8',
+      // legacy aliases (defensive)
+      AVAILABLE: '#22c55e', UNDER_CONSTRUCTION: '#8b5cf6', UNAVAILABLE: '#94a3b8',
     };
     return map[key] ?? '#6366f1';
   }

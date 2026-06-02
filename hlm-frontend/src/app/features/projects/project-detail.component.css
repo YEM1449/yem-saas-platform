@@ -240,3 +240,73 @@
 
 /* ── Card body padding ──────────────────────────────────────── */
 .card-body { padding: 16px 20px; }
+
+/* ── Aperçu absorption headline — the project's lead commercial metric ── */
+.apercu-absorption {
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-md, 8px);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.apercu-abs-main { display: flex; align-items: center; gap: 16px; }
+.apercu-abs-pct {
+  font-size: 2.2rem; font-weight: 800; line-height: 1;
+  color: var(--c-text, #0f172a); flex-shrink: 0;
+}
+.apercu-abs-pct.abs-good { color: var(--c-success, #16a34a); }
+.apercu-abs-pct.abs-mid  { color: var(--c-warning, #d97706); }
+.apercu-abs-pct.abs-low  { color: var(--c-danger, #dc2626); }
+.apercu-abs-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.apercu-abs-title { font-size: 0.95rem; font-weight: 700; color: var(--c-text, #0f172a); }
+.apercu-abs-sub { font-size: 0.82rem; color: var(--c-text-secondary, #475569); }
+.apercu-abs-target {
+  font-size: 0.72rem; font-weight: 600; color: var(--c-text-muted, #94a3b8);
+  white-space: nowrap; align-self: flex-start;
+  border: 1px solid var(--c-border, #e2e8f0); border-radius: 999px; padding: 3px 10px;
+}
+.apercu-abs-track {
+  height: 8px; background: var(--c-neutral-100, #f1f5f9);
+  border-radius: 999px; overflow: hidden; margin-top: 14px;
+}
+.apercu-abs-fill { height: 100%; border-radius: 999px; background: var(--c-neutral-400, #94a3b8); transition: width .4s ease; }
+.apercu-abs-fill.abs-good { background: var(--c-success, #16a34a); }
+.apercu-abs-fill.abs-mid  { background: var(--c-warning, #d97706); }
+.apercu-abs-fill.abs-low  { background: var(--c-danger, #dc2626); }
+@media (max-width: 640px) {
+  .apercu-abs-main { flex-wrap: wrap; }
+  .apercu-abs-pct { font-size: 1.8rem; }
+}
+@media (prefers-reduced-motion: reduce) { .apercu-abs-fill { transition: none; } }
+
+/* ── Project workspace: breadcrumb + context nav ─────────────────── */
+.ws-crumbs {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; margin-bottom: 12px;
+}
+.ws-crumb { color: var(--c-text-secondary, #475569); text-decoration: none; }
+.ws-crumb:hover { color: var(--c-primary, #16a34a); text-decoration: underline; }
+.ws-crumb.is-current { color: var(--c-text-muted, #94a3b8); }
+.ws-crumb-sep { color: var(--c-text-muted, #cbd5e1); }
+
+/* Reuses the existing .detail-tab styling; adds a separator + "à venir" state */
+.ws-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ws-nav-sep {
+  width: 1px; align-self: stretch; min-height: 22px;
+  background: var(--c-border, #e2e8f0); margin: 0 6px;
+}
+.ws-tab-soon {
+  opacity: 0.55; cursor: not-allowed;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.ws-tab-soon:hover { background: transparent; }
+.ws-soon-badge {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--c-text-muted, #94a3b8);
+  background: var(--c-neutral-100, #f1f5f9);
+  border-radius: 999px; padding: 1px 6px;
+}
+@media (max-width: 720px) {
+  .ws-nav-sep { display: none; }
+  .ws-tab-soon { display: none; }   /* hide future signposts on small screens */
+}
