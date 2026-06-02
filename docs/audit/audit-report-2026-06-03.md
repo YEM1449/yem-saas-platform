@@ -24,14 +24,14 @@
 |----|----------|--------|-------------|-------------|--------|----------|
 | F-001 | 🔴 CRITIQUE | vente | ✅ **RÉSOLU 2026-06-03** — `create()` appelle désormais la garde → 409 `PROPERTY_ALREADY_ENGAGED` + index unique partiel (changeset 075). | RG-B03 | S | **P0** |
 | F-002 | 🔴 CRITIQUE | vente | ✅ **RÉSOLU 2026-06-03** — `VenteServiceTest` (6) + `VenteControllerIT` (8) ajoutés ; suite unit 108 verts. | RG-B04/B05/B10 | M | **P1** |
-| F-003 | 🟠 MAJEUR | common/error | `CrossSocieteAccessException` → 403 alors que le reste du cross-société renvoie 404 (tests d'isolation). Incohérence + divulgation d'existence. | RG-A01 | XS | P2 |
-| F-004 | 🟠 MAJEUR | viewer3d | Validation GLB backend = métadonnées seules ; le flag client `dracoCompressed` est cru. Pas de validation binaire (magic glTF / KHR_draco via Range request). | RG-E05 | S | P2 |
+| F-003 | 🔵 INFO | common/error | ⓘ **REQUALIFIÉ 2026-06-03 (faux positif)** — `CrossSocieteAccessException`→403 n'est levée que pour un **contexte manquant** (société/user/principal portail absent), jamais pour un accès ressource cross-société (celui-ci renvoie déjà 404 via `*NotFoundException`). Le 403 est donc correct ; aucune divulgation d'existence. | RG-A01 | — | — |
+| F-004 | 🟠 MAJEUR | viewer3d | ✅ **RÉSOLU 2026-06-03** — `GlbValidator` lit les octets à la confirmation (magic glTF + version 2 + chunk JSON → `KHR_draco_mesh_compression`) → 422 `INVALID_GLB_FILE`. Activé en prod (`app.viewer3d.validate-glb-binary`), désactivé en profil test ; 7 tests unitaires. | RG-E05 | S | P2 |
 | F-005 | 🟠 MAJEUR | (transverse) | 54/64 services sans test unitaire/IT dédié (couverture partielle via 45 IT contrôleur). Cœurs non couverts directement : Vente, Reservation, ProjectGeneration, Auth. | — | L | P2 |
 | F-006 | 🟡 MINEUR | (transverse) | ~36 endpoints contrôleur renvoient `List<>` non paginé. Bornés par la société mais non bornés pour une grande société. | RG-G* | M | P2 |
 | F-007 | 🟡 MINEUR | viewer3d / templates | 2 templates encore en `*ngIf`/`*ngFor` (`mesh-mapping-admin`, `template-editor`). Migration Angular 19 control-flow incomplète. | — | XS | P3 |
 | F-008 | 🟡 MINEUR | frontend | 222 `.subscribe()` sans `takeUntilDestroyed`. Beaucoup sont one-shot HTTP, mais à auditer sur composants longue durée (polling, 3D). | — | M | P2 |
 | F-009 | 🟡 MINEUR | frontend | 232 `style="..."` inline dans les templates → incohérence avec le design system / tokens. | — | M | P3 |
-| F-010 | 🟡 MINEUR | viewer3d | Composants `color-legend` et `model-no-config` (fallback RG-E10) nommés au spec mais absents ; vérifier que le fallback « aucun modèle » est géré inline. | RG-E10 | S | P2 |
+| F-010 | 🟡 MINEUR | viewer3d | ✅ **RÉSOLU 2026-06-03** — le fallback « aucun modèle » (état `no-model`, 404) existait mais affichait l'uploader admin à tous ; désormais gated `canManageModel` (ADMIN/MANAGER) sinon message informatif. Légende couleur déjà gérée inline dans le viewer. | RG-E10 | S | P2 |
 | F-011 | 🟡 MINEUR | frontend | 3 specs unitaires pour 175 fichiers TS → couverture unitaire frontend quasi nulle. | — | L | P2 |
 | F-012 | 🔵 INFO | base | Pas de soft-delete (`deleted_at`) sur les tables domaine — suppressions physiques. Choix de conception ; impact piste d'audit/GDPR à documenter. | RG-D* | — | P3 |
 | F-013 | 🔵 INFO | docs | Fichiers d'état périmés : `.sprint-state.md`/`.audit-state` (Wave 10, 58 changesets) contredisent CLAUDE.md (Wave 15, 74). CLAUDE.md fait foi. | — | XS | P3 |

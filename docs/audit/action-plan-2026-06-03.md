@@ -29,7 +29,7 @@ Effort : XS=<2h, S=<1j, M=<3j, L=<1sem, XL=>1sem.
 |---|--------|--------|-------------------|-------|-----------|
 | B-001 | F-002 Vente non testée | `VenteServiceTest` : transitions valides/invalides (→409), double-vente (→409), avancement contact ACTIVE/COMPLETED, bascule bien SOLD@ACTE_NOTARIE / release@ANNULE | `vente/VenteServiceTest.java` | M | — |
 | B-002 | F-002 Vente non testée (IT) | `VenteControllerIT` : RBAC par rôle, cross-société → 404, 409 double-vente, `PATCH /{id}/statut` machine à états | `vente/VenteControllerIT.java` | M | — |
-| B-003 | F-010 Fallback 3D | Vérifier/implémenter l'état « projet sans modèle 3D » (RG-E10) ; ajouter `model-no-config` + `color-legend` ou confirmer le fallback inline | `modules/viewer-3d/components/` | S | — |
+| B-003 | F-010 Fallback 3D | ✅ **FAIT** — état `no-model` (404) gated `canManageModel` (ADMIN/MANAGER) sinon message informatif ; légende couleur déjà inline | `project-viewer-3d.component.*` | S | — |
 
 ---
 
@@ -37,8 +37,8 @@ Effort : XS=<2h, S=<1j, M=<3j, L=<1sem, XL=>1sem.
 
 | # | Faille | Action | Fichiers impactés | Durée |
 |---|--------|--------|-------------------|-------|
-| C-001 | F-003 403/404 incohérent | Trancher la sémantique cross-société : convertir `CrossSocieteAccessException` → 404 (non-divulgation) **ou** documenter pourquoi 403 ; aligner les IT | `GlobalExceptionHandler.java`, IT d'isolation | XS |
-| C-002 | F-004 GLB non validé | Validation binaire serveur : Range request R2 octets 0–11 (magic `glTF`), parse chunk JSON pour `KHR_draco_mesh_compression` | `viewer3d/service/Project3dService.java` | S |
+| C-001 | F-003 403/404 | ✅ **FAIT (requalifié faux positif)** — vérifié que le 403 ne concerne que le contexte manquant ; l'accès ressource est déjà 404. Documenté ; aucun changement code. | — | — |
+| C-002 | F-004 GLB non validé | ✅ **FAIT** — `GlbValidator` (magic glTF + version + chunk JSON → `KHR_draco_mesh_compression`) → 422 ; gated `app.viewer3d.validate-glb-binary` ; 7 tests | `viewer3d/service/GlbValidator.java`, `Project3dService.java` | S |
 | C-003 | F-006 Listes non paginées | Introduire `Pageable`/`Page<T>` sur les ~36 endpoints `List<>` (commencer par contacts/ventes/properties) | `*Controller.java` | M |
 | C-004 | F-005 Services non testés | Couvrir en priorité `ReservationService`, `ProjectGenerationService`, `AuthService`, `QuotaService` | `src/test/.../*Test.java` | L |
 | C-005 | F-008 Subscriptions | Auditer les composants longue durée (polling, 3D, shell) → `takeUntilDestroyed` systématique | `core/`, `features/`, `modules/viewer-3d/` | M |

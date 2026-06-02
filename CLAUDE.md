@@ -12,7 +12,12 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 - **F-001 (P0, RG-B03) ✅** `VenteService.create()` now calls `existsBySocieteIdAndPropertyIdAndStatutNot(..., ANNULE)` → `PropertyAlreadyEngagedException` (409 `PROPERTY_ALREADY_ENGAGED`). Concurrency backstop: changeset **075** `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'`.
 - **F-002 (P1) ✅** `VenteServiceTest` (6 Mockito tests: RG-B03 guard, property-status precondition, state machine, ANNULE-needs-motif) + `VenteControllerIT` (8 IT: 401, create→RESERVED, **409 double-vente**, ANNULE frees property, valid/invalid transitions, cross-société 404, 404 unknown property). Unit suite: **108 pass** (was 102).
 
-**Still open (P2):** F-003 `CrossSocieteAccessException`→403 (rest is 404); F-004 GLB validated by client flag only (no binary check); F-005 services untested; F-011 frontend unit coverage.
+**Fixed P2 (2026-06-03):**
+- **F-003 → requalifié faux positif** : `CrossSocieteAccessException`(403) ne couvre que le contexte manquant (société/user/principal portail) ; l'accès ressource cross-société renvoie déjà 404. Aucun changement code.
+- **F-004 ✅** `GlbValidator` (RG-E05) valide les octets GLB à la confirmation (magic glTF + version 2 + `KHR_draco_mesh_compression`) → 422 `INVALID_GLB_FILE`. Property `app.viewer3d.validate-glb-binary` (true prod, false test) ; 7 tests `GlbValidatorTest`.
+- **F-010 ✅** Fallback 3D `no-model` gated `canManageModel` (ADMIN/MANAGER) sinon message informatif.
+
+**Still open (P2/P3):** F-005 services untested; F-006 unpaginated lists; F-008 unguarded subscriptions; F-011 frontend unit coverage.
 
 Next available changeset: **076**.
 

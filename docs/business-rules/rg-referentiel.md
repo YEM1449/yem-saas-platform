@@ -5,11 +5,10 @@
 Statuts : ✅ Implémentée · ⚠️ Partielle · ❌ Manquante
 
 ## RG-A01 · Isolation cross-société
-**Module :** common/security · **Statut :** ⚠️ Partielle
-**Règle :** une société ne doit jamais accéder aux ressources d'une autre ; comportement cohérent (404 de préférence, non-divulgation).
-**Backend :** `requireSocieteId()` (~280 sites) + RLS phase 2 (`RlsContextAspect`, changesets 050/051). La plupart des accès cross-société → `*NotFoundException` (404).
-**Écart :** `CrossSocieteAccessException` → **403** (incohérent). Voir F-003 / action C-001.
-**Tests :** `CrossSocieteIsolationIT` (contacts, projets, properties, timeline → 404).
+**Module :** common/security · **Statut :** ✅ Implémentée
+**Règle :** une société ne doit jamais accéder aux ressources d'une autre ; comportement cohérent (404, non-divulgation).
+**Backend :** `requireSocieteId()` (~280 sites) + RLS phase 2 (`RlsContextAspect`, changesets 050/051). Tout accès ressource cross-société → `*NotFoundException` (404). `CrossSocieteAccessException` (403) est réservée au **contexte manquant** (société/user absent, principal portail invalide) — pas un accès ressource, donc 403 légitime (cf. F-003 requalifié faux positif).
+**Tests :** `CrossSocieteIsolationIT` (contacts, projets, properties, timeline → 404), `VenteControllerIT.get_crossSocieteVente_returns404`, `ReservationControllerIT`.
 
 ## RG-B03 · Un seul engagement actif par bien
 **Module :** vente · **Statut :** ✅ Implémentée (2026-06-03)
@@ -42,15 +41,15 @@ Statuts : ✅ Implémentée · ⚠️ Partielle · ❌ Manquante
 **Tests :** ❌ backend absent (recalcul à l'annulation à couvrir).
 
 ## RG-E05 · Validation du modèle 3D (GLB/Draco)
-**Module :** viewer3d · **Statut :** ⚠️ Partielle
+**Module :** viewer3d · **Statut :** ✅ Implémentée (2026-06-03)
 **Règle :** seuls des GLB Draco-compressés valides sont acceptés.
-**Backend :** validation par flag client `dracoCompressed` ; pas de validation binaire (magic glTF / KHR_draco).
-**Correction :** action C-002.
+**Backend :** `GlbValidator.validate()` (appelé par `Project3dService.upsertModel` quand `app.viewer3d.validate-glb-binary=true`) lit les octets : magic `glTF`, version 2, chunk JSON, puis exige `KHR_draco_mesh_compression` dans `extensionsUsed`/`extensionsRequired`. Échec → `InvalidGlbException` (422 `INVALID_GLB_FILE`). Le flag client n'est plus cru seul.
+**Tests :** ✅ `GlbValidatorTest` (7 : valide, Draco-only-used, mauvais magic, version, chunk non-JSON, sans Draco, tronqué).
 
 ## RG-E10 · Fallback « projet sans modèle 3D »
-**Module :** viewer3d · **Statut :** ⚠️ À formaliser
+**Module :** viewer3d · **Statut :** ✅ Implémentée (2026-06-03)
 **Règle :** afficher un état clair quand aucun modèle 3D n'est configuré.
-**Front :** composant `model-no-config` absent ; vérifier le fallback inline. Voir F-010 / B-003.
+**Front :** `project-viewer-3d` — état `no-model` (sur 404). Uploader admin affiché si `canManageModel` (ADMIN/MANAGER), sinon message informatif « Aucun modèle 3D configuré ». Portail → état `error` (jamais l'uploader).
 
 ---
 
