@@ -22,8 +22,8 @@
 
 | ID | Sévérité | Module | Description | RG impactée | Effort | Priorité |
 |----|----------|--------|-------------|-------------|--------|----------|
-| F-001 | 🔴 CRITIQUE | vente | `create()` n'empêche pas une 2ᵉ vente active sur un bien déjà engagé. Garde `existsBySocieteIdAndPropertyIdAndStatutNot` jamais appelée ; pas d'index unique partiel. Risque double-vente. | RG-B03 | S | **P0** |
-| F-002 | 🔴 CRITIQUE | vente | `VenteService` (machine à états + effets contact/bien) sans aucun test backend (0 `*Test`, 0 `*IT`). | RG-B04/B05/B10 | M | **P1** |
+| F-001 | 🔴 CRITIQUE | vente | ✅ **RÉSOLU 2026-06-03** — `create()` appelle désormais la garde → 409 `PROPERTY_ALREADY_ENGAGED` + index unique partiel (changeset 075). | RG-B03 | S | **P0** |
+| F-002 | 🔴 CRITIQUE | vente | ✅ **RÉSOLU 2026-06-03** — `VenteServiceTest` (6) + `VenteControllerIT` (8) ajoutés ; suite unit 108 verts. | RG-B04/B05/B10 | M | **P1** |
 | F-003 | 🟠 MAJEUR | common/error | `CrossSocieteAccessException` → 403 alors que le reste du cross-société renvoie 404 (tests d'isolation). Incohérence + divulgation d'existence. | RG-A01 | XS | P2 |
 | F-004 | 🟠 MAJEUR | viewer3d | Validation GLB backend = métadonnées seules ; le flag client `dracoCompressed` est cru. Pas de validation binaire (magic glTF / KHR_draco via Range request). | RG-E05 | S | P2 |
 | F-005 | 🟠 MAJEUR | (transverse) | 54/64 services sans test unitaire/IT dédié (couverture partielle via 45 IT contrôleur). Cœurs non couverts directement : Vente, Reservation, ProjectGeneration, Auth. | — | L | P2 |

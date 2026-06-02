@@ -8,12 +8,13 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 
 **Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
 
-**Top fixes (P0/P1):**
-- **F-001 (P0, RG-B03 NOT enforced):** `VenteService.create()` allows a 2nd active vente on a property already RESERVED — guard `VenteRepository.existsBySocieteIdAndPropertyIdAndStatutNot` exists but is **never called**; no partial unique index. → call guard (409) + changeset **075** `CREATE UNIQUE INDEX ... ON vente(property_id) WHERE statut <> 'ANNULE'`.
-- **F-002 (P1):** `VenteService` (commercial core) has **0 backend tests** — add `VenteServiceTest` + `VenteControllerIT`.
-- P2: F-003 `CrossSocieteAccessException`→403 (rest is 404); F-004 GLB validated by client flag only (no binary check); F-005 54/64 services untested; F-011 3 frontend specs for 175 TS.
+**Fixed (2026-06-03):**
+- **F-001 (P0, RG-B03) ✅** `VenteService.create()` now calls `existsBySocieteIdAndPropertyIdAndStatutNot(..., ANNULE)` → `PropertyAlreadyEngagedException` (409 `PROPERTY_ALREADY_ENGAGED`). Concurrency backstop: changeset **075** `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'`.
+- **F-002 (P1) ✅** `VenteServiceTest` (6 Mockito tests: RG-B03 guard, property-status precondition, state machine, ANNULE-needs-motif) + `VenteControllerIT` (8 IT: 401, create→RESERVED, **409 double-vente**, ANNULE frees property, valid/invalid transitions, cross-société 404, 404 unknown property). Unit suite: **108 pass** (was 102).
 
-Next available changeset: **075** (unchanged — audit added no DB changes).
+**Still open (P2):** F-003 `CrossSocieteAccessException`→403 (rest is 404); F-004 GLB validated by client flag only (no binary check); F-005 services untested; F-011 frontend unit coverage.
+
+Next available changeset: **076**.
 
 ## Architecture Context
 
@@ -94,7 +95,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **075**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **076**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -146,8 +147,9 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 072 | lot_3d_mapping table (mesh↔lot links, RLS, unique per societe+projet+mesh) |
 | 073 | Vente legal field rename — `date_fin_delai_sru` → `date_fin_delai_reflexion`, `date_limite_condition_credit` → `date_limite_financement` |
 | 074 | Reservation hardening — `raison_annulation VARCHAR(100)` + `notified_expiring_soon BOOLEAN` on `property_reservation` |
+| 075 | RG-B03 — `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'` (one active vente per property) |
 
-Next available changeset: **075**
+Next available changeset: **076**
 
 ## CI Pipeline Map
 

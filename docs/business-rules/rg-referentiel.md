@@ -12,17 +12,16 @@ Statuts : ✅ Implémentée · ⚠️ Partielle · ❌ Manquante
 **Tests :** `CrossSocieteIsolationIT` (contacts, projets, properties, timeline → 404).
 
 ## RG-B03 · Un seul engagement actif par bien
-**Module :** vente · **Statut :** ❌ Manquante
+**Module :** vente · **Statut :** ✅ Implémentée (2026-06-03)
 **Règle :** un bien ne peut avoir qu'une vente active (statut ≠ ANNULE) à la fois.
-**Backend :** garde `VenteRepository.existsBySocieteIdAndPropertyIdAndStatutNot` **présente mais jamais appelée** ; `VenteService.create()` ne contrôle que le statut du bien (ACTIVE/RESERVED). Pas d'index unique partiel.
-**Correction :** action A-001 (garde applicative 409) + A-002 (index unique partiel, changeset 075).
-**Tests :** ❌ aucun (à créer : double-vente → 409).
+**Backend :** `VenteService.create()` appelle `existsBySocieteIdAndPropertyIdAndStatutNot(societeId, propertyId, ANNULE)` → `PropertyAlreadyEngagedException` (409 `PROPERTY_ALREADY_ENGAGED`). Filet base concurrent : changeset **075** `uk_vente_active_property` (index unique partiel `WHERE statut <> 'ANNULE'`).
+**Tests :** ✅ `VenteServiceTest.create_rejectsDuplicateActiveVente` + `VenteControllerIT.create_secondVenteOnSameProperty_returns409` + `cancelledVente_freesPropertyForNewVente`.
 
 ## RG-B04 · Machine à états des transitions de vente
 **Module :** vente · **Statut :** ✅ Implémentée
 **Règle :** COMPROMIS → FINANCEMENT → ACTE_NOTARIE → LIVRE ; ANNULE possible depuis tout état non terminal. LIVRE/ANNULE terminaux.
 **Backend :** `VenteService.validateTransition()` (Set d'autorisés par statut) → `InvalidVenteTransitionException` (409).
-**Tests :** ❌ backend absent (E2E `pipeline.spec.ts` uniquement). Voir B-001/B-002.
+**Tests :** ✅ (2026-06-03) `VenteServiceTest` (skip-stage, terminal LIVRE, ANNULE-needs-motif) + `VenteControllerIT` (valid 200, skip-stage 409).
 
 ## RG-B05 · Cycle de vie du bien piloté par la vente
 **Module :** vente / property · **Statut :** ✅ Implémentée
