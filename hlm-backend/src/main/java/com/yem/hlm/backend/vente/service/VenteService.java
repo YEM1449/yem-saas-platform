@@ -75,6 +75,7 @@ public class VenteService {
     private final ApplicationEventPublisher eventPublisher;
     private final VenteRefGenerator refGenerator;
     private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
+    private final com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -89,7 +90,8 @@ public class VenteService {
             DateCoherenceValidator dateCoherence,
             ApplicationEventPublisher eventPublisher,
             VenteRefGenerator refGenerator,
-            com.yem.hlm.backend.legal.MarketConfig marketConfig) {
+            com.yem.hlm.backend.legal.MarketConfig marketConfig,
+            com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -103,6 +105,7 @@ public class VenteService {
         this.eventPublisher      = eventPublisher;
         this.refGenerator        = refGenerator;
         this.marketConfig        = marketConfig;
+        this.reserveRepository   = reserveRepository;
     }
 
     // =========================================================================
@@ -388,6 +391,77 @@ public class VenteService {
             }
             propertyRepository.save(property);
         }
+    }
+
+    // =========================================================================
+    // VEFA Loi 44-00 — Livraison avec réserves (Wave 12 P1-T5)
+    // =========================================================================
+
+    /**
+     * Records delivery from ACTE. With no reserves → LIVRE_DEFINITIF; otherwise →
+     * LIVRE_AVEC_RESERVES and the reserves are created with a configurable lift deadline.
+     * Reuses {@link #updateStatut} so the standard side-effects (date stamping, contact
+     * advancement on final delivery) stay in one place.
+     */
+    @Transactional
+    public VenteResponse recordDelivery(UUID venteId, RecordDeliveryRequest request) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        boolean withReserves = request.reserves() != null && !request.reserves().isEmpty();
+        VenteStatut target = withReserves ? VenteStatut.LIVRE_AVEC_RESERVES : VenteStatut.LIVRE_DEFINITIF;
+
+        if (vente.getStatut() != VenteStatut.ACTE) {
+            throw new InvalidVenteTransitionException(vente.getStatut(), target);
+        }
+
+        VenteResponse response = updateStatut(venteId, new UpdateVenteStatutRequest(
+                target, null, request.dateLivraison(), null, null, null));
+
+        if (withReserves) {
+            LocalDate echeance = LocalDate.now().plusDays(marketConfig.getDelaiLeveeReservesJours());
+            for (String description : request.reserves()) {
+                if (description != null && !description.isBlank()) {
+                    reserveRepository.save(new ReserveLivraison(societeId, venteId, description.trim(), echeance));
+                }
+            }
+        }
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReserveLivraisonResponse> listReserves(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        requireVente(societeId, venteId); // scope check
+        return reserveRepository.findBySocieteIdAndVenteIdOrderByDateConstatAsc(societeId, venteId)
+                .stream().map(ReserveLivraisonResponse::from).toList();
+    }
+
+    /** Lifts a single reserve; when the last one is lifted the vente advances to RESERVES_LEVEES. */
+    @Transactional
+    public VenteResponse liftReserve(UUID venteId, UUID reserveId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+        ReserveLivraison reserve = reserveRepository.findBySocieteIdAndId(societeId, reserveId)
+                .orElseThrow(() -> new ReserveNotFoundException(reserveId));
+        if (!reserve.getVenteId().equals(venteId)) {
+            throw new ReserveNotFoundException(reserveId);
+        }
+
+        reserve.setStatut(StatutReserve.LEVEE);
+        reserve.setDateLeveeReelle(LocalDate.now());
+        reserveRepository.save(reserve);
+
+        long remaining = reserveRepository.countBySocieteIdAndVenteIdAndStatutNot(
+                societeId, venteId, StatutReserve.LEVEE);
+        if (remaining == 0 && vente.getStatut() == VenteStatut.LIVRE_AVEC_RESERVES) {
+            validateTransition(vente.getStatut(), VenteStatut.RESERVES_LEVEES);
+            vente.setStatut(VenteStatut.RESERVES_LEVEES);
+            vente.setProbability(defaultProbability(VenteStatut.RESERVES_LEVEES));
+            vente.setStageEntryDate(LocalDateTime.now());
+            venteRepository.save(vente);
+        }
+        return toResponse(vente);
     }
 
     @Transactional(readOnly = true)

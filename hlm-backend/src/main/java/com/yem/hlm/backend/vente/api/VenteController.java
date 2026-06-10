@@ -85,6 +85,27 @@ public class VenteController {
         return venteService.exerciseRetractation(id);
     }
 
+    // ── VEFA — Livraison avec réserves ───────────────────────────────────────
+
+    @PostMapping("/{id}/livraison")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse recordDelivery(
+            @PathVariable UUID id,
+            @Valid @RequestBody RecordDeliveryRequest request) {
+        return venteService.recordDelivery(id, request);
+    }
+
+    @GetMapping("/{id}/reserves")
+    public List<ReserveLivraisonResponse> listReserves(@PathVariable UUID id) {
+        return venteService.listReserves(id);
+    }
+
+    @PutMapping("/{id}/reserves/{reserveId}/lever")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse liftReserve(@PathVariable UUID id, @PathVariable UUID reserveId) {
+        return venteService.liftReserve(id, reserveId);
+    }
+
     @GetMapping
     public List<VenteResponse> list(@RequestParam(required = false) UUID contactId) {
         if (contactId != null) return venteService.findByContactId(contactId);

@@ -24,6 +24,17 @@ export type MotifAnnulation =
   | 'LITIGE'
   | 'AUTRE';
 
+export type StatutReserve = 'EN_ATTENTE' | 'EN_COURS' | 'LEVEE';
+
+export interface ReserveLivraison {
+  id: string;
+  description: string;
+  statut: StatutReserve;
+  dateConstat: string;
+  dateLeveePrevue: string | null;
+  dateLeveeReelle: string | null;
+}
+
 export interface Echeance {
   id: string;
   venteId: string;
@@ -181,6 +192,19 @@ export class VenteService {
 
   exerciseRetractation(id: string): Observable<Vente> {
     return this.http.post<Vente>(`${BASE}/${id}/retractation`, {});
+  }
+
+  // ── VEFA — livraison avec réserves ──────────────────────────────────────
+  recordDelivery(id: string, req: { dateLivraison?: string | null; reserves?: string[] }): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/livraison`, req);
+  }
+
+  listReserves(id: string): Observable<ReserveLivraison[]> {
+    return this.http.get<ReserveLivraison[]>(`${BASE}/${id}/reserves`);
+  }
+
+  liftReserve(id: string, reserveId: string): Observable<Vente> {
+    return this.http.put<Vente>(`${BASE}/${id}/reserves/${reserveId}/lever`, {});
   }
 
   updateStatut(id: string, req: UpdateVenteStatutRequest): Observable<Vente> {

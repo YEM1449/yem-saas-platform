@@ -74,6 +74,7 @@ class VenteServiceTest {
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock VenteRefGenerator refGenerator;
     @Mock com.yem.hlm.backend.legal.MarketConfig marketConfig;
+    @Mock com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
 
     private VenteService service;
 
@@ -82,7 +83,7 @@ class VenteServiceTest {
         service = new VenteService(
                 venteRepository, echeanceRepository, documentRepository, contactRepository,
                 propertyRepository, userRepository, reservationRepository, propertyWorkflow,
-                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig);
+                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -273,5 +274,32 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.exerciseRetractation(VENTE))
                 .isInstanceOf(RetractationImpossibleException.class);
         verify(vente, never()).setStatut(VenteStatut.ANNULE);
+    }
+
+    // ── VEFA Loi 44-00 (livraison avec réserves) ─────────────────────────────
+
+    @Test
+    @DisplayName("recordDelivery is rejected unless the vente is at ACTE")
+    void recordDelivery_rejectedUnlessActe() {
+        venteWithStatut(VenteStatut.FINANCEMENT);
+
+        var req = new com.yem.hlm.backend.vente.api.dto.RecordDeliveryRequest(
+                null, java.util.List.of("Fissure plafond séjour"));
+        assertThatThrownBy(() -> service.recordDelivery(VENTE, req))
+                .isInstanceOf(InvalidVenteTransitionException.class);
+        verify(reserveRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("liftReserve → 404 when the reserve is not found in the société")
+    void liftReserve_reserveNotFound() {
+        UUID reserveId = UUID.randomUUID();
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE))
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(Vente.class)));
+        when(reserveRepository.findBySocieteIdAndId(SOC, reserveId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.liftReserve(VENTE, reserveId))
+                .isInstanceOf(ReserveNotFoundException.class);
     }
 }

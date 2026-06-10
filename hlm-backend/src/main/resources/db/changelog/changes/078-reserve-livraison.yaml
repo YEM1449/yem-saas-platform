@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: 078-reserve-livraison
+      author: yem-wave12
+      comment: "Wave 12 P1-T5 — delivery reserves (PV de livraison avec réserves, Loi 44-00)."
+      changes:
+        - createTable:
+            tableName: reserve_livraison
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reservelivraison_societe
+                    references: societe(id)
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reservelivraison_vente
+                    references: vente(id)
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints: { nullable: false }
+              - column:
+                  name: statut
+                  type: varchar(20)
+                  defaultValue: EN_ATTENTE
+                  constraints: { nullable: false }
+              - column:
+                  name: date_constat
+                  type: date
+                  constraints: { nullable: false }
+              - column:
+                  name: date_levee_prevue
+                  type: date
+              - column:
+                  name: date_levee_reelle
+                  type: date
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - createIndex:
+            tableName: reserve_livraison
+            indexName: idx_reservelivraison_vente_societe
+            columns:
+              - column: { name: vente_id }
+              - column: { name: societe_id }
+
+        - sql:
+            comment: "Enable RLS on reserve_livraison"
+            sql: "ALTER TABLE reserve_livraison ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy"
+            sql: >-
+              CREATE POLICY reservelivraison_societe_isolation ON reserve_livraison
+              USING (
+                societe_id = NULLIF(current_setting('app.current_societe_id', TRUE), '')::uuid
+                OR societe_id = '00000000-0000-0000-0000-000000000000'::uuid
+              )

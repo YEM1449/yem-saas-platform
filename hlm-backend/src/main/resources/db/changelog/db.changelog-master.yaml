@@ -155,3 +155,5 @@ databaseChangeLog:
       file: db/changelog/changes/076-vente-statut-vefa-rename.yaml
   - include:
       file: db/changelog/changes/077-vente-option-retractation.yaml
+  - include:
+      file: db/changelog/changes/078-reserve-livraison.yaml
