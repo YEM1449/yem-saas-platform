@@ -73,6 +73,7 @@ class VenteServiceTest {
     @Mock DateCoherenceValidator dateCoherence;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock VenteRefGenerator refGenerator;
+    @Mock com.yem.hlm.backend.legal.MarketConfig marketConfig;
 
     private VenteService service;
 
@@ -81,7 +82,7 @@ class VenteServiceTest {
         service = new VenteService(
                 venteRepository, echeanceRepository, documentRepository, contactRepository,
                 propertyRepository, userRepository, reservationRepository, propertyWorkflow,
-                societeCtx, dateCoherence, eventPublisher, refGenerator);
+                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -105,6 +106,18 @@ class VenteServiceTest {
                 .thenReturn(Optional.of(property));
         User agent = org.mockito.Mockito.mock(User.class);
         when(userRepository.findById(AGENT)).thenReturn(Optional.of(agent));
+    }
+
+    /** Lookups for createOption() up to the RG-B03/status guards (no agent resolution — guards fail first). */
+    private void stubOptionLookups(PropertyStatus propStatus) {
+        when(societeCtx.requireUserId()).thenReturn(USER);
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(contactRepository.findBySocieteIdAndId(SOC, CONTACT))
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(Contact.class)));
+        Property property = org.mockito.Mockito.mock(Property.class);
+        lenient().when(property.getStatus()).thenReturn(propStatus);
+        when(propertyRepository.findBySocieteIdAndIdAndDeletedAtIsNull(SOC, PROP))
+                .thenReturn(Optional.of(property));
     }
 
     // ── RG-B03 : one active vente per property ────────────────────────────────
@@ -198,5 +211,67 @@ class VenteServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(vente, never()).setStatut(any());
+    }
+
+    // ── VEFA Loi 44-00 (OPTION + rétractation) ───────────────────────────────
+
+    @Test
+    @DisplayName("createOption rejects a property that already has an active vente (RG-B03)")
+    void createOption_rejectsDuplicateActiveVente() {
+        stubOptionLookups(PropertyStatus.ACTIVE);
+        when(venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(SOC, PROP, VenteStatut.ANNULE))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.createOption(PROP, CONTACT, 48))
+                .isInstanceOf(PropertyAlreadyEngagedException.class);
+        verify(venteRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("createOption requires the property to be ACTIVE")
+    void createOption_requiresActiveProperty() {
+        stubOptionLookups(PropertyStatus.RESERVED);
+        when(venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(SOC, PROP, VenteStatut.ANNULE))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> service.createOption(PROP, CONTACT, 48))
+                .isInstanceOf(InvalidPropertyStatusTransitionException.class);
+        verify(venteRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("confirmReservation rejects a deposit above the 5% legal cap (Art. 618-4)")
+    void confirmReservation_rejectsExcessiveDeposit() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        when(vente.getStatut()).thenReturn(VenteStatut.OPTION);
+        when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("100000"));
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(marketConfig.getDepotGarantieMaxPct()).thenReturn(new java.math.BigDecimal("0.05"));
+
+        // 10 000 > 5 000 (5% of 100 000) → legal violation
+        assertThatThrownBy(() -> service.confirmReservation(VENTE, new java.math.BigDecimal("10000")))
+                .isInstanceOf(ViolationLegaleException.class);
+        verify(vente, never()).setStatut(any());
+    }
+
+    @Test
+    @DisplayName("exerciseRetractation rejected when the vente is not in the cooling-off period")
+    void exerciseRetractation_rejectedWhenNotInWindow() {
+        venteWithStatut(VenteStatut.COMPROMIS);
+
+        assertThatThrownBy(() -> service.exerciseRetractation(VENTE))
+                .isInstanceOf(RetractationImpossibleException.class);
+    }
+
+    @Test
+    @DisplayName("exerciseRetractation rejected after the legal deadline has passed")
+    void exerciseRetractation_rejectedAfterDeadline() {
+        Vente vente = venteWithStatut(VenteStatut.EN_RETRACTATION);
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now().minusDays(1));
+
+        assertThatThrownBy(() -> service.exerciseRetractation(VENTE))
+                .isInstanceOf(RetractationImpossibleException.class);
+        verify(vente, never()).setStatut(VenteStatut.ANNULE);
     }
 }

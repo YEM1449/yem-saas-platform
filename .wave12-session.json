@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-10T22:59:45.253Z",
+  "last_updated": "2026-06-10T23:14:40.772Z",
   "current_phase": "P1",
-  "current_task": "P1-T3 (OPTION timer) / P1-T4 (rétractation) / P1-T5 (réserves livraison + table reserve_livraison + scheduler)",
+  "current_task": "P1-T5 (livraison avec réserves + table reserve_livraison + leverReserve) puis T6 (IT) / T7 (commit final P1). Reste aussi: boutons frontend OPTION/confirm/rétractation (UX).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -18,12 +18,12 @@
     },
     "P1": {
       "label": "Pipeline étendu conforme Loi 44-00",
-      "status": "in progress (T1/T2/T2b done; T3-T7 pending)",
+      "status": "in progress (T1-T4 done; T5-T7 pending)",
       "tasks": {
         "P1-T1": "✅ Enum VenteStatut étendu (ASCII, FINANCEMENT conservé) + matrice transitions",
         "P1-T2": "✅ (backend) Liquibase 076 + backend reconcilié, 128 unit verts. ⏭️ P1-T2b (frontend) NEXT",
-        "P1-T3": "VenteService : logique OPTION (timer 48h)",
-        "P1-T4": "VenteService : délai rétractation 7j post-RÉSERVÉ",
+        "P1-T3": "✅ OPTION : createOption (hold 1-72h, RG-B03, property→RESERVED) + expireOverdueOptions sweep + VenteVefaScheduler (hourly, system ctx). Changeset 077 (option_expire_at).",
+        "P1-T4": "✅ Rétractation : confirmReservation (dépôt ≤5% Art.618-4 → ViolationLegale 422 ; RESERVE→EN_RETRACTATION, délai 7j via MarketConfig) + exerciseRetractation (fenêtre légale → RetractationImpossible 409) + closeExpiredRetractations sweep. Endpoints POST /option, /{id}/confirm-reservation, /{id}/retractation. Frontend service methods ajoutées.",
         "P1-T5": "VenteService : pipeline LIVRAISON avec réserves",
         "P1-T6": "Tests unitaires + IT pipeline étendu",
         "P1-T7": "Commit P1",
@@ -108,7 +108,7 @@
     }
   },
   "decisions": {
-    "prochain_changeset": "076",
+    "prochain_changeset": "078",
     "vente_statuts_existants": [
       "COMPROMIS",
       "FINANCEMENT",

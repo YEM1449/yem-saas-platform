@@ -24,6 +24,12 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
 
     boolean existsBySocieteIdAndPropertyIdAndStatutNot(UUID societeId, UUID propertyId, VenteStatut statut);
 
+    /** OPTIONs whose temporary hold has expired (system sweep — not société-scoped). */
+    List<Vente> findByStatutAndOptionExpireAtBefore(VenteStatut statut, java.time.Instant before);
+
+    /** Ventes whose legal cooling-off deadline has passed (system sweep — not société-scoped). */
+    List<Vente> findByStatutAndDateFinDelaiReflexionBefore(VenteStatut statut, java.time.LocalDate before);
+
     long countBySocieteIdAndStatut(UUID societeId, VenteStatut statut);
 
     /** Active pipeline: all non-terminal ventes for agent scope (home dashboard). */

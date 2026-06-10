@@ -33,8 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -72,6 +74,7 @@ public class VenteService {
     private final DateCoherenceValidator dateCoherence;
     private final ApplicationEventPublisher eventPublisher;
     private final VenteRefGenerator refGenerator;
+    private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -85,7 +88,8 @@ public class VenteService {
             SocieteContextHelper societeCtx,
             DateCoherenceValidator dateCoherence,
             ApplicationEventPublisher eventPublisher,
-            VenteRefGenerator refGenerator) {
+            VenteRefGenerator refGenerator,
+            com.yem.hlm.backend.legal.MarketConfig marketConfig) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -98,6 +102,7 @@ public class VenteService {
         this.dateCoherence       = dateCoherence;
         this.eventPublisher      = eventPublisher;
         this.refGenerator        = refGenerator;
+        this.marketConfig        = marketConfig;
     }
 
     // =========================================================================
@@ -241,6 +246,148 @@ public class VenteService {
         }
 
         return toResponse(venteRepository.save(vente));
+    }
+
+    // =========================================================================
+    // VEFA Loi 44-00 — OPTION + rétractation (Wave 12 P1-T3/T4)
+    // =========================================================================
+
+    /** Creates an OPTION (temporary hold, 1-72h, default capped) on a property for a contact. */
+    @Transactional
+    public VenteResponse createOption(UUID propertyId, UUID contactId, int dureeHeures) {
+        UUID societeId = societeCtx.requireSocieteId();
+        UUID actorId   = societeCtx.requireUserId();
+
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+        Property property = propertyRepository
+                .findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+
+        // RG-B03: at most one active (non-cancelled) vente per property (fail fast before agent lookup).
+        if (venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(societeId, propertyId, VenteStatut.ANNULE)) {
+            throw new PropertyAlreadyEngagedException(propertyId);
+        }
+        if (property.getStatus() != PropertyStatus.ACTIVE) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Le bien doit être ACTIVE pour poser une option; statut actuel : " + property.getStatus());
+        }
+
+        User agent = userRepository.findById(actorId)
+                .orElseThrow(() -> new UserNotFoundException(actorId));
+        int duree = Math.min(Math.max(dureeHeures, 1), 72);
+        propertyWorkflow.reserve(property, LocalDateTime.now());
+        propertyRepository.save(property);
+
+        Vente vente = new Vente(societeId, property.getId(), contact, agent);
+        vente.setVenteRef(refGenerator.generate(societeId));
+        vente.setStatut(VenteStatut.OPTION);
+        vente.setOptionExpireAt(Instant.now().plus(duree, ChronoUnit.HOURS));
+        if (property.getPrice() != null) vente.setPrixVente(property.getPrice());
+        vente.setProbability(defaultProbability(VenteStatut.OPTION));
+        vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
+
+        advanceContactStatus(contact, ContactStatus.QUALIFIED_PROSPECT);
+        contactRepository.save(contact);
+
+        return toResponse(venteRepository.save(vente));
+    }
+
+    /** Confirms a reservation (from PROSPECT/OPTION): enforces the legal deposit cap and opens the cooling-off period. */
+    @Transactional
+    public VenteResponse confirmReservation(UUID venteId, BigDecimal montantDepot) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        validateTransition(vente.getStatut(), VenteStatut.RESERVE);
+
+        // Art. 618-4 Loi 44-00 — deposit ≤ 5% of the agreed price.
+        BigDecimal price = vente.getPrixVente();
+        if (montantDepot != null && price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal maxDepot = price.multiply(marketConfig.getDepotGarantieMaxPct());
+            if (montantDepot.compareTo(maxDepot) > 0) {
+                throw new ViolationLegaleException(
+                        "Le dépôt de garantie ne peut excéder " + maxDepot
+                        + " (5% du prix — Art. 618-4 Loi 44-00).");
+            }
+        }
+
+        vente.setStatut(VenteStatut.RESERVE);
+        vente.setOptionExpireAt(null);
+
+        // Open the legal cooling-off window and advance to EN_RETRACTATION.
+        vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()));
+        vente.setStatut(VenteStatut.EN_RETRACTATION);
+        vente.setStageEntryDate(LocalDateTime.now());
+        vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
+
+        advanceContactStatus(vente.getContact(), ContactStatus.CLIENT);
+        contactRepository.save(vente.getContact());
+
+        return toResponse(venteRepository.save(vente));
+    }
+
+    /** Buyer exercises the legal cooling-off right within the window → vente cancelled, property freed. */
+    @Transactional
+    public VenteResponse exerciseRetractation(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        if (vente.getStatut() != VenteStatut.EN_RETRACTATION) {
+            throw new RetractationImpossibleException("La vente n'est pas en période de rétractation.");
+        }
+        LocalDate deadline = vente.getDateFinDelaiReflexion();
+        if (deadline != null && LocalDate.now().isAfter(deadline)) {
+            throw new RetractationImpossibleException(
+                    "Le délai légal de rétractation de " + marketConfig.getDelaiRetractationJours()
+                    + " jours est expiré.");
+        }
+
+        vente.setStatut(VenteStatut.ANNULE);
+        vente.setRetractationExerceeAt(Instant.now());
+        vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
+        releasePropertyForCancelledVente(societeId, vente);
+
+        return toResponse(venteRepository.save(vente));
+    }
+
+    // ── scheduler-facing sweeps (run in system context) ──────────────────────
+
+    /** Cancels OPTIONs whose hold has expired. Returns the number expired. */
+    @Transactional
+    public int expireOverdueOptions() {
+        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now());
+        for (Vente v : overdue) {
+            v.setStatut(VenteStatut.ANNULE);
+            v.setMotifAnnulation(MotifAnnulation.AUTRE);
+            releasePropertyForCancelledVente(v.getSocieteId(), v);
+            venteRepository.save(v);
+        }
+        return overdue.size();
+    }
+
+    /** Closes the cooling-off window for ventes whose retraction deadline has passed (→ RESERVE). Returns count. */
+    @Transactional
+    public int closeExpiredRetractations() {
+        List<Vente> done = venteRepository.findByStatutAndDateFinDelaiReflexionBefore(
+                VenteStatut.EN_RETRACTATION, LocalDate.now());
+        for (Vente v : done) {
+            v.setStatut(VenteStatut.RESERVE);
+            venteRepository.save(v);
+        }
+        return done.size();
+    }
+
+    private void releasePropertyForCancelledVente(UUID societeId, Vente vente) {
+        Property property = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
+        if (property != null) {
+            if (property.getStatus() == PropertyStatus.RESERVED) {
+                propertyWorkflow.releaseReservation(property);
+            } else if (property.getStatus() == PropertyStatus.SOLD) {
+                propertyWorkflow.cancelSaleToAvailable(property);
+            }
+            propertyRepository.save(property);
+        }
     }
 
     @Transactional(readOnly = true)

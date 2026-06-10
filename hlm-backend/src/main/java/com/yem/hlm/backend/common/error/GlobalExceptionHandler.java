@@ -46,6 +46,8 @@ import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
 import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
+import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
+import com.yem.hlm.backend.vente.service.ViolationLegaleException;
 import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
@@ -927,6 +929,26 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request.getRequestURI()
         );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Legal violation (422) / retraction impossible (409) ==========
+
+    @ExceptionHandler(ViolationLegaleException.class)
+    public ResponseEntity<ErrorResponse> handleViolationLegale(
+            ViolationLegaleException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.VIOLATION_LEGALE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
+    }
+
+    @ExceptionHandler(RetractationImpossibleException.class)
+    public ResponseEntity<ErrorResponse> handleRetractationImpossible(
+            RetractationImpossibleException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.RETRACTATION_IMPOSSIBLE, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 

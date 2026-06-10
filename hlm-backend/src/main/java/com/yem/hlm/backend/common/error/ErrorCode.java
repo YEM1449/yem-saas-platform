@@ -45,6 +45,8 @@ public enum ErrorCode {
     PROPERTY_REFERENCE_CODE_EXISTS,
     INVALID_PERIOD,
     INVALID_GLB_FILE,           // 422 — uploaded GLB is malformed or not Draco-compressed (RG-E05)
+    VIOLATION_LEGALE,           // 422 — operation would breach a legal constraint (Loi 44-00)
+    RETRACTATION_IMPOSSIBLE,    // 409 — retraction outside the legal window or wrong state
 
     // Project errors (409)
     PROJECT_NAME_EXISTS,

@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 077-vente-option-retractation
+      author: yem-wave12
+      comment: >
+        Wave 12 P1-T3/T4 — VEFA OPTION + rétractation (Loi 44-00). option_expire_at
+        drives automatic OPTION expiry; retractation_exercee_at records when the buyer
+        exercised the legal cooling-off right (Art. 618-3). The retraction deadline itself
+        reuses the existing vente.date_fin_delai_reflexion column.
+      changes:
+        - addColumn:
+            tableName: vente
+            columns:
+              - column:
+                  name: option_expire_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: true
+              - column:
+                  name: retractation_exercee_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: true

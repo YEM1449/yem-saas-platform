@@ -170,6 +170,19 @@ export class VenteService {
     return this.http.post<Vente>(BASE, req);
   }
 
+  // ── VEFA Loi 44-00 — OPTION + rétractation ──────────────────────────────
+  createOption(req: { propertyId: string; contactId: string; dureeHeures: number }): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/option`, req);
+  }
+
+  confirmReservation(id: string, montantDepot: number): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/confirm-reservation`, { montantDepot });
+  }
+
+  exerciseRetractation(id: string): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/retractation`, {});
+  }
+
   updateStatut(id: string, req: UpdateVenteStatutRequest): Observable<Vente> {
     return this.http.patch<Vente>(`${BASE}/${id}/statut`, req);
   }

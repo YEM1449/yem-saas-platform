@@ -62,6 +62,29 @@ public class VenteController {
         return venteService.create(request);
     }
 
+    // ── VEFA Loi 44-00 — OPTION + rétractation ───────────────────────────────
+
+    @PostMapping("/option")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VenteResponse createOption(@Valid @RequestBody CreateOptionRequest request) {
+        return venteService.createOption(request.propertyId(), request.contactId(), request.dureeHeures());
+    }
+
+    @PostMapping("/{id}/confirm-reservation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VenteResponse confirmReservation(
+            @PathVariable UUID id,
+            @Valid @RequestBody ConfirmReservationRequest request) {
+        return venteService.confirmReservation(id, request.montantDepot());
+    }
+
+    @PostMapping("/{id}/retractation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse exerciseRetractation(@PathVariable UUID id) {
+        return venteService.exerciseRetractation(id);
+    }
+
     @GetMapping
     public List<VenteResponse> list(@RequestParam(required = false) UUID contactId) {
         if (contactId != null) return venteService.findByContactId(contactId);

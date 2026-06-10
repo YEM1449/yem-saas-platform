@@ -153,3 +153,5 @@ databaseChangeLog:
       file: db/changelog/changes/075-vente-active-unique.yaml
   - include:
       file: db/changelog/changes/076-vente-statut-vefa-rename.yaml
+  - include:
+      file: db/changelog/changes/077-vente-option-retractation.yaml
