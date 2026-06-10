@@ -5,7 +5,14 @@ import { environment } from '../../../environments/environment';
 
 const BASE = `${environment.apiUrl}/api/ventes`;
 
-export type VenteStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
+/**
+ * VEFA pipeline statut (Loi 44-00). In sync with the backend enum — Wave 12 renamed
+ * ACTE_NOTARIE→ACTE and LIVRE→LIVRE_DEFINITIF and added the upstream/delivery states.
+ */
+export type VenteStatut =
+  | 'PROSPECT' | 'OPTION' | 'RESERVE' | 'EN_RETRACTATION' | 'ACOMPTE'
+  | 'COMPROMIS' | 'FINANCEMENT' | 'ACTE'
+  | 'LIVRE_AVEC_RESERVES' | 'RESERVES_LEVEES' | 'LIVRE_DEFINITIF' | 'ANNULE';
 export type EcheanceStatut = 'EN_ATTENTE' | 'PAYEE' | 'EN_RETARD';
 export type ContractStatus = 'PENDING' | 'GENERATED' | 'SIGNED';
 export type TypeFinancement = 'COMPTANT' | 'CREDIT_IMMOBILIER' | 'PTZ' | 'MIXTE';

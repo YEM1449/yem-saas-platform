@@ -3,7 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export type ReportStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
+export type ReportStatut =
+  | 'PROSPECT' | 'OPTION' | 'RESERVE' | 'EN_RETRACTATION' | 'ACOMPTE'
+  | 'COMPROMIS' | 'FINANCEMENT' | 'ACTE'
+  | 'LIVRE_AVEC_RESERVES' | 'RESERVES_LEVEES' | 'LIVRE_DEFINITIF' | 'ANNULE';
 
 export interface ReportFilters {
   from?: string;

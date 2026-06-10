@@ -36,7 +36,7 @@
       <div class="pvc-header">
         <div class="pvc-header-left">
           <span class="pvc-ref">{{ v.venteRef || 'Dossier' }}</span>
-          @if (v.statut === 'LIVRE') {
+          @if (v.statut === 'LIVRE_DEFINITIF') {
             <span class="portal-badge badge-success">Livré</span>
           } @else if (v.statut === 'ANNULE') {
             <span class="portal-badge badge-error">Annulé</span>

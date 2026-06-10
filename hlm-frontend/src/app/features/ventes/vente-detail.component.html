@@ -71,7 +71,7 @@
         </div>
         <p class="deadline-what">{{ nd.label }}</p>
         <p class="deadline-when">{{ nd.date | date:'EEEE d MMMM y' }}</p>
-      } @else if (v.statut === 'LIVRE') {
+      } @else if (v.statut === 'LIVRE_DEFINITIF') {
         <p class="deal-done">✓ Vente livrée @if (v.dateLivraisonReelle) { le {{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }} }</p>
       } @else if (v.statut === 'ANNULE') {
         <p class="deal-muted">Vente annulée</p>
@@ -92,7 +92,7 @@
       </ul>
       @if (canWrite && !isTerminal(v.statut)) {
         <div class="deal-actions">
-          @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+          @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
             <button class="btn btn-sm btn-secondary" (click)="generateContract(v.id)" [disabled]="contractGenerating()">
               {{ contractGenerating() ? 'Génération…' : 'Générer le contrat' }}
             </button>
@@ -162,7 +162,7 @@
           <dt>Livraison réelle</dt>
           <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
 
-          @if (v.statut === 'LIVRE') {
+          @if (v.statut === 'LIVRE_DEFINITIF') {
             <dt>PV de réception</dt>
             <dd>
               @if (!editingPostLivraison) {
@@ -513,7 +513,7 @@
   <div class="card mb-20" data-testid="financing-card">
     <div class="card-header">
       <h2 class="card-title">Financement</h2>
-      @if (canWriteFinancing && v.statut !== 'ACTE_NOTARIE' && v.statut !== 'LIVRE' && v.statut !== 'ANNULE') {
+      @if (canWriteFinancing && v.statut !== 'ACTE' && v.statut !== 'LIVRE_DEFINITIF' && v.statut !== 'ANNULE') {
         <button class="btn btn-sm btn-secondary"
                 (click)="showFinancingForm ? showFinancingForm = false : openFinancingForm(v)"
                 data-testid="btn-edit-financing">

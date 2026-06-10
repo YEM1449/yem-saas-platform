@@ -78,7 +78,7 @@ export class ContractsComponent implements OnInit {
   venteStatutLabel(s: string): string {
     const map: Record<string, string> = {
       COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-      ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+      ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
     };
     return map[s] ?? s;
   }

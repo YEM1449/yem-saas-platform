@@ -242,7 +242,7 @@ export class VenteDetailComponent implements OnInit {
   }
 
   isTerminal(s: VenteStatut): boolean {
-    return s === 'LIVRE' || s === 'ANNULE';
+    return s === 'LIVRE_DEFINITIF' || s === 'ANNULE';
   }
 
   hasContratGenereDoc(v: Vente): boolean {
@@ -255,16 +255,22 @@ export class VenteDetailComponent implements OnInit {
 
   statutLabel(s: VenteStatut): string {
     const labels: Record<VenteStatut, string> = {
-      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-      ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
+      EN_RETRACTATION: 'Délai de rétractation', ACOMPTE: 'Acompte',
+      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement', ACTE: 'Acte notarié',
+      LIVRE_AVEC_RESERVES: 'Livré (réserves)', RESERVES_LEVEES: 'Réserves levées',
+      LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
     };
     return labels[s] ?? s;
   }
 
   statutClass(s: VenteStatut): string {
     const classes: Record<VenteStatut, string> = {
-      COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning',
-      ACTE_NOTARIE: 'badge-primary', LIVRE: 'badge-success', ANNULE: 'badge-error',
+      PROSPECT: 'badge-info', OPTION: 'badge-info', RESERVE: 'badge-info',
+      EN_RETRACTATION: 'badge-warning', ACOMPTE: 'badge-info',
+      COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning', ACTE: 'badge-primary',
+      LIVRE_AVEC_RESERVES: 'badge-warning', RESERVES_LEVEES: 'badge-primary',
+      LIVRE_DEFINITIF: 'badge-success', ANNULE: 'badge-error',
     };
     return classes[s] ?? '';
   }
@@ -363,7 +369,7 @@ export class VenteDetailComponent implements OnInit {
     if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && v.dateLimiteFinancement) {
       candidates.push({ label: 'Limite d’obtention du financement', date: v.dateLimiteFinancement });
     }
-    if (v.statut === 'ACTE_NOTARIE' && v.dateLivraisonPrevue) {
+    if (v.statut === 'ACTE' && v.dateLivraisonPrevue) {
       candidates.push({ label: 'Livraison prévue', date: v.dateLivraisonPrevue });
     }
     if (v.expectedClosingDate) {
@@ -404,7 +410,7 @@ export class VenteDetailComponent implements OnInit {
       return items;
     }
 
-    if (v.statut === 'LIVRE') {
+    if (v.statut === 'LIVRE_DEFINITIF') {
       if (fin.reste > 0) items.push({ text: 'Solde restant : ' + this.formatMad(fin.reste), severity: 'warning' });
       if (!v.datePvReception) items.push({ text: 'PV de réception non saisi', severity: 'warning' });
       if (!v.dateTitreFoncier) items.push({ text: 'Titre foncier non enregistré', severity: 'info' });
@@ -430,7 +436,7 @@ export class VenteDetailComponent implements OnInit {
         severity: crit ? 'critical' : 'warning',
       });
     }
-    if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+    if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
       items.push({ text: 'Contrat de vente non généré', severity: 'warning' });
     }
     if (v.contractStatus === 'GENERATED') {

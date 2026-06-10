@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 
 // Status types used across the application
-export type VenteStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
+export type VenteStatut =
+  | 'PROSPECT' | 'OPTION' | 'RESERVE' | 'EN_RETRACTATION' | 'ACOMPTE'
+  | 'COMPROMIS' | 'FINANCEMENT' | 'ACTE'
+  | 'LIVRE_AVEC_RESERVES' | 'RESERVES_LEVEES' | 'LIVRE_DEFINITIF' | 'ANNULE';
 export type PropertyStatus = 'DRAFT' | 'ACTIVE' | 'RESERVED' | 'SOLD' | 'WITHDRAWN' | 'ARCHIVED';
 export type ContactStatus = 'NEW_PROSPECT' | 'QUALIFIED_PROSPECT' | 'ACTIVE_CLIENT' | 'COMPLETED_CLIENT' | 'LOST' | 'REFERRAL';
 export type ContractStatus = 'PENDING' | 'GENERATED' | 'SIGNED';
@@ -15,26 +18,47 @@ export class StatusService {
 
   // Vente status mappings
   private readonly VENTE_LABELS: Record<VenteStatut, string> = {
+    PROSPECT: 'Prospect',
+    OPTION: 'Option',
+    RESERVE: 'Réservé',
+    EN_RETRACTATION: 'Délai de rétractation',
+    ACOMPTE: 'Acompte',
     COMPROMIS: 'Compromis',
     FINANCEMENT: 'Financement',
-    ACTE_NOTARIE: 'Acte notarié',
-    LIVRE: 'Livré',
+    ACTE: 'Acte notarié',
+    LIVRE_AVEC_RESERVES: 'Livré (réserves)',
+    RESERVES_LEVEES: 'Réserves levées',
+    LIVRE_DEFINITIF: 'Livré',
     ANNULE: 'Annulé',
   };
 
   private readonly VENTE_CLASSES: Record<VenteStatut, string> = {
+    PROSPECT: 'badge-info',
+    OPTION: 'badge-info',
+    RESERVE: 'badge-info',
+    EN_RETRACTATION: 'badge-warning',
+    ACOMPTE: 'badge-info',
     COMPROMIS: 'badge-info',
     FINANCEMENT: 'badge-warning',
-    ACTE_NOTARIE: 'badge-primary',
-    LIVRE: 'badge-success',
+    ACTE: 'badge-primary',
+    LIVRE_AVEC_RESERVES: 'badge-warning',
+    RESERVES_LEVEES: 'badge-primary',
+    LIVRE_DEFINITIF: 'badge-success',
     ANNULE: 'badge-error',
   };
 
   private readonly VENTE_DESCRIPTIONS: Record<VenteStatut, string> = {
+    PROSPECT: 'Intérêt commercial initial — pas encore d\'engagement',
+    OPTION: 'Bien bloqué temporairement (24-72h) en attente de réservation',
+    RESERVE: 'Réservation signée avec dépôt de garantie (≤ 5%, Art. 618-4)',
+    EN_RETRACTATION: 'Délai légal de rétractation en cours (7 jours, Art. 618-3)',
+    ACOMPTE: 'Acompte versé par l\'acquéreur',
     COMPROMIS: 'Avant-contrat signé — financement et conditions suspensives en cours',
     FINANCEMENT: 'Dossier de financement déposé — en attente d\'accord bancaire',
-    ACTE_NOTARIE: 'Acte authentique signé devant notaire — transfert de propriété effectué',
-    LIVRE: 'Bien remis à l\'acquéreur — vente finalisée',
+    ACTE: 'Acte authentique signé devant notaire — transfert de propriété effectué',
+    LIVRE_AVEC_RESERVES: 'Bien livré avec réserves à lever',
+    RESERVES_LEVEES: 'Toutes les réserves de livraison sont levées',
+    LIVRE_DEFINITIF: 'Bien remis à l\'acquéreur — vente finalisée',
     ANNULE: 'Vente annulée — voir motif dans la fiche',
   };
 

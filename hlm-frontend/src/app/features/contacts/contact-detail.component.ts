@@ -627,8 +627,8 @@ export class ContactDetailComponent implements OnInit {
     const labels: Record<string, string> = {
       COMPROMIS:    'Compromis',
       FINANCEMENT:  'Financement',
-      ACTE_NOTARIE: 'Acte notarié',
-      LIVRE:        'Livré',
+      ACTE: 'Acte notarié',
+      LIVRE_DEFINITIF:        'Livré',
       ANNULE:       'Annulé',
     };
     return labels[s] ?? s;
@@ -638,8 +638,8 @@ export class ContactDetailComponent implements OnInit {
     const classes: Record<string, string> = {
       COMPROMIS:    'badge-info',
       FINANCEMENT:  'badge-warning',
-      ACTE_NOTARIE: 'badge-primary',
-      LIVRE:        'badge-success',
+      ACTE: 'badge-primary',
+      LIVRE_DEFINITIF:        'badge-success',
       ANNULE:       'badge-error',
     };
     return classes[s] ?? '';

@@ -49,13 +49,17 @@ export class VenteListComponent implements OnInit {
   creating = false;
   createError = '';
 
-  readonly statuts: VenteStatut[] = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE'];
+  readonly statuts: VenteStatut[] = [
+    'PROSPECT', 'OPTION', 'RESERVE', 'EN_RETRACTATION', 'ACOMPTE',
+    'COMPROMIS', 'FINANCEMENT', 'ACTE',
+    'LIVRE_AVEC_RESERVES', 'RESERVES_LEVEES', 'LIVRE_DEFINITIF', 'ANNULE',
+  ];
 
   /** View mode: table (default) or kanban board */
   viewMode: 'table' | 'kanban' = 'table';
 
   /** Statuts whose accordion panel is expanded on mobile. */
-  openStatuts = new Set<VenteStatut>(['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE', 'ANNULE']);
+  openStatuts = new Set<VenteStatut>(['RESERVE', 'COMPROMIS', 'FINANCEMENT', 'ACTE', 'LIVRE_DEFINITIF', 'ANNULE']);
 
   /** Ventes grouped by statut for the mobile accordion view. */
   get groupedByStatut(): { statut: VenteStatut; items: Vente[] }[] {
@@ -88,10 +92,11 @@ export class VenteListComponent implements OnInit {
   }
 
   readonly KANBAN_COLUMNS: { key: VenteStatut; label: string; hint: string; color: string }[] = [
-    { key: 'COMPROMIS',    label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
-    { key: 'FINANCEMENT',  label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
-    { key: 'ACTE_NOTARIE', label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
-    { key: 'LIVRE',        label: 'Livré',         hint: 'Remise des clés',           color: '#15803d' },
+    { key: 'RESERVE',         label: 'Réservé',      hint: 'Réservation + dépôt',       color: '#c2410c' },
+    { key: 'COMPROMIS',       label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
+    { key: 'FINANCEMENT',     label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
+    { key: 'ACTE',            label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
+    { key: 'LIVRE_DEFINITIF', label: 'Livré',        hint: 'Remise des clés',           color: '#15803d' },
   ];
 
   get kanbanBoard(): { col: { key: VenteStatut; label: string; hint: string; color: string }; items: Vente[] }[] {
@@ -125,11 +130,18 @@ export class VenteListComponent implements OnInit {
   }
 
   readonly STATUT_DESC: Record<VenteStatut, string> = {
-    COMPROMIS:    'Avant-contrat signé — financement et conditions suspensives en cours',
-    FINANCEMENT:  'Dossier de financement déposé — en attente d\'accord bancaire',
-    ACTE_NOTARIE: 'Acte authentique signé devant notaire — transfert de propriété effectué',
-    LIVRE:        'Bien remis à l\'acquéreur — vente finalisée',
-    ANNULE:       'Vente annulée — voir motif dans la fiche',
+    PROSPECT:            'Intérêt commercial initial — pas encore d\'engagement',
+    OPTION:              'Bien bloqué temporairement (24-72h) avant réservation',
+    RESERVE:             'Réservation signée avec dépôt de garantie (≤ 5%)',
+    EN_RETRACTATION:     'Délai légal de rétractation en cours (7 jours)',
+    ACOMPTE:             'Acompte versé par l\'acquéreur',
+    COMPROMIS:           'Avant-contrat signé — financement et conditions suspensives en cours',
+    FINANCEMENT:         'Dossier de financement déposé — en attente d\'accord bancaire',
+    ACTE:                'Acte authentique signé devant notaire — transfert de propriété effectué',
+    LIVRE_AVEC_RESERVES: 'Bien livré avec réserves à lever',
+    RESERVES_LEVEES:     'Toutes les réserves de livraison sont levées',
+    LIVRE_DEFINITIF:     'Bien remis à l\'acquéreur — vente finalisée',
+    ANNULE:              'Vente annulée — voir motif dans la fiche',
   };
 
   ngOnInit(): void {
@@ -147,22 +159,22 @@ export class VenteListComponent implements OnInit {
 
   statutLabel(s: VenteStatut): string {
     const labels: Record<VenteStatut, string> = {
-      COMPROMIS:    'Compromis',
-      FINANCEMENT:  'Financement',
-      ACTE_NOTARIE: 'Acte notarié',
-      LIVRE:        'Livré',
-      ANNULE:       'Annulé',
+      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
+      EN_RETRACTATION: 'Délai de rétractation', ACOMPTE: 'Acompte',
+      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement', ACTE: 'Acte notarié',
+      LIVRE_AVEC_RESERVES: 'Livré (réserves)', RESERVES_LEVEES: 'Réserves levées',
+      LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
     };
     return labels[s] ?? s;
   }
 
   statutClass(s: VenteStatut): string {
     const classes: Record<VenteStatut, string> = {
-      COMPROMIS:    'badge-info',
-      FINANCEMENT:  'badge-warning',
-      ACTE_NOTARIE: 'badge-primary',
-      LIVRE:        'badge-success',
-      ANNULE:       'badge-error',
+      PROSPECT: 'badge-info', OPTION: 'badge-info', RESERVE: 'badge-info',
+      EN_RETRACTATION: 'badge-warning', ACOMPTE: 'badge-info',
+      COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning', ACTE: 'badge-primary',
+      LIVRE_AVEC_RESERVES: 'badge-warning', RESERVES_LEVEES: 'badge-primary',
+      LIVRE_DEFINITIF: 'badge-success', ANNULE: 'badge-error',
     };
     return classes[s] ?? '';
   }

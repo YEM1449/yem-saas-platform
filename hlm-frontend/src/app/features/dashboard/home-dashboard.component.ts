@@ -325,7 +325,7 @@ export class HomeDashboardComponent implements OnInit {
   /** Valeur des ventes encore au compromis/financement (pas encore actées). */
   caEnCours(): number { return this.stageRaw('COMPROMIS') + this.stageRaw('FINANCEMENT'); }
   /** Valeur actée (acte notarié signé) mais pas encore livrée — clôture commerciale. */
-  caActe(): number { return this.stageRaw('ACTE_NOTARIE'); }
+  caActe(): number { return this.stageRaw('ACTE'); }
 
   formatDeltaPrev(d: KpiDelta | null): string {
     if (!d) return '';
@@ -336,12 +336,12 @@ export class HomeDashboardComponent implements OnInit {
 
   readonly STATUT_LABELS: Record<string, string> = {
     COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-    ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+    ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
   };
 
   readonly STATUT_COLORS: Record<string, string> = {
     COMPROMIS: '#6366f1', FINANCEMENT: '#f59e0b',
-    ACTE_NOTARIE: '#3b82f6', LIVRE: '#10b981', ANNULE: '#ef4444',
+    ACTE: '#3b82f6', LIVRE_DEFINITIF: '#10b981', ANNULE: '#ef4444',
   };
 
   statutLabel(s: string): string { return this.STATUT_LABELS[s] ?? s; }
@@ -350,13 +350,13 @@ export class HomeDashboardComponent implements OnInit {
   statutClass(s: string): string {
     const m: Record<string, string> = {
       COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning',
-      ACTE_NOTARIE: 'badge-primary', LIVRE: 'badge-success', ANNULE: 'badge-error',
+      ACTE: 'badge-primary', LIVRE_DEFINITIF: 'badge-success', ANNULE: 'badge-error',
     };
     return 'badge ' + (m[s] ?? '');
   }
 
   pipelineEntries(v: Record<string, number>): { statut: string; count: number }[] {
-    return ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE']
+    return ['COMPROMIS', 'FINANCEMENT', 'ACTE']
       .filter(s => v[s] != null)
       .map(s => ({ statut: s, count: v[s] }));
   }
@@ -423,18 +423,18 @@ export class HomeDashboardComponent implements OnInit {
     return Math.min(Math.round((s.caSigneMoisCourant / s.caMensuelCible) * 100), 100);
   }
 
-  private readonly STAGE_FLOW_ORDER = ['COMPROMIS', 'FINANCEMENT', 'ACTE_NOTARIE', 'LIVRE'];
+  private readonly STAGE_FLOW_ORDER = ['COMPROMIS', 'FINANCEMENT', 'ACTE', 'LIVRE_DEFINITIF'];
   private readonly STAGE_FLOW_LABELS: Record<string, string> = {
     COMPROMIS:    'Compromis',
     FINANCEMENT:  'Financement',
-    ACTE_NOTARIE: 'Acte',
-    LIVRE:        'Livraison',
+    ACTE: 'Acte',
+    LIVRE_DEFINITIF:        'Livraison',
   };
   private readonly STAGE_FLOW_COLORS: Record<string, string> = {
     COMPROMIS:    '#c2410c',
     FINANCEMENT:  '#a16207',
-    ACTE_NOTARIE: '#15803d',
-    LIVRE:        '#15803d',
+    ACTE: '#15803d',
+    LIVRE_DEFINITIF:        '#15803d',
   };
 
   pipelineStageFlow(s: HomeDashboard): { key: string; label: string; count: number; amount: number; color: string; flex: number }[] {

@@ -33,10 +33,10 @@ export class VenteCreateComponent implements OnInit {
   createError = signal('');
 
   readonly PIPELINE_STAGES = [
-    { key: 'COMPROMIS',    label: 'Compromis',     color: '#6366f1' },
-    { key: 'FINANCEMENT',  label: 'Financement',   color: '#f59e0b' },
-    { key: 'ACTE_NOTARIE', label: 'Acte notarié',  color: '#3b82f6' },
-    { key: 'LIVRE',        label: 'Livraison',      color: '#10b981' },
+    { key: 'COMPROMIS',       label: 'Compromis',     color: '#6366f1' },
+    { key: 'FINANCEMENT',     label: 'Financement',   color: '#f59e0b' },
+    { key: 'ACTE',            label: 'Acte notarié',  color: '#3b82f6' },
+    { key: 'LIVRE_DEFINITIF', label: 'Livraison',     color: '#10b981' },
   ];
 
   get reservationId(): string | null {
