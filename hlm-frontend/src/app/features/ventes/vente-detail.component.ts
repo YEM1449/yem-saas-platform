@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
-  CreateEcheanceRequest, UpdateVenteStatutRequest
+  CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
@@ -85,6 +85,16 @@ export class VenteDetailComponent implements OnInit {
 
   ech: CreateEcheanceRequest = { libelle: '', montant: 0, dateEcheance: '' };
 
+  // ── VEFA Loi 44-00 lifecycle actions ──────────────────────────────────────
+  vefaError = signal('');
+  vefaBusy  = signal(false);
+  reserves  = signal<ReserveLivraison[]>([]);
+  showConfirmForm  = false;
+  showDeliveryForm = false;
+  depositAmount: number | null = null;
+  deliveryDate: string | null = null;
+  deliveryReserves = ''; // one reserve description per line
+
   get canWrite(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
@@ -98,8 +108,79 @@ export class VenteDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.get(id).subscribe({
-      next:  (v) => this.vente.set(v),
+      next:  (v) => { this.vente.set(v); this.maybeLoadReserves(v); },
       error: ()  => this.error.set('Vente introuvable.'),
+    });
+  }
+
+  // ── VEFA actions ───────────────────────────────────────────────────────────
+
+  /** True for statuts that can still confirm a reservation (PROSPECT/OPTION). */
+  get canConfirmReservation(): boolean {
+    const s = this.vente()?.statut;
+    return this.canWrite && (s === 'PROSPECT' || s === 'OPTION');
+  }
+  get canRetract(): boolean {
+    return this.canWrite && this.vente()?.statut === 'EN_RETRACTATION';
+  }
+  get canRecordDelivery(): boolean {
+    return this.canWrite && this.vente()?.statut === 'ACTE';
+  }
+  get showReservesPanel(): boolean {
+    const s = this.vente()?.statut;
+    return s === 'LIVRE_AVEC_RESERVES' || s === 'RESERVES_LEVEES';
+  }
+
+  private maybeLoadReserves(v: Vente): void {
+    if (v.statut === 'LIVRE_AVEC_RESERVES' || v.statut === 'RESERVES_LEVEES') {
+      this.svc.listReserves(v.id).subscribe({ next: (r) => this.reserves.set(r) });
+    }
+  }
+
+  private applyVente(v: Vente): void {
+    this.vente.set(v);
+    this.vefaBusy.set(false);
+    this.maybeLoadReserves(v);
+  }
+
+  confirmReservation(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.confirmReservation(venteId, this.depositAmount ?? 0).subscribe({
+      next: (v) => { this.showConfirmForm = false; this.depositAmount = null; this.applyVente(v); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La confirmation de réservation a échoué (dépôt > 5% ?).'); },
+    });
+  }
+
+  exerciseRetractation(venteId: string): void {
+    if (!confirm('Confirmer la rétractation ? La vente sera annulée et le bien libéré.')) return;
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.exerciseRetractation(venteId).subscribe({
+      next: (v) => this.applyVente(v),
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La rétractation est impossible (délai expiré ?).'); },
+    });
+  }
+
+  recordDelivery(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    const reserves = this.deliveryReserves
+      .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    this.svc.recordDelivery(venteId, { dateLivraison: this.deliveryDate, reserves }).subscribe({
+      next: (v) => { this.showDeliveryForm = false; this.deliveryReserves = ''; this.deliveryDate = null; this.applyVente(v); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'L\'enregistrement de la livraison a échoué.'); },
+    });
+  }
+
+  liftReserve(venteId: string, reserveId: string): void {
+    this.vefaBusy.set(true);
+    this.svc.liftReserve(venteId, reserveId).subscribe({
+      next: (v) => this.applyVente(v),
+      error: () => { this.vefaBusy.set(false); this.vefaError.set('La levée de réserve a échoué.'); },
     });
   }
 

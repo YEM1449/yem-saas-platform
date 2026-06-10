@@ -52,6 +52,95 @@
     </div>
   </div>
 
+  <!-- ── VEFA actions (Loi 44-00) ────────────────────────────── -->
+  @if (canConfirmReservation || canRetract || canRecordDelivery || showReservesPanel) {
+    <div class="card mb-20" data-testid="vefa-actions">
+      <div class="card-body">
+        <h3 class="card-title">Actions VEFA — Loi 44-00</h3>
+        @if (vefaError()) { <p class="msg-error" data-testid="vefa-error">{{ vefaError() }}</p> }
+
+        <!-- Confirmer la réservation (dépôt ≤ 5%) -->
+        @if (canConfirmReservation) {
+          @if (!showConfirmForm) {
+            <button class="btn btn-primary" (click)="showConfirmForm = true" data-testid="vefa-confirm-open">
+              Confirmer la réservation
+            </button>
+          } @else {
+            <div class="vefa-form">
+              <label class="form-label">Dépôt de garantie (MAD) — max 5% du prix (Art. 618-4)</label>
+              <input type="number" class="form-input" [(ngModel)]="depositAmount" min="0"
+                     placeholder="Montant du dépôt" data-testid="vefa-deposit"/>
+              <div class="form-actions">
+                <button class="btn btn-ghost" (click)="showConfirmForm = false">Annuler</button>
+                <button class="btn btn-primary" [disabled]="vefaBusy()"
+                        (click)="confirmReservation(v.id)" data-testid="vefa-confirm-submit">
+                  Confirmer (ouvre le délai de rétractation de 7j)
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Exercer la rétractation (fenêtre légale) -->
+        @if (canRetract) {
+          <p class="vefa-hint">Délai légal de rétractation en cours
+            @if (v.dateFinDelaiReflexion) { jusqu'au {{ v.dateFinDelaiReflexion | date:'dd/MM/yyyy' }} }.</p>
+          <button class="btn btn-danger-soft" [disabled]="vefaBusy()"
+                  (click)="exerciseRetractation(v.id)" data-testid="vefa-retract">
+            Exercer la rétractation
+          </button>
+        }
+
+        <!-- Enregistrer la livraison (avec ou sans réserves) -->
+        @if (canRecordDelivery) {
+          @if (!showDeliveryForm) {
+            <button class="btn btn-primary" (click)="showDeliveryForm = true" data-testid="vefa-delivery-open">
+              Enregistrer la livraison
+            </button>
+          } @else {
+            <div class="vefa-form">
+              <label class="form-label">Date de livraison</label>
+              <input type="date" class="form-input" [(ngModel)]="deliveryDate" data-testid="vefa-delivery-date"/>
+              <label class="form-label">Réserves (une par ligne — laisser vide pour une livraison sans réserve)</label>
+              <textarea class="form-input" rows="3" [(ngModel)]="deliveryReserves"
+                        placeholder="Ex. Fissure plafond séjour&#10;Volet roulant chambre 2"
+                        data-testid="vefa-delivery-reserves"></textarea>
+              <div class="form-actions">
+                <button class="btn btn-ghost" (click)="showDeliveryForm = false">Annuler</button>
+                <button class="btn btn-primary" [disabled]="vefaBusy()"
+                        (click)="recordDelivery(v.id)" data-testid="vefa-delivery-submit">
+                  Enregistrer la livraison
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Réserves de livraison + levée -->
+        @if (showReservesPanel) {
+          <h4 class="vefa-subtitle">Réserves de livraison</h4>
+          @if (reserves().length === 0) {
+            <p class="vefa-hint">Aucune réserve.</p>
+          } @else {
+            <ul class="vefa-reserves" data-testid="vefa-reserves-list">
+              @for (r of reserves(); track r.id) {
+                <li class="vefa-reserve" [class.lifted]="r.statut === 'LEVEE'">
+                  <span class="vefa-reserve-desc">{{ r.description }}</span>
+                  @if (r.statut === 'LEVEE') {
+                    <span class="badge badge-success">Levée @if (r.dateLeveeReelle) { le {{ r.dateLeveeReelle | date:'dd/MM/yyyy' }} }</span>
+                  } @else {
+                    <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
+                            (click)="liftReserve(v.id, r.id)" data-testid="vefa-lift-reserve">Lever</button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  }
+
   <!-- ── Deal cockpit band — answers the agent's first 3 questions:
          next deadline · what's blocking · where's the money ─────── -->
   <div class="deal-band" [class.deal-band-terminal]="isTerminal(v.statut)">

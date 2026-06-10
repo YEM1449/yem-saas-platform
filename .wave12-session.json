@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-10T23:22:21.920Z",
+  "last_updated": "2026-06-10T23:33:48.198Z",
   "current_phase": "P1",
-  "current_task": "P1-T6 (IT pipeline VEFA, nécessite Docker/CI) / P1-T7 (commit final P1). Puis boutons frontend OPTION/confirm/rétractation/livraison. Ensuite P2-P7.",
+  "current_task": "P1-T6 (IT pipeline VEFA — Docker/CI) / P1-T7 (commit clôture P1). Ensuite P2 (échéancier/appels en étendant payments).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -27,7 +27,8 @@
         "P1-T5": "✅ Livraison avec réserves : table reserve_livraison (changeset 078 + RLS), ReserveLivraison/StatutReserve + repo, recordDelivery (ACTE→LIVRE_DEFINITIF si 0 réserve, sinon LIVRE_AVEC_RESERVES + création réserves, délai levée 60j via MarketConfig, réutilise updateStatut), listReserves, liftReserve (dernière levée → RESERVES_LEVEES). Endpoints POST /{id}/livraison, GET /{id}/reserves, PUT /{id}/reserves/{rid}/lever. ReserveNotFoundException 404. Frontend service methods + interface ReserveLivraison.",
         "P1-T6": "Tests unitaires + IT pipeline étendu",
         "P1-T7": "Commit P1",
-        "P1-T2b": "✅ Frontend réconcilié (statut VEFA) — vente.service + status.service types (12 états), pipeline-stepper (ORDER 12 + 5 étapes), advance-dialog (NEXT_MAP/labels/hints), vente-detail/list (Records 12 + comparaisons), portal-ventes, dashboards (value-tunnel ACTE/LIVRE_DEFINITIF + drills), reports, ui-status-pill. Domaine 3D/property/tranche préservé (lot-3d-status LIVRE intact). Build VERT."
+        "P1-T2b": "✅ Frontend réconcilié (statut VEFA) — vente.service + status.service types (12 états), pipeline-stepper (ORDER 12 + 5 étapes), advance-dialog (NEXT_MAP/labels/hints), vente-detail/list (Records 12 + comparaisons), portal-ventes, dashboards (value-tunnel ACTE/LIVRE_DEFINITIF + drills), reports, ui-status-pill. Domaine 3D/property/tranche préservé (lot-3d-status LIVRE intact). Build VERT.",
+        "P1-T2c-frontend-vefa-ui": "✅ Boutons VEFA câblés dans vente-detail : confirmer réservation (dépôt ≤5%), exercer rétractation (fenêtre légale), enregistrer livraison (avec/sans réserves), panneau réserves + lever. Getters context-sensitifs (canConfirmReservation/canRetract/canRecordDelivery/showReservesPanel), gestion erreur (vefaError), build vert."
       }
     },
     "P2": {
