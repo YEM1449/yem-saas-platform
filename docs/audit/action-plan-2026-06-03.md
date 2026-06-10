@@ -39,10 +39,10 @@ Effort : XS=<2h, S=<1j, M=<3j, L=<1sem, XL=>1sem.
 |---|--------|--------|-------------------|-------|
 | C-001 | F-003 403/404 | ✅ **FAIT (requalifié faux positif)** — vérifié que le 403 ne concerne que le contexte manquant ; l'accès ressource est déjà 404. Documenté ; aucun changement code. | — | — |
 | C-002 | F-004 GLB non validé | ✅ **FAIT** — `GlbValidator` (magic glTF + version + chunk JSON → `KHR_draco_mesh_compression`) → 422 ; gated `app.viewer3d.validate-glb-binary` ; 7 tests | `viewer3d/service/GlbValidator.java`, `Project3dService.java` | S |
-| C-003 | F-006 Listes non paginées | Introduire `Pageable`/`Page<T>` sur les ~36 endpoints `List<>` (commencer par contacts/ventes/properties) | `*Controller.java` | M |
-| C-004 | F-005 Services non testés | Couvrir en priorité `ReservationService`, `ProjectGenerationService`, `AuthService`, `QuotaService` | `src/test/.../*Test.java` | L |
-| C-005 | F-008 Subscriptions | Auditer les composants longue durée (polling, 3D, shell) → `takeUntilDestroyed` systématique | `core/`, `features/`, `modules/viewer-3d/` | M |
-| C-006 | F-011 Front non testé | Specs unitaires sur services core (auth, vente, reservation) + guards | `*.spec.ts` | L |
+| C-003 | F-006 Listes non paginées | ⏳ **DIFFÉRÉ** — chantier coordonné FE+BE (List→Page casse les consommateurs tableau) ; bornage déjà par scope société | `*Controller.java` + services FE | M |
+| C-004 | F-005 Services non testés | ⏳ **EN COURS** — `QuotaServiceTest` (8), `ContactCompletenessServiceTest` (5), `VenteServiceTest` (6) ajoutés ; reste à étendre par vagues | `src/test/.../*Test.java` | L |
+| C-005 | F-008 Subscriptions | ✅ **FAIT (faux positif)** — 0 flux infini non gardé ; HttpClient one-shot ; polling/3D/keep-alive déjà détruits | — | — |
+| C-006 | F-011 Front non testé | ⏳ **EN COURS** — `absorption.spec.ts` ajouté (KPI canonique) ; étendre aux services core par vagues | `*.spec.ts` | L |
 
 ---
 
@@ -50,12 +50,12 @@ Effort : XS=<2h, S=<1j, M=<3j, L=<1sem, XL=>1sem.
 
 | # | Item | Description | Bénéfice | Effort |
 |---|------|-------------|----------|--------|
-| D-001 | F-007 | Migrer les 2 derniers `*ngIf`/`*ngFor` → `@if`/`@for` | Cohérence Angular 19 | XS |
-| D-002 | F-009 | Remplacer les 232 `style=` inline par classes/tokens | Design system | M |
+| D-001 | F-007 | ✅ **FAIT** — `template-editor` + `mesh-mapping-admin` migrés `@if`/`@for` (0 legacy restant) | Cohérence Angular 19 | XS |
+| D-002 | F-009 | ⏳ **DIFFÉRÉ** — 232 `style=` inline : refactor de masse cosmétique, traiter par lot en passe UI | Design system | M |
 | D-003 | F-012 | Décider d'une stratégie soft-delete pour les entités à piste d'audit GDPR | Conformité/traçabilité | M |
-| D-004 | F-013 | Purger/rafraîchir les fichiers `.X-state` périmés ou les retirer du repo | Clarté | XS |
-| D-005 | F-014 | Corriger les chemins divergents dans la doc/prompts (changelog, docs/ai, guides) | DX | XS |
-| D-006 | F-015 | Workflow CD (Render/Cloudflare) + job lint distinct | Automatisation | S |
+| D-004 | F-013 | ✅ **FAIT** — bannière CURRENT STATE en tête de `.sprint-state.md` (renvoi CLAUDE.md) | Clarté | XS |
+| D-005 | F-014 | Chemins divergents documentés dans le rapport d'audit (§ écarts) ; CLAUDE.md fait foi | DX | XS |
+| D-006 | F-015 | ⏳ **DIFFÉRÉ** — workflow CD nécessite secrets/cibles de déploiement réels | Automatisation | S |
 
 ---
 

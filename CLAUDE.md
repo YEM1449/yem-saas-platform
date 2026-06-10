@@ -17,7 +17,14 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 - **F-004 ✅** `GlbValidator` (RG-E05) valide les octets GLB à la confirmation (magic glTF + version 2 + `KHR_draco_mesh_compression`) → 422 `INVALID_GLB_FILE`. Property `app.viewer3d.validate-glb-binary` (true prod, false test) ; 7 tests `GlbValidatorTest`.
 - **F-010 ✅** Fallback 3D `no-model` gated `canManageModel` (ADMIN/MANAGER) sinon message informatif.
 
-**Still open (P2/P3):** F-005 services untested; F-006 unpaginated lists; F-008 unguarded subscriptions; F-011 frontend unit coverage.
+**Fixed P2/P3 batch 2 (2026-06-04):**
+- **F-007 ✅** `template-editor` (23 `*ngIf`) + `mesh-mapping-admin` migrated to `@if`/`@for`; 0 legacy control-flow remaining; build green.
+- **F-008 → faux positif** : 222 `.subscribe()` = HttpClient one-shot (auto-complétés) ; flux persistants (notification-polling 60s, keep-alive, viewer-3d) déjà détruits (`takeUntil(destroy$)`/`unsubscribe`). 0 fuite réelle.
+- **F-005 ⏳ en cours** : `QuotaServiceTest` (8), `ContactCompletenessServiceTest` (5) ajoutés (+ `VenteServiceTest`). Unit suite: **128 pass**.
+- **F-011 ⏳ en cours** : `absorption.spec.ts` (KPI canonique).
+- **F-013 ✅** bannière CURRENT STATE en tête de `.sprint-state.md`.
+
+**Deferred (justifié, P2/P3):** F-006 (List→Page casse les contrats FE — chantier coordonné), F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
 
 Next available changeset: **076**.
 

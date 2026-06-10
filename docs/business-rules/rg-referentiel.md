@@ -28,6 +28,12 @@ Statuts : ✅ Implémentée · ⚠️ Partielle · ❌ Manquante
 **Backend :** `VenteService.updateStatut()` (`:317-325`) via `PropertyCommercialWorkflowService`.
 **Tests :** ❌ backend absent.
 
+## RG-F1 · Complétude du contact par étape
+**Module :** contact · **Statut :** ✅ Implémentée (test ajouté 2026-06-04)
+**Règle :** RESERVATION exige `phone` ; VENTE exige en plus `nationalId` + `address`.
+**Backend :** `ContactCompletenessService.validateForStage()` → `ClientIncompleteException` (422) listant les champs manquants.
+**Tests :** ✅ `ContactCompletenessServiceTest` (5 : inconnu→404, RESERVATION ok/blank-phone, VENTE complet/champs légaux manquants).
+
 ## RG-B07 · Prix verrouillé après acompte
 **Module :** vente · **Statut :** ⚠️ À vérifier
 **Règle :** le prix de vente ne doit plus changer après l'acompte.
