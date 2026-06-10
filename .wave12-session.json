@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-10T22:33:09.078Z",
+  "last_updated": "2026-06-10T22:38:00.583Z",
   "current_phase": "P1",
-  "current_task": "P1-T2b (frontend: réconcilier les 26 fichiers statut) puis P1-T3 (OPTION/rétractation/réserves)",
+  "current_task": "P1-T2b (frontend statut reconciliation, domain-aware) puis P1-T3/T4/T5 (OPTION/rétractation/réserves + table reserve_livraison + scheduler)",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -21,12 +21,13 @@
       "status": "in progress",
       "tasks": {
         "P1-T1": "✅ Enum VenteStatut étendu (ASCII, FINANCEMENT conservé) + matrice transitions",
-        "P1-T2": "✅ Liquibase 076 : migration ACTE_NOTARIE→ACTE, LIVRE→LIVRE_DEFINITIF + backend reconcilié (dashboards, repo SQL, tests) — 128 unit verts",
+        "P1-T2": "✅ (backend) Liquibase 076 + backend reconcilié, 128 unit verts. ⏭️ P1-T2b (frontend) NEXT",
         "P1-T3": "VenteService : logique OPTION (timer 48h)",
         "P1-T4": "VenteService : délai rétractation 7j post-RÉSERVÉ",
         "P1-T5": "VenteService : pipeline LIVRAISON avec réserves",
         "P1-T6": "Tests unitaires + IT pipeline étendu",
-        "P1-T7": "Commit P1"
+        "P1-T7": "Commit P1",
+        "P1-T2b": "⏭️ NEXT — réconcilier 21 fichiers frontend (84 sites). ATTENTION : discriminer le domaine VENTE (LIVRE→LIVRE_DEFINITIF, ACTE_NOTARIE→ACTE) du domaine 3D/property/tranche (LIVRE = libellé d affichage, NE PAS rencommer : lot-3d-status, dashboard-3d-tab, palette tranche de ui-status-pill). Étendre status.service + pipeline-stepper + Records<VenteStatut>. Frontend laissé VERT (type non modifié) ; en attendant, les ventes ACTE/LIVRE_DEFINITIF affichent des libellés périmés (régression connue, branche dev)."
       }
     },
     "P2": {
