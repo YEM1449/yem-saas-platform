@@ -296,19 +296,19 @@ public class VenteService {
         // Stamp date fields based on the new statut
         if (request.dateTransition() != null) {
             switch (request.statut()) {
-                case ACTE_NOTARIE -> vente.setDateActeNotarie(request.dateTransition());
-                case LIVRE        -> vente.setDateLivraisonReelle(request.dateTransition());
-                default           -> { /* no specific date field for other statuts */ }
+                case ACTE            -> vente.setDateActeNotarie(request.dateTransition());
+                case LIVRE_DEFINITIF -> vente.setDateLivraisonReelle(request.dateTransition());
+                default              -> { /* no specific date field for other statuts */ }
             }
         }
 
-        // Capture PV de réception date when advancing to LIVRE (optional convenience field)
-        if (request.statut() == VenteStatut.LIVRE && request.datePvReception() != null) {
+        // Capture PV de réception date when advancing to final delivery (optional convenience field)
+        if (request.statut() == VenteStatut.LIVRE_DEFINITIF && request.datePvReception() != null) {
             vente.setDatePvReception(request.datePvReception());
         }
 
         // Advance contact to COMPLETED_CLIENT when sale is delivered
-        if (request.statut() == VenteStatut.LIVRE) {
+        if (request.statut() == VenteStatut.LIVRE_DEFINITIF) {
             Contact contact = vente.getContact();
             advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
             contactRepository.save(contact);
@@ -322,11 +322,11 @@ public class VenteService {
         }
 
         // Drive property status from vente stage:
-        // ACTE_NOTARIE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
+        // ACTE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
         Property property = propertyRepository
                 .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
         if (property != null) {
-            if (request.statut() == VenteStatut.ACTE_NOTARIE) {
+            if (request.statut() == VenteStatut.ACTE) {
                 propertyWorkflow.sell(property, LocalDateTime.now());
                 propertyRepository.save(property);
             } else if (request.statut() == VenteStatut.ANNULE) {
@@ -557,20 +557,34 @@ public class VenteService {
 
     private static int defaultProbability(VenteStatut statut) {
         return switch (statut) {
-            case COMPROMIS    -> 25;
-            case FINANCEMENT  -> 50;
-            case ACTE_NOTARIE -> 75;
-            case LIVRE        -> 100;
-            case ANNULE       -> 0;
+            case PROSPECT            -> 5;
+            case OPTION              -> 10;
+            case RESERVE             -> 20;
+            case EN_RETRACTATION     -> 20;
+            case ACOMPTE             -> 30;
+            case COMPROMIS           -> 40;
+            case FINANCEMENT         -> 50;
+            case ACTE                -> 75;
+            case LIVRE_AVEC_RESERVES -> 90;
+            case RESERVES_LEVEES     -> 95;
+            case LIVRE_DEFINITIF     -> 100;
+            case ANNULE              -> 0;
         };
     }
 
     private static long estimatedDaysToClose(VenteStatut statut) {
         return switch (statut) {
-            case COMPROMIS    -> 90;
-            case FINANCEMENT  -> 60;
-            case ACTE_NOTARIE -> 30;
-            case LIVRE, ANNULE -> 0;
+            case PROSPECT            -> 150;
+            case OPTION              -> 120;
+            case RESERVE             -> 110;
+            case EN_RETRACTATION     -> 100;
+            case ACOMPTE             -> 95;
+            case COMPROMIS           -> 90;
+            case FINANCEMENT         -> 60;
+            case ACTE                -> 30;
+            case LIVRE_AVEC_RESERVES -> 15;
+            case RESERVES_LEVEES     -> 5;
+            case LIVRE_DEFINITIF, ANNULE -> 0;
         };
     }
 
@@ -578,20 +592,33 @@ public class VenteService {
      * Validates that the requested statut transition is permitted.
      *
      * <pre>
-     * COMPROMIS  → FINANCEMENT, ANNULE
-     * FINANCEMENT → ACTE_NOTARIE, ANNULE
-     * ACTE_NOTARIE → LIVRE, ANNULE
-     * LIVRE      → (terminal)
-     * ANNULE     → (terminal)
+     * PROSPECT        → OPTION, RESERVE, ANNULE
+     * OPTION          → RESERVE, PROSPECT, ANNULE
+     * RESERVE         → EN_RETRACTATION, ACOMPTE, ANNULE
+     * EN_RETRACTATION → ACOMPTE, ANNULE        (expiry → continue ; rétractation → ANNULE)
+     * ACOMPTE         → COMPROMIS, ANNULE
+     * COMPROMIS       → FINANCEMENT, ANNULE
+     * FINANCEMENT     → ACTE, ANNULE
+     * ACTE            → LIVRE_AVEC_RESERVES, LIVRE_DEFINITIF, ANNULE
+     * LIVRE_AVEC_RESERVES → RESERVES_LEVEES, ANNULE
+     * RESERVES_LEVEES → LIVRE_DEFINITIF
+     * LIVRE_DEFINITIF, ANNULE → (terminal)
      * </pre>
      */
     private void validateTransition(VenteStatut from, VenteStatut to) {
         if (from == to) return; // idempotent — no-op
         Set<VenteStatut> allowed = switch (from) {
-            case COMPROMIS    -> Set.of(VenteStatut.FINANCEMENT,  VenteStatut.ANNULE);
-            case FINANCEMENT  -> Set.of(VenteStatut.ACTE_NOTARIE, VenteStatut.ANNULE);
-            case ACTE_NOTARIE -> Set.of(VenteStatut.LIVRE,        VenteStatut.ANNULE);
-            case LIVRE, ANNULE -> Set.of(); // terminal states
+            case PROSPECT        -> Set.of(VenteStatut.OPTION, VenteStatut.RESERVE, VenteStatut.ANNULE);
+            case OPTION          -> Set.of(VenteStatut.RESERVE, VenteStatut.PROSPECT, VenteStatut.ANNULE);
+            case RESERVE         -> Set.of(VenteStatut.EN_RETRACTATION, VenteStatut.ACOMPTE, VenteStatut.ANNULE);
+            case EN_RETRACTATION -> Set.of(VenteStatut.ACOMPTE, VenteStatut.ANNULE);
+            case ACOMPTE         -> Set.of(VenteStatut.COMPROMIS, VenteStatut.ANNULE);
+            case COMPROMIS       -> Set.of(VenteStatut.FINANCEMENT, VenteStatut.ANNULE);
+            case FINANCEMENT     -> Set.of(VenteStatut.ACTE, VenteStatut.ANNULE);
+            case ACTE            -> Set.of(VenteStatut.LIVRE_AVEC_RESERVES, VenteStatut.LIVRE_DEFINITIF, VenteStatut.ANNULE);
+            case LIVRE_AVEC_RESERVES -> Set.of(VenteStatut.RESERVES_LEVEES, VenteStatut.ANNULE);
+            case RESERVES_LEVEES -> Set.of(VenteStatut.LIVRE_DEFINITIF);
+            case LIVRE_DEFINITIF, ANNULE -> Set.of(); // terminal states
         };
         if (!allowed.contains(to)) {
             throw new InvalidVenteTransitionException(from, to);

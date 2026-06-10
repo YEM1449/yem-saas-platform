@@ -65,7 +65,7 @@ public class DashboardCockpitService {
 
     private static final List<VenteStatut> ANNULE_ONLY = List.of(VenteStatut.ANNULE);
     private static final List<VenteStatut> NON_TERMINAL =
-            List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
+            List.of(VenteStatut.LIVRE_DEFINITIF, VenteStatut.ANNULE);
     private static final int SPARKLINE_WEEKS = 12;
 
     private final VenteRepository         venteRepo;
@@ -155,7 +155,7 @@ public class DashboardCockpitService {
         long activeVentes = venteRepo.countByStatut(societeId, NON_TERMINAL).stream()
                 .mapToLong(r -> ((Number) r[1]).longValue())
                 .sum();
-        long livre = venteRepo.countBySocieteIdAndStatut(societeId, VenteStatut.LIVRE);
+        long livre = venteRepo.countBySocieteIdAndStatut(societeId, VenteStatut.LIVRE_DEFINITIF);
 
         List<FunnelStage> stages = new ArrayList<>(5);
         stages.add(buildStage("PROSPECTS",    "Prospects",          prospects,          null));

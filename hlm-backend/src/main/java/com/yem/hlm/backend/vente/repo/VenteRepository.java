@@ -289,7 +289,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                    COALESCE(AVG(EXTRACT(EPOCH FROM (NOW() - v.stage_entry_date)) / 86400.0), 0)
             FROM vente v
             WHERE v.societe_id = :societeId
-              AND v.statut NOT IN ('LIVRE','ANNULE')
+              AND v.statut NOT IN ('LIVRE_DEFINITIF','ANNULE')
             GROUP BY v.statut, v.probability
             ORDER BY v.probability
             """, nativeQuery = true)
@@ -306,7 +306,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             FROM vente v
             JOIN contact c ON c.id = v.contact_id
             WHERE v.societe_id = :societeId
-              AND v.statut NOT IN ('LIVRE','ANNULE')
+              AND v.statut NOT IN ('LIVRE_DEFINITIF','ANNULE')
               AND EXTRACT(EPOCH FROM (NOW() - v.stage_entry_date)) / 86400.0 > :thresholdDays
             ORDER BY aging DESC
             LIMIT 20
@@ -323,7 +323,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             SELECT v.expected_closing_date, v.prix_vente, v.probability
             FROM vente v
             WHERE v.societe_id = :societeId
-              AND v.statut NOT IN ('LIVRE','ANNULE')
+              AND v.statut NOT IN ('LIVRE_DEFINITIF','ANNULE')
             """, nativeQuery = true)
     List<Object[]> forecastRawData(@Param("societeId") UUID societeId);
 
@@ -336,16 +336,16 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     @Query(value = """
             SELECT v.agent_id,
                    u.prenom, u.nom_famille,
-                   COUNT(*) FILTER (WHERE v.statut = 'LIVRE'),
-                   COALESCE(SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE'), 0),
+                   COUNT(*) FILTER (WHERE v.statut = 'LIVRE_DEFINITIF'),
+                   COALESCE(SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE_DEFINITIF'), 0),
                    COUNT(*) FILTER (WHERE v.statut = 'ANNULE'),
-                   AVG(EXTRACT(EPOCH FROM (COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE'),
-                   COUNT(*) FILTER (WHERE v.statut NOT IN ('LIVRE','ANNULE'))
+                   AVG(EXTRACT(EPOCH FROM (COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) - v.created_at)) / 86400.0) FILTER (WHERE v.statut = 'LIVRE_DEFINITIF'),
+                   COUNT(*) FILTER (WHERE v.statut NOT IN ('LIVRE_DEFINITIF','ANNULE'))
             FROM vente v
             JOIN app_user u ON u.id = v.agent_id
             WHERE v.societe_id = :societeId
             GROUP BY v.agent_id, u.prenom, u.nom_famille
-            ORDER BY SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE') DESC NULLS LAST
+            ORDER BY SUM(v.prix_vente) FILTER (WHERE v.statut = 'LIVRE_DEFINITIF') DESC NULLS LAST
             """, nativeQuery = true)
     List<Object[]> agentPerformance(@Param("societeId") UUID societeId);
 
@@ -408,14 +408,14 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             SELECT 'SRU' AS alert_type, COUNT(*) AS cnt
             FROM vente v
             WHERE v.societe_id = :societeId
-              AND v.statut NOT IN ('LIVRE', 'ANNULE')
+              AND v.statut NOT IN ('LIVRE_DEFINITIF', 'ANNULE')
               AND v.date_fin_delai_reflexion IS NOT NULL
               AND v.date_fin_delai_reflexion BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
             UNION ALL
             SELECT 'CREDIT' AS alert_type, COUNT(*) AS cnt
             FROM vente v
             WHERE v.societe_id = :societeId
-              AND v.statut NOT IN ('LIVRE', 'ANNULE')
+              AND v.statut NOT IN ('LIVRE_DEFINITIF', 'ANNULE')
               AND v.date_limite_financement IS NOT NULL
               AND v.date_limite_financement BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:daysAhead AS INT)
             """, nativeQuery = true)
@@ -650,7 +650,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                        END AS bucket
                 FROM vente
                 WHERE societe_id = :societeId
-                  AND statut = 'LIVRE'
+                  AND statut = 'LIVRE_DEFINITIF'
             ) sub
             GROUP BY bucket
             ORDER BY MIN(days_to_close)
@@ -696,12 +696,12 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
                    COALESCE(SUM(prix_vente), 0)                                                   AS total_value
             FROM vente
             WHERE societe_id = :societeId
-              AND statut NOT IN ('LIVRE','ANNULE')
+              AND statut NOT IN ('LIVRE_DEFINITIF','ANNULE')
             GROUP BY statut
             ORDER BY CASE statut
                        WHEN 'COMPROMIS'    THEN 1
                        WHEN 'FINANCEMENT'  THEN 2
-                       WHEN 'ACTE_NOTARIE' THEN 3
+                       WHEN 'ACTE' THEN 3
                        ELSE 4
                      END
             """, nativeQuery = true)
@@ -724,7 +724,7 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
             FROM vente v
             JOIN property p ON p.id = v.property_id
             WHERE v.societe_id = :societeId
-              AND v.statut = 'LIVRE'
+              AND v.statut = 'LIVRE_DEFINITIF'
               AND COALESCE(v.date_livraison_reelle::timestamp, v.stage_entry_date) IS NOT NULL
             GROUP BY p.type
             ORDER BY avg_days_to_close ASC NULLS LAST

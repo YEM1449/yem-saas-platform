@@ -54,7 +54,7 @@ import java.util.UUID;
 public class HomeDashboardService {
 
     /** Terminal statuts excluded from "active pipeline" queries. */
-    private static final List<VenteStatut> TERMINAL = List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
+    private static final List<VenteStatut> TERMINAL = List.of(VenteStatut.LIVRE_DEFINITIF, VenteStatut.ANNULE);
 
     private static final List<VenteStatut> ANNULE_ONLY = List.of(VenteStatut.ANNULE);
 
@@ -179,7 +179,7 @@ public class HomeDashboardService {
         if (caSigneMoisCourant  == null) caSigneMoisCourant  = BigDecimal.ZERO;
         if (caSigneMoisPrecedent == null) caSigneMoisPrecedent = BigDecimal.ZERO;
 
-        BigDecimal caLivre = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        BigDecimal caLivre = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE_DEFINITIF);
         if (caLivre == null) caLivre = BigDecimal.ZERO;
 
         long ventesSigneesMoisCourantCount = isAgent
@@ -265,7 +265,7 @@ public class HomeDashboardService {
                         .setScale(1, RoundingMode.HALF_UP)
                 : null;
 
-        BigDecimal avgTicketLivre = venteRepo.avgPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        BigDecimal avgTicketLivre = venteRepo.avgPrixVenteByStatut(societeId, VenteStatut.LIVRE_DEFINITIF);
         if (avgTicketLivre == null) avgTicketLivre = BigDecimal.ZERO;
 
         long ventes30d       = venteRepo.countCreatedInPeriod(societeId, thirtyDaysAgo, now);
@@ -352,7 +352,7 @@ public class HomeDashboardService {
                     .divide(BigDecimal.valueOf(4), 1, RoundingMode.HALF_UP);
 
             // Win rate 90d = LIVRE / (LIVRE + ANNULE)
-            long livre90d = venteRepo.countByStatutInPeriod(societeId, VenteStatut.LIVRE, ninetyDaysAgo, now);
+            long livre90d = venteRepo.countByStatutInPeriod(societeId, VenteStatut.LIVRE_DEFINITIF, ninetyDaysAgo, now);
             long terminal90d = livre90d + annule90d;
             if (terminal90d > 0) {
                 winRate90d = BigDecimal.valueOf(livre90d)
@@ -627,7 +627,7 @@ public class HomeDashboardService {
                                 com.yem.hlm.backend.dashboard.api.dto.ShareholderKpiDTO.ProjectConcentrationRow::pctOfPortfolio).reversed())
                         .toList();
 
-        BigDecimal soldValue = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE);
+        BigDecimal soldValue = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE_DEFINITIF);
         if (soldValue == null) soldValue = BigDecimal.ZERO;
 
         BigDecimal projectedExposure = venteRepo.sumPrixVente(societeId, TERMINAL);

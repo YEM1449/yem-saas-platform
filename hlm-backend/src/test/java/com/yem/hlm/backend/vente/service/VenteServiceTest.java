@@ -170,7 +170,7 @@ class VenteServiceTest {
     void updateStatut_rejectsSkippingStages() {
         Vente vente = venteWithStatut(VenteStatut.COMPROMIS);
 
-        assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(VenteStatut.LIVRE)))
+        assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(VenteStatut.LIVRE_DEFINITIF)))
                 .isInstanceOf(InvalidVenteTransitionException.class);
 
         verify(vente, never()).setStatut(any());
@@ -179,7 +179,7 @@ class VenteServiceTest {
     @Test
     @DisplayName("RG-B04: no transition out of terminal LIVRE")
     void updateStatut_rejectsTransitionFromTerminal() {
-        Vente vente = venteWithStatut(VenteStatut.LIVRE);
+        Vente vente = venteWithStatut(VenteStatut.LIVRE_DEFINITIF);
 
         assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(VenteStatut.FINANCEMENT)))
                 .isInstanceOf(InvalidVenteTransitionException.class);

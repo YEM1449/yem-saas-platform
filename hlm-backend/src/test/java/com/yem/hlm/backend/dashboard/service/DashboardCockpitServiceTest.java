@@ -115,7 +115,7 @@ class DashboardCockpitServiceTest {
         statutRows.add(new Object[]{VenteStatut.COMPROMIS, 8L});
         when(venteRepo.countByStatut(ArgumentMatchers.eq(societeId), anyList()))
                 .thenReturn(statutRows);
-        when(venteRepo.countBySocieteIdAndStatut(societeId, VenteStatut.LIVRE)).thenReturn(4L);
+        when(venteRepo.countBySocieteIdAndStatut(societeId, VenteStatut.LIVRE_DEFINITIF)).thenReturn(4L);
 
         FunnelDTO dto = service.getFunnel(societeId);
         assertEquals(5, dto.stages().size());

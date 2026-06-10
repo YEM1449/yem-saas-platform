@@ -151,3 +151,5 @@ databaseChangeLog:
       file: db/changelog/changes/074-reservation-cancel-reason.yaml
   - include:
       file: db/changelog/changes/075-vente-active-unique.yaml
+  - include:
+      file: db/changelog/changes/076-vente-statut-vefa-rename.yaml

@@ -177,7 +177,7 @@ class VenteControllerIT extends IntegrationTestBase {
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new UpdateVenteStatutRequest(
-                                VenteStatut.LIVRE, null, null, null, null, null))))
+                                VenteStatut.LIVRE_DEFINITIF, null, null, null, null, null))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("INVALID_STATUS_TRANSITION"));
     }
