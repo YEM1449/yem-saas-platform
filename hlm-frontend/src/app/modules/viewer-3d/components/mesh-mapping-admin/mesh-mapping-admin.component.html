@@ -9,9 +9,11 @@
     <p class="page-subtitle">{{ 'viewer3d.mappingSubtitle' | translate }}</p>
   </div>
   <div class="page-header-actions">
-    <span class="stat-chip" *ngIf="!loading() && !error()">
-      <strong>{{ mappedCount() }}</strong>&nbsp;/&nbsp;{{ allMeshes().length }}&nbsp;{{ 'viewer3d.mappedLabel' | translate }}
-    </span>
+    @if (!loading() && !error()) {
+      <span class="stat-chip">
+        <strong>{{ mappedCount() }}</strong>&nbsp;/&nbsp;{{ allMeshes().length }}&nbsp;{{ 'viewer3d.mappedLabel' | translate }}
+      </span>
+    }
     @if (canUndoAutoPair()) {
       <button class="btn btn-secondary btn-sm" (click)="undoAutoPair()"
               [title]="'viewer3d.undoAutoPairHint' | translate">
