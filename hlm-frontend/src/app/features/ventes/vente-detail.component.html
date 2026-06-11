@@ -518,11 +518,21 @@
     <div class="card-header">
       <h2 class="card-title">Échéancier</h2>
       @if (canWrite) {
-        <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm">
-          + Ajouter
-        </button>
+        <div class="card-header-actions">
+          @if (!hasLegalEcheancier(v)) {
+            <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
+                    (click)="generateEcheancierLegal(v.id)" data-testid="ech-generate-legal"
+                    title="Génère les 7 appels de fonds Art. 618-17 (Loi 44-00)">
+              Générer l'échéancier légal
+            </button>
+          }
+          <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm">
+            + Ajouter
+          </button>
+        </div>
       }
     </div>
+    @if (vefaError()) { <p class="msg-error" style="margin: 8px 16px 0">{{ vefaError() }}</p> }
 
     @if (showEcheanceForm) {
       <div class="echeance-form card-body border-top">

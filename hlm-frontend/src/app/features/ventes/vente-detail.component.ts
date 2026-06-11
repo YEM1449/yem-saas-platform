@@ -184,6 +184,21 @@ export class VenteDetailComponent implements OnInit {
     });
   }
 
+  /** True once the legal échéancier (Art. 618-17) has been generated. */
+  hasLegalEcheancier(v: Vente): boolean {
+    return v.echeances.some(e => !!e.etape);
+  }
+
+  generateEcheancierLegal(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.generateEcheancierLegal(venteId).subscribe({
+      next: () => { this.vefaBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La génération de l\'échéancier légal a échoué.'); },
+    });
+  }
+
   openAdvanceDialog(): void  { this.showAdvanceDialog = true; }
   closeAdvanceDialog(): void { this.showAdvanceDialog = false; }
 

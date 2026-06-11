@@ -45,6 +45,10 @@ export interface Echeance {
   datePaiement: string | null;
   notes: string | null;
   createdAt: string;
+  // VEFA legal échéancier (Art. 618-17) — null for ad-hoc échéances
+  etape: string | null;
+  pctPrevu: number | null;
+  baseLegale: string | null;
 }
 
 export interface VenteDocument {
@@ -213,6 +217,11 @@ export class VenteService {
 
   addEcheance(venteId: string, req: CreateEcheanceRequest): Observable<Echeance> {
     return this.http.post<Echeance>(`${BASE}/${venteId}/echeances`, req);
+  }
+
+  /** Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00). */
+  generateEcheancierLegal(venteId: string): Observable<Echeance[]> {
+    return this.http.post<Echeance[]>(`${BASE}/${venteId}/echeancier/generer-legal`, {});
   }
 
   updateEcheanceStatut(venteId: string, echeanceId: string, req: UpdateEcheanceStatutRequest): Observable<Echeance> {

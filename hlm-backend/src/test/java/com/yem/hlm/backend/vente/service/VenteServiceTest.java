@@ -302,4 +302,49 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.liftReserve(VENTE, reserveId))
                 .isInstanceOf(ReserveNotFoundException.class);
     }
+
+    // ── VEFA Loi 44-00 (échéancier légal Art. 618-17) ────────────────────────
+
+    @Test
+    @DisplayName("generateEcheancierLegal requires a price")
+    void generateEcheancierLegal_requiresPrice() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        when(vente.getPrixVente()).thenReturn(null);
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+
+        assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
+                .isInstanceOf(ViolationLegaleException.class);
+        verify(echeanceRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("generateEcheancierLegal is rejected when a legal schedule already exists")
+    void generateEcheancierLegal_rejectedWhenAlreadyGenerated() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("1000000"));
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(echeanceRepository.existsByVente_IdAndEtapeIsNotNull(VENTE)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
+                .isInstanceOf(ViolationLegaleException.class);
+        verify(echeanceRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("addEcheance rejects an échéance that pushes the cumul above the price (Art. 618-17)")
+    void addEcheance_rejectsCumulOverPrice() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("100000"));
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(echeanceRepository.sumMontantByVente(SOC, VENTE)).thenReturn(new java.math.BigDecimal("95000"));
+
+        var req = new com.yem.hlm.backend.vente.api.dto.CreateEcheanceRequest(
+                "Solde", new java.math.BigDecimal("10000"), LocalDate.now(), null);
+        assertThatThrownBy(() -> service.addEcheance(VENTE, req))
+                .isInstanceOf(ViolationLegaleException.class);
+        verify(echeanceRepository, never()).save(any());
+    }
 }

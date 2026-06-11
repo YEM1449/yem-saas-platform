@@ -16,5 +16,9 @@ public record EcheanceResponse(
         EcheanceStatut statut,
         LocalDate datePaiement,
         String notes,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        // VEFA legal échéancier (Art. 618-17) — null for ad-hoc échéances
+        String etape,
+        BigDecimal pctPrevu,
+        String baseLegale
 ) {}

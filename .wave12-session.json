@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-10T23:33:48.198Z",
+  "last_updated": "2026-06-11T11:20:59.744Z",
   "current_phase": "P1",
-  "current_task": "P1-T6 (IT pipeline VEFA — Docker/CI) / P1-T7 (commit clôture P1). Ensuite P2 (échéancier/appels en étendant payments).",
+  "current_task": "P2 done. Reste P1-T6/T7 (IT/clôture). Ensuite P3 (contact enrichi + co-acquéreur + financement, en étendant vente/contact).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -33,15 +33,15 @@
     },
     "P2": {
       "label": "Échéancier VEFA + Appels de fonds",
-      "status": "pending",
+      "status": "✅ (échéancier légal sur vente_echeance — décision: étendre vente_echeance, PAS payments/SaleContract)",
       "tasks": {
-        "P2-T1": "Liquibase : tables echeancier_template + appel_de_fonds",
-        "P2-T2": "Entités JPA + repositories",
-        "P2-T3": "EcheancierTemplateService (templates légaux Loi 44-00)",
-        "P2-T4": "AppelDeFondsService (génération automatique + validation légale)",
-        "P2-T5": "REST endpoints échéancier + appels",
-        "P2-T6": "Angular : composant échéancier (tableau + timeline)",
-        "P2-T7": "Tests + Commit P2"
+        "P2-T1": "✅ Changeset 079 : etape/pct_prevu/base_legale sur vente_echeance (additif)",
+        "P2-T2": "✅ VenteEcheance +3 champs ; EcheancierLegal (7 étapes Art.618-17, MA, somme=100%)",
+        "P2-T3": "✅ generateEcheancierLegal (prix requis, idempotence, 7 échéances staged montant=prix×pct, base_legale)",
+        "P2-T4": "✅ Garde cumul ≤ prix (assertCumulWithinPrice) dans addEcheance + génération → ViolationLegale 422",
+        "P2-T5": "✅ POST /api/ventes/{id}/echeancier/generer-legal (ADMIN/MANAGER) ; EcheanceResponse +etape/pctPrevu/baseLegale",
+        "P2-T6": "✅ Frontend : Echeance +3 champs, generateEcheancierLegal service, bouton Générer l échéancier légal dans vente-detail (gated hasLegalEcheancier)",
+        "P2-T7": "✅ 3 tests unitaires (prix requis, déjà généré, cumul>prix) ; 138 unit verts ; build front vert"
       }
     },
     "P3": {
@@ -109,7 +109,7 @@
     }
   },
   "decisions": {
-    "prochain_changeset": "079",
+    "prochain_changeset": "080",
     "vente_statuts_existants": [
       "COMPROMIS",
       "FINANCEMENT",
@@ -181,6 +181,7 @@
     "naming_convention": "Constantes enum en ASCII (LIVRE, ANNULE) — PAS d'accents dans les identifiants Java. Les nouveaux statuts doivent suivre (ex. LIVRE_AVEC_RESERVES, RESERVES_LEVEES).",
     "gating": "CONFLIT MAJEUR : le pipeline VenteStatut supposé par le prompt contredit le pipeline réel, et P2 (échéancier/appels) + P3 (financement) dupliqueraient des systèmes existants. Décision utilisateur requise avant P1 : ÉTENDRE l'existant (recommandé) vs REMPLACER (breaking). Voir question posée à l'utilisateur.",
     "note_kpi": "Les 32 littéraux SQL KPI (LIVRE→LIVRE_DEFINITIF, ACTE_NOTARIE→ACTE) ne sont vérifiables que par IT (Docker indispo localement) — à valider en CI.",
-    "engineering_choices": "FINANCEMENT conservé (suppression = perte logique/données financement). Identifiants ASCII (pas d accents) — DB statut VARCHAR."
+    "engineering_choices": "FINANCEMENT conservé (suppression = perte logique/données financement). Identifiants ASCII (pas d accents) — DB statut VARCHAR.",
+    "p2_decision": "Étendre vente_echeance (Vente-natif) car payments est lié à SaleContract (contract_id NOT NULL, aucun lien Vente). Module payments inchangé."
   }
 }

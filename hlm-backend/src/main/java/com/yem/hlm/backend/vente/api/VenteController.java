@@ -138,6 +138,14 @@ public class VenteController {
         return venteService.findEcheances(id);
     }
 
+    /** Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00). */
+    @PostMapping("/{id}/echeancier/generer-legal")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public List<EcheanceResponse> generateEcheancierLegal(@PathVariable UUID id) {
+        return venteService.generateEcheancierLegal(id);
+    }
+
     @PostMapping("/{id}/echeances")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")

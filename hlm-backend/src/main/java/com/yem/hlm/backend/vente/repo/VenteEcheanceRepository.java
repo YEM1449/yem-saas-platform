@@ -15,6 +15,18 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
 
     List<VenteEcheance> findAllByVente_IdOrderByDateEcheanceAsc(UUID venteId);
 
+    /** True if a legal échéancier (etape set) was already generated for this vente. */
+    boolean existsByVente_IdAndEtapeIsNotNull(UUID venteId);
+
+    /** Sum of all échéance amounts for a vente (cumul vs price legal check, Art. 618-17). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId AND e.vente.id = :venteId
+            """)
+    java.math.BigDecimal sumMontantByVente(@Param("societeId") UUID societeId,
+                                           @Param("venteId") UUID venteId);
+
     /** Sum of unpaid échéances with due date in [from, to) — for upcoming 30-day cash forecast. */
     @Query("""
             SELECT COALESCE(SUM(e.montant), 0)

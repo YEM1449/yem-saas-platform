@@ -572,6 +572,7 @@ public class VenteService {
         Vente vente = requireVente(societeId, venteId);
 
         dateCoherence.validateEcheanceDates(vente.getDateCompromis(), request.dateEcheance(), null);
+        assertCumulWithinPrice(societeId, venteId, vente.getPrixVente(), request.montant());
 
         var echeance = new VenteEcheance(
                 societeId, vente,
@@ -588,6 +589,61 @@ public class VenteService {
                 new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
 
         return saved;
+    }
+
+    /**
+     * Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00): 7 staged
+     * échéances whose percentages sum to 100% of the agreed price. Idempotent-guarded —
+     * fails if a legal échéancier already exists.
+     */
+    @Transactional
+    public List<EcheanceResponse> generateEcheancierLegal(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        BigDecimal prix = vente.getPrixVente();
+        if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ViolationLegaleException(
+                    "Le prix de vente doit être défini pour générer l'échéancier légal.");
+        }
+        if (echeanceRepository.existsByVente_IdAndEtapeIsNotNull(venteId)) {
+            throw new ViolationLegaleException("L'échéancier légal a déjà été généré pour cette vente.");
+        }
+
+        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now()))
+                ? vente.getDateCompromis() : LocalDate.now();
+
+        List<VenteEcheance> created = new java.util.ArrayList<>();
+        for (com.yem.hlm.backend.legal.EcheancierLegal.EtapeLegale etape
+                : com.yem.hlm.backend.legal.EcheancierLegal.MA) {
+            BigDecimal montant = prix.multiply(etape.pct())
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            LocalDate echeance = base.plusMonths(2L * (etape.ordre() - 1));
+            VenteEcheance e = new VenteEcheance(societeId, vente,
+                    etape.label() + " (" + etape.pct() + "%)", montant, echeance);
+            e.setEtape(etape.code());
+            e.setPctPrevu(etape.pct());
+            e.setBaseLegale(com.yem.hlm.backend.legal.EcheancierLegal.BASE_LEGALE_MA);
+            created.add(echeanceRepository.save(e));
+        }
+
+        UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                .map(p -> p.getTrancheId()).orElse(null);
+        eventPublisher.publishEvent(
+                new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
+
+        return created.stream().map(this::toEcheanceResponse).toList();
+    }
+
+    /** Art. 618-17 — the cumulative échéances may never exceed the agreed price. */
+    private void assertCumulWithinPrice(UUID societeId, UUID venteId, BigDecimal prix, BigDecimal addedMontant) {
+        if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0 || addedMontant == null) return;
+        BigDecimal cumul = echeanceRepository.sumMontantByVente(societeId, venteId).add(addedMontant);
+        if (cumul.compareTo(prix) > 0) {
+            throw new ViolationLegaleException(
+                    "Le cumul des échéances (" + cumul + ") dépasse le prix de vente (" + prix
+                    + ") — Art. 618-17 Loi 44-00.");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -877,7 +933,8 @@ public class VenteService {
         return new EcheanceResponse(
                 e.getId(), e.getVente().getId(),
                 e.getLibelle(), e.getMontant(), e.getDateEcheance(),
-                e.getStatut(), e.getDatePaiement(), e.getNotes(), e.getCreatedAt());
+                e.getStatut(), e.getDatePaiement(), e.getNotes(), e.getCreatedAt(),
+                e.getEtape(), e.getPctPrevu(), e.getBaseLegale());
     }
 
     private VenteDocumentResponse toDocumentResponse(VenteDocument d) {

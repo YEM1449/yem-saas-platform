@@ -157,3 +157,5 @@ databaseChangeLog:
       file: db/changelog/changes/077-vente-option-retractation.yaml
   - include:
       file: db/changelog/changes/078-reserve-livraison.yaml
+  - include:
+      file: db/changelog/changes/079-vente-echeance-legal.yaml
