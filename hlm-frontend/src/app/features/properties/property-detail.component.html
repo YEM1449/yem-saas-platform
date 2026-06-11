@@ -226,6 +226,53 @@
         }
       </div>
 
+      <!-- ── Fiche commerciale VEFA (HT / TVA / TTC) ──────────────── -->
+      <div class="card" data-testid="property-commercial">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Fiche commerciale (VEFA)</span>
+          @if (canEditCommercial && !showCommercialForm) {
+            <button class="btn btn-sm btn-secondary" (click)="openCommercialForm()" data-testid="commercial-edit">Modifier</button>
+          }
+        </div>
+        <div class="card-body">
+          @if (commercialError) { <p class="msg-error">{{ commercialError }}</p> }
+          @if (showCommercialForm) {
+            <div class="commercial-grid">
+              <label>Prix HT (MAD) <input type="number" [(ngModel)]="commercialForm.prixHt"/></label>
+              <label>Taux TVA (0 / 0.10 / 0.20) <input type="number" step="0.01" [(ngModel)]="commercialForm.tvaTaux"
+                       placeholder="auto si vide"/></label>
+              <label class="chk"><input type="checkbox" [(ngModel)]="commercialForm.logementSocial"/> Logement social (TVA 0%)</label>
+              <label>Vue <input type="text" [(ngModel)]="commercialForm.vue" placeholder="MER / JARDIN…"/></label>
+              <label>Surface terrasse (m²) <input type="number" [(ngModel)]="commercialForm.surfaceTerrasse"/></label>
+              <label>Surface cave (m²) <input type="number" [(ngModel)]="commercialForm.surfaceCave"/></label>
+              <label>Surface parking (m²) <input type="number" [(ngModel)]="commercialForm.surfaceParking"/></label>
+              <label class="chk"><input type="checkbox" [(ngModel)]="commercialForm.parkingInclus"/> Parking inclus</label>
+              <label class="chk"><input type="checkbox" [(ngModel)]="commercialForm.caveIncluse"/> Cave incluse</label>
+              <label>Pénalité retard (MAD/jour) <input type="number" [(ngModel)]="commercialForm.penaliteRetardJournalier"/></label>
+              <label>Charges copro (MAD/mois) <input type="number" [(ngModel)]="commercialForm.chargesCoproMensuelles"/></label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary btn-sm" (click)="showCommercialForm = false">Annuler</button>
+              <button class="btn btn-primary btn-sm" [disabled]="commercialSaving" (click)="saveCommercial()" data-testid="commercial-save">Enregistrer</button>
+            </div>
+          } @else {
+            @if (commercial; as c) {
+              <dl class="info-dl">
+                <dt>Prix HT</dt><dd>{{ c.prixHt ? ((c.prixHt | number:'1.0-0') + ' MAD') : '—' }}</dd>
+                <dt>TVA</dt><dd>{{ c.tvaTaux !== null && c.tvaTaux !== undefined ? ((c.tvaTaux * 100) + ' %') : '—' }}</dd>
+                <dt>Prix TTC</dt><dd><strong>{{ c.prixTtc ? ((c.prixTtc | number:'1.0-0') + ' MAD') : '—' }}</strong></dd>
+                <dt>Étage / Orientation</dt><dd>{{ c.etage ?? '—' }} / {{ c.orientation ?? '—' }}</dd>
+                <dt>Vue</dt><dd>{{ c.vue ?? '—' }}</dd>
+                <dt>Parking / Cave</dt><dd>{{ c.parkingInclus ? 'Parking inclus' : '—' }}{{ c.caveIncluse ? ' · Cave incluse' : '' }}</dd>
+                <dt>Charges copro</dt><dd>{{ c.chargesCoproMensuelles ? ((c.chargesCoproMensuelles | number:'1.0-0') + ' MAD/mois') : '—' }}</dd>
+              </dl>
+            } @else {
+              <p class="muted">Aucune donnée commerciale.</p>
+            }
+          }
+        </div>
+      </div>
+
       <!-- Identification card -->
       <div class="card">
         <div class="card-header">Identification</div>

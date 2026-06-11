@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T17:54:57.848Z",
+  "last_updated": "2026-06-11T18:25:43.867Z",
   "current_phase": "P1",
-  "current_task": "P3 done. Ensuite P4 (Property commerciale + TVA + 3D filtre étage/présentation).",
+  "current_task": "P4-T5 (3D filtre par étage) + P4-T6 (3D mode présentation). Puis P5-P7.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -60,12 +60,12 @@
     },
     "P4": {
       "label": "Property enrichie (étage, orientation, prix TTC)",
-      "status": "pending",
+      "status": "in progress (T1-T4 done; T5/T6 3D restants)",
       "tasks": {
-        "P4-T1": "Liquibase : colonnes commerciales Property",
-        "P4-T2": "Service : calcul prix TTC selon taux TVA",
-        "P4-T3": "REST : endpoints Property enrichis",
-        "P4-T4": "Angular : fiche bien commerciale",
+        "P4-T1": "✅ Changeset 083 : colonnes commerciales property (prix_ht, tva_taux, vue, surfaces terrasse/cave/parking, parking/cave inclus, pénalité retard, charges copro, plan_key). étage/orientation déjà présents.",
+        "P4-T2": "✅ TvaCalculator (CGI Maroc : social 0%, moyen 10%, normal 20% ; prix_ttc = ht×(1+taux), JAMAIS stocké). 5 tests.",
+        "P4-T3": "✅ Endpoints isolés GET/PATCH /api/properties/{id}/commercial (PropertyService.getCommercial/updateCommercial, suggestion auto du taux si non fourni). DTOs Update/Response. 0 impact sur PropertyCreate/Update existants.",
+        "P4-T4": "✅ Fiche commerciale (panneau dans property-detail : prix HT/TVA/TTC, vue, surfaces, parking/cave, charges) + service frontend.",
         "P4-T5": "3D Viewer : filtre par étage",
         "P4-T6": "3D Viewer : mode présentation client",
         "P4-T7": "Tests + Commit P4"
@@ -109,7 +109,7 @@
     }
   },
   "decisions": {
-    "prochain_changeset": "083",
+    "prochain_changeset": "084",
     "vente_statuts_existants": [
       "COMPROMIS",
       "FINANCEMENT",

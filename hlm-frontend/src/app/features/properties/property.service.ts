@@ -77,6 +77,27 @@ export interface PropertyListParams {
   status?: string;
 }
 
+/** VEFA commercial sheet. prixTtc is computed server-side; logementSocial is write-only (suggests TVA). */
+export interface PropertyCommercial {
+  propertyId?: string;
+  etage?: number | null;
+  orientation?: string | null;
+  vue?: string | null;
+  surfaceHabitable?: number | null;
+  surfaceTerrasse?: number | null;
+  surfaceCave?: number | null;
+  surfaceParking?: number | null;
+  parkingInclus?: boolean;
+  caveIncluse?: boolean;
+  prixHt?: number | null;
+  tvaTaux?: number | null;
+  prixTtc?: number | null;
+  logementSocial?: boolean | null;
+  penaliteRetardJournalier?: number | null;
+  chargesCoproMensuelles?: number | null;
+  planAppartementKey?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PropertyService {
   private http = inject(HttpClient);
@@ -128,6 +149,15 @@ export class PropertyService {
   /** Update an existing property (ADMIN / MANAGER only). */
   update(id: string, req: UpdatePropertyRequest): Observable<Property> {
     return this.http.put<Property>(`${this.apiUrl}/api/properties/${id}`, req);
+  }
+
+  // ── VEFA commercial sheet (HT/TVA/TTC) ──────────────────────────────────
+  getCommercial(id: string): Observable<PropertyCommercial> {
+    return this.http.get<PropertyCommercial>(`${this.apiUrl}/api/properties/${id}/commercial`);
+  }
+
+  updateCommercial(id: string, req: PropertyCommercial): Observable<PropertyCommercial> {
+    return this.http.patch<PropertyCommercial>(`${this.apiUrl}/api/properties/${id}/commercial`, req);
   }
 
   /**

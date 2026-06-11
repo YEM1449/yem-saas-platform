@@ -291,6 +291,19 @@ public class Property {
     @Column(name = "orientation", length = 50)
     private String orientation;
 
+    // ── VEFA commercial fields (Wave 12 P4) ───────────────────────────────────
+    @Setter @Column(name = "prix_ht", precision = 15, scale = 2)        private BigDecimal prixHt;
+    @Setter @Column(name = "tva_taux", precision = 5, scale = 4)        private BigDecimal tvaTaux;
+    @Setter @Column(name = "vue", length = 50)                          private String vue;
+    @Setter @Column(name = "surface_terrasse", precision = 8, scale = 2) private BigDecimal surfaceTerrasse;
+    @Setter @Column(name = "surface_cave", precision = 8, scale = 2)    private BigDecimal surfaceCave;
+    @Setter @Column(name = "surface_parking", precision = 8, scale = 2) private BigDecimal surfaceParking;
+    @Setter @Column(name = "parking_inclus", nullable = false)          private boolean parkingInclus;
+    @Setter @Column(name = "cave_incluse", nullable = false)            private boolean caveIncluse;
+    @Setter @Column(name = "penalite_retard_journalier", precision = 10, scale = 2) private BigDecimal penaliteRetardJournalier;
+    @Setter @Column(name = "charges_copro_mensuelles", precision = 8, scale = 2)    private BigDecimal chargesCoproMensuelles;
+    @Setter @Column(name = "plan_appartement_key", length = 500)        private String planAppartementKey;
+
     /**
      * Convenience accessor — returns the project name for display purposes.
      * Delegates to the mandatory {@link #project} FK.

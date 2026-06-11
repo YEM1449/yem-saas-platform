@@ -109,6 +109,22 @@ public class PropertyController {
         return propertyService.update(id, request);
     }
 
+    @Operation(summary = "Get the VEFA commercial sheet (HT/TVA/TTC, surfaces, charges)")
+    @GetMapping("/{id}/commercial")
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse getCommercial(@PathVariable UUID id) {
+        return propertyService.getCommercial(id);
+    }
+
+    @Operation(summary = "Update the VEFA commercial fields (ADMIN/MANAGER)")
+    @PatchMapping("/{id}/commercial")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse updateCommercial(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.yem.hlm.backend.property.api.dto.UpdatePropertyCommercialRequest request
+    ) {
+        return propertyService.updateCommercial(id, request);
+    }
+
     /**
      * Change the editorial status of a property (DRAFT / ACTIVE / WITHDRAWN / ARCHIVED).
      * RESERVED and SOLD are rejected — use the reservation/contract workflow instead.
