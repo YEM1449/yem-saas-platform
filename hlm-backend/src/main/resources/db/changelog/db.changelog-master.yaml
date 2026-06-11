@@ -161,3 +161,5 @@ databaseChangeLog:
       file: db/changelog/changes/079-vente-echeance-legal.yaml
   - include:
       file: db/changelog/changes/080-contact-legal-fields.yaml
+  - include:
+      file: db/changelog/changes/081-co-acquereur.yaml

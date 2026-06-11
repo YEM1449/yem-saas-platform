@@ -229,6 +229,7 @@ public class GlobalExceptionHandler {
             VenteNotFoundException.class,
             VenteEcheanceNotFoundException.class,
             com.yem.hlm.backend.vente.service.ReserveNotFoundException.class,
+            com.yem.hlm.backend.vente.service.CoAcquereurNotFoundException.class,
             TrancheNotFoundException.class,
             Project3dModelNotFoundException.class
     })
@@ -370,6 +371,21 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.PROPERTY_ALREADY_ENGAGED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(com.yem.hlm.backend.vente.service.CoAcquereurAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCoAcquereurExists(
+            com.yem.hlm.backend.vente.service.CoAcquereurAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.CO_ACQUEREUR_EXISTS,
                 ex.getMessage(),
                 request.getRequestURI()
         );

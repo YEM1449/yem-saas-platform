@@ -6,7 +6,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
-  CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison
+  CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison,
+  CoAcquereur, RoleAcquereur, SituationMatrimoniale, TypeAcquereur
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
@@ -105,11 +106,63 @@ export class VenteDetailComponent implements OnInit {
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER' || r === 'ROLE_AGENT';
   }
 
+  // ── Co-acquéreur (VEFA co-acquisition) ─────────────────────────────────────
+  coAcquereur = signal<CoAcquereur | null>(null);
+  showCoAcqForm = false;
+  coAcqForm: CoAcquereur = { nom: '', prenom: '' };
+  coAcqError = signal('');
+  coAcqBusy = signal(false);
+  readonly coAcqSituationOptions: SituationMatrimoniale[] =
+    ['CELIBATAIRE', 'MARIE_COMMUNAUTE', 'MARIE_SEPARATION', 'DIVORCE', 'VEUF'];
+  readonly coAcqTypeOptions: TypeAcquereur[] = ['RESIDENT_MAROC', 'MRE', 'ETRANGER'];
+  readonly coAcqRoleOptions: RoleAcquereur[] = ['CO_ACQUEREUR', 'CONJOINT', 'CO_INVESTISSEUR', 'REPRESENTANT_SCI'];
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.get(id).subscribe({
-      next:  (v) => { this.vente.set(v); this.maybeLoadReserves(v); },
+      next:  (v) => { this.vente.set(v); this.maybeLoadReserves(v); this.loadCoAcquereur(v.id); },
       error: ()  => this.error.set('Vente introuvable.'),
+    });
+  }
+
+  private loadCoAcquereur(venteId: string): void {
+    this.svc.listCoAcquereurs(venteId).subscribe({
+      next: (list) => this.coAcquereur.set(list.length > 0 ? list[0] : null),
+    });
+  }
+
+  openCoAcqForm(): void {
+    const existing = this.coAcquereur();
+    this.coAcqForm = existing ? { ...existing } : { nom: '', prenom: '', roleAcquereur: 'CO_ACQUEREUR' };
+    this.showCoAcqForm = true;
+    this.coAcqError.set('');
+  }
+
+  saveCoAcquereur(venteId: string): void {
+    if (!this.coAcqForm.nom?.trim() || !this.coAcqForm.prenom?.trim()) {
+      this.coAcqError.set('Nom et prénom sont requis.');
+      return;
+    }
+    this.coAcqBusy.set(true);
+    this.coAcqError.set('');
+    const existing = this.coAcquereur();
+    const obs = existing?.id
+      ? this.svc.updateCoAcquereur(venteId, existing.id, this.coAcqForm)
+      : this.svc.addCoAcquereur(venteId, this.coAcqForm);
+    obs.subscribe({
+      next: (c) => { this.coAcquereur.set(c); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
+      error: (e) => { this.coAcqBusy.set(false);
+        this.coAcqError.set(e?.error?.message ?? 'Échec de l\'enregistrement du co-acquéreur.'); },
+    });
+  }
+
+  deleteCoAcquereur(venteId: string): void {
+    const existing = this.coAcquereur();
+    if (!existing?.id || !confirm('Supprimer le co-acquéreur ?')) return;
+    this.coAcqBusy.set(true);
+    this.svc.deleteCoAcquereur(venteId, existing.id).subscribe({
+      next: () => { this.coAcquereur.set(null); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
+      error: () => { this.coAcqBusy.set(false); this.coAcqError.set('La suppression a échoué.'); },
     });
   }
 

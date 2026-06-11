@@ -608,6 +608,72 @@
     }
   </div>
 
+  <!-- ── Co-acquéreur (VEFA) ───────────────────────────────── -->
+  <div class="card mb-20" data-testid="co-acquereur-card">
+    <div class="card-header">
+      <h2 class="card-title">Co-acquéreur</h2>
+      @if (canWrite && !showCoAcqForm) {
+        <button class="btn btn-sm btn-secondary" (click)="openCoAcqForm()" data-testid="coacq-edit">
+          {{ coAcquereur() ? 'Modifier' : '+ Ajouter' }}
+        </button>
+      }
+    </div>
+    <div class="card-body">
+      @if (coAcqError()) { <p class="msg-error">{{ coAcqError() }}</p> }
+      @if (showCoAcqForm) {
+        <div class="legal-grid">
+          <label>Nom* <input type="text" [(ngModel)]="coAcqForm.nom" data-testid="coacq-nom"/></label>
+          <label>Prénom* <input type="text" [(ngModel)]="coAcqForm.prenom" data-testid="coacq-prenom"/></label>
+          <label>Rôle
+            <select [(ngModel)]="coAcqForm.roleAcquereur">
+              @for (r of coAcqRoleOptions; track r) { <option [ngValue]="r">{{ r }}</option> }
+            </select>
+          </label>
+          <label>Type d'acquéreur
+            <select [(ngModel)]="coAcqForm.typeAcquereur">
+              <option [ngValue]="null">—</option>
+              @for (t of coAcqTypeOptions; track t) { <option [ngValue]="t">{{ t }}</option> }
+            </select>
+          </label>
+          <label>Situation matrimoniale
+            <select [(ngModel)]="coAcqForm.situationMatrimoniale">
+              <option [ngValue]="null">—</option>
+              @for (s of coAcqSituationOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+            </select>
+          </label>
+          <label>CIN <input type="text" [(ngModel)]="coAcqForm.cinNumero"/></label>
+          <label>N° passeport <input type="text" [(ngModel)]="coAcqForm.passeportNumero"/></label>
+          <label>Date de naissance <input type="date" [(ngModel)]="coAcqForm.dateNaissance"/></label>
+          <label>Nationalité <input type="text" [(ngModel)]="coAcqForm.nationalite"/></label>
+          <label>Pays de résidence <input type="text" [(ngModel)]="coAcqForm.paysResidence"/></label>
+          <label>Email <input type="email" [(ngModel)]="coAcqForm.email"/></label>
+          <label>Téléphone <input type="text" [(ngModel)]="coAcqForm.telephone"/></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showCoAcqForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm" [disabled]="coAcqBusy()"
+                  (click)="saveCoAcquereur(v.id)" data-testid="coacq-save">Enregistrer</button>
+        </div>
+      } @else {
+        @if (coAcquereur(); as co) {
+          <dl class="detail-list">
+            <dt>Nom complet</dt><dd>{{ co.prenom }} {{ co.nom }}</dd>
+            <dt>Rôle</dt><dd>{{ co.roleAcquereur ?? '—' }}</dd>
+            <dt>Type</dt><dd>{{ co.typeAcquereur ?? '—' }}</dd>
+            <dt>CIN / Passeport</dt><dd>{{ co.cinNumero || co.passeportNumero || '—' }}</dd>
+            <dt>Contact</dt><dd>{{ co.email || co.telephone || '—' }}</dd>
+          </dl>
+          @if (canWrite) {
+            <button class="btn btn-sm btn-danger-soft" [disabled]="coAcqBusy()"
+                    (click)="deleteCoAcquereur(v.id)" data-testid="coacq-delete">Supprimer</button>
+          }
+        } @else {
+          <p class="vefa-hint">Aucun co-acquéreur.</p>
+        }
+      }
+    </div>
+  </div>
+
   <!-- ── Financement ───────────────────────────────────────── -->
   <div class="card mb-20" data-testid="financing-card">
     <div class="card-header">

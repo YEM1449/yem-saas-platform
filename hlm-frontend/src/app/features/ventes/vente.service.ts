@@ -24,6 +24,30 @@ export type MotifAnnulation =
   | 'LITIGE'
   | 'AUTRE';
 
+export type SituationMatrimoniale =
+  'CELIBATAIRE' | 'MARIE_COMMUNAUTE' | 'MARIE_SEPARATION' | 'DIVORCE' | 'VEUF';
+export type TypeAcquereur = 'RESIDENT_MAROC' | 'MRE' | 'ETRANGER';
+export type RoleAcquereur = 'CO_ACQUEREUR' | 'CONJOINT' | 'CO_INVESTISSEUR' | 'REPRESENTANT_SCI';
+
+export interface CoAcquereur {
+  id?: string;
+  venteId?: string;
+  nom: string;
+  prenom: string;
+  cinNumero?: string | null;
+  cinDateDelivrance?: string | null;
+  passeportNumero?: string | null;
+  dateNaissance?: string | null;
+  nationalite?: string | null;
+  paysResidence?: string | null;
+  situationMatrimoniale?: SituationMatrimoniale | null;
+  typeAcquereur?: TypeAcquereur | null;
+  email?: string | null;
+  telephone?: string | null;
+  roleAcquereur?: RoleAcquereur | null;
+  createdAt?: string;
+}
+
 export type StatutReserve = 'EN_ATTENTE' | 'EN_COURS' | 'LEVEE';
 
 export interface ReserveLivraison {
@@ -222,6 +246,23 @@ export class VenteService {
   /** Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00). */
   generateEcheancierLegal(venteId: string): Observable<Echeance[]> {
     return this.http.post<Echeance[]>(`${BASE}/${venteId}/echeancier/generer-legal`, {});
+  }
+
+  // ── Co-acquéreurs ───────────────────────────────────────────────────────
+  listCoAcquereurs(venteId: string): Observable<CoAcquereur[]> {
+    return this.http.get<CoAcquereur[]>(`${BASE}/${venteId}/co-acquereurs`);
+  }
+
+  addCoAcquereur(venteId: string, req: CoAcquereur): Observable<CoAcquereur> {
+    return this.http.post<CoAcquereur>(`${BASE}/${venteId}/co-acquereurs`, req);
+  }
+
+  updateCoAcquereur(venteId: string, coId: string, req: CoAcquereur): Observable<CoAcquereur> {
+    return this.http.put<CoAcquereur>(`${BASE}/${venteId}/co-acquereurs/${coId}`, req);
+  }
+
+  deleteCoAcquereur(venteId: string, coId: string): Observable<void> {
+    return this.http.delete<void>(`${BASE}/${venteId}/co-acquereurs/${coId}`);
   }
 
   updateEcheanceStatut(venteId: string, echeanceId: string, req: UpdateEcheanceStatutRequest): Observable<Echeance> {

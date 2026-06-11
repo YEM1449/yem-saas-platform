@@ -34,6 +34,7 @@ public enum ErrorCode {
     DEPOSIT_ALREADY_EXISTS,
     PROPERTY_ALREADY_RESERVED,
     PROPERTY_ALREADY_ENGAGED,   // 409 — property already has an active (non-cancelled) vente (RG-B03)
+    CO_ACQUEREUR_EXISTS,        // 409 — vente already has a co-buyer (Wave 12: one per vente)
     INVALID_DEPOSIT_STATE,
     INVALID_STATUS_TRANSITION,
 

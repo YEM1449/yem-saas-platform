@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: 081-co-acquereur
+      author: yem-wave12
+      comment: >
+        Wave 12 P3-T2 — co-acquéreur (co-buyer) for a vente. Max one per vente in Wave 12
+        (unique constraint), architecturally open to N. Reuses the contact legal enums
+        (situation_matrimoniale, type_acquereur) as strings.
+      changes:
+        - createTable:
+            tableName: co_acquereur
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints: { nullable: false, foreignKeyName: fk_coacq_societe, references: societe(id) }
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints: { nullable: false, foreignKeyName: fk_coacq_vente, references: vente(id) }
+              - column: { name: nom,                    type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: prenom,                 type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: cin_numero,             type: VARCHAR(20) }
+              - column: { name: cin_date_delivrance,    type: date }
+              - column: { name: passeport_numero,       type: VARCHAR(30) }
+              - column: { name: date_naissance,         type: date }
+              - column: { name: nationalite,            type: VARCHAR(50) }
+              - column: { name: pays_residence,         type: VARCHAR(50) }
+              - column: { name: situation_matrimoniale, type: VARCHAR(30) }
+              - column: { name: type_acquereur,         type: VARCHAR(20) }
+              - column: { name: email,                  type: VARCHAR(200) }
+              - column: { name: telephone,              type: VARCHAR(30) }
+              - column:
+                  name: role_acquereur
+                  type: VARCHAR(30)
+                  defaultValue: CO_ACQUEREUR
+                  constraints: { nullable: false }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - addUniqueConstraint:
+            tableName: co_acquereur
+            columnNames: societe_id, vente_id
+            constraintName: uk_coacq_societe_vente
+
+        - createIndex:
+            tableName: co_acquereur
+            indexName: idx_coacq_vente_societe
+            columns:
+              - column: { name: vente_id }
+              - column: { name: societe_id }
+
+        - sql:
+            comment: "Enable RLS on co_acquereur"
+            sql: "ALTER TABLE co_acquereur ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy"
+            sql: >-
+              CREATE POLICY coacquereur_societe_isolation ON co_acquereur
+              USING (
+                societe_id = NULLIF(current_setting('app.current_societe_id', TRUE), '')::uuid
+                OR societe_id = '00000000-0000-0000-0000-000000000000'::uuid
+              )
