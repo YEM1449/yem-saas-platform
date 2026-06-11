@@ -7,7 +7,8 @@ import {
   VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
   CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison,
-  CoAcquereur, RoleAcquereur, SituationMatrimoniale, TypeAcquereur
+  CoAcquereur, RoleAcquereur, SituationMatrimoniale, TypeAcquereur,
+  DossierFinancement, StatutDossierFinancement
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
@@ -117,11 +118,49 @@ export class VenteDetailComponent implements OnInit {
   readonly coAcqTypeOptions: TypeAcquereur[] = ['RESIDENT_MAROC', 'MRE', 'ETRANGER'];
   readonly coAcqRoleOptions: RoleAcquereur[] = ['CO_ACQUEREUR', 'CONJOINT', 'CO_INVESTISSEUR', 'REPRESENTANT_SCI'];
 
+  // ── Dossier de financement ─────────────────────────────────────────────────
+  dossier = signal<DossierFinancement | null>(null);
+  showDossierForm = false;
+  dossierForm: DossierFinancement = {};
+  dossierError = signal('');
+  dossierBusy = signal(false);
+  readonly statutDossierOptions: StatutDossierFinancement[] =
+    ['EN_COURS', 'ACCORD_PRINCIPE', 'ACCORD_DEFINITIF', 'REFUSE'];
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.get(id).subscribe({
-      next:  (v) => { this.vente.set(v); this.maybeLoadReserves(v); this.loadCoAcquereur(v.id); },
+      next:  (v) => {
+        this.vente.set(v);
+        this.maybeLoadReserves(v);
+        this.loadCoAcquereur(v.id);
+        this.loadDossier(v.id);
+      },
       error: ()  => this.error.set('Vente introuvable.'),
+    });
+  }
+
+  private loadDossier(venteId: string): void {
+    this.svc.getDossierFinancement(venteId).subscribe({
+      next:  (d) => this.dossier.set(d),
+      error: ()  => this.dossier.set(null), // 404 = no dossier yet
+    });
+  }
+
+  openDossierForm(): void {
+    const existing = this.dossier();
+    this.dossierForm = existing ? { ...existing } : { statut: 'EN_COURS' };
+    this.showDossierForm = true;
+    this.dossierError.set('');
+  }
+
+  saveDossier(venteId: string): void {
+    this.dossierBusy.set(true);
+    this.dossierError.set('');
+    this.svc.upsertDossierFinancement(venteId, this.dossierForm).subscribe({
+      next: (d) => { this.dossier.set(d); this.showDossierForm = false; this.dossierBusy.set(false); },
+      error: (e) => { this.dossierBusy.set(false);
+        this.dossierError.set(e?.error?.message ?? 'Échec de l\'enregistrement du dossier.'); },
     });
   }
 

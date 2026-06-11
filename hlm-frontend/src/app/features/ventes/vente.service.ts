@@ -48,6 +48,25 @@ export interface CoAcquereur {
   createdAt?: string;
 }
 
+export type StatutDossierFinancement = 'EN_COURS' | 'ACCORD_PRINCIPE' | 'ACCORD_DEFINITIF' | 'REFUSE';
+
+export interface DossierFinancement {
+  id?: string;
+  venteId?: string;
+  typeFinancement?: TypeFinancement | null;
+  banque?: string | null;
+  montantCredit?: number | null;
+  tauxInteret?: number | null;
+  dureeMois?: number | null;
+  apportPersonnel?: number | null;
+  statut?: StatutDossierFinancement | null;
+  dateDemande?: string | null;
+  dateAccord?: string | null;
+  dateExpirationAccord?: string | null;
+  commentaire?: string | null;
+  updatedAt?: string;
+}
+
 export type StatutReserve = 'EN_ATTENTE' | 'EN_COURS' | 'LEVEE';
 
 export interface ReserveLivraison {
@@ -263,6 +282,15 @@ export class VenteService {
 
   deleteCoAcquereur(venteId: string, coId: string): Observable<void> {
     return this.http.delete<void>(`${BASE}/${venteId}/co-acquereurs/${coId}`);
+  }
+
+  // ── Dossier de financement ──────────────────────────────────────────────
+  getDossierFinancement(venteId: string): Observable<DossierFinancement> {
+    return this.http.get<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`);
+  }
+
+  upsertDossierFinancement(venteId: string, req: DossierFinancement): Observable<DossierFinancement> {
+    return this.http.put<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`, req);
   }
 
   updateEcheanceStatut(venteId: string, echeanceId: string, req: UpdateEcheanceStatutRequest): Observable<Echeance> {

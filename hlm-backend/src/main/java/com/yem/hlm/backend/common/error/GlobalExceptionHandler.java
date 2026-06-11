@@ -230,6 +230,7 @@ public class GlobalExceptionHandler {
             VenteEcheanceNotFoundException.class,
             com.yem.hlm.backend.vente.service.ReserveNotFoundException.class,
             com.yem.hlm.backend.vente.service.CoAcquereurNotFoundException.class,
+            com.yem.hlm.backend.vente.service.DossierFinancementNotFoundException.class,
             TrancheNotFoundException.class,
             Project3dModelNotFoundException.class
     })

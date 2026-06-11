@@ -765,6 +765,64 @@
     </div>
   </div>
 
+  <!-- ── Dossier de financement (suivi) ────────────────────── -->
+  <div class="card mb-20" data-testid="dossier-financement-card">
+    <div class="card-header">
+      <h2 class="card-title">Dossier de financement</h2>
+      @if (canWriteFinancing && !showDossierForm) {
+        <button class="btn btn-sm btn-secondary" (click)="openDossierForm()" data-testid="dossier-edit">
+          {{ dossier() ? 'Modifier' : '+ Créer' }}
+        </button>
+      }
+    </div>
+    <div class="card-body">
+      @if (dossierError()) { <p class="msg-error">{{ dossierError() }}</p> }
+      @if (showDossierForm) {
+        <div class="legal-grid">
+          <label>Statut
+            <select [(ngModel)]="dossierForm.statut">
+              @for (s of statutDossierOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+            </select>
+          </label>
+          <label>Type de financement
+            <select [(ngModel)]="dossierForm.typeFinancement">
+              <option [ngValue]="null">—</option>
+              @for (t of typeFinancementOptions; track t) { <option [ngValue]="t">{{ financingLabel(t) }}</option> }
+            </select>
+          </label>
+          <label>Banque <input type="text" [(ngModel)]="dossierForm.banque"/></label>
+          <label>Montant crédit (MAD) <input type="number" [(ngModel)]="dossierForm.montantCredit"/></label>
+          <label>Taux d'intérêt (ex. 0.045) <input type="number" step="0.0001" [(ngModel)]="dossierForm.tauxInteret"/></label>
+          <label>Durée (mois) <input type="number" [(ngModel)]="dossierForm.dureeMois"/></label>
+          <label>Apport personnel (MAD) <input type="number" [(ngModel)]="dossierForm.apportPersonnel"/></label>
+          <label>Date de demande <input type="date" [(ngModel)]="dossierForm.dateDemande"/></label>
+          <label>Date d'accord <input type="date" [(ngModel)]="dossierForm.dateAccord"/></label>
+          <label>Expiration de l'accord <input type="date" [(ngModel)]="dossierForm.dateExpirationAccord"/></label>
+        </div>
+        <label class="form-label">Commentaire
+          <textarea class="form-control" rows="2" [(ngModel)]="dossierForm.commentaire"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showDossierForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm" [disabled]="dossierBusy()"
+                  (click)="saveDossier(v.id)" data-testid="dossier-save">Enregistrer</button>
+        </div>
+      } @else {
+        @if (dossier(); as d) {
+          <dl class="detail-list">
+            <dt>Statut</dt><dd><span class="badge">{{ d.statut }}</span></dd>
+            <dt>Banque</dt><dd>{{ d.banque || '—' }}</dd>
+            <dt>Montant crédit</dt><dd>{{ d.montantCredit ? ((d.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
+            <dt>Taux / Durée</dt><dd>{{ d.tauxInteret ?? '—' }} / {{ d.dureeMois ? (d.dureeMois + ' mois') : '—' }}</dd>
+            <dt>Accord expire le</dt><dd>{{ (d.dateExpirationAccord | date:'dd/MM/yyyy') || '—' }}</dd>
+          </dl>
+        } @else {
+          <p class="vefa-hint">Aucun dossier de financement.</p>
+        }
+      }
+    </div>
+  </div>
+
   <!-- ── Documents ──────────────────────────────────────────── -->
   <div class="card">
     <div class="card-header">

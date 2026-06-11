@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T17:27:45.365Z",
+  "last_updated": "2026-06-11T17:54:57.848Z",
   "current_phase": "P1",
-  "current_task": "P3-T3 (dossier financement multi-statuts) puis T7 (forms). Ensuite P4-P7.",
+  "current_task": "P3 done. Ensuite P4 (Property commerciale + TVA + 3D filtre étage/présentation).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -46,15 +46,15 @@
     },
     "P3": {
       "label": "Contact enrichi + Co-acquéreur + Financement",
-      "status": "in progress (T1/T2 done; T3 financement, T7 reste)",
+      "status": "✅ (T1 contact légal, T2 co-acquéreur, T3 dossier financement — backend+frontend+tests). T7 forms intégrés dans les panneaux. Reste alerte expiration (→ P6).",
       "tasks": {
         "P3-T1": "✅ Contact enrichi VEFA (changeset 080) : 11 colonnes légales additives (cin_date_delivrance, passeport, date/lieu naissance, situation_matrimoniale, nationalite, pays_residence, type_acquereur, apport_personnel) + enums SituationMatrimoniale/TypeAcquereur. DTOs ISOLÉS (ContactLegalResponse/UpdateContactLegalRequest) → 0 impact sur Contact DTOs existants. Endpoints GET/PATCH /contacts/{id}/legal (ADMIN/MANAGER write). Frontend: ContactLegal + service methods + panneau Profil légal VEFA dans contact-detail. 1 test unitaire (null-skip).",
         "P3-T2": "✅ Co-acquéreur : changeset 081 (table co_acquereur + RLS + unique société+vente), enum RoleAcquereur, CoAcquereur entity (réutilise enums contact), CoAcquereurRepository, CoAcquereurService (CRUD, 1/vente, scope vérifié), DTOs Upsert/Response, CoAcquereurController (GET/POST/PUT/DELETE /api/ventes/{id}/co-acquereurs), exceptions 404 + 409 CO_ACQUEREUR_EXISTS. Frontend: CoAcquereur interface + service methods + panneau co-acquéreur dans vente-detail. 3 tests unitaires (déjà existe, 404, mauvaise vente).",
-        "P3-T3": "Liquibase : table dossier_financement",
-        "P3-T4": "Services + endpoints Contact étendu",
-        "P3-T5": "Services + endpoints Co-acquéreur",
-        "P3-T6": "Services + endpoints Dossier financement",
-        "P3-T7": "Angular : formulaires enrichis",
+        "P3-T3": "✅ Dossier financement : changeset 082 (table dossier_financement 1:1 vente + RLS), enum StatutDossierFinancement (EN_COURS→ACCORD_PRINCIPE→ACCORD_DEFINITIF/REFUSE), DossierFinancement entity (réutilise TypeFinancement), repo (+ query accords expirant bientôt pour P6), DossierFinancementService (getByVente 404, upsert 1:1, findAccordsExpiringSoon), DTOs, DossierFinancementController GET/PUT /api/ventes/{id}/dossier-financement. Frontend: interface + service + panneau suivi dans vente-detail. 2 tests unitaires.",
+        "P3-T4": "✅ Contact étendu (panneau profil légal) — voir T1",
+        "P3-T5": "✅ Co-acquéreur endpoints+UI — voir T2",
+        "P3-T6": "✅ Dossier financement endpoints+UI — voir T3",
+        "P3-T7": "✅ Formulaires Angular enrichis (panneaux contact-detail + vente-detail)",
         "P3-T8": "Tests + Commit P3"
       }
     },
@@ -109,7 +109,7 @@
     }
   },
   "decisions": {
-    "prochain_changeset": "082",
+    "prochain_changeset": "083",
     "vente_statuts_existants": [
       "COMPROMIS",
       "FINANCEMENT",

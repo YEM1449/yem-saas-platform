@@ -163,3 +163,5 @@ databaseChangeLog:
       file: db/changelog/changes/080-contact-legal-fields.yaml
   - include:
       file: db/changelog/changes/081-co-acquereur.yaml
+  - include:
+      file: db/changelog/changes/082-dossier-financement.yaml
