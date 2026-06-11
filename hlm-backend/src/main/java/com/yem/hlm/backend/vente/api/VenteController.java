@@ -40,15 +40,18 @@ public class VenteController {
     private final VenteInviteService venteInviteService;
     private final MediaStorageService mediaStorage;
     private final VenteContractPdfService venteContractPdfService;
+    private final com.yem.hlm.backend.vente.service.VenteLegalDocumentService legalDocumentService;
 
     public VenteController(VenteService venteService,
                            VenteInviteService venteInviteService,
                            MediaStorageService mediaStorage,
-                           VenteContractPdfService venteContractPdfService) {
+                           VenteContractPdfService venteContractPdfService,
+                           com.yem.hlm.backend.vente.service.VenteLegalDocumentService legalDocumentService) {
         this.venteService             = venteService;
         this.venteInviteService       = venteInviteService;
         this.mediaStorage             = mediaStorage;
         this.venteContractPdfService  = venteContractPdfService;
+        this.legalDocumentService     = legalDocumentService;
     }
 
     // =========================================================================
@@ -93,6 +96,22 @@ public class VenteController {
             @PathVariable UUID id,
             @Valid @RequestBody RecordDeliveryRequest request) {
         return venteService.recordDelivery(id, request);
+    }
+
+    // ── VEFA legal document generation (Loi 44-00) ───────────────────────────
+
+    @PostMapping("/{id}/documents/contrat-reservation")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public GeneratedDocumentResponse generateContratReservation(@PathVariable UUID id) {
+        return legalDocumentService.generateContratReservation(id);
+    }
+
+    @PostMapping("/{id}/documents/pv-livraison")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public GeneratedDocumentResponse generatePvLivraison(@PathVariable UUID id) {
+        return legalDocumentService.generatePvLivraison(id);
     }
 
     @GetMapping("/{id}/reserves")

@@ -16,5 +16,9 @@ public enum VenteDocumentType {
     CONTRAT_SIGNE_CLIENT,
     CONTRAT_SIGNE_FINAL,
     PV_RECEPTION,
+    /** Contrat préliminaire de réservation généré (Loi 44-00 Art. 618-3). */
+    CONTRAT_RESERVATION,
+    /** PV de livraison avec liste des réserves (Loi 44-00). */
+    PV_LIVRAISON,
     AUTRE
 }

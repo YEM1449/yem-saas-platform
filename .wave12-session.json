@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T18:50:50.713Z",
+  "last_updated": "2026-06-11T19:19:57.380Z",
   "current_phase": "P1",
-  "current_task": "P4 done. Ensuite P6 (dashboard trésorerie + alertes : appels en retard, options/réservations/accords expirant) — valorise les données VEFA. Puis P5 (docs légaux), P7.",
+  "current_task": "P5 (essentiel) done. Reste P6 (dashboard trésorerie + alertes : appels en retard, options/réservations/accords expirant) + P7 (E2E + docs) + P1-T6/T7 (IT en CI) + P5-T4 (quittances).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -73,14 +73,14 @@
     },
     "P5": {
       "label": "Documents légaux automatisés",
-      "status": "pending",
+      "status": "✅ (contrat réservation + PV livraison générés en PDF, stockés comme VenteDocument, accessibles CRM + portail par réutilisation). Quittances appels de fonds (T4) + orchestration événementielle = différé.",
       "tasks": {
-        "P5-T1": "Liquibase : table document_legal",
-        "P5-T2": "Service : génération contrat réservation (Loi 44-00)",
-        "P5-T3": "Service : PV livraison + liste réserves",
-        "P5-T4": "Service : quittances appels de fonds",
-        "P5-T5": "Portail acquéreur : accès documents",
-        "P5-T6": "Tests + Commit P5"
+        "P5-T1": "✅ Réutilise vente_document (table existante) + VenteDocumentType +CONTRAT_RESERVATION/PV_LIVRAISON (additif) — pas de nouvelle table document_legal",
+        "P5-T2": "✅ generateContratReservation : template Thymeleaf contrat-reservation-vefa (mention Loi 44-00 Art.618-3/4) → DocumentGenerationService.renderToPdf → storage → VenteDocument(CONTRAT_RESERVATION)",
+        "P5-T3": "✅ generatePvLivraison : template pv-livraison-vefa (table des réserves depuis reserve_livraison) → VenteDocument(PV_LIVRAISON)",
+        "P5-T4": "⏭️ différé : quittances appels de fonds (réutiliser CallForFundsPdfService)",
+        "P5-T5": "✅ Portail acquéreur : réutilise l accès documents vente existant (PortalVenteService expose VenteDocument)",
+        "P5-T6": "✅ 1 test unitaire (render+store+type) ; 150 unit verts ; build front vert. Endpoints POST /api/ventes/{id}/documents/{contrat-reservation,pv-livraison} ; boutons vente-detail"
       }
     },
     "P6": {

@@ -828,16 +828,33 @@
     <div class="card-header">
       <h2 class="card-title">Documents</h2>
       @if (canWrite) {
-        <label class="btn btn-sm btn-secondary" style="cursor:pointer">
-          @if (docUploading()) {
-            <span class="spinner spinner-sm"></span> Téléversement…
-          } @else {
-            + Ajouter
+        <div class="card-header-actions">
+          <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
+                  (click)="generateContratReservation(v.id)" data-testid="gen-contrat-reservation"
+                  title="Génère le contrat préliminaire de réservation (Loi 44-00)">
+            Contrat réservation
+          </button>
+          @if (v.statut === 'LIVRE_AVEC_RESERVES' || v.statut === 'RESERVES_LEVEES' || v.statut === 'LIVRE_DEFINITIF') {
+            <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
+                    (click)="generatePvLivraison(v.id)" data-testid="gen-pv-livraison"
+                    title="Génère le PV de livraison avec la liste des réserves">
+              PV livraison
+            </button>
           }
-          <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
-        </label>
+          <label class="btn btn-sm btn-secondary" style="cursor:pointer">
+            @if (docUploading()) {
+              <span class="spinner spinner-sm"></span> Téléversement…
+            } @else {
+              + Ajouter
+            }
+            <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
+          </label>
+        </div>
       }
     </div>
+    @if (docGenError()) {
+      <div class="alert alert-error" style="margin:8px 16px">{{ docGenError() }}</div>
+    }
     @if (docError()) {
       <div class="alert alert-error" style="margin:8px 16px">{{ docError() }}</div>
     }

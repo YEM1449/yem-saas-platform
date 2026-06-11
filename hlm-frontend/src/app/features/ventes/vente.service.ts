@@ -284,6 +284,17 @@ export class VenteService {
     return this.http.delete<void>(`${BASE}/${venteId}/co-acquereurs/${coId}`);
   }
 
+  // ── Documents légaux générés (Loi 44-00) ────────────────────────────────
+  generateContratReservation(venteId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/documents/contrat-reservation`, {});
+  }
+
+  generatePvLivraison(venteId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/documents/pv-livraison`, {});
+  }
+
   // ── Dossier de financement ──────────────────────────────────────────────
   getDossierFinancement(venteId: string): Observable<DossierFinancement> {
     return this.http.get<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`);

@@ -140,6 +140,30 @@ export class VenteDetailComponent implements OnInit {
     });
   }
 
+  // ── Legal document generation (Loi 44-00) ──────────────────────────────────
+  docGenBusy = signal(false);
+  docGenError = signal('');
+
+  generateContratReservation(venteId: string): void {
+    this.docGenBusy.set(true);
+    this.docGenError.set('');
+    this.svc.generateContratReservation(venteId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.docGenBusy.set(false);
+        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du contrat.'); },
+    });
+  }
+
+  generatePvLivraison(venteId: string): void {
+    this.docGenBusy.set(true);
+    this.docGenError.set('');
+    this.svc.generatePvLivraison(venteId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.docGenBusy.set(false);
+        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du PV.'); },
+    });
+  }
+
   private loadDossier(venteId: string): void {
     this.svc.getDossierFinancement(venteId).subscribe({
       next:  (d) => this.dossier.set(d),
