@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T19:19:57.380Z",
+  "last_updated": "2026-06-11T22:22:46.597Z",
   "current_phase": "P1",
-  "current_task": "P5 (essentiel) done. Reste P6 (dashboard trésorerie + alertes : appels en retard, options/réservations/accords expirant) + P7 (E2E + docs) + P1-T6/T7 (IT en CI) + P5-T4 (quittances).",
+  "current_task": "P6 (essentiel) done. Reste P7 (E2E + docs légales + maj CLAUDE.md/api-map) + P1-T6/T7 (IT en CI) + P5-T4 (quittances).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -85,14 +85,14 @@
     },
     "P6": {
       "label": "Dashboard trésorerie + alertes métier",
-      "status": "pending",
+      "status": "✅ (T1/T2 trésorerie+alertes ; T3 perf agents déjà dans dashboards existants ; T5 composant Angular). T4 push-notifications différé (alertes en pull via endpoint).",
       "tasks": {
-        "P6-T1": "KPI : trésorerie prévisionnelle",
-        "P6-T2": "KPI : dossiers bloqués + options/réservations expirées",
-        "P6-T3": "KPI : performance par agent",
-        "P6-T4": "Alertes automatiques (scheduler Spring)",
-        "P6-T5": "Angular : dashboard trésorerie",
-        "P6-T6": "Tests + Commit P6"
+        "P6-T1": "✅ KPI trésorerie : encaisseTotal/aEncaisser (sumPaidAll/sumDueAll), previsionnel6Mois, enRetard montant+count — depuis vente_echeance légal.",
+        "P6-T2": "✅ Alertes : optionsActives + retractationsEnCours (countBySocieteIdAndStatut) + accordsExpirant15j (DossierFinancementRepository société-scoped) + liste appels en retard (findOverdueDetails, top 20, joursRetard).",
+        "P6-T3": "↪ Perf agents déjà couverte par CommercialDashboard/HomeDashboard (pas de duplication).",
+        "P6-T4": "⏳ Différé : alertes en pull via GET /api/dashboard/tresorerie (les sweeps VEFA push existent déjà côté scheduler). Notifications push = backlog.",
+        "P6-T5": "✅ TresorerieDashboardComponent (4 KPI + chips alertes + table appels en retard) + route /app/dashboard/tresorerie + nav.",
+        "P6-T6": "✅ 1 test unitaire (agrégation+overdue) ; 151 unit verts ; build front vert."
       }
     },
     "P7": {

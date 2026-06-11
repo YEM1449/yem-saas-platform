@@ -51,6 +51,42 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
     java.math.BigDecimal sumMontantOverdue(@Param("societeId") UUID societeId,
                                            @Param("today") java.time.LocalDate today);
 
+    /** All-time encaissé — sum of PAID échéances (trésorerie dashboard). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    java.math.BigDecimal sumPaidAll(@Param("societeId") UUID societeId);
+
+    /** All-time à encaisser — sum of UNPAID échéances (trésorerie dashboard). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    java.math.BigDecimal sumDueAll(@Param("societeId") UUID societeId);
+
+    /**
+     * Overdue unpaid échéances with sale + buyer context, oldest first.
+     * Rows: [venteId(UUID), venteRef(String), acquereur(String), libelle(String),
+     *        montant(BigDecimal), dateEcheance(LocalDate)].
+     */
+    @Query("""
+            SELECT e.vente.id, e.vente.venteRef, e.vente.contact.fullName,
+                   e.libelle, e.montant, e.dateEcheance
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.dateEcheance < :today
+            ORDER BY e.dateEcheance ASC
+            """)
+    List<Object[]> findOverdueDetails(@Param("societeId") UUID societeId,
+                                      @Param("today") java.time.LocalDate today,
+                                      org.springframework.data.domain.Pageable pageable);
+
     /** Count unpaid échéances with due date before today (overdue). */
     @Query("""
             SELECT COUNT(e)

@@ -20,4 +20,8 @@ public interface DossierFinancementRepository extends JpaRepository<DossierFinan
      */
     List<DossierFinancement> findByStatutInAndDateExpirationAccordBetween(
             List<StatutDossierFinancement> statuts, LocalDate from, LocalDate to);
+
+    /** Société-scoped count of financing agreements expiring within a window (trésorerie alerts). */
+    long countBySocieteIdAndStatutInAndDateExpirationAccordBetween(
+            UUID societeId, List<StatutDossierFinancement> statuts, LocalDate from, LocalDate to);
 }
