@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T22:48:29.282Z",
+  "last_updated": "2026-06-11T23:02:20.719Z",
   "current_phase": "COMPLETE",
-  "current_task": "Reliquats P5-T4 + P6-T4 done. Reste backlog: IT pipeline VEFA (CI/Docker), E2E flows complets.",
+  "current_task": "Wave 12 COMPLETE + validée IT (Docker). Bug migration critique corrigé. E2E flows complets écrits (run en CI). Reste optionnel : run E2E full-stack local sur demande.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -25,7 +25,7 @@
         "P1-T3": "✅ OPTION : createOption (hold 1-72h, RG-B03, property→RESERVED) + expireOverdueOptions sweep + VenteVefaScheduler (hourly, system ctx). Changeset 077 (option_expire_at).",
         "P1-T4": "✅ Rétractation : confirmReservation (dépôt ≤5% Art.618-4 → ViolationLegale 422 ; RESERVE→EN_RETRACTATION, délai 7j via MarketConfig) + exerciseRetractation (fenêtre légale → RetractationImpossible 409) + closeExpiredRetractations sweep. Endpoints POST /option, /{id}/confirm-reservation, /{id}/retractation. Frontend service methods ajoutées.",
         "P1-T5": "✅ Livraison avec réserves : table reserve_livraison (changeset 078 + RLS), ReserveLivraison/StatutReserve + repo, recordDelivery (ACTE→LIVRE_DEFINITIF si 0 réserve, sinon LIVRE_AVEC_RESERVES + création réserves, délai levée 60j via MarketConfig, réutilise updateStatut), listReserves, liftReserve (dernière levée → RESERVES_LEVEES). Endpoints POST /{id}/livraison, GET /{id}/reserves, PUT /{id}/reserves/{rid}/lever. ReserveNotFoundException 404. Frontend service methods + interface ReserveLivraison.",
-        "P1-T6": "Tests unitaires + IT pipeline étendu",
+        "P1-T6": "✅ IT validés sur Postgres réel (Docker) : VenteControllerIT 8/8, CommercialDashboardIT 7/7 (requêtes SQL KPI renommées), + HlmBackendApplicationIT/CrossSocieteIsolationIT/ReceivablesDashboardIT/Project3dControllerIT/ContactControllerIT/PropertyControllerIT = 93 IT verts. A RÉVÉLÉ + corrigé un bug critique : DECIMAL(x,y) inline non quoté dans changesets 080/082/083 cassait Liquibase (app ne démarrait pas).",
         "P1-T7": "Commit P1",
         "P1-T2b": "✅ Frontend réconcilié (statut VEFA) — vente.service + status.service types (12 états), pipeline-stepper (ORDER 12 + 5 étapes), advance-dialog (NEXT_MAP/labels/hints), vente-detail/list (Records 12 + comparaisons), portal-ventes, dashboards (value-tunnel ACTE/LIVRE_DEFINITIF + drills), reports, ui-status-pill. Domaine 3D/property/tranche préservé (lot-3d-status LIVRE intact). Build VERT.",
         "P1-T2c-frontend-vefa-ui": "✅ Boutons VEFA câblés dans vente-detail : confirmer réservation (dépôt ≤5%), exercer rétractation (fenêtre légale), enregistrer livraison (avec/sans réserves), panneau réserves + lever. Getters context-sensitifs (canConfirmReservation/canRetract/canRecordDelivery/showReservesPanel), gestion erreur (vefaError), build vert."
@@ -99,9 +99,9 @@
       "label": "Tests E2E + Documentation légale",
       "status": "✅ (T4 guide légal, T5 docs CLAUDE.md/api-map/sprint-state, T1/T2/T3 → 1 spec E2E trésorerie CI-gated + scénarios documentés). T6 commit.",
       "tasks": {
-        "P7-T1": "⏳ E2E flows complets (option/rétractation) documentés comme scénarios CI ; spec trésorerie écrite (vefa.spec.ts).",
-        "P7-T2": "⏳ idem (échéancier/appels) — endpoints testés en unit ; E2E CI-gated.",
-        "P7-T3": "⏳ idem (livraison/réserves) — unit OK ; E2E CI-gated.",
+        "P7-T1": "✅ E2E complet : vefa.spec.ts — option→confirm(dépôt≤5%)→rétractation, dépôt>5% rejeté. Compile (playwright --list). Run en CI (e2e.yml stack complète).",
+        "P7-T2": "✅ E2E : génération échéancier légal + quittance (paid call).",
+        "P7-T3": "✅ E2E : livraison avec réserves → levée (setup ACTE via API, UI delivery+lift).",
         "P7-T4": "✅ docs/legal/guide-loi-44-00-managers.md (pipeline, option, rétractation, échéancier, livraison, TVA, acquéreurs, documents, trésorerie, garde-fous).",
         "P7-T5": "✅ CLAUDE.md (checkpoint Wave 12 + chaîne changesets 076-083, next 084) + api-map.md (endpoints VEFA) + .sprint-state.md.",
         "P7-T6": "✅ Commit P7 — Wave 12 COMPLETE."
