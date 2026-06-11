@@ -107,6 +107,12 @@ public class VenteController {
         return legalDocumentService.generateContratReservation(id);
     }
 
+    @PostMapping("/{id}/echeances/{echeanceId}/quittance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public GeneratedDocumentResponse generateQuittance(@PathVariable UUID id, @PathVariable UUID echeanceId) {
+        return legalDocumentService.generateQuittance(id, echeanceId);
+    }
+
     @PostMapping("/{id}/documents/pv-livraison")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")

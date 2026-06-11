@@ -295,6 +295,12 @@ export class VenteService {
       `${BASE}/${venteId}/documents/pv-livraison`, {});
   }
 
+  /** Generates a receipt (quittance) PDF for a paid call-for-funds échéance. */
+  generateQuittance(venteId: string, echeanceId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/echeances/${echeanceId}/quittance`, {});
+  }
+
   // ── Dossier de financement ──────────────────────────────────────────────
   getDossierFinancement(venteId: string): Observable<DossierFinancement> {
     return this.http.get<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`);

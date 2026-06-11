@@ -39,6 +39,7 @@ public class VenteLegalDocumentService {
     private final PropertyRepository propertyRepository;
     private final SocieteRepository societeRepository;
     private final ReserveLivraisonRepository reserveRepository;
+    private final com.yem.hlm.backend.vente.repo.VenteEcheanceRepository echeanceRepository;
     private final VenteDocumentRepository documentRepository;
     private final DocumentGenerationService pdf;
     private final MediaStorageService storage;
@@ -48,6 +49,7 @@ public class VenteLegalDocumentService {
                                      PropertyRepository propertyRepository,
                                      SocieteRepository societeRepository,
                                      ReserveLivraisonRepository reserveRepository,
+                                     com.yem.hlm.backend.vente.repo.VenteEcheanceRepository echeanceRepository,
                                      VenteDocumentRepository documentRepository,
                                      DocumentGenerationService pdf,
                                      MediaStorageService storage,
@@ -56,6 +58,7 @@ public class VenteLegalDocumentService {
         this.propertyRepository = propertyRepository;
         this.societeRepository = societeRepository;
         this.reserveRepository = reserveRepository;
+        this.echeanceRepository = echeanceRepository;
         this.documentRepository = documentRepository;
         this.pdf = pdf;
         this.storage = storage;
@@ -110,6 +113,39 @@ public class VenteLegalDocumentService {
         return store(societeId, vente, bytes,
                 "pv-livraison-" + safe(vente.getVenteRef()) + ".pdf",
                 VenteDocumentType.PV_LIVRAISON);
+    }
+
+    /** Generates a receipt (quittance) PDF for a PAID call-for-funds échéance. */
+    public GeneratedDocumentResponse generateQuittance(UUID venteId, UUID echeanceId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        var echeance = echeanceRepository.findBySocieteIdAndId(societeId, echeanceId)
+                .orElseThrow(() -> new VenteEcheanceNotFoundException(echeanceId));
+        if (!echeance.getVente().getId().equals(venteId)) {
+            throw new VenteEcheanceNotFoundException(echeanceId);
+        }
+        if (echeance.getStatut() != com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE) {
+            throw new ViolationLegaleException(
+                    "Une quittance ne peut être émise que pour une échéance payée.");
+        }
+
+        Property property = property(societeId, vente);
+        Map<String, Object> model = new java.util.HashMap<>();
+        model.put("societeName", societeName(societeId));
+        model.put("acquereur", vente.getContact().getFullName());
+        model.put("venteRef", orDash(vente.getVenteRef()));
+        model.put("propertyRef", property != null ? orDash(property.getReferenceCode()) : "—");
+        model.put("libelle", orDash(echeance.getLibelle()));
+        model.put("etape", orDash(echeance.getEtape()));
+        model.put("montant", money(echeance.getMontant()));
+        model.put("datePaiement", str(echeance.getDatePaiement() != null
+                ? echeance.getDatePaiement() : LocalDate.now()));
+
+        byte[] bytes = pdf.renderToPdf("documents/quittance-vefa", Map.of("model", model));
+        return store(societeId, vente, bytes,
+                "quittance-" + safe(vente.getVenteRef()) + "-" + safe(echeance.getLibelle()) + ".pdf",
+                VenteDocumentType.QUITTANCE);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

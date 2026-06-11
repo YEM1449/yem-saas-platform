@@ -20,5 +20,7 @@ public enum VenteDocumentType {
     CONTRAT_RESERVATION,
     /** PV de livraison avec liste des réserves (Loi 44-00). */
     PV_LIVRAISON,
+    /** Quittance d'un appel de fonds payé (reçu de paiement). */
+    QUITTANCE,
     AUTRE
 }

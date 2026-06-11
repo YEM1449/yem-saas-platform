@@ -597,6 +597,12 @@
                       <button class="btn btn-sm btn-secondary" (click)="markPaid(v.id, e.id)">
                         Marquer payée
                       </button>
+                    } @else {
+                      <button class="btn btn-sm btn-ghost" [disabled]="docGenBusy()"
+                              (click)="generateQuittance(v.id, e.id)" data-testid="ech-quittance"
+                              title="Générer la quittance (PDF)">
+                        Quittance
+                      </button>
                     }
                   </td>
                 }

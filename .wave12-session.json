@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T22:30:07.282Z",
+  "last_updated": "2026-06-11T22:48:29.282Z",
   "current_phase": "COMPLETE",
-  "current_task": "Wave 12 VEFA COMPLETE. Backlog: IT pipeline (CI/Docker), P5-T4 quittances, P6-T4 push notifications, E2E flows complets.",
+  "current_task": "Reliquats P5-T4 + P6-T4 done. Reste backlog: IT pipeline VEFA (CI/Docker), E2E flows complets.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -78,7 +78,7 @@
         "P5-T1": "✅ Réutilise vente_document (table existante) + VenteDocumentType +CONTRAT_RESERVATION/PV_LIVRAISON (additif) — pas de nouvelle table document_legal",
         "P5-T2": "✅ generateContratReservation : template Thymeleaf contrat-reservation-vefa (mention Loi 44-00 Art.618-3/4) → DocumentGenerationService.renderToPdf → storage → VenteDocument(CONTRAT_RESERVATION)",
         "P5-T3": "✅ generatePvLivraison : template pv-livraison-vefa (table des réserves depuis reserve_livraison) → VenteDocument(PV_LIVRAISON)",
-        "P5-T4": "⏭️ différé : quittances appels de fonds (réutiliser CallForFundsPdfService)",
+        "P5-T4": "✅ Quittance d appel de fonds : VenteDocumentType.QUITTANCE, VenteLegalDocumentService.generateQuittance (échéance PAYEE requise sinon 422), template quittance-vefa.html (mention Loi 44-00), POST /api/ventes/{id}/echeances/{eid}/quittance, bouton Quittance sur les échéances payées. 2 tests unitaires.",
         "P5-T5": "✅ Portail acquéreur : réutilise l accès documents vente existant (PortalVenteService expose VenteDocument)",
         "P5-T6": "✅ 1 test unitaire (render+store+type) ; 150 unit verts ; build front vert. Endpoints POST /api/ventes/{id}/documents/{contrat-reservation,pv-livraison} ; boutons vente-detail"
       }
@@ -90,7 +90,7 @@
         "P6-T1": "✅ KPI trésorerie : encaisseTotal/aEncaisser (sumPaidAll/sumDueAll), previsionnel6Mois, enRetard montant+count — depuis vente_echeance légal.",
         "P6-T2": "✅ Alertes : optionsActives + retractationsEnCours (countBySocieteIdAndStatut) + accordsExpirant15j (DossierFinancementRepository société-scoped) + liste appels en retard (findOverdueDetails, top 20, joursRetard).",
         "P6-T3": "↪ Perf agents déjà couverte par CommercialDashboard/HomeDashboard (pas de duplication).",
-        "P6-T4": "⏳ Différé : alertes en pull via GET /api/dashboard/tresorerie (les sweeps VEFA push existent déjà côté scheduler). Notifications push = backlog.",
+        "P6-T4": "✅ Notifications push VEFA : NotificationType OPTION_EXPIRED + RETRACTATION_DELAI_CLOS ; VenteService.expireOverdueOptions/closeExpiredRetractations notifient l agent de la vente (best-effort) via NotificationService (apparaît dans la cloche existante). 1 test unitaire.",
         "P6-T5": "✅ TresorerieDashboardComponent (4 KPI + chips alertes + table appels en retard) + route /app/dashboard/tresorerie + nav.",
         "P6-T6": "✅ 1 test unitaire (agrégation+overdue) ; 151 unit verts ; build front vert."
       }

@@ -76,6 +76,7 @@ public class VenteService {
     private final VenteRefGenerator refGenerator;
     private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
     private final com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
+    private final com.yem.hlm.backend.notification.service.NotificationService notificationService;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -91,7 +92,8 @@ public class VenteService {
             ApplicationEventPublisher eventPublisher,
             VenteRefGenerator refGenerator,
             com.yem.hlm.backend.legal.MarketConfig marketConfig,
-            com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository) {
+            com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository,
+            com.yem.hlm.backend.notification.service.NotificationService notificationService) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -106,6 +108,7 @@ public class VenteService {
         this.refGenerator        = refGenerator;
         this.marketConfig        = marketConfig;
         this.reserveRepository   = reserveRepository;
+        this.notificationService = notificationService;
     }
 
     // =========================================================================
@@ -365,6 +368,8 @@ public class VenteService {
             v.setMotifAnnulation(MotifAnnulation.AUTRE);
             releasePropertyForCancelledVente(v.getSocieteId(), v);
             venteRepository.save(v);
+            notifyAgent(v, com.yem.hlm.backend.notification.domain.NotificationType.OPTION_EXPIRED,
+                    "{\"venteRef\":\"" + safeJson(v.getVenteRef()) + "\"}");
         }
         return overdue.size();
     }
@@ -377,8 +382,24 @@ public class VenteService {
         for (Vente v : done) {
             v.setStatut(VenteStatut.RESERVE);
             venteRepository.save(v);
+            notifyAgent(v, com.yem.hlm.backend.notification.domain.NotificationType.RETRACTATION_DELAI_CLOS,
+                    "{\"venteRef\":\"" + safeJson(v.getVenteRef()) + "\"}");
         }
         return done.size();
+    }
+
+    /** Pushes a VEFA notification to the vente's agent (best-effort — never breaks the sweep). */
+    private void notifyAgent(Vente vente, com.yem.hlm.backend.notification.domain.NotificationType type, String payload) {
+        if (vente.getAgent() == null) return;
+        try {
+            notificationService.notify(vente.getSocieteId(), vente.getAgent(), type, vente.getId(), payload);
+        } catch (Exception ignored) {
+            // a notification failure must not abort the scheduled sweep
+        }
+    }
+
+    private static String safeJson(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private void releasePropertyForCancelledVente(UUID societeId, Vente vente) {

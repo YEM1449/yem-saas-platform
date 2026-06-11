@@ -75,6 +75,7 @@ class VenteServiceTest {
     @Mock VenteRefGenerator refGenerator;
     @Mock com.yem.hlm.backend.legal.MarketConfig marketConfig;
     @Mock com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
+    @Mock com.yem.hlm.backend.notification.service.NotificationService notificationService;
 
     private VenteService service;
 
@@ -83,7 +84,8 @@ class VenteServiceTest {
         service = new VenteService(
                 venteRepository, echeanceRepository, documentRepository, contactRepository,
                 propertyRepository, userRepository, reservationRepository, propertyWorkflow,
-                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository);
+                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository,
+                notificationService);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -288,6 +290,26 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.recordDelivery(VENTE, req))
                 .isInstanceOf(InvalidVenteTransitionException.class);
         verify(reserveRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("expireOverdueOptions cancels the option and pushes an OPTION_EXPIRED notification to the agent")
+    void expireOverdueOptions_notifiesAgent() {
+        com.yem.hlm.backend.user.domain.User agent = org.mockito.Mockito.mock(com.yem.hlm.backend.user.domain.User.class);
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        when(vente.getSocieteId()).thenReturn(SOC);
+        when(vente.getPropertyId()).thenReturn(PROP);
+        when(vente.getAgent()).thenReturn(agent);
+        when(venteRepository.findByStatutAndOptionExpireAtBefore(eq(VenteStatut.OPTION), any()))
+                .thenReturn(java.util.List.of(vente));
+        when(propertyRepository.findBySocieteIdAndId(SOC, PROP)).thenReturn(Optional.empty());
+
+        int count = service.expireOverdueOptions();
+
+        org.assertj.core.api.Assertions.assertThat(count).isEqualTo(1);
+        verify(vente).setStatut(VenteStatut.ANNULE);
+        verify(notificationService).notify(eq(SOC), eq(agent),
+                eq(com.yem.hlm.backend.notification.domain.NotificationType.OPTION_EXPIRED), any(), any());
     }
 
     @Test

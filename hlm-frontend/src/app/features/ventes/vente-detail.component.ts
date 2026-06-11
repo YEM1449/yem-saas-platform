@@ -346,6 +346,14 @@ export class VenteDetailComponent implements OnInit {
     });
   }
 
+  generateQuittance(venteId: string, echeanceId: string): void {
+    this.docGenBusy.set(true);
+    this.svc.generateQuittance(venteId, echeanceId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: () => { this.docGenBusy.set(false); this.docError.set('La génération de la quittance a échoué.'); },
+    });
+  }
+
   markPaid(venteId: string, echeanceId: string): void {
     const today = new Date().toISOString().slice(0, 10);
     this.svc.updateEcheanceStatut(venteId, echeanceId, {
