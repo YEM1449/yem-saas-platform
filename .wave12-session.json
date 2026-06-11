@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T23:02:20.719Z",
+  "last_updated": "2026-06-11T23:40:35.665Z",
   "current_phase": "COMPLETE",
-  "current_task": "Wave 12 COMPLETE + validée IT (Docker). Bug migration critique corrigé. E2E flows complets écrits (run en CI). Reste optionnel : run E2E full-stack local sur demande.",
+  "current_task": "Wave 12 COMPLETE — validée IT (93, Postgres réel) ET E2E (6/6, full stack local). Bug migration critique corrigé.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -99,7 +99,7 @@
       "label": "Tests E2E + Documentation légale",
       "status": "✅ (T4 guide légal, T5 docs CLAUDE.md/api-map/sprint-state, T1/T2/T3 → 1 spec E2E trésorerie CI-gated + scénarios documentés). T6 commit.",
       "tasks": {
-        "P7-T1": "✅ E2E complet : vefa.spec.ts — option→confirm(dépôt≤5%)→rétractation, dépôt>5% rejeté. Compile (playwright --list). Run en CI (e2e.yml stack complète).",
+        "P7-T1": "✅ E2E EXÉCUTÉ EN LOCAL (full stack) — 6/6 verts : option→confirm(dépôt≤5%)→rétractation, dépôt>5% rejeté, livraison+réserves→levée, échéancier légal+quittance, dashboard trésorerie. (Le 1er run a révélé que l image compose était périmée — pré-Wave12 ; backend courant via spring-boot:run → tout vert.)",
         "P7-T2": "✅ E2E : génération échéancier légal + quittance (paid call).",
         "P7-T3": "✅ E2E : livraison avec réserves → levée (setup ACTE via API, UI delivery+lift).",
         "P7-T4": "✅ docs/legal/guide-loi-44-00-managers.md (pipeline, option, rétractation, échéancier, livraison, TVA, acquéreurs, documents, trésorerie, garde-fous).",
