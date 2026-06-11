@@ -110,3 +110,22 @@ This is the high-level route map for the live application. Use [../spec/api-refe
 - role restrictions are enforced in both `SecurityConfig` and controller-level annotations
 - entity ownership and societe ownership often return `404` rather than `403` to avoid leaking existence
 - download endpoints are explicit and file-type aware, especially for PDFs
+
+## Wave 12 — VEFA Loi 44-00 endpoints
+
+| Method | Path | Rôles | Notes |
+|---|---|---|---|
+| POST | `/api/ventes/option` | ADMIN/MANAGER/AGENT | Pose une option (hold 1-72h) ; RG-B03 |
+| POST | `/api/ventes/{id}/confirm-reservation` | ADMIN/MANAGER/AGENT | Dépôt ≤5% (422) ; ouvre rétractation 7j |
+| POST | `/api/ventes/{id}/retractation` | ADMIN/MANAGER | Fenêtre légale (409 hors délai) |
+| POST | `/api/ventes/{id}/livraison` | ADMIN/MANAGER | Livraison ± réserves |
+| GET | `/api/ventes/{id}/reserves` | CRM | Liste des réserves |
+| PUT | `/api/ventes/{id}/reserves/{rid}/lever` | ADMIN/MANAGER | Lève une réserve |
+| POST | `/api/ventes/{id}/echeancier/generer-legal` | ADMIN/MANAGER | 7 appels Art. 618-17 |
+| GET/POST/PUT/DELETE | `/api/ventes/{id}/co-acquereurs[/{coId}]` | CRM / ADMIN-MANAGER write | Co-acquéreur (1/vente, 409 si doublon) |
+| GET/PUT | `/api/ventes/{id}/dossier-financement` | CRM / write | Dossier financement (404 si absent) |
+| POST | `/api/ventes/{id}/documents/contrat-reservation` | ADMIN/MANAGER | PDF contrat réservation (Loi 44-00) |
+| POST | `/api/ventes/{id}/documents/pv-livraison` | ADMIN/MANAGER | PDF PV de livraison |
+| GET/PATCH | `/api/contacts/{id}/legal` | CRM / ADMIN-MANAGER write | Profil légal VEFA (CIN, MRE…) |
+| GET/PATCH | `/api/properties/{id}/commercial` | CRM / ADMIN-MANAGER write | Prix HT/TVA/TTC, surfaces, charges |
+| GET | `/api/dashboard/tresorerie` | ADMIN/MANAGER | Trésorerie + alertes VEFA |

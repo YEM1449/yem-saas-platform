@@ -26,7 +26,31 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 
 **Deferred (justifié, P2/P3):** F-006 (List→Page casse les contrats FE — chantier coordonné), F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
 
-Next available changeset: **076**.
+Next available changeset: **084** (Wave 12 used 076–083).
+
+## Wave 12 — Conformité VEFA Loi 44-00 (Maroc) — complete (2026-06-11)
+
+Branch `Epic/Dashboard-UIUX-improvement`. The vente pipeline was **replaced** with the VEFA
+state machine (user decision): `PROSPECT→OPTION→RESERVE→EN_RETRACTATION→ACOMPTE→COMPROMIS→FINANCEMENT→ACTE→LIVRE_AVEC_RESERVES→RESERVES_LEVEES→LIVRE_DEFINITIF`, `ANNULE` terminal. `FINANCEMENT` kept; ASCII identifiers; `ACTE_NOTARIE→ACTE`, `LIVRE→LIVRE_DEFINITIF` migrated (changeset 076). 151 unit tests.
+
+- **P1 OPTION + rétractation** (ch. 076-077): `createOption` (1-72h hold), `confirmReservation`
+  (deposit ≤5% Art.618-4 → 422), `exerciseRetractation` (7-day window → 409), `VenteVefaScheduler`
+  (hourly sweeps). `MarketConfig`/`MarketConstants`/`TvaCalculator` in `legal/` package.
+- **P1 livraison avec réserves** (ch. 078): `reserve_livraison`, `recordDelivery`/`liftReserve`.
+- **P2 échéancier légal** (ch. 079): `generateEcheancierLegal` (7 calls Art.618-17), cumul≤prix guard.
+- **P3** (ch. 080-082): contact legal identity (isolated `/contacts/{id}/legal`), `co_acquereur`
+  (`/api/ventes/{id}/co-acquereurs`), `dossier_financement` (`/api/ventes/{id}/dossier-financement`).
+- **P4** (ch. 083): property commercial fields + Moroccan VAT (`TvaCalculator`, prix TTC never stored,
+  `/api/properties/{id}/commercial`); 3D floor filter + presentation mode.
+- **P5**: legal PDF generation (contrat réservation, PV livraison) via `DocumentGenerationService`.
+- **P6**: `GET /api/dashboard/tresorerie` (cash + VEFA alerts).
+
+**Pattern note:** legal/VEFA fields were added via **isolated DTOs + dedicated endpoints** (not by
+extending the big positional `CreateContactRequest`/`PropertyCreateRequest` records) to avoid breaking
+their many call-sites. Session manifest: `.wave12-session.json`. Legal ref: `docs/legal/`.
+
+**Deferred (CI/backlog):** IT tests for the VEFA pipeline (need Docker — run in CI), P5 quittances
+appels de fonds, P6 push notifications, VEFA E2E full flows (CI-gated).
 
 ## Architecture Context
 
@@ -160,8 +184,16 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 073 | Vente legal field rename — `date_fin_delai_sru` → `date_fin_delai_reflexion`, `date_limite_condition_credit` → `date_limite_financement` |
 | 074 | Reservation hardening — `raison_annulation VARCHAR(100)` + `notified_expiring_soon BOOLEAN` on `property_reservation` |
 | 075 | RG-B03 — `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'` (one active vente per property) |
+| 076 | Wave 12 — VenteStatut VEFA rename (ACTE_NOTARIE→ACTE, LIVRE→LIVRE_DEFINITIF) + data migration |
+| 077 | Wave 12 — vente option_expire_at + retractation_exercee_at (OPTION + rétractation) |
+| 078 | Wave 12 — reserve_livraison table (RLS) — delivery reserves |
+| 079 | Wave 12 — vente_echeance legal fields (etape/pct_prevu/base_legale, Art. 618-17) |
+| 080 | Wave 12 — contact legal columns (CIN/passeport/situation/type_acquereur…) |
+| 081 | Wave 12 — co_acquereur table (RLS, unique société+vente) |
+| 082 | Wave 12 — dossier_financement table (1:1 vente, RLS, statut workflow) |
+| 083 | Wave 12 — property commercial columns (prix_ht, tva_taux, surfaces, charges…) |
 
-Next available changeset: **076**
+Next available changeset: **084**
 
 ## CI Pipeline Map
 

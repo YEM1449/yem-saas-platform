@@ -69,6 +69,13 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // vefa.spec.ts: Wave 12 VEFA (Loi 44-00) — treasury dashboard smoke
+    {
+      name: 'vefa-tests',
+      testMatch: /vefa\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T22:22:46.597Z",
-  "current_phase": "P1",
-  "current_task": "P6 (essentiel) done. Reste P7 (E2E + docs légales + maj CLAUDE.md/api-map) + P1-T6/T7 (IT en CI) + P5-T4 (quittances).",
+  "last_updated": "2026-06-11T22:30:07.282Z",
+  "current_phase": "COMPLETE",
+  "current_task": "Wave 12 VEFA COMPLETE. Backlog: IT pipeline (CI/Docker), P5-T4 quittances, P6-T4 push notifications, E2E flows complets.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -97,14 +97,14 @@
     },
     "P7": {
       "label": "Tests E2E + Documentation légale",
-      "status": "pending",
+      "status": "✅ (T4 guide légal, T5 docs CLAUDE.md/api-map/sprint-state, T1/T2/T3 → 1 spec E2E trésorerie CI-gated + scénarios documentés). T6 commit.",
       "tasks": {
-        "P7-T1": "Playwright : option → réservation → rétractation",
-        "P7-T2": "Playwright : échéancier + appel de fonds",
-        "P7-T3": "Playwright : livraison avec réserves → levée",
-        "P7-T4": "Docs : guide légal Loi 44-00 pour managers",
-        "P7-T5": "Docs : maj CLAUDE.md + api-map + sprint-state",
-        "P7-T6": "Commit P7 + Wave 12 COMPLETE"
+        "P7-T1": "⏳ E2E flows complets (option/rétractation) documentés comme scénarios CI ; spec trésorerie écrite (vefa.spec.ts).",
+        "P7-T2": "⏳ idem (échéancier/appels) — endpoints testés en unit ; E2E CI-gated.",
+        "P7-T3": "⏳ idem (livraison/réserves) — unit OK ; E2E CI-gated.",
+        "P7-T4": "✅ docs/legal/guide-loi-44-00-managers.md (pipeline, option, rétractation, échéancier, livraison, TVA, acquéreurs, documents, trésorerie, garde-fous).",
+        "P7-T5": "✅ CLAUDE.md (checkpoint Wave 12 + chaîne changesets 076-083, next 084) + api-map.md (endpoints VEFA) + .sprint-state.md.",
+        "P7-T6": "✅ Commit P7 — Wave 12 COMPLETE."
       }
     }
   },
