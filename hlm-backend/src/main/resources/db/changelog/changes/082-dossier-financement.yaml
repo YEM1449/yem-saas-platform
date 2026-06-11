@@ -22,10 +22,10 @@ databaseChangeLog:
                                  foreignKeyName: fk_dosfin_vente, references: vente(id) }
               - column: { name: type_financement,        type: VARCHAR(30) }
               - column: { name: banque,                  type: VARCHAR(100) }
-              - column: { name: montant_credit,          type: DECIMAL(15,2) }
-              - column: { name: taux_interet,            type: DECIMAL(5,4) }
+              - column: { name: montant_credit,          type: "DECIMAL(15,2)" }
+              - column: { name: taux_interet,            type: "DECIMAL(5,4)" }
               - column: { name: duree_mois,              type: INT }
-              - column: { name: apport_personnel,        type: DECIMAL(15,2) }
+              - column: { name: apport_personnel,        type: "DECIMAL(15,2)" }
               - column:
                   name: statut
                   type: VARCHAR(30)

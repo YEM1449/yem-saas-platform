@@ -19,4 +19,4 @@ databaseChangeLog:
               - column: { name: nationalite,            type: VARCHAR(50) }
               - column: { name: pays_residence,         type: VARCHAR(50) }
               - column: { name: type_acquereur,         type: VARCHAR(20) }
-              - column: { name: apport_personnel,       type: DECIMAL(15,2) }
+              - column: { name: apport_personnel,       type: "DECIMAL(15,2)" }

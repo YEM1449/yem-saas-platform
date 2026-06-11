@@ -10,16 +10,16 @@ databaseChangeLog:
         - addColumn:
             tableName: property
             columns:
-              - column: { name: prix_ht,                    type: DECIMAL(15,2) }
-              - column: { name: tva_taux,                   type: DECIMAL(5,4) }
+              - column: { name: prix_ht,                    type: "DECIMAL(15,2)" }
+              - column: { name: tva_taux,                   type: "DECIMAL(5,4)" }
               - column: { name: vue,                        type: VARCHAR(50) }
-              - column: { name: surface_terrasse,           type: DECIMAL(8,2) }
-              - column: { name: surface_cave,               type: DECIMAL(8,2) }
-              - column: { name: surface_parking,            type: DECIMAL(8,2) }
+              - column: { name: surface_terrasse,           type: "DECIMAL(8,2)" }
+              - column: { name: surface_cave,               type: "DECIMAL(8,2)" }
+              - column: { name: surface_parking,            type: "DECIMAL(8,2)" }
               - column: { name: parking_inclus,             type: BOOLEAN, defaultValueBoolean: false,
                           constraints: { nullable: false } }
               - column: { name: cave_incluse,               type: BOOLEAN, defaultValueBoolean: false,
                           constraints: { nullable: false } }
-              - column: { name: penalite_retard_journalier, type: DECIMAL(10,2) }
-              - column: { name: charges_copro_mensuelles,   type: DECIMAL(8,2) }
+              - column: { name: penalite_retard_journalier, type: "DECIMAL(10,2)" }
+              - column: { name: charges_copro_mensuelles,   type: "DECIMAL(8,2)" }
               - column: { name: plan_appartement_key,       type: VARCHAR(500) }
