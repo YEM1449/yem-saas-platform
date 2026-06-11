@@ -148,4 +148,29 @@ class ContactServiceTest {
                 .isInstanceOf(ContactInterestAlreadyExistsException.class);
     }
 
+    @Test
+    void updateLegalDetails_appliesOnlyProvidedFields() {
+        UUID contactId = UUID.randomUUID();
+        Contact contact = mock(Contact.class);
+        when(contactRepository.findBySocieteIdAndId(TENANT_ID, contactId)).thenReturn(Optional.of(contact));
+        when(contactRepository.save(contact)).thenReturn(contact);
+
+        var req = new UpdateContactLegalRequest(
+                null, null, "AB123456", null, LocalDate.of(1990, 1, 1), null,
+                SituationMatrimoniale.MARIE_COMMUNAUTE, "Marocaine", null,
+                TypeAcquereur.MRE, new BigDecimal("200000"));
+
+        service.updateLegalDetails(contactId, req);
+
+        verify(contact).setPasseportNumero("AB123456");
+        verify(contact).setDateNaissance(LocalDate.of(1990, 1, 1));
+        verify(contact).setSituationMatrimoniale(SituationMatrimoniale.MARIE_COMMUNAUTE);
+        verify(contact).setNationalite("Marocaine");
+        verify(contact).setTypeAcquereur(TypeAcquereur.MRE);
+        verify(contact).setApportPersonnel(new BigDecimal("200000"));
+        // null fields must not be touched
+        verify(contact, never()).setCinAutorite(any());
+        verify(contact, never()).setPaysResidence(any());
+    }
+
 }

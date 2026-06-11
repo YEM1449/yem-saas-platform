@@ -68,6 +68,20 @@ public class ContactController {
         return contactService.update(id, request);
     }
 
+    @Operation(summary = "Get a contact's VEFA legal identity (Loi 44-00)")
+    @GetMapping("/contacts/{id}/legal")
+    public ContactLegalResponse getLegalDetails(@PathVariable("id") UUID id) {
+        return contactService.getLegalDetails(id);
+    }
+
+    @Operation(summary = "Update a contact's VEFA legal identity (ADMIN/MANAGER only)")
+    @PatchMapping("/contacts/{id}/legal")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactLegalResponse updateLegalDetails(@PathVariable("id") UUID id,
+                                                   @Valid @RequestBody UpdateContactLegalRequest request) {
+        return contactService.updateLegalDetails(id, request);
+    }
+
     @Operation(summary = "Transition a contact's status (ADMIN/MANAGER only)")
     @PatchMapping("/contacts/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")

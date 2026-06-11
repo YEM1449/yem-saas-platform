@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T11:20:59.744Z",
+  "last_updated": "2026-06-11T11:36:12.523Z",
   "current_phase": "P1",
-  "current_task": "P2 done. Reste P1-T6/T7 (IT/clôture). Ensuite P3 (contact enrichi + co-acquéreur + financement, en étendant vente/contact).",
+  "current_task": "P3-T2 (table co_acquereur + CRUD + endpoints) puis P3-T3 (dossier financement multi-statuts).",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -46,9 +46,9 @@
     },
     "P3": {
       "label": "Contact enrichi + Co-acquéreur + Financement",
-      "status": "pending",
+      "status": "in progress (T1 done; T2 co-acquéreur, T3 financement, T7 forms restants)",
       "tasks": {
-        "P3-T1": "Liquibase : colonnes légales Contact (CIN, situation...)",
+        "P3-T1": "✅ Contact enrichi VEFA (changeset 080) : 11 colonnes légales additives (cin_date_delivrance, passeport, date/lieu naissance, situation_matrimoniale, nationalite, pays_residence, type_acquereur, apport_personnel) + enums SituationMatrimoniale/TypeAcquereur. DTOs ISOLÉS (ContactLegalResponse/UpdateContactLegalRequest) → 0 impact sur Contact DTOs existants. Endpoints GET/PATCH /contacts/{id}/legal (ADMIN/MANAGER write). Frontend: ContactLegal + service methods + panneau Profil légal VEFA dans contact-detail. 1 test unitaire (null-skip).",
         "P3-T2": "Liquibase : table co_acquereur",
         "P3-T3": "Liquibase : table dossier_financement",
         "P3-T4": "Services + endpoints Contact étendu",
@@ -109,7 +109,7 @@
     }
   },
   "decisions": {
-    "prochain_changeset": "080",
+    "prochain_changeset": "081",
     "vente_statuts_existants": [
       "COMPROMIS",
       "FINANCEMENT",

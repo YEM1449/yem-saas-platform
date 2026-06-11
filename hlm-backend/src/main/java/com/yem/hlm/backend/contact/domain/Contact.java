@@ -3,7 +3,9 @@ package com.yem.hlm.backend.contact.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -104,6 +106,21 @@ public class Contact {
     @Setter
     @Column(name = "address", length = 500)
     private String address;
+
+    // ── VEFA legal identity (Loi 44-00 / Office des Changes) — Wave 12 ────────
+    @Setter @Column(name = "cin_date_delivrance")            private LocalDate cinDateDelivrance;
+    @Setter @Column(name = "cin_autorite", length = 100)     private String cinAutorite;
+    @Setter @Column(name = "passeport_numero", length = 30)  private String passeportNumero;
+    @Setter @Column(name = "passeport_expire")               private LocalDate passeportExpire;
+    @Setter @Column(name = "date_naissance")                 private LocalDate dateNaissance;
+    @Setter @Column(name = "lieu_naissance", length = 100)   private String lieuNaissance;
+    @Setter @Enumerated(EnumType.STRING)
+    @Column(name = "situation_matrimoniale", length = 30)    private SituationMatrimoniale situationMatrimoniale;
+    @Setter @Column(name = "nationalite", length = 50)       private String nationalite;
+    @Setter @Column(name = "pays_residence", length = 50)    private String paysResidence;
+    @Setter @Enumerated(EnumType.STRING)
+    @Column(name = "type_acquereur", length = 20)            private TypeAcquereur typeAcquereur;
+    @Setter @Column(name = "apport_personnel", precision = 15, scale = 2) private BigDecimal apportPersonnel;
 
     @Setter
     @Column(name = "notes", length = 2000)

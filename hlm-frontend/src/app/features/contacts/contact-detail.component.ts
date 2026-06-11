@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { ContactService, ConvertToProspectRequest, UpdateContactRequest } from './contact.service';
+import { ContactService, ConvertToProspectRequest, UpdateContactRequest,
+         ContactLegal, SituationMatrimoniale, TypeAcquereur } from './contact.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Contact, TimelineEvent } from '../../core/models/contact.model';
 import { ContactInterest } from '../../core/models/contact-interest.model';
@@ -45,6 +46,34 @@ export class ContactDetailComponent implements OnInit {
   contact: Contact | null = null;
   loading = true;
   error = '';
+
+  // ── VEFA legal identity (Loi 44-00) ────────────────────────────────────────
+  showLegal = false;
+  legal: ContactLegal = {};
+  legalSaving = false;
+  legalError = '';
+  legalSaved = false;
+  readonly situationOptions: SituationMatrimoniale[] =
+    ['CELIBATAIRE', 'MARIE_COMMUNAUTE', 'MARIE_SEPARATION', 'DIVORCE', 'VEUF'];
+  readonly typeAcquereurOptions: TypeAcquereur[] = ['RESIDENT_MAROC', 'MRE', 'ETRANGER'];
+
+  toggleLegal(): void {
+    this.showLegal = !this.showLegal;
+    if (this.showLegal && this.contact && !this.legal.contactId) {
+      this.svc.getLegalDetails(this.contact.id).subscribe({ next: (l) => this.legal = l });
+    }
+  }
+
+  saveLegal(): void {
+    if (!this.contact) return;
+    this.legalSaving = true;
+    this.legalError = '';
+    this.legalSaved = false;
+    this.svc.updateLegalDetails(this.contact.id, this.legal).subscribe({
+      next: (l) => { this.legal = l; this.legalSaving = false; this.legalSaved = true; },
+      error: () => { this.legalSaving = false; this.legalError = 'Échec de l\'enregistrement du profil légal.'; },
+    });
+  }
   contactId = '';
 
   activeTab: TabId = 'details';

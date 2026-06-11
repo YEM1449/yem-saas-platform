@@ -39,6 +39,27 @@ export interface ConvertToProspectRequest {
   budgetMax?: number | null;
 }
 
+export type SituationMatrimoniale =
+  'CELIBATAIRE' | 'MARIE_COMMUNAUTE' | 'MARIE_SEPARATION' | 'DIVORCE' | 'VEUF';
+export type TypeAcquereur = 'RESIDENT_MAROC' | 'MRE' | 'ETRANGER';
+
+/** VEFA legal identity (Loi 44-00). CIN is the contact's nationalId. */
+export interface ContactLegal {
+  contactId?: string;
+  nationalId?: string | null;
+  cinDateDelivrance?: string | null;
+  cinAutorite?: string | null;
+  passeportNumero?: string | null;
+  passeportExpire?: string | null;
+  dateNaissance?: string | null;
+  lieuNaissance?: string | null;
+  situationMatrimoniale?: SituationMatrimoniale | null;
+  nationalite?: string | null;
+  paysResidence?: string | null;
+  typeAcquereur?: TypeAcquereur | null;
+  apportPersonnel?: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContactService {
   private http = inject(HttpClient);
@@ -69,6 +90,15 @@ export class ContactService {
   /** Partially update a contact's fields (ADMIN / MANAGER only). */
   update(id: string, req: UpdateContactRequest): Observable<Contact> {
     return this.http.patch<Contact>(`${this.apiUrl}/api/contacts/${id}`, req);
+  }
+
+  // ── VEFA legal identity (Loi 44-00) ─────────────────────────────────────
+  getLegalDetails(id: string): Observable<ContactLegal> {
+    return this.http.get<ContactLegal>(`${this.apiUrl}/api/contacts/${id}/legal`);
+  }
+
+  updateLegalDetails(id: string, req: ContactLegal): Observable<ContactLegal> {
+    return this.http.patch<ContactLegal>(`${this.apiUrl}/api/contacts/${id}/legal`, req);
   }
 
   /** Transition the contact's status via the server-enforced state machine. */
