@@ -75,7 +75,23 @@
       <button class="legend-peek" (click)="toggleLegend()" aria-label="Afficher la légende des statuts">?</button>
     }
 
-    @if (isAdmin && !projetIdInput) {
+    <!-- ── Floor filter (P4-T5) ──────────────────────────────────────────── -->
+    @if (etages().length > 1) {
+      <div class="etage-filter" role="group" aria-label="Filtre par étage" data-testid="etage-filter">
+        <button [class.active]="etageActif() === null" (click)="filterEtage(null)">Tous</button>
+        @for (e of etages(); track e) {
+          <button [class.active]="etageActif() === e" (click)="filterEtage(e)">{{ etageLabel(e) }}</button>
+        }
+      </div>
+    }
+
+    <!-- ── Presentation mode (P4-T6) ─────────────────────────────────────── -->
+    <button class="presentation-toggle" (click)="togglePresentation()" data-testid="presentation-toggle"
+            [attr.aria-label]="presentationMode() ? 'Quitter la présentation' : 'Mode présentation'">
+      {{ presentationMode() ? '✕ Quitter' : '⛶ Présentation' }}
+    </button>
+
+    @if (!presentationMode() && isAdmin && !projetIdInput) {
       <a class="mapping-cta"
          [routerLink]="['/app/projets', projetId, 'viewer-3d', 'mappings']"
          data-testid="open-mesh-mapping">

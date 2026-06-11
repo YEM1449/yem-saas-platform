@@ -1,9 +1,9 @@
 {
   "wave": "12",
   "started_at": "2026-06-04T00:00:00Z",
-  "last_updated": "2026-06-11T18:25:43.867Z",
+  "last_updated": "2026-06-11T18:50:50.713Z",
   "current_phase": "P1",
-  "current_task": "P4-T5 (3D filtre par étage) + P4-T6 (3D mode présentation). Puis P5-P7.",
+  "current_task": "P4 done. Ensuite P6 (dashboard trésorerie + alertes : appels en retard, options/réservations/accords expirant) — valorise les données VEFA. Puis P5 (docs légaux), P7.",
   "phases": {
     "P0": {
       "label": "Bootstrap & Audit terrain",
@@ -60,14 +60,14 @@
     },
     "P4": {
       "label": "Property enrichie (étage, orientation, prix TTC)",
-      "status": "in progress (T1-T4 done; T5/T6 3D restants)",
+      "status": "✅ (T1-T6). T5/T6 3D vérifiés au BUILD uniquement (pas de navigateur/GLB pour valider le rendu).",
       "tasks": {
         "P4-T1": "✅ Changeset 083 : colonnes commerciales property (prix_ht, tva_taux, vue, surfaces terrasse/cave/parking, parking/cave inclus, pénalité retard, charges copro, plan_key). étage/orientation déjà présents.",
         "P4-T2": "✅ TvaCalculator (CGI Maroc : social 0%, moyen 10%, normal 20% ; prix_ttc = ht×(1+taux), JAMAIS stocké). 5 tests.",
         "P4-T3": "✅ Endpoints isolés GET/PATCH /api/properties/{id}/commercial (PropertyService.getCommercial/updateCommercial, suggestion auto du taux si non fourni). DTOs Update/Response. 0 impact sur PropertyCreate/Update existants.",
         "P4-T4": "✅ Fiche commerciale (panneau dans property-detail : prix HT/TVA/TTC, vue, surfaces, parking/cave, charges) + service frontend.",
-        "P4-T5": "3D Viewer : filtre par étage",
-        "P4-T6": "3D Viewer : mode présentation client",
+        "P4-T5": "✅ 3D filtre par étage : etage ajouté à Lot3dStatusDto (+ snapshot service), LotStatusSnapshot.etage, LotMappingService.applyFloorFilter (opacity 0.15 hors étage), project-viewer-3d (etages()/etageActif/filterEtage + UI .etage-filter, ré-appliqué au poll 30s).",
+        "P4-T6": "✅ 3D mode présentation : togglePresentation (Fullscreen API), presentationMode signal, bouton + raccourcis P/Escape, masque la CTA admin en présentation.",
         "P4-T7": "Tests + Commit P4"
       }
     },

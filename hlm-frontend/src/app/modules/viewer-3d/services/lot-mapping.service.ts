@@ -64,6 +64,22 @@ export class LotMappingService {
     });
   }
 
+  /**
+   * Dims (opacity 0.15) every mapped mesh whose lot is not on {@code etage}; passing
+   * {@code null} restores full opacity to all. Unmapped meshes are left untouched.
+   */
+  applyFloorFilter(etage: number | null, statuses: LotStatusSnapshot[]): void {
+    const statusMap = new Map(statuses.map(s => [s.meshId, s]));
+    this.meshByMeshId.forEach((mesh, meshId) => {
+      const status = statusMap.get(meshId);
+      const dim = etage !== null && status != null && status.etage !== etage;
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      mat.transparent = dim;
+      mat.opacity = dim ? 0.15 : 1;
+      mat.needsUpdate = true;
+    });
+  }
+
   /** Returns the mapping entry for a given mesh, or undefined if unmapped. */
   getMappingForMesh(mesh: THREE.Mesh): Lot3dMappingEntry | undefined {
     return this.byMeshId.get(mesh.name);

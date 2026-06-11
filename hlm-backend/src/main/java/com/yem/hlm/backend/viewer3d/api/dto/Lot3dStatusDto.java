@@ -16,5 +16,6 @@ public record Lot3dStatusDto(
         String    statut,
         String    typology,
         BigDecimal surface,
-        BigDecimal prix
+        BigDecimal prix,
+        Integer   etage
 ) {}

@@ -24,4 +24,5 @@ export interface LotStatusSnapshot {
   typology: string | null;
   surface:  number | null;
   prix:     number | null;
+  etage:    number | null;
 }

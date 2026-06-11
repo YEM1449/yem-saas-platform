@@ -148,7 +148,8 @@ public class Project3dService {
                             toDisplayStatus(p.getStatus()),
                             p.getType() != null ? p.getType().name() : null,
                             p.getSurfaceAreaSqm(),
-                            p.getPrice());
+                            p.getPrice(),
+                            p.getFloorNumber());
                 })
                 .toList();
     }

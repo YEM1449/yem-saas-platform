@@ -68,6 +68,11 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   errorMessage  = signal('');
   legendVisible = signal(true);
 
+  /** Floor filter — null = all floors visible; otherwise dim other floors. */
+  etageActif       = signal<number | null>(null);
+  /** Fullscreen client presentation mode (minimal chrome). */
+  presentationMode = signal(false);
+
   hoveredMapping = signal<Lot3dMappingEntry | null>(null);
   hoveredStatus  = signal<LotStatusSnapshot | null>(null);
   tooltipX = 0;
@@ -205,6 +210,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
         this.onLotClick(m, status);
       }
     }
+    if ((event.key === 'p' || event.key === 'P') && !this.portalMode) {
+      this.togglePresentation();
+    }
+    if (event.key === 'Escape' && this.presentationMode()) {
+      this.togglePresentation();
+    }
   }
 
   // ── private ───────────────────────────────────────────────────────────────
@@ -260,7 +271,36 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   private applyStatuses(statuses: LotStatusSnapshot[]): void {
     this.statuses = statuses;
     this.mapping.updateColors(statuses);
+    // Re-apply the active floor filter so the 30 s poll doesn't reset it.
+    this.mapping.applyFloorFilter(this.etageActif(), statuses);
     this.cdr.markForCheck();
+  }
+
+  /** Distinct floors present in the model, ascending (RDC=0, basements negative). */
+  etages(): number[] {
+    const set = new Set<number>();
+    for (const s of this.statuses) if (s.etage !== null && s.etage !== undefined) set.add(s.etage);
+    return [...set].sort((a, b) => a - b);
+  }
+
+  etageLabel(e: number): string {
+    return e === 0 ? 'RDC' : e < 0 ? `SS${-e}` : `${e}ᵉ`;
+  }
+
+  filterEtage(etage: number | null): void {
+    this.etageActif.set(etage);
+    this.mapping.applyFloorFilter(etage, this.statuses);
+  }
+
+  togglePresentation(): void {
+    const next = !this.presentationMode();
+    this.presentationMode.set(next);
+    const el = this.canvasRef?.nativeElement?.parentElement;
+    if (next) {
+      el?.requestFullscreen?.().catch(() => { /* fullscreen may be denied */ });
+    } else if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => { /* ignore */ });
+    }
   }
 
   private onLotClick(m: Lot3dMappingEntry, status: LotStatusSnapshot | undefined): void {
