@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 7 | 3 |
+> | 🟠 Major | 10 | 6 | 4 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **29** | **5** |
+> | **Total** | **34** | **28** | **6** |
 
 ---
 
@@ -67,7 +67,7 @@ sans changer d'écran."**
 | # | Finding | Owner domain | Effort | Blocks client demo? |
 |---|---------|--------------|--------|---------------------|
 | 1 | #015 — Wire entry links to the 3D viewer/dashboard | Karim (UX) | XS | **YES** — flagship invisible |
-| 2 | #010 — Load the Inter font (it's declared, never shipped) | Sara (Design) | XS | Yes (perceived quality) |
+| 2 | #010 — Load the Inter font (it's declared, never shipped) — ✅ done 2026-06-12 | Sara (Design) | XS | Yes (perceived quality) |
 | 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
 | 4 | #003 — Month-by-month cash forecast in trésorerie — ✅ done 2026-06-12 | Mehdi/Adam | S | Yes (owner demo) |
 | 5 | #025 — Privacy policy + mentions légales in portal | Nadia (Legal) | S | **YES** — legal exposure |
@@ -500,11 +500,19 @@ unlink dissolves pair, listing). Unit suite 185 green; FE prod build green.
 is never copied to the group table, and one société's data is never rendered to an admin who
 doesn't administer it. Next changeset: **085**.
 
-**FINDING #010** — UI/UX — Sara — `Status: 🔲 OPEN`
+**FINDING #010** — UI/UX — Sara — `Status: ✅ RESOLVED (2026-06-12, self-hosted fonts)`
 Brand font Inter declared (`design-tokens.css:111`) but never loaded — all users get OS
 fallback; typography ships unreviewed.
 *Fix:* `@fontsource-variable/inter`, import in styles.css, font-display swap, re-check
 dense tables. *Effort:* XS
+*Resolution:* Added `@fontsource-variable/inter` + `@fontsource/fira-code` (the mono token
+was a second ghost font), imported in `styles.css`; bundled/self-hosted, **no Google CDN**
+(avoids leaking user IPs — CNDP/Loi 09-08 friendly) and works offline. `font-display: swap`
+is built into the @fontsource faces. The variable package registers the family as
+`'Inter Variable'`, so the `--font` token now reads `'Inter Variable', 'Inter', …`. Build
+emits the Inter (latin + subsets) and Fira Code woff2 into `media/`; built CSS references
+`'Inter Variable'`. Dense tables are safe — Inter is marginally narrower than the Segoe UI
+fallback they were accidentally reviewed in, so spacing only loosens. FE prod build green.
 
 **FINDING #015** — UI/UX — Karim — `Status: 🔲 OPEN`
 3D viewer (`/app/projets/:id/viewer-3d`) and 3D dashboard (`/app/dashboard/commercial/3d`)
