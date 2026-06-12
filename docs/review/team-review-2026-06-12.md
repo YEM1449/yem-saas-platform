@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 6 | 4 |
+> | 🟠 Major | 10 | 5 | 5 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **28** | **6** |
+> | **Total** | **34** | **27** | **7** |
 
 ---
 
@@ -66,7 +66,7 @@ sans changer d'écran."**
 
 | # | Finding | Owner domain | Effort | Blocks client demo? |
 |---|---------|--------------|--------|---------------------|
-| 1 | #015 — Wire entry links to the 3D viewer/dashboard | Karim (UX) | XS | **YES** — flagship invisible |
+| 1 | #015 — Wire entry links to the 3D viewer/dashboard — ✅ done 2026-06-12 | Karim (UX) | XS | **YES** — flagship invisible |
 | 2 | #010 — Load the Inter font (it's declared, never shipped) — ✅ done 2026-06-12 | Sara (Design) | XS | Yes (perceived quality) |
 | 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
 | 4 | #003 — Month-by-month cash forecast in trésorerie — ✅ done 2026-06-12 | Mehdi/Adam | S | Yes (owner demo) |
@@ -514,11 +514,19 @@ emits the Inter (latin + subsets) and Fira Code woff2 into `media/`; built CSS r
 `'Inter Variable'`. Dense tables are safe — Inter is marginally narrower than the Segoe UI
 fallback they were accidentally reviewed in, so spacing only loosens. FE prod build green.
 
-**FINDING #015** — UI/UX — Karim — `Status: 🔲 OPEN`
+**FINDING #015** — UI/UX — Karim — `Status: ✅ RESOLVED (2026-06-12, 3D entry points)`
 3D viewer (`/app/projets/:id/viewer-3d`) and 3D dashboard (`/app/dashboard/commercial/3d`)
 have **zero inbound links** in any template — the flagship Wave 13 feature is URL-only.
 *Fix:* "Visualiseur 3D" tab/button on project-detail (gate on model presence or
 canManageModel) + card link from commercial dashboard. *Effort:* XS
+*Resolution:* (1) "Visualiseur 3D" entry added to the project-detail workspace nav
+(`project-detail.component`), a `routerLink` to `/app/projets/:id/viewer-3d`. Gated via
+`show3dEntry = has3dModel || isAdminOrManager`: agents see it only when a model exists;
+ADMIN/MANAGER always see it with an "à configurer" badge (and the viewer's no-model fallback
+embeds the upload UI per F-010, so it's not a dead end). Model presence is probed once on
+init via `Viewer3dApiService.getModel()` (404 → no entry for agents). (2) "Vue 3D" header
+link added to the commercial dashboard → `/app/dashboard/commercial/3d`. Both previously
+orphaned routes are now reachable from the UI. FE prod build green.
 
 **FINDING #016** — UI/UX — Karim — `Status: 🔲 OPEN`
 Sidebar offers both "Contrats" (legacy SaleContract module) and "Pipeline Ventes" (VEFA) as

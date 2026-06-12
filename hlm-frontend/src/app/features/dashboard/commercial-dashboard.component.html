@@ -1,7 +1,10 @@
 <div class="dashboard">
   <div class="dashboard-header">
     <h2>{{ 'dashboard.commercial.title' | translate }}</h2>
-    <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.viewSales' | translate }} &rsaquo;</a>
+    <div class="dashboard-header-links">
+      <a routerLink="/app/dashboard/commercial/3d" class="btn-link">Vue 3D &rsaquo;</a>
+      <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.viewSales' | translate }} &rsaquo;</a>
+    </div>
   </div>
 
   <!-- Filter bar -->

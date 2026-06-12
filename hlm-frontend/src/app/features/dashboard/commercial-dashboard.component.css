@@ -349,3 +349,10 @@
 @media (max-width: 720px) {
   .cd-kpi { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
 }
+
+/* Header action links (Vue 3D + Voir les ventes) */
+.dashboard-header-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
