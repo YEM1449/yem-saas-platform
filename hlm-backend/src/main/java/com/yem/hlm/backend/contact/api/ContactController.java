@@ -29,11 +29,14 @@ public class ContactController {
 
     private final ContactService contactService;
     private final ContactTimelineService timelineService;
+    private final com.yem.hlm.backend.contact.service.ContactImportService contactImportService;
 
     public ContactController(ContactService contactService,
-                             ContactTimelineService timelineService) {
+                             ContactTimelineService timelineService,
+                             com.yem.hlm.backend.contact.service.ContactImportService contactImportService) {
         this.contactService  = contactService;
         this.timelineService = timelineService;
+        this.contactImportService = contactImportService;
     }
 
     @Operation(summary = "Create a new contact (ADMIN/MANAGER only)")
@@ -42,6 +45,20 @@ public class ContactController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse create(@Valid @RequestBody CreateContactRequest request) {
         return contactService.create(request);
+    }
+
+    @Operation(summary = "Import contacts from a CSV file (ADMIN/MANAGER only). "
+            + "dryRun=true previews the result without creating anything.")
+    @PostMapping(value = "/contacts/import", consumes = "multipart/form-data")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactImportReport importCsv(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun,
+            @RequestParam(value = "consentGiven", defaultValue = "false") boolean consentGiven,
+            @RequestParam(value = "processingBasis", required = false)
+            com.yem.hlm.backend.contact.domain.ProcessingBasis processingBasis
+    ) throws java.io.IOException {
+        return contactImportService.importCsv(file.getBytes(), dryRun, consentGiven, processingBasis);
     }
 
     @Operation(summary = "Get a contact by ID")

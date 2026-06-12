@@ -8,6 +8,7 @@ import { ContactService } from './contact.service';
 import { Contact } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
+import { ContactImportDialogComponent } from './contact-import-dialog.component';
 
 interface CreateContactForm {
   firstName: string;
@@ -36,7 +37,7 @@ const PIPELINE_STATUSES = new Set([
 @Component({
   selector: 'app-contacts',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, ContactImportDialogComponent],
   templateUrl: './contacts.component.html',
   styleUrl: './contacts.component.css',
 })
@@ -60,6 +61,14 @@ export class ContactsComponent implements OnInit {
   showModal   = false;
   submitting  = false;
   submitError = '';
+
+  /** CSV import dialog */
+  showImportModal = false;
+
+  /** Reload the list after a real import; the dialog stays open to show its final report. */
+  onImported(): void {
+    this.load();
+  }
 
   form: CreateContactForm = {
     firstName: '', lastName: '', email: '', phone: '', notes: '',

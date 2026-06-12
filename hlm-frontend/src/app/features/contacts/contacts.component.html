@@ -42,6 +42,13 @@
     </div>
 
     @if (canWrite) {
+      <button class="btn btn-secondary" (click)="showImportModal = true" data-testid="import-contacts">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 9.5V1.5M4 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1.5 9.5v2a1 1 0 001 1h9a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Importer
+      </button>
       <button class="btn btn-primary" (click)="openModal()" data-testid="create-contact">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -489,4 +496,11 @@
 
     </div>
   </div>
+}
+
+<!-- ══ CSV Import Dialog ═══════════════════════════════════════ -->
+@if (showImportModal) {
+  <app-contact-import-dialog
+    (closed)="showImportModal = false"
+    (imported)="onImported()" />
 }

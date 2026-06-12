@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 10 | 0 |
+> | 🟠 Major | 10 | 9 | 1 |
 > | 🟡 Minor | 16 | 16 | 0 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **33** | **1** |
+> | **Total** | **34** | **32** | **2** |
 
 ---
 
@@ -68,7 +68,7 @@ sans changer d'écran."**
 |---|---------|--------------|--------|---------------------|
 | 1 | #015 — Wire entry links to the 3D viewer/dashboard | Karim (UX) | XS | **YES** — flagship invisible |
 | 2 | #010 — Load the Inter font (it's declared, never shipped) | Sara (Design) | XS | Yes (perceived quality) |
-| 3 | #002 — Contact CSV/Excel import | Mehdi (Business) | M | **YES** — first demo question |
+| 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
 | 4 | #003 — Month-by-month cash forecast in trésorerie | Mehdi/Adam | S | Yes (owner demo) |
 | 5 | #025 — Privacy policy + mentions légales in portal | Nadia (Legal) | S | **YES** — legal exposure |
 | 6 | #004 — "Deactivate everywhere" for multi-société users | Leila (Security) | S | No (but security hole) |
@@ -424,11 +424,24 @@ MANAGER/AGENT memberships deliberately excluded (owner-level financials).
 
 ## 🟠 Major
 
-**FINDING #002** — Functional — Mehdi — `Status: 🔲 OPEN`
+**FINDING #002** — Functional — Mehdi — `Status: ✅ RESOLVED (2026-06-12, CSV import)`
 No contact import (CSV/Excel) anywhere; onboarding an existing book is manual entry.
 *Why:* first question of every sales demo; blocks Excel migration (= the whole market).
 *Fix:* `POST /api/contacts/import` (multipart CSV), column-mapping preview, dedup on
 phone/email, error report. *Effort:* M · *Impact:* Growth
+*Resolution:* `POST /api/contacts/import` (ADMIN/MANAGER, multipart, `dryRun` param) —
+`ContactImportService` parses UTF-8 CSV (`;`/`,` auto-detect, quoted fields, BOM, FR/EN
+headers with accents ignored; max 2000 rows), validates each row with the same bean
+constraints as the form, dedups on email + phone (in-file and against the société), then
+routes every valid row through `ContactService.create()` so quota, e-mail uniqueness, the
+Loi 09-08 consent/basis guard, timeline and audit apply identically. Best-effort per row
+(one bad line never rolls back the rest; re-importing the same file is idempotent).
+Report: created/duplicates/errors with 1-based line numbers, capped at 100 issues.
+Frontend: "Importer" button on the contacts page → 3-step dialog (file + base juridique
+Loi 09-08 → dry-run preview → confirmed import with final report) + downloadable CSV
+template. Tests: `ContactImportServiceTest` ×8 (delimiters/quotes/accents, phone-or-email
+rule, in-file + DB dedup, dry-run never persists, missing columns 422, consent guard,
+per-row quota failure, ignored columns); unit suite 168 green; FE prod build green.
 
 **FINDING #003** — Functional — Mehdi/Adam — `Status: 🔲 OPEN`
 Cash forecast is a single 6-month aggregate (`previsionnel6Mois`); no monthly breakdown —

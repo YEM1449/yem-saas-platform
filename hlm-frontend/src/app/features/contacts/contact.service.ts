@@ -19,6 +19,24 @@ export interface CreateContactRequest {
   processingBasis?: string | null;
 }
 
+export interface ContactImportRowIssue {
+  line: number;
+  identity: string;
+  reason: string;
+}
+
+export interface ContactImportReport {
+  dryRun: boolean;
+  totalRows: number;
+  created: number;
+  duplicateCount: number;
+  errorCount: number;
+  truncated: boolean;
+  ignoredColumns: string[];
+  duplicates: ContactImportRowIssue[];
+  errors: ContactImportRowIssue[];
+}
+
 export interface UpdateContactRequest {
   firstName?: string | null;
   lastName?: string | null;
@@ -85,6 +103,21 @@ export class ContactService {
   /** Create a new contact (ADMIN / MANAGER only). */
   create(req: CreateContactRequest): Observable<Contact> {
     return this.http.post<Contact>(`${this.apiUrl}/api/contacts`, req);
+  }
+
+  /**
+   * Import contacts from a CSV file (ADMIN / MANAGER only).
+   * `dryRun=true` previews created/duplicates/errors without persisting anything.
+   * Exactly one of `consentGiven` / `processingBasis` is required (Loi 09-08).
+   */
+  importCsv(file: File, opts: { dryRun: boolean; consentGiven: boolean; processingBasis?: string }):
+      Observable<ContactImportReport> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('dryRun', String(opts.dryRun));
+    form.append('consentGiven', String(opts.consentGiven));
+    if (opts.processingBasis) form.append('processingBasis', opts.processingBasis);
+    return this.http.post<ContactImportReport>(`${this.apiUrl}/api/contacts/import`, form);
   }
 
   /** Partially update a contact's fields (ADMIN / MANAGER only). */

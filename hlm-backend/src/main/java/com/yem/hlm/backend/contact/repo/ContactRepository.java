@@ -24,6 +24,9 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
 
     boolean existsBySocieteIdAndEmail(UUID societeId, String email);
 
+    /** Phone dedup for CSV import — exact match on the stored phone string. */
+    boolean existsBySocieteIdAndPhone(UUID societeId, String phone);
+
     /**
      * Returns distinct societeIds that have at least one non-deleted contact with one of the given statuses.
      * Used by ReminderService to iterate only over relevant sociétés without loading all contacts.
