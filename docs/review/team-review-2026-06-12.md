@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 9 | 1 |
+> | 🟠 Major | 10 | 8 | 2 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **31** | **3** |
+> | **Total** | **34** | **30** | **4** |
 
 ---
 
@@ -71,7 +71,7 @@ sans changer d'écran."**
 | 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
 | 4 | #003 — Month-by-month cash forecast in trésorerie — ✅ done 2026-06-12 | Mehdi/Adam | S | Yes (owner demo) |
 | 5 | #025 — Privacy policy + mentions légales in portal | Nadia (Legal) | S | **YES** — legal exposure |
-| 6 | #004 — "Deactivate everywhere" for multi-société users | Leila (Security) | S | No (but security hole) |
+| 6 | #004 — "Deactivate everywhere" for multi-société users — ✅ done 2026-06-12 | Leila (Security) | S | No (but security hole) |
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
 | 8 | #028 — Refund (remboursement) tracking after rétractation | Nadia (Legal) | M | No, but pre-GA |
 | 9 | #016 — Resolve Contracts-vs-Ventes dual concept in nav | Karim (UX) | M | Yes (agent confusion) |
@@ -461,11 +461,22 @@ constructor arg; unit suite 169 green; FE prod build green.
 *Note:* this single-société monthly curve also feeds the group case — Vue Groupe (#001) can
 surface a consolidated monthly view on top of it as a later enhancement.
 
-**FINDING #004** — Security — Leila — `Status: 🔲 OPEN`
+**FINDING #004** — Security — Leila — `Status: ✅ RESOLVED (2026-06-12, Désactiver partout)`
 No single-action cross-société user deactivation; off-boarding is per-membership and
 forgettable.
 *Fix:* "Désactiver partout": set `actif=false` on all `AppUserSociete` rows + bump
 `tokenVersion` in one call. *Effort:* S · *Impact:* Operations/Security
+*Resolution:* `POST /api/users/{id}/deactivate-everywhere` (ADMIN) →
+`AdminUserService.deactivateEverywhere()`: deactivates every active `AppUserSociete`
+membership (with `dateRetrait`/`raisonRetrait`/`retirePar` retrait metadata), disables the
+global account, bumps `tokenVersion` and evicts the security cache so all live JWTs are
+rejected immediately; one audit `OFFBOARDED_ALL` event per société. **Authorization:** the
+acting admin must be ADMIN in at least one société shared with the target (else 403), and
+cannot off-board themselves (403). Frontend: "Désactiver partout" button on the admin-users
+row (active members only) with a departure-confirmation + optional motif; success toast
+reports the société count. Tests: `AdminUserServiceTest` ×6 (happy path multi-société +
+audit per société, 403 no-shared-admin, 403 actor-only-MANAGER, 403 self, 404 unknown,
+already-inactive not re-counted); unit suite 175 green; FE prod build green.
 
 **FINDING #005** — Functional — Mehdi (Nadia framing) — `Status: 🔲 OPEN`
 Same buyer in two sociétés = two unlinked contacts; no group-level client identity.

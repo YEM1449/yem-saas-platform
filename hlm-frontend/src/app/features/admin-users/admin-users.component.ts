@@ -124,6 +124,22 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
+  desactiverPartout(m: MembreDto): void {
+    if (!confirm(
+      `Désactiver ${m.nomComplet} dans TOUTES ses sociétés ?\n\n`
+      + `Son compte sera désactivé et toutes ses sessions révoquées immédiatement. `
+      + `À utiliser lors d'un départ définitif.`)) return;
+    const raison = prompt('Motif (optionnel) :') ?? undefined;
+    this.error = '';
+    this.svc.desactiverPartout(m.id, raison).subscribe({
+      next: (res) => {
+        this.success = `${m.nomComplet} désactivé dans ${res.societesDesactivees} société(s).`;
+        this.load();
+      },
+      error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
+    });
+  }
+
   exportDonnees(m: MembreDto): void {
     this.svc.exportDonnees(m.id).subscribe({
       next: (data) => { this.exportData = JSON.stringify(data, null, 2); },

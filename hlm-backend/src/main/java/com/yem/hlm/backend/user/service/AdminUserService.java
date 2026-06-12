@@ -11,6 +11,7 @@ import com.yem.hlm.backend.societe.SocieteContext;
 import com.yem.hlm.backend.user.api.dto.*;
 import com.yem.hlm.backend.user.domain.User;
 import com.yem.hlm.backend.user.repo.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -137,6 +140,69 @@ public class AdminUserService {
         }
 
         return UserResponse.from(saved);
+    }
+
+    /**
+     * Off-boards a user across <b>all</b> their sociétés in one action (finding #004).
+     *
+     * <p>Deactivates every active {@link AppUserSociete} membership (with retrait metadata),
+     * disables the global account, and bumps {@code tokenVersion} so any live JWT is rejected
+     * immediately. Closes the hole where a multi-société employee kept access through a
+     * membership the admin forgot to revoke.
+     *
+     * <p><b>Authorization.</b> The acting admin must be ADMIN in at least one société the
+     * target user also belongs to ("admins sharing those memberships"); otherwise 403. An
+     * admin cannot off-board themselves through this endpoint.
+     */
+    @Transactional
+    public DeactivateEverywhereResponse deactivateEverywhere(UUID userId, DeactivateEverywhereRequest request) {
+        UUID actorId = resolveActorId();
+        if (actorId != null && actorId.equals(userId)) {
+            throw new AccessDeniedException("Un administrateur ne peut pas se désactiver lui-même partout.");
+        }
+
+        List<AppUserSociete> targetMemberships = appUserSocieteRepository.findByIdUserId(userId);
+        if (targetMemberships.isEmpty()) {
+            throw new UserNotFoundException(userId);
+        }
+
+        // The actor must share at least one société where they are ADMIN with the target.
+        Set<UUID> actorAdminSocietes = appUserSocieteRepository.findByIdUserIdAndActifTrue(actorId).stream()
+                .filter(m -> "ADMIN".equals(m.getRole()))
+                .map(AppUserSociete::getSocieteId)
+                .collect(java.util.stream.Collectors.toSet());
+        boolean sharesAdminSociete = targetMemberships.stream()
+                .anyMatch(m -> actorAdminSocietes.contains(m.getSocieteId()));
+        if (!sharesAdminSociete) {
+            throw new AccessDeniedException(
+                    "Vous n'êtes administrateur d'aucune société partagée avec cet utilisateur.");
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        User actor = actorId != null ? userRepository.findById(actorId).orElse(null) : null;
+        Instant now = Instant.now();
+        String raison = (request != null && request.raison() != null && !request.raison().isBlank())
+                ? request.raison().trim() : "Off-boarding multi-sociétés";
+
+        int deactivated = 0;
+        for (AppUserSociete membership : targetMemberships) {
+            if (!membership.isActif()) continue;
+            membership.setActif(false);
+            membership.setDateRetrait(now);
+            membership.setRaisonRetrait(raison);
+            membership.setRetirePar(actor);
+            appUserSocieteRepository.save(membership);
+            securityAuditLogger.logTokenRevocation(
+                    membership.getSocieteId().toString(), userId, actorId, "OFFBOARDED_ALL");
+            deactivated++;
+        }
+
+        user.setEnabled(false);
+        user.incrementTokenVersion();
+        userRepository.save(user);
+        userSecurityCacheService.evict(userId);
+
+        return new DeactivateEverywhereResponse(userId, user.getEmail(), deactivated, true);
     }
 
     @Transactional

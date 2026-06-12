@@ -35,6 +35,13 @@ export interface ProjectAccessRequest {
   projectIds: string[];
 }
 
+export interface DeactivateEverywhereResponse {
+  userId: string;
+  email: string;
+  societesDesactivees: number;
+  compteDesactive: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
   private http = inject(HttpClient);
@@ -76,6 +83,16 @@ export class AdminUserService {
 
   debloquer(id: string): Observable<MembreDto> {
     return this.http.post<MembreDto>(`${this.base}/${id}/debloquer`, {});
+  }
+
+  /**
+   * Off-boards the user across every société they belong to in one action (finding #004).
+   * Uses the AdminUserController endpoint (/api/users), not the mon-espace base.
+   */
+  desactiverPartout(id: string, raison?: string): Observable<DeactivateEverywhereResponse> {
+    return this.http.post<DeactivateEverywhereResponse>(
+      `${environment.apiUrl}/api/users/${id}/deactivate-everywhere`,
+      { raison: raison ?? null });
   }
 
   exportDonnees(id: string): Observable<UserDataExport> {

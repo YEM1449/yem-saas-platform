@@ -73,6 +73,10 @@
             <button (click)="exportDonnees(m)" class="btn-small">Export RGPD</button>
             <button (click)="anonymiser(m)" class="btn-small btn-danger">Anonymiser</button>
             <button (click)="retirer(m)" class="btn-small btn-danger">{{ 'admin.deactivate' | translate }}</button>
+            @if (m.statut !== 'RETIRE') {
+              <button (click)="desactiverPartout(m)" class="btn-small btn-danger"
+                      title="Désactiver dans toutes les sociétés (départ définitif)">Désactiver partout</button>
+            }
           </td>
         </tr>
       }
