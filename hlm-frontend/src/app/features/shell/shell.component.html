@@ -158,6 +158,18 @@
 
       <div class="nav-section-label">{{ 'nav.analytics' | translate }}</div>
 
+      @if (isAdmin) {
+        <a routerLink="/app/groupe" routerLinkActive="nav-active"
+           class="nav-item" title="Vue Groupe" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <rect x="1" y="5" width="4.5" height="8" rx=".5" stroke="currentColor" stroke-width="1.3"/>
+            <rect x="8.5" y="2" width="4.5" height="11" rx=".5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M5.5 9h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          Vue Groupe
+        </a>
+      }
+
       <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active"
          class="nav-item" title="{{ 'nav.receivables' | translate }}" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
