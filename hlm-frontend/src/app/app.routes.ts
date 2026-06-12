@@ -53,6 +53,7 @@ export const routes: Routes = [
       { path: 'dashboard/receivables', loadComponent: () => import('./features/dashboard/receivables-dashboard.component').then(m => m.ReceivablesDashboardComponent) },
       { path: 'dashboard/tresorerie', loadComponent: () => import('./features/dashboard/tresorerie-dashboard.component').then(m => m.TresorerieDashboardComponent) },
       { path: 'groupe', canActivate: [adminGuard], loadComponent: () => import('./features/dashboard/vue-groupe.component').then(m => m.VueGroupeComponent) },
+      { path: 'groupe/clients', canActivate: [adminGuard], loadComponent: () => import('./features/dashboard/vue-groupe-clients.component').then(m => m.VueGroupeClientsComponent) },
       { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: 'audit', loadComponent: () => import('./features/audit/audit.component').then(m => m.AuditComponent) },
       { path: 'tasks', loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent) },

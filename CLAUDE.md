@@ -26,7 +26,7 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 
 **Deferred (justifié, P2/P3):** F-006 (List→Page casse les contrats FE — chantier coordonné), F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
 
-Next available changeset: **084** (Wave 12 used 076–083).
+Next available changeset: **085** (084 = client_groupe_lien, review finding #005).
 
 ## Wave 12 — Conformité VEFA Loi 44-00 (Maroc) — complete (2026-06-11)
 
@@ -193,7 +193,7 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 082 | Wave 12 — dossier_financement table (1:1 vente, RLS, statut workflow) |
 | 083 | Wave 12 — property commercial columns (prix_ht, tva_taux, surfaces, charges…) |
 
-Next available changeset: **084**
+Next available changeset: **085**
 
 ## CI Pipeline Map
 

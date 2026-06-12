@@ -167,3 +167,5 @@ databaseChangeLog:
       file: db/changelog/changes/082-dossier-financement.yaml
   - include:
       file: db/changelog/changes/083-property-commercial.yaml
+  - include:
+      file: db/changelog/changes/084-client-groupe-lien.yaml

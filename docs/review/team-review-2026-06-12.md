@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 8 | 2 |
+> | 🟠 Major | 10 | 7 | 3 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **30** | **4** |
+> | **Total** | **34** | **29** | **5** |
 
 ---
 
@@ -478,10 +478,27 @@ reports the société count. Tests: `AdminUserServiceTest` ×6 (happy path multi
 audit per société, 403 no-shared-admin, 403 actor-only-MANAGER, 403 self, 404 unknown,
 already-inactive not re-counted); unit suite 175 green; FE prod build green.
 
-**FINDING #005** — Functional — Mehdi (Nadia framing) — `Status: 🔲 OPEN`
+**FINDING #005** — Functional — Mehdi (Nadia framing) — `Status: ✅ RESOLVED (2026-06-12, Clients Groupe)`
 Same buyer in two sociétés = two unlinked contacts; no group-level client identity.
 *Fix:* opt-in consent-based linking (Loi 09-08), match on CIN, link don't merge.
 *Effort:* M · *Impact:* Revenue
+*Resolution:* New `groupe` package + changeset **084** `client_groupe_lien` (cross-société
+infrastructure table, **no per-société RLS** — same category as `app_user_societe`; stores
+only opaque IDs + consent, never PII). `GroupClientService` (ADMIN, scoped to the caller's
+ADMIN sociétés, context-switched per société like `GroupDashboardService` so contact reads
+stay RLS-scoped): `findCandidates()` surfaces same-CIN contacts spanning ≥2 sociétés with the
+**CIN masked** ("••••3456"); `link()` requires explicit consent (422 `CONSENT_REQUIRED` —
+Loi 09-08), verifies all contacts share a CIN and sit in the caller's admin sociétés, reuses
+or creates a cluster ("link, don't merge"); `unlink()` honours consent withdrawal and
+dissolves a pair cluster. `GET/POST/DELETE /api/groupe/clients[...]`. Frontend:
+`/app/groupe/clients` (adminGuard) — "À lier" candidates with a per-row consent checkbox +
+"Clients liés" with removable pills; linked from the Vue Groupe header. Tests:
+`GroupClientServiceTest` ×10 (candidate detection incl. CIN normalisation, consent gate,
+happy-path cluster, CIN mismatch, out-of-perimeter contact, cluster reuse, no-admin 403,
+unlink dissolves pair, listing). Unit suite 185 green; FE prod build green.
+*Note:* Nadia's legal frame is honoured — consent is mandatory, the link is reversible, PII
+is never copied to the group table, and one société's data is never rendered to an admin who
+doesn't administer it. Next changeset: **085**.
 
 **FINDING #010** — UI/UX — Sara — `Status: 🔲 OPEN`
 Brand font Inter declared (`design-tokens.css:111`) but never loaded — all users get OS

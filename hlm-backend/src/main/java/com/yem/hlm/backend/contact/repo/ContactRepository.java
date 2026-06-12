@@ -27,6 +27,16 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
     /** Phone dedup for CSV import — exact match on the stored phone string. */
     boolean existsBySocieteIdAndPhone(UUID societeId, String phone);
 
+    /** Non-deleted contacts in a société that carry a CIN — group client-identity matching (#005). */
+    @Query("""
+            SELECT c FROM Contact c
+            WHERE c.societeId = :societeId
+              AND c.deleted = false
+              AND c.nationalId IS NOT NULL
+              AND c.nationalId <> ''
+            """)
+    List<Contact> findWithNationalId(@Param("societeId") UUID societeId);
+
     /**
      * Returns distinct societeIds that have at least one non-deleted contact with one of the given statuses.
      * Used by ReminderService to iterate only over relevant sociétés without loading all contacts.

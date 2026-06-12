@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { GroupDashboardService, GroupDashboard } from './group-dashboard.service';
 
 /**
@@ -12,7 +13,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
 @Component({
   selector: 'app-vue-groupe',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, RouterLink],
   template: `
     <div class="page">
       <header class="page-head">
@@ -20,7 +21,10 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
           <h1>Vue Groupe</h1>
           <p class="sub">Vos sociétés consolidées · chiffre d'affaires, stock, trésorerie et alertes.</p>
         </div>
-        <button class="btn btn-sm btn-secondary" (click)="reload()" title="Actualiser">Actualiser</button>
+        <div class="head-actions">
+          <a class="btn btn-sm btn-secondary" routerLink="/app/groupe/clients">Clients récurrents</a>
+          <button class="btn btn-sm btn-secondary" (click)="reload()" title="Actualiser">Actualiser</button>
+        </div>
       </header>
 
       @if (loading()) {
