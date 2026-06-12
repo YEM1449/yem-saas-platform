@@ -19,7 +19,9 @@ public record TresorerieDashboardDTO(
         long       optionsActives,
         long       retractationsEnCours,
         long       accordsExpirant15j,
-        List<AppelEnRetard> appelsEnRetard
+        List<AppelEnRetard> appelsEnRetard,
+        /** Month-by-month upcoming cash (6 buckets, current month first). */
+        List<MoisPrevision> previsionnelParMois
 ) {
     /** One overdue call-for-funds line. */
     public record AppelEnRetard(
@@ -30,5 +32,16 @@ public record TresorerieDashboardDTO(
             BigDecimal montant,
             LocalDate  dateEcheance,
             long       joursRetard
+    ) {}
+
+    /**
+     * Expected (not-yet-paid, not overdue) cash falling due in one calendar month.
+     * The first bucket counts only from today onward, so overdue amounts are excluded.
+     */
+    public record MoisPrevision(
+            int        annee,
+            int        mois,        // 1-12
+            String     libelle,     // e.g. "oct. 2026"
+            BigDecimal montant
     ) {}
 }

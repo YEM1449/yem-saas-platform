@@ -13,6 +13,13 @@ export interface AppelEnRetard {
   joursRetard: number;
 }
 
+export interface MoisPrevision {
+  annee: number;
+  mois: number;
+  libelle: string;
+  montant: number;
+}
+
 export interface TresorerieDashboard {
   encaisseTotal: number;
   aEncaisser: number;
@@ -23,6 +30,7 @@ export interface TresorerieDashboard {
   retractationsEnCours: number;
   accordsExpirant15j: number;
   appelsEnRetard: AppelEnRetard[];
+  previsionnelParMois: MoisPrevision[];
 }
 
 @Injectable({ providedIn: 'root' })

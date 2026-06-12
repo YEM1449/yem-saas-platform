@@ -48,6 +48,7 @@ class TresorerieDashboardServiceTest {
         when(echeanceRepository.findOverdueDetails(eq(SOC), any(), any())).thenReturn(List.<Object[]>of(
                 new Object[]{venteId, "VTE-2026-001", "Mohamed El Amrani", "Appel fondations",
                         new BigDecimal("42000"), due}));
+        when(echeanceRepository.sumUnpaidByMonth(eq(SOC), any(), any())).thenReturn(List.of());
 
         var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, societeCtx);
         TresorerieDashboardDTO dto = service.getTresorerie();
@@ -61,5 +62,40 @@ class TresorerieDashboardServiceTest {
         assertThat(dto.appelsEnRetard()).hasSize(1);
         assertThat(dto.appelsEnRetard().get(0).joursRetard()).isEqualTo(15);
         assertThat(dto.appelsEnRetard().get(0).venteRef()).isEqualTo("VTE-2026-001");
+    }
+
+    @Test
+    void getTresorerie_buildsSixMonthForecastZeroFillingGaps() {
+        LocalDate today = LocalDate.now();
+        java.time.YearMonth m0 = java.time.YearMonth.from(today);
+        java.time.YearMonth m2 = m0.plusMonths(2);
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(echeanceRepository.sumPaidAll(SOC)).thenReturn(BigDecimal.ZERO);
+        when(echeanceRepository.sumDueAll(SOC)).thenReturn(BigDecimal.ZERO);
+        when(echeanceRepository.sumMontantDueInPeriod(eq(SOC), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(echeanceRepository.sumMontantOverdue(eq(SOC), any())).thenReturn(BigDecimal.ZERO);
+        when(echeanceRepository.countOverdue(eq(SOC), any())).thenReturn(0L);
+        when(venteRepository.countBySocieteIdAndStatut(eq(SOC), any())).thenReturn(0L);
+        when(dossierRepository.countBySocieteIdAndStatutInAndDateExpirationAccordBetween(eq(SOC), anyList(), any(), any()))
+                .thenReturn(0L);
+        when(echeanceRepository.findOverdueDetails(eq(SOC), any(), any())).thenReturn(List.of());
+        // Only the current month and month+2 have unpaid échéances.
+        when(echeanceRepository.sumUnpaidByMonth(eq(SOC), any(), any())).thenReturn(List.<Object[]>of(
+                new Object[]{m0.getYear(), m0.getMonthValue(), new BigDecimal("120000")},
+                new Object[]{m2.getYear(), m2.getMonthValue(), new BigDecimal("80000")}));
+
+        var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, societeCtx);
+        TresorerieDashboardDTO dto = service.getTresorerie();
+
+        assertThat(dto.previsionnelParMois()).hasSize(6);
+        // Current month first, in chronological order.
+        assertThat(dto.previsionnelParMois().get(0).annee()).isEqualTo(m0.getYear());
+        assertThat(dto.previsionnelParMois().get(0).mois()).isEqualTo(m0.getMonthValue());
+        assertThat(dto.previsionnelParMois().get(0).montant()).isEqualByComparingTo("120000");
+        // Gap month is zero-filled.
+        assertThat(dto.previsionnelParMois().get(1).montant()).isEqualByComparingTo("0");
+        assertThat(dto.previsionnelParMois().get(2).montant()).isEqualByComparingTo("80000");
+        assertThat(dto.previsionnelParMois().get(5).montant()).isEqualByComparingTo("0");
+        assertThat(dto.previsionnelParMois().get(0).libelle()).isNotBlank();
     }
 }

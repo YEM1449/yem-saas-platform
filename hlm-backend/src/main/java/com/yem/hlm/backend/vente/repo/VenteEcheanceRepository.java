@@ -51,6 +51,29 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
     java.math.BigDecimal sumMontantOverdue(@Param("societeId") UUID societeId,
                                            @Param("today") java.time.LocalDate today);
 
+    /**
+     * Sum of unpaid échéances grouped by due month, for the cash-forecast timeline.
+     * Only échéances in [from, to) are counted, so passing {@code from = today} keeps
+     * overdue amounts (already shown as "en retard") out of the forecast.
+     * Rows: [year(Integer), month(Integer 1-12), montant(BigDecimal)]; months with no
+     * unpaid échéance are simply absent (gaps are zero-filled in the service).
+     */
+    @Query(value = """
+            SELECT CAST(EXTRACT(YEAR  FROM date_echeance) AS INTEGER) AS yr,
+                   CAST(EXTRACT(MONTH FROM date_echeance) AS INTEGER) AS mo,
+                   COALESCE(SUM(montant), 0)                          AS total
+            FROM vente_echeance
+            WHERE societe_id = :societeId
+              AND statut != 'PAYEE'
+              AND date_echeance >= :from
+              AND date_echeance <  :to
+            GROUP BY yr, mo
+            ORDER BY yr, mo
+            """, nativeQuery = true)
+    List<Object[]> sumUnpaidByMonth(@Param("societeId") UUID societeId,
+                                    @Param("from") java.time.LocalDate from,
+                                    @Param("to") java.time.LocalDate to);
+
     /** All-time encaissé — sum of PAID échéances (trésorerie dashboard). */
     @Query("""
             SELECT COALESCE(SUM(e.montant), 0)

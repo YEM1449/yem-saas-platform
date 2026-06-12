@@ -15,9 +15,9 @@
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
 > | 🟠 Major | 10 | 9 | 1 |
-> | 🟡 Minor | 16 | 16 | 0 |
+> | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **32** | **2** |
+> | **Total** | **34** | **31** | **3** |
 
 ---
 
@@ -69,7 +69,7 @@ sans changer d'écran."**
 | 1 | #015 — Wire entry links to the 3D viewer/dashboard | Karim (UX) | XS | **YES** — flagship invisible |
 | 2 | #010 — Load the Inter font (it's declared, never shipped) | Sara (Design) | XS | Yes (perceived quality) |
 | 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
-| 4 | #003 — Month-by-month cash forecast in trésorerie | Mehdi/Adam | S | Yes (owner demo) |
+| 4 | #003 — Month-by-month cash forecast in trésorerie — ✅ done 2026-06-12 | Mehdi/Adam | S | Yes (owner demo) |
 | 5 | #025 — Privacy policy + mentions légales in portal | Nadia (Legal) | S | **YES** — legal exposure |
 | 6 | #004 — "Deactivate everywhere" for multi-société users | Leila (Security) | S | No (but security hole) |
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
@@ -443,11 +443,23 @@ template. Tests: `ContactImportServiceTest` ×8 (delimiters/quotes/accents, phon
 rule, in-file + DB dedup, dry-run never persists, missing columns 422, consent guard,
 per-row quota failure, ignored columns); unit suite 168 green; FE prod build green.
 
-**FINDING #003** — Functional — Mehdi/Adam — `Status: 🔲 OPEN`
+**FINDING #003** — Functional — Mehdi/Adam — `Status: ✅ RESOLVED (2026-06-12, monthly cash forecast)`
 Cash forecast is a single 6-month aggregate (`previsionnel6Mois`); no monthly breakdown —
 "how much in October?" unanswerable.
 *Fix:* group `vente_echeance` by month in `TresorerieDashboardService`; return
 `List<MoisPrevision>`; 6-bar timeline in UI. *Effort:* S · *Impact:* Operations
+*Resolution:* New `VenteEcheanceRepository.sumUnpaidByMonth(societeId, from, to)` groups
+unpaid échéances by `EXTRACT(YEAR/MONTH ...)`. `TresorerieDashboardService.buildMonthlyForecast()`
+builds 6 calendar-month buckets (current month first), window starting at `today` so overdue
+amounts already shown as "en retard" aren't double-counted, zero-filling months with no
+échéance. `TresorerieDashboardDTO` gains `List<MoisPrevision> previsionnelParMois`
+(annee/mois/libelle/montant); `previsionnel6Mois` retained for the headline KPI. Frontend:
+6-bar timeline ("Encaissements prévus par mois") on the trésorerie dashboard, current month
+highlighted green, K-MAD labels. Tests: `TresorerieDashboardServiceTest` +1 (6 buckets,
+chronological order, gap zero-filling, non-blank labels) — existing test updated for the new
+constructor arg; unit suite 169 green; FE prod build green.
+*Note:* this single-société monthly curve also feeds the group case — Vue Groupe (#001) can
+surface a consolidated monthly view on top of it as a later enhancement.
 
 **FINDING #004** — Security — Leila — `Status: 🔲 OPEN`
 No single-action cross-société user deactivation; off-boarding is per-membership and

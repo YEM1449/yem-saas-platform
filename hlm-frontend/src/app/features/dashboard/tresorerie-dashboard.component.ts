@@ -48,6 +48,27 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
           </div>
         </section>
 
+        <section class="card forecast">
+          <h2>Encaissements prévus par mois</h2>
+          <p class="forecast-sub">Appels de fonds à venir, non encore réglés (hors retards).</p>
+          @if (forecastMax(d) === 0) {
+            <p class="empty">Aucun encaissement prévu sur les 6 prochains mois.</p>
+          } @else {
+            <div class="bars" role="img" aria-label="Prévisionnel de trésorerie sur 6 mois">
+              @for (m of d.previsionnelParMois; track m.libelle) {
+                <div class="bar-col">
+                  <span class="bar-amount">{{ m.montant > 0 ? (m.montant / 1000 | number:'1.0-0') + ' K' : '—' }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill" [style.height.%]="forecastMax(d) > 0 ? (m.montant / forecastMax(d) * 100) : 0"
+                         [class.bar-current]="$first"></div>
+                  </div>
+                  <span class="bar-label">{{ m.libelle }}</span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
         <section class="alerts">
           <span class="chip" [class.warn]="d.optionsActives > 0">⏳ {{ d.optionsActives }} option(s) active(s)</span>
           <span class="chip" [class.warn]="d.retractationsEnCours > 0">↩ {{ d.retractationsEnCours }} en délai de rétractation</span>
@@ -105,6 +126,15 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
     .badge.bad { background: #fee2e2; color: #b91c1c; border-radius: 6px; padding: 2px 8px; }
     .link { color: #3b82f6; text-decoration: none; }
     .empty { color: #64748b; }
+    .forecast { margin-top: 16px; }
+    .forecast-sub { color: #64748b; font-size: 12px; margin: -6px 0 14px; }
+    .bars { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding-top: 8px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+    .bar-amount { font-size: 11px; color: #475569; font-weight: 600; margin-bottom: 4px; }
+    .bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+    .bar-fill { width: 70%; min-height: 2px; background: #cbd5e1; border-radius: 6px 6px 0 0; transition: height .3s ease; }
+    .bar-fill.bar-current { background: #22c55e; }
+    .bar-label { font-size: 11px; color: #64748b; margin-top: 6px; text-transform: capitalize; }
   `],
 })
 export class TresorerieDashboardComponent implements OnInit {
@@ -119,5 +149,10 @@ export class TresorerieDashboardComponent implements OnInit {
       next:  (d) => { this.data.set(d); this.loading.set(false); },
       error: ()  => { this.error.set('Impossible de charger la trésorerie.'); this.loading.set(false); },
     });
+  }
+
+  /** Largest monthly amount — drives bar heights (0 when the forecast is empty). */
+  forecastMax(d: TresorerieDashboard): number {
+    return d.previsionnelParMois.reduce((max, m) => Math.max(max, m.montant), 0);
   }
 }
