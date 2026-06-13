@@ -178,11 +178,11 @@
       <!-- ── Contract section ──────────────────────────────────────── -->
       @if (v.statut !== 'ANNULE') {
         <div class="portal-card-section portal-contract-section">
-          <h3 class="portal-card-section-title">{{ 'portal.contract.title' | translate }}</h3>
+          <h3 class="portal-card-section-title">Votre contrat de vente</h3>
 
           <!-- PENDING: contract not yet generated -->
           @if (v.contractStatus === 'PENDING') {
-            <p class="portal-info-text">{{ 'portal.contract.pendingMsg' | translate }}</p>
+            <p class="portal-info-text">Votre contrat sera disponible ici dès sa génération par votre conseiller.</p>
           }
 
           <!-- GENERATED or SIGNED: download the generated contract PDF -->
@@ -196,15 +196,15 @@
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              {{ 'portal.contract.downloadBtn' | translate }}
+              Télécharger le contrat
             </button>
           }
 
           <!-- GENERATED + no signed copy yet: upload section -->
           @if (v.contractStatus === 'GENERATED' && !hasSignedContract(v)) {
             <div class="portal-upload-section">
-              <h4 class="portal-upload-title">{{ 'portal.contract.uploadTitle' | translate }}</h4>
-              <p class="portal-upload-body">{{ 'portal.contract.uploadBody' | translate }}</p>
+              <h4 class="portal-upload-title">Déposer le contrat signé</h4>
+              <p class="portal-upload-body">Après signature et légalisation chez le notaire, déposez ici votre exemplaire signé.</p>
 
               <!-- Legal acknowledgment (Moroccan law — Loi 44-00 + D.O.C.) -->
               <label class="portal-legal-ack">
@@ -212,7 +212,7 @@
                        [checked]="legalAck()[v.id]"
                        (change)="toggleLegalAck(v.id)"
                        data-testid="portal-legal-ack-checkbox" />
-                <span class="portal-legal-text">{{ 'portal.contract.legalAck' | translate }}</span>
+                <span class="portal-legal-text">Je certifie avoir lu, signé et légalisé le présent contrat de vente conformément à la loi n°44-00 du 3 octobre 2002 relative à la vente en l'état futur d'achèvement (VEFA). Je reconnais avoir reçu un exemplaire du contrat, l'avoir signé en présence du notaire instrumentaire, et je transmets par la présente voie numérique un exemplaire signé et légalisé à l'agence immobilière, conformément aux dispositions du Dahir des Obligations et Contrats (D.O.C.).</span>
               </label>
 
               @if (legalAck()[v.id]) {
@@ -224,7 +224,7 @@
                       <polyline points="17 8 12 3 7 8"/>
                       <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    {{ uploadFile[v.id] ? uploadFile[v.id]!.name : ('portal.contract.selectFile' | translate) }}
+                    {{ uploadFile[v.id] ? uploadFile[v.id]!.name : 'Sélectionner un fichier' }}
                     <input type="file" hidden
                            (change)="onFileSelected(v.id, $event)"
                            accept=".pdf,.jpg,.jpeg,.png"
@@ -238,9 +238,9 @@
                             data-testid="portal-upload-signed-contract">
                       @if (uploading()[v.id]) {
                         <span class="spinner spinner-sm" aria-hidden="true"></span>
-                        {{ 'portal.contract.uploading' | translate }}
+                        Dépôt en cours…
                       } @else {
-                        {{ 'portal.contract.uploadBtn' | translate }}
+                        Déposer le contrat signé
                       }
                     </button>
                   }
@@ -260,7 +260,7 @@
                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              {{ 'portal.contract.uploadSuccess' | translate }}
+              Contrat signé transmis avec succès.
             </div>
           }
 
@@ -271,7 +271,7 @@
                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              {{ 'portal.contract.signedConfirm' | translate }}
+              Votre contrat signé a bien été reçu par l'agence.
             </div>
           }
         </div>
@@ -280,7 +280,7 @@
       <!-- ── Documents list ────────────────────────────────────────── -->
       @if (v.documents.length > 0) {
         <div class="portal-card-section">
-          <h3 class="portal-card-section-title">{{ 'portal.contract.docsTitle' | translate }}</h3>
+          <h3 class="portal-card-section-title">Mes documents</h3>
           <ul class="portal-doc-list">
             @for (d of v.documents; track d.id) {
               <li class="portal-doc-item">
@@ -315,7 +315,7 @@
 
       <!-- ── Upload supplementary documents ───────────────────────── -->
       <div class="portal-card-section">
-        <h3 class="portal-card-section-title">{{ 'portal.contract.addDoc' | translate }}</h3>
+        <h3 class="portal-card-section-title">Ajouter un document</h3>
         <div class="portal-doc-upload-row">
 
           <!-- PV de réception -->
@@ -326,7 +326,7 @@
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             {{ uploadFile[v.id + '_PV_RECEPTION'] ? uploadFile[v.id + '_PV_RECEPTION']!.name
-               : ('portal.contract.docTypes.PV_RECEPTION' | translate) }}
+               : 'PV de réception' }}
             <input type="file" hidden
                    (change)="onFileSelected(v.id + '_PV_RECEPTION', $event)"
                    accept=".pdf,.jpg,.jpeg,.png"
@@ -350,7 +350,7 @@
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             {{ uploadFile[v.id + '_AUTRE'] ? uploadFile[v.id + '_AUTRE']!.name
-               : ('portal.contract.docTypes.AUTRE' | translate) }}
+               : 'Autre document' }}
             <input type="file" hidden
                    (change)="onFileSelected(v.id + '_AUTRE', $event)"
                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"

@@ -19,6 +19,10 @@ export const routes: Routes = [
       // Legacy /app/prospects routes — redirect to unified contacts page
       { path: 'prospects', redirectTo: 'contacts', pathMatch: 'full' },
       { path: 'prospects/:id', redirectTo: 'contacts/:id', pathMatch: 'full' },
+      // French URL aliases (D-003)
+      { path: 'biens', redirectTo: 'properties', pathMatch: 'full' },
+      { path: 'biens/:id', redirectTo: 'properties/:id', pathMatch: 'full' },
+      { path: 'projets', redirectTo: 'projects', pathMatch: 'full' },
       { path: 'notifications', loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'messages', loadComponent: () => import('./features/outbox/outbox.component').then(m => m.OutboxComponent) },
       { path: 'projects', loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },

@@ -3,14 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { SocieteDto } from './societe.model';
 
 @Component({
   selector: 'app-societe-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './societe-list.component.html',
   styleUrl: './societe-list.component.css',
 })

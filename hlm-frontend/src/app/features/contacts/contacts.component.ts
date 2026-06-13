@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { ContactService } from './contact.service';
 import { Contact } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -37,7 +36,7 @@ const PIPELINE_STATUSES = new Set([
 @Component({
   selector: 'app-contacts',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, ContactImportDialogComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ContactImportDialogComponent],
   templateUrl: './contacts.component.html',
   styleUrl: './contacts.component.css',
 })

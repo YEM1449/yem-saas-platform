@@ -19,7 +19,9 @@ import java.util.UUID;
  * <p>A Vente is typically created by converting a Reservation (post-deposit stage).
  * It tracks the full commercial pipeline from compromis to livraison.
  *
- * <p>Lifecycle: COMPROMIS → FINANCEMENT → ACTE_NOTARIE → LIVRE (or ANNULE at any point)
+ * <p>Lifecycle (VEFA Loi 44-00): PROSPECT → OPTION → RESERVE → EN_RETRACTATION → ACOMPTE →
+ * COMPROMIS → FINANCEMENT → ACTE → LIVRE_AVEC_RESERVES → RESERVES_LEVEES → LIVRE_DEFINITIF.
+ * ANNULE is the terminal failure state reachable from any non-terminal stage.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

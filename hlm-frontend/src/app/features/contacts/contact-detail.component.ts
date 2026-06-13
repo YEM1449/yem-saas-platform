@@ -3,7 +3,6 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { ContactService, ConvertToProspectRequest, UpdateContactRequest,
          ContactLegal, SituationMatrimoniale, TypeAcquereur } from './contact.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -24,7 +23,7 @@ type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
+  imports: [CommonModule, RouterLink, FormsModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })

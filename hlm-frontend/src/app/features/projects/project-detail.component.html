@@ -1,6 +1,6 @@
 <!-- ── Loading / Error ───────────────────────────────────────── -->
 @if (loadingProject) {
-  <div class="skeleton-stack" data-testid="project-detail-loading-state" [attr.aria-label]="'common.loading' | translate">
+  <div class="skeleton-stack" data-testid="project-detail-loading-state" aria-label="Chargement...">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
     <span class="skeleton skeleton-card" style="height:200px"></span>
     <div class="skeleton-grid">
@@ -38,7 +38,7 @@
         <div class="hero-logo-initials">{{ heroInitials(project.name) }}</div>
       }
       @if (isAdminOrManager) {
-        <label class="hero-logo-upload" title="{{ 'projects.uploadLogo' | translate }}">
+        <label class="hero-logo-upload" title="Téléverser un logo">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v7M3 5l3-4 3 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M1 10h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
@@ -274,7 +274,7 @@
   @if (activeTab === 'documents') {
     <div class="card">
       <div class="card-body">
-        <h3 class="card-title" style="margin-bottom:12px">{{ 'projects.documents' | translate }}</h3>
+        <h3 class="card-title" style="margin-bottom:12px">Documents</h3>
         <app-document-list entityType="PROJECT" [entityId]="projectId" />
       </div>
     </div>

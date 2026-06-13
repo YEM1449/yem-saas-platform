@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { SocieteService } from './societe.service';
 import { SocieteDetailDto, SocieteStatsDto, SocieteComplianceDto } from './societe.model';
 import { SocieteMembersComponent } from './societe-members.component';
@@ -14,7 +13,7 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 @Component({
   selector: 'app-societe-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, SocieteMembersComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, SocieteMembersComponent],
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })

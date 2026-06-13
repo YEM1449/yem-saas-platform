@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 import { PortalTenantInfo } from '../../../core/models/portal.model';
 
@@ -11,11 +10,11 @@ import { PortalTenantInfo } from '../../../core/models/portal.model';
 @Component({
   selector: 'app-portal-legal',
   standalone: true,
-  imports: [RouterLink, TranslateModule],
+  imports: [RouterLink],
   template: `
     <div class="legal-page">
       <div class="legal-card">
-        <a routerLink="/portal/login" class="legal-back">← {{ 'portal.legal.back' | translate }}</a>
+        <a routerLink="/portal/login" class="legal-back">← Retour</a>
         <h1>Mentions légales</h1>
         <p class="legal-updated">Dernière mise à jour : juin 2026</p>
 

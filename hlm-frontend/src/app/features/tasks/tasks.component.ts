@@ -2,7 +2,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, TaskStatus } from './task.model';
 import { TaskFormComponent } from './task-form.component';
@@ -11,7 +10,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskFormComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, TaskFormComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
 })

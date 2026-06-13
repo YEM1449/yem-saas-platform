@@ -3,7 +3,6 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
-import { TranslateModule } from '@ngx-translate/core';
 import { VenteService, Vente, VenteStatut, ContractStatus, CreateVenteRequest } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ContactService } from '../contacts/contact.service';
@@ -16,7 +15,7 @@ import { UiButtonComponent, UiEmptyStateComponent } from '../../shared/ui';
 @Component({
   selector: 'app-vente-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe, TranslateModule,
+  imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe,
             UiButtonComponent, UiEmptyStateComponent],
   templateUrl: './vente-list.component.html',
   styleUrl: './vente-list.component.css',

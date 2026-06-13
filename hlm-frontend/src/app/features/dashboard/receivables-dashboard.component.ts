@@ -5,7 +5,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import {
   Chart,
   BarController, BarElement, CategoryScale, LinearScale,
@@ -23,7 +22,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
 @Component({
   selector: 'app-receivables-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './receivables-dashboard.component.html',
   styleUrl: './receivables-dashboard.component.css',
 })

@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { PropertyService } from './property.service';
 import { ImportResult, Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -42,7 +41,7 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DecimalPipe, HlmCardComponent],
+  imports: [CommonModule, FormsModule, DecimalPipe, HlmCardComponent],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })

@@ -1,21 +1,21 @@
 <!-- Page header -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">{{ 'reservations.title' | translate }}</h1>
+    <h1 class="page-title">Réservations</h1>
   </div>
 </div>
 
 <!-- Filter toolbar -->
 <div class="toolbar">
-  <label class="form-label" style="margin:0; white-space:nowrap;">{{ 'common.status' | translate }}</label>
+  <label class="form-label" style="margin:0; white-space:nowrap;">Statut</label>
   <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus">
-    <option value="">{{ 'contracts.allStatuses' | translate }}</option>
+    <option value="">Tous les statuts</option>
     @for (s of statuses; track s) {
       <option [value]="s">{{ s }}</option>
     }
   </select>
   @if (!loading) {
-    <span class="stat-chip">{{ filtered.length }} {{ 'reservations.count' | translate }}</span>
+    <span class="stat-chip">{{ filtered.length }} réservation(s)</span>
   }
 </div>
 
@@ -26,7 +26,7 @@
 
 <!-- Loading -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="reservations-loading-state" [attr.aria-label]="'common.loading' | translate">
+  <div class="skeleton-stack" data-testid="reservations-loading-state" aria-label="Chargement...">
     <span class="skeleton skeleton-row"></span>
     <span class="skeleton skeleton-row"></span>
     <span class="skeleton skeleton-row"></span>
@@ -39,9 +39,9 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔖</div>
-      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
+      <p class="empty-state-title">Aucun résultat trouvé.</p>
       @if (filterStatus) {
-        <button class="btn btn-secondary btn-sm" (click)="filterStatus=''">{{ 'common.filter' | translate }}</button>
+        <button class="btn btn-secondary btn-sm" (click)="filterStatus=''">Filtrer</button>
       }
     </div>
   </div>
@@ -54,13 +54,13 @@
         <thead>
           <tr>
             <th>Réf.</th>
-            <th>{{ 'reservations.contact' | translate }}</th>
-            <th>{{ 'reservations.property' | translate }}</th>
-            <th class="text-right">{{ 'reservations.amount' | translate }}</th>
-            <th>{{ 'reservations.status' | translate }}</th>
-            <th>{{ 'common.date' | translate }}</th>
-            <th>{{ 'reservations.expiresAt' | translate }}</th>
-            <th class="text-right">{{ 'common.actions' | translate }}</th>
+            <th>Client</th>
+            <th>Bien réservé</th>
+            <th class="text-right">Montant</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Expiration</th>
+            <th class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -125,7 +125,7 @@
                       Convertir en vente
                     </button>
                     <button class="btn btn-sm btn-danger"
-                            (click)="cancel(r)">{{ 'reservations.cancel' | translate }}</button>
+                            (click)="cancel(r)">Annuler la réservation</button>
                   }
                 </div>
               </td>

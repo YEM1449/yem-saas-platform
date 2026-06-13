@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -90,7 +89,6 @@ import { HttpClient } from '@angular/common/http';
   `],
 })
 export class LanguageSwitcherComponent {
-  private translate = inject(TranslateService);
   private http = inject(HttpClient);
 
   languages = [
@@ -107,7 +105,6 @@ export class LanguageSwitcherComponent {
     document.body.style.transition = 'opacity 0.15s ease';
     document.body.style.opacity = '0.7';
 
-    this.translate.use(lang);
     localStorage.setItem('hlm_lang', lang);
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;

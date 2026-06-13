@@ -7,7 +7,7 @@
 </a>
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="property-detail-loading-state" [attr.aria-label]="'common.loading' | translate" style="margin-top:24px">
+  <div class="skeleton-stack" data-testid="property-detail-loading-state" aria-label="Chargement..." style="margin-top:24px">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
     <span class="skeleton skeleton-card" style="height:160px"></span>
     <div class="skeleton-grid">
@@ -474,7 +474,7 @@
                   <div class="media-name">{{ m.originalFilename }}</div>
                   <div class="media-meta">{{ m.sizeBytes | number }} octets</div>
                   @if (isAdmin) {
-                    <button class="btn-delete" (click)="deleteMedia(m.id)">{{ 'common.delete' | translate }}</button>
+                    <button class="btn-delete" (click)="deleteMedia(m.id)">Supprimer</button>
                   }
                 </li>
               }

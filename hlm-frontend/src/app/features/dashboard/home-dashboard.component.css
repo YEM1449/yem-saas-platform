@@ -323,7 +323,7 @@
 }
 
 /* Accent colors per card type */
-.hero-pipeline::before  { background: linear-gradient(90deg, #6366f1, #818cf8); }
+.hero-pipeline::before  { background: linear-gradient(90deg, var(--c-primary-600, #16a34a), var(--c-primary-400, #4ade80)); }
 .hero-mois::before      { background: linear-gradient(90deg, #3b82f6, #4ade80); }
 .hero-livre::before     { background: linear-gradient(90deg, #10b981, #34d399); }
 .hero-absorption::before{ background: linear-gradient(90deg, #f59e0b, #fbbf24); }

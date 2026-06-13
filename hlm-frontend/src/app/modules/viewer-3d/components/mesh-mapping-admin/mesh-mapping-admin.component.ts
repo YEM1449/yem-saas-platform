@@ -13,7 +13,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 import { ThreeEngineService } from '../../services/three-engine.service';
@@ -55,7 +54,7 @@ interface MeshHierarchy {
 @Component({
   selector: 'app-mesh-mapping-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mesh-mapping-admin.component.html',
   styleUrl: './mesh-mapping-admin.component.css',
@@ -69,8 +68,6 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
   private readonly loader       = inject(ModelLoaderService);
   private readonly api          = inject(Viewer3dApiService);
   private readonly propertySvc  = inject(PropertyService);
-  private readonly i18n         = inject(TranslateService);
-
   projetId = '';
 
   /** Phase signals. */
@@ -283,7 +280,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
   }
 
   clearAll(): void {
-    if (!confirm(this.i18n.instant('viewer3d.clearAllConfirm'))) return;
+    if (!confirm('Effacer toutes les associations ? Aucun changement n\'est enregistré tant que vous ne cliquez pas sur "Enregistrer".')) return;
     const next = new Map<string, string | null>();
     this.allMeshes().forEach(m => next.set(m, null));
     this.draft.set(next);
@@ -310,7 +307,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
     );
 
     if (proposals.length === 0) {
-      alert(this.i18n.instant('viewer3d.autoPairNone'));
+      alert('Aucune association automatique trouvée. Les noms de mesh ne correspondent à aucune référence de bien.');
       return;
     }
 
@@ -365,13 +362,12 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
     this.paintAllMeshes();
   }
 
-  /** Localised, short label for a proposal's match strategy. */
   strategyLabel(s: PairStrategy): string {
     switch (s) {
-      case 'exact':    return this.i18n.instant('viewer3d.matchExact');
-      case 'contains': return this.i18n.instant('viewer3d.matchContains');
-      case 'suffix':   return this.i18n.instant('viewer3d.matchSuffix');
-      case 'trailing': return this.i18n.instant('viewer3d.matchTrailing');
+      case 'exact':    return 'Exact';
+      case 'contains': return 'Inclus';
+      case 'suffix':   return 'Suffixe';
+      case 'trailing': return 'Numéro final';
       default:         return s;
     }
   }

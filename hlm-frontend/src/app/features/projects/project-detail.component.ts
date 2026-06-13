@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { ProjectService } from './project.service';
 import { absorptionRate, absorptionTone as toneBucket } from '../../core/utils/absorption';
 import { Project, ProjectKpi } from '../../core/models/project.model';
@@ -24,7 +23,7 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RouterLink, DocumentListComponent, BuildingViewComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, BuildingViewComponent],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })

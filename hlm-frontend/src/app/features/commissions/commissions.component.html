@@ -1,20 +1,20 @@
 <div class="page">
   <div class="page-header">
-    <h2 class="page-title">{{ 'commissions.title' | translate }}</h2>
+    <h2 class="page-title">Règles de commission</h2>
   </div>
 
   <!-- Filters -->
   <div class="filter-bar">
     @if (isAdminOrManager) {
-      <label>{{ 'common.agent' | translate }} <input type="text" [(ngModel)]="agentId" [placeholder]="'common.reference' | translate" /></label>
+      <label>Agent <input type="text" [(ngModel)]="agentId" placeholder="Référence" /></label>
     }
-    <label>{{ 'dashboard.commercial.fromDate' | translate }} <input type="date" [(ngModel)]="fromDate" /></label>
-    <label>{{ 'dashboard.commercial.toDate' | translate }} <input type="date" [(ngModel)]="toDate" /></label>
-    <button class="btn btn-secondary" (click)="load()">{{ 'common.filter' | translate }}</button>
+    <label>Du <input type="date" [(ngModel)]="fromDate" /></label>
+    <label>Au <input type="date" [(ngModel)]="toDate" /></label>
+    <button class="btn btn-secondary" (click)="load()">Filtrer</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="commissions-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="commissions-loading-state" aria-label="Chargement...">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -31,7 +31,7 @@
     @if (commissions.length === 0) {
       <div class="card">
         <div class="empty-state">
-          <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
+          <p class="empty-state-title">Aucun résultat trouvé.</p>
         </div>
       </div>
     } @else {
@@ -40,13 +40,13 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>{{ 'contracts.signedAt' | translate }}</th>
-                <th>{{ 'common.project' | translate }}</th>
-                <th>{{ 'common.reference' | translate }}</th>
-                <th>{{ 'common.agent' | translate }}</th>
-                <th>{{ 'contracts.agreedPrice' | translate }}</th>
-                <th>{{ 'commissions.rate' | translate }}</th>
-                <th>{{ 'commissions.title' | translate }}</th>
+                <th>Date de signature</th>
+                <th>Projet</th>
+                <th>Référence</th>
+                <th>Agent</th>
+                <th>Prix convenu</th>
+                <th>Taux (%)</th>
+                <th>Règles de commission</th>
               </tr>
             </thead>
             <tbody>
@@ -71,74 +71,74 @@
     @if (isAdmin) {
       <section style="margin-top:32px">
         <div class="page-header" style="margin-bottom:12px">
-          <h3 class="page-title" style="font-size:16px">{{ 'commissions.title' | translate }}</h3>
+          <h3 class="page-title" style="font-size:16px">Règles de commission</h3>
           <div class="page-header-actions">
-            <button class="btn btn-primary btn-sm" (click)="openNewRule()">+ {{ 'commissions.create' | translate }}</button>
+            <button class="btn btn-primary btn-sm" (click)="openNewRule()">+ Nouvelle règle</button>
           </div>
         </div>
 
         @if (showRuleForm) {
           <div class="card" style="padding:16px;margin-bottom:16px">
-            <h4>{{ editingRuleId ? ('common.edit' | translate) : ('commissions.create' | translate) }}</h4>
+            <h4>{{ editingRuleId ? 'Modifier' : 'Nouvelle règle' }}</h4>
             @if (ruleError) { <div class="alert alert-error">{{ ruleError }}</div> }
             <div class="form-group">
-              <label class="form-label">{{ 'commissions.project' | translate }}</label>
-              <input class="form-control" type="text" [(ngModel)]="ruleForm.projectId" [placeholder]="'common.reference' | translate" style="width:300px" />
+              <label class="form-label">Projet (optionnel)</label>
+              <input class="form-control" type="text" [(ngModel)]="ruleForm.projectId" placeholder="Référence" style="width:300px" />
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">{{ 'commissions.rate' | translate }}</label>
+                <label class="form-label">Taux (%)</label>
                 <input class="form-control" type="number" [(ngModel)]="ruleForm.ratePercent" min="0" step="0.01" />
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'commissions.fixedAmount' | translate }}</label>
+                <label class="form-label">Montant fixe</label>
                 <input class="form-control" type="number" [(ngModel)]="ruleForm.fixedAmount" min="0" />
               </div>
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">{{ 'dashboard.commercial.fromDate' | translate }}</label>
+                <label class="form-label">Du</label>
                 <input class="form-control" type="date" [(ngModel)]="ruleForm.effectiveFrom" />
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'dashboard.commercial.toDate' | translate }}</label>
+                <label class="form-label">Au</label>
                 <input class="form-control" type="date" [(ngModel)]="ruleForm.effectiveTo" />
               </div>
             </div>
             <div class="modal-footer" style="padding:0">
-              <button class="btn btn-primary" (click)="saveRule()">{{ 'common.save' | translate }}</button>
-              <button class="btn btn-secondary" (click)="showRuleForm=false">{{ 'common.cancel' | translate }}</button>
+              <button class="btn btn-primary" (click)="saveRule()">Enregistrer</button>
+              <button class="btn btn-secondary" (click)="showRuleForm=false">Annuler</button>
             </div>
           </div>
         }
 
         @if (rules.length === 0) {
-          <p class="td-muted">{{ 'common.noResults' | translate }}</p>
+          <p class="td-muted">Aucun résultat trouvé.</p>
         } @else {
           <div class="card">
             <div class="card-body-flush">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>{{ 'common.type' | translate }}</th>
-                    <th>{{ 'commissions.rate' | translate }}</th>
-                    <th>{{ 'commissions.fixedAmount' | translate }}</th>
-                    <th>{{ 'dashboard.commercial.fromDate' | translate }}</th>
-                    <th>{{ 'dashboard.commercial.toDate' | translate }}</th>
+                    <th>Type</th>
+                    <th>Taux (%)</th>
+                    <th>Montant fixe</th>
+                    <th>Du</th>
+                    <th>Au</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (r of rules; track r.id) {
                     <tr>
-                      <td>{{ r.projectName ?? ('commissions.default' | translate) }}</td>
+                      <td>{{ r.projectName ?? 'Règle par défaut' }}</td>
                       <td class="num">{{ r.ratePercent }}%</td>
                       <td class="num">{{ r.fixedAmount !== null ? formatAmount(r.fixedAmount) : '—' }}</td>
                       <td>{{ r.effectiveFrom }}</td>
                       <td>{{ r.effectiveTo ?? '∞' }}</td>
                       <td class="td-actions">
-                        <button class="btn btn-sm btn-secondary" (click)="editRule(r)">{{ 'common.edit' | translate }}</button>
-                        <button class="btn btn-sm btn-danger" (click)="deleteRule(r.id)">{{ 'common.delete' | translate }}</button>
+                        <button class="btn btn-sm btn-secondary" (click)="editRule(r)">Modifier</button>
+                        <button class="btn btn-sm btn-danger" (click)="deleteRule(r.id)">Supprimer</button>
                       </td>
                     </tr>
                   }

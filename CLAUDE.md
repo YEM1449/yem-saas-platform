@@ -7,7 +7,7 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 **→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
 (Consolidation of audit 2026-06-03 + cross-functional product review 2026-06-12 + fresh code scan 2026-06-13. Supersedes `audit-report-2026-06-03.md`, `action-plan-2026-06-03.md`, and `team-review-2026-06-12.md` for current state — those files are retained for history.)
 
-**11 open items (2026-06-13, updated):** 0 Critical · 0 Major · all A+B+C resolved. Remaining: 5 quick-wins XS (D), 5 code-quality (E). Next: Phase D or E.
+**5 open items (2026-06-13, updated):** 0 Critical · 0 Major · all A+B+C+D resolved. Remaining: 5 code-quality (E). Next: Phase E.
 
 **Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
 

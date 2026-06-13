@@ -1,21 +1,21 @@
 <div class="doc-section">
-  <h4>{{ 'documents.title' | translate }}</h4>
+  <h4>Documents</h4>
 
   @if (error) { <div class="alert alert-error">{{ error }}</div> }
   @if (deleteError) { <div class="alert alert-error">{{ deleteError }}</div> }
 
   <!-- Upload area -->
   <div class="upload-row">
-    <input type="text" [(ngModel)]="description" [placeholder]="'common.notes' | translate" class="desc-input form-control" />
+    <input type="text" [(ngModel)]="description" placeholder="Notes" class="desc-input form-control" />
     <label class="btn btn-secondary upload-btn" [class.uploading]="uploading">
-      @if (uploading) { {{ 'common.saving' | translate }} } @else { {{ 'documents.upload' | translate }} }
+      @if (uploading) { Enregistrement... } @else { Téléverser }
       <input type="file" accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" [disabled]="uploading" style="display:none" />
     </label>
   </div>
   @if (uploadError) { <div class="alert alert-error">{{ uploadError }}</div> }
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="documents-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="documents-loading-state" aria-label="Chargement...">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -24,18 +24,18 @@
   }
 
   @if (!loading && documents.length === 0) {
-    <p class="empty-state-desc">{{ 'documents.noDocuments' | translate }}</p>
+    <p class="empty-state-desc">Aucun document.</p>
   }
 
   @if (!loading && documents.length > 0) {
     <table class="data-table">
       <thead>
         <tr>
-          <th>{{ 'documents.fileName' | translate }}</th>
-          <th>{{ 'common.type' | translate }}</th>
-          <th>{{ 'documents.size' | translate }}</th>
-          <th>{{ 'documents.date' | translate }}</th>
-          <th>{{ 'common.actions' | translate }}</th>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>Taille</th>
+          <th>Date</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -46,8 +46,8 @@
             <td>{{ formatSize(doc.fileSize) }}</td>
             <td>{{ doc.createdAt | date:'dd/MM/yyyy' }}</td>
             <td class="td-actions">
-              <button (click)="download(doc)" class="btn btn-sm btn-secondary">{{ 'documents.download' | translate }}</button>
-              <button (click)="deleteDoc(doc)" class="btn btn-sm btn-danger">{{ 'documents.delete' | translate }}</button>
+              <button (click)="download(doc)" class="btn btn-sm btn-secondary">Télécharger</button>
+              <button (click)="deleteDoc(doc)" class="btn btn-sm btn-danger">Supprimer</button>
             </td>
           </tr>
         }

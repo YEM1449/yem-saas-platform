@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { ContractService, ListContractsParams } from './contract.service';
 import { ContractResponse, SaleContractStatus } from '../../core/models/contract.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -14,7 +13,7 @@ import { VenteService, Vente } from '../ventes/vente.service';
 @Component({
   selector: 'app-contracts',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './contracts.component.html',
   styleUrl: './contracts.component.css',
 })

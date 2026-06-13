@@ -44,15 +44,15 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 
 ---
 
-## PHASE D — QUICK WINS (XS, enchaînables en une session)
+## PHASE D — QUICK WINS ✅ RÉSOLU 2026-06-13
 
 | ID | Finding | Action | Fichiers | Effort |
 |----|---------|--------|----------|--------|
-| D-001 | **#033** Javadoc stale | Mettre à jour `VenteService.java:53` (machine VEFA Wave 12) ; supprimer les commentaires `ACTE_NOTARIE` dans `ShareholderKpiDTO`, `CommercialDashboardSummaryDTO`, `HomeDashboardDTO` (7 fichiers) | 4 fichiers Java | XS |
-| D-002 | **#012** Couleurs CSS hardcodées | Remplacer le gradient `indigo` `home-dashboard.component.css:326-329` par `var(--c-primary-*)` ; `stroke="#16a34a"` SVG → `currentColor` | `home-dashboard.component.css`, `shell.component.html` | XS |
-| D-003 | **#018** Routes bilingues | Normaliser en français : `/app/properties` → `/app/biens` (redirect alias) + `/app/projects` → `/app/projets` (redirect alias) | `app.routes.ts` | XS |
-| D-004 | **#034** Guide manager : passe plain-French | Remplacer `option_expire_at` → *"l'heure d'expiration"*, `VenteService.validateTransition` → *"la plateforme refuse cette transition"*, `scheduler horaire` → *"vérification automatique toutes les heures"*, `MARKET_CODE` → *"configuration marché"* ; sweep "MAD" + "DD/MM/YYYY" | `docs/legal/guide-loi-44-00-managers.md` | XS |
-| D-005 | **#011** i18n : décision + sweep | Décider FR-only ou i18n complet ; si FR-only : supprimer les `| translate` et simplifier la config ; si i18n : balayer les 14 templates (78 occurrences hardcodées détectées dont home-dashboard) | `i18n/` + features/*.html | M |
+| D-001 ✅ | **#033** Javadoc stale | Javadoc mis à jour dans `VenteService.java` (machine VEFA Wave 12), `Vente.java`, `CommercialDashboardSummaryDTO`, `ShareholderKpiDTO`, `HomeDashboardDTO` (×3 occurrences) — `ACTE_NOTARIE` remplacé par `ACTE`, pipeline VEFA complet documenté | 4 fichiers Java | XS |
+| D-002 ✅ | **#012** Couleurs CSS hardcodées | `.hero-pipeline::before` : `linear-gradient(90deg, #6366f1, #818cf8)` → `var(--c-primary-600, #16a34a)` / `var(--c-primary-400, #4ade80)` ; SVG `stroke="#16a34a"` → `stroke="currentColor"` dans `shell.component.html` (sidebar brand + mobile topbar) | `home-dashboard.component.css`, `shell.component.html` | XS |
+| D-003 ✅ | **#018** Routes bilingues | Redirect aliases ajoutés : `/app/biens` → `properties`, `/app/biens/:id` → `properties/:id`, `/app/projets` → `projects` (sans affecter `projets/:projetId/viewer-3d` existant) | `app.routes.ts` | XS |
+| D-004 ✅ | **#034** Guide manager : passe plain-French | 4 remplacements : `VenteService.validateTransition` → *"la plateforme refuse"*, `option_expire_at` → *"l'heure d'expiration"*, `scheduler horaire` (×2) → *"vérification automatique toutes les heures"*, `MARKET_CODE` → *"configuration marché"* | `docs/legal/guide-loi-44-00-managers.md` | XS |
+| D-005 ✅ | **#011** i18n FR-only | Décision FR-only prise. 613 `\| translate` supprimés de 36 templates HTML + templates inline TS. `TranslateModule`/`TranslateService` retirés de 42 composants + `app.config.ts` épuré (`provideTranslateService` + `provideTranslateHttpLoader` supprimés). TS : 5 `translate.instant()` → chaînes FR hardcodées. `LanguageSwitcherComponent` conservé (gère RTL + persistance `hlm_lang`) sans dépendance ngx-translate. Build green, 200 tests pass. | 36 `.html` + 42 `.ts` + `app.config.ts` | M |
 
 ---
 
@@ -85,11 +85,11 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 | A — Fonctionnel bloquant | 4 | **4** | **0** |
 | B — Légal/Conformité | 5 | **5** | **0** |
 | C — UX/Navigation | 6 | **6** | **0** |
-| D — Quick wins XS | 5 | 0 | **5** |
+| D — Quick wins XS | 5 | **5** | **0** |
 | E — Code quality | 5 | 0 | **5** |
 | F — Différé | 3 | — | 3 |
 
-**Total ouvert actionnable : 10 items** (D+E) — dont **5 à effort XS** débloquables en 1 session.
+**Total ouvert actionnable : 5 items** (Phase E uniquement).
 
 ---
 

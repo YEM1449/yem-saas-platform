@@ -2,7 +2,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { AdminUserService } from './admin-user.service';
 import { MembreDto, MembreStatut } from './admin-user.model';
 import { UserInviteDialogComponent } from './user-invite-dialog.component';
@@ -13,7 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserInviteDialogComponent, UserSettingsDialogComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, UserInviteDialogComponent, UserSettingsDialogComponent],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
 })
