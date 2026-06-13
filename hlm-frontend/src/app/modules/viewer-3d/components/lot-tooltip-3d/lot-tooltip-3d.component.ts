@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LotStatusSnapshot, LOT_STATUS_COLORS, LOT_STATUS_LABELS, LotDisplayStatus } from '../../models/lot-3d-status.model';
 import { Lot3dMappingEntry } from '../../models/project-3d-model.model';
@@ -16,6 +16,9 @@ export class LotTooltip3dComponent {
   @Input() status!:  LotStatusSnapshot;
   @Input() x = 0;
   @Input() y = 0;
+  /** When true the tooltip is touch-pinned and shows a close (×) button. */
+  @Input() pinned = false;
+  @Output() close = new EventEmitter<void>();
 
   get statusColor(): string {
     return LOT_STATUS_COLORS[this.status?.statut as LotDisplayStatus] ?? '#6B7280';

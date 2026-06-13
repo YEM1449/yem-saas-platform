@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.dashboard.service;
 
+import com.yem.hlm.backend.legal.MarketConfig;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
 import com.yem.hlm.backend.vente.repo.DossierFinancementRepository;
@@ -29,6 +30,7 @@ class TresorerieDashboardServiceTest {
     @Mock VenteEcheanceRepository echeanceRepository;
     @Mock VenteRepository venteRepository;
     @Mock DossierFinancementRepository dossierRepository;
+    @Mock MarketConfig marketConfig;
     @Mock SocieteContextHelper societeCtx;
 
     @Test
@@ -49,8 +51,11 @@ class TresorerieDashboardServiceTest {
                 new Object[]{venteId, "VTE-2026-001", "Mohamed El Amrani", "Appel fondations",
                         new BigDecimal("42000"), due}));
         when(echeanceRepository.sumUnpaidByMonth(eq(SOC), any(), any())).thenReturn(List.of());
+        when(venteRepository.countVentesEnRetardLivraison(eq(SOC), any())).thenReturn(0L);
+        when(venteRepository.sumRetardJoursLivraison(SOC)).thenReturn(null);
+        // sumRetardJoursLivraison returns null → ZERO penalty; getPenaliteRetardJournalierMad() not called.
 
-        var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, societeCtx);
+        var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, marketConfig, societeCtx);
         TresorerieDashboardDTO dto = service.getTresorerie();
 
         assertThat(dto.encaisseTotal()).isEqualByComparingTo("500000");
@@ -83,8 +88,12 @@ class TresorerieDashboardServiceTest {
         when(echeanceRepository.sumUnpaidByMonth(eq(SOC), any(), any())).thenReturn(List.<Object[]>of(
                 new Object[]{m0.getYear(), m0.getMonthValue(), new BigDecimal("120000")},
                 new Object[]{m2.getYear(), m2.getMonthValue(), new BigDecimal("80000")}));
+        when(venteRepository.countVentesEnRetardLivraison(eq(SOC), any())).thenReturn(0L);
+        when(venteRepository.sumRetardJoursLivraison(SOC)).thenReturn(null);
+        // marketConfig.getPenaliteRetardJournalierMad() is NOT stubbed here:
+        // sumRetardJoursLivraison returns null so the penalty branch is skipped.
 
-        var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, societeCtx);
+        var service = new TresorerieDashboardService(echeanceRepository, venteRepository, dossierRepository, marketConfig, societeCtx);
         TresorerieDashboardDTO dto = service.getTresorerie();
 
         assertThat(dto.previsionnelParMois()).hasSize(6);

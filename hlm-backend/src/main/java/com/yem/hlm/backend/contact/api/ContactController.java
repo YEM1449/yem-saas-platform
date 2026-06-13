@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import com.yem.hlm.backend.audit.service.ReadAudit;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -87,6 +88,7 @@ public class ContactController {
 
     @Operation(summary = "Get a contact's VEFA legal identity (Loi 44-00)")
     @GetMapping("/contacts/{id}/legal")
+    @ReadAudit(entityType = "CONTACT")
     public ContactLegalResponse getLegalDetails(@PathVariable("id") UUID id) {
         return contactService.getLegalDetails(id);
     }

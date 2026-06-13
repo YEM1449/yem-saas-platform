@@ -47,13 +47,15 @@
   <canvas #canvas class="three-canvas" [class.hidden]="state() !== 'loaded'"
           aria-label="Vue 3D interactive — cliquez sur un lot pour plus de détails"></canvas>
 
-  <!-- ── Tooltip overlay ───────────────────────────────────────────────────── -->
-  @if (hoveredMapping() && hoveredStatus()) {
+  <!-- ── Tooltip overlay (hover on desktop · pinned on touch) ─────────────── -->
+  @if ((pinnedMapping() && pinnedStatus()) || (hoveredMapping() && hoveredStatus())) {
     <app-lot-tooltip-3d
-      [mapping]="hoveredMapping()!"
-      [status]="hoveredStatus()!"
+      [mapping]="(pinnedMapping() ?? hoveredMapping())!"
+      [status]="(pinnedStatus() ?? hoveredStatus())!"
       [x]="tooltipX"
       [y]="tooltipY"
+      [pinned]="!!pinnedMapping()"
+      (close)="clearPin()"
     ></app-lot-tooltip-3d>
   }
 

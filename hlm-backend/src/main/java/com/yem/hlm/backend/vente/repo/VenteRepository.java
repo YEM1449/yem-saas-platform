@@ -831,4 +831,36 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Object[]> agentsLeaderboardForReport(@Param("societeId") UUID societeId,
                                               @Param("fromDt") java.time.LocalDateTime fromDt,
                                               @Param("toDt") java.time.LocalDateTime toDt);
+
+    // ── B-001 Late-delivery penalty helpers ──────────────────────────────────
+
+    /** Count active ventes past their expected delivery date (not yet delivered or cancelled). */
+    @Query("""
+            SELECT COUNT(v)
+            FROM Vente v
+            WHERE v.societeId = :societeId
+              AND v.statut NOT IN (
+                  com.yem.hlm.backend.vente.domain.VenteStatut.ANNULE,
+                  com.yem.hlm.backend.vente.domain.VenteStatut.LIVRE_DEFINITIF)
+              AND v.dateLivraisonReelle IS NULL
+              AND v.dateLivraisonPrevue IS NOT NULL
+              AND v.dateLivraisonPrevue < :today
+            """)
+    long countVentesEnRetardLivraison(@Param("societeId") UUID societeId,
+                                      @Param("today") java.time.LocalDate today);
+
+    /**
+     * Sum of total delay days across all overdue-delivery ventes (to compute global penalty budget).
+     * Returns null when no overdue ventes exist.
+     */
+    @Query(value = """
+            SELECT SUM(CURRENT_DATE - v.date_livraison_prevue)
+            FROM vente v
+            WHERE v.societe_id = :societeId
+              AND v.statut NOT IN ('ANNULE', 'LIVRE_DEFINITIF')
+              AND v.date_livraison_reelle IS NULL
+              AND v.date_livraison_prevue IS NOT NULL
+              AND v.date_livraison_prevue < CURRENT_DATE
+            """, nativeQuery = true)
+    Long sumRetardJoursLivraison(@Param("societeId") UUID societeId);
 }

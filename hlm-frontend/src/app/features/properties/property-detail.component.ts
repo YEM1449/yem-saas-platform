@@ -9,11 +9,12 @@ import { Property, PropertyMedia } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { DocumentListComponent } from '../documents/document-list.component';
+import { MadInputComponent } from '../../core/components/mad-input.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, TranslateModule, MadInputComponent],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })

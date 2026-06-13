@@ -75,6 +75,9 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
 
   hoveredMapping = signal<Lot3dMappingEntry | null>(null);
   hoveredStatus  = signal<LotStatusSnapshot | null>(null);
+  /** Touch-pinned tooltip — stays visible until tapped empty space or the × button. */
+  pinnedMapping  = signal<Lot3dMappingEntry | null>(null);
+  pinnedStatus   = signal<LotStatusSnapshot | null>(null);
   tooltipX = 0;
   tooltipY = 0;
 
@@ -179,6 +182,25 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
       })
     );
 
+    // Touch tap — pin tooltip without navigating (first tap shows info, second tap can navigate).
+    this.subs.add(
+      this.engine.tap$.subscribe(ev => {
+        if (!ev) {
+          this.pinnedMapping.set(null);
+          this.pinnedStatus.set(null);
+        } else {
+          const m = this.mapping.getMappingForMesh(ev.mesh);
+          if (m) {
+            this.pinnedMapping.set(m);
+            this.pinnedStatus.set(this.statuses.find(s => s.meshId === m.meshId) ?? null);
+            this.tooltipX = ev.screenX;
+            this.tooltipY = ev.screenY;
+          }
+        }
+        this.cdr.markForCheck();
+      })
+    );
+
     // If model metadata arrived before AfterViewInit, load now
     if (this.modelMeta) {
       this.loadGlb(this.modelMeta);
@@ -194,6 +216,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
 
   toggleLegend(): void {
     this.legendVisible.update(v => !v);
+  }
+
+  clearPin(): void {
+    this.pinnedMapping.set(null);
+    this.pinnedStatus.set(null);
+    this.cdr.markForCheck();
   }
 
   // ── Keyboard accessibility (Tab + Enter for lot selection) ────────────────

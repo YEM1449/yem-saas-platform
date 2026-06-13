@@ -76,7 +76,7 @@
         </div>
         <div class="field">
           <label>Prix</label>
-          <input type="number" class="form-control" [(ngModel)]="editForm.price" min="0" step="1" />
+          <app-mad-input [(ngModel)]="editForm.price" name="editPrice" inputClass="form-control"></app-mad-input>
         </div>
         <div class="field">
           <label>Statut juridique</label>
@@ -238,7 +238,7 @@
           @if (commercialError) { <p class="msg-error">{{ commercialError }}</p> }
           @if (showCommercialForm) {
             <div class="commercial-grid">
-              <label>Prix HT (MAD) <input type="number" [(ngModel)]="commercialForm.prixHt"/></label>
+              <label>Prix HT (MAD) <app-mad-input [(ngModel)]="commercialForm.prixHt" name="commercialPrixHt" inputClass="form-control"></app-mad-input></label>
               <label>Taux TVA (0 / 0.10 / 0.20) <input type="number" step="0.01" [(ngModel)]="commercialForm.tvaTaux"
                        placeholder="auto si vide"/></label>
               <label class="chk"><input type="checkbox" [(ngModel)]="commercialForm.logementSocial"/> Logement social (TVA 0%)</label>

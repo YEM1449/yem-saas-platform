@@ -262,6 +262,11 @@ app:
     # Cron for daily retention sweep (default 02:00)
     retention-cron: "${DATA_RETENTION_CRON:0 0 2 * * *}"
 
+  digest:
+    # Cron for daily alert digest email to ADMIN/MANAGER (C-006); default 07:30 Mon–Fri.
+    # Set DIGEST_CRON env var to override (e.g. "0 0 8 * * MON-FRI" for 08:00).
+    cron: "${DIGEST_CRON:0 30 7 * * MON-FRI}"
+
   # Auth cookie — httpOnly JWT carrier.
   # Set COOKIE_SECURE=true in production (requires HTTPS / TLS termination at proxy).
   # COOKIE_SAME_SITE: "Lax" (default) works behind a same-domain reverse proxy.

@@ -203,14 +203,18 @@
         {{ 'nav.commissions' | translate }}
       </a>
 
-      <a routerLink="/app/messages" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.messages' | translate }}" (click)="closeSidebar()">
-        <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 13V4a1 1 0 011-1z"
-                stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-        </svg>
-        {{ 'nav.messages' | translate }}
-      </a>
+      <div class="nav-section-label">Communication</div>
+
+      @if (isAdminOrManager) {
+        <a routerLink="/app/messages" routerLinkActive="nav-active"
+           class="nav-item" title="{{ 'nav.messages' | translate }}" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 13V4a1 1 0 011-1z"
+                  stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+          {{ 'nav.messages' | translate }}
+        </a>
+      }
 
       <a routerLink="/app/notifications" routerLinkActive="nav-active"
          class="nav-item" title="{{ 'nav.notifications' | translate }}" (click)="closeSidebar()">

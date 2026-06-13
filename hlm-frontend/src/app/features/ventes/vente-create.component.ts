@@ -5,11 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { VenteService, CreateVenteRequest } from './vente.service';
 import { ReservationService, VentePrefillData } from '../reservations/reservation.service';
+import { MadInputComponent } from '../../core/components/mad-input.component';
 
 @Component({
   selector: 'app-vente-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink],
+  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, MadInputComponent],
   templateUrl: './vente-create.component.html',
   styleUrl: './vente-create.component.css',
 })

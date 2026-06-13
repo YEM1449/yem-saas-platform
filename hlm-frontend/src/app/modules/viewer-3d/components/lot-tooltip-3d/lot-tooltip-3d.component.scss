@@ -4,6 +4,10 @@
   pointer-events: none;
 }
 
+:host(:has(.tooltip-pinned)) {
+  pointer-events: auto;
+}
+
 .tooltip-3d {
   position: absolute;
   background: #fff;
@@ -57,4 +61,22 @@
 .price {
   font-weight: 600;
   color: #1e293b;
+}
+
+.tooltip-pinned {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+
+.tooltip-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #94a3b8;
+  line-height: 1;
+  padding: 0 2px;
+  pointer-events: auto;
+
+  &:hover { color: #1e293b; }
 }

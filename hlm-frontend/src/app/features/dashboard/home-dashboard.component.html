@@ -450,7 +450,12 @@
             </thead>
             <tbody>
               @for (a of s.topAgents; track a.agentId; let i = $index) {
-                <tr class="clickable-row" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
+                @if (i === 3 && s.topAgents.length > 3) {
+                  <tr class="rank-separator" aria-hidden="true">
+                    <td colspan="6">Autres agents</td>
+                  </tr>
+                }
+                <tr class="clickable-row" [class.rank-low]="i >= 3" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
                   <td class="lb-rank">{{ i + 1 }}</td>
                   <td class="lb-name">{{ a.agentName }}</td>
                   <td class="lb-ventes">{{ a.ventesCount }}</td>
@@ -461,7 +466,7 @@
                       <div class="agent-share-bar-bg">
                         <div class="agent-share-bar" [style.width]="agentShareWidth(a, s.topAgents)"></div>
                       </div>
-                      <span style="font-size:.7rem;color:#6b7280;white-space:nowrap">{{ agentShareWidth(a, s.topAgents) }}</span>
+                      <span class="share-pct">{{ agentShareWidth(a, s.topAgents) }}</span>
                     </div>
                   </td>
                 </tr>

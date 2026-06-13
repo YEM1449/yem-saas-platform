@@ -97,6 +97,25 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
             @Param("cutoff")    java.time.LocalDateTime cutoff
     );
 
+    /**
+     * Status-filtered variant: soft-deleted contacts whose status is in {@code statuses}
+     * and whose {@code updatedAt} is older than {@code cutoff}. Used by type-aware
+     * retention sweeps in {@link com.yem.hlm.backend.gdpr.scheduler.DataRetentionScheduler} (B-002).
+     */
+    @Query("""
+            SELECT c FROM Contact c
+            WHERE c.societeId   = :societeId
+              AND c.deleted      = true
+              AND c.anonymizedAt IS NULL
+              AND c.updatedAt    < :cutoff
+              AND c.status IN    :statuses
+            """)
+    List<Contact> findRetentionCandidatesByStatuses(
+            @Param("societeId") UUID societeId,
+            @Param("cutoff")    java.time.LocalDateTime cutoff,
+            @Param("statuses")  java.util.List<ContactStatus> statuses
+    );
+
     @Query("""
             select c from Contact c
             where c.societeId = :societeId

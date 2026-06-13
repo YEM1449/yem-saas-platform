@@ -7,7 +7,7 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 **→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
 (Consolidation of audit 2026-06-03 + cross-functional product review 2026-06-12 + fresh code scan 2026-06-13. Supersedes `audit-report-2026-06-03.md`, `action-plan-2026-06-03.md`, and `team-review-2026-06-12.md` for current state — those files are retained for history.)
 
-**22 open items (2026-06-13):** 0 Critical · 0 Major · all Criticals+Majors resolved. Remaining: 4 functional-blocking (A), 5 legal/compliance (B), 6 UX (C), 5 quick-wins XS (D), 5 code-quality (E).
+**11 open items (2026-06-13, updated):** 0 Critical · 0 Major · all A+B+C resolved. Remaining: 5 quick-wins XS (D), 5 code-quality (E). Next: Phase D or E.
 
 **Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
 
@@ -29,6 +29,19 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 
 **Fixed (2026-06-13):**
 - **F-006 ✅** `GET /api/ventes` + `GET /api/properties` migrated to `Page<T>` → `PageResponse.of()` (`@PageableDefault` 20/50); contacts was already paginated. FE: `PagedResult<T>` type + `listPage()`; bounded callers keep capped `list()`. `GET /api/notifications`: `@Max(200) @Min(1)` added at controller layer (service already clamped). 26 sub-resource endpoints remain `List<T>` (FK-bounded). `NotificationControllerTest` (5 tests); unit suite: **200 pass**.
+
+**Fixed — Phase A (2026-06-13):**
+- **A-001 ✅** `EcheanceStatut.ANNULEE` ; `cancelAllPendingByVente()` `@Modifying` ; appelé dans `updateStatut(ANNULE)` + `exerciseRetractation()` ; trésorerie exclut ANNULEE.
+- **A-002 ✅** Export CSV/PDF + TVA (Prix HT, Taux, Prix TTC via `TvaCalculator`) ; `ReportExportService` batch-load `findAllById`, `ventes-report.html` 9 colonnes.
+- **A-003 ✅** Changeset **087** `responsable_user_id` sur `reserve_livraison` ; `ReserveLivraisonProjectController` `GET /api/projects/{id}/reserves` (ADMIN/MANAGER).
+- **A-004 ✅** Guard `prixVente ≤ 0` → `PrixVenteInvalideException` 422 `PRIX_VENTE_INVALIDE`.
+
+**Fixed — Phase B (2026-06-13):**
+- **B-001 ✅** `MarketConfig.getPenaliteRetardJournalierMad()` (défaut 500 MAD/j, configurable) ; `joursRetard`+`penaliteAccumulee` dans `VenteResponse`+`VenteService.toResponse()` ; `countVentesEnRetardLivraison`+`sumRetardJoursLivraison` dans `VenteRepository` ; `ventesEnRetardLivraison`+`penaliteRetardTotale` dans `TresorerieDashboardDTO`+Service ; section `.penalite` dans PV livraison.
+- **B-002 ✅** `DataRetentionScheduler` 3 passes (prospect 730j, acquéreur 1825j, VEFA 3650j) ; `findRetentionCandidatesByStatuses()` ; `docs/legal/data-retention.md`.
+- **B-003 ✅** `docs/legal/pdf-review-checklist.md` (27 items Art.618-3/618-13/618-17, mentions obligatoires, actions correctives).
+- **B-004 ✅** `@ReadAudit` AOP aspect (`SensitiveDataReadEvent` → `AuditEventListener.onSensitiveDataRead()` REQUIRES_NEW) ; annoté sur `getLegalDetails()` + `getCommercial()`.
+- **B-005 ✅** `ComplianceController` `GET/PATCH /api/mon-espace/compliance` (ADMIN) pour saisie `numeroCndp`+`dateDeclarationCndp`.
 
 **Deferred (justifié, P2/P3):** F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
 

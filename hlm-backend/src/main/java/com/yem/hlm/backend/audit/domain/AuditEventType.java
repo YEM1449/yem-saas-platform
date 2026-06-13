@@ -34,6 +34,9 @@ public enum AuditEventType {
     CONTACT_CREATED,
     CONTACT_STATUS_CHANGED,
 
+    // Sensitive data read events (B-004)
+    SENSITIVE_DATA_READ,
+
     // User management events
     USER_INVITED,
     USER_ACTIVATED,

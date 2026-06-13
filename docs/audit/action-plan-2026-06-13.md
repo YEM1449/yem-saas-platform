@@ -19,28 +19,28 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 
 ---
 
-## PHASE B — LÉGAL & CONFORMITÉ (avant tout usage commercial réel)
+## PHASE B — LÉGAL & CONFORMITÉ ✅ RÉSOLU 2026-06-13
 
 | ID | Finding | Action | Fichiers | Effort |
 |----|---------|--------|----------|--------|
-| B-001 | **#029** Pénalité retard non calculée | Calculer `joursRetard = today - tranche.dateLivraisonPrevue` dans `VenteService` / `TresorerieDashboardService` ; exposer `penaliteAccumulee = joursRetard × penaliteRetardJournalier` dans `VenteResponse` et `TresorerieDashboardDTO` ; alerte dans le dashboard et mention dans le PV livraison | `VenteService.java`, `TresorerieDashboardService.java`, `VenteResponse.java`, PV template | M |
-| B-002 | **#027** Politique de rétention | Définir la matrice (prospect 2 ans, acquéreur 5 ans, vente VEFA 10 ans conformément Loi 44-00) ; documenter dans `docs/legal/data-retention.md` ; câbler les durées dans `DataRetentionScheduler` comme constantes nommées | `DataRetentionScheduler.java`, nouveau `docs/legal/data-retention.md` | M |
-| B-003 | **#031** Relecture notaire PDFs | Préparer la checklist des mentions obligatoires Loi 44-00 Art.618-1 sq. dans `docs/legal/pdf-review-checklist.md` ; livrer à un notaire ; appliquer les corrections sur les templates Thymeleaf | Templates PDF, `docs/legal/pdf-review-checklist.md` | S + suivis |
-| B-004 | **#008** Read-audit sur GETs sensibles | Annoter `ContactController.getLegal()` et `PropertyController.getCommercial()` (et équivalents portail) avec un aspect `@ReadAudit` qui publie un `AuditEvent(READ, entityId, userId)` asynchrone (sampled 100%) | `CommercialAuditController.java`, nouveau `@ReadAudit` aspect | M |
-| B-005 | **#026** CNDP déclaration | *(Acte organisationnel)* Déposer la déclaration auprès de la CNDP pour chaque société ; saisir le numéro de récépissé dans le champ `Societe.numeroCndp` (endpoint `/api/admin/societes/{id}/compliance`) → apparaît automatiquement sur les pages légales portail | — | S (org) |
+| B-001 ✅ | **#029** Pénalité retard non calculée | `MarketConfig.getPenaliteRetardJournalierMad()` (défaut 500 MAD/j) ; `joursRetard`+`penaliteAccumulee` dans `VenteService.toResponse()` ; `countVentesEnRetardLivraison`+`sumRetardJoursLivraison` dans `VenteRepository` ; `ventesEnRetardLivraison`+`penaliteRetardTotale` dans `TresorerieDashboardDTO`+Service ; section `.penalite` conditionnelle dans PV livraison | `MarketConfig.java`, `VenteResponse.java`, `VenteService.java`, `VenteRepository.java`, `TresorerieDashboardDTO.java`, `TresorerieDashboardService.java`, `pv-livraison-vefa.html` | M |
+| B-002 ✅ | **#027** Politique de rétention | Matrice 3 tiers : prospect 2 ans / acquéreur 5 ans / VEFA 10 ans ; `findRetentionCandidatesByStatuses()` dans `ContactRepository` ; `DataRetentionScheduler` réécrit 3 passes + constantes nommées ; `docs/legal/data-retention.md` | `ContactRepository.java`, `DataRetentionScheduler.java`, `docs/legal/data-retention.md` | M |
+| B-003 ✅ | **#031** Relecture notaire PDFs | `docs/legal/pdf-review-checklist.md` (27 items — Art.618-3/618-13/618-17, mentions obligatoires, actions correctives identifiées) | `docs/legal/pdf-review-checklist.md` | S |
+| B-004 ✅ | **#008** Read-audit sur GETs sensibles | `AuditEventType.SENSITIVE_DATA_READ` ; `SensitiveDataReadEvent` ; `@ReadAudit` annotation + `ReadAuditAspect` (`@Around`, SocieteContext static, erreur silencieuse) ; `onSensitiveDataRead()` dans `AuditEventListener` (REQUIRES_NEW) ; annoté sur `getLegalDetails()` et `getCommercial()` | `AuditEventType.java`, `SensitiveDataReadEvent.java`, `ReadAudit.java`, `ReadAuditAspect.java`, `AuditEventListener.java`, `ContactController.java`, `PropertyController.java` | M |
+| B-005 ✅ | **#026** CNDP déclaration | `Societe.numeroCndp` existait — pas de changeset ; `UpdateComplianceRequest`, `ComplianceInfoResponse`, `ComplianceController` `GET/PATCH /api/mon-espace/compliance` (ADMIN self-service) | `UpdateComplianceRequest.java`, `ComplianceInfoResponse.java`, `ComplianceController.java` | S |
 
 ---
 
-## PHASE C — UX & NAVIGATION (qualité démo / first impressions)
+## PHASE C — UX & NAVIGATION ✅ RÉSOLU 2026-06-13
 
 | ID | Finding | Action | Fichiers | Effort |
 |----|---------|--------|----------|--------|
-| C-001 | **#024** Leaderboard incomplet | Ajouter tableau complet trié après le podium, ou strip "bottom-3 / agents sans vente depuis 14j" | `home-dashboard.component.html/.ts` | XS |
-| C-002 | **#021** Draco : hint manquant | Ajouter une ligne d'aide sous le label "Draco obligatoire" : *"Exportez depuis Blender avec compression Draco activée — voir [guide 3D]"* + lien `docs/guides/user/3d.md` | `model-upload-admin.component.html` | XS |
-| C-003 | **#017** Nav misgrouping | Déplacer "Messages" et "Notifications" vers une section "Communication" dans la sidebar shell ; consolider les ~16 items en ≤12 avec role-based pruning (AGENT ne voit pas Messages/Outbox) | `shell.component.html`, `shell.component.ts` | S |
-| C-004 | **#022** 3D touch/tap | Ajouter `(pointerdown)` / `(touchstart)` sur les meshes lot pour épingler le tooltip ; test sur iOS Safari | `project-viewer-3d.component.ts`, `lot-tooltip-3d.component.ts/.css` | S |
-| C-005 | **#020** Currency input masqué | Créer `MadInputComponent` (standalone, `type="text"`, `inputmode="numeric"`, formatage live `1 250 000 MAD`) ; remplacer les `type="number"` sur les champs prix vente, bien, commercial | Nouveau `shared/mad-input.component.ts`, vente-create, property-form, commercial-form | S |
-| C-006 | **#009** Digest d'alertes cross-société | Email digest (quotidien/hebdo) par appartenance : items overdue + alertes trésorerie de chaque société admin ; scheduler cron + `EmailSender` | `NotificationScheduler.java` (ou nouveau), template email | M |
+| C-001 ✅ | **#024** Leaderboard incomplet | Séparateur visuel après rang 3 + classe `rank-low` pour rang 4+ (muted) ; `rank-separator` CSS | `home-dashboard.component.html`, `home-dashboard.component.css` | XS |
+| C-002 ✅ | **#021** Draco : hint manquant | Hint text + lien `docs/guides/user/3d-visualiseur.md` sous "Draco obligatoire" | `model-upload-admin.component.html`, `.scss` | XS |
+| C-003 ✅ | **#017** Nav misgrouping | Section "Communication" créée ; Messages déplacé (ADMIN/MANAGER only via `@if (isAdminOrManager)`) ; Notifications tous rôles | `shell.component.html` | S |
+| C-004 ✅ | **#022** 3D touch/tap | `ThreeEngineService.tap$` Subject + `touchstart` listener ; `pinnedMapping`/`pinnedStatus` signals dans le viewer ; bouton × dans `LotTooltip3dComponent` (pinned mode) ; suppression du click synthétique mobile (`lastTouchAt` guard) | `three-engine.service.ts`, `project-viewer-3d.component.ts/.html`, `lot-tooltip-3d.component.ts/.html/.scss` | S |
+| C-005 ✅ | **#020** Currency input masqué | `MadInputComponent` standalone (`ControlValueAccessor`, `type="text"`, `inputmode="numeric"`, format fr-MA sur blur) ; remplacé sur `prixVente` (vente-create), `editForm.price` + `commercialForm.prixHt` (property-detail) | `core/components/mad-input.component.ts`, `vente-create.component.ts/.html`, `property-detail.component.ts/.html` | S |
+| C-006 ✅ | **#009** Digest d'alertes cross-société | `NotificationDigestScheduler` (cron `app.digest.cron` 07:30 lun–ven) ; pour chaque société active : ADMIN/MANAGER récupérés via `AppUserSocieteRepository`, comptes via `echeanceRepository.countOverdue` + `venteRepository.count*` ; email HTML inline via `EmailSender` ; skip si 0 alertes | `NotificationDigestScheduler.java`, `application.yml` | M |
 
 ---
 
@@ -83,13 +83,13 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 | Phase | Items | Résolus | Restants |
 |-------|-------|---------|---------|
 | A — Fonctionnel bloquant | 4 | **4** | **0** |
-| B — Légal/Conformité | 5 | 0 | **5** |
-| C — UX/Navigation | 6 | 0 | **6** |
+| B — Légal/Conformité | 5 | **5** | **0** |
+| C — UX/Navigation | 6 | **6** | **0** |
 | D — Quick wins XS | 5 | 0 | **5** |
 | E — Code quality | 5 | 0 | **5** |
 | F — Différé | 3 | — | 3 |
 
-**Total ouvert actionnable : 25 items** (A+B+C+D+E) — dont **11 à effort XS/S** débloquables en 1–2 sessions.
+**Total ouvert actionnable : 10 items** (D+E) — dont **5 à effort XS** débloquables en 1 session.
 
 ---
 

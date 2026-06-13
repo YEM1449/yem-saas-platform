@@ -21,6 +21,9 @@
         .legal { margin-top: 22px; padding: 10px; border: 1px solid #cbd5e1; background: #f8fafc;
                  font-size: 10px; color: #334155; }
         .sign-cell { width: 50%; text-align: center; color: #475569; }
+        .penalite { margin-top: 14px; padding: 8px 10px; border: 1px solid #fca5a5;
+                    background: #fff1f2; font-size: 10px; color: #991b1b; }
+        .penalite strong { font-size: 11px; }
     </style>
 </head>
 <body>
@@ -44,6 +47,16 @@
             <td th:text="${r.dateLeveePrevue}">—</td>
         </tr>
     </table>
+
+    <!-- Penalty clause — rendered only when joursRetard > 0 (B-001) -->
+    <div class="penalite" th:if="${model.joursRetard != null and model.joursRetard > 0}">
+        <strong>P&#233;nalit&#233;s de retard (Art.&#160;618-17 Loi&#160;44-00)</strong><br/>
+        Date de livraison pr&#233;vue&#160;: <span th:text="${model.dateLivraisonPrevue}">—</span>
+        &#8212; Retard constat&#233;&#160;: <span th:text="${model.joursRetard}">0</span> jours.<br/>
+        P&#233;nalit&#233; journali&#232;re&#160;: <span th:text="${model.penaliteJournaliereMad}">500</span>&#160;MAD/jour.<br/>
+        <strong>P&#233;nalit&#233; totale accumul&#233;e&#160;: <span th:text="${model.penaliteAccumuleeMad}">0</span>&#160;MAD</strong>
+        (sous r&#233;serve des dispositions contractuelles).
+    </div>
 
     <div class="legal">
         Document &#233;tabli conform&#233;ment &#224; la Loi n&#176;44-00 (VEFA, Maroc). Les r&#233;serves doivent &#234;tre

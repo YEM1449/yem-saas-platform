@@ -21,7 +21,11 @@ public record TresorerieDashboardDTO(
         long       accordsExpirant15j,
         List<AppelEnRetard> appelsEnRetard,
         /** Month-by-month upcoming cash (6 buckets, current month first). */
-        List<MoisPrevision> previsionnelParMois
+        List<MoisPrevision> previsionnelParMois,
+        /** Number of active ventes past their expected delivery date (B-001). */
+        long ventesEnRetardLivraison,
+        /** Total accumulated late-delivery penalty in MAD across all overdue ventes (B-001). */
+        BigDecimal penaliteRetardTotale
 ) {
     /** One overdue call-for-funds line. */
     public record AppelEnRetard(

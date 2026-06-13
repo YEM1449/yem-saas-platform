@@ -974,6 +974,20 @@ public class VenteService {
                 .map(this::toEcheanceResponse).toList();
         List<VenteDocumentResponse> docs = v.getDocuments().stream()
                 .map(this::toDocumentResponse).toList();
+
+        // B-001: late-delivery penalty — only for active ventes past their expected delivery date
+        Long joursRetard = null;
+        BigDecimal penaliteAccumulee = null;
+        boolean terminal = v.getStatut() == VenteStatut.ANNULE || v.getStatut() == VenteStatut.LIVRE_DEFINITIF;
+        if (!terminal && v.getDateLivraisonReelle() == null && v.getDateLivraisonPrevue() != null) {
+            LocalDate today = LocalDate.now();
+            if (today.isAfter(v.getDateLivraisonPrevue())) {
+                joursRetard = ChronoUnit.DAYS.between(v.getDateLivraisonPrevue(), today);
+                penaliteAccumulee = marketConfig.getPenaliteRetardJournalierMad()
+                        .multiply(BigDecimal.valueOf(joursRetard));
+            }
+        }
+
         return new VenteResponse(
                 v.getId(), v.getVenteRef(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
@@ -993,7 +1007,8 @@ public class VenteService {
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
                 v.getNotes(), v.getProbability(), v.getStageEntryDate(),
                 v.getExpectedClosingDate(), echeances, docs,
-                v.getCreatedAt(), v.getUpdatedAt());
+                v.getCreatedAt(), v.getUpdatedAt(),
+                joursRetard, penaliteAccumulee);
     }
 
     private EcheanceResponse toEcheanceResponse(VenteEcheance e) {

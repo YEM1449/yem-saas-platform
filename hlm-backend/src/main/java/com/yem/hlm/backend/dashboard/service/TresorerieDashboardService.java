@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.dashboard.service;
 
+import com.yem.hlm.backend.legal.MarketConfig;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.vente.domain.StatutDossierFinancement;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
@@ -33,15 +34,18 @@ public class TresorerieDashboardService {
     private final VenteEcheanceRepository echeanceRepository;
     private final VenteRepository venteRepository;
     private final DossierFinancementRepository dossierRepository;
+    private final MarketConfig marketConfig;
     private final SocieteContextHelper societeCtx;
 
     public TresorerieDashboardService(VenteEcheanceRepository echeanceRepository,
                                       VenteRepository venteRepository,
                                       DossierFinancementRepository dossierRepository,
+                                      MarketConfig marketConfig,
                                       SocieteContextHelper societeCtx) {
         this.echeanceRepository = echeanceRepository;
         this.venteRepository = venteRepository;
         this.dossierRepository = dossierRepository;
+        this.marketConfig = marketConfig;
         this.societeCtx = societeCtx;
     }
 
@@ -74,10 +78,16 @@ public class TresorerieDashboardService {
                         ChronoUnit.DAYS.between((LocalDate) r[5], today)))
                 .toList();
 
+        // B-001 — late-delivery penalty totals
+        long ventesEnRetardLivraison = venteRepository.countVentesEnRetardLivraison(societeId, today);
+        Long totalRetardJours = venteRepository.sumRetardJoursLivraison(societeId);
+        BigDecimal penaliteRetardTotale = totalRetardJours == null ? BigDecimal.ZERO
+                : marketConfig.getPenaliteRetardJournalierMad().multiply(BigDecimal.valueOf(totalRetardJours));
+
         return new TresorerieDashboardDTO(
                 encaisse, aEncaisser, previsionnel, enRetardMnt, enRetardCount,
                 optionsActives, retractationsEnCours, accordsExpirant, appels,
-                previsionnelParMois);
+                previsionnelParMois, ventesEnRetardLivraison, penaliteRetardTotale);
     }
 
     /**

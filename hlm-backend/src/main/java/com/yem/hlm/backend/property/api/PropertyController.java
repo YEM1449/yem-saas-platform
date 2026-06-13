@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.property.api;
 
+import com.yem.hlm.backend.audit.service.ReadAudit;
 import com.yem.hlm.backend.property.api.dto.BulkStatusRequest;
 import com.yem.hlm.backend.property.api.dto.BulkStatusResult;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
@@ -115,6 +116,7 @@ public class PropertyController {
 
     @Operation(summary = "Get the VEFA commercial sheet (HT/TVA/TTC, surfaces, charges)")
     @GetMapping("/{id}/commercial")
+    @ReadAudit(entityType = "PROPERTY")
     public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse getCommercial(@PathVariable UUID id) {
         return propertyService.getCommercial(id);
     }

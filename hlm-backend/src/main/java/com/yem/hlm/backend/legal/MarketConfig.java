@@ -38,6 +38,18 @@ public class MarketConfig {
         return 60;
     }
 
+    /**
+     * Daily late-delivery penalty in MAD, applied per day of delay past dateLivraisonPrevue
+     * (Art. 618-17 Loi 44-00 — montant contractuellement fixé, valeur par défaut 500 MAD/jour).
+     * Override via {@code app.market.penalite-retard-journalier-mad}.
+     */
+    public BigDecimal getPenaliteRetardJournalierMad() {
+        return penaliteRetardJournalierMad;
+    }
+
+    @Value("${app.market.penalite-retard-journalier-mad:500}")
+    private BigDecimal penaliteRetardJournalierMad;
+
     public String getMarketCode() {
         return marketCode;
     }
