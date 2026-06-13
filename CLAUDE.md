@@ -2,9 +2,12 @@
 
 Auto-load guide for Claude Code. Captures operating rules, architecture context, and the current implementation backlog.
 
-## Audit Checkpoint — Master Audit (2026-06-03)
+## Audit Checkpoint — Consolidated Audit (2026-06-13)
 
-Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-report-2026-06-03.md` + `docs/audit/action-plan-2026-06-03.md`. New docs: `docs/adr/005-3d-viewer-threejs.md`, `docs/business-rules/rg-referentiel.md`.
+**→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
+(Consolidation of audit 2026-06-03 + cross-functional product review 2026-06-12 + fresh code scan 2026-06-13. Supersedes `audit-report-2026-06-03.md`, `action-plan-2026-06-03.md`, and `team-review-2026-06-12.md` for current state — those files are retained for history.)
+
+**22 open items (2026-06-13):** 0 Critical · 0 Major · all Criticals+Majors resolved. Remaining: 4 functional-blocking (A), 5 legal/compliance (B), 6 UX (C), 5 quick-wins XS (D), 5 code-quality (E).
 
 **Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
 

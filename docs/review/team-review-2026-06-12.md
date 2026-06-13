@@ -10,14 +10,16 @@
 > findings at the bottom of the registry with the next number. The summary
 > table below should be kept in sync.
 >
-> **STATUS SUMMARY (update on every change)**
+> **STATUS SUMMARY (updated 2026-06-13)**
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 1 | 9 |
+> | 🟠 Major | 10 | 0 | 10 |
 > | 🟡 Minor | 16 | 14 | 2 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **22** | **12** |
+> | **Total** | **34** | **21** | **13** |
+>
+> **→ Plan d'action consolidé et re-audit 2026-06-13 : `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
 
 ---
 
@@ -545,7 +547,7 @@ untouched (verified: no other in-app nav links to `/app/contracts`). FE prod bui
 *Follow-up (not blocking):* a per-société backend flag would beat an env flag if mixed
 legacy/VEFA sociétés ever share one deployment — noted for when flag infra exists.
 
-**FINDING #023** — Code — Adam — `Status: ✅ RESOLVED (2026-06-12, List→Page)`
+**FINDING #023** — Code — Adam — `Status: ✅ RESOLVED (2026-06-12/13, List→Page + NotificationController @Max)`
 List endpoints return unpaginated `List<>` (`GET /api/ventes`, `/api/properties`, contact
 lists; audit F-006) — full serialization per request.
 *Fix:* coordinated List→Page migration (BE `Page<T>` + FE flat `PageResponse` pattern from
