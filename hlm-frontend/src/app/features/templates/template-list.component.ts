@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { TemplateService } from './template.service';
 import { TemplateSummary, TemplateType } from './template.model';
@@ -30,7 +30,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
 @Component({
   selector: 'app-template-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   template: `
     <div class="page-header">
       <div class="page-header-inner">

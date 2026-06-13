@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { VenteStatut, MotifAnnulation, UpdateVenteStatutRequest } from './vente.service';
 
@@ -35,7 +35,7 @@ const LABELS: Record<VenteStatut, string> = {
 @Component({
   selector: 'app-advance-pipeline-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './advance-pipeline-dialog.component.html',
   styleUrl: './advance-pipeline-dialog.component.css',
 })
@@ -58,8 +58,7 @@ export class AdvancePipelineDialogComponent {
     { value: 'CSP_NON_REALISEE', label: 'Condition suspensive non réalisée' },
     { value: 'ACCORD_PARTIES',   label: 'Accord entre parties' },
     { value: 'LITIGE',           label: 'Litige' },
-    { value: 'AUTRE',            label: 'Autre' },
-  ];
+    { value: 'AUTRE',            label: 'Autre' }];
 
   get nextStatut(): VenteStatut | null {
     return NEXT_MAP[this.currentStatut] ?? null;

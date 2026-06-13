@@ -1,0 +1,90 @@
+/* Widget shell shared with tasks column */
+.widget {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.widget-tall { min-height: 240px; }
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.widget-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text, #111827);
+}
+.widget-link {
+  font-size: .78rem;
+  color: var(--c-primary-600, #16a34a);
+  text-decoration: none;
+  font-weight: 500;
+}
+.widget-link:hover { text-decoration: underline; }
+
+.widget-empty {
+  font-size: .875rem;
+  color: var(--text-muted, #9ca3af);
+  text-align: center;
+  padding: 24px 0;
+}
+.widget-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+/* Vente rows */
+.vente-list { display: flex; flex-direction: column; gap: 4px; }
+
+.vente-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-secondary, #f9fafb);
+  text-decoration: none;
+  transition: background .12s;
+  border: 1px solid transparent;
+}
+.vente-row:hover { background: #f0fdf4; border-color: #86efac; }
+
+.vente-row-main { display: flex; align-items: center; gap: 8px; }
+
+.vente-contact {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ref-badge-sm {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .03em;
+}
+.vente-row-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vente-price {
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #6b7280);
+  margin-left: auto;
+}
+.vente-date { font-size: .72rem; color: var(--text-muted, #9ca3af); flex-shrink: 0; }

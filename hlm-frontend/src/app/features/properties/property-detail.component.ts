@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { MadInputComponent } from '../../core/components/mad-input.component';
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, MadInputComponent],
+  imports: [FormsModule, RouterLink, DocumentListComponent, MadInputComponent, DatePipe, DecimalPipe],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })

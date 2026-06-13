@@ -1,0 +1,32 @@
+<div class="widget widget-tall">
+  <div class="widget-header">
+    <span class="widget-title">Ventes récentes</span>
+    <a routerLink="/app/ventes" class="widget-link">Tout voir →</a>
+  </div>
+  @if (ventes.length === 0) {
+    <div class="widget-empty">Aucune vente enregistrée</div>
+  } @else {
+    <div class="vente-list">
+      @for (v of ventes; track v.id) {
+        <a [routerLink]="['/app/ventes', v.id]" class="vente-row">
+          <div class="vente-row-main">
+            @if (v.venteRef) {
+              <span class="ref-badge-sm">{{ v.venteRef }}</span>
+            }
+            <span class="vente-contact">{{ v.contactFullName || '—' }}</span>
+          </div>
+          <div class="vente-row-meta">
+            <span [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
+            <span class="vente-price">{{ formatAmount(v.prixVente) }}</span>
+            <span class="vente-date">{{ v.createdAt | date:'dd/MM/yy' }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+  <div class="widget-actions mt-auto">
+    <a routerLink="/app/ventes" class="btn btn-sm btn-primary">
+      + Nouvelle vente
+    </a>
+  </div>
+</div>

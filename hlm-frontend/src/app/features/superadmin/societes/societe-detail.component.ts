@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 @Component({
   selector: 'app-societe-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, SocieteMembersComponent],
+  imports: [FormsModule, SocieteMembersComponent, DatePipe, DecimalPipe],
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })

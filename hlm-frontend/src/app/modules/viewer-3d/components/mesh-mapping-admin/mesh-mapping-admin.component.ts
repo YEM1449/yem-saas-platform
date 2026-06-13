@@ -10,7 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -54,7 +54,7 @@ interface MeshHierarchy {
 @Component({
   selector: 'app-mesh-mapping-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mesh-mapping-admin.component.html',
   styleUrl: './mesh-mapping-admin.component.css',

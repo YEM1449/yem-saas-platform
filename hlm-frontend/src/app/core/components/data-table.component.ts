@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, TemplateRef, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 
 export interface ColumnDef<T> {
   field?: keyof T;
@@ -17,7 +17,7 @@ export interface SortEvent {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgTemplateOutlet],
   template: `
     <div class="data-table-container">
       <!-- Loading State -->

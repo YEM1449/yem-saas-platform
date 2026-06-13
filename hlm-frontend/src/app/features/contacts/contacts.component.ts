@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, LowerCasePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -30,13 +30,12 @@ interface PipelineColumn {
 }
 
 const PIPELINE_STATUSES = new Set([
-  'PROSPECT', 'QUALIFIED_PROSPECT', 'CLIENT', 'ACTIVE_CLIENT', 'COMPLETED_CLIENT', 'REFERRAL', 'LOST',
-]);
+  'PROSPECT', 'QUALIFIED_PROSPECT', 'CLIENT', 'ACTIVE_CLIENT', 'COMPLETED_CLIENT', 'REFERRAL', 'LOST']);
 
 @Component({
   selector: 'app-contacts',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ContactImportDialogComponent],
+  imports: [RouterLink, FormsModule, ContactImportDialogComponent, DatePipe, LowerCasePipe, TitleCasePipe],
   templateUrl: './contacts.component.html',
   styleUrl: './contacts.component.css',
 })
@@ -82,8 +81,7 @@ export class ContactsComponent implements OnInit {
     { key: 'CLIENT',             label: 'Clients',        color: '#8b5cf6' },
     { key: 'ACTIVE_CLIENT',      label: 'Clients Actifs', color: '#10b981' },
     { key: 'COMPLETED_CLIENT',   label: 'Complétés',      color: '#059669' },
-    { key: 'REFERRAL',           label: 'Parrains',       color: '#f59e0b' },
-  ];
+    { key: 'REFERRAL',           label: 'Parrains',       color: '#f59e0b' }];
 
   // ── Auth ────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PortalContractsService } from '../../core/portal-contracts.service';
 import { PortalContract } from '../../../core/models/portal.model';
@@ -7,7 +7,7 @@ import { PortalContract } from '../../../core/models/portal.model';
 @Component({
   selector: 'app-portal-contracts',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule, DatePipe, DecimalPipe, NgClass],
   templateUrl: './portal-contracts.component.html',
   styleUrl: './portal-contracts.component.css',
 })

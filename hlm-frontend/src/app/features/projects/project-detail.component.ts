@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -23,7 +23,7 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, BuildingViewComponent],
+  imports: [FormsModule, RouterLink, DocumentListComponent, BuildingViewComponent, DatePipe, DecimalPipe],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })

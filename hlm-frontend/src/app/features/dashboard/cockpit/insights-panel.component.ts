@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { SmartInsight, InsightType } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-insights-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   template: `
     @if (insights.length === 0) {
       <!-- nothing to show -->

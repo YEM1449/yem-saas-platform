@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,7 +23,7 @@ type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
+  imports: [RouterLink, FormsModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })

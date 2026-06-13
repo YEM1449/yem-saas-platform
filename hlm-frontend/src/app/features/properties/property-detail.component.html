@@ -7,9 +7,9 @@
 </a>
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="property-detail-loading-state" aria-label="Chargement..." style="margin-top:24px">
+  <div class="skeleton-stack" data-testid="property-detail-loading-state" aria-label="Chargement..." class="mt-24">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
-    <span class="skeleton skeleton-card" style="height:160px"></span>
+    <span class="skeleton skeleton-card sk-h-160"></span>
     <div class="skeleton-grid">
       <span class="skeleton skeleton-card"></span>
       <span class="skeleton skeleton-card"></span>
@@ -19,7 +19,7 @@
 }
 
 @if (error && !loading) {
-  <div class="alert alert-error" style="margin-top:16px">{{ error }}</div>
+  <div class="alert alert-error mt-16">{{ error }}</div>
 }
 
 @if (!loading && property) {
@@ -62,11 +62,11 @@
   </div>
 
   @if (showEditForm) {
-    <div class="card" style="margin-bottom:16px; padding:20px">
-      <h3 style="margin-top:0">Modifier le bien</h3>
+    <div class="card card-padded mb-16">
+      <h3 class="mt-0">Modifier le bien</h3>
 
       @if (editError) {
-        <div class="alert alert-error" style="margin-bottom:12px">{{ editError }}</div>
+        <div class="alert alert-error mb-12">{{ editError }}</div>
       }
 
       <div class="form-grid">
@@ -168,7 +168,7 @@
         </div>
       </div>
 
-      <div class="form-actions" style="margin-top:16px; display:flex; gap:8px">
+      <div class="form-actions d-flex gap-8 mt-16">
         <button class="btn btn-primary" [disabled]="savingEdit" (click)="saveEdit()">
           {{ savingEdit ? 'Enregistrement…' : 'Enregistrer' }}
         </button>
@@ -180,10 +180,10 @@
   }
 
   @if (statusSuccess) {
-    <div class="alert alert-success" style="margin-bottom:16px">✓ {{ statusSuccess }}</div>
+    <div class="alert alert-success mb-16">✓ {{ statusSuccess }}</div>
   }
   @if (statusError) {
-    <div class="alert alert-error" style="margin-bottom:16px">{{ statusError }}</div>
+    <div class="alert alert-error mb-16">{{ statusError }}</div>
   }
 
   <!-- ── Two-column detail layout ────────────────────────────── -->
@@ -228,7 +228,7 @@
 
       <!-- ── Fiche commerciale VEFA (HT / TVA / TTC) ──────────────── -->
       <div class="card" data-testid="property-commercial">
-        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-header d-flex justify-between items-center">
           <span>Fiche commerciale (VEFA)</span>
           @if (canEditCommercial && !showCommercialForm) {
             <button class="btn btn-sm btn-secondary" (click)="openCommercialForm()" data-testid="commercial-edit">Modifier</button>
@@ -323,7 +323,7 @@
 
       <!-- Location card -->
       @if (property.address || property.city || property.region || property.postalCode) {
-        <div class="card" style="margin-top:16px">
+        <div class="card mt-16">
           <div class="card-header">Localisation</div>
           <div class="card-body">
             <dl class="info-dl">
@@ -350,7 +350,7 @@
 
       <!-- Legal card -->
       @if (property.titleDeedNumber || property.cadastralReference || property.legalStatus || property.zoning || property.ownerName) {
-        <div class="card" style="margin-top:16px">
+        <div class="card mt-16">
           <div class="card-header">Informations juridiques</div>
           <div class="card-body">
             <dl class="info-dl">
@@ -381,7 +381,7 @@
 
       <!-- Description / Notes -->
       @if (property.description || property.notes) {
-        <div class="card" style="margin-top:16px">
+        <div class="card mt-16">
           <div class="card-header">Description &amp; notes</div>
           <div class="card-body">
             @if (property.description) {
@@ -395,7 +395,7 @@
       }
 
       <!-- Timeline -->
-      <div class="card" style="margin-top:16px">
+      <div class="card mt-16">
         <div class="card-header">Historique</div>
         <div class="card-body">
           <dl class="info-dl">
@@ -434,7 +434,7 @@
             <span class="card-header-count">{{ media.length }}</span>
           }
           @if (canManageMedia) {
-            <label class="btn-upload" [class.disabled]="uploadLoading" style="margin-left:auto">
+            <label class="btn-upload ml-auto" [class.disabled]="uploadLoading">
               @if (uploadLoading) { Envoi… } @else { + Ajouter }
               <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
                      (change)="onFileSelected($event)" [disabled]="uploadLoading" hidden />
@@ -443,16 +443,16 @@
         </div>
         <div class="card-body">
           @if (uploadError) {
-            <div class="alert alert-error" style="margin-bottom:10px">{{ uploadError }}</div>
+            <div class="alert alert-error mb-10">{{ uploadError }}</div>
           }
           @if (deleteError) {
-            <div class="alert alert-error" style="margin-bottom:10px">{{ deleteError }}</div>
+            <div class="alert alert-error mb-10">{{ deleteError }}</div>
           }
           @if (mediaLoading) {
             <div class="skeleton-grid" aria-label="Chargement des médias…">
-              <span class="skeleton skeleton-card" style="height:120px"></span>
-              <span class="skeleton skeleton-card" style="height:120px"></span>
-              <span class="skeleton skeleton-card" style="height:120px"></span>
+              <span class="skeleton skeleton-card sk-h-120"></span>
+              <span class="skeleton skeleton-card sk-h-120"></span>
+              <span class="skeleton skeleton-card sk-h-120"></span>
             </div>
           }
           @if (!mediaLoading && media.length === 0) {
@@ -484,7 +484,7 @@
       </div>
 
       <!-- Documents card -->
-      <div class="card" style="margin-top:16px">
+      <div class="card mt-16">
         <div class="card-header">Documents</div>
         <div class="card-body">
           <app-document-list entityType="PROPERTY" [entityId]="property.id" />

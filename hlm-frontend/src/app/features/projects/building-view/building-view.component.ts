@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -28,7 +28,7 @@ interface StatusStats {
 @Component({
   selector: 'app-building-view',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule, DecimalPipe],
   templateUrl: './building-view.component.html',
   styleUrl: './building-view.component.css',
 })

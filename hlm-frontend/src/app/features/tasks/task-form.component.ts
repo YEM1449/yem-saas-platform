@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +16,7 @@ interface PropertySuggestion { id: string; title: string; referenceCode: string;
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserPickerComponent, ContactPickerComponent],
+  imports: [FormsModule, UserPickerComponent, ContactPickerComponent],
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.css',
 })

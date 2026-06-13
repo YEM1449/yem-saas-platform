@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { UiButtonComponent, UiEmptyStateComponent } from '../../shared/ui';
 @Component({
   selector: 'app-vente-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe,
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe,
             UiButtonComponent, UiEmptyStateComponent],
   templateUrl: './vente-list.component.html',
   styleUrl: './vente-list.component.css',
@@ -51,8 +51,7 @@ export class VenteListComponent implements OnInit {
   readonly statuts: VenteStatut[] = [
     'PROSPECT', 'OPTION', 'RESERVE', 'EN_RETRACTATION', 'ACOMPTE',
     'COMPROMIS', 'FINANCEMENT', 'ACTE',
-    'LIVRE_AVEC_RESERVES', 'RESERVES_LEVEES', 'LIVRE_DEFINITIF', 'ANNULE',
-  ];
+    'LIVRE_AVEC_RESERVES', 'RESERVES_LEVEES', 'LIVRE_DEFINITIF', 'ANNULE'];
 
   /** View mode: table (default) or kanban board */
   viewMode: 'table' | 'kanban' = 'table';
@@ -95,8 +94,7 @@ export class VenteListComponent implements OnInit {
     { key: 'COMPROMIS',       label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
     { key: 'FINANCEMENT',     label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
     { key: 'ACTE',            label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
-    { key: 'LIVRE_DEFINITIF', label: 'Livré',        hint: 'Remise des clés',           color: '#15803d' },
-  ];
+    { key: 'LIVRE_DEFINITIF', label: 'Livré',        hint: 'Remise des clés',           color: '#15803d' }];
 
   get kanbanBoard(): { col: { key: VenteStatut; label: string; hint: string; color: string }; items: Vente[] }[] {
     return this.KANBAN_COLUMNS.map(col => ({

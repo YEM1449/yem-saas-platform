@@ -296,3 +296,5 @@
 .legal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
 .legal-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #475569; }
 .legal-grid input, .legal-grid select { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+
+.form-control-inline { border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.85rem; }

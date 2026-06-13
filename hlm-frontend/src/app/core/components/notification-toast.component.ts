@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { NotificationPollingService, DueTask } from '../notification-polling.service';
 
 @Component({
   selector: 'app-notification-toast',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [DatePipe],
   template: `
     <div class="toast-stack" aria-live="polite">
       @for (task of tasks.slice(0, 3); track task.id) {

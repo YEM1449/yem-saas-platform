@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
 
@@ -10,7 +10,7 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
 @Component({
   selector: 'app-tresorerie-dashboard',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink],
+  imports: [DecimalPipe, DatePipe, RouterLink],
   template: `
     <div class="page">
       <header class="page-head">

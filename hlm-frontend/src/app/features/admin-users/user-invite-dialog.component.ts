@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminUserService } from './admin-user.service';
@@ -10,7 +10,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-user-invite-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './user-invite-dialog.component.html',
   styles: [`
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; }

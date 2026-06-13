@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
 
 /**
  * Status pill that maps a domain status onto the canonical status palette
@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'ui-status-pill',
   standalone: true,
-  imports: [CommonModule],
+  imports: [TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<span class="ui-pill" [style.background]="tone.bg" [style.color]="tone.fg">{{ label || (status | titlecase) }}</span>`,
   styles: [`

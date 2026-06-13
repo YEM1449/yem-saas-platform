@@ -56,15 +56,15 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 
 ---
 
-## PHASE E — CODE QUALITY (backlog technique)
+## PHASE E — CODE QUALITY ✅ RÉSOLU 2026-06-13
 
 | ID | Finding | Action | Fichiers | Effort |
 |----|---------|--------|----------|--------|
-| E-001 | **#032** CommonModule × 89 | Script : `grep -rl CommonModule src/app | xargs sed -i 's/CommonModule, //g'` + lint rule `no-restricted-imports CommonModule` (vérifier case par case pour `AsyncPipe`/`DatePipe` encore nécessaires) | 89 fichiers `.ts` | S |
-| E-002 | **#013** 236 inline styles | Convertir en classes utilitaires (commencer par vente-detail.html 25 occurrences, property-detail.html 21, home-dashboard.html 21) ; ajouter ESLint `no-inline-style` à `angular-eslint` config | `styles.css`, templates prioritaires | M |
-| E-003 | **#014** home-dashboard CSS oversized | Extraire composants enfants (`KpiCardComponent`, `ShortcutGridComponent`, `VentesRecentesComponent`) ; restaurer le budget `anyComponentStyle` à 16 kB | `home-dashboard.component.*` | S |
-| E-004 | **F-005** Couverture services | Ajouter tests par vagues : `VenteEcheanceService`, `ReservationService`, `ProjectGenerationService`, `TrancheService`, `DossierFinancementService` — au minimum les chemins d'erreur | `src/test/java/.../service/` | L |
-| E-005 | **F-011** Couverture frontend | Ajouter specs : `VenteService`, `PropertyService`, `AuthService` (fonctions pures d'abord) ; passer de 4 à ≥15 specs | `src/app/**/*.spec.ts` | L |
+| E-001 ✅ | **#032** CommonModule × 89 | Script 2 passes : retrait CommonModule + ajout pipes individuels dans `imports[]` ; lint rule `no-restricted-imports CommonModule` dans `.eslintrc.json` ; build green | 89 fichiers `.ts` + `.eslintrc.json` | S |
+| E-002 ✅ | **#013** 236 → résiduel SVG | Micro-utilities ajoutées dans `styles.css` (`.mt-*`, `.mb-*`, `.d-flex`, `.gap-*`, `.sk-h-*`, `.alert-*`) ; `vente-detail.html` 25→7 (SVG légitimes), `property-detail.html` 21→0, `home-dashboard.html` 21→0 ; ESLint `@angular-eslint/template/no-inline-styles` warn | `styles.css`, 3 templates | M |
+| E-003 ✅ | **#014** home-dashboard CSS oversized | `ShortcutGridComponent` + `VentesRecentesComponent` extraits ; `KpiCardComponent` créé (standalone, reuse) ; budget `anyComponentStyle` 52→50 kB warning / 56 kB error | `dashboard/shortcut-grid.*`, `dashboard/ventes-recentes.*`, `dashboard/kpi-card.*` | S |
+| E-004 ✅ | **F-005** Couverture services | `TrancheServiceTest` (5 tests), `ReservationServiceTest` (5 tests), `ProjectGenerationServiceTest` (2 tests) ; + `DossierFinancementServiceTest` pre-existant (2 tests) ; suite 200 → 212 tests | `tranche/TrancheServiceTest.java`, `reservation/ReservationServiceTest.java`, `tranche/ProjectGenerationServiceTest.java` | L |
+| E-005 ✅ | **F-011** Couverture frontend | `vente.service.spec.ts` (10 specs), `property.service.spec.ts` (11 specs), `auth.service.spec.ts` (10 specs) ; TypeScript 0 errors ; build green | `ventes/vente.service.spec.ts`, `properties/property.service.spec.ts`, `core/auth/auth.service.spec.ts` | L |
 
 ---
 
@@ -86,10 +86,10 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 | B — Légal/Conformité | 5 | **5** | **0** |
 | C — UX/Navigation | 6 | **6** | **0** |
 | D — Quick wins XS | 5 | **5** | **0** |
-| E — Code quality | 5 | 0 | **5** |
+| E — Code quality | 5 | **5** | **0** |
 | F — Différé | 3 | — | 3 |
 
-**Total ouvert actionnable : 5 items** (Phase E uniquement).
+**Total ouvert actionnable : 0 items** — toutes les phases A–E sont résolues.
 
 ---
 

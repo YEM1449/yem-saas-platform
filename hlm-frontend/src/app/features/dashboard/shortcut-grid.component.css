@@ -1,0 +1,35 @@
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.sc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 500;
+  color: var(--text, #374151);
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s, color .15s;
+}
+.sc:hover {
+  border-color: var(--c-primary-600, #16a34a);
+  box-shadow: 0 1px 6px rgba(22,163,74,.1);
+  color: var(--c-primary-600, #16a34a);
+}
+
+.sc-contacts    svg { color: #10b981; }
+.sc-properties  svg { color: #3b82f6; }
+.sc-reservations svg { color: #f59e0b; }
+.sc-ventes      svg { color: #6366f1; }
+.sc-projects    svg { color: #ec4899; }
+.sc-tasks       svg { color: #0ea5e9; }
+.sc-commercial  svg { color: #8b5cf6; }
+.sc-cash        svg { color: #10b981; }

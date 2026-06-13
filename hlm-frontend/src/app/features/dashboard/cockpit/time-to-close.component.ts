@@ -1,11 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { TimeToCloseRow } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-time-to-close',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">

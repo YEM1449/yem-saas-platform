@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditService } from './audit.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -8,7 +8,7 @@ import { AuditEventResponse } from '../../core/models/audit.model';
 @Component({
   selector: 'app-audit',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, DatePipe, SlicePipe],
   templateUrl: './audit.component.html',
 })
 export class AuditComponent implements OnInit {

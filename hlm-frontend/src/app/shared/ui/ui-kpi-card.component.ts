@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export type UiKpiTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 export type UiTrend = 'up' | 'down' | 'flat';
@@ -18,7 +18,7 @@ export type UiTrend = 'up' | 'down' | 'flat';
 @Component({
   selector: 'ui-kpi-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ui-kpi" [attr.data-tone]="tone">

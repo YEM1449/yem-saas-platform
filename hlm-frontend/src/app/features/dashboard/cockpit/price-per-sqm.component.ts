@@ -1,5 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { PricePerSqmRow, PricePerSqmProjectRow } from '../dashboard-cockpit.service';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -8,13 +8,12 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS = [
-  '#16a34a','#7c3aed','#059669','#d97706','#0891b2','#65a30d','#94a3b8',
-];
+  '#16a34a','#7c3aed','#059669','#d97706','#0891b2','#65a30d','#94a3b8'];
 
 @Component({
   selector: 'app-price-per-sqm',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">

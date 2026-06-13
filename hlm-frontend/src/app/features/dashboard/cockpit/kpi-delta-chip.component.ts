@@ -1,5 +1,5 @@
 import { Component, Input, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { KpiDelta } from '../dashboard-cockpit.service';
 
 /**
@@ -11,7 +11,7 @@ import { KpiDelta } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-kpi-delta-chip',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (delta?.deltaPct == null) {
       <span class="kpi-chip kpi-chip-neutral" title="Pas de période de référence">—</span>

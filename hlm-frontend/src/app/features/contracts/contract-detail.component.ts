@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ContractService } from './contract.service';
@@ -12,7 +12,7 @@ type Tab = 'info' | 'payments' | 'documents';
 @Component({
   selector: 'app-contract-detail',
   standalone: true,
-  imports: [CommonModule, PaymentScheduleComponent, DocumentListComponent],
+  imports: [PaymentScheduleComponent, DocumentListComponent, DatePipe, DecimalPipe],
   templateUrl: './contract-detail.component.html',
   styleUrl: './contract-detail.component.css',
 })

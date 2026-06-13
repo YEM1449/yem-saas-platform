@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,7 +11,7 @@ type PageState = 'loading' | 'form' | 'invalid' | 'done';
 @Component({
   selector: 'app-activation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './activation.component.html',
   styleUrl: './activation.component.css',
 })

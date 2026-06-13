@@ -2,7 +2,7 @@ import {
   Component, OnInit, OnDestroy, Input,
   ChangeDetectionStrategy, ChangeDetectorRef, signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Subscription, Subject, takeUntil, catchError, EMPTY } from 'rxjs';
 
@@ -27,7 +27,7 @@ interface KpiEntry {
 @Component({
   selector: 'app-dashboard-3d-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProjectViewer3dComponent],
+  imports: [FormsModule, ProjectViewer3dComponent],
   templateUrl: './dashboard-3d-tab.component.html',
   styleUrl:    './dashboard-3d-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,8 +88,7 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
       // Dynamic import to keep three.js and html2canvas out of the main bundle
       const [html2canvasModule, jsPDFModule] = await Promise.all([
         import('html2canvas' as any).catch(() => null),
-        import('jspdf' as any).catch(() => null),
-      ]);
+        import('jspdf' as any).catch(() => null)]);
 
       if (!html2canvasModule || !jsPDFModule) {
         alert('Export PDF non disponible (modules html2canvas/jsPDF introuvables).');
@@ -141,7 +140,6 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
       { label: 'Livrés',          value: String(livre),      sub: pct(livre),       color: '#6B7280' },
       ...(retire > 0 ? [{ label: 'Retirés', value: String(retire), sub: pct(retire), color: '#EF4444' }] : []),
       { label: 'CA réalisé',      value: caRealise   > 0 ? fmt(caRealise)   : '—' },
-      { label: 'CA prévisionnel', value: caPrevision > 0 ? fmt(caPrevision) : '—' },
-    ];
+      { label: 'CA prévisionnel', value: caPrevision > 0 ? fmt(caPrevision) : '—' }];
   }
 }

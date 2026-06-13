@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
@@ -9,7 +9,7 @@ import { CommissionDTO, CommissionRuleRequest, CommissionRuleResponse } from '..
 @Component({
   selector: 'app-commissions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './commissions.component.html',
 })
 export class CommissionsComponent implements OnInit {

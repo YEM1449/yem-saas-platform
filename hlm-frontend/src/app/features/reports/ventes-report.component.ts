@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs';
@@ -9,7 +9,7 @@ import { VenteService, Vente } from '../ventes/vente.service';
 @Component({
   selector: 'app-ventes-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './ventes-report.component.html',
   styleUrl: './ventes-report.component.css',
 })
@@ -40,8 +40,7 @@ export class VentesReportComponent implements OnInit {
     { value: 'LIVRE_AVEC_RESERVES', label: 'Livré (réserves)' },
     { value: 'RESERVES_LEVEES',     label: 'Réserves levées' },
     { value: 'LIVRE_DEFINITIF',     label: 'Livré' },
-    { value: 'ANNULE',              label: 'Annulé' },
-  ];
+    { value: 'ANNULE',              label: 'Annulé' }];
 
   readonly STATUT_LABELS: Record<string, string> = {
     COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',

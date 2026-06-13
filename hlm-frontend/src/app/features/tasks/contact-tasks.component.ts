@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TaskService } from './task.service';
 import { Task, TaskStatus } from './task.model';
@@ -9,7 +9,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-contact-tasks',
   standalone: true,
-  imports: [CommonModule, TaskFormComponent],
+  imports: [TaskFormComponent, DatePipe],
   template: `
     <div class="task-widget">
       <div class="widget-header">

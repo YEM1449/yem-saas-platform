@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { PortalVentesService } from '../../core/portal-ventes.service';
 import { Vente, EcheanceStatut, VenteDocument } from '../../../features/ventes/vente.service';
 import { PipelineStepperComponent } from '../../../features/ventes/pipeline-stepper.component';
@@ -7,7 +7,7 @@ import { PipelineStepperComponent } from '../../../features/ventes/pipeline-step
 @Component({
   selector: 'app-portal-ventes',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, PipelineStepperComponent],
+  imports: [DatePipe, DecimalPipe, PipelineStepperComponent],
   templateUrl: './portal-ventes.component.html',
   styleUrl: './portal-ventes.component.css',
 })

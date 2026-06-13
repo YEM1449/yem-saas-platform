@@ -34,7 +34,15 @@
           }
         ],
         "@typescript-eslint/no-explicit-any": "warn",
-        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+        "no-restricted-imports": [
+          "error",
+          {
+            "name": "@angular/common",
+            "importNames": ["CommonModule"],
+            "message": "Import individual pipes/directives (DatePipe, NgClass, etc.) instead of CommonModule."
+          }
+        ]
       }
     },
     {
@@ -42,7 +50,12 @@
       "extends": [
         "plugin:@angular-eslint/template/recommended"
       ],
-      "rules": {}
+      "rules": {
+        "@angular-eslint/template/no-inline-styles": [
+          "warn",
+          { "allowNgStyle": true, "allowBindToStyle": true }
+        ]
+      }
     }
   ]
 }

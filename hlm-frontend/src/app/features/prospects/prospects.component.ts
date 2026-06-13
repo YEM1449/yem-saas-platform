@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +16,7 @@ interface PipelineColumn {
 @Component({
   selector: 'app-prospects',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './prospects.component.html',
   styleUrl: './prospects.component.css',
 })
@@ -36,8 +36,7 @@ export class ProspectsComponent implements OnInit {
     { key: 'CLIENT',             label: 'Clients',         colorVar: '#8b5cf6' },
     { key: 'ACTIVE_CLIENT',      label: 'Clients Actifs',  colorVar: '#10b981' },
     { key: 'COMPLETED_CLIENT',   label: 'Complétés',       colorVar: '#059669' },
-    { key: 'REFERRAL',           label: 'Parrains',        colorVar: '#f59e0b' },
-  ];
+    { key: 'REFERRAL',           label: 'Parrains',        colorVar: '#f59e0b' }];
 
   ngOnInit(): void {
     this.svc.list().subscribe({

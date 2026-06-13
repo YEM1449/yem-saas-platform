@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Forecast } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-forecast-widget',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="widget">
       <div class="widget-header">

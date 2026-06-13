@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PortalContractsService } from '../../core/portal-contracts.service';
 import { PortalProperty } from '../../../core/models/portal.model';
@@ -7,7 +7,7 @@ import { PortalProperty } from '../../../core/models/portal.model';
 @Component({
   selector: 'app-portal-property',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './portal-property.component.html',
   styleUrl: './portal-property.component.css',
 })

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommercialDashboardService } from './commercial-dashboard.service';
@@ -10,7 +10,7 @@ import {
 @Component({
   selector: 'app-commercial-dashboard-sales',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink, DatePipe],
   template: `
     <div class="sales-page">
       <div class="sales-header">

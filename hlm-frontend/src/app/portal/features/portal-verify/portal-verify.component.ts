@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { PortalAuthService } from '../../core/portal-auth.service';
 
@@ -8,7 +8,7 @@ type VerifyState = 'verifying' | 'error';
 @Component({
   selector: 'app-portal-verify',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './portal-verify.component.html',
   styleUrl: './portal-verify.component.css',
 })

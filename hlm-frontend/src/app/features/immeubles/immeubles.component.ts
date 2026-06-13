@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ImmeubleService, Immeuble, CreateImmeubleRequest } from './immeuble.service';
 import { ProjectService } from '../projects/project.service';
@@ -10,7 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-immeubles',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './immeubles.component.html',
 })
 export class ImmeublesComponent implements OnInit {

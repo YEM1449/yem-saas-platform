@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { VenteStatut } from './vente.service';
 
 export interface PipelineStep {
@@ -12,13 +12,12 @@ const VENTE_STEPS: PipelineStep[] = [
   { statut: 'COMPROMIS',       label: 'Compromis'    },
   { statut: 'FINANCEMENT',     label: 'Financement'  },
   { statut: 'ACTE',            label: 'Acte notarié' },
-  { statut: 'LIVRE_DEFINITIF', label: 'Livré'        },
-];
+  { statut: 'LIVRE_DEFINITIF', label: 'Livré'        }];
 
 @Component({
   selector: 'app-pipeline-stepper',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (statut === 'ANNULE') {
       <div class="stepper-cancelled">

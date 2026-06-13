@@ -730,6 +730,47 @@ select.form-control   { cursor: pointer; }
 .divider      { height: 1px; background: var(--c-border); border: none; margin: 20px 0; }
 .sr-only      { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
+/* ── Spacing / layout micro-utilities (replaces inline styles) ──── */
+.m-0   { margin: 0; }
+.mt-0  { margin-top: 0; }
+.mt-4  { margin-top: 4px; }
+.mt-6  { margin-top: 6px; }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mt-auto { margin-top: auto; }
+.mb-0  { margin-bottom: 0; }
+.mb-4  { margin-bottom: 4px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-10 { margin-bottom: 10px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.ml-auto { margin-left: auto; }
+.ml-4  { margin-left: 4px; }
+.ml-6  { margin-left: 6px; }
+.d-flex        { display: flex; }
+.flex-wrap     { flex-wrap: wrap; }
+.items-center  { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-4  { gap: 4px; }
+.gap-6  { gap: 6px; }
+.gap-8  { gap: 8px; }
+.gap-10 { gap: 10px; }
+.gap-12 { gap: 12px; }
+.text-2xs    { font-size: 0.7rem; }
+.text-gray   { color: #9ca3af; }
+.cursor-pointer { cursor: pointer; }
+.sk-h-80  { height: 80px; }
+.sk-h-120 { height: 120px; }
+.sk-h-160 { height: 160px; }
+.sk-h-220 { height: 220px; }
+.sk-h-240 { height: 240px; }
+.alert-row   { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.alert-inset { margin: 8px 16px; }
+.py-16 { padding-top: 16px; padding-bottom: 16px; }
+.card-padded { padding: 20px; }
+.text-base { font-size: 1rem; }
+
 /* Inline stat in toolbar */
 .stat-chip {
   display: inline-flex;

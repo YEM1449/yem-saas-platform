@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { MadInputComponent } from '../../core/components/mad-input.component';
 @Component({
   selector: 'app-vente-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, MadInputComponent],
+  imports: [FormsModule, DecimalPipe, RouterLink, MadInputComponent],
   templateUrl: './vente-create.component.html',
   styleUrl: './vente-create.component.css',
 })
@@ -37,8 +37,7 @@ export class VenteCreateComponent implements OnInit {
     { key: 'COMPROMIS',       label: 'Compromis',     color: '#6366f1' },
     { key: 'FINANCEMENT',     label: 'Financement',   color: '#f59e0b' },
     { key: 'ACTE',            label: 'Acte notarié',  color: '#3b82f6' },
-    { key: 'LIVRE_DEFINITIF', label: 'Livraison',     color: '#10b981' },
-  ];
+    { key: 'LIVRE_DEFINITIF', label: 'Livraison',     color: '#10b981' }];
 
   get reservationId(): string | null {
     return this.route.snapshot.queryParamMap.get('reservationId');
