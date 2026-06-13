@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 2 | 8 |
+> | 🟠 Major | 10 | 1 | 9 |
 > | 🟡 Minor | 16 | 14 | 2 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **23** | **11** |
+> | **Total** | **34** | **22** | **12** |
 
 ---
 
@@ -73,7 +73,7 @@ sans changer d'écran."**
 | 5 | #025 — Privacy policy + mentions légales in portal — ✅ done 2026-06-12 | Nadia (Legal) | S | **YES** — legal exposure |
 | 6 | #004 — "Deactivate everywhere" for multi-société users — ✅ done 2026-06-12 | Leila (Security) | S | No (but security hole) |
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
-| 8 | #028 — Refund (remboursement) tracking after rétractation | Nadia (Legal) | M | No, but pre-GA |
+| 8 | #028 — Refund (remboursement) tracking after rétractation — ✅ done 2026-06-12 | Nadia (Legal) | M | No, but pre-GA |
 | 9 | #016 — Resolve Contracts-vs-Ventes dual concept in nav — ✅ done 2026-06-12 | Karim (UX) | M | Yes (agent confusion) |
 | 10 | #023 — Paginate list endpoints (List→Page) — ✅ done 2026-06-12 | Adam (Code) | L | No (load risk at scale) |
 
@@ -592,11 +592,29 @@ vous consentez… Loi 09-08 → politique de confidentialité"). i18n keys in fr
 *Operator action required before GA:* fill the `[à compléter]` placeholders and file/confirm
 the CNDP declaration (that organizational step is finding #026).
 
-**FINDING #028** — Legal — Nadia — `Status: 🔲 OPEN`
+**FINDING #028** — Legal — Nadia — `Status: ✅ RESOLVED (2026-06-12, remboursement tracking)`
 No refund (remboursement) tracking: after rétractation/annulation the deposit's return is
 untracked (no field, no event, no document) though the manager guide promises it.
 *Fix:* `remboursement` record on vente (montant, date, moyen, statut) + audit event +
 mention on the cancellation PV. *Effort:* M
+*Resolution:* Changeset **085** — `remboursement` table (1:1 vente, RLS) + `vente.montant_depot`
+(the deposit validated at `confirmReservation` was checked against the 5% cap but **never
+persisted** — now it is, giving the refund a known amount). `Remboursement` entity + enums
+(`MoyenRemboursement`, `StatutRemboursement DU/EFFECTUE/ANNULE`). **Auto-tracked, never
+forgotten:** cancelling a vente (rétractation or `→ANNULE`) publishes `VenteAnnuleeEvent`;
+`RemboursementService` (synchronous `@EventListener`, idempotent) creates a `DU` record with
+the deposit amount and audits `REMBOURSEMENT_DU`. A gestionnaire adjusts the amount
+(`PUT`) and marks it paid (`POST /effectue` — date + moyen + référence), audited
+`REMBOURSEMENT_EFFECTUE`. Endpoints under `/api/ventes/{id}/remboursement` (ADMIN/MANAGER for
+writes). Frontend: a "Remboursement du dépôt" card on vente-detail (shown when ANNULE) — status
+badge (À rembourser / Remboursé), amount adjust, and a mark-as-paid form. Manager legal guide
+updated (the line that "promised" the refund now describes the tracking). Tests:
+`RemboursementServiceTest` ×8 (auto-create + audit, idempotent, null-deposit→0, amount adjust,
+reject active vente, mark-paid + audit, reject double-pay, 404); unit suite **195 green**; FE
+build green. Next changeset: **086**.
+*Note on "cancellation PV":* no annulation PV document is generated today, so there is nothing
+to print the mention on yet; the refund data is exposed on the vente for any future PV. The
+**audit trail** (`REMBOURSEMENT_*`) is the durable legal record in the meantime.
 
 ## 🟡 Minor
 

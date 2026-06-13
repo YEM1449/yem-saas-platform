@@ -318,6 +318,9 @@ public class VenteService {
             }
         }
 
+        // Persist the deposit so the refund obligation has a known amount on annulation (#028).
+        vente.setMontantDepot(montantDepot);
+
         vente.setStatut(VenteStatut.RESERVE);
         vente.setOptionExpireAt(null);
 
@@ -354,7 +357,15 @@ public class VenteService {
         vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
         releasePropertyForCancelledVente(societeId, vente);
 
-        return toResponse(venteRepository.save(vente));
+        Vente saved = venteRepository.save(vente);
+        publishVenteAnnulee(societeId, saved);
+        return toResponse(saved);
+    }
+
+    /** Fires the cancellation event so a refund obligation is recorded (#028). */
+    private void publishVenteAnnulee(UUID societeId, Vente vente) {
+        eventPublisher.publishEvent(new com.yem.hlm.backend.common.event.VenteAnnuleeEvent(
+                societeId, societeCtx.requireUserId(), vente.getId(), vente.getMontantDepot()));
     }
 
     // ── scheduler-facing sweeps (run in system context) ──────────────────────
@@ -598,7 +609,11 @@ public class VenteService {
             }
         }
 
-        return toResponse(venteRepository.save(vente));
+        Vente saved = venteRepository.save(vente);
+        if (request.statut() == VenteStatut.ANNULE) {
+            publishVenteAnnulee(societeId, saved);
+        }
+        return toResponse(saved);
     }
 
     // =========================================================================

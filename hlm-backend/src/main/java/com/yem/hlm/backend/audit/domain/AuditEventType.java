@@ -16,6 +16,10 @@ public enum AuditEventType {
     PAYMENT_CALL_ISSUED,
     PAYMENT_RECEIVED,
 
+    // Refund events (#028)
+    REMBOURSEMENT_DU,
+    REMBOURSEMENT_EFFECTUE,
+
     // Reservation module events
     RESERVATION_CREATED,
     RESERVATION_CANCELLED,

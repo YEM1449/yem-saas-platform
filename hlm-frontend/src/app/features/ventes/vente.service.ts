@@ -345,4 +345,33 @@ export class VenteService {
   updateFinancement(id: string, req: UpdateFinancingRequest): Observable<Vente> {
     return this.http.patch<Vente>(`${BASE}/${id}/financement`, req);
   }
+
+  // ── Refund tracking after annulation/rétractation (#028) ───────────────────
+  getRemboursement(venteId: string): Observable<Remboursement> {
+    return this.http.get<Remboursement>(`${BASE}/${venteId}/remboursement`);
+  }
+
+  upsertRemboursement(venteId: string, montant: number, motif?: string): Observable<Remboursement> {
+    return this.http.put<Remboursement>(`${BASE}/${venteId}/remboursement`, { montant, motif });
+  }
+
+  marquerRembourse(venteId: string, moyen: MoyenRemboursement,
+                   dateRemboursement?: string, reference?: string): Observable<Remboursement> {
+    return this.http.post<Remboursement>(`${BASE}/${venteId}/remboursement/effectue`,
+      { moyen, dateRemboursement, reference });
+  }
+}
+
+export type MoyenRemboursement = 'VIREMENT' | 'CHEQUE' | 'ESPECES' | 'AUTRE';
+export type StatutRemboursement = 'DU' | 'EFFECTUE' | 'ANNULE';
+
+export interface Remboursement {
+  id: string;
+  venteId: string;
+  montant: number;
+  moyen: MoyenRemboursement | null;
+  statut: StatutRemboursement;
+  reference: string | null;
+  motif: string | null;
+  dateRemboursement: string | null;
 }

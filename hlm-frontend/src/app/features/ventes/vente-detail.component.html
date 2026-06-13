@@ -52,6 +52,83 @@
     </div>
   </div>
 
+  <!-- ── Remboursement du dépôt (après annulation/rétractation) #028 ── -->
+  @if (v.statut === 'ANNULE') {
+    <div class="card mb-20" data-testid="remboursement-card">
+      <div class="card-body">
+        <h3 class="card-title">Remboursement du dépôt</h3>
+        @if (rembError()) { <p class="msg-error">{{ rembError() }}</p> }
+
+        @if (remboursement(); as r) {
+          <div class="info-grid">
+            <div><span class="info-label">Statut</span>
+              <span class="badge" [class.badge-success]="r.statut === 'EFFECTUE'"
+                    [class.badge-warning]="r.statut === 'DU'">
+                {{ r.statut === 'EFFECTUE' ? 'Remboursé' : (r.statut === 'DU' ? 'À rembourser' : 'Annulé') }}
+              </span>
+            </div>
+            <div><span class="info-label">Montant</span>
+              <span class="info-value">{{ r.montant | number:'1.0-0' }} MAD</span></div>
+            @if (r.statut === 'EFFECTUE') {
+              <div><span class="info-label">Moyen</span><span class="info-value">{{ moyenLabel(r.moyen) }}</span></div>
+              <div><span class="info-label">Date</span>
+                <span class="info-value">{{ r.dateRemboursement | date:'dd/MM/yyyy' }}</span></div>
+              @if (r.reference) {
+                <div><span class="info-label">Référence</span><span class="info-value">{{ r.reference }}</span></div>
+              }
+            }
+          </div>
+
+          @if (r.statut === 'DU' && canWrite) {
+            <!-- Adjust amount -->
+            <div class="remb-edit">
+              <label class="info-label">Ajuster le montant dû (MAD)</label>
+              <div class="remb-row">
+                <input type="number" min="0" class="form-control" [(ngModel)]="editMontant"
+                       [placeholder]="r.montant" />
+                <button class="btn btn-sm btn-secondary" [disabled]="rembBusy() || editMontant == null"
+                        (click)="saveMontant(v.id)">Enregistrer</button>
+              </div>
+            </div>
+
+            <!-- Mark as paid -->
+            @if (!showRembForm) {
+              <button class="btn btn-primary mt-12" (click)="showRembForm = true"
+                      data-testid="remb-mark-paid">Marquer comme remboursé</button>
+            } @else {
+              <div class="remb-form">
+                <div class="form-group">
+                  <label class="info-label">Moyen</label>
+                  <select class="form-control" [(ngModel)]="rembForm.moyen">
+                    <option value="VIREMENT">Virement</option>
+                    <option value="CHEQUE">Chèque</option>
+                    <option value="ESPECES">Espèces</option>
+                    <option value="AUTRE">Autre</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="info-label">Date</label>
+                  <input type="date" class="form-control" [(ngModel)]="rembForm.dateRemboursement" />
+                </div>
+                <div class="form-group">
+                  <label class="info-label">Référence (virement/chèque)</label>
+                  <input type="text" class="form-control" [(ngModel)]="rembForm.reference" />
+                </div>
+                <div class="remb-row">
+                  <button class="btn btn-primary" [disabled]="rembBusy()"
+                          (click)="confirmRemboursement(v.id)" data-testid="remb-confirm">Confirmer</button>
+                  <button class="btn btn-secondary" (click)="showRembForm = false">Annuler</button>
+                </div>
+              </div>
+            }
+          }
+        } @else {
+          <p class="muted">Aucun remboursement enregistré pour cette vente annulée.</p>
+        }
+      </div>
+    </div>
+  }
+
   <!-- ── VEFA actions (Loi 44-00) ────────────────────────────── -->
   @if (canConfirmReservation || canRetract || canRecordDelivery || showReservesPanel) {
     <div class="card mb-20" data-testid="vefa-actions">

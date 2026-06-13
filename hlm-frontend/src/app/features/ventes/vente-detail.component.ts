@@ -8,7 +8,8 @@ import {
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
   CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison,
   CoAcquereur, RoleAcquereur, SituationMatrimoniale, TypeAcquereur,
-  DossierFinancement, StatutDossierFinancement
+  DossierFinancement, StatutDossierFinancement,
+  Remboursement, MoyenRemboursement
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
@@ -135,6 +136,7 @@ export class VenteDetailComponent implements OnInit {
         this.maybeLoadReserves(v);
         this.loadCoAcquereur(v.id);
         this.loadDossier(v.id);
+        if (v.statut === 'ANNULE') this.loadRemboursement(v.id);
       },
       error: ()  => this.error.set('Vente introuvable.'),
     });
@@ -169,6 +171,46 @@ export class VenteDetailComponent implements OnInit {
       next:  (d) => this.dossier.set(d),
       error: ()  => this.dossier.set(null), // 404 = no dossier yet
     });
+  }
+
+  // ── Refund tracking (#028) ────────────────────────────────────────────────
+  remboursement = signal<Remboursement | null>(null);
+  rembBusy      = signal(false);
+  rembError     = signal('');
+  showRembForm  = false;
+  rembForm: { moyen: MoyenRemboursement; dateRemboursement: string; reference: string } =
+    { moyen: 'VIREMENT', dateRemboursement: '', reference: '' };
+  editMontant: number | null = null;
+
+  private loadRemboursement(venteId: string): void {
+    this.svc.getRemboursement(venteId).subscribe({
+      next:  (r) => this.remboursement.set(r),
+      error: ()  => this.remboursement.set(null), // 404 = none (vente not cancelled)
+    });
+  }
+
+  saveMontant(venteId: string): void {
+    if (this.editMontant == null || this.editMontant < 0) return;
+    this.rembBusy.set(true); this.rembError.set('');
+    this.svc.upsertRemboursement(venteId, this.editMontant).subscribe({
+      next: (r) => { this.remboursement.set(r); this.editMontant = null; this.rembBusy.set(false); },
+      error: (e) => { this.rembBusy.set(false);
+        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du montant.'); },
+    });
+  }
+
+  confirmRemboursement(venteId: string): void {
+    this.rembBusy.set(true); this.rembError.set('');
+    this.svc.marquerRembourse(venteId, this.rembForm.moyen,
+      this.rembForm.dateRemboursement || undefined, this.rembForm.reference || undefined).subscribe({
+      next: (r) => { this.remboursement.set(r); this.showRembForm = false; this.rembBusy.set(false); },
+      error: (e) => { this.rembBusy.set(false);
+        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du remboursement.'); },
+    });
+  }
+
+  moyenLabel(m: MoyenRemboursement | null): string {
+    return { VIREMENT: 'Virement', CHEQUE: 'Chèque', ESPECES: 'Espèces', AUTRE: 'Autre' }[m ?? 'AUTRE'] ?? '—';
   }
 
   openDossierForm(): void {
@@ -470,7 +512,10 @@ export class VenteDetailComponent implements OnInit {
   }
 
   private reload(id: string): void {
-    this.svc.get(id).subscribe({ next: (v) => this.vente.set(v) });
+    this.svc.get(id).subscribe({ next: (v) => {
+      this.vente.set(v);
+      if (v.statut === 'ANNULE') this.loadRemboursement(v.id);
+    } });
   }
 
   statutLabel(s: VenteStatut): string {

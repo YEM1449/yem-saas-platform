@@ -34,7 +34,10 @@ l'interface n'affiche que les actions autorisées par l'état courant.
   **délai légal de rétractation de 7 jours** (Art. 618-3 ; configurable par marché via `MARKET_CODE`,
   FR = 10 j). La date limite est affichée sur la fiche.
 - **Exercer la rétractation** (bouton dédié, ADMIN/MANAGER) :
-  - **Dans le délai** → la vente est annulée, le bien libéré, le dépôt à rembourser.
+  - **Dans le délai** → la vente est annulée, le bien libéré, et un **remboursement « à rembourser »
+    est créé automatiquement** sur la fiche vente (montant = dépôt versé). Le gestionnaire ajuste le
+    montant si besoin puis le marque **« remboursé »** (date + moyen : virement/chèque/espèces) — la
+    confirmation est tracée dans le journal d'audit (`REMBOURSEMENT_EFFECTUE`).
   - **Hors délai** → l'action est refusée (**409 `RETRACTATION_IMPOSSIBLE`**).
   - **Sans rétractation** : à l'expiration du délai, un *scheduler* fait passer la vente en `RESERVE`
     (la vente continue).
