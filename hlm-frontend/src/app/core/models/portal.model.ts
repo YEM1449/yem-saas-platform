@@ -39,4 +39,14 @@ export interface PortalProperty {
 export interface PortalTenantInfo {
   tenantName: string;
   logoUrl: string | null;
+  // Legal identity + recorded data-protection info for the legal pages (#025/#026).
+  // Any field may be null until the société records it.
+  legalName?: string | null;
+  rc?: string | null;
+  ice?: string | null;
+  adresseSiege?: string | null;
+  dpoEmail?: string | null;
+  dpoName?: string | null;
+  cndpNumber?: string | null;
+  cndpDeclarationDate?: string | null;
 }

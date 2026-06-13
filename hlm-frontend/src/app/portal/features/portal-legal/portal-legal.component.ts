@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PortalAuthService } from '../../core/portal-auth.service';
+import { PortalTenantInfo } from '../../../core/models/portal.model';
 
 /**
  * Mentions légales — portail acquéreur (finding #025). Page publique.
@@ -20,12 +22,14 @@ import { TranslateModule } from '@ngx-translate/core';
         <h2>Éditeur de la plateforme</h2>
         <p>
           L'espace acquéreur est édité et exploité techniquement par la plateforme <strong>YEM HLM</strong>,
-          pour le compte du promoteur immobilier vendeur <strong>[à compléter : raison sociale, forme
-          juridique, capital, RC, ICE, adresse du siège]</strong>.
+          pour le compte du promoteur immobilier vendeur@if (info()?.legalName) {
+            <strong> {{ info()!.legalName }}</strong>@if (info()?.adresseSiege) {, dont le siège est
+            situé {{ info()!.adresseSiege }}}@if (info()?.rc) { — RC {{ info()!.rc }}}@if (info()?.ice) {,
+            ICE {{ info()!.ice }}}.
+          } @else {
+            (raison sociale, RC et ICE disponibles auprès de votre promoteur).
+          }
         </p>
-
-        <h2>Directeur de la publication</h2>
-        <p><strong>[à compléter : nom du représentant légal du promoteur]</strong>.</p>
 
         <h2>Hébergement</h2>
         <p>
@@ -66,4 +70,16 @@ import { TranslateModule } from '@ngx-translate/core';
     a { color: #16a34a; }
   `]
 })
-export class PortalLegalComponent {}
+export class PortalLegalComponent implements OnInit {
+  private auth = inject(PortalAuthService);
+
+  /** Société legal identity — populated for authenticated buyers; null pre-auth (public visit). */
+  info = signal<PortalTenantInfo | null>(null);
+
+  ngOnInit(): void {
+    this.auth.getTenantInfo().subscribe({
+      next: (i) => this.info.set(i),
+      error: () => this.info.set(null),
+    });
+  }
+}

@@ -15,9 +15,9 @@
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
 > | 🟠 Major | 10 | 2 | 8 |
-> | 🟡 Minor | 16 | 15 | 1 |
+> | 🟡 Minor | 16 | 14 | 2 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **24** | **10** |
+> | **Total** | **34** | **23** | **11** |
 
 ---
 
@@ -653,10 +653,25 @@ Leaderboard is top-5 only; "which agent is underperforming" — the manager's da
 is unanswerable. *Fix:* full ranked table behind the podium, or a "bottom 3 / no sales 14d"
 strip. *Effort:* XS
 
-**FINDING #026** — Legal — Nadia — `Status: 🔲 OPEN`
+**FINDING #026** — Legal — Nadia — `Status: ✅ RESOLVED (software part) (2026-06-12, CNDP surfacing) · ⏳ org filing pending`
 CNDP declaration for CIN/financial processing not evidenced anywhere (org-level act).
 *Fix:* file/confirm CNDP declaration; record number in mentions légales (#025). *Effort:* S
 (org)
+*Resolution:* The Societe entity already had the fields (`numeroCndp`, `dateDeclarationCndp`,
+`emailDpo`, `dpoNom`, `rc`, `siretIce`, `adresseSiege`) and the admin `/compliance` endpoint
+already scores a missing CNDP declaration (+30, flagged in `missingFields`). The gap was
+**surfacing**: `getTenantInfo()` only returned name+logo. Enriched `PortalTenantInfoResponse`
+with the legal-identity + data-protection fields, populated from the société. The portal
+legal pages (#025) now fetch tenant-info best-effort and render the **recorded CNDP number,
+declaration date and DPO contact** in place of the `[à compléter]` placeholders — so once a
+société files and records the number, it is automatically evidenced on the consumer-facing
+privacy/mentions pages. Authenticated buyers see the real values; pre-auth/public visits and
+not-yet-recorded sociétés get a clean generic notice (no raw brackets). Added
+`docs/legal/cndp-declaration.md` — the org filing checklist + declaration register (the audit
+evidence artifact), incl. the #005 intra-group transfer note. Unit suite 187 green; FE build
+green. **Org action still required (cannot be done in code):** each société must actually file
+with the CNDP and enter its récépissé number on the société record. The compliance score
+surfaces this to admins until done.
 
 **FINDING #027** — Legal — Nadia — `Status: 🔲 OPEN`
 No written data-retention policy; deletion is soft/anonymization (F-012 deferred) with

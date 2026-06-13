@@ -92,12 +92,26 @@ public class PortalContractService {
     // Société info
     // =========================================================================
 
-    /** Returns the société's display name for the portal shell header. */
+    /**
+     * Returns the société's display name + legal identity + recorded data-protection info
+     * (CNDP declaration, DPO) for the portal shell header and the legal pages (#025/#026).
+     */
     public PortalTenantInfoResponse getTenantInfo() {
         UUID societeId = requireSocieteId();
         Societe societe = societeRepository.findById(societeId)
                 .orElseThrow(() -> new IllegalStateException("Société not found in context"));
-        return new PortalTenantInfoResponse(societe.getNom(), null);
+        String adresse = societe.getAdresseSiege() != null ? societe.getAdresseSiege() : societe.getAdresse();
+        return new PortalTenantInfoResponse(
+                societe.getNomCommercial() != null ? societe.getNomCommercial() : societe.getNom(),
+                null,
+                societe.getNom(),
+                societe.getRc(),
+                societe.getSiretIce(),
+                adresse,
+                societe.getEmailDpo(),
+                societe.getDpoNom(),
+                societe.getNumeroCndp(),
+                societe.getDateDeclarationCndp());
     }
 
     // =========================================================================

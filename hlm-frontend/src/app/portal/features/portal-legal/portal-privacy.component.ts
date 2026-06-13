@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PortalAuthService } from '../../core/portal-auth.service';
+import { PortalTenantInfo } from '../../../core/models/portal.model';
 
 /**
  * Politique de confidentialité — portail acquéreur (finding #025).
@@ -34,7 +36,8 @@ import { TranslateModule } from '@ngx-translate/core';
         <h2>1. Responsable du traitement</h2>
         <p>
           Le responsable du traitement est le promoteur immobilier auprès duquel vous avez engagé
-          votre acquisition (la société vendeuse), <strong>[à compléter : raison sociale, adresse]</strong>.
+          votre acquisition (la société vendeuse)@if (info()?.legalName) { :
+          <strong>{{ info()!.legalName }}</strong>@if (info()?.adresseSiege) {, {{ info()!.adresseSiege }}}}.
           La plateforme YEM HLM agit en qualité de sous-traitant technique pour le compte de ce
           promoteur.
         </p>
@@ -78,16 +81,27 @@ import { TranslateModule } from '@ngx-translate/core';
         <h2>7. Vos droits</h2>
         <p>
           Conformément à la Loi 09-08, vous disposez d'un droit d'accès, de rectification,
-          d'opposition et de suppression de vos données. Pour exercer ces droits, contactez le
-          promoteur à l'adresse <strong>[à compléter : e-mail de contact / DPO]</strong>. Vous
-          pouvez également saisir la <strong>CNDP</strong> (Commission Nationale de contrôle de la
-          Protection des Données à caractère personnel) en cas de difficulté.
+          d'opposition et de suppression de vos données. Pour exercer ces droits, contactez
+          @if (info()?.dpoEmail) {
+            le délégué à la protection des données à l'adresse
+            <strong>{{ info()!.dpoEmail }}</strong>@if (info()?.dpoName) { ({{ info()!.dpoName }})}.
+          } @else {
+            votre promoteur, qui vous indiquera les modalités d'exercice de ces droits.
+          }
+          Vous pouvez également saisir la <strong>CNDP</strong> (Commission Nationale de contrôle
+          de la Protection des Données à caractère personnel) en cas de difficulté.
         </p>
 
         <h2>8. Déclaration CNDP</h2>
         <p>
-          Ce traitement a fait l'objet d'une déclaration auprès de la CNDP sous le numéro
-          <strong>[à compléter : n° de récépissé CNDP]</strong>.
+          @if (info()?.cndpNumber) {
+            Ce traitement a fait l'objet d'une déclaration auprès de la CNDP sous le numéro
+            <strong>{{ info()!.cndpNumber }}</strong>@if (info()?.cndpDeclarationDate) {
+              (déclaration du {{ info()!.cndpDeclarationDate }})}.
+          } @else {
+            Le traitement de vos données est déclaré auprès de la CNDP conformément à la Loi 09-08 ;
+            le numéro de récépissé peut être obtenu auprès de votre promoteur.
+          }
         </p>
 
         <h2>9. Sécurité</h2>
@@ -118,4 +132,18 @@ import { TranslateModule } from '@ngx-translate/core';
     .legal-links a { color: #16a34a; }
   `]
 })
-export class PortalPrivacyComponent {}
+export class PortalPrivacyComponent implements OnInit {
+  private auth = inject(PortalAuthService);
+
+  /** Société legal/CNDP info — populated for authenticated buyers; null pre-auth (public visit). */
+  info = signal<PortalTenantInfo | null>(null);
+
+  ngOnInit(): void {
+    // Best-effort: a logged-in buyer sees the recorded values; a public visitor (no session)
+    // gets a clean generic notice (error ignored).
+    this.auth.getTenantInfo().subscribe({
+      next: (i) => this.info.set(i),
+      error: () => this.info.set(null),
+    });
+  }
+}
