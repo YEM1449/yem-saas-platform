@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 4 | 6 |
+> | 🟠 Major | 10 | 3 | 7 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **26** | **8** |
+> | **Total** | **34** | **25** | **9** |
 
 ---
 
@@ -75,7 +75,7 @@ sans changer d'écran."**
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
 | 8 | #028 — Refund (remboursement) tracking after rétractation | Nadia (Legal) | M | No, but pre-GA |
 | 9 | #016 — Resolve Contracts-vs-Ventes dual concept in nav — ✅ done 2026-06-12 | Karim (UX) | M | Yes (agent confusion) |
-| 10 | #023 — Paginate list endpoints (List→Page) | Adam (Code) | L | No (load risk at scale) |
+| 10 | #023 — Paginate list endpoints (List→Page) — ✅ done 2026-06-12 | Adam (Code) | L | No (load risk at scale) |
 
 ---
 ---
@@ -545,11 +545,30 @@ untouched (verified: no other in-app nav links to `/app/contracts`). FE prod bui
 *Follow-up (not blocking):* a per-société backend flag would beat an env flag if mixed
 legacy/VEFA sociétés ever share one deployment — noted for when flag infra exists.
 
-**FINDING #023** — Code — Adam — `Status: 🔲 OPEN`
+**FINDING #023** — Code — Adam — `Status: ✅ RESOLVED (2026-06-12, List→Page)`
 List endpoints return unpaginated `List<>` (`GET /api/ventes`, `/api/properties`, contact
 lists; audit F-006) — full serialization per request.
 *Fix:* coordinated List→Page migration (BE `Page<T>` + FE flat `PageResponse` pattern from
 Wave 12-A), starting with contacts/ventes. *Effort:* L
+*Resolution:* Contacts was already paginated. Migrated the two remaining offenders.
+**Backend:** `GET /api/ventes` and `GET /api/properties` now accept `Pageable`
+(`@PageableDefault` 20 / 50, sort createdAt DESC) and return the `PageResponse.of()`
+envelope (`{content, page}`) — the same shape contacts uses. New repo queries
+(`VenteRepository.findAllBySocieteId[AndContact_Id]`, `PropertyRepository.findWithFiltersPaged`
+with an explicit countQuery for the LEFT JOIN) + service `Page<T>` methods. **The key win is
+the capped default**: a naive/forgotten call now gets ≤50 rows, never the whole table — the
+unbounded-by-default footgun is gone. **Frontend:** new `PagedResult<T>` type; `vente.service`
+and `property.service` keep their array-returning `list()`/`listByContact()` for the 8 bounded
+callers (a building's units, a project's lots, pickers, the kanban) by requesting one large
+**capped** page (1000 / 2000) and unwrapping `.content` — zero churn, no regressions; plus a
+new `listPage()` for true server-side pagination. Tests: `PropertyControllerTest` ×4 updated
+to the paginated signature, `PropertyControllerIT` isolation assertion → `$.content`,
+`VenteServiceTest` +2 pagination-delegation tests; unit suite **187 green**; FE build green.
+*Deliberately scoped:* the catalog (properties.component) and pipeline board (vente-list) do
+rich **client-side** search/filter/sort over the full set, so forcing 24-per-page there would
+break "search finds any row". They use the capped `list()` (bounded opt-in) and the backend
+cap is the safety net. Visible numbered pagination on those pages awaits moving free-text
+search + price/sort server-side — a follow-up, not a regression. `listPage()` is ready for it.
 
 **FINDING #025** — Legal — Nadia — `Status: 🔲 OPEN`
 Portal (consumer-facing, CIN-linked financial data) has no privacy policy, mentions légales

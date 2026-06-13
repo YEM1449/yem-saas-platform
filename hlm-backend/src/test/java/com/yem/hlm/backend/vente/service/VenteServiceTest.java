@@ -123,6 +123,36 @@ class VenteServiceTest {
                 .thenReturn(Optional.of(property));
     }
 
+    // ── #023 : paginated list delegation ──────────────────────────────────────
+
+    @Test
+    @DisplayName("#023: findAll(pageable) delegates to the paginated repo with the same Pageable")
+    void findAll_paginated_delegates() {
+        var pageable = org.springframework.data.domain.PageRequest.of(2, 20);
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findAllBySocieteId(SOC, pageable))
+                .thenReturn(org.springframework.data.domain.Page.empty(pageable));
+
+        var page = service.findAll(pageable);
+
+        org.assertj.core.api.Assertions.assertThat(page.getContent()).isEmpty();
+        verify(venteRepository).findAllBySocieteId(SOC, pageable);
+    }
+
+    @Test
+    @DisplayName("#023: findByContactId(contactId, pageable) delegates to the contact-filtered paginated repo")
+    void findByContact_paginated_delegates() {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findAllBySocieteIdAndContact_Id(SOC, CONTACT, pageable))
+                .thenReturn(org.springframework.data.domain.Page.empty(pageable));
+
+        var page = service.findByContactId(CONTACT, pageable);
+
+        org.assertj.core.api.Assertions.assertThat(page.getContent()).isEmpty();
+        verify(venteRepository).findAllBySocieteIdAndContact_Id(SOC, CONTACT, pageable);
+    }
+
     // ── RG-B03 : one active vente per property ────────────────────────────────
 
     @Test

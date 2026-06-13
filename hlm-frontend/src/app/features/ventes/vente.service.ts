@@ -1,9 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { PagedResult } from '../../core/models/page-response.model';
 
 const BASE = `${environment.apiUrl}/api/ventes`;
+
+/** Page size used by `list()`/`listByContact()` to fetch "all" rows for bounded callers. */
+const ALL_SIZE = 1000;
 
 /**
  * VEFA pipeline statut (Loi 44-00). In sync with the backend enum — Wave 12 renamed
@@ -201,12 +206,23 @@ export interface UpdateEcheanceStatutRequest {
 export class VenteService {
   private http = inject(HttpClient);
 
+  /** All ventes (bounded callers). Backend is paginated (#023); request a large page and unwrap. */
   list(): Observable<Vente[]> {
-    return this.http.get<Vente[]>(BASE);
+    return this.http.get<PagedResult<Vente>>(BASE, { params: { size: ALL_SIZE } })
+      .pipe(map(r => r.content));
   }
 
+  /** One contact's ventes — naturally small; unwrap the page envelope. */
   listByContact(contactId: string): Observable<Vente[]> {
-    return this.http.get<Vente[]>(BASE, { params: { contactId } });
+    return this.http.get<PagedResult<Vente>>(BASE, { params: { contactId, size: ALL_SIZE } })
+      .pipe(map(r => r.content));
+  }
+
+  /** Paginated list for the main pipeline page (#023). */
+  listPage(page: number, size: number): Observable<PagedResult<Vente>> {
+    return this.http.get<PagedResult<Vente>>(BASE, {
+      params: { page: String(page), size: String(size) },
+    });
   }
 
   uploadDocument(venteId: string, file: File): Observable<VenteDocument> {

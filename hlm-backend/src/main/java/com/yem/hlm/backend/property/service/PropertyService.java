@@ -113,6 +113,16 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    /** Paginated filtered list (#023). */
+    public org.springframework.data.domain.Page<PropertyResponse> listAllPaged(
+            UUID projectId, UUID immeubleId, PropertyType type, PropertyStatus status,
+            org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = requireSocieteId();
+        return propertyRepository.findWithFiltersPaged(
+                societeId, projectId, immeubleId, type, status, pageable)
+                .map(PropertyResponse::from);
+    }
+
     @Transactional
     public PropertyResponse update(UUID propertyId, PropertyUpdateRequest request) {
         UUID societeId = requireSocieteId();

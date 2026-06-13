@@ -2,6 +2,8 @@ package com.yem.hlm.backend.vente.repo;
 
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +23,12 @@ public interface VenteRepository extends JpaRepository<Vente, UUID> {
     List<Vente> findAllBySocieteIdAndStatutOrderByCreatedAtDesc(UUID societeId, VenteStatut statut);
 
     List<Vente> findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(UUID societeId, UUID contactId);
+
+    /** Paginated société-scoped list — sort comes from the Pageable (#023). */
+    Page<Vente> findAllBySocieteId(UUID societeId, Pageable pageable);
+
+    /** Paginated société-scoped list filtered by buyer (#023). */
+    Page<Vente> findAllBySocieteIdAndContact_Id(UUID societeId, UUID contactId, Pageable pageable);
 
     boolean existsBySocieteIdAndPropertyIdAndStatutNot(UUID societeId, UUID propertyId, VenteStatut statut);
 

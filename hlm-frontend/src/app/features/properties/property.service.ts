@@ -1,8 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ImportResult, Property, PropertyMedia } from '../../core/models/property.model';
+import { PagedResult } from '../../core/models/page-response.model';
+
+/** Page size used by `list()` to fetch "all" matching rows for bounded callers (#023). */
+const ALL_SIZE = 2000;
 
 export interface CreatePropertyRequest {
   type: string;
@@ -103,13 +108,31 @@ export class PropertyService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
+  /**
+   * All matching properties (bounded callers: a building's units, a project's lots, pickers).
+   * Backend is paginated (#023); request a large page and unwrap. Use `listPage()` for the
+   * main properties page where real pagination is wanted.
+   */
   list(params?: PropertyListParams): Observable<Property[]> {
-    const httpParams: Record<string, string> = {};
-    if (params?.projectId) httpParams['projectId'] = params.projectId;
-    if (params?.immeubleId) httpParams['immeubleId'] = params.immeubleId;
-    if (params?.type) httpParams['type'] = params.type;
-    if (params?.status) httpParams['status'] = params.status;
-    return this.http.get<Property[]>(`${this.apiUrl}/api/properties`, { params: httpParams });
+    return this.http.get<PagedResult<Property>>(`${this.apiUrl}/api/properties`,
+      { params: { ...this.filterParams(params), size: String(ALL_SIZE) } })
+      .pipe(map(r => r.content));
+  }
+
+  /** Paginated filtered list for the main properties page (#023). */
+  listPage(params: PropertyListParams | undefined, page: number, size: number):
+      Observable<PagedResult<Property>> {
+    return this.http.get<PagedResult<Property>>(`${this.apiUrl}/api/properties`,
+      { params: { ...this.filterParams(params), page: String(page), size: String(size) } });
+  }
+
+  private filterParams(params?: PropertyListParams): Record<string, string> {
+    const p: Record<string, string> = {};
+    if (params?.projectId) p['projectId'] = params.projectId;
+    if (params?.immeubleId) p['immeubleId'] = params.immeubleId;
+    if (params?.type) p['type'] = params.type;
+    if (params?.status) p['status'] = params.status;
+    return p;
   }
 
   listMedia(propertyId: string): Observable<PropertyMedia[]> {

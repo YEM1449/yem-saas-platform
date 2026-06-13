@@ -81,15 +81,19 @@ public class PropertyController {
      * @param status optional property status filter
      * @return 200 OK with list of PropertyResponse
      */
-    @Operation(summary = "List all non-deleted properties with optional filters")
+    @Operation(summary = "List non-deleted properties with optional filters, paginated (#023)")
     @GetMapping
-    public List<PropertyResponse> list(
+    public com.yem.hlm.backend.common.dto.PageResponse<PropertyResponse> list(
             @RequestParam(required = false) UUID projectId,
             @RequestParam(required = false) UUID immeubleId,
             @RequestParam(required = false) PropertyType type,
-            @RequestParam(required = false) PropertyStatus status
+            @RequestParam(required = false) PropertyStatus status,
+            @org.springframework.data.web.PageableDefault(size = 50, sort = "createdAt",
+                    direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable
     ) {
-        return propertyService.listAll(projectId, immeubleId, type, status);
+        return com.yem.hlm.backend.common.dto.PageResponse.of(
+                propertyService.listAllPaged(projectId, immeubleId, type, status, pageable));
     }
 
     /**

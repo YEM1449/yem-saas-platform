@@ -132,9 +132,15 @@ public class VenteController {
     }
 
     @GetMapping
-    public List<VenteResponse> list(@RequestParam(required = false) UUID contactId) {
-        if (contactId != null) return venteService.findByContactId(contactId);
-        return venteService.findAll();
+    public com.yem.hlm.backend.common.dto.PageResponse<VenteResponse> list(
+            @RequestParam(required = false) UUID contactId,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt",
+                    direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<VenteResponse> page = (contactId != null)
+                ? venteService.findByContactId(contactId, pageable)
+                : venteService.findAll(pageable);
+        return com.yem.hlm.backend.common.dto.PageResponse.of(page);
     }
 
     @GetMapping("/{id}")

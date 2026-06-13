@@ -558,14 +558,13 @@ class PropertyControllerIT extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(prop2)))
                 .andExpect(status().isCreated());
 
-        String json = mvc.perform(get("/api/properties")
+        // Paginated response (#023): assert via the PageResponse envelope's content array.
+        mvc.perform(get("/api/properties")
                         .header("Authorization", adminBearer))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-
-        PropertyResponse[] properties = objectMapper.readValue(json, PropertyResponse[].class);
-        assertThat(properties).hasSize(1);
-        assertThat(properties[0].referenceCode()).isEqualTo("VIL-TENANT-001");
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].referenceCode").value("VIL-TENANT-001"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
     }
 
     // ===== Error Scenario Tests =====

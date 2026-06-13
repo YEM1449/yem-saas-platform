@@ -4,6 +4,7 @@ import com.yem.hlm.backend.property.api.dto.PropertyResponse;
 import com.yem.hlm.backend.property.domain.PropertyCategory;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
+import com.yem.hlm.backend.common.dto.PageResponse;
 import com.yem.hlm.backend.property.service.PropertyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,58 +43,52 @@ class PropertyControllerTest {
         mockResponse = createMockPropertyResponse();
     }
 
+    private static final Pageable PAGE = PageRequest.of(0, 50);
+
     @Test
     void list_noQueryParams_callsServiceWithNullFilters() {
-        // Given
-        when(propertyService.listAll(null, null, null, null)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAllPaged(null, null, null, null, PAGE))
+                .thenReturn(new PageImpl<>(List.of(mockResponse)));
 
-        // When
-        List<PropertyResponse> result = propertyController.list(null, null, null, null);
+        PageResponse<PropertyResponse> result = propertyController.list(null, null, null, null, PAGE);
 
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo(mockResponse.id());
-        verify(propertyService).listAll(null, null, null, null);
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).id()).isEqualTo(mockResponse.id());
+        verify(propertyService).listAllPaged(null, null, null, null, PAGE);
     }
 
     @Test
     void list_withTypeParam_callsServiceWithType() {
-        // Given
-        when(propertyService.listAll(null, null, PropertyType.VILLA, null)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAllPaged(null, null, PropertyType.VILLA, null, PAGE))
+                .thenReturn(new PageImpl<>(List.of(mockResponse)));
 
-        // When
-        List<PropertyResponse> result = propertyController.list(null, null, PropertyType.VILLA, null);
+        PageResponse<PropertyResponse> result = propertyController.list(null, null, PropertyType.VILLA, null, PAGE);
 
-        // Then
-        assertThat(result).hasSize(1);
-        verify(propertyService).listAll(null, null, PropertyType.VILLA, null);
+        assertThat(result.content()).hasSize(1);
+        verify(propertyService).listAllPaged(null, null, PropertyType.VILLA, null, PAGE);
     }
 
     @Test
     void list_withStatusParam_callsServiceWithStatus() {
-        // Given
-        when(propertyService.listAll(null, null, null, PropertyStatus.ACTIVE)).thenReturn(List.of(mockResponse));
+        when(propertyService.listAllPaged(null, null, null, PropertyStatus.ACTIVE, PAGE))
+                .thenReturn(new PageImpl<>(List.of(mockResponse)));
 
-        // When
-        List<PropertyResponse> result = propertyController.list(null, null, null, PropertyStatus.ACTIVE);
+        PageResponse<PropertyResponse> result = propertyController.list(null, null, null, PropertyStatus.ACTIVE, PAGE);
 
-        // Then
-        assertThat(result).hasSize(1);
-        verify(propertyService).listAll(null, null, null, PropertyStatus.ACTIVE);
+        assertThat(result.content()).hasSize(1);
+        verify(propertyService).listAllPaged(null, null, null, PropertyStatus.ACTIVE, PAGE);
     }
 
     @Test
     void list_withBothParams_callsServiceWithBothFilters() {
-        // Given
-        when(propertyService.listAll(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE))
-                .thenReturn(List.of(mockResponse));
+        when(propertyService.listAllPaged(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE, PAGE))
+                .thenReturn(new PageImpl<>(List.of(mockResponse)));
 
-        // When
-        List<PropertyResponse> result = propertyController.list(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE);
+        PageResponse<PropertyResponse> result =
+                propertyController.list(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE, PAGE);
 
-        // Then
-        assertThat(result).hasSize(1);
-        verify(propertyService).listAll(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE);
+        assertThat(result.content()).hasSize(1);
+        verify(propertyService).listAllPaged(null, null, PropertyType.VILLA, PropertyStatus.ACTIVE, PAGE);
     }
 
     private PropertyResponse createMockPropertyResponse() {

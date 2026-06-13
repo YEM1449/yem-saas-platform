@@ -492,11 +492,28 @@ public class VenteService {
                 .stream().map(this::toResponse).toList();
     }
 
+    /** Paginated société-scoped list (#023). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<VenteResponse> findAll(
+            org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = societeCtx.requireSocieteId();
+        return venteRepository.findAllBySocieteId(societeId, pageable).map(this::toResponse);
+    }
+
     @Transactional(readOnly = true)
     public List<VenteResponse> findByContactId(UUID contactId) {
         UUID societeId = societeCtx.requireSocieteId();
         return venteRepository.findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
                 .stream().map(this::toResponse).toList();
+    }
+
+    /** Paginated société-scoped list filtered by buyer (#023). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<VenteResponse> findByContactId(
+            UUID contactId, org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = societeCtx.requireSocieteId();
+        return venteRepository.findAllBySocieteIdAndContact_Id(societeId, contactId, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
