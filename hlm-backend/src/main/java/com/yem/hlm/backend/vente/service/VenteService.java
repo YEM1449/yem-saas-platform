@@ -154,7 +154,10 @@ public class VenteService {
 
             // Price calculation: property price − advance already paid − optional reduction.
             // If an explicit prixVente is provided it takes precedence (override mode).
-            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new PrixVenteInvalideException();
+            }
+            if (request.prixVente() != null) {
                 finalPrice = request.prixVente();
             } else {
                 BigDecimal basePrice  = property.getPrice() != null
@@ -187,7 +190,11 @@ public class VenteService {
             agent = userRepository.findById(agentId)
                     .orElseThrow(() -> new UserNotFoundException(agentId));
             // Use provided price; fall back to property catalogue price when omitted.
-            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+            // A non-null price that is zero or negative is an explicit error (A-004).
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new PrixVenteInvalideException();
+            }
+            if (request.prixVente() != null) {
                 finalPrice = request.prixVente();
             } else if (property.getPrice() != null && property.getPrice().compareTo(BigDecimal.ZERO) > 0) {
                 finalPrice = property.getPrice();
@@ -356,6 +363,7 @@ public class VenteService {
         vente.setRetractationExerceeAt(Instant.now());
         vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
         releasePropertyForCancelledVente(societeId, vente);
+        echeanceRepository.cancelAllPendingByVente(vente.getId());
 
         Vente saved = venteRepository.save(vente);
         publishVenteAnnulee(societeId, saved);
@@ -607,6 +615,12 @@ public class VenteService {
                 }
                 propertyRepository.save(property);
             }
+        }
+
+        // Cancel all pending échéances when a vente is annulled (A-001).
+        // PAYEE échéances are already collected and are left unchanged.
+        if (request.statut() == VenteStatut.ANNULE) {
+            echeanceRepository.cancelAllPendingByVente(vente.getId());
         }
 
         Vente saved = venteRepository.save(vente);

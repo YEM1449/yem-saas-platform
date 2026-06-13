@@ -52,6 +52,11 @@ public class ReserveLivraison {
     @Column(name = "date_levee_reelle")
     private LocalDate dateLeveeReelle;
 
+    /** Optional user responsible for tracking/resolving this reserve (A-003). */
+    @Setter
+    @Column(name = "responsable_user_id")
+    private UUID responsableUserId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -13,11 +13,13 @@ public record ReserveLivraisonResponse(
         StatutReserve statut,
         LocalDate dateConstat,
         LocalDate dateLeveePrevue,
-        LocalDate dateLeveeReelle
+        LocalDate dateLeveeReelle,
+        UUID responsableUserId
 ) {
     public static ReserveLivraisonResponse from(ReserveLivraison r) {
         return new ReserveLivraisonResponse(
                 r.getId(), r.getDescription(), r.getStatut(),
-                r.getDateConstat(), r.getDateLeveePrevue(), r.getDateLeveeReelle());
+                r.getDateConstat(), r.getDateLeveePrevue(), r.getDateLeveeReelle(),
+                r.getResponsableUserId());
     }
 }

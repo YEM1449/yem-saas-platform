@@ -171,3 +171,5 @@ databaseChangeLog:
       file: db/changelog/changes/084-client-groupe-lien.yaml
   - include:
       file: db/changelog/changes/085-remboursement.yaml
+  - include:
+      file: db/changelog/changes/087-reserve-livraison-responsable.yaml

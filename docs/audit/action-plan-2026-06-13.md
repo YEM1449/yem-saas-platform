@@ -8,14 +8,14 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 
 ---
 
-## PHASE A — FONCTIONNEL BLOQUANT (livrer avant premier client payant)
+## PHASE A — FONCTIONNEL BLOQUANT (livrer avant premier client payant) ✅ RÉSOLU 2026-06-13
 
 | ID | Finding | Action | Fichiers | Effort | Changeset |
 |----|---------|--------|----------|--------|-----------|
-| A-001 | **#030** Échéances non annulées sur ANNULE | Dans `VenteService.updateStatut()` branche `ANNULE` : appeler `echeanceRepository.cancelAllPendingByVente(venteId)` (nouveau statut `ANNULEE`) ; exclure `ANNULEE` de toutes les requêtes trésorerie/receivables ; ajouter test | `VenteService.java`, `VenteEcheance.java`, `VenteEcheanceRepository.java`, `TresorerieDashboardService.java` | S | — |
-| A-002 | **#006** Export CSV/PDF sans TVA | Ajouter colonnes `prix_ht`, `taux_tva`, `prix_ttc` (via `TvaCalculator`) dans l'export CSV ventes + sous-total par taux dans la section PDF ; ajouter colonne dans `VenteResponse` export shape | `VenteExportService.java` (ou équivalent), `TvaCalculator.java` | S | — |
-| A-003 | **#007** Réserves livraison : vue projet + responsable | `GET /api/projects/{id}/reserves` (ADMIN/MANAGER, société-scopé) + ajouter `responsable_user_id UUID` nullable sur `reserve_livraison` (nouveau changeset) ; nouveau `ReserveLivraisonProjectController` | `reserve_livraison` table, `ReserveLivraison.java`, nouveau controller | M | **087** |
-| A-004 | **#019** Prix silencieux → 422 | Dans `VenteService.create()` lignes 157/190 : si `request.prixVente() != null && request.prixVente() ≤ 0` → lever `ValidationException` 422 (`PRIX_VENTE_INVALIDE`) au lieu de tomber sur le fallback catalogue | `VenteService.java:157–200`, `ErrorCode.java` | XS | — |
+| A-001 ✅ | **#030** Échéances non annulées sur ANNULE | `EcheanceStatut.ANNULEE` ajouté ; `cancelAllPendingByVente()` `@Modifying` dans le repo ; appelé dans `updateStatut(ANNULE)` et `exerciseRetractation()` ; toutes les requêtes trésorerie/receivables excluent `ANNULEE` (`NOT IN ('PAYEE','ANNULEE')`) | `EcheanceStatut.java`, `VenteEcheanceRepository.java`, `VenteService.java` | S | — |
+| A-002 ✅ | **#006** Export CSV/PDF sans TVA | CSV : 3 colonnes ajoutées (Prix HT, Taux TVA, Prix TTC) via `TvaCalculator` ; PDF : colonnes + sous-total par taux (`subtotalByTaux`) ; `PropertyRepository` injecté dans `ReportExportService`, batch-load par `findAllById` | `ReportExportService.java`, `ventes-report.html` | S | — |
+| A-003 ✅ | **#007** Réserves livraison : vue projet + responsable | Changeset **087** : `responsable_user_id UUID` nullable sur `reserve_livraison` (FK → `app_user`, ON DELETE SET NULL) ; `ReserveLivraison.responsableUserId` ; `ReserveLivraisonRepository.findByProjectId()` (native) ; `ReserveLivraisonProjectController` `GET /api/projects/{id}/reserves` (ADMIN/MANAGER) ; `ReserveLivraisonProjectResponse` DTO | `087-reserve-livraison-responsable.yaml`, `ReserveLivraison.java`, `ReserveLivraisonRepository.java`, `ReserveLivraisonProjectController.java`, `ReserveLivraisonProjectResponse.java`, `ReserveLivraisonResponse.java` | M | **087** |
+| A-004 ✅ | **#019** Prix silencieux → 422 | Guard ajouté aux deux branches de `create()` : `prixVente != null && ≤ 0` → `PrixVenteInvalideException` 422 `PRIX_VENTE_INVALIDE` | `VenteService.java`, `PrixVenteInvalideException.java`, `ErrorCode.java`, `GlobalExceptionHandler.java` | XS | — |
 
 ---
 
@@ -82,7 +82,7 @@ Effort : XS=<2h · S=<1j · M=<3j · L=<1sem.
 
 | Phase | Items | Résolus | Restants |
 |-------|-------|---------|---------|
-| A — Fonctionnel bloquant | 4 | 0 | **4** |
+| A — Fonctionnel bloquant | 4 | **4** | **0** |
 | B — Légal/Conformité | 5 | 0 | **5** |
 | C — UX/Navigation | 6 | 0 | **6** |
 | D — Quick wins XS | 5 | 0 | **5** |

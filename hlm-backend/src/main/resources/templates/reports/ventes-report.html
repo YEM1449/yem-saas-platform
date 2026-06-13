@@ -34,6 +34,10 @@
     .amount { text-align: right; font-weight: bold; color: #1a4480; }
     .muted { color: #888; }
     .total-row td { background: #edf2fb; font-weight: bold; border-top: 2px solid #1a4480; }
+    .tva-section { margin-top: 14px; }
+    .tva-section table { width: 50%; margin-left: auto; border-collapse: collapse; font-size: 9pt; }
+    .tva-section th { background: #1a4480; color: #fff; padding: 5px 8px; text-align: left; }
+    .tva-section td { padding: 5px 8px; border-bottom: 1px solid #e0e6f0; }
     .footer { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 8px;
                font-size: 8pt; color: #888; text-align: center; }
   </style>
@@ -66,15 +70,15 @@
   <div class="summary-row">
     <div class="summary-cell">
       <div class="summary-label">Nombre de ventes</div>
-      <div class="summary-value" th:text="${#lists.size(ventes)}">0</div>
+      <div class="summary-value" th:text="${#lists.size(rows)}">0</div>
     </div>
     <div class="summary-cell">
-      <div class="summary-label">CA total (MAD)</div>
+      <div class="summary-label">CA HT total (MAD)</div>
       <div class="summary-value" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}">0</div>
     </div>
     <div class="summary-cell">
-      <div class="summary-label">Filtre statut</div>
-      <div class="summary-value" th:text="${statutFilter != null ? statutFilter : 'Tous'}">Tous</div>
+      <div class="summary-label">CA TTC total (MAD)</div>
+      <div class="summary-value" th:text="${#numbers.formatDecimal(totalTtc, 0, 'COMMA', 0, 'POINT')}">0</div>
     </div>
   </div>
 
@@ -85,36 +89,61 @@
         <th>Référence</th>
         <th>Acquéreur</th>
         <th>Statut</th>
-        <th>Prix (MAD)</th>
+        <th>Prix HT (MAD)</th>
+        <th>TVA</th>
+        <th>Prix TTC (MAD)</th>
         <th>Date compromis</th>
         <th>Livraison prévue</th>
         <th>Agent</th>
       </tr>
     </thead>
     <tbody>
-      <tr th:each="v : ${ventes}">
-        <td th:text="${v.venteRef}"></td>
-        <td th:text="${v.contact.fullName}"></td>
+      <tr th:each="r : ${rows}">
+        <td th:text="${r.vente.venteRef}"></td>
+        <td th:text="${r.vente.contact.fullName}"></td>
         <td>
           <span class="statut-badge"
-                th:classappend="${'statut-' + v.statut.name()}"
-                th:text="${v.statut.name()}"></span>
+                th:classappend="${'statut-' + r.vente.statut.name()}"
+                th:text="${r.vente.statut.name()}"></span>
         </td>
         <td class="amount"
-            th:text="${v.prixVente != null ? #numbers.formatDecimal(v.prixVente, 0, 'COMMA', 0, 'POINT') : '&#8212;'}"></td>
-        <td th:text="${v.dateCompromis != null ? #temporals.format(v.dateCompromis,'dd/MM/yyyy') : ''}"></td>
-        <td th:text="${v.dateLivraisonPrevue != null ? #temporals.format(v.dateLivraisonPrevue,'dd/MM/yyyy') : ''}"></td>
-        <td th:text="${(v.agent.prenom != null ? v.agent.prenom : '') + ' ' + (v.agent.nomFamille != null ? v.agent.nomFamille : '')}"></td>
+            th:text="${r.prixHt != null ? #numbers.formatDecimal(r.prixHt, 0, 'COMMA', 0, 'POINT') : '&#8212;'}"></td>
+        <td th:text="${r.tauxPct}"></td>
+        <td class="amount"
+            th:text="${r.prixTtc != null ? #numbers.formatDecimal(r.prixTtc, 0, 'COMMA', 0, 'POINT') : '&#8212;'}"></td>
+        <td th:text="${r.vente.dateCompromis != null ? #temporals.format(r.vente.dateCompromis,'dd/MM/yyyy') : ''}"></td>
+        <td th:text="${r.vente.dateLivraisonPrevue != null ? #temporals.format(r.vente.dateLivraisonPrevue,'dd/MM/yyyy') : ''}"></td>
+        <td th:text="${r.agentNom}"></td>
       </tr>
-      <tr class="total-row" th:if="${#lists.size(ventes) > 0}">
+      <tr class="total-row" th:if="${!rows.isEmpty()}">
         <td colspan="3">Total</td>
         <td class="amount" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td></td>
+        <td class="amount" th:text="${#numbers.formatDecimal(totalTtc, 0, 'COMMA', 0, 'POINT')}"></td>
         <td colspan="3"></td>
       </tr>
     </tbody>
   </table>
 
-  <div th:if="${#lists.isEmpty(ventes)}" style="text-align:center;padding:30px;color:#888;">
+  <!-- TVA subtotals by rate -->
+  <div class="tva-section" th:if="${!rows.isEmpty() and !subtotalByTaux.isEmpty()}">
+    <table>
+      <thead>
+        <tr>
+          <th>Taux TVA</th>
+          <th style="text-align:right">Base HT (MAD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="entry : ${subtotalByTaux}">
+          <td th:text="${entry.key + '%'}"></td>
+          <td class="amount" th:text="${#numbers.formatDecimal(entry.value, 0, 'COMMA', 0, 'POINT')}"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:if="${rows.isEmpty()}" style="text-align:center;padding:30px;color:#888;">
     Aucune vente pour les critères sélectionnés.
   </div>
 

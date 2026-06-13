@@ -1,6 +1,9 @@
 package com.yem.hlm.backend.dashboard.service;
 
 import com.yem.hlm.backend.deposit.service.pdf.DocumentGenerationService;
+import com.yem.hlm.backend.legal.TvaCalculator;
+import com.yem.hlm.backend.property.domain.Property;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
@@ -16,7 +19,9 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,13 +30,16 @@ public class ReportExportService {
     private final VenteRepository          venteRepo;
     private final SocieteRepository        societeRepo;
     private final DocumentGenerationService docGenService;
+    private final PropertyRepository       propertyRepo;
 
     public ReportExportService(VenteRepository venteRepo,
                                SocieteRepository societeRepo,
-                               DocumentGenerationService docGenService) {
+                               DocumentGenerationService docGenService,
+                               PropertyRepository propertyRepo) {
         this.venteRepo     = venteRepo;
         this.societeRepo   = societeRepo;
         this.docGenService = docGenService;
+        this.propertyRepo  = propertyRepo;
     }
 
     // ── Ventes PDF ────────────────────────────────────────────────────────────
@@ -39,19 +47,43 @@ public class ReportExportService {
     public byte[] ventesPdf(UUID societeId, LocalDate from, LocalDate to, VenteStatut statut) {
         String societeNom = societeRepo.findById(societeId).map(s -> s.getNom()).orElse("");
         List<Vente> ventes = fetchVentes(societeId, from, to, statut);
-        BigDecimal total = ventes.stream()
-                .filter(v -> v.getPrixVente() != null)
-                .map(Vente::getPrixVente)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Map<UUID, BigDecimal> tauxByProperty = loadTauxTvaMap(ventes);
+
+        BigDecimal totalHt  = BigDecimal.ZERO;
+        BigDecimal totalTtc = BigDecimal.ZERO;
+        Map<String, BigDecimal> subtotalByTaux = new java.util.LinkedHashMap<>();
+
+        // Build pre-computed rows so the template stays free of BigDecimal arithmetic.
+        List<Map<String, Object>> rows = new java.util.ArrayList<>(ventes.size());
+        for (Vente v : ventes) {
+            BigDecimal prixHt = v.getPrixVente();
+            BigDecimal taux   = tauxByProperty.getOrDefault(v.getPropertyId(), TvaCalculator.TAUX_NORMAL);
+            BigDecimal prixTtc = TvaCalculator.computePrixTtc(prixHt, taux);
+            String tauxKey = taux.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString();
+            if (prixHt != null) {
+                totalHt  = totalHt.add(prixHt);
+                totalTtc = totalTtc.add(prixTtc != null ? prixTtc : prixHt);
+                subtotalByTaux.merge(tauxKey, prixHt, BigDecimal::add);
+            }
+            Map<String, Object> row = new HashMap<>();
+            row.put("vente",    v);
+            row.put("prixHt",   prixHt);
+            row.put("tauxPct",  tauxKey + "%");
+            row.put("prixTtc",  prixTtc);
+            row.put("agentNom", agentName(v));
+            rows.add(row);
+        }
 
         Map<String, Object> vars = new HashMap<>();
-        vars.put("ventes",       ventes);
-        vars.put("societeNom",   societeNom);
-        vars.put("from",         from);
-        vars.put("to",           to);
-        vars.put("statutFilter", statut != null ? statut.name() : null);
-        vars.put("total",        total);
-        vars.put("generatedAt",  LocalDateTime.now());
+        vars.put("rows",           rows);
+        vars.put("societeNom",     societeNom);
+        vars.put("from",           from);
+        vars.put("to",             to);
+        vars.put("statutFilter",   statut != null ? statut.name() : null);
+        vars.put("total",          totalHt);
+        vars.put("totalTtc",       totalTtc);
+        vars.put("subtotalByTaux", subtotalByTaux);
+        vars.put("generatedAt",    LocalDateTime.now());
         return docGenService.renderToPdf("reports/ventes-report", vars);
     }
 
@@ -59,13 +91,22 @@ public class ReportExportService {
 
     public byte[] ventesCsv(UUID societeId, LocalDate from, LocalDate to, VenteStatut statut) {
         List<Vente> ventes = fetchVentes(societeId, from, to, statut);
+        Map<UUID, BigDecimal> tauxByProperty = loadTauxTvaMap(ventes);
         StringBuilder sb = new StringBuilder();
-        sb.append("Référence,Acquéreur,Statut,Prix (MAD),Date compromis,Date livraison prévue,Agent\n");
+        sb.append("Référence,Acquéreur,Statut,Prix HT (MAD),Taux TVA,Prix TTC (MAD),Date compromis,Date livraison prévue,Agent\n");
         for (Vente v : ventes) {
+            BigDecimal prixHt  = v.getPrixVente();
+            BigDecimal taux    = tauxByProperty.getOrDefault(v.getPropertyId(), TvaCalculator.TAUX_NORMAL);
+            BigDecimal prixTtc = TvaCalculator.computePrixTtc(prixHt, taux);
+            String tauxPct     = prixHt != null
+                    ? taux.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
+                    : "";
             sb.append(escapeCsv(v.getVenteRef()))
               .append(',').append(escapeCsv(v.getContact().getFullName()))
               .append(',').append(v.getStatut().name())
-              .append(',').append(v.getPrixVente() != null ? v.getPrixVente().toPlainString() : "")
+              .append(',').append(prixHt  != null ? prixHt.toPlainString()  : "")
+              .append(',').append(tauxPct)
+              .append(',').append(prixTtc != null ? prixTtc.toPlainString() : "")
               .append(',').append(v.getDateCompromis() != null ? v.getDateCompromis().toString() : "")
               .append(',').append(v.getDateLivraisonPrevue() != null ? v.getDateLivraisonPrevue().toString() : "")
               .append(',').append(escapeCsv(agentName(v)))
@@ -138,6 +179,17 @@ public class ReportExportService {
         if (p != null && n != null) return p + " " + n;
         if (p != null) return p;
         return n != null ? n : "";
+    }
+
+    /**
+     * Batch-loads tvaTaux for all properties referenced in the vente list.
+     * Falls back to TAUX_NORMAL (20%) when a property has no commercial data.
+     */
+    private Map<UUID, BigDecimal> loadTauxTvaMap(List<Vente> ventes) {
+        Set<UUID> ids = ventes.stream().map(Vente::getPropertyId).collect(Collectors.toSet());
+        return propertyRepo.findAllById(ids).stream()
+                .filter(p -> p.getTvaTaux() != null)
+                .collect(Collectors.toMap(Property::getId, Property::getTvaTaux));
     }
 
     private static String escapeCsv(String s) {

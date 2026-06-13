@@ -154,6 +154,9 @@ public enum ErrorCode {
     // Date coherence errors (422)
     DATE_COHERENCE_VIOLATION,   // 422 — date sequence rule violated (e.g. reservation > compromis)
 
+    // Vente pricing errors (422)
+    PRIX_VENTE_INVALIDE,        // 422 — prixVente is provided but is zero or negative
+
     // Contract generation errors (409)
     CONTRACT_NOT_GENERATED,     // 409 — contract must be generated before signing
 

@@ -49,6 +49,7 @@ import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
 import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
 import com.yem.hlm.backend.vente.service.ViolationLegaleException;
 import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
+import com.yem.hlm.backend.vente.service.PrixVenteInvalideException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
 import com.yem.hlm.backend.viewer3d.service.Project3dModelNotFoundException;
@@ -948,6 +949,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Prix vente invalide (422) ==========
+
+    @ExceptionHandler(PrixVenteInvalideException.class)
+    public ResponseEntity<ErrorResponse> handlePrixVenteInvalide(
+            PrixVenteInvalideException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.PRIX_VENTE_INVALIDE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
     }
 
     // ========== Legal violation (422) / retraction impossible (409) ==========
