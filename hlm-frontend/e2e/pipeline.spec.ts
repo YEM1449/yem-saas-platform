@@ -190,9 +190,9 @@ test.describe('Vente pipeline', () => {
     });
     expect(advRes.status()).toBe(200);
 
-    // Force an illegal transition via API (FINANCEMENT → LIVRE skips ACTE_NOTARIE)
+    // Force an illegal transition via API (FINANCEMENT → LIVRE_DEFINITIF skips ACTE, LIVRE_AVEC_RESERVES, RESERVES_LEVEES)
     const badRes = await page.request.patch(`${API_BASE}/api/ventes/${vente.id}/statut`, {
-      data: { statut: 'LIVRE' },
+      data: { statut: 'LIVRE_DEFINITIF' },
     });
     expect(badRes.status()).toBe(409);
     const body = await badRes.json() as { code: string };
@@ -352,8 +352,8 @@ test.describe('Vente pipeline', () => {
     await page.goto(`/app/ventes/${vente.id}`);
 
     // Open echéance form
-    await page.waitForSelector('.card-header button', { timeout: 10000 });
-    await page.locator('.card-header button', { hasText: '+ Ajouter' }).click();
+    await page.waitForSelector('[data-testid="ech-add"]', { timeout: 10000 });
+    await page.click('[data-testid="ech-add"]');
 
     // Fill in the form
     await page.fill('[data-testid="ech-libelle"]', 'Acompte 30%');
