@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 3 | 7 |
+> | 🟠 Major | 10 | 2 | 8 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **25** | **9** |
+> | **Total** | **34** | **24** | **10** |
 
 ---
 
@@ -70,7 +70,7 @@ sans changer d'écran."**
 | 2 | #010 — Load the Inter font (it's declared, never shipped) — ✅ done 2026-06-12 | Sara (Design) | XS | Yes (perceived quality) |
 | 3 | #002 — Contact CSV/Excel import — ✅ done 2026-06-12 | Mehdi (Business) | M | **YES** — first demo question |
 | 4 | #003 — Month-by-month cash forecast in trésorerie — ✅ done 2026-06-12 | Mehdi/Adam | S | Yes (owner demo) |
-| 5 | #025 — Privacy policy + mentions légales in portal | Nadia (Legal) | S | **YES** — legal exposure |
+| 5 | #025 — Privacy policy + mentions légales in portal — ✅ done 2026-06-12 | Nadia (Legal) | S | **YES** — legal exposure |
 | 6 | #004 — "Deactivate everywhere" for multi-société users — ✅ done 2026-06-12 | Leila (Security) | S | No (but security hole) |
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
 | 8 | #028 — Refund (remboursement) tracking after rétractation | Nadia (Legal) | M | No, but pre-GA |
@@ -570,13 +570,27 @@ break "search finds any row". They use the capped `list()` (bounded opt-in) and 
 cap is the safety net. Visible numbered pagination on those pages awaits moving free-text
 search + price/sort server-side — a follow-up, not a regression. `listPage()` is ready for it.
 
-**FINDING #025** — Legal — Nadia — `Status: 🔲 OPEN`
+**FINDING #025** — Legal — Nadia — `Status: ✅ RESOLVED (2026-06-12, portal legal pages)`
 Portal (consumer-facing, CIN-linked financial data) has no privacy policy, mentions légales
 or CNDP notice — zero hits in portal templates.
 *Why:* Loi 09-08 right-to-information violation on a consumer surface; embarrassing in any
 procurement review.
 *Fix:* footer links to politique de confidentialité + mentions légales (static pages),
 consent line on magic-link request. *Effort:* S
+*Resolution:* Two **public** portal pages (`PortalPrivacyComponent`, `PortalLegalComponent`,
+routes `/portal/privacy` + `/portal/mentions-legales`, outside `portalGuard` so they're
+readable before login). The privacy notice is structured to Loi 09-08: responsable de
+traitement, données collectées (incl. CIN/financier), finalités (échéancier Art. 618-17),
+base légale, destinataires (promoteur/notaire/banque), durée de conservation, **droits
+d'accès/rectification/opposition/suppression**, **déclaration CNDP**, sécurité. Operator-
+specific blanks are marked `[à compléter]` (raison sociale, n° récépissé CNDP, contact DPO,
+hébergeur). Legal links added to the authenticated **shell footer**, the **login card
+footer**, and a **consent line** under the magic-link request form ("En demandant un lien…
+vous consentez… Loi 09-08 → politique de confidentialité"). i18n keys in fr/en/ar
+(`portal.legal.*`, `portal.login.consent*`); link labels/titles translated, legal body in FR
+(VEFA language). FE prod build green.
+*Operator action required before GA:* fill the `[à compléter]` placeholders and file/confirm
+the CNDP declaration (that organizational step is finding #026).
 
 **FINDING #028** — Legal — Nadia — `Status: 🔲 OPEN`
 No refund (remboursement) tracking: after rétractation/annulation the deposit's return is

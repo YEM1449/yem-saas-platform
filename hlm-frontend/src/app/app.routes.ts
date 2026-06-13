@@ -82,6 +82,9 @@ export const routes: Routes = [
     children: [
       { path: 'login',  loadComponent: () => import('./portal/features/portal-login/portal-login.component').then(m => m.PortalLoginComponent) },
       { path: 'verify', loadComponent: () => import('./portal/features/portal-verify/portal-verify.component').then(m => m.PortalVerifyComponent) },
+      // Public legal pages (Loi 09-08 / CNDP) — readable before authentication (#025)
+      { path: 'privacy', loadComponent: () => import('./portal/features/portal-legal/portal-privacy.component').then(m => m.PortalPrivacyComponent) },
+      { path: 'mentions-legales', loadComponent: () => import('./portal/features/portal-legal/portal-legal.component').then(m => m.PortalLegalComponent) },
       {
         path: '',
         loadComponent: () => import('./portal/features/portal-shell/portal-shell.component').then(m => m.PortalShellComponent),

@@ -42,6 +42,10 @@
           <p class="portal-login-hint">
             {{ 'portal.login.hint' | translate }}
           </p>
+          <p class="portal-login-consent">
+            {{ 'portal.login.consent' | translate }}
+            <a routerLink="/portal/privacy">{{ 'portal.login.consentPrivacyLink' | translate }}</a>.
+          </p>
         </form>
       }
 
@@ -85,5 +89,11 @@
       }
 
     </div>
+
+    <nav class="portal-login-legal" [attr.aria-label]="'portal.legal.privacyLink' | translate">
+      <a routerLink="/portal/privacy">{{ 'portal.legal.privacyLink' | translate }}</a>
+      <span aria-hidden="true">·</span>
+      <a routerLink="/portal/mentions-legales">{{ 'portal.legal.legalLink' | translate }}</a>
+    </nav>
   </div>
 </div>
