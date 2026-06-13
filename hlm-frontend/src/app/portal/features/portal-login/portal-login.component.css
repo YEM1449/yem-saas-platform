@@ -244,3 +244,24 @@
   text-align: center;
   line-height: var(--lh-normal, 1.5);
 }
+
+.portal-login-consent {
+  margin: var(--sp-3, 12px) 0 0;
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--c-text-muted, #94a3b8);
+  text-align: center;
+  line-height: var(--lh-normal, 1.5);
+}
+.portal-login-consent a { color: var(--c-primary, #16a34a); }
+
+.portal-login-legal {
+  margin-top: var(--sp-4, 16px);
+  padding-top: var(--sp-3, 12px);
+  border-top: 1px solid var(--c-border, #e8dec5);
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: var(--text-xs, 0.75rem);
+}
+.portal-login-legal a { color: var(--c-primary, #16a34a); text-decoration: none; }
+.portal-login-legal a:hover { text-decoration: underline; }

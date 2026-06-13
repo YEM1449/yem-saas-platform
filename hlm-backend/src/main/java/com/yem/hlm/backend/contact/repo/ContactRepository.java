@@ -24,6 +24,19 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
 
     boolean existsBySocieteIdAndEmail(UUID societeId, String email);
 
+    /** Phone dedup for CSV import — exact match on the stored phone string. */
+    boolean existsBySocieteIdAndPhone(UUID societeId, String phone);
+
+    /** Non-deleted contacts in a société that carry a CIN — group client-identity matching (#005). */
+    @Query("""
+            SELECT c FROM Contact c
+            WHERE c.societeId = :societeId
+              AND c.deleted = false
+              AND c.nationalId IS NOT NULL
+              AND c.nationalId <> ''
+            """)
+    List<Contact> findWithNationalId(@Param("societeId") UUID societeId);
+
     /**
      * Returns distinct societeIds that have at least one non-deleted contact with one of the given statuses.
      * Used by ReminderService to iterate only over relevant sociétés without loading all contacts.
@@ -82,6 +95,25 @@ public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpec
     List<Contact> findRetentionCandidates(
             @Param("societeId") UUID societeId,
             @Param("cutoff")    java.time.LocalDateTime cutoff
+    );
+
+    /**
+     * Status-filtered variant: soft-deleted contacts whose status is in {@code statuses}
+     * and whose {@code updatedAt} is older than {@code cutoff}. Used by type-aware
+     * retention sweeps in {@link com.yem.hlm.backend.gdpr.scheduler.DataRetentionScheduler} (B-002).
+     */
+    @Query("""
+            SELECT c FROM Contact c
+            WHERE c.societeId   = :societeId
+              AND c.deleted      = true
+              AND c.anonymizedAt IS NULL
+              AND c.updatedAt    < :cutoff
+              AND c.status IN    :statuses
+            """)
+    List<Contact> findRetentionCandidatesByStatuses(
+            @Param("societeId") UUID societeId,
+            @Param("cutoff")    java.time.LocalDateTime cutoff,
+            @Param("statuses")  java.util.List<ContactStatus> statuses
     );
 
     @Query("""

@@ -1,8 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ImportResult, Property, PropertyMedia } from '../../core/models/property.model';
+import { PagedResult } from '../../core/models/page-response.model';
+
+/** Page size used by `list()` to fetch "all" matching rows for bounded callers (#023). */
+const ALL_SIZE = 2000;
 
 export interface CreatePropertyRequest {
   type: string;
@@ -77,18 +82,57 @@ export interface PropertyListParams {
   status?: string;
 }
 
+/** VEFA commercial sheet. prixTtc is computed server-side; logementSocial is write-only (suggests TVA). */
+export interface PropertyCommercial {
+  propertyId?: string;
+  etage?: number | null;
+  orientation?: string | null;
+  vue?: string | null;
+  surfaceHabitable?: number | null;
+  surfaceTerrasse?: number | null;
+  surfaceCave?: number | null;
+  surfaceParking?: number | null;
+  parkingInclus?: boolean;
+  caveIncluse?: boolean;
+  prixHt?: number | null;
+  tvaTaux?: number | null;
+  prixTtc?: number | null;
+  logementSocial?: boolean | null;
+  penaliteRetardJournalier?: number | null;
+  chargesCoproMensuelles?: number | null;
+  planAppartementKey?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PropertyService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
+  /**
+   * All matching properties (bounded callers: a building's units, a project's lots, pickers).
+   * Backend is paginated (#023); request a large page and unwrap. Use `listPage()` for the
+   * main properties page where real pagination is wanted.
+   */
   list(params?: PropertyListParams): Observable<Property[]> {
-    const httpParams: Record<string, string> = {};
-    if (params?.projectId) httpParams['projectId'] = params.projectId;
-    if (params?.immeubleId) httpParams['immeubleId'] = params.immeubleId;
-    if (params?.type) httpParams['type'] = params.type;
-    if (params?.status) httpParams['status'] = params.status;
-    return this.http.get<Property[]>(`${this.apiUrl}/api/properties`, { params: httpParams });
+    return this.http.get<PagedResult<Property>>(`${this.apiUrl}/api/properties`,
+      { params: { ...this.filterParams(params), size: String(ALL_SIZE) } })
+      .pipe(map(r => r.content));
+  }
+
+  /** Paginated filtered list for the main properties page (#023). */
+  listPage(params: PropertyListParams | undefined, page: number, size: number):
+      Observable<PagedResult<Property>> {
+    return this.http.get<PagedResult<Property>>(`${this.apiUrl}/api/properties`,
+      { params: { ...this.filterParams(params), page: String(page), size: String(size) } });
+  }
+
+  private filterParams(params?: PropertyListParams): Record<string, string> {
+    const p: Record<string, string> = {};
+    if (params?.projectId) p['projectId'] = params.projectId;
+    if (params?.immeubleId) p['immeubleId'] = params.immeubleId;
+    if (params?.type) p['type'] = params.type;
+    if (params?.status) p['status'] = params.status;
+    return p;
   }
 
   listMedia(propertyId: string): Observable<PropertyMedia[]> {
@@ -128,6 +172,15 @@ export class PropertyService {
   /** Update an existing property (ADMIN / MANAGER only). */
   update(id: string, req: UpdatePropertyRequest): Observable<Property> {
     return this.http.put<Property>(`${this.apiUrl}/api/properties/${id}`, req);
+  }
+
+  // ── VEFA commercial sheet (HT/TVA/TTC) ──────────────────────────────────
+  getCommercial(id: string): Observable<PropertyCommercial> {
+    return this.http.get<PropertyCommercial>(`${this.apiUrl}/api/properties/${id}/commercial`);
+  }
+
+  updateCommercial(id: string, req: PropertyCommercial): Observable<PropertyCommercial> {
+    return this.http.patch<PropertyCommercial>(`${this.apiUrl}/api/properties/${id}/commercial`, req);
   }
 
   /**

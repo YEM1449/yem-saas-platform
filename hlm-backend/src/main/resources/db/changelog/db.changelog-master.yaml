@@ -149,3 +149,27 @@ databaseChangeLog:
       file: db/changelog/changes/073-vente-legal-fields-rename.yaml
   - include:
       file: db/changelog/changes/074-reservation-cancel-reason.yaml
+  - include:
+      file: db/changelog/changes/075-vente-active-unique.yaml
+  - include:
+      file: db/changelog/changes/076-vente-statut-vefa-rename.yaml
+  - include:
+      file: db/changelog/changes/077-vente-option-retractation.yaml
+  - include:
+      file: db/changelog/changes/078-reserve-livraison.yaml
+  - include:
+      file: db/changelog/changes/079-vente-echeance-legal.yaml
+  - include:
+      file: db/changelog/changes/080-contact-legal-fields.yaml
+  - include:
+      file: db/changelog/changes/081-co-acquereur.yaml
+  - include:
+      file: db/changelog/changes/082-dossier-financement.yaml
+  - include:
+      file: db/changelog/changes/083-property-commercial.yaml
+  - include:
+      file: db/changelog/changes/084-client-groupe-lien.yaml
+  - include:
+      file: db/changelog/changes/085-remboursement.yaml
+  - include:
+      file: db/changelog/changes/087-reserve-livraison-responsable.yaml

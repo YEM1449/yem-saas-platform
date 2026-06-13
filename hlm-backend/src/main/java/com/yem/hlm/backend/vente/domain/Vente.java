@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -127,6 +128,21 @@ public class Vente {
     @Setter
     @Column(name = "date_fin_delai_reflexion")
     private LocalDate dateFinDelaiReflexion;
+
+    /** When the OPTION (temporary hold) expires; cleared once confirmed (Wave 12 VEFA). */
+    @Setter
+    @Column(name = "option_expire_at")
+    private Instant optionExpireAt;
+
+    /** When the buyer exercised the legal cooling-off right, if any (Loi 44-00 Art. 618-3). */
+    @Setter
+    @Column(name = "retractation_exercee_at")
+    private Instant retractationExerceeAt;
+
+    /** Dépôt de garantie versé à la confirmation de réservation (≤5%, Art. 618-4). Base du remboursement (#028). */
+    @Setter
+    @Column(name = "montant_depot", precision = 15, scale = 2)
+    private java.math.BigDecimal montantDepot;
 
     /** Financing condition deadline. Defaults to dateCompromis + configurable period; overridable. */
     @Setter

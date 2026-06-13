@@ -52,5 +52,9 @@ public record VenteResponse(
         List<EcheanceResponse> echeances,
         List<VenteDocumentResponse> documents,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        /** Days past dateLivraisonPrevue (null when not yet overdue or already delivered). B-001 */
+        Long joursRetard,
+        /** Accumulated daily penalty = joursRetard × penaliteRetardJournalier (null when no delay). B-001 */
+        BigDecimal penaliteAccumulee
 ) {}

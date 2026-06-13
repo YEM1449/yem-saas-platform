@@ -33,8 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -72,6 +74,9 @@ public class VenteService {
     private final DateCoherenceValidator dateCoherence;
     private final ApplicationEventPublisher eventPublisher;
     private final VenteRefGenerator refGenerator;
+    private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
+    private final com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
+    private final com.yem.hlm.backend.notification.service.NotificationService notificationService;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -85,7 +90,10 @@ public class VenteService {
             SocieteContextHelper societeCtx,
             DateCoherenceValidator dateCoherence,
             ApplicationEventPublisher eventPublisher,
-            VenteRefGenerator refGenerator) {
+            VenteRefGenerator refGenerator,
+            com.yem.hlm.backend.legal.MarketConfig marketConfig,
+            com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository,
+            com.yem.hlm.backend.notification.service.NotificationService notificationService) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -98,6 +106,9 @@ public class VenteService {
         this.dateCoherence       = dateCoherence;
         this.eventPublisher      = eventPublisher;
         this.refGenerator        = refGenerator;
+        this.marketConfig        = marketConfig;
+        this.reserveRepository   = reserveRepository;
+        this.notificationService = notificationService;
     }
 
     // =========================================================================
@@ -143,7 +154,10 @@ public class VenteService {
 
             // Price calculation: property price − advance already paid − optional reduction.
             // If an explicit prixVente is provided it takes precedence (override mode).
-            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new PrixVenteInvalideException();
+            }
+            if (request.prixVente() != null) {
                 finalPrice = request.prixVente();
             } else {
                 BigDecimal basePrice  = property.getPrice() != null
@@ -176,7 +190,11 @@ public class VenteService {
             agent = userRepository.findById(agentId)
                     .orElseThrow(() -> new UserNotFoundException(agentId));
             // Use provided price; fall back to property catalogue price when omitted.
-            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) > 0) {
+            // A non-null price that is zero or negative is an explicit error (A-004).
+            if (request.prixVente() != null && request.prixVente().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new PrixVenteInvalideException();
+            }
+            if (request.prixVente() != null) {
                 finalPrice = request.prixVente();
             } else if (property.getPrice() != null && property.getPrice().compareTo(BigDecimal.ZERO) > 0) {
                 finalPrice = property.getPrice();
@@ -193,6 +211,14 @@ public class VenteService {
                 null,
                 request.dateLivraisonPrevue()
         );
+
+        // RG-B03: a property may have at most one active (non-cancelled) vente at a time.
+        // The DB partial unique index (changeset 075) is the concurrency-safe backstop;
+        // this guard gives a clean 409 with an actionable message.
+        if (venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(
+                societeId, property.getId(), VenteStatut.ANNULE)) {
+            throw new PropertyAlreadyEngagedException(property.getId());
+        }
 
         // Property must be ACTIVE or RESERVED to start a vente.
         // If ACTIVE (direct creation path), reserve it now.
@@ -235,6 +261,249 @@ public class VenteService {
         return toResponse(venteRepository.save(vente));
     }
 
+    // =========================================================================
+    // VEFA Loi 44-00 — OPTION + rétractation (Wave 12 P1-T3/T4)
+    // =========================================================================
+
+    /** Creates an OPTION (temporary hold, 1-72h, default capped) on a property for a contact. */
+    @Transactional
+    public VenteResponse createOption(UUID propertyId, UUID contactId, int dureeHeures) {
+        UUID societeId = societeCtx.requireSocieteId();
+        UUID actorId   = societeCtx.requireUserId();
+
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+        Property property = propertyRepository
+                .findBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+
+        // RG-B03: at most one active (non-cancelled) vente per property (fail fast before agent lookup).
+        if (venteRepository.existsBySocieteIdAndPropertyIdAndStatutNot(societeId, propertyId, VenteStatut.ANNULE)) {
+            throw new PropertyAlreadyEngagedException(propertyId);
+        }
+        if (property.getStatus() != PropertyStatus.ACTIVE) {
+            throw new InvalidPropertyStatusTransitionException(
+                    "Le bien doit être ACTIVE pour poser une option; statut actuel : " + property.getStatus());
+        }
+
+        User agent = userRepository.findById(actorId)
+                .orElseThrow(() -> new UserNotFoundException(actorId));
+        int duree = Math.min(Math.max(dureeHeures, 1), 72);
+        propertyWorkflow.reserve(property, LocalDateTime.now());
+        propertyRepository.save(property);
+
+        Vente vente = new Vente(societeId, property.getId(), contact, agent);
+        vente.setVenteRef(refGenerator.generate(societeId));
+        vente.setStatut(VenteStatut.OPTION);
+        vente.setOptionExpireAt(Instant.now().plus(duree, ChronoUnit.HOURS));
+        if (property.getPrice() != null) vente.setPrixVente(property.getPrice());
+        vente.setProbability(defaultProbability(VenteStatut.OPTION));
+        vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
+
+        advanceContactStatus(contact, ContactStatus.QUALIFIED_PROSPECT);
+        contactRepository.save(contact);
+
+        return toResponse(venteRepository.save(vente));
+    }
+
+    /** Confirms a reservation (from PROSPECT/OPTION): enforces the legal deposit cap and opens the cooling-off period. */
+    @Transactional
+    public VenteResponse confirmReservation(UUID venteId, BigDecimal montantDepot) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        validateTransition(vente.getStatut(), VenteStatut.RESERVE);
+
+        // Art. 618-4 Loi 44-00 — deposit ≤ 5% of the agreed price.
+        BigDecimal price = vente.getPrixVente();
+        if (montantDepot != null && price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal maxDepot = price.multiply(marketConfig.getDepotGarantieMaxPct());
+            if (montantDepot.compareTo(maxDepot) > 0) {
+                throw new ViolationLegaleException(
+                        "Le dépôt de garantie ne peut excéder " + maxDepot
+                        + " (5% du prix — Art. 618-4 Loi 44-00).");
+            }
+        }
+
+        // Persist the deposit so the refund obligation has a known amount on annulation (#028).
+        vente.setMontantDepot(montantDepot);
+
+        vente.setStatut(VenteStatut.RESERVE);
+        vente.setOptionExpireAt(null);
+
+        // Open the legal cooling-off window and advance to EN_RETRACTATION.
+        vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()));
+        vente.setStatut(VenteStatut.EN_RETRACTATION);
+        vente.setStageEntryDate(LocalDateTime.now());
+        vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
+
+        advanceContactStatus(vente.getContact(), ContactStatus.CLIENT);
+        contactRepository.save(vente.getContact());
+
+        return toResponse(venteRepository.save(vente));
+    }
+
+    /** Buyer exercises the legal cooling-off right within the window → vente cancelled, property freed. */
+    @Transactional
+    public VenteResponse exerciseRetractation(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        if (vente.getStatut() != VenteStatut.EN_RETRACTATION) {
+            throw new RetractationImpossibleException("La vente n'est pas en période de rétractation.");
+        }
+        LocalDate deadline = vente.getDateFinDelaiReflexion();
+        if (deadline != null && LocalDate.now().isAfter(deadline)) {
+            throw new RetractationImpossibleException(
+                    "Le délai légal de rétractation de " + marketConfig.getDelaiRetractationJours()
+                    + " jours est expiré.");
+        }
+
+        vente.setStatut(VenteStatut.ANNULE);
+        vente.setRetractationExerceeAt(Instant.now());
+        vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
+        releasePropertyForCancelledVente(societeId, vente);
+        echeanceRepository.cancelAllPendingByVente(vente.getId());
+
+        Vente saved = venteRepository.save(vente);
+        publishVenteAnnulee(societeId, saved);
+        return toResponse(saved);
+    }
+
+    /** Fires the cancellation event so a refund obligation is recorded (#028). */
+    private void publishVenteAnnulee(UUID societeId, Vente vente) {
+        eventPublisher.publishEvent(new com.yem.hlm.backend.common.event.VenteAnnuleeEvent(
+                societeId, societeCtx.requireUserId(), vente.getId(), vente.getMontantDepot()));
+    }
+
+    // ── scheduler-facing sweeps (run in system context) ──────────────────────
+
+    /** Cancels OPTIONs whose hold has expired. Returns the number expired. */
+    @Transactional
+    public int expireOverdueOptions() {
+        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now());
+        for (Vente v : overdue) {
+            v.setStatut(VenteStatut.ANNULE);
+            v.setMotifAnnulation(MotifAnnulation.AUTRE);
+            releasePropertyForCancelledVente(v.getSocieteId(), v);
+            venteRepository.save(v);
+            notifyAgent(v, com.yem.hlm.backend.notification.domain.NotificationType.OPTION_EXPIRED,
+                    "{\"venteRef\":\"" + safeJson(v.getVenteRef()) + "\"}");
+        }
+        return overdue.size();
+    }
+
+    /** Closes the cooling-off window for ventes whose retraction deadline has passed (→ RESERVE). Returns count. */
+    @Transactional
+    public int closeExpiredRetractations() {
+        List<Vente> done = venteRepository.findByStatutAndDateFinDelaiReflexionBefore(
+                VenteStatut.EN_RETRACTATION, LocalDate.now());
+        for (Vente v : done) {
+            v.setStatut(VenteStatut.RESERVE);
+            venteRepository.save(v);
+            notifyAgent(v, com.yem.hlm.backend.notification.domain.NotificationType.RETRACTATION_DELAI_CLOS,
+                    "{\"venteRef\":\"" + safeJson(v.getVenteRef()) + "\"}");
+        }
+        return done.size();
+    }
+
+    /** Pushes a VEFA notification to the vente's agent (best-effort — never breaks the sweep). */
+    private void notifyAgent(Vente vente, com.yem.hlm.backend.notification.domain.NotificationType type, String payload) {
+        if (vente.getAgent() == null) return;
+        try {
+            notificationService.notify(vente.getSocieteId(), vente.getAgent(), type, vente.getId(), payload);
+        } catch (Exception ignored) {
+            // a notification failure must not abort the scheduled sweep
+        }
+    }
+
+    private static String safeJson(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private void releasePropertyForCancelledVente(UUID societeId, Vente vente) {
+        Property property = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
+        if (property != null) {
+            if (property.getStatus() == PropertyStatus.RESERVED) {
+                propertyWorkflow.releaseReservation(property);
+            } else if (property.getStatus() == PropertyStatus.SOLD) {
+                propertyWorkflow.cancelSaleToAvailable(property);
+            }
+            propertyRepository.save(property);
+        }
+    }
+
+    // =========================================================================
+    // VEFA Loi 44-00 — Livraison avec réserves (Wave 12 P1-T5)
+    // =========================================================================
+
+    /**
+     * Records delivery from ACTE. With no reserves → LIVRE_DEFINITIF; otherwise →
+     * LIVRE_AVEC_RESERVES and the reserves are created with a configurable lift deadline.
+     * Reuses {@link #updateStatut} so the standard side-effects (date stamping, contact
+     * advancement on final delivery) stay in one place.
+     */
+    @Transactional
+    public VenteResponse recordDelivery(UUID venteId, RecordDeliveryRequest request) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        boolean withReserves = request.reserves() != null && !request.reserves().isEmpty();
+        VenteStatut target = withReserves ? VenteStatut.LIVRE_AVEC_RESERVES : VenteStatut.LIVRE_DEFINITIF;
+
+        if (vente.getStatut() != VenteStatut.ACTE) {
+            throw new InvalidVenteTransitionException(vente.getStatut(), target);
+        }
+
+        VenteResponse response = updateStatut(venteId, new UpdateVenteStatutRequest(
+                target, null, request.dateLivraison(), null, null, null));
+
+        if (withReserves) {
+            LocalDate echeance = LocalDate.now().plusDays(marketConfig.getDelaiLeveeReservesJours());
+            for (String description : request.reserves()) {
+                if (description != null && !description.isBlank()) {
+                    reserveRepository.save(new ReserveLivraison(societeId, venteId, description.trim(), echeance));
+                }
+            }
+        }
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReserveLivraisonResponse> listReserves(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        requireVente(societeId, venteId); // scope check
+        return reserveRepository.findBySocieteIdAndVenteIdOrderByDateConstatAsc(societeId, venteId)
+                .stream().map(ReserveLivraisonResponse::from).toList();
+    }
+
+    /** Lifts a single reserve; when the last one is lifted the vente advances to RESERVES_LEVEES. */
+    @Transactional
+    public VenteResponse liftReserve(UUID venteId, UUID reserveId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+        ReserveLivraison reserve = reserveRepository.findBySocieteIdAndId(societeId, reserveId)
+                .orElseThrow(() -> new ReserveNotFoundException(reserveId));
+        if (!reserve.getVenteId().equals(venteId)) {
+            throw new ReserveNotFoundException(reserveId);
+        }
+
+        reserve.setStatut(StatutReserve.LEVEE);
+        reserve.setDateLeveeReelle(LocalDate.now());
+        reserveRepository.save(reserve);
+
+        long remaining = reserveRepository.countBySocieteIdAndVenteIdAndStatutNot(
+                societeId, venteId, StatutReserve.LEVEE);
+        if (remaining == 0 && vente.getStatut() == VenteStatut.LIVRE_AVEC_RESERVES) {
+            validateTransition(vente.getStatut(), VenteStatut.RESERVES_LEVEES);
+            vente.setStatut(VenteStatut.RESERVES_LEVEES);
+            vente.setProbability(defaultProbability(VenteStatut.RESERVES_LEVEES));
+            vente.setStageEntryDate(LocalDateTime.now());
+            venteRepository.save(vente);
+        }
+        return toResponse(vente);
+    }
+
     @Transactional(readOnly = true)
     public List<VenteResponse> findAll() {
         UUID societeId = societeCtx.requireSocieteId();
@@ -242,11 +511,28 @@ public class VenteService {
                 .stream().map(this::toResponse).toList();
     }
 
+    /** Paginated société-scoped list (#023). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<VenteResponse> findAll(
+            org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = societeCtx.requireSocieteId();
+        return venteRepository.findAllBySocieteId(societeId, pageable).map(this::toResponse);
+    }
+
     @Transactional(readOnly = true)
     public List<VenteResponse> findByContactId(UUID contactId) {
         UUID societeId = societeCtx.requireSocieteId();
         return venteRepository.findAllBySocieteIdAndContact_IdOrderByCreatedAtDesc(societeId, contactId)
                 .stream().map(this::toResponse).toList();
+    }
+
+    /** Paginated société-scoped list filtered by buyer (#023). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<VenteResponse> findByContactId(
+            UUID contactId, org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = societeCtx.requireSocieteId();
+        return venteRepository.findAllBySocieteIdAndContact_Id(societeId, contactId, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -288,19 +574,19 @@ public class VenteService {
         // Stamp date fields based on the new statut
         if (request.dateTransition() != null) {
             switch (request.statut()) {
-                case ACTE_NOTARIE -> vente.setDateActeNotarie(request.dateTransition());
-                case LIVRE        -> vente.setDateLivraisonReelle(request.dateTransition());
-                default           -> { /* no specific date field for other statuts */ }
+                case ACTE            -> vente.setDateActeNotarie(request.dateTransition());
+                case LIVRE_DEFINITIF -> vente.setDateLivraisonReelle(request.dateTransition());
+                default              -> { /* no specific date field for other statuts */ }
             }
         }
 
-        // Capture PV de réception date when advancing to LIVRE (optional convenience field)
-        if (request.statut() == VenteStatut.LIVRE && request.datePvReception() != null) {
+        // Capture PV de réception date when advancing to final delivery (optional convenience field)
+        if (request.statut() == VenteStatut.LIVRE_DEFINITIF && request.datePvReception() != null) {
             vente.setDatePvReception(request.datePvReception());
         }
 
         // Advance contact to COMPLETED_CLIENT when sale is delivered
-        if (request.statut() == VenteStatut.LIVRE) {
+        if (request.statut() == VenteStatut.LIVRE_DEFINITIF) {
             Contact contact = vente.getContact();
             advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
             contactRepository.save(contact);
@@ -314,11 +600,11 @@ public class VenteService {
         }
 
         // Drive property status from vente stage:
-        // ACTE_NOTARIE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
+        // ACTE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
         Property property = propertyRepository
                 .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
         if (property != null) {
-            if (request.statut() == VenteStatut.ACTE_NOTARIE) {
+            if (request.statut() == VenteStatut.ACTE) {
                 propertyWorkflow.sell(property, LocalDateTime.now());
                 propertyRepository.save(property);
             } else if (request.statut() == VenteStatut.ANNULE) {
@@ -331,7 +617,17 @@ public class VenteService {
             }
         }
 
-        return toResponse(venteRepository.save(vente));
+        // Cancel all pending échéances when a vente is annulled (A-001).
+        // PAYEE échéances are already collected and are left unchanged.
+        if (request.statut() == VenteStatut.ANNULE) {
+            echeanceRepository.cancelAllPendingByVente(vente.getId());
+        }
+
+        Vente saved = venteRepository.save(vente);
+        if (request.statut() == VenteStatut.ANNULE) {
+            publishVenteAnnulee(societeId, saved);
+        }
+        return toResponse(saved);
     }
 
     // =========================================================================
@@ -343,6 +639,7 @@ public class VenteService {
         Vente vente = requireVente(societeId, venteId);
 
         dateCoherence.validateEcheanceDates(vente.getDateCompromis(), request.dateEcheance(), null);
+        assertCumulWithinPrice(societeId, venteId, vente.getPrixVente(), request.montant());
 
         var echeance = new VenteEcheance(
                 societeId, vente,
@@ -359,6 +656,61 @@ public class VenteService {
                 new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
 
         return saved;
+    }
+
+    /**
+     * Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00): 7 staged
+     * échéances whose percentages sum to 100% of the agreed price. Idempotent-guarded —
+     * fails if a legal échéancier already exists.
+     */
+    @Transactional
+    public List<EcheanceResponse> generateEcheancierLegal(UUID venteId) {
+        UUID societeId = societeCtx.requireSocieteId();
+        Vente vente = requireVente(societeId, venteId);
+
+        BigDecimal prix = vente.getPrixVente();
+        if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ViolationLegaleException(
+                    "Le prix de vente doit être défini pour générer l'échéancier légal.");
+        }
+        if (echeanceRepository.existsByVente_IdAndEtapeIsNotNull(venteId)) {
+            throw new ViolationLegaleException("L'échéancier légal a déjà été généré pour cette vente.");
+        }
+
+        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now()))
+                ? vente.getDateCompromis() : LocalDate.now();
+
+        List<VenteEcheance> created = new java.util.ArrayList<>();
+        for (com.yem.hlm.backend.legal.EcheancierLegal.EtapeLegale etape
+                : com.yem.hlm.backend.legal.EcheancierLegal.MA) {
+            BigDecimal montant = prix.multiply(etape.pct())
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            LocalDate echeance = base.plusMonths(2L * (etape.ordre() - 1));
+            VenteEcheance e = new VenteEcheance(societeId, vente,
+                    etape.label() + " (" + etape.pct() + "%)", montant, echeance);
+            e.setEtape(etape.code());
+            e.setPctPrevu(etape.pct());
+            e.setBaseLegale(com.yem.hlm.backend.legal.EcheancierLegal.BASE_LEGALE_MA);
+            created.add(echeanceRepository.save(e));
+        }
+
+        UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                .map(p -> p.getTrancheId()).orElse(null);
+        eventPublisher.publishEvent(
+                new EcheanceChangedEvent(societeId, societeCtx.requireUserId(), venteId, trancheId));
+
+        return created.stream().map(this::toEcheanceResponse).toList();
+    }
+
+    /** Art. 618-17 — the cumulative échéances may never exceed the agreed price. */
+    private void assertCumulWithinPrice(UUID societeId, UUID venteId, BigDecimal prix, BigDecimal addedMontant) {
+        if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0 || addedMontant == null) return;
+        BigDecimal cumul = echeanceRepository.sumMontantByVente(societeId, venteId).add(addedMontant);
+        if (cumul.compareTo(prix) > 0) {
+            throw new ViolationLegaleException(
+                    "Le cumul des échéances (" + cumul + ") dépasse le prix de vente (" + prix
+                    + ") — Art. 618-17 Loi 44-00.");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -549,20 +901,34 @@ public class VenteService {
 
     private static int defaultProbability(VenteStatut statut) {
         return switch (statut) {
-            case COMPROMIS    -> 25;
-            case FINANCEMENT  -> 50;
-            case ACTE_NOTARIE -> 75;
-            case LIVRE        -> 100;
-            case ANNULE       -> 0;
+            case PROSPECT            -> 5;
+            case OPTION              -> 10;
+            case RESERVE             -> 20;
+            case EN_RETRACTATION     -> 20;
+            case ACOMPTE             -> 30;
+            case COMPROMIS           -> 40;
+            case FINANCEMENT         -> 50;
+            case ACTE                -> 75;
+            case LIVRE_AVEC_RESERVES -> 90;
+            case RESERVES_LEVEES     -> 95;
+            case LIVRE_DEFINITIF     -> 100;
+            case ANNULE              -> 0;
         };
     }
 
     private static long estimatedDaysToClose(VenteStatut statut) {
         return switch (statut) {
-            case COMPROMIS    -> 90;
-            case FINANCEMENT  -> 60;
-            case ACTE_NOTARIE -> 30;
-            case LIVRE, ANNULE -> 0;
+            case PROSPECT            -> 150;
+            case OPTION              -> 120;
+            case RESERVE             -> 110;
+            case EN_RETRACTATION     -> 100;
+            case ACOMPTE             -> 95;
+            case COMPROMIS           -> 90;
+            case FINANCEMENT         -> 60;
+            case ACTE                -> 30;
+            case LIVRE_AVEC_RESERVES -> 15;
+            case RESERVES_LEVEES     -> 5;
+            case LIVRE_DEFINITIF, ANNULE -> 0;
         };
     }
 
@@ -570,20 +936,33 @@ public class VenteService {
      * Validates that the requested statut transition is permitted.
      *
      * <pre>
-     * COMPROMIS  → FINANCEMENT, ANNULE
-     * FINANCEMENT → ACTE_NOTARIE, ANNULE
-     * ACTE_NOTARIE → LIVRE, ANNULE
-     * LIVRE      → (terminal)
-     * ANNULE     → (terminal)
+     * PROSPECT        → OPTION, RESERVE, ANNULE
+     * OPTION          → RESERVE, PROSPECT, ANNULE
+     * RESERVE         → EN_RETRACTATION, ACOMPTE, ANNULE
+     * EN_RETRACTATION → ACOMPTE, ANNULE        (expiry → continue ; rétractation → ANNULE)
+     * ACOMPTE         → COMPROMIS, ANNULE
+     * COMPROMIS       → FINANCEMENT, ANNULE
+     * FINANCEMENT     → ACTE, ANNULE
+     * ACTE            → LIVRE_AVEC_RESERVES, LIVRE_DEFINITIF, ANNULE
+     * LIVRE_AVEC_RESERVES → RESERVES_LEVEES, ANNULE
+     * RESERVES_LEVEES → LIVRE_DEFINITIF
+     * LIVRE_DEFINITIF, ANNULE → (terminal)
      * </pre>
      */
     private void validateTransition(VenteStatut from, VenteStatut to) {
         if (from == to) return; // idempotent — no-op
         Set<VenteStatut> allowed = switch (from) {
-            case COMPROMIS    -> Set.of(VenteStatut.FINANCEMENT,  VenteStatut.ANNULE);
-            case FINANCEMENT  -> Set.of(VenteStatut.ACTE_NOTARIE, VenteStatut.ANNULE);
-            case ACTE_NOTARIE -> Set.of(VenteStatut.LIVRE,        VenteStatut.ANNULE);
-            case LIVRE, ANNULE -> Set.of(); // terminal states
+            case PROSPECT        -> Set.of(VenteStatut.OPTION, VenteStatut.RESERVE, VenteStatut.ANNULE);
+            case OPTION          -> Set.of(VenteStatut.RESERVE, VenteStatut.PROSPECT, VenteStatut.ANNULE);
+            case RESERVE         -> Set.of(VenteStatut.EN_RETRACTATION, VenteStatut.ACOMPTE, VenteStatut.ANNULE);
+            case EN_RETRACTATION -> Set.of(VenteStatut.ACOMPTE, VenteStatut.ANNULE);
+            case ACOMPTE         -> Set.of(VenteStatut.COMPROMIS, VenteStatut.ANNULE);
+            case COMPROMIS       -> Set.of(VenteStatut.FINANCEMENT, VenteStatut.ANNULE);
+            case FINANCEMENT     -> Set.of(VenteStatut.ACTE, VenteStatut.ANNULE);
+            case ACTE            -> Set.of(VenteStatut.LIVRE_AVEC_RESERVES, VenteStatut.LIVRE_DEFINITIF, VenteStatut.ANNULE);
+            case LIVRE_AVEC_RESERVES -> Set.of(VenteStatut.RESERVES_LEVEES, VenteStatut.ANNULE);
+            case RESERVES_LEVEES -> Set.of(VenteStatut.LIVRE_DEFINITIF);
+            case LIVRE_DEFINITIF, ANNULE -> Set.of(); // terminal states
         };
         if (!allowed.contains(to)) {
             throw new InvalidVenteTransitionException(from, to);
@@ -595,6 +974,20 @@ public class VenteService {
                 .map(this::toEcheanceResponse).toList();
         List<VenteDocumentResponse> docs = v.getDocuments().stream()
                 .map(this::toDocumentResponse).toList();
+
+        // B-001: late-delivery penalty — only for active ventes past their expected delivery date
+        Long joursRetard = null;
+        BigDecimal penaliteAccumulee = null;
+        boolean terminal = v.getStatut() == VenteStatut.ANNULE || v.getStatut() == VenteStatut.LIVRE_DEFINITIF;
+        if (!terminal && v.getDateLivraisonReelle() == null && v.getDateLivraisonPrevue() != null) {
+            LocalDate today = LocalDate.now();
+            if (today.isAfter(v.getDateLivraisonPrevue())) {
+                joursRetard = ChronoUnit.DAYS.between(v.getDateLivraisonPrevue(), today);
+                penaliteAccumulee = marketConfig.getPenaliteRetardJournalierMad()
+                        .multiply(BigDecimal.valueOf(joursRetard));
+            }
+        }
+
         return new VenteResponse(
                 v.getId(), v.getVenteRef(), v.getSocieteId(), v.getPropertyId(),
                 v.getContact().getId(), v.getContact().getFullName(), v.getAgent().getId(),
@@ -614,14 +1007,16 @@ public class VenteService {
                 v.getDateLivraisonPrevue(), v.getDateLivraisonReelle(),
                 v.getNotes(), v.getProbability(), v.getStageEntryDate(),
                 v.getExpectedClosingDate(), echeances, docs,
-                v.getCreatedAt(), v.getUpdatedAt());
+                v.getCreatedAt(), v.getUpdatedAt(),
+                joursRetard, penaliteAccumulee);
     }
 
     private EcheanceResponse toEcheanceResponse(VenteEcheance e) {
         return new EcheanceResponse(
                 e.getId(), e.getVente().getId(),
                 e.getLibelle(), e.getMontant(), e.getDateEcheance(),
-                e.getStatut(), e.getDatePaiement(), e.getNotes(), e.getCreatedAt());
+                e.getStatut(), e.getDatePaiement(), e.getNotes(), e.getCreatedAt(),
+                e.getEtape(), e.getPctPrevu(), e.getBaseLegale());
     }
 
     private VenteDocumentResponse toDocumentResponse(VenteDocument d) {

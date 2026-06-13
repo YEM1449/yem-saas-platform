@@ -9,5 +9,7 @@ public enum EcheanceStatut {
     /** Paiement reçu et confirmé. */
     PAYEE,
     /** Date d'échéance dépassée sans paiement. */
-    EN_RETARD
+    EN_RETARD,
+    /** Échéance annulée suite à l'annulation de la vente (A-001). */
+    ANNULEE
 }

@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 
@@ -10,7 +10,7 @@ type Step = 'request' | 'sent' | 'verifying' | 'error';
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
   templateUrl: './portal-login.component.html',
   styleUrl: './portal-login.component.css',
 })

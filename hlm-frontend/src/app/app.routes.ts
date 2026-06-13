@@ -51,6 +51,9 @@ export const routes: Routes = [
       { path: 'dashboard/commercial/sales', loadComponent: () => import('./features/dashboard/commercial-dashboard-sales.component').then(m => m.CommercialDashboardSalesComponent) },
       { path: 'dashboard/commercial/cash', loadComponent: () => import('./features/dashboard/cash-dashboard.component').then(m => m.CashDashboardComponent) },
       { path: 'dashboard/receivables', loadComponent: () => import('./features/dashboard/receivables-dashboard.component').then(m => m.ReceivablesDashboardComponent) },
+      { path: 'dashboard/tresorerie', loadComponent: () => import('./features/dashboard/tresorerie-dashboard.component').then(m => m.TresorerieDashboardComponent) },
+      { path: 'groupe', canActivate: [adminGuard], loadComponent: () => import('./features/dashboard/vue-groupe.component').then(m => m.VueGroupeComponent) },
+      { path: 'groupe/clients', canActivate: [adminGuard], loadComponent: () => import('./features/dashboard/vue-groupe-clients.component').then(m => m.VueGroupeClientsComponent) },
       { path: 'commissions', loadComponent: () => import('./features/commissions/commissions.component').then(m => m.CommissionsComponent) },
       { path: 'audit', loadComponent: () => import('./features/audit/audit.component').then(m => m.AuditComponent) },
       { path: 'tasks', loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent) },
@@ -79,6 +82,9 @@ export const routes: Routes = [
     children: [
       { path: 'login',  loadComponent: () => import('./portal/features/portal-login/portal-login.component').then(m => m.PortalLoginComponent) },
       { path: 'verify', loadComponent: () => import('./portal/features/portal-verify/portal-verify.component').then(m => m.PortalVerifyComponent) },
+      // Public legal pages (Loi 09-08 / CNDP) — readable before authentication (#025)
+      { path: 'privacy', loadComponent: () => import('./portal/features/portal-legal/portal-privacy.component').then(m => m.PortalPrivacyComponent) },
+      { path: 'mentions-legales', loadComponent: () => import('./portal/features/portal-legal/portal-legal.component').then(m => m.PortalLegalComponent) },
       {
         path: '',
         loadComponent: () => import('./portal/features/portal-shell/portal-shell.component').then(m => m.PortalShellComponent),

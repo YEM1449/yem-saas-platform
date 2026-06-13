@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 087-reserve-livraison-responsable
+      author: yem-phase-a
+      comment: >
+        A-003 — add responsable_user_id (nullable FK to app_user) on reserve_livraison,
+        enabling per-reserve assignment tracking in the project reserve view.
+      changes:
+        - addColumn:
+            tableName: reserve_livraison
+            columns:
+              - column:
+                  name: responsable_user_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        - addForeignKeyConstraint:
+            baseTableName: reserve_livraison
+            baseColumnNames: responsable_user_id
+            constraintName: fk_reservelivraison_responsable
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: SET NULL

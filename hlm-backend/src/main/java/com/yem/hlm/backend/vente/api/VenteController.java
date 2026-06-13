@@ -40,15 +40,18 @@ public class VenteController {
     private final VenteInviteService venteInviteService;
     private final MediaStorageService mediaStorage;
     private final VenteContractPdfService venteContractPdfService;
+    private final com.yem.hlm.backend.vente.service.VenteLegalDocumentService legalDocumentService;
 
     public VenteController(VenteService venteService,
                            VenteInviteService venteInviteService,
                            MediaStorageService mediaStorage,
-                           VenteContractPdfService venteContractPdfService) {
+                           VenteContractPdfService venteContractPdfService,
+                           com.yem.hlm.backend.vente.service.VenteLegalDocumentService legalDocumentService) {
         this.venteService             = venteService;
         this.venteInviteService       = venteInviteService;
         this.mediaStorage             = mediaStorage;
         this.venteContractPdfService  = venteContractPdfService;
+        this.legalDocumentService     = legalDocumentService;
     }
 
     // =========================================================================
@@ -62,10 +65,82 @@ public class VenteController {
         return venteService.create(request);
     }
 
+    // ── VEFA Loi 44-00 — OPTION + rétractation ───────────────────────────────
+
+    @PostMapping("/option")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VenteResponse createOption(@Valid @RequestBody CreateOptionRequest request) {
+        return venteService.createOption(request.propertyId(), request.contactId(), request.dureeHeures());
+    }
+
+    @PostMapping("/{id}/confirm-reservation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VenteResponse confirmReservation(
+            @PathVariable UUID id,
+            @Valid @RequestBody ConfirmReservationRequest request) {
+        return venteService.confirmReservation(id, request.montantDepot());
+    }
+
+    @PostMapping("/{id}/retractation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse exerciseRetractation(@PathVariable UUID id) {
+        return venteService.exerciseRetractation(id);
+    }
+
+    // ── VEFA — Livraison avec réserves ───────────────────────────────────────
+
+    @PostMapping("/{id}/livraison")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse recordDelivery(
+            @PathVariable UUID id,
+            @Valid @RequestBody RecordDeliveryRequest request) {
+        return venteService.recordDelivery(id, request);
+    }
+
+    // ── VEFA legal document generation (Loi 44-00) ───────────────────────────
+
+    @PostMapping("/{id}/documents/contrat-reservation")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public GeneratedDocumentResponse generateContratReservation(@PathVariable UUID id) {
+        return legalDocumentService.generateContratReservation(id);
+    }
+
+    @PostMapping("/{id}/echeances/{echeanceId}/quittance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public GeneratedDocumentResponse generateQuittance(@PathVariable UUID id, @PathVariable UUID echeanceId) {
+        return legalDocumentService.generateQuittance(id, echeanceId);
+    }
+
+    @PostMapping("/{id}/documents/pv-livraison")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public GeneratedDocumentResponse generatePvLivraison(@PathVariable UUID id) {
+        return legalDocumentService.generatePvLivraison(id);
+    }
+
+    @GetMapping("/{id}/reserves")
+    public List<ReserveLivraisonResponse> listReserves(@PathVariable UUID id) {
+        return venteService.listReserves(id);
+    }
+
+    @PutMapping("/{id}/reserves/{reserveId}/lever")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public VenteResponse liftReserve(@PathVariable UUID id, @PathVariable UUID reserveId) {
+        return venteService.liftReserve(id, reserveId);
+    }
+
     @GetMapping
-    public List<VenteResponse> list(@RequestParam(required = false) UUID contactId) {
-        if (contactId != null) return venteService.findByContactId(contactId);
-        return venteService.findAll();
+    public com.yem.hlm.backend.common.dto.PageResponse<VenteResponse> list(
+            @RequestParam(required = false) UUID contactId,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt",
+                    direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<VenteResponse> page = (contactId != null)
+                ? venteService.findByContactId(contactId, pageable)
+                : venteService.findAll(pageable);
+        return com.yem.hlm.backend.common.dto.PageResponse.of(page);
     }
 
     @GetMapping("/{id}")
@@ -92,6 +167,14 @@ public class VenteController {
     @GetMapping("/{id}/echeances")
     public List<EcheanceResponse> listEcheances(@PathVariable UUID id) {
         return venteService.findEcheances(id);
+    }
+
+    /** Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00). */
+    @PostMapping("/{id}/echeancier/generer-legal")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public List<EcheanceResponse> generateEcheancierLegal(@PathVariable UUID id) {
+        return venteService.generateEcheancierLegal(id);
     }
 
     @PostMapping("/{id}/echeances")

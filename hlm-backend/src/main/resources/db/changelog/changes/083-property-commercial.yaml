@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 083-property-commercial
+      author: yem-wave12
+      comment: >
+        Wave 12 P4 — commercial fields on property (HT/TVA, secondary surfaces, charges,
+        plan). étage (floor_number) and orientation already exist. prix_ttc is never stored
+        — it is computed as prix_ht × (1 + tva_taux). All additive & nullable.
+      changes:
+        - addColumn:
+            tableName: property
+            columns:
+              - column: { name: prix_ht,                    type: "DECIMAL(15,2)" }
+              - column: { name: tva_taux,                   type: "DECIMAL(5,4)" }
+              - column: { name: vue,                        type: VARCHAR(50) }
+              - column: { name: surface_terrasse,           type: "DECIMAL(8,2)" }
+              - column: { name: surface_cave,               type: "DECIMAL(8,2)" }
+              - column: { name: surface_parking,            type: "DECIMAL(8,2)" }
+              - column: { name: parking_inclus,             type: BOOLEAN, defaultValueBoolean: false,
+                          constraints: { nullable: false } }
+              - column: { name: cave_incluse,               type: BOOLEAN, defaultValueBoolean: false,
+                          constraints: { nullable: false } }
+              - column: { name: penalite_retard_journalier, type: "DECIMAL(10,2)" }
+              - column: { name: charges_copro_mensuelles,   type: "DECIMAL(8,2)" }
+              - column: { name: plan_appartement_key,       type: VARCHAR(500) }

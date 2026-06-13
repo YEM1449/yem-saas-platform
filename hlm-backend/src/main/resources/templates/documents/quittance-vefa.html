@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- Quittance d'appel de fonds (VEFA, Loi 44-00). Rendered via DocumentGenerationService. -->
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Quittance de paiement</title>
+    <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #1e293b; }
+        h1 { font-size: 18px; text-align: center; margin: 0 0 4px; }
+        .subtitle { text-align: center; color: #475569; margin: 0 0 18px; font-size: 11px; }
+        .section-title { font-size: 13px; font-weight: bold; border-bottom: 1px solid #94a3b8;
+                         padding-bottom: 2px; margin: 16px 0 6px; }
+        table.fields { width: 100%; border-collapse: collapse; }
+        table.fields td { padding: 3px 6px; vertical-align: top; }
+        table.fields td.label { width: 38%; color: #475569; }
+        .amount { font-size: 16px; font-weight: bold; color: #15803d; }
+        .legal { margin-top: 22px; padding: 10px; border: 1px solid #cbd5e1; background: #f8fafc;
+                 font-size: 10px; color: #334155; }
+        .sign-row { margin-top: 36px; }
+        .sign-cell { width: 50%; text-align: center; color: #475569; }
+    </style>
+</head>
+<body>
+    <h1>Quittance de paiement</h1>
+    <p class="subtitle" th:text="${model.societeName}">Soci&#233;t&#233;</p>
+
+    <div class="section-title">Acqu&#233;reur</div>
+    <table class="fields">
+        <tr><td class="label">Nom complet</td><td th:text="${model.acquereur}">—</td></tr>
+        <tr><td class="label">R&#233;f&#233;rence de la vente</td><td th:text="${model.venteRef}">—</td></tr>
+        <tr><td class="label">Bien</td><td th:text="${model.propertyRef}">—</td></tr>
+    </table>
+
+    <div class="section-title">Appel de fonds r&#233;gl&#233;</div>
+    <table class="fields">
+        <tr><td class="label">Libell&#233;</td><td th:text="${model.libelle}">—</td></tr>
+        <tr><td class="label">&#201;tape</td><td th:text="${model.etape}">—</td></tr>
+        <tr><td class="label">Date de paiement</td><td th:text="${model.datePaiement}">—</td></tr>
+        <tr><td class="label">Montant re&#231;u</td><td class="amount" th:text="${model.montant}">—</td></tr>
+    </table>
+
+    <p style="margin-top:16px">
+        Nous accusons r&#233;ception du montant ci-dessus, en r&#232;glement de l'appel de fonds
+        d&#233;sign&#233;, pour la vente en l'&#233;tat futur d'ach&#232;vement r&#233;f&#233;renc&#233;e.
+    </p>
+
+    <div class="legal">
+        Conform&#233;ment &#224; la Loi n&#176;44-00 du 3 octobre 2002 (VEFA Maroc, articles 618-1
+        &#224; 618-21 du DOC). La pr&#233;sente quittance vaut re&#231;u libératoire pour l'appel
+        de fonds vis&#233;.
+    </div>
+
+    <table class="sign-row" style="width:100%">
+        <tr>
+            <td class="sign-cell">Le promoteur</td>
+            <td class="sign-cell">L'acqu&#233;reur</td>
+        </tr>
+    </table>
+</body>
+</html>

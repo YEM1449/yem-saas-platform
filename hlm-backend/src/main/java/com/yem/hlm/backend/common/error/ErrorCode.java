@@ -33,6 +33,8 @@ public enum ErrorCode {
     CONTACT_INTEREST_EXISTS,
     DEPOSIT_ALREADY_EXISTS,
     PROPERTY_ALREADY_RESERVED,
+    PROPERTY_ALREADY_ENGAGED,   // 409 — property already has an active (non-cancelled) vente (RG-B03)
+    CO_ACQUEREUR_EXISTS,        // 409 — vente already has a co-buyer (Wave 12: one per vente)
     INVALID_DEPOSIT_STATE,
     INVALID_STATUS_TRANSITION,
 
@@ -43,6 +45,9 @@ public enum ErrorCode {
     INVALID_PROPERTY_TYPE,
     PROPERTY_REFERENCE_CODE_EXISTS,
     INVALID_PERIOD,
+    INVALID_GLB_FILE,           // 422 — uploaded GLB is malformed or not Draco-compressed (RG-E05)
+    VIOLATION_LEGALE,           // 422 — operation would breach a legal constraint (Loi 44-00)
+    RETRACTATION_IMPOSSIBLE,    // 409 — retraction outside the legal window or wrong state
 
     // Project errors (409)
     PROJECT_NAME_EXISTS,
@@ -148,6 +153,9 @@ public enum ErrorCode {
 
     // Date coherence errors (422)
     DATE_COHERENCE_VIOLATION,   // 422 — date sequence rule violated (e.g. reservation > compromis)
+
+    // Vente pricing errors (422)
+    PRIX_VENTE_INVALIDE,        // 422 — prixVente is provided but is zero or negative
 
     // Contract generation errors (409)
     CONTRACT_NOT_GENERATED,     // 409 — contract must be generated before signing

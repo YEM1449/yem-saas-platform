@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import com.yem.hlm.backend.audit.service.ReadAudit;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,11 +30,14 @@ public class ContactController {
 
     private final ContactService contactService;
     private final ContactTimelineService timelineService;
+    private final com.yem.hlm.backend.contact.service.ContactImportService contactImportService;
 
     public ContactController(ContactService contactService,
-                             ContactTimelineService timelineService) {
+                             ContactTimelineService timelineService,
+                             com.yem.hlm.backend.contact.service.ContactImportService contactImportService) {
         this.contactService  = contactService;
         this.timelineService = timelineService;
+        this.contactImportService = contactImportService;
     }
 
     @Operation(summary = "Create a new contact (ADMIN/MANAGER only)")
@@ -42,6 +46,20 @@ public class ContactController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse create(@Valid @RequestBody CreateContactRequest request) {
         return contactService.create(request);
+    }
+
+    @Operation(summary = "Import contacts from a CSV file (ADMIN/MANAGER only). "
+            + "dryRun=true previews the result without creating anything.")
+    @PostMapping(value = "/contacts/import", consumes = "multipart/form-data")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactImportReport importCsv(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun,
+            @RequestParam(value = "consentGiven", defaultValue = "false") boolean consentGiven,
+            @RequestParam(value = "processingBasis", required = false)
+            com.yem.hlm.backend.contact.domain.ProcessingBasis processingBasis
+    ) throws java.io.IOException {
+        return contactImportService.importCsv(file.getBytes(), dryRun, consentGiven, processingBasis);
     }
 
     @Operation(summary = "Get a contact by ID")
@@ -66,6 +84,21 @@ public class ContactController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ContactResponse update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateContactRequest request) {
         return contactService.update(id, request);
+    }
+
+    @Operation(summary = "Get a contact's VEFA legal identity (Loi 44-00)")
+    @GetMapping("/contacts/{id}/legal")
+    @ReadAudit(entityType = "CONTACT")
+    public ContactLegalResponse getLegalDetails(@PathVariable("id") UUID id) {
+        return contactService.getLegalDetails(id);
+    }
+
+    @Operation(summary = "Update a contact's VEFA legal identity (ADMIN/MANAGER only)")
+    @PatchMapping("/contacts/{id}/legal")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ContactLegalResponse updateLegalDetails(@PathVariable("id") UUID id,
+                                                   @Valid @RequestBody UpdateContactLegalRequest request) {
+        return contactService.updateLegalDetails(id, request);
     }
 
     @Operation(summary = "Transition a contact's status (ADMIN/MANAGER only)")

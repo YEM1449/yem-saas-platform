@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- Procès-verbal de livraison (VEFA, Loi 44-00). Rendered via DocumentGenerationService. -->
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>PV de livraison</title>
+    <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #1e293b; }
+        h1 { font-size: 18px; text-align: center; margin: 0 0 4px; }
+        .subtitle { text-align: center; color: #475569; margin: 0 0 18px; font-size: 11px; }
+        .section-title { font-size: 13px; font-weight: bold; border-bottom: 1px solid #94a3b8;
+                         padding-bottom: 2px; margin: 16px 0 6px; }
+        table.fields { width: 100%; border-collapse: collapse; }
+        table.fields td { padding: 3px 6px; vertical-align: top; }
+        table.fields td.label { width: 38%; color: #475569; }
+        table.reserves { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        table.reserves th, table.reserves td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; }
+        table.reserves th { background: #f1f5f9; }
+        .none { color: #15803d; font-weight: bold; }
+        .legal { margin-top: 22px; padding: 10px; border: 1px solid #cbd5e1; background: #f8fafc;
+                 font-size: 10px; color: #334155; }
+        .sign-cell { width: 50%; text-align: center; color: #475569; }
+        .penalite { margin-top: 14px; padding: 8px 10px; border: 1px solid #fca5a5;
+                    background: #fff1f2; font-size: 10px; color: #991b1b; }
+        .penalite strong { font-size: 11px; }
+    </style>
+</head>
+<body>
+    <h1>Proc&#232;s-verbal de livraison</h1>
+    <p class="subtitle" th:text="${model.societeName}">Soci&#233;t&#233;</p>
+
+    <table class="fields">
+        <tr><td class="label">Acqu&#233;reur</td><td th:text="${model.acquereur}">—</td></tr>
+        <tr><td class="label">Bien</td><td th:text="${model.propertyRef}">—</td></tr>
+        <tr><td class="label">R&#233;f&#233;rence de la vente</td><td th:text="${model.venteRef}">—</td></tr>
+        <tr><td class="label">Date de livraison</td><td th:text="${model.dateLivraison}">—</td></tr>
+    </table>
+
+    <div class="section-title">R&#233;serves constat&#233;es</div>
+    <p class="none" th:if="${#lists.isEmpty(model.reserves)}">Aucune r&#233;serve &#8212; livraison conforme.</p>
+    <table class="reserves" th:unless="${#lists.isEmpty(model.reserves)}">
+        <tr><th>Description</th><th>Statut</th><th>Lev&#233;e pr&#233;vue</th></tr>
+        <tr th:each="r : ${model.reserves}">
+            <td th:text="${r.description}">—</td>
+            <td th:text="${r.statut}">—</td>
+            <td th:text="${r.dateLeveePrevue}">—</td>
+        </tr>
+    </table>
+
+    <!-- Penalty clause — rendered only when joursRetard > 0 (B-001) -->
+    <div class="penalite" th:if="${model.joursRetard != null and model.joursRetard > 0}">
+        <strong>P&#233;nalit&#233;s de retard (Art.&#160;618-17 Loi&#160;44-00)</strong><br/>
+        Date de livraison pr&#233;vue&#160;: <span th:text="${model.dateLivraisonPrevue}">—</span>
+        &#8212; Retard constat&#233;&#160;: <span th:text="${model.joursRetard}">0</span> jours.<br/>
+        P&#233;nalit&#233; journali&#232;re&#160;: <span th:text="${model.penaliteJournaliereMad}">500</span>&#160;MAD/jour.<br/>
+        <strong>P&#233;nalit&#233; totale accumul&#233;e&#160;: <span th:text="${model.penaliteAccumuleeMad}">0</span>&#160;MAD</strong>
+        (sous r&#233;serve des dispositions contractuelles).
+    </div>
+
+    <div class="legal">
+        Document &#233;tabli conform&#233;ment &#224; la Loi n&#176;44-00 (VEFA, Maroc). Les r&#233;serves doivent &#234;tre
+        lev&#233;es dans les 60 jours suivant la livraison, sauf accord contraire.
+    </div>
+
+    <table style="width:100%; margin-top:36px">
+        <tr>
+            <td class="sign-cell">Le promoteur<br/><br/>______________________</td>
+            <td class="sign-cell">L'acqu&#233;reur<br/><br/>______________________</td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -146,17 +146,34 @@
         Ventes
       </a>
 
-      <a routerLink="/app/contracts" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.contracts' | translate }}" (click)="closeSidebar()">
-        <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M3 1.5h5l3 3V12a.5.5 0 01-.5.5h-7A.5.5 0 013 12V1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-          <path d="M8 1.5v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-          <path d="M5 7h4M5 9h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
-        {{ 'nav.contracts' | translate }}
-      </a>
+      <!-- Legacy SaleContract module — hidden by default so the Pipeline section reads as a
+           single selling funnel (VEFA Ventes). Enabled per-deployment for sociétés still on
+           the old contract workflow (environment.features.legacyContracts). Finding #016. -->
+      @if (showLegacyContracts) {
+        <a routerLink="/app/contracts" routerLinkActive="nav-active"
+           class="nav-item" title="Contrats (ancien module)" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 1.5h5l3 3V12a.5.5 0 01-.5.5h-7A.5.5 0 013 12V1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M8 1.5v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M5 7h4M5 9h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          {{ 'nav.contracts' | translate }}
+        </a>
+      }
 
       <div class="nav-section-label">{{ 'nav.analytics' | translate }}</div>
+
+      @if (isAdmin) {
+        <a routerLink="/app/groupe" routerLinkActive="nav-active"
+           class="nav-item" title="Vue Groupe" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <rect x="1" y="5" width="4.5" height="8" rx=".5" stroke="currentColor" stroke-width="1.3"/>
+            <rect x="8.5" y="2" width="4.5" height="11" rx=".5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M5.5 9h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          Vue Groupe
+        </a>
+      }
 
       <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active"
          class="nav-item" title="{{ 'nav.receivables' | translate }}" (click)="closeSidebar()">
@@ -165,6 +182,15 @@
           <path d="M2 6v5M5 6v5M9 6v5M12 6v5M1 12.5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
         {{ 'nav.receivables' | translate }}
+      </a>
+
+      <a routerLink="/app/dashboard/tresorerie" routerLinkActive="nav-active"
+         class="nav-item" title="Trésorerie VEFA" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1.5" y="3" width="11" height="8" rx="1.3" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="7" cy="7" r="1.6" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        Trésorerie
       </a>
 
       <a routerLink="/app/commissions" routerLinkActive="nav-active"
@@ -177,14 +203,18 @@
         {{ 'nav.commissions' | translate }}
       </a>
 
-      <a routerLink="/app/messages" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.messages' | translate }}" (click)="closeSidebar()">
-        <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 13V4a1 1 0 011-1z"
-                stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-        </svg>
-        {{ 'nav.messages' | translate }}
-      </a>
+      <div class="nav-section-label">Communication</div>
+
+      @if (isAdminOrManager) {
+        <a routerLink="/app/messages" routerLinkActive="nav-active"
+           class="nav-item" title="{{ 'nav.messages' | translate }}" (click)="closeSidebar()">
+          <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 13V4a1 1 0 011-1z"
+                  stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+          {{ 'nav.messages' | translate }}
+        </a>
+      }
 
       <a routerLink="/app/notifications" routerLinkActive="nav-active"
          class="nav-item" title="{{ 'nav.notifications' | translate }}" (click)="closeSidebar()">

@@ -8,6 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
 import { NotificationPollingService } from '../../core/notification-polling.service';
 import { NotificationToastComponent } from '../../core/components/notification-toast.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-shell',
@@ -49,6 +50,9 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.railExpanded = !this.railExpanded;
     localStorage.setItem('rail_expanded', this.railExpanded ? '1' : '0');
   }
+
+  /** Legacy SaleContract nav item — off by default (single selling concept). Finding #016. */
+  readonly showLegacyContracts = environment.features.legacyContracts;
 
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';

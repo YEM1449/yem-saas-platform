@@ -1334,6 +1334,11 @@
 .agent-share-bar-wrap{display:flex;align-items:center;gap:5px}
 .agent-share-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;min-width:36px;overflow:hidden}
 .agent-share-bar{height:4px;background:#6366f1;border-radius:2px;transition:width .4s ease}
+.rank-separator td{padding:4px 16px;background:#f9fafb;font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;border-top:1px dashed var(--border,#e5e7eb)}
+.leaderboard-table .rank-low td{color:#9ca3af}
+.leaderboard-table .rank-low .lb-name{color:#6b7280;font-weight:500}
+.leaderboard-table .rank-low .agent-share-bar{background:#d1d5db}
+.share-pct{font-size:.7rem;color:#6b7280;white-space:nowrap}
 
 /* ── Tab alert badges ────────────────────────────────────────────────────── */
 .tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-weight:700;line-height:1;margin-left:2px}

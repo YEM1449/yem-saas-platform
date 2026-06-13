@@ -16,6 +16,10 @@ public enum AuditEventType {
     PAYMENT_CALL_ISSUED,
     PAYMENT_RECEIVED,
 
+    // Refund events (#028)
+    REMBOURSEMENT_DU,
+    REMBOURSEMENT_EFFECTUE,
+
     // Reservation module events
     RESERVATION_CREATED,
     RESERVATION_CANCELLED,
@@ -29,6 +33,9 @@ public enum AuditEventType {
     // Contact lifecycle events
     CONTACT_CREATED,
     CONTACT_STATUS_CHANGED,
+
+    // Sensitive data read events (B-004)
+    SENSITIVE_DATA_READ,
 
     // User management events
     USER_INVITED,

@@ -5,6 +5,13 @@
    ================================================================ */
 @import './design-tokens.css';
 
+/* Self-hosted brand fonts (bundled, no external CDN — privacy/offline friendly).
+   Inter ships as a variable font under the family 'Inter Variable'; Fira Code (mono)
+   is loaded at the two weights the UI actually uses. font-display:swap is built in. */
+@import '@fontsource-variable/inter';
+@import '@fontsource/fira-code/400.css';
+@import '@fontsource/fira-code/500.css';
+
 /* ── 1. Design Tokens — App-Level Surface + Aliases ───────────────
    The full token system lives in design-tokens.css.  This block only:
    1. Maps the warm-sand surface palette (`--c-bg`, `--c-surface`, …)

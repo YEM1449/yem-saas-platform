@@ -2,6 +2,7 @@ package com.yem.hlm.backend.vente.repo;
 
 import com.yem.hlm.backend.vente.domain.VenteEcheance;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,16 +12,42 @@ import java.util.UUID;
 
 public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UUID> {
 
+    /**
+     * Cancels all non-PAYEE échéances for a vente when the vente is annulled (A-001).
+     * PAYEE échéances are already collected and are left unchanged.
+     */
+    @Modifying
+    @Query("""
+            UPDATE VenteEcheance e
+            SET e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE
+            WHERE e.vente.id = :venteId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    void cancelAllPendingByVente(@Param("venteId") UUID venteId);
+
     Optional<VenteEcheance> findBySocieteIdAndId(UUID societeId, UUID id);
 
     List<VenteEcheance> findAllByVente_IdOrderByDateEcheanceAsc(UUID venteId);
+
+    /** True if a legal échéancier (etape set) was already generated for this vente. */
+    boolean existsByVente_IdAndEtapeIsNotNull(UUID venteId);
+
+    /** Sum of all échéance amounts for a vente (cumul vs price legal check, Art. 618-17). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId AND e.vente.id = :venteId
+            """)
+    java.math.BigDecimal sumMontantByVente(@Param("societeId") UUID societeId,
+                                           @Param("venteId") UUID venteId);
 
     /** Sum of unpaid échéances with due date in [from, to) — for upcoming 30-day cash forecast. */
     @Query("""
             SELECT COALESCE(SUM(e.montant), 0)
             FROM VenteEcheance e
             WHERE e.societeId = :societeId
-              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
               AND e.dateEcheance >= :from
               AND e.dateEcheance < :to
             """)
@@ -33,18 +60,81 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
             SELECT COALESCE(SUM(e.montant), 0)
             FROM VenteEcheance e
             WHERE e.societeId = :societeId
-              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
               AND e.dateEcheance < :today
             """)
     java.math.BigDecimal sumMontantOverdue(@Param("societeId") UUID societeId,
                                            @Param("today") java.time.LocalDate today);
+
+    /**
+     * Sum of unpaid échéances grouped by due month, for the cash-forecast timeline.
+     * Only échéances in [from, to) are counted, so passing {@code from = today} keeps
+     * overdue amounts (already shown as "en retard") out of the forecast.
+     * Rows: [year(Integer), month(Integer 1-12), montant(BigDecimal)]; months with no
+     * unpaid échéance are simply absent (gaps are zero-filled in the service).
+     */
+    @Query(value = """
+            SELECT CAST(EXTRACT(YEAR  FROM date_echeance) AS INTEGER) AS yr,
+                   CAST(EXTRACT(MONTH FROM date_echeance) AS INTEGER) AS mo,
+                   COALESCE(SUM(montant), 0)                          AS total
+            FROM vente_echeance
+            WHERE societe_id = :societeId
+              AND statut NOT IN ('PAYEE', 'ANNULEE')
+              AND date_echeance >= :from
+              AND date_echeance <  :to
+            GROUP BY yr, mo
+            ORDER BY yr, mo
+            """, nativeQuery = true)
+    List<Object[]> sumUnpaidByMonth(@Param("societeId") UUID societeId,
+                                    @Param("from") java.time.LocalDate from,
+                                    @Param("to") java.time.LocalDate to);
+
+    /** All-time encaissé — sum of PAID échéances (trésorerie dashboard). */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+            """)
+    java.math.BigDecimal sumPaidAll(@Param("societeId") UUID societeId);
+
+    /** All-time à encaisser — sum of UNPAID échéances (trésorerie dashboard). Excludes cancelled ones. */
+    @Query("""
+            SELECT COALESCE(SUM(e.montant), 0)
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
+            """)
+    java.math.BigDecimal sumDueAll(@Param("societeId") UUID societeId);
+
+    /**
+     * Overdue unpaid échéances with sale + buyer context, oldest first.
+     * Rows: [venteId(UUID), venteRef(String), acquereur(String), libelle(String),
+     *        montant(BigDecimal), dateEcheance(LocalDate)].
+     */
+    @Query("""
+            SELECT e.vente.id, e.vente.venteRef, e.vente.contact.fullName,
+                   e.libelle, e.montant, e.dateEcheance
+            FROM VenteEcheance e
+            WHERE e.societeId = :societeId
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
+              AND e.dateEcheance < :today
+            ORDER BY e.dateEcheance ASC
+            """)
+    List<Object[]> findOverdueDetails(@Param("societeId") UUID societeId,
+                                      @Param("today") java.time.LocalDate today,
+                                      org.springframework.data.domain.Pageable pageable);
 
     /** Count unpaid échéances with due date before today (overdue). */
     @Query("""
             SELECT COUNT(e)
             FROM VenteEcheance e
             WHERE e.societeId = :societeId
-              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
               AND e.dateEcheance < :today
             """)
     long countOverdue(@Param("societeId") UUID societeId,
@@ -100,7 +190,7 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
               COALESCE(SUM(montant), 0),
               0
             FROM vente_echeance
-            WHERE societe_id = :societeId AND statut != 'PAYEE'
+            WHERE societe_id = :societeId AND statut NOT IN ('PAYEE', 'ANNULEE')
             """, nativeQuery = true)
     List<Object[]> getVenteReceivablesAging(@Param("societeId") UUID societeId);
 
@@ -117,7 +207,7 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
               COALESCE(SUM(montant), 0),
               COALESCE(SUM(CASE WHEN date_echeance < CURRENT_DATE THEN montant ELSE 0 END), 0)
             FROM vente_echeance
-            WHERE societe_id = :societeId AND statut != 'PAYEE'
+            WHERE societe_id = :societeId AND statut NOT IN ('PAYEE', 'ANNULEE')
             """, nativeQuery = true)
     List<Object[]> venteReceivablesTotals(@Param("societeId") UUID societeId);
 
@@ -129,7 +219,8 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
             SELECT e.montant, e.dateEcheance
             FROM VenteEcheance e
             WHERE e.societeId = :societeId
-              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
+              AND e.statut NOT IN (com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE,
+                                   com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE)
             """)
     List<Object[]> venteOutstandingForAging(@Param("societeId") UUID societeId);
 
@@ -144,7 +235,7 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
             JOIN property pr ON pr.id  = v.property_id
             JOIN project proj ON proj.id = pr.project_id
             WHERE e.societe_id = :societeId
-              AND e.statut != 'PAYEE'
+              AND e.statut NOT IN ('PAYEE', 'ANNULEE')
               AND e.date_echeance < CURRENT_DATE
             GROUP BY proj.id, proj.name
             ORDER BY SUM(e.montant) DESC NULLS LAST
@@ -152,11 +243,12 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
             """, nativeQuery = true)
     List<Object[]> venteOverdueByProject(@Param("societeId") UUID societeId);
 
-    /** Sum of all échéance amounts (denominator for collection rate). */
+    /** Sum of non-cancelled échéance amounts (denominator for collection rate). */
     @Query("""
             SELECT COALESCE(SUM(e.montant), 0)
             FROM VenteEcheance e
             WHERE e.societeId = :societeId
+              AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE
             """)
     java.math.BigDecimal venteTotalIssued(@Param("societeId") UUID societeId);
 

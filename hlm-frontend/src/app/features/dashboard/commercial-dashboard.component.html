@@ -1,7 +1,10 @@
 <div class="dashboard">
   <div class="dashboard-header">
     <h2>{{ 'dashboard.commercial.title' | translate }}</h2>
-    <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.viewSales' | translate }} &rsaquo;</a>
+    <div class="dashboard-header-links">
+      <a routerLink="/app/dashboard/commercial/3d" class="btn-link">Vue 3D &rsaquo;</a>
+      <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.viewSales' | translate }} &rsaquo;</a>
+    </div>
   </div>
 
   <!-- Filter bar -->
@@ -124,7 +127,7 @@
         </div>
       </div>
 
-      <div class="kpi-card" (click)="goVentes('LIVRE')" title="Voir les ventes livrées">
+      <div class="kpi-card" (click)="goVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.7"/>

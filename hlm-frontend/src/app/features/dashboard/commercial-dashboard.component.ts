@@ -105,8 +105,8 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
     const map: Record<string, string> = {
       COMPROMIS:     'Compromis',
       FINANCEMENT:   'Financement',
-      ACTE_NOTARIE:  'Acte notarié',
-      LIVRE:         'Livré',
+      ACTE:  'Acte notarié',
+      LIVRE_DEFINITIF:         'Livré',
       ANNULE:        'Annulé',
     };
     return map[s] ?? s;
@@ -116,8 +116,8 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
     const map: Record<string, string> = {
       COMPROMIS:    '#42a5f5',
       FINANCEMENT:  '#66bb6a',
-      ACTE_NOTARIE: '#ab47bc',
-      LIVRE:        '#26c6da',
+      ACTE: '#ab47bc',
+      LIVRE_DEFINITIF:        '#26c6da',
       ANNULE:       '#ef5350',
     };
     return map[s] ?? '#bdbdbd';

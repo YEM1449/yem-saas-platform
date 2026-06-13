@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 079-vente-echeance-legal
+      author: yem-wave12
+      comment: >
+        Wave 12 P2 — VEFA legal échéancier (Art. 618-17, Loi 44-00). Enriches the
+        existing vente_echeance with the legal stage code, its planned percentage and
+        the legal basis, so an échéance can be generated from the legal template and
+        traced. Additive, nullable.
+      changes:
+        - addColumn:
+            tableName: vente_echeance
+            columns:
+              - column:
+                  name: etape
+                  type: VARCHAR(80)
+                  constraints: { nullable: true }
+              - column:
+                  name: pct_prevu
+                  type: DECIMAL(5,2)
+                  constraints: { nullable: true }
+              - column:
+                  name: base_legale
+                  type: VARCHAR(200)
+                  constraints: { nullable: true }

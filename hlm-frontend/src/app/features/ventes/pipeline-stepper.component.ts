@@ -8,10 +8,11 @@ export interface PipelineStep {
 }
 
 const VENTE_STEPS: PipelineStep[] = [
-  { statut: 'COMPROMIS',    label: 'Compromis'    },
-  { statut: 'FINANCEMENT',  label: 'Financement'  },
-  { statut: 'ACTE_NOTARIE', label: 'Acte notarié' },
-  { statut: 'LIVRE',        label: 'Livré'        },
+  { statut: 'RESERVE',         label: 'Réservé'      },
+  { statut: 'COMPROMIS',       label: 'Compromis'    },
+  { statut: 'FINANCEMENT',     label: 'Financement'  },
+  { statut: 'ACTE',            label: 'Acte notarié' },
+  { statut: 'LIVRE_DEFINITIF', label: 'Livré'        },
 ];
 
 @Component({
@@ -63,11 +64,18 @@ export class PipelineStepperComponent {
   readonly steps = VENTE_STEPS;
 
   private readonly ORDER: Record<VenteStatut, number> = {
-    COMPROMIS:    0,
-    FINANCEMENT:  1,
-    ACTE_NOTARIE: 2,
-    LIVRE:        3,
-    ANNULE:      -1,
+    PROSPECT:             0,
+    OPTION:               1,
+    RESERVE:              2,
+    EN_RETRACTATION:      3,
+    ACOMPTE:              4,
+    COMPROMIS:            5,
+    FINANCEMENT:          6,
+    ACTE:                 7,
+    LIVRE_AVEC_RESERVES:  8,
+    RESERVES_LEVEES:      9,
+    LIVRE_DEFINITIF:     10,
+    ANNULE:              -1,
   };
 
   isCompleted(step: VenteStatut): boolean {

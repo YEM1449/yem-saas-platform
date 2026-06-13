@@ -77,4 +77,16 @@ public class AdminUserController {
     public ResetPasswordResponse resetPassword(@PathVariable UUID id) {
         return adminUserService.resetPassword(id);
     }
+
+    /**
+     * Off-boards a user across every société they belong to in one action (finding #004).
+     * Restricted to admins who share at least one société with the target; revokes all live
+     * sessions immediately.
+     */
+    @PostMapping("/{id}/deactivate-everywhere")
+    public DeactivateEverywhereResponse deactivateEverywhere(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) DeactivateEverywhereRequest request) {
+        return adminUserService.deactivateEverywhere(id, request);
+    }
 }

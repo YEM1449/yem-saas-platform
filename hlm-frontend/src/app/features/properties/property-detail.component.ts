@@ -4,16 +4,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { PropertyService, UpdatePropertyRequest } from './property.service';
+import { PropertyService, UpdatePropertyRequest, PropertyCommercial } from './property.service';
 import { Property, PropertyMedia } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { DocumentListComponent } from '../documents/document-list.component';
+import { MadInputComponent } from '../../core/components/mad-input.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, DocumentListComponent, TranslateModule, MadInputComponent],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })
@@ -148,6 +149,40 @@ export class PropertyDetailComponent implements OnInit {
     });
   }
 
+  // ── VEFA commercial sheet (HT/TVA/TTC) ──────────────────────────────────────
+  commercial: PropertyCommercial | null = null;
+  showCommercialForm = false;
+  commercialForm: PropertyCommercial = {};
+  commercialError = '';
+  commercialSaving = false;
+
+  get canEditCommercial(): boolean {
+    const role = this.auth.user?.role;
+    return role === 'ROLE_ADMIN' || role === 'ROLE_MANAGER';
+  }
+
+  private loadCommercial(): void {
+    this.svc.getCommercial(this.propertyId).subscribe({
+      next: (c) => this.commercial = c,
+      error: () => this.commercial = null,
+    });
+  }
+
+  openCommercialForm(): void {
+    this.commercialForm = this.commercial ? { ...this.commercial } : {};
+    this.showCommercialForm = true;
+    this.commercialError = '';
+  }
+
+  saveCommercial(): void {
+    this.commercialSaving = true;
+    this.commercialError = '';
+    this.svc.updateCommercial(this.propertyId, this.commercialForm).subscribe({
+      next: (c) => { this.commercial = c; this.showCommercialForm = false; this.commercialSaving = false; },
+      error: () => { this.commercialSaving = false; this.commercialError = 'Échec de l\'enregistrement de la fiche commerciale.'; },
+    });
+  }
+
   ngOnInit(): void {
     this.propertyId = this.route.snapshot.paramMap.get('id')!;
     this.svc.getById(this.propertyId).subscribe({
@@ -155,6 +190,7 @@ export class PropertyDetailComponent implements OnInit {
         this.property = p;
         this.loading = false;
         this.loadMedia();
+        this.loadCommercial();
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +36,13 @@ import java.util.stream.Collectors;
 public class Project3dService {
 
     static final Duration PRESIGN_TTL = Duration.ofMinutes(15);
+
+    /**
+     * When true (production default), the GLB bytes are validated server-side at confirm time
+     * (RG-E05). Disabled in the test profile where IT tests post object keys without a real upload.
+     */
+    @org.springframework.beans.factory.annotation.Value("${app.viewer3d.validate-glb-binary:true}")
+    private boolean validateGlbBinary;
 
     private final Project3dModelRepository modelRepository;
     private final Lot3dMappingRepository   mappingRepository;
@@ -65,6 +73,16 @@ public class Project3dService {
         projectRepository.findById(projetId)
                 .filter(p -> societeId.equals(p.getSocieteId()))
                 .orElseThrow(() -> new ProjectNotFoundException(projetId));
+
+        // RG-E05: never trust the client dracoCompressed flag — validate the actual GLB bytes.
+        if (validateGlbBinary) {
+            try (InputStream glb = storageService.load(req.glbFileKey())) {
+                GlbValidator.validate(glb);
+            } catch (IOException e) {
+                throw new InvalidGlbException(
+                        "Le fichier GLB est introuvable ou illisible dans le stockage : " + e.getMessage());
+            }
+        }
 
         Project3dModel model = modelRepository.findBySocieteIdAndProjetId(societeId, projetId)
                 .orElseGet(() -> new Project3dModel(societeId, projetId, req.glbFileKey(),
@@ -130,7 +148,8 @@ public class Project3dService {
                             toDisplayStatus(p.getStatus()),
                             p.getType() != null ? p.getType().name() : null,
                             p.getSurfaceAreaSqm(),
-                            p.getPrice());
+                            p.getPrice(),
+                            p.getFloorNumber());
                 })
                 .toList();
     }

@@ -393,3 +393,8 @@ code {
   font-size: 0.75rem;
   color: #94a3b8;
 }
+
+/* ── VEFA legal profile grid ──────────────────────────────────────── */
+.legal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.legal-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #475569; }
+.legal-grid input, .legal-grid select { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; }

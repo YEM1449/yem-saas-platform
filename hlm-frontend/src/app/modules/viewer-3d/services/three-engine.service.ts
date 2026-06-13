@@ -26,15 +26,19 @@ export class ThreeEngineService implements OnDestroy {
   readonly hover$ = new Subject<PointerEvent3D | null>();
   /** Fires when the user clicks a Mesh. */
   readonly click$ = new Subject<PointerEvent3D>();
+  /** Fires when the user taps a Mesh on a touch device (touchstart). Null = tapped empty space. */
+  readonly tap$ = new Subject<PointerEvent3D | null>();
 
-  private rafId       = 0;
-  private canvas!:    HTMLCanvasElement;
-  private raycaster   = new THREE.Raycaster();
-  private pointer     = new THREE.Vector2();
-  private meshes:     THREE.Mesh[] = [];
-  private resizeObs!: ResizeObserver;
+  private rafId         = 0;
+  private canvas!:      HTMLCanvasElement;
+  private raycaster     = new THREE.Raycaster();
+  private pointer       = new THREE.Vector2();
+  private meshes:       THREE.Mesh[] = [];
+  private resizeObs!:   ResizeObserver;
+  private lastTouchAt   = 0;
   private boundPointerMove!: (e: MouseEvent) => void;
   private boundClick!:       (e: MouseEvent) => void;
+  private boundTouchStart!:  (e: TouchEvent)  => void;
   private boundVisChange!:   () => void;
 
   constructor(private zone: NgZone) {}
@@ -76,9 +80,11 @@ export class ThreeEngineService implements OnDestroy {
     // ── Events ────────────────────────────────────────────────────────────────
     this.boundPointerMove = (e) => this.onPointerMove(e);
     this.boundClick       = (e) => this.onCanvasClick(e);
+    this.boundTouchStart  = (e) => this.onTouchStart(e);
     this.boundVisChange   = ()  => this.onVisibilityChange();
     canvas.addEventListener('pointermove', this.boundPointerMove);
     canvas.addEventListener('click',       this.boundClick);
+    canvas.addEventListener('touchstart',  this.boundTouchStart, { passive: true });
     document.addEventListener('visibilitychange', this.boundVisChange);
 
     // ── Resize ────────────────────────────────────────────────────────────────
@@ -149,6 +155,7 @@ export class ThreeEngineService implements OnDestroy {
     cancelAnimationFrame(this.rafId);
     this.canvas?.removeEventListener('pointermove', this.boundPointerMove);
     this.canvas?.removeEventListener('click',       this.boundClick);
+    this.canvas?.removeEventListener('touchstart',  this.boundTouchStart);
     document.removeEventListener('visibilitychange', this.boundVisChange);
     this.resizeObs?.disconnect();
     this.controls?.dispose();
@@ -166,6 +173,7 @@ export class ThreeEngineService implements OnDestroy {
     this.renderer?.dispose();
     this.hover$.complete();
     this.click$.complete();
+    this.tap$.complete();
   }
 
   ngOnDestroy(): void {
@@ -210,6 +218,10 @@ export class ThreeEngineService implements OnDestroy {
   }
 
   private onCanvasClick(e: MouseEvent): void {
+    // Suppress click events synthesized from a recent touch tap (mobile browsers fire click ~300ms
+    // after touchstart). The touch$  subject already handled those via onTouchStart.
+    if (Date.now() - this.lastTouchAt < 600) return;
+
     const rect = this.canvas.getBoundingClientRect();
     this.pointer.x =  ((e.clientX - rect.left)  / rect.width)  * 2 - 1;
     this.pointer.y = -((e.clientY - rect.top)   / rect.height) * 2 + 1;
@@ -222,6 +234,28 @@ export class ThreeEngineService implements OnDestroy {
         this.click$.next({ mesh: hits[0].object as THREE.Mesh, screenX: e.clientX, screenY: e.clientY })
       );
     }
+  }
+
+  private onTouchStart(e: TouchEvent): void {
+    // Multi-touch (pinch/pan) — dismiss any pinned tooltip and let OrbitControls take over.
+    if (e.touches.length !== 1) {
+      this.zone.run(() => this.tap$.next(null));
+      return;
+    }
+    this.lastTouchAt = Date.now();
+    const touch = e.touches[0];
+    const rect   = this.canvas.getBoundingClientRect();
+    this.pointer.x =  ((touch.clientX - rect.left) / rect.width)  * 2 - 1;
+    this.pointer.y = -((touch.clientY - rect.top)  / rect.height) * 2 + 1;
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+    const hits = this.raycaster.intersectObjects(this.meshes, false);
+    this.zone.run(() => {
+      if (hits.length > 0) {
+        this.tap$.next({ mesh: hits[0].object as THREE.Mesh, screenX: touch.clientX, screenY: touch.clientY });
+      } else {
+        this.tap$.next(null);
+      }
+    });
   }
 
   private onVisibilityChange(): void {

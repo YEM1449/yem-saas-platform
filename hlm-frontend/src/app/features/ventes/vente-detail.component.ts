@@ -6,7 +6,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
-  CreateEcheanceRequest, UpdateVenteStatutRequest
+  CreateEcheanceRequest, UpdateVenteStatutRequest, ReserveLivraison,
+  CoAcquereur, RoleAcquereur, SituationMatrimoniale, TypeAcquereur,
+  DossierFinancement, StatutDossierFinancement,
+  Remboursement, MoyenRemboursement
 } from './vente.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
@@ -85,6 +88,16 @@ export class VenteDetailComponent implements OnInit {
 
   ech: CreateEcheanceRequest = { libelle: '', montant: 0, dateEcheance: '' };
 
+  // ── VEFA Loi 44-00 lifecycle actions ──────────────────────────────────────
+  vefaError = signal('');
+  vefaBusy  = signal(false);
+  reserves  = signal<ReserveLivraison[]>([]);
+  showConfirmForm  = false;
+  showDeliveryForm = false;
+  depositAmount: number | null = null;
+  deliveryDate: string | null = null;
+  deliveryReserves = ''; // one reserve description per line
+
   get canWrite(): boolean {
     const r = this.auth.user?.role;
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
@@ -95,11 +108,252 @@ export class VenteDetailComponent implements OnInit {
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER' || r === 'ROLE_AGENT';
   }
 
+  // ── Co-acquéreur (VEFA co-acquisition) ─────────────────────────────────────
+  coAcquereur = signal<CoAcquereur | null>(null);
+  showCoAcqForm = false;
+  coAcqForm: CoAcquereur = { nom: '', prenom: '' };
+  coAcqError = signal('');
+  coAcqBusy = signal(false);
+  readonly coAcqSituationOptions: SituationMatrimoniale[] =
+    ['CELIBATAIRE', 'MARIE_COMMUNAUTE', 'MARIE_SEPARATION', 'DIVORCE', 'VEUF'];
+  readonly coAcqTypeOptions: TypeAcquereur[] = ['RESIDENT_MAROC', 'MRE', 'ETRANGER'];
+  readonly coAcqRoleOptions: RoleAcquereur[] = ['CO_ACQUEREUR', 'CONJOINT', 'CO_INVESTISSEUR', 'REPRESENTANT_SCI'];
+
+  // ── Dossier de financement ─────────────────────────────────────────────────
+  dossier = signal<DossierFinancement | null>(null);
+  showDossierForm = false;
+  dossierForm: DossierFinancement = {};
+  dossierError = signal('');
+  dossierBusy = signal(false);
+  readonly statutDossierOptions: StatutDossierFinancement[] =
+    ['EN_COURS', 'ACCORD_PRINCIPE', 'ACCORD_DEFINITIF', 'REFUSE'];
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.get(id).subscribe({
-      next:  (v) => this.vente.set(v),
+      next:  (v) => {
+        this.vente.set(v);
+        this.maybeLoadReserves(v);
+        this.loadCoAcquereur(v.id);
+        this.loadDossier(v.id);
+        if (v.statut === 'ANNULE') this.loadRemboursement(v.id);
+      },
       error: ()  => this.error.set('Vente introuvable.'),
+    });
+  }
+
+  // ── Legal document generation (Loi 44-00) ──────────────────────────────────
+  docGenBusy = signal(false);
+  docGenError = signal('');
+
+  generateContratReservation(venteId: string): void {
+    this.docGenBusy.set(true);
+    this.docGenError.set('');
+    this.svc.generateContratReservation(venteId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.docGenBusy.set(false);
+        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du contrat.'); },
+    });
+  }
+
+  generatePvLivraison(venteId: string): void {
+    this.docGenBusy.set(true);
+    this.docGenError.set('');
+    this.svc.generatePvLivraison(venteId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.docGenBusy.set(false);
+        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du PV.'); },
+    });
+  }
+
+  private loadDossier(venteId: string): void {
+    this.svc.getDossierFinancement(venteId).subscribe({
+      next:  (d) => this.dossier.set(d),
+      error: ()  => this.dossier.set(null), // 404 = no dossier yet
+    });
+  }
+
+  // ── Refund tracking (#028) ────────────────────────────────────────────────
+  remboursement = signal<Remboursement | null>(null);
+  rembBusy      = signal(false);
+  rembError     = signal('');
+  showRembForm  = false;
+  rembForm: { moyen: MoyenRemboursement; dateRemboursement: string; reference: string } =
+    { moyen: 'VIREMENT', dateRemboursement: '', reference: '' };
+  editMontant: number | null = null;
+
+  private loadRemboursement(venteId: string): void {
+    this.svc.getRemboursement(venteId).subscribe({
+      next:  (r) => this.remboursement.set(r),
+      error: ()  => this.remboursement.set(null), // 404 = none (vente not cancelled)
+    });
+  }
+
+  saveMontant(venteId: string): void {
+    if (this.editMontant == null || this.editMontant < 0) return;
+    this.rembBusy.set(true); this.rembError.set('');
+    this.svc.upsertRemboursement(venteId, this.editMontant).subscribe({
+      next: (r) => { this.remboursement.set(r); this.editMontant = null; this.rembBusy.set(false); },
+      error: (e) => { this.rembBusy.set(false);
+        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du montant.'); },
+    });
+  }
+
+  confirmRemboursement(venteId: string): void {
+    this.rembBusy.set(true); this.rembError.set('');
+    this.svc.marquerRembourse(venteId, this.rembForm.moyen,
+      this.rembForm.dateRemboursement || undefined, this.rembForm.reference || undefined).subscribe({
+      next: (r) => { this.remboursement.set(r); this.showRembForm = false; this.rembBusy.set(false); },
+      error: (e) => { this.rembBusy.set(false);
+        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du remboursement.'); },
+    });
+  }
+
+  moyenLabel(m: MoyenRemboursement | null): string {
+    return { VIREMENT: 'Virement', CHEQUE: 'Chèque', ESPECES: 'Espèces', AUTRE: 'Autre' }[m ?? 'AUTRE'] ?? '—';
+  }
+
+  openDossierForm(): void {
+    const existing = this.dossier();
+    this.dossierForm = existing ? { ...existing } : { statut: 'EN_COURS' };
+    this.showDossierForm = true;
+    this.dossierError.set('');
+  }
+
+  saveDossier(venteId: string): void {
+    this.dossierBusy.set(true);
+    this.dossierError.set('');
+    this.svc.upsertDossierFinancement(venteId, this.dossierForm).subscribe({
+      next: (d) => { this.dossier.set(d); this.showDossierForm = false; this.dossierBusy.set(false); },
+      error: (e) => { this.dossierBusy.set(false);
+        this.dossierError.set(e?.error?.message ?? 'Échec de l\'enregistrement du dossier.'); },
+    });
+  }
+
+  private loadCoAcquereur(venteId: string): void {
+    this.svc.listCoAcquereurs(venteId).subscribe({
+      next: (list) => this.coAcquereur.set(list.length > 0 ? list[0] : null),
+    });
+  }
+
+  openCoAcqForm(): void {
+    const existing = this.coAcquereur();
+    this.coAcqForm = existing ? { ...existing } : { nom: '', prenom: '', roleAcquereur: 'CO_ACQUEREUR' };
+    this.showCoAcqForm = true;
+    this.coAcqError.set('');
+  }
+
+  saveCoAcquereur(venteId: string): void {
+    if (!this.coAcqForm.nom?.trim() || !this.coAcqForm.prenom?.trim()) {
+      this.coAcqError.set('Nom et prénom sont requis.');
+      return;
+    }
+    this.coAcqBusy.set(true);
+    this.coAcqError.set('');
+    const existing = this.coAcquereur();
+    const obs = existing?.id
+      ? this.svc.updateCoAcquereur(venteId, existing.id, this.coAcqForm)
+      : this.svc.addCoAcquereur(venteId, this.coAcqForm);
+    obs.subscribe({
+      next: (c) => { this.coAcquereur.set(c); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
+      error: (e) => { this.coAcqBusy.set(false);
+        this.coAcqError.set(e?.error?.message ?? 'Échec de l\'enregistrement du co-acquéreur.'); },
+    });
+  }
+
+  deleteCoAcquereur(venteId: string): void {
+    const existing = this.coAcquereur();
+    if (!existing?.id || !confirm('Supprimer le co-acquéreur ?')) return;
+    this.coAcqBusy.set(true);
+    this.svc.deleteCoAcquereur(venteId, existing.id).subscribe({
+      next: () => { this.coAcquereur.set(null); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
+      error: () => { this.coAcqBusy.set(false); this.coAcqError.set('La suppression a échoué.'); },
+    });
+  }
+
+  // ── VEFA actions ───────────────────────────────────────────────────────────
+
+  /** True for statuts that can still confirm a reservation (PROSPECT/OPTION). */
+  get canConfirmReservation(): boolean {
+    const s = this.vente()?.statut;
+    return this.canWrite && (s === 'PROSPECT' || s === 'OPTION');
+  }
+  get canRetract(): boolean {
+    return this.canWrite && this.vente()?.statut === 'EN_RETRACTATION';
+  }
+  get canRecordDelivery(): boolean {
+    return this.canWrite && this.vente()?.statut === 'ACTE';
+  }
+  get showReservesPanel(): boolean {
+    const s = this.vente()?.statut;
+    return s === 'LIVRE_AVEC_RESERVES' || s === 'RESERVES_LEVEES';
+  }
+
+  private maybeLoadReserves(v: Vente): void {
+    if (v.statut === 'LIVRE_AVEC_RESERVES' || v.statut === 'RESERVES_LEVEES') {
+      this.svc.listReserves(v.id).subscribe({ next: (r) => this.reserves.set(r) });
+    }
+  }
+
+  private applyVente(v: Vente): void {
+    this.vente.set(v);
+    this.vefaBusy.set(false);
+    this.maybeLoadReserves(v);
+  }
+
+  confirmReservation(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.confirmReservation(venteId, this.depositAmount ?? 0).subscribe({
+      next: (v) => { this.showConfirmForm = false; this.depositAmount = null; this.applyVente(v); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La confirmation de réservation a échoué (dépôt > 5% ?).'); },
+    });
+  }
+
+  exerciseRetractation(venteId: string): void {
+    if (!confirm('Confirmer la rétractation ? La vente sera annulée et le bien libéré.')) return;
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.exerciseRetractation(venteId).subscribe({
+      next: (v) => this.applyVente(v),
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La rétractation est impossible (délai expiré ?).'); },
+    });
+  }
+
+  recordDelivery(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    const reserves = this.deliveryReserves
+      .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    this.svc.recordDelivery(venteId, { dateLivraison: this.deliveryDate, reserves }).subscribe({
+      next: (v) => { this.showDeliveryForm = false; this.deliveryReserves = ''; this.deliveryDate = null; this.applyVente(v); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'L\'enregistrement de la livraison a échoué.'); },
+    });
+  }
+
+  liftReserve(venteId: string, reserveId: string): void {
+    this.vefaBusy.set(true);
+    this.svc.liftReserve(venteId, reserveId).subscribe({
+      next: (v) => this.applyVente(v),
+      error: () => { this.vefaBusy.set(false); this.vefaError.set('La levée de réserve a échoué.'); },
+    });
+  }
+
+  /** True once the legal échéancier (Art. 618-17) has been generated. */
+  hasLegalEcheancier(v: Vente): boolean {
+    return v.echeances.some(e => !!e.etape);
+  }
+
+  generateEcheancierLegal(venteId: string): void {
+    this.vefaError.set('');
+    this.vefaBusy.set(true);
+    this.svc.generateEcheancierLegal(venteId).subscribe({
+      next: () => { this.vefaBusy.set(false); this.reload(venteId); },
+      error: (e) => { this.vefaBusy.set(false);
+        this.vefaError.set(e?.error?.message ?? 'La génération de l\'échéancier légal a échoué.'); },
     });
   }
 
@@ -131,6 +385,14 @@ export class VenteDetailComponent implements OnInit {
         this.reload(venteId);
       },
       error: () => this.echError.set('Erreur lors de l\'ajout.'),
+    });
+  }
+
+  generateQuittance(venteId: string, echeanceId: string): void {
+    this.docGenBusy.set(true);
+    this.svc.generateQuittance(venteId, echeanceId).subscribe({
+      next: () => { this.docGenBusy.set(false); this.reload(venteId); },
+      error: () => { this.docGenBusy.set(false); this.docError.set('La génération de la quittance a échoué.'); },
     });
   }
 
@@ -242,7 +504,7 @@ export class VenteDetailComponent implements OnInit {
   }
 
   isTerminal(s: VenteStatut): boolean {
-    return s === 'LIVRE' || s === 'ANNULE';
+    return s === 'LIVRE_DEFINITIF' || s === 'ANNULE';
   }
 
   hasContratGenereDoc(v: Vente): boolean {
@@ -250,21 +512,30 @@ export class VenteDetailComponent implements OnInit {
   }
 
   private reload(id: string): void {
-    this.svc.get(id).subscribe({ next: (v) => this.vente.set(v) });
+    this.svc.get(id).subscribe({ next: (v) => {
+      this.vente.set(v);
+      if (v.statut === 'ANNULE') this.loadRemboursement(v.id);
+    } });
   }
 
   statutLabel(s: VenteStatut): string {
     const labels: Record<VenteStatut, string> = {
-      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-      ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
+      EN_RETRACTATION: 'Délai de rétractation', ACOMPTE: 'Acompte',
+      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement', ACTE: 'Acte notarié',
+      LIVRE_AVEC_RESERVES: 'Livré (réserves)', RESERVES_LEVEES: 'Réserves levées',
+      LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
     };
     return labels[s] ?? s;
   }
 
   statutClass(s: VenteStatut): string {
     const classes: Record<VenteStatut, string> = {
-      COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning',
-      ACTE_NOTARIE: 'badge-primary', LIVRE: 'badge-success', ANNULE: 'badge-error',
+      PROSPECT: 'badge-info', OPTION: 'badge-info', RESERVE: 'badge-info',
+      EN_RETRACTATION: 'badge-warning', ACOMPTE: 'badge-info',
+      COMPROMIS: 'badge-info', FINANCEMENT: 'badge-warning', ACTE: 'badge-primary',
+      LIVRE_AVEC_RESERVES: 'badge-warning', RESERVES_LEVEES: 'badge-primary',
+      LIVRE_DEFINITIF: 'badge-success', ANNULE: 'badge-error',
     };
     return classes[s] ?? '';
   }
@@ -363,7 +634,7 @@ export class VenteDetailComponent implements OnInit {
     if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && v.dateLimiteFinancement) {
       candidates.push({ label: 'Limite d’obtention du financement', date: v.dateLimiteFinancement });
     }
-    if (v.statut === 'ACTE_NOTARIE' && v.dateLivraisonPrevue) {
+    if (v.statut === 'ACTE' && v.dateLivraisonPrevue) {
       candidates.push({ label: 'Livraison prévue', date: v.dateLivraisonPrevue });
     }
     if (v.expectedClosingDate) {
@@ -404,7 +675,7 @@ export class VenteDetailComponent implements OnInit {
       return items;
     }
 
-    if (v.statut === 'LIVRE') {
+    if (v.statut === 'LIVRE_DEFINITIF') {
       if (fin.reste > 0) items.push({ text: 'Solde restant : ' + this.formatMad(fin.reste), severity: 'warning' });
       if (!v.datePvReception) items.push({ text: 'PV de réception non saisi', severity: 'warning' });
       if (!v.dateTitreFoncier) items.push({ text: 'Titre foncier non enregistré', severity: 'info' });
@@ -430,7 +701,7 @@ export class VenteDetailComponent implements OnInit {
         severity: crit ? 'critical' : 'warning',
       });
     }
-    if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+    if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
       items.push({ text: 'Contrat de vente non généré', severity: 'warning' });
     }
     if (v.contractStatus === 'GENERATED') {

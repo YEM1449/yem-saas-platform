@@ -31,7 +31,15 @@
   <!-- ── No model state (admin upload) ────────────────────────────────────── -->
   @if (state() === 'no-model') {
     <div class="viewer-overlay no-model-state" data-testid="viewer-no-model">
-      <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
+      @if (canManageModel) {
+        <app-model-upload-admin [projetId]="projetId" (uploaded)="onModelUploaded($event)"></app-model-upload-admin>
+      } @else {
+        <div class="no-model-info" role="status">
+          <div class="no-model-icon" aria-hidden="true">🏗️</div>
+          <p class="no-model-title">Aucun modèle 3D configuré</p>
+          <p class="no-model-hint">La maquette 3D de ce projet n'est pas encore disponible. Contactez un administrateur pour la téléverser.</p>
+        </div>
+      }
     </div>
   }
 
@@ -39,13 +47,15 @@
   <canvas #canvas class="three-canvas" [class.hidden]="state() !== 'loaded'"
           aria-label="Vue 3D interactive — cliquez sur un lot pour plus de détails"></canvas>
 
-  <!-- ── Tooltip overlay ───────────────────────────────────────────────────── -->
-  @if (hoveredMapping() && hoveredStatus()) {
+  <!-- ── Tooltip overlay (hover on desktop · pinned on touch) ─────────────── -->
+  @if ((pinnedMapping() && pinnedStatus()) || (hoveredMapping() && hoveredStatus())) {
     <app-lot-tooltip-3d
-      [mapping]="hoveredMapping()!"
-      [status]="hoveredStatus()!"
+      [mapping]="(pinnedMapping() ?? hoveredMapping())!"
+      [status]="(pinnedStatus() ?? hoveredStatus())!"
       [x]="tooltipX"
       [y]="tooltipY"
+      [pinned]="!!pinnedMapping()"
+      (close)="clearPin()"
     ></app-lot-tooltip-3d>
   }
 
@@ -67,7 +77,23 @@
       <button class="legend-peek" (click)="toggleLegend()" aria-label="Afficher la légende des statuts">?</button>
     }
 
-    @if (isAdmin && !projetIdInput) {
+    <!-- ── Floor filter (P4-T5) ──────────────────────────────────────────── -->
+    @if (etages().length > 1) {
+      <div class="etage-filter" role="group" aria-label="Filtre par étage" data-testid="etage-filter">
+        <button [class.active]="etageActif() === null" (click)="filterEtage(null)">Tous</button>
+        @for (e of etages(); track e) {
+          <button [class.active]="etageActif() === e" (click)="filterEtage(e)">{{ etageLabel(e) }}</button>
+        }
+      </div>
+    }
+
+    <!-- ── Presentation mode (P4-T6) ─────────────────────────────────────── -->
+    <button class="presentation-toggle" (click)="togglePresentation()" data-testid="presentation-toggle"
+            [attr.aria-label]="presentationMode() ? 'Quitter la présentation' : 'Mode présentation'">
+      {{ presentationMode() ? '✕ Quitter' : '⛶ Présentation' }}
+    </button>
+
+    @if (!presentationMode() && isAdmin && !projetIdInput) {
       <a class="mapping-cta"
          [routerLink]="['/app/projets', projetId, 'viewer-3d', 'mappings']"
          data-testid="open-mesh-mapping">

@@ -186,6 +186,19 @@
   color: var(--c-text-muted, #94a3b8);
 }
 
+.portal-footer-links {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: var(--text-xs, 0.75rem);
+}
+.portal-footer-links a {
+  color: var(--c-primary, #16a34a);
+  text-decoration: none;
+}
+.portal-footer-links a:hover { text-decoration: underline; }
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .portal-header-inner {

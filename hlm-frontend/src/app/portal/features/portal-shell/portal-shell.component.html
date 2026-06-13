@@ -67,6 +67,11 @@
       {{ 'portal.shell.footer' | translate }}
       @if (tenantInfo()?.tenantName) { — {{ tenantInfo()!.tenantName }} }
     </p>
+    <nav class="portal-footer-links" [attr.aria-label]="'portal.legal.privacyLink' | translate">
+      <a routerLink="/portal/privacy">{{ 'portal.legal.privacyLink' | translate }}</a>
+      <span aria-hidden="true">·</span>
+      <a routerLink="/portal/mentions-legales">{{ 'portal.legal.legalLink' | translate }}</a>
+    </nav>
   </footer>
 
 </div>

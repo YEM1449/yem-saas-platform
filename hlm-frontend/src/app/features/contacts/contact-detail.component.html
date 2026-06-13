@@ -144,6 +144,52 @@
       </dl>
     }
 
+    <!-- ── Profil légal VEFA (Loi 44-00) ─────────────────────────────── -->
+    <div class="card" style="margin-top:16px" data-testid="contact-legal">
+      <div class="card-header">
+        <h3 class="card-title">Profil légal VEFA (Loi 44-00)</h3>
+        <button class="btn btn-sm btn-secondary" (click)="toggleLegal()" data-testid="legal-toggle">
+          {{ showLegal ? 'Masquer' : 'Afficher' }}
+        </button>
+      </div>
+      @if (showLegal) {
+        <div class="card-body">
+          @if (legalError) { <p class="msg-error">{{ legalError }}</p> }
+          @if (legalSaved) { <p class="msg-success">✓ Profil légal enregistré</p> }
+          <div class="legal-grid">
+            <label>Type d'acquéreur
+              <select [(ngModel)]="legal.typeAcquereur" [disabled]="!canWrite">
+                <option [ngValue]="null">—</option>
+                @for (t of typeAcquereurOptions; track t) { <option [ngValue]="t">{{ t }}</option> }
+              </select>
+            </label>
+            <label>Situation matrimoniale
+              <select [(ngModel)]="legal.situationMatrimoniale" [disabled]="!canWrite">
+                <option [ngValue]="null">—</option>
+                @for (s of situationOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+              </select>
+            </label>
+            <label>Date de naissance <input type="date" [(ngModel)]="legal.dateNaissance" [disabled]="!canWrite"/></label>
+            <label>Lieu de naissance <input type="text" [(ngModel)]="legal.lieuNaissance" [disabled]="!canWrite"/></label>
+            <label>Nationalité <input type="text" [(ngModel)]="legal.nationalite" [disabled]="!canWrite"/></label>
+            <label>Pays de résidence <input type="text" [(ngModel)]="legal.paysResidence" [disabled]="!canWrite"/></label>
+            <label>CIN délivrée le <input type="date" [(ngModel)]="legal.cinDateDelivrance" [disabled]="!canWrite"/></label>
+            <label>Autorité (CIN) <input type="text" [(ngModel)]="legal.cinAutorite" [disabled]="!canWrite"/></label>
+            <label>N° passeport (MRE/étranger) <input type="text" [(ngModel)]="legal.passeportNumero" [disabled]="!canWrite"/></label>
+            <label>Passeport expire le <input type="date" [(ngModel)]="legal.passeportExpire" [disabled]="!canWrite"/></label>
+            <label>Apport personnel (MAD) <input type="number" [(ngModel)]="legal.apportPersonnel" [disabled]="!canWrite"/></label>
+          </div>
+          @if (canWrite) {
+            <div class="form-actions">
+              <button class="btn btn-primary btn-sm" [disabled]="legalSaving" (click)="saveLegal()" data-testid="legal-save">
+                Enregistrer le profil légal
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     @if (showEditForm) {
       <div class="card qualify-form">
         <h3 class="card-title">Modifier la fiche contact</h3>

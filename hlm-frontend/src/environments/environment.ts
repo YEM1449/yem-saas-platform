@@ -4,4 +4,10 @@ export const environment = {
   // To bypass proxy, set to 'http://localhost:8080'
   // and add your origin to CorsConfig.java allowedOrigins.
   apiUrl: '',
+  features: {
+    // Legacy SaleContract module. Off by default so the sidebar shows a single
+    // selling concept ("Pipeline Ventes", VEFA). Turn on for sociétés still on the
+    // pre-VEFA contract workflow. See review finding #016.
+    legacyContracts: false,
+  },
 };

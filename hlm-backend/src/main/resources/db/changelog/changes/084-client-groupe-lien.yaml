@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 084-client-groupe-lien
+      author: yem-review-f005
+      comment: >
+        Finding #005 — group-level client identity. Links contacts that are the same physical
+        person across several sociétés of one owner ("link, don't merge"): each société keeps
+        its own contact row (distinct responsable de traitement under Loi 09-08); this table only
+        records that they belong to the same person, with the consent that makes the cross-société
+        link lawful. Cross-société infrastructure table — intentionally NO per-société RLS
+        (same category as app_user_societe / societe), so the group owner can read links across
+        their sociétés. It stores only opaque IDs + consent metadata, never PII (no name, no CIN).
+      changes:
+        - createTable:
+            tableName: client_groupe_lien
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column:
+                  name: groupe_personne_id
+                  type: uuid
+                  constraints: { nullable: false }
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints: { nullable: false, foreignKeyName: fk_cgl_contact, references: contact(id) }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints: { nullable: false, foreignKeyName: fk_cgl_societe, references: societe(id) }
+              - column:
+                  name: consent_given
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column:
+                  name: linked_by
+                  type: uuid
+                  constraints: { foreignKeyName: fk_cgl_linked_by, references: app_user(id) }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        # A contact belongs to at most one group-person cluster.
+        - addUniqueConstraint:
+            tableName: client_groupe_lien
+            columnNames: contact_id
+            constraintName: uk_cgl_contact
+
+        - createIndex:
+            tableName: client_groupe_lien
+            indexName: idx_cgl_groupe_personne
+            columns:
+              - column: { name: groupe_personne_id }
+
+        - createIndex:
+            tableName: client_groupe_lien
+            indexName: idx_cgl_societe
+            columns:
+              - column: { name: societe_id }

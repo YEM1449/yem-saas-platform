@@ -114,6 +114,33 @@
   color: #F59E0B;
 }
 
+.no-model-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  max-width: 340px;
+  padding: 24px;
+}
+
+.no-model-icon {
+  font-size: 44px;
+}
+
+.no-model-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.no-model-hint {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
 .error-msg {
   font-size: 14px;
   color: #475569;
@@ -242,4 +269,23 @@
     flex-wrap: wrap;
     gap: 8px 12px;
   }
+}
+
+/* ── Floor filter (P4-T5) ─────────────────────────────────────────── */
+.etage-filter {
+  position: absolute; top: 12px; left: 12px; display: flex; gap: 4px; flex-wrap: wrap;
+  background: rgba(255,255,255,.92); padding: 4px; border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.etage-filter button {
+  border: 1px solid #cbd5e1; background: #fff; border-radius: 6px;
+  padding: 4px 10px; font-size: 12px; cursor: pointer; color: #475569;
+}
+.etage-filter button.active { background: #3B82F6; color: #fff; border-color: #3B82F6; }
+
+/* ── Presentation toggle (P4-T6) ──────────────────────────────────── */
+.presentation-toggle {
+  position: absolute; bottom: 12px; right: 12px; z-index: 20;
+  border: none; background: rgba(15,23,42,.85); color: #fff;
+  border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer;
 }

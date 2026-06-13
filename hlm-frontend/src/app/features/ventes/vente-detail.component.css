@@ -280,3 +280,19 @@
   .deal-col { border-right: none; border-bottom: 1px solid var(--c-border, #e2e8f0); }
   .deal-col:last-child { border-bottom: none; }
 }
+
+/* ── VEFA actions (Loi 44-00) ─────────────────────────────────────── */
+.vefa-form { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; max-width: 480px; }
+.vefa-hint { font-size: 13px; color: #64748b; margin: 8px 0; }
+.vefa-subtitle { font-size: 14px; font-weight: 600; color: #1e293b; margin: 16px 0 8px; }
+.vefa-reserves { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.vefa-reserve { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+.vefa-reserve.lifted { background: #f0fdf4; border-color: #bbf7d0; }
+.vefa-reserve-desc { font-size: 14px; color: #334155; }
+.vefa-actions .btn + .btn { margin-left: 8px; }
+
+/* ── Co-acquéreur / legal grid ────────────────────────────────────── */
+.legal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.legal-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #475569; }
+.legal-grid input, .legal-grid select { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; }

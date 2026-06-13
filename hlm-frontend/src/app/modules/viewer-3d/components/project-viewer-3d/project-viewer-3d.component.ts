@@ -68,8 +68,16 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   errorMessage  = signal('');
   legendVisible = signal(true);
 
+  /** Floor filter — null = all floors visible; otherwise dim other floors. */
+  etageActif       = signal<number | null>(null);
+  /** Fullscreen client presentation mode (minimal chrome). */
+  presentationMode = signal(false);
+
   hoveredMapping = signal<Lot3dMappingEntry | null>(null);
   hoveredStatus  = signal<LotStatusSnapshot | null>(null);
+  /** Touch-pinned tooltip — stays visible until tapped empty space or the × button. */
+  pinnedMapping  = signal<Lot3dMappingEntry | null>(null);
+  pinnedStatus   = signal<LotStatusSnapshot | null>(null);
   tooltipX = 0;
   tooltipY = 0;
 
@@ -97,6 +105,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   /** True for CRM ROLE_ADMIN users — used to gate the "Configure mappings" CTA. */
   get isAdmin(): boolean {
     return this.auth.user?.role === 'ROLE_ADMIN';
+  }
+
+  /** True for CRM users allowed to upload/replace the 3D model (ADMIN or MANAGER). */
+  get canManageModel(): boolean {
+    const role = this.auth.user?.role;
+    return role === 'ROLE_ADMIN' || role === 'ROLE_MANAGER';
   }
 
   ngOnInit(): void {
@@ -168,6 +182,25 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
       })
     );
 
+    // Touch tap — pin tooltip without navigating (first tap shows info, second tap can navigate).
+    this.subs.add(
+      this.engine.tap$.subscribe(ev => {
+        if (!ev) {
+          this.pinnedMapping.set(null);
+          this.pinnedStatus.set(null);
+        } else {
+          const m = this.mapping.getMappingForMesh(ev.mesh);
+          if (m) {
+            this.pinnedMapping.set(m);
+            this.pinnedStatus.set(this.statuses.find(s => s.meshId === m.meshId) ?? null);
+            this.tooltipX = ev.screenX;
+            this.tooltipY = ev.screenY;
+          }
+        }
+        this.cdr.markForCheck();
+      })
+    );
+
     // If model metadata arrived before AfterViewInit, load now
     if (this.modelMeta) {
       this.loadGlb(this.modelMeta);
@@ -185,6 +218,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
     this.legendVisible.update(v => !v);
   }
 
+  clearPin(): void {
+    this.pinnedMapping.set(null);
+    this.pinnedStatus.set(null);
+    this.cdr.markForCheck();
+  }
+
   // ── Keyboard accessibility (Tab + Enter for lot selection) ────────────────
 
   onKeyDown(event: KeyboardEvent): void {
@@ -198,6 +237,12 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
         const status = this.statuses.find(s => s.meshId === m.meshId);
         this.onLotClick(m, status);
       }
+    }
+    if ((event.key === 'p' || event.key === 'P') && !this.portalMode) {
+      this.togglePresentation();
+    }
+    if (event.key === 'Escape' && this.presentationMode()) {
+      this.togglePresentation();
     }
   }
 
@@ -254,7 +299,36 @@ export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestro
   private applyStatuses(statuses: LotStatusSnapshot[]): void {
     this.statuses = statuses;
     this.mapping.updateColors(statuses);
+    // Re-apply the active floor filter so the 30 s poll doesn't reset it.
+    this.mapping.applyFloorFilter(this.etageActif(), statuses);
     this.cdr.markForCheck();
+  }
+
+  /** Distinct floors present in the model, ascending (RDC=0, basements negative). */
+  etages(): number[] {
+    const set = new Set<number>();
+    for (const s of this.statuses) if (s.etage !== null && s.etage !== undefined) set.add(s.etage);
+    return [...set].sort((a, b) => a - b);
+  }
+
+  etageLabel(e: number): string {
+    return e === 0 ? 'RDC' : e < 0 ? `SS${-e}` : `${e}ᵉ`;
+  }
+
+  filterEtage(etage: number | null): void {
+    this.etageActif.set(etage);
+    this.mapping.applyFloorFilter(etage, this.statuses);
+  }
+
+  togglePresentation(): void {
+    const next = !this.presentationMode();
+    this.presentationMode.set(next);
+    const el = this.canvasRef?.nativeElement?.parentElement;
+    if (next) {
+      el?.requestFullscreen?.().catch(() => { /* fullscreen may be denied */ });
+    } else if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => { /* ignore */ });
+    }
   }
 
   private onLotClick(m: Lot3dMappingEntry, status: LotStatusSnapshot | undefined): void {

@@ -2,6 +2,75 @@
 
 Auto-load guide for Claude Code. Captures operating rules, architecture context, and the current implementation backlog.
 
+## Audit Checkpoint — Consolidated Audit (2026-06-13)
+
+**→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
+(Consolidation of audit 2026-06-03 + cross-functional product review 2026-06-12 + fresh code scan 2026-06-13. Supersedes `audit-report-2026-06-03.md`, `action-plan-2026-06-03.md`, and `team-review-2026-06-12.md` for current state — those files are retained for history.)
+
+**11 open items (2026-06-13, updated):** 0 Critical · 0 Major · all A+B+C resolved. Remaining: 5 quick-wins XS (D), 5 code-quality (E). Next: Phase D or E.
+
+**Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
+
+**Fixed (2026-06-03):**
+- **F-001 (P0, RG-B03) ✅** `VenteService.create()` now calls `existsBySocieteIdAndPropertyIdAndStatutNot(..., ANNULE)` → `PropertyAlreadyEngagedException` (409 `PROPERTY_ALREADY_ENGAGED`). Concurrency backstop: changeset **075** `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'`.
+- **F-002 (P1) ✅** `VenteServiceTest` (6 Mockito tests: RG-B03 guard, property-status precondition, state machine, ANNULE-needs-motif) + `VenteControllerIT` (8 IT: 401, create→RESERVED, **409 double-vente**, ANNULE frees property, valid/invalid transitions, cross-société 404, 404 unknown property). Unit suite: **108 pass** (was 102).
+
+**Fixed P2 (2026-06-03):**
+- **F-003 → requalifié faux positif** : `CrossSocieteAccessException`(403) ne couvre que le contexte manquant (société/user/principal portail) ; l'accès ressource cross-société renvoie déjà 404. Aucun changement code.
+- **F-004 ✅** `GlbValidator` (RG-E05) valide les octets GLB à la confirmation (magic glTF + version 2 + `KHR_draco_mesh_compression`) → 422 `INVALID_GLB_FILE`. Property `app.viewer3d.validate-glb-binary` (true prod, false test) ; 7 tests `GlbValidatorTest`.
+- **F-010 ✅** Fallback 3D `no-model` gated `canManageModel` (ADMIN/MANAGER) sinon message informatif.
+
+**Fixed P2/P3 batch 2 (2026-06-04):**
+- **F-007 ✅** `template-editor` (23 `*ngIf`) + `mesh-mapping-admin` migrated to `@if`/`@for`; 0 legacy control-flow remaining; build green.
+- **F-008 → faux positif** : 222 `.subscribe()` = HttpClient one-shot (auto-complétés) ; flux persistants (notification-polling 60s, keep-alive, viewer-3d) déjà détruits (`takeUntil(destroy$)`/`unsubscribe`). 0 fuite réelle.
+- **F-005 ⏳ en cours** : `QuotaServiceTest` (8), `ContactCompletenessServiceTest` (5) ajoutés (+ `VenteServiceTest`). Unit suite: **128 pass**.
+- **F-011 ⏳ en cours** : `absorption.spec.ts` (KPI canonique).
+- **F-013 ✅** bannière CURRENT STATE en tête de `.sprint-state.md`.
+
+**Fixed (2026-06-13):**
+- **F-006 ✅** `GET /api/ventes` + `GET /api/properties` migrated to `Page<T>` → `PageResponse.of()` (`@PageableDefault` 20/50); contacts was already paginated. FE: `PagedResult<T>` type + `listPage()`; bounded callers keep capped `list()`. `GET /api/notifications`: `@Max(200) @Min(1)` added at controller layer (service already clamped). 26 sub-resource endpoints remain `List<T>` (FK-bounded). `NotificationControllerTest` (5 tests); unit suite: **200 pass**.
+
+**Fixed — Phase A (2026-06-13):**
+- **A-001 ✅** `EcheanceStatut.ANNULEE` ; `cancelAllPendingByVente()` `@Modifying` ; appelé dans `updateStatut(ANNULE)` + `exerciseRetractation()` ; trésorerie exclut ANNULEE.
+- **A-002 ✅** Export CSV/PDF + TVA (Prix HT, Taux, Prix TTC via `TvaCalculator`) ; `ReportExportService` batch-load `findAllById`, `ventes-report.html` 9 colonnes.
+- **A-003 ✅** Changeset **087** `responsable_user_id` sur `reserve_livraison` ; `ReserveLivraisonProjectController` `GET /api/projects/{id}/reserves` (ADMIN/MANAGER).
+- **A-004 ✅** Guard `prixVente ≤ 0` → `PrixVenteInvalideException` 422 `PRIX_VENTE_INVALIDE`.
+
+**Fixed — Phase B (2026-06-13):**
+- **B-001 ✅** `MarketConfig.getPenaliteRetardJournalierMad()` (défaut 500 MAD/j, configurable) ; `joursRetard`+`penaliteAccumulee` dans `VenteResponse`+`VenteService.toResponse()` ; `countVentesEnRetardLivraison`+`sumRetardJoursLivraison` dans `VenteRepository` ; `ventesEnRetardLivraison`+`penaliteRetardTotale` dans `TresorerieDashboardDTO`+Service ; section `.penalite` dans PV livraison.
+- **B-002 ✅** `DataRetentionScheduler` 3 passes (prospect 730j, acquéreur 1825j, VEFA 3650j) ; `findRetentionCandidatesByStatuses()` ; `docs/legal/data-retention.md`.
+- **B-003 ✅** `docs/legal/pdf-review-checklist.md` (27 items Art.618-3/618-13/618-17, mentions obligatoires, actions correctives).
+- **B-004 ✅** `@ReadAudit` AOP aspect (`SensitiveDataReadEvent` → `AuditEventListener.onSensitiveDataRead()` REQUIRES_NEW) ; annoté sur `getLegalDetails()` + `getCommercial()`.
+- **B-005 ✅** `ComplianceController` `GET/PATCH /api/mon-espace/compliance` (ADMIN) pour saisie `numeroCndp`+`dateDeclarationCndp`.
+
+**Deferred (justifié, P2/P3):** F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
+
+Next available changeset: **086** (084 = client_groupe_lien #005, 085 = remboursement #028).
+
+## Wave 12 — Conformité VEFA Loi 44-00 (Maroc) — complete (2026-06-11)
+
+Branch `Epic/Dashboard-UIUX-improvement`. The vente pipeline was **replaced** with the VEFA
+state machine (user decision): `PROSPECT→OPTION→RESERVE→EN_RETRACTATION→ACOMPTE→COMPROMIS→FINANCEMENT→ACTE→LIVRE_AVEC_RESERVES→RESERVES_LEVEES→LIVRE_DEFINITIF`, `ANNULE` terminal. `FINANCEMENT` kept; ASCII identifiers; `ACTE_NOTARIE→ACTE`, `LIVRE→LIVRE_DEFINITIF` migrated (changeset 076). 151 unit tests.
+
+- **P1 OPTION + rétractation** (ch. 076-077): `createOption` (1-72h hold), `confirmReservation`
+  (deposit ≤5% Art.618-4 → 422), `exerciseRetractation` (7-day window → 409), `VenteVefaScheduler`
+  (hourly sweeps). `MarketConfig`/`MarketConstants`/`TvaCalculator` in `legal/` package.
+- **P1 livraison avec réserves** (ch. 078): `reserve_livraison`, `recordDelivery`/`liftReserve`.
+- **P2 échéancier légal** (ch. 079): `generateEcheancierLegal` (7 calls Art.618-17), cumul≤prix guard.
+- **P3** (ch. 080-082): contact legal identity (isolated `/contacts/{id}/legal`), `co_acquereur`
+  (`/api/ventes/{id}/co-acquereurs`), `dossier_financement` (`/api/ventes/{id}/dossier-financement`).
+- **P4** (ch. 083): property commercial fields + Moroccan VAT (`TvaCalculator`, prix TTC never stored,
+  `/api/properties/{id}/commercial`); 3D floor filter + presentation mode.
+- **P5**: legal PDF generation (contrat réservation, PV livraison) via `DocumentGenerationService`.
+- **P6**: `GET /api/dashboard/tresorerie` (cash + VEFA alerts).
+
+**Pattern note:** legal/VEFA fields were added via **isolated DTOs + dedicated endpoints** (not by
+extending the big positional `CreateContactRequest`/`PropertyCreateRequest` records) to avoid breaking
+their many call-sites. Session manifest: `.wave12-session.json`. Legal ref: `docs/legal/`.
+
+**Deferred (CI/backlog):** IT tests for the VEFA pipeline (need Docker — run in CI), P5 quittances
+appels de fonds, P6 push notifications, VEFA E2E full flows (CI-gated).
+
 ## Architecture Context
 
 **Multi-company (multi-société) real-estate CRM SaaS** platform (codename HLM).
@@ -81,7 +150,7 @@ audit, auth, commission, common, contact, contract, dashboard, deposit, document
 ## Critical Rules
 
 - **Never use `SocieteContext.getSocieteId()` without null-check.** Always use `requireSocieteId()` via `SocieteContextHelper`.
-- For backend data changes, use additive Liquibase changesets only. Next available: **075**.
+- For backend data changes, use additive Liquibase changesets only. Next available: **076**.
 - Reuse existing package boundaries and patterns.
 - Keep controllers on DTO contracts and error envelope (`ErrorResponse`, `ErrorCode`).
 - Run relevant tests before finishing.
@@ -133,8 +202,17 @@ Tasks: `task-title` (form input), `task-submit` (submit button)
 | 072 | lot_3d_mapping table (mesh↔lot links, RLS, unique per societe+projet+mesh) |
 | 073 | Vente legal field rename — `date_fin_delai_sru` → `date_fin_delai_reflexion`, `date_limite_condition_credit` → `date_limite_financement` |
 | 074 | Reservation hardening — `raison_annulation VARCHAR(100)` + `notified_expiring_soon BOOLEAN` on `property_reservation` |
+| 075 | RG-B03 — `uk_vente_active_property` partial unique index on `vente(property_id) WHERE statut <> 'ANNULE'` (one active vente per property) |
+| 076 | Wave 12 — VenteStatut VEFA rename (ACTE_NOTARIE→ACTE, LIVRE→LIVRE_DEFINITIF) + data migration |
+| 077 | Wave 12 — vente option_expire_at + retractation_exercee_at (OPTION + rétractation) |
+| 078 | Wave 12 — reserve_livraison table (RLS) — delivery reserves |
+| 079 | Wave 12 — vente_echeance legal fields (etape/pct_prevu/base_legale, Art. 618-17) |
+| 080 | Wave 12 — contact legal columns (CIN/passeport/situation/type_acquereur…) |
+| 081 | Wave 12 — co_acquereur table (RLS, unique société+vente) |
+| 082 | Wave 12 — dossier_financement table (1:1 vente, RLS, statut workflow) |
+| 083 | Wave 12 — property commercial columns (prix_ht, tva_taux, surfaces, charges…) |
 
-Next available changeset: **075**
+Next available changeset: **086**
 
 ## CI Pipeline Map
 

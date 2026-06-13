@@ -72,7 +72,7 @@ public class CommercialDashboardService {
     private static final long SLOW_QUERY_THRESHOLD_MS = 300;
 
     private static final List<VenteStatut> TERMINAL_STATUTS =
-            List.of(VenteStatut.LIVRE, VenteStatut.ANNULE);
+            List.of(VenteStatut.LIVRE_DEFINITIF, VenteStatut.ANNULE);
 
     private final DepositRepository      depositRepository;
     private final PropertyRepository     propertyRepository;

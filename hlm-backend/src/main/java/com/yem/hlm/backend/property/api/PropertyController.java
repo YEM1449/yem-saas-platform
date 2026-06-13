@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.property.api;
 
+import com.yem.hlm.backend.audit.service.ReadAudit;
 import com.yem.hlm.backend.property.api.dto.BulkStatusRequest;
 import com.yem.hlm.backend.property.api.dto.BulkStatusResult;
 import com.yem.hlm.backend.property.api.dto.ImportResultResponse;
@@ -81,15 +82,19 @@ public class PropertyController {
      * @param status optional property status filter
      * @return 200 OK with list of PropertyResponse
      */
-    @Operation(summary = "List all non-deleted properties with optional filters")
+    @Operation(summary = "List non-deleted properties with optional filters, paginated (#023)")
     @GetMapping
-    public List<PropertyResponse> list(
+    public com.yem.hlm.backend.common.dto.PageResponse<PropertyResponse> list(
             @RequestParam(required = false) UUID projectId,
             @RequestParam(required = false) UUID immeubleId,
             @RequestParam(required = false) PropertyType type,
-            @RequestParam(required = false) PropertyStatus status
+            @RequestParam(required = false) PropertyStatus status,
+            @org.springframework.data.web.PageableDefault(size = 50, sort = "createdAt",
+                    direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable
     ) {
-        return propertyService.listAll(projectId, immeubleId, type, status);
+        return com.yem.hlm.backend.common.dto.PageResponse.of(
+                propertyService.listAllPaged(projectId, immeubleId, type, status, pageable));
     }
 
     /**
@@ -107,6 +112,23 @@ public class PropertyController {
             @Valid @RequestBody PropertyUpdateRequest request
     ) {
         return propertyService.update(id, request);
+    }
+
+    @Operation(summary = "Get the VEFA commercial sheet (HT/TVA/TTC, surfaces, charges)")
+    @GetMapping("/{id}/commercial")
+    @ReadAudit(entityType = "PROPERTY")
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse getCommercial(@PathVariable UUID id) {
+        return propertyService.getCommercial(id);
+    }
+
+    @Operation(summary = "Update the VEFA commercial fields (ADMIN/MANAGER)")
+    @PatchMapping("/{id}/commercial")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse updateCommercial(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.yem.hlm.backend.property.api.dto.UpdatePropertyCommercialRequest request
+    ) {
+        return propertyService.updateCommercial(id, request);
     }
 
     /**

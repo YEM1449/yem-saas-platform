@@ -167,6 +167,39 @@ public class ContactService {
         return toResponse(saved);
     }
 
+    // ── VEFA legal identity (Loi 44-00) — Wave 12 P3-T1 ───────────────────────
+
+    @Transactional(readOnly = true)
+    public ContactLegalResponse getLegalDetails(UUID contactId) {
+        UUID societeId = requireSocieteId();
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+        return ContactLegalResponse.from(contact);
+    }
+
+    @Transactional
+    public ContactLegalResponse updateLegalDetails(UUID contactId, UpdateContactLegalRequest req) {
+        UUID societeId = requireSocieteId();
+        UUID actorUserId = requireUserId();
+        Contact contact = contactRepository.findBySocieteIdAndId(societeId, contactId)
+                .orElseThrow(() -> new ContactNotFoundException(contactId));
+
+        if (req.cinDateDelivrance() != null)    contact.setCinDateDelivrance(req.cinDateDelivrance());
+        if (req.cinAutorite() != null)          contact.setCinAutorite(req.cinAutorite());
+        if (req.passeportNumero() != null)      contact.setPasseportNumero(req.passeportNumero());
+        if (req.passeportExpire() != null)      contact.setPasseportExpire(req.passeportExpire());
+        if (req.dateNaissance() != null)        contact.setDateNaissance(req.dateNaissance());
+        if (req.lieuNaissance() != null)        contact.setLieuNaissance(req.lieuNaissance());
+        if (req.situationMatrimoniale() != null) contact.setSituationMatrimoniale(req.situationMatrimoniale());
+        if (req.nationalite() != null)          contact.setNationalite(req.nationalite());
+        if (req.paysResidence() != null)        contact.setPaysResidence(req.paysResidence());
+        if (req.typeAcquereur() != null)        contact.setTypeAcquereur(req.typeAcquereur());
+        if (req.apportPersonnel() != null)      contact.setApportPersonnel(req.apportPersonnel());
+
+        contact.markUpdatedBy(actorUserId);
+        return ContactLegalResponse.from(contactRepository.save(contact));
+    }
+
     /**
      * Updates a contact's status following the allowed state machine transitions.
      * @throws InvalidStatusTransitionException if the requested transition is not permitted

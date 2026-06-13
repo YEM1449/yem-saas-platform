@@ -1,0 +1,187 @@
+{
+  "wave": "12",
+  "started_at": "2026-06-04T00:00:00Z",
+  "last_updated": "2026-06-11T23:40:35.665Z",
+  "current_phase": "COMPLETE",
+  "current_task": "Wave 12 COMPLETE — validée IT (93, Postgres réel) ET E2E (6/6, full stack local). Bug migration critique corrigé.",
+  "phases": {
+    "P0": {
+      "label": "Bootstrap & Audit terrain",
+      "status": "✅ complete",
+      "tasks": {
+        "P0-T1": "✅ Lecture CLAUDE.md + sprint-state",
+        "P0-T2": "✅ Inventaire schema DB existant",
+        "P0-T3": "✅ Inventaire entités Java existantes",
+        "P0-T4": "✅ Inventaire composants Angular existants",
+        "P0-T5": "✅ Synthèse audit → décisions d'implémentation"
+      }
+    },
+    "P1": {
+      "label": "Pipeline étendu conforme Loi 44-00",
+      "status": "in progress (T1-T5 done; T6 IT + T7 commit; + boutons frontend VEFA)",
+      "tasks": {
+        "P1-T1": "✅ Enum VenteStatut étendu (ASCII, FINANCEMENT conservé) + matrice transitions",
+        "P1-T2": "✅ (backend) Liquibase 076 + backend reconcilié, 128 unit verts. ⏭️ P1-T2b (frontend) NEXT",
+        "P1-T3": "✅ OPTION : createOption (hold 1-72h, RG-B03, property→RESERVED) + expireOverdueOptions sweep + VenteVefaScheduler (hourly, system ctx). Changeset 077 (option_expire_at).",
+        "P1-T4": "✅ Rétractation : confirmReservation (dépôt ≤5% Art.618-4 → ViolationLegale 422 ; RESERVE→EN_RETRACTATION, délai 7j via MarketConfig) + exerciseRetractation (fenêtre légale → RetractationImpossible 409) + closeExpiredRetractations sweep. Endpoints POST /option, /{id}/confirm-reservation, /{id}/retractation. Frontend service methods ajoutées.",
+        "P1-T5": "✅ Livraison avec réserves : table reserve_livraison (changeset 078 + RLS), ReserveLivraison/StatutReserve + repo, recordDelivery (ACTE→LIVRE_DEFINITIF si 0 réserve, sinon LIVRE_AVEC_RESERVES + création réserves, délai levée 60j via MarketConfig, réutilise updateStatut), listReserves, liftReserve (dernière levée → RESERVES_LEVEES). Endpoints POST /{id}/livraison, GET /{id}/reserves, PUT /{id}/reserves/{rid}/lever. ReserveNotFoundException 404. Frontend service methods + interface ReserveLivraison.",
+        "P1-T6": "✅ IT validés sur Postgres réel (Docker) : VenteControllerIT 8/8, CommercialDashboardIT 7/7 (requêtes SQL KPI renommées), + HlmBackendApplicationIT/CrossSocieteIsolationIT/ReceivablesDashboardIT/Project3dControllerIT/ContactControllerIT/PropertyControllerIT = 93 IT verts. A RÉVÉLÉ + corrigé un bug critique : DECIMAL(x,y) inline non quoté dans changesets 080/082/083 cassait Liquibase (app ne démarrait pas).",
+        "P1-T7": "Commit P1",
+        "P1-T2b": "✅ Frontend réconcilié (statut VEFA) — vente.service + status.service types (12 états), pipeline-stepper (ORDER 12 + 5 étapes), advance-dialog (NEXT_MAP/labels/hints), vente-detail/list (Records 12 + comparaisons), portal-ventes, dashboards (value-tunnel ACTE/LIVRE_DEFINITIF + drills), reports, ui-status-pill. Domaine 3D/property/tranche préservé (lot-3d-status LIVRE intact). Build VERT.",
+        "P1-T2c-frontend-vefa-ui": "✅ Boutons VEFA câblés dans vente-detail : confirmer réservation (dépôt ≤5%), exercer rétractation (fenêtre légale), enregistrer livraison (avec/sans réserves), panneau réserves + lever. Getters context-sensitifs (canConfirmReservation/canRetract/canRecordDelivery/showReservesPanel), gestion erreur (vefaError), build vert."
+      }
+    },
+    "P2": {
+      "label": "Échéancier VEFA + Appels de fonds",
+      "status": "✅ (échéancier légal sur vente_echeance — décision: étendre vente_echeance, PAS payments/SaleContract)",
+      "tasks": {
+        "P2-T1": "✅ Changeset 079 : etape/pct_prevu/base_legale sur vente_echeance (additif)",
+        "P2-T2": "✅ VenteEcheance +3 champs ; EcheancierLegal (7 étapes Art.618-17, MA, somme=100%)",
+        "P2-T3": "✅ generateEcheancierLegal (prix requis, idempotence, 7 échéances staged montant=prix×pct, base_legale)",
+        "P2-T4": "✅ Garde cumul ≤ prix (assertCumulWithinPrice) dans addEcheance + génération → ViolationLegale 422",
+        "P2-T5": "✅ POST /api/ventes/{id}/echeancier/generer-legal (ADMIN/MANAGER) ; EcheanceResponse +etape/pctPrevu/baseLegale",
+        "P2-T6": "✅ Frontend : Echeance +3 champs, generateEcheancierLegal service, bouton Générer l échéancier légal dans vente-detail (gated hasLegalEcheancier)",
+        "P2-T7": "✅ 3 tests unitaires (prix requis, déjà généré, cumul>prix) ; 138 unit verts ; build front vert"
+      }
+    },
+    "P3": {
+      "label": "Contact enrichi + Co-acquéreur + Financement",
+      "status": "✅ (T1 contact légal, T2 co-acquéreur, T3 dossier financement — backend+frontend+tests). T7 forms intégrés dans les panneaux. Reste alerte expiration (→ P6).",
+      "tasks": {
+        "P3-T1": "✅ Contact enrichi VEFA (changeset 080) : 11 colonnes légales additives (cin_date_delivrance, passeport, date/lieu naissance, situation_matrimoniale, nationalite, pays_residence, type_acquereur, apport_personnel) + enums SituationMatrimoniale/TypeAcquereur. DTOs ISOLÉS (ContactLegalResponse/UpdateContactLegalRequest) → 0 impact sur Contact DTOs existants. Endpoints GET/PATCH /contacts/{id}/legal (ADMIN/MANAGER write). Frontend: ContactLegal + service methods + panneau Profil légal VEFA dans contact-detail. 1 test unitaire (null-skip).",
+        "P3-T2": "✅ Co-acquéreur : changeset 081 (table co_acquereur + RLS + unique société+vente), enum RoleAcquereur, CoAcquereur entity (réutilise enums contact), CoAcquereurRepository, CoAcquereurService (CRUD, 1/vente, scope vérifié), DTOs Upsert/Response, CoAcquereurController (GET/POST/PUT/DELETE /api/ventes/{id}/co-acquereurs), exceptions 404 + 409 CO_ACQUEREUR_EXISTS. Frontend: CoAcquereur interface + service methods + panneau co-acquéreur dans vente-detail. 3 tests unitaires (déjà existe, 404, mauvaise vente).",
+        "P3-T3": "✅ Dossier financement : changeset 082 (table dossier_financement 1:1 vente + RLS), enum StatutDossierFinancement (EN_COURS→ACCORD_PRINCIPE→ACCORD_DEFINITIF/REFUSE), DossierFinancement entity (réutilise TypeFinancement), repo (+ query accords expirant bientôt pour P6), DossierFinancementService (getByVente 404, upsert 1:1, findAccordsExpiringSoon), DTOs, DossierFinancementController GET/PUT /api/ventes/{id}/dossier-financement. Frontend: interface + service + panneau suivi dans vente-detail. 2 tests unitaires.",
+        "P3-T4": "✅ Contact étendu (panneau profil légal) — voir T1",
+        "P3-T5": "✅ Co-acquéreur endpoints+UI — voir T2",
+        "P3-T6": "✅ Dossier financement endpoints+UI — voir T3",
+        "P3-T7": "✅ Formulaires Angular enrichis (panneaux contact-detail + vente-detail)",
+        "P3-T8": "Tests + Commit P3"
+      }
+    },
+    "P4": {
+      "label": "Property enrichie (étage, orientation, prix TTC)",
+      "status": "✅ (T1-T6). T5/T6 3D vérifiés au BUILD uniquement (pas de navigateur/GLB pour valider le rendu).",
+      "tasks": {
+        "P4-T1": "✅ Changeset 083 : colonnes commerciales property (prix_ht, tva_taux, vue, surfaces terrasse/cave/parking, parking/cave inclus, pénalité retard, charges copro, plan_key). étage/orientation déjà présents.",
+        "P4-T2": "✅ TvaCalculator (CGI Maroc : social 0%, moyen 10%, normal 20% ; prix_ttc = ht×(1+taux), JAMAIS stocké). 5 tests.",
+        "P4-T3": "✅ Endpoints isolés GET/PATCH /api/properties/{id}/commercial (PropertyService.getCommercial/updateCommercial, suggestion auto du taux si non fourni). DTOs Update/Response. 0 impact sur PropertyCreate/Update existants.",
+        "P4-T4": "✅ Fiche commerciale (panneau dans property-detail : prix HT/TVA/TTC, vue, surfaces, parking/cave, charges) + service frontend.",
+        "P4-T5": "✅ 3D filtre par étage : etage ajouté à Lot3dStatusDto (+ snapshot service), LotStatusSnapshot.etage, LotMappingService.applyFloorFilter (opacity 0.15 hors étage), project-viewer-3d (etages()/etageActif/filterEtage + UI .etage-filter, ré-appliqué au poll 30s).",
+        "P4-T6": "✅ 3D mode présentation : togglePresentation (Fullscreen API), presentationMode signal, bouton + raccourcis P/Escape, masque la CTA admin en présentation.",
+        "P4-T7": "Tests + Commit P4"
+      }
+    },
+    "P5": {
+      "label": "Documents légaux automatisés",
+      "status": "✅ (contrat réservation + PV livraison générés en PDF, stockés comme VenteDocument, accessibles CRM + portail par réutilisation). Quittances appels de fonds (T4) + orchestration événementielle = différé.",
+      "tasks": {
+        "P5-T1": "✅ Réutilise vente_document (table existante) + VenteDocumentType +CONTRAT_RESERVATION/PV_LIVRAISON (additif) — pas de nouvelle table document_legal",
+        "P5-T2": "✅ generateContratReservation : template Thymeleaf contrat-reservation-vefa (mention Loi 44-00 Art.618-3/4) → DocumentGenerationService.renderToPdf → storage → VenteDocument(CONTRAT_RESERVATION)",
+        "P5-T3": "✅ generatePvLivraison : template pv-livraison-vefa (table des réserves depuis reserve_livraison) → VenteDocument(PV_LIVRAISON)",
+        "P5-T4": "✅ Quittance d appel de fonds : VenteDocumentType.QUITTANCE, VenteLegalDocumentService.generateQuittance (échéance PAYEE requise sinon 422), template quittance-vefa.html (mention Loi 44-00), POST /api/ventes/{id}/echeances/{eid}/quittance, bouton Quittance sur les échéances payées. 2 tests unitaires.",
+        "P5-T5": "✅ Portail acquéreur : réutilise l accès documents vente existant (PortalVenteService expose VenteDocument)",
+        "P5-T6": "✅ 1 test unitaire (render+store+type) ; 150 unit verts ; build front vert. Endpoints POST /api/ventes/{id}/documents/{contrat-reservation,pv-livraison} ; boutons vente-detail"
+      }
+    },
+    "P6": {
+      "label": "Dashboard trésorerie + alertes métier",
+      "status": "✅ (T1/T2 trésorerie+alertes ; T3 perf agents déjà dans dashboards existants ; T5 composant Angular). T4 push-notifications différé (alertes en pull via endpoint).",
+      "tasks": {
+        "P6-T1": "✅ KPI trésorerie : encaisseTotal/aEncaisser (sumPaidAll/sumDueAll), previsionnel6Mois, enRetard montant+count — depuis vente_echeance légal.",
+        "P6-T2": "✅ Alertes : optionsActives + retractationsEnCours (countBySocieteIdAndStatut) + accordsExpirant15j (DossierFinancementRepository société-scoped) + liste appels en retard (findOverdueDetails, top 20, joursRetard).",
+        "P6-T3": "↪ Perf agents déjà couverte par CommercialDashboard/HomeDashboard (pas de duplication).",
+        "P6-T4": "✅ Notifications push VEFA : NotificationType OPTION_EXPIRED + RETRACTATION_DELAI_CLOS ; VenteService.expireOverdueOptions/closeExpiredRetractations notifient l agent de la vente (best-effort) via NotificationService (apparaît dans la cloche existante). 1 test unitaire.",
+        "P6-T5": "✅ TresorerieDashboardComponent (4 KPI + chips alertes + table appels en retard) + route /app/dashboard/tresorerie + nav.",
+        "P6-T6": "✅ 1 test unitaire (agrégation+overdue) ; 151 unit verts ; build front vert."
+      }
+    },
+    "P7": {
+      "label": "Tests E2E + Documentation légale",
+      "status": "✅ (T4 guide légal, T5 docs CLAUDE.md/api-map/sprint-state, T1/T2/T3 → 1 spec E2E trésorerie CI-gated + scénarios documentés). T6 commit.",
+      "tasks": {
+        "P7-T1": "✅ E2E EXÉCUTÉ EN LOCAL (full stack) — 6/6 verts : option→confirm(dépôt≤5%)→rétractation, dépôt>5% rejeté, livraison+réserves→levée, échéancier légal+quittance, dashboard trésorerie. (Le 1er run a révélé que l image compose était périmée — pré-Wave12 ; backend courant via spring-boot:run → tout vert.)",
+        "P7-T2": "✅ E2E : génération échéancier légal + quittance (paid call).",
+        "P7-T3": "✅ E2E : livraison avec réserves → levée (setup ACTE via API, UI delivery+lift).",
+        "P7-T4": "✅ docs/legal/guide-loi-44-00-managers.md (pipeline, option, rétractation, échéancier, livraison, TVA, acquéreurs, documents, trésorerie, garde-fous).",
+        "P7-T5": "✅ CLAUDE.md (checkpoint Wave 12 + chaîne changesets 076-083, next 084) + api-map.md (endpoints VEFA) + .sprint-state.md.",
+        "P7-T6": "✅ Commit P7 — Wave 12 COMPLETE."
+      }
+    }
+  },
+  "decisions": {
+    "prochain_changeset": "084",
+    "vente_statuts_existants": [
+      "COMPROMIS",
+      "FINANCEMENT",
+      "ACTE_NOTARIE",
+      "LIVRE",
+      "ANNULE"
+    ],
+    "vente_state_machine_reelle": "COMPROMIS → FINANCEMENT → ACTE_NOTARIE → LIVRE (ANNULE terminal). Gardée par VenteService.validateTransition(). Testée (VenteServiceTest/VenteControllerIT). NE diffère TOTALEMENT du pipeline supposé par le prompt (PROSPECT/OPTION/RÉSERVÉ/ACOMPTE/ACTE/LIVRÉ).",
+    "echeancier_existe": true,
+    "echeancier_detail": "Module `payments` complet : payment_schedule (ch.020), payment_call (ch.021), payment (ch.022) + CallForFundsWorkflowService, CallForFundsPdfService, PaymentScheduleService. vente_echeance (ch.058) existe aussi. P2 dupliquerait ce système.",
+    "vente_colonnes_overlap_P1_P3": [
+      "date_livraison_prevue",
+      "notaire_acquereur_nom",
+      "notaire_acquereur_email",
+      "type_financement",
+      "banque_credit",
+      "montant_credit",
+      "credit_obtenu",
+      "date_fin_delai_reflexion (=rétractation, ch.073)",
+      "motif_annulation"
+    ],
+    "property_colonnes_existantes_overlap_P4": [
+      "floor_number (=étage)",
+      "orientation",
+      "surface_area_sqm",
+      "price",
+      "currency"
+    ],
+    "property_colonnes_manquantes_P4": [
+      "prix_ht",
+      "tva_taux",
+      "vue",
+      "surface_terrasse",
+      "surface_cave",
+      "surface_parking",
+      "parking_inclus",
+      "cave_incluse",
+      "penalite_retard_journalier",
+      "charges_copro_mensuelles",
+      "plan_appartement_key"
+    ],
+    "contact_colonnes_existantes_overlap_P3": [
+      "national_id (=CIN)",
+      "address",
+      "email",
+      "phone"
+    ],
+    "contact_colonnes_manquantes_P3": [
+      "cin_date_delivrance",
+      "passeport_numero",
+      "date_naissance",
+      "situation_matrimoniale",
+      "nationalite",
+      "pays_residence",
+      "type_acquereur",
+      "apport_personnel"
+    ],
+    "tables_nouvelles_confirmees_absentes": [
+      "echeancier_template",
+      "appel_de_fonds",
+      "co_acquereur",
+      "dossier_financement",
+      "reserve_livraison",
+      "document_legal"
+    ],
+    "guard_name": "authGuard (CRM), portalGuard (portail), adminGuard/superadminGuard",
+    "r2_service_class": "MediaStorageService (interface) / ObjectStorageMediaStorage (impl S3/R2) — generatePresignedUrl + generatePresignedPutUrl",
+    "pdf_lib": "openhtmltopdf (déjà présent — voir pitfall HTML entities)",
+    "naming_convention": "Constantes enum en ASCII (LIVRE, ANNULE) — PAS d'accents dans les identifiants Java. Les nouveaux statuts doivent suivre (ex. LIVRE_AVEC_RESERVES, RESERVES_LEVEES).",
+    "gating": "CONFLIT MAJEUR : le pipeline VenteStatut supposé par le prompt contredit le pipeline réel, et P2 (échéancier/appels) + P3 (financement) dupliqueraient des systèmes existants. Décision utilisateur requise avant P1 : ÉTENDRE l'existant (recommandé) vs REMPLACER (breaking). Voir question posée à l'utilisateur.",
+    "note_kpi": "Les 32 littéraux SQL KPI (LIVRE→LIVRE_DEFINITIF, ACTE_NOTARIE→ACTE) ne sont vérifiables que par IT (Docker indispo localement) — à valider en CI.",
+    "engineering_choices": "FINANCEMENT conservé (suppression = perte logique/données financement). Identifiants ASCII (pas d accents) — DB statut VARCHAR.",
+    "p2_decision": "Étendre vente_echeance (Vente-natif) car payments est lié à SaleContract (contract_id NOT NULL, aucun lien Vente). Module payments inchangé."
+  }
+}

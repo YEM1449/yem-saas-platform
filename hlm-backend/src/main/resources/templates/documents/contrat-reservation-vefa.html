@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- Contrat préliminaire de réservation (VEFA, Loi 44-00). Rendered via DocumentGenerationService. -->
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Contrat de r&#233;servation</title>
+    <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #1e293b; }
+        h1 { font-size: 18px; text-align: center; margin: 0 0 4px; }
+        .subtitle { text-align: center; color: #475569; margin: 0 0 18px; font-size: 11px; }
+        .section-title { font-size: 13px; font-weight: bold; border-bottom: 1px solid #94a3b8;
+                         padding-bottom: 2px; margin: 16px 0 6px; }
+        table.fields { width: 100%; border-collapse: collapse; }
+        table.fields td { padding: 3px 6px; vertical-align: top; }
+        table.fields td.label { width: 38%; color: #475569; }
+        .legal { margin-top: 22px; padding: 10px; border: 1px solid #cbd5e1; background: #f8fafc;
+                 font-size: 10px; color: #334155; }
+        .sign-row { margin-top: 36px; }
+        .sign-cell { width: 50%; text-align: center; color: #475569; }
+    </style>
+</head>
+<body>
+    <h1>Contrat pr&#233;liminaire de r&#233;servation</h1>
+    <p class="subtitle" th:text="${model.societeName}">Soci&#233;t&#233;</p>
+
+    <div class="section-title">Acqu&#233;reur</div>
+    <table class="fields">
+        <tr><td class="label">Nom complet</td><td th:text="${model.acquereur}">—</td></tr>
+        <tr><td class="label">CIN / Passeport</td><td th:text="${model.acquereurCin}">—</td></tr>
+    </table>
+
+    <div class="section-title">Bien r&#233;serv&#233;</div>
+    <table class="fields">
+        <tr><td class="label">R&#233;f&#233;rence</td><td th:text="${model.propertyRef}">—</td></tr>
+        <tr><td class="label">Projet</td><td th:text="${model.projectName}">—</td></tr>
+        <tr><td class="label">Prix de vente (TTC)</td><td th:text="${model.prix}">—</td></tr>
+        <tr><td class="label">D&#233;p&#244;t de garantie vers&#233;</td><td th:text="${model.depot}">—</td></tr>
+    </table>
+
+    <div class="section-title">D&#233;lais l&#233;gaux</div>
+    <table class="fields">
+        <tr><td class="label">R&#233;f&#233;rence de la vente</td><td th:text="${model.venteRef}">—</td></tr>
+        <tr><td class="label">Fin du d&#233;lai de r&#233;tractation</td><td th:text="${model.dateFinRetractation}">—</td></tr>
+    </table>
+
+    <div class="legal">
+        Conform&#233;ment &#224; la Loi n&#176;44-00 du 3 octobre 2002 relative &#224; la vente d'immeubles en l'&#233;tat
+        futur d'ach&#232;vement (VEFA), Maroc&#160;: l'acqu&#233;reur dispose d'un d&#233;lai de r&#233;tractation de
+        7 jours (Art. 618-3) ; le d&#233;p&#244;t de garantie ne peut exc&#233;der 5&#160;% du prix (Art. 618-4).
+    </div>
+
+    <table class="sign-row" style="width:100%">
+        <tr>
+            <td class="sign-cell">Le promoteur<br/><br/>______________________</td>
+            <td class="sign-cell">L'acqu&#233;reur<br/><br/>______________________</td>
+        </tr>
+    </table>
+</body>
+</html>

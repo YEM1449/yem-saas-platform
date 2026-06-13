@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 082-dossier-financement
+      author: yem-wave12
+      comment: >
+        Wave 12 P3-T3 — financing file (dossier de financement), one per vente. Adds the
+        multi-status workflow (EN_COURS → ACCORD_PRINCIPE → ACCORD_DEFINITIF / REFUSE) and
+        the dates the flat vente.* financing fields don't carry.
+      changes:
+        - createTable:
+            tableName: dossier_financement
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints: { nullable: false, foreignKeyName: fk_dosfin_societe, references: societe(id) }
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints: { nullable: false, unique: true, uniqueConstraintName: uk_dosfin_vente,
+                                 foreignKeyName: fk_dosfin_vente, references: vente(id) }
+              - column: { name: type_financement,        type: VARCHAR(30) }
+              - column: { name: banque,                  type: VARCHAR(100) }
+              - column: { name: montant_credit,          type: "DECIMAL(15,2)" }
+              - column: { name: taux_interet,            type: "DECIMAL(5,4)" }
+              - column: { name: duree_mois,              type: INT }
+              - column: { name: apport_personnel,        type: "DECIMAL(15,2)" }
+              - column:
+                  name: statut
+                  type: VARCHAR(30)
+                  defaultValue: EN_COURS
+                  constraints: { nullable: false }
+              - column: { name: date_demande,            type: date }
+              - column: { name: date_accord,             type: date }
+              - column: { name: date_expiration_accord,  type: date }
+              - column: { name: commentaire,             type: TEXT }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - createIndex:
+            tableName: dossier_financement
+            indexName: idx_dosfin_societe
+            columns:
+              - column: { name: societe_id }
+
+        - sql:
+            comment: "Enable RLS on dossier_financement"
+            sql: "ALTER TABLE dossier_financement ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy"
+            sql: >-
+              CREATE POLICY dosfin_societe_isolation ON dossier_financement
+              USING (
+                societe_id = NULLIF(current_setting('app.current_societe_id', TRUE), '')::uuid
+                OR societe_id = '00000000-0000-0000-0000-000000000000'::uuid
+              )

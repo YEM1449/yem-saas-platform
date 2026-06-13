@@ -180,10 +180,12 @@
           <label class="form-label">
             Prix de vente final (MAD) <span class="required">*</span>
           </label>
-          <input class="form-control form-control--lg" type="number" min="1"
-                 [(ngModel)]="prixVente" name="prixVente"
-                 placeholder="Ex : 850 000"
-                 data-testid="vente-create-prix-vente" />
+          <app-mad-input
+            [(ngModel)]="prixVente" name="prixVente"
+            inputClass="form-control form-control--lg"
+            placeholder="Ex : 850 000 MAD"
+            testId="vente-create-prix-vente"
+          ></app-mad-input>
           @if (prixVente !== null && prixVente <= 0) {
             <span class="form-error">Le prix doit être supérieur à 0.</span>
           }

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 080-contact-legal-fields
+      author: yem-wave12
+      comment: >
+        Wave 12 P3-T1 — legal/VEFA identity fields on contact (Loi 44-00 + Office des
+        Changes). CIN already exists as contact.national_id. All additive & nullable.
+      changes:
+        - addColumn:
+            tableName: contact
+            columns:
+              - column: { name: cin_date_delivrance,    type: date }
+              - column: { name: cin_autorite,           type: VARCHAR(100) }
+              - column: { name: passeport_numero,       type: VARCHAR(30) }
+              - column: { name: passeport_expire,       type: date }
+              - column: { name: date_naissance,         type: date }
+              - column: { name: lieu_naissance,         type: VARCHAR(100) }
+              - column: { name: situation_matrimoniale, type: VARCHAR(30) }
+              - column: { name: nationalite,            type: VARCHAR(50) }
+              - column: { name: pays_residence,         type: VARCHAR(50) }
+              - column: { name: type_acquereur,         type: VARCHAR(20) }
+              - column: { name: apport_personnel,       type: "DECIMAL(15,2)" }

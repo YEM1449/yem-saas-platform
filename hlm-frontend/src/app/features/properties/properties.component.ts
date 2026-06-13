@@ -61,6 +61,9 @@ export class PropertiesComponent implements OnInit {
   projectsLoading = false;
   error          = '';
 
+  /** Count of loaded properties (the page fetches the full capped set — #023). */
+  totalElements = 0;
+
   searchQuery    = '';
   filterProjectId  = '';
   filterImmeubleId = '';
@@ -271,8 +274,12 @@ export class PropertiesComponent implements OnInit {
     if (this.filterImmeubleId) params['immeubleId']  = this.filterImmeubleId;
     if (this.filterType)       params['type']        = this.filterType;
     if (this.filterStatus)     params['status']      = this.filterStatus;
+    // This page filters/sorts/searches client-side over the full set, so it fetches all
+    // matching rows (server-capped at 2000 — #023) rather than 24-per-page, which would
+    // break "search finds any property". Server-side pagination via PropertyService.listPage()
+    // awaits moving the free-text search + price/sort to the backend (follow-up).
     this.svc.list(params).subscribe({
-      next: (data) => { this.properties = data; this.loading = false; },
+      next: (data) => { this.properties = data; this.totalElements = data.length; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;

@@ -387,7 +387,7 @@
       </div>
       <div class="owner-kpi-grid">
 
-        <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
           <div class="owner-kpi-label">Ticket moyen (livré)</div>
           <div class="owner-kpi-value">
             {{ formatAmount(s.avgTicketLivre) }}
@@ -450,7 +450,12 @@
             </thead>
             <tbody>
               @for (a of s.topAgents; track a.agentId; let i = $index) {
-                <tr class="clickable-row" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
+                @if (i === 3 && s.topAgents.length > 3) {
+                  <tr class="rank-separator" aria-hidden="true">
+                    <td colspan="6">Autres agents</td>
+                  </tr>
+                }
+                <tr class="clickable-row" [class.rank-low]="i >= 3" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
                   <td class="lb-rank">{{ i + 1 }}</td>
                   <td class="lb-name">{{ a.agentName }}</td>
                   <td class="lb-ventes">{{ a.ventesCount }}</td>
@@ -461,7 +466,7 @@
                       <div class="agent-share-bar-bg">
                         <div class="agent-share-bar" [style.width]="agentShareWidth(a, s.topAgents)"></div>
                       </div>
-                      <span style="font-size:.7rem;color:#6b7280;white-space:nowrap">{{ agentShareWidth(a, s.topAgents) }}</span>
+                      <span class="share-pct">{{ agentShareWidth(a, s.topAgents) }}</span>
                     </div>
                   </td>
                 </tr>
@@ -752,7 +757,7 @@
         </div>
 
         <!-- Win rate -->
-        <div class="exec-card clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
+        <div class="exec-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
           <div class="exec-card-head">
             <span class="exec-label">Taux de succès 90j</span>
           </div>
@@ -1644,7 +1649,7 @@
               <span class="kdt-action" (click)="drillProperties('ACTIVE')">Inventaire →</span>
             </div>
           </div>
-          <div class="sh-kpi-card sh-kpi-sold clickable-card" (click)="drillVentes('LIVRE')" title="Voir les ventes livrées">
+          <div class="sh-kpi-card sh-kpi-sold clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
             @let shTotal = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.soldValue) }}</div>
             <div class="sh-kpi-lbl">CA livré (LIVRE)</div>
@@ -1653,7 +1658,7 @@
               @if (shTotal > 0) {
                 <span class="kdt-text">{{ (shareholderKpi()!.soldValue / shTotal * 100).toFixed(0) }}% du portefeuille total réalisé</span>
               }
-              <span class="kdt-action" (click)="drillVentes('LIVRE')">Livrées →</span>
+              <span class="kdt-action" (click)="drillVentes('LIVRE_DEFINITIF')">Livrées →</span>
             </div>
           </div>
           <div class="sh-kpi-card sh-kpi-exposure clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">

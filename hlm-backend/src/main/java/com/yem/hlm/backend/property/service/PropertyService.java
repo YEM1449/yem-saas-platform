@@ -113,6 +113,16 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    /** Paginated filtered list (#023). */
+    public org.springframework.data.domain.Page<PropertyResponse> listAllPaged(
+            UUID projectId, UUID immeubleId, PropertyType type, PropertyStatus status,
+            org.springframework.data.domain.Pageable pageable) {
+        UUID societeId = requireSocieteId();
+        return propertyRepository.findWithFiltersPaged(
+                societeId, projectId, immeubleId, type, status, pageable)
+                .map(PropertyResponse::from);
+    }
+
     @Transactional
     public PropertyResponse update(UUID propertyId, PropertyUpdateRequest request) {
         UUID societeId = requireSocieteId();
@@ -131,6 +141,46 @@ public class PropertyService {
         property = propertyRepository.save(property);
 
         return PropertyResponse.from(property);
+    }
+
+    // ── VEFA commercial (HT/TVA/TTC, surfaces, charges) — Wave 12 P4 ───────────
+
+    @Transactional(readOnly = true)
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse getCommercial(UUID propertyId) {
+        UUID societeId = requireSocieteId();
+        var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        return com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse.from(property);
+    }
+
+    @Transactional
+    public com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse updateCommercial(
+            UUID propertyId, com.yem.hlm.backend.property.api.dto.UpdatePropertyCommercialRequest req) {
+        UUID societeId = requireSocieteId();
+        UUID userId = requireUserId();
+        var property = propertyRepository.findBySocieteIdAndId(societeId, propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+
+        property.setPrixHt(req.prixHt());
+        // Use the provided rate, otherwise suggest the legal rate from surface + price (CGI Maroc).
+        java.math.BigDecimal taux = req.tvaTaux();
+        if (taux == null && req.prixHt() != null) {
+            taux = com.yem.hlm.backend.legal.TvaCalculator.suggestTaux(
+                    req.prixHt(), property.getSurfaceAreaSqm(), Boolean.TRUE.equals(req.logementSocial()));
+        }
+        property.setTvaTaux(taux);
+        property.setVue(req.vue());
+        property.setSurfaceTerrasse(req.surfaceTerrasse());
+        property.setSurfaceCave(req.surfaceCave());
+        property.setSurfaceParking(req.surfaceParking());
+        if (req.parkingInclus() != null) property.setParkingInclus(req.parkingInclus());
+        if (req.caveIncluse() != null) property.setCaveIncluse(req.caveIncluse());
+        property.setPenaliteRetardJournalier(req.penaliteRetardJournalier());
+        property.setChargesCoproMensuelles(req.chargesCoproMensuelles());
+        property.markUpdatedBy(userId);
+
+        property = propertyRepository.save(property);
+        return com.yem.hlm.backend.property.api.dto.PropertyCommercialResponse.from(property);
     }
 
     @Transactional

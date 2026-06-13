@@ -1,11 +1,23 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { PagedResult } from '../../core/models/page-response.model';
 
 const BASE = `${environment.apiUrl}/api/ventes`;
 
-export type VenteStatut = 'COMPROMIS' | 'FINANCEMENT' | 'ACTE_NOTARIE' | 'LIVRE' | 'ANNULE';
+/** Page size used by `list()`/`listByContact()` to fetch "all" rows for bounded callers. */
+const ALL_SIZE = 1000;
+
+/**
+ * VEFA pipeline statut (Loi 44-00). In sync with the backend enum — Wave 12 renamed
+ * ACTE_NOTARIE→ACTE and LIVRE→LIVRE_DEFINITIF and added the upstream/delivery states.
+ */
+export type VenteStatut =
+  | 'PROSPECT' | 'OPTION' | 'RESERVE' | 'EN_RETRACTATION' | 'ACOMPTE'
+  | 'COMPROMIS' | 'FINANCEMENT' | 'ACTE'
+  | 'LIVRE_AVEC_RESERVES' | 'RESERVES_LEVEES' | 'LIVRE_DEFINITIF' | 'ANNULE';
 export type EcheanceStatut = 'EN_ATTENTE' | 'PAYEE' | 'EN_RETARD';
 export type ContractStatus = 'PENDING' | 'GENERATED' | 'SIGNED';
 export type TypeFinancement = 'COMPTANT' | 'CREDIT_IMMOBILIER' | 'PTZ' | 'MIXTE';
@@ -17,6 +29,60 @@ export type MotifAnnulation =
   | 'LITIGE'
   | 'AUTRE';
 
+export type SituationMatrimoniale =
+  'CELIBATAIRE' | 'MARIE_COMMUNAUTE' | 'MARIE_SEPARATION' | 'DIVORCE' | 'VEUF';
+export type TypeAcquereur = 'RESIDENT_MAROC' | 'MRE' | 'ETRANGER';
+export type RoleAcquereur = 'CO_ACQUEREUR' | 'CONJOINT' | 'CO_INVESTISSEUR' | 'REPRESENTANT_SCI';
+
+export interface CoAcquereur {
+  id?: string;
+  venteId?: string;
+  nom: string;
+  prenom: string;
+  cinNumero?: string | null;
+  cinDateDelivrance?: string | null;
+  passeportNumero?: string | null;
+  dateNaissance?: string | null;
+  nationalite?: string | null;
+  paysResidence?: string | null;
+  situationMatrimoniale?: SituationMatrimoniale | null;
+  typeAcquereur?: TypeAcquereur | null;
+  email?: string | null;
+  telephone?: string | null;
+  roleAcquereur?: RoleAcquereur | null;
+  createdAt?: string;
+}
+
+export type StatutDossierFinancement = 'EN_COURS' | 'ACCORD_PRINCIPE' | 'ACCORD_DEFINITIF' | 'REFUSE';
+
+export interface DossierFinancement {
+  id?: string;
+  venteId?: string;
+  typeFinancement?: TypeFinancement | null;
+  banque?: string | null;
+  montantCredit?: number | null;
+  tauxInteret?: number | null;
+  dureeMois?: number | null;
+  apportPersonnel?: number | null;
+  statut?: StatutDossierFinancement | null;
+  dateDemande?: string | null;
+  dateAccord?: string | null;
+  dateExpirationAccord?: string | null;
+  commentaire?: string | null;
+  updatedAt?: string;
+}
+
+export type StatutReserve = 'EN_ATTENTE' | 'EN_COURS' | 'LEVEE';
+
+export interface ReserveLivraison {
+  id: string;
+  description: string;
+  statut: StatutReserve;
+  dateConstat: string;
+  dateLeveePrevue: string | null;
+  dateLeveeReelle: string | null;
+}
+
 export interface Echeance {
   id: string;
   venteId: string;
@@ -27,6 +93,10 @@ export interface Echeance {
   datePaiement: string | null;
   notes: string | null;
   createdAt: string;
+  // VEFA legal échéancier (Art. 618-17) — null for ad-hoc échéances
+  etape: string | null;
+  pctPrevu: number | null;
+  baseLegale: string | null;
 }
 
 export interface VenteDocument {
@@ -136,12 +206,23 @@ export interface UpdateEcheanceStatutRequest {
 export class VenteService {
   private http = inject(HttpClient);
 
+  /** All ventes (bounded callers). Backend is paginated (#023); request a large page and unwrap. */
   list(): Observable<Vente[]> {
-    return this.http.get<Vente[]>(BASE);
+    return this.http.get<PagedResult<Vente>>(BASE, { params: { size: ALL_SIZE } })
+      .pipe(map(r => r.content));
   }
 
+  /** One contact's ventes — naturally small; unwrap the page envelope. */
   listByContact(contactId: string): Observable<Vente[]> {
-    return this.http.get<Vente[]>(BASE, { params: { contactId } });
+    return this.http.get<PagedResult<Vente>>(BASE, { params: { contactId, size: ALL_SIZE } })
+      .pipe(map(r => r.content));
+  }
+
+  /** Paginated list for the main pipeline page (#023). */
+  listPage(page: number, size: number): Observable<PagedResult<Vente>> {
+    return this.http.get<PagedResult<Vente>>(BASE, {
+      params: { page: String(page), size: String(size) },
+    });
   }
 
   uploadDocument(venteId: string, file: File): Observable<VenteDocument> {
@@ -163,12 +244,86 @@ export class VenteService {
     return this.http.post<Vente>(BASE, req);
   }
 
+  // ── VEFA Loi 44-00 — OPTION + rétractation ──────────────────────────────
+  createOption(req: { propertyId: string; contactId: string; dureeHeures: number }): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/option`, req);
+  }
+
+  confirmReservation(id: string, montantDepot: number): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/confirm-reservation`, { montantDepot });
+  }
+
+  exerciseRetractation(id: string): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/retractation`, {});
+  }
+
+  // ── VEFA — livraison avec réserves ──────────────────────────────────────
+  recordDelivery(id: string, req: { dateLivraison?: string | null; reserves?: string[] }): Observable<Vente> {
+    return this.http.post<Vente>(`${BASE}/${id}/livraison`, req);
+  }
+
+  listReserves(id: string): Observable<ReserveLivraison[]> {
+    return this.http.get<ReserveLivraison[]>(`${BASE}/${id}/reserves`);
+  }
+
+  liftReserve(id: string, reserveId: string): Observable<Vente> {
+    return this.http.put<Vente>(`${BASE}/${id}/reserves/${reserveId}/lever`, {});
+  }
+
   updateStatut(id: string, req: UpdateVenteStatutRequest): Observable<Vente> {
     return this.http.patch<Vente>(`${BASE}/${id}/statut`, req);
   }
 
   addEcheance(venteId: string, req: CreateEcheanceRequest): Observable<Echeance> {
     return this.http.post<Echeance>(`${BASE}/${venteId}/echeances`, req);
+  }
+
+  /** Generates the legal VEFA call-for-funds schedule (Art. 618-17 Loi 44-00). */
+  generateEcheancierLegal(venteId: string): Observable<Echeance[]> {
+    return this.http.post<Echeance[]>(`${BASE}/${venteId}/echeancier/generer-legal`, {});
+  }
+
+  // ── Co-acquéreurs ───────────────────────────────────────────────────────
+  listCoAcquereurs(venteId: string): Observable<CoAcquereur[]> {
+    return this.http.get<CoAcquereur[]>(`${BASE}/${venteId}/co-acquereurs`);
+  }
+
+  addCoAcquereur(venteId: string, req: CoAcquereur): Observable<CoAcquereur> {
+    return this.http.post<CoAcquereur>(`${BASE}/${venteId}/co-acquereurs`, req);
+  }
+
+  updateCoAcquereur(venteId: string, coId: string, req: CoAcquereur): Observable<CoAcquereur> {
+    return this.http.put<CoAcquereur>(`${BASE}/${venteId}/co-acquereurs/${coId}`, req);
+  }
+
+  deleteCoAcquereur(venteId: string, coId: string): Observable<void> {
+    return this.http.delete<void>(`${BASE}/${venteId}/co-acquereurs/${coId}`);
+  }
+
+  // ── Documents légaux générés (Loi 44-00) ────────────────────────────────
+  generateContratReservation(venteId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/documents/contrat-reservation`, {});
+  }
+
+  generatePvLivraison(venteId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/documents/pv-livraison`, {});
+  }
+
+  /** Generates a receipt (quittance) PDF for a paid call-for-funds échéance. */
+  generateQuittance(venteId: string, echeanceId: string): Observable<{ documentId: string; nomFichier: string; documentType: string }> {
+    return this.http.post<{ documentId: string; nomFichier: string; documentType: string }>(
+      `${BASE}/${venteId}/echeances/${echeanceId}/quittance`, {});
+  }
+
+  // ── Dossier de financement ──────────────────────────────────────────────
+  getDossierFinancement(venteId: string): Observable<DossierFinancement> {
+    return this.http.get<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`);
+  }
+
+  upsertDossierFinancement(venteId: string, req: DossierFinancement): Observable<DossierFinancement> {
+    return this.http.put<DossierFinancement>(`${BASE}/${venteId}/dossier-financement`, req);
   }
 
   updateEcheanceStatut(venteId: string, echeanceId: string, req: UpdateEcheanceStatutRequest): Observable<Echeance> {
@@ -190,4 +345,33 @@ export class VenteService {
   updateFinancement(id: string, req: UpdateFinancingRequest): Observable<Vente> {
     return this.http.patch<Vente>(`${BASE}/${id}/financement`, req);
   }
+
+  // ── Refund tracking after annulation/rétractation (#028) ───────────────────
+  getRemboursement(venteId: string): Observable<Remboursement> {
+    return this.http.get<Remboursement>(`${BASE}/${venteId}/remboursement`);
+  }
+
+  upsertRemboursement(venteId: string, montant: number, motif?: string): Observable<Remboursement> {
+    return this.http.put<Remboursement>(`${BASE}/${venteId}/remboursement`, { montant, motif });
+  }
+
+  marquerRembourse(venteId: string, moyen: MoyenRemboursement,
+                   dateRemboursement?: string, reference?: string): Observable<Remboursement> {
+    return this.http.post<Remboursement>(`${BASE}/${venteId}/remboursement/effectue`,
+      { moyen, dateRemboursement, reference });
+  }
+}
+
+export type MoyenRemboursement = 'VIREMENT' | 'CHEQUE' | 'ESPECES' | 'AUTRE';
+export type StatutRemboursement = 'DU' | 'EFFECTUE' | 'ANNULE';
+
+export interface Remboursement {
+  id: string;
+  venteId: string;
+  montant: number;
+  moyen: MoyenRemboursement | null;
+  statut: StatutRemboursement;
+  reference: string | null;
+  motif: string | null;
+  dateRemboursement: string | null;
 }

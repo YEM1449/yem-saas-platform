@@ -45,10 +45,15 @@ import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
+import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
+import com.yem.hlm.backend.vente.service.ViolationLegaleException;
 import com.yem.hlm.backend.vente.service.ContractNotGeneratedException;
+import com.yem.hlm.backend.vente.service.PrixVenteInvalideException;
 import com.yem.hlm.backend.vente.service.DateCoherenceException;
 import com.yem.hlm.backend.tranche.service.TrancheNotFoundException;
 import com.yem.hlm.backend.viewer3d.service.Project3dModelNotFoundException;
+import com.yem.hlm.backend.viewer3d.service.InvalidGlbException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
@@ -224,6 +229,9 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             VenteNotFoundException.class,
             VenteEcheanceNotFoundException.class,
+            com.yem.hlm.backend.vente.service.ReserveNotFoundException.class,
+            com.yem.hlm.backend.vente.service.CoAcquereurNotFoundException.class,
+            com.yem.hlm.backend.vente.service.DossierFinancementNotFoundException.class,
             TrancheNotFoundException.class,
             Project3dModelNotFoundException.class
     })
@@ -350,6 +358,36 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.INVALID_STATUS_TRANSITION,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(PropertyAlreadyEngagedException.class)
+    public ResponseEntity<ErrorResponse> handlePropertyAlreadyEngaged(
+            PropertyAlreadyEngagedException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.PROPERTY_ALREADY_ENGAGED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(com.yem.hlm.backend.vente.service.CoAcquereurAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCoAcquereurExists(
+            com.yem.hlm.backend.vente.service.CoAcquereurAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.CO_ACQUEREUR_EXISTS,
                 ex.getMessage(),
                 request.getRequestURI()
         );
@@ -911,6 +949,54 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Prix vente invalide (422) ==========
+
+    @ExceptionHandler(PrixVenteInvalideException.class)
+    public ResponseEntity<ErrorResponse> handlePrixVenteInvalide(
+            PrixVenteInvalideException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.PRIX_VENTE_INVALIDE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
+    }
+
+    // ========== Legal violation (422) / retraction impossible (409) ==========
+
+    @ExceptionHandler(ViolationLegaleException.class)
+    public ResponseEntity<ErrorResponse> handleViolationLegale(
+            ViolationLegaleException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.VIOLATION_LEGALE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
+    }
+
+    @ExceptionHandler(RetractationImpossibleException.class)
+    public ResponseEntity<ErrorResponse> handleRetractationImpossible(
+            RetractationImpossibleException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.RETRACTATION_IMPOSSIBLE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // ========== Invalid GLB upload (422) ==========
+
+    @ExceptionHandler(InvalidGlbException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidGlb(
+            InvalidGlbException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = ErrorResponse.of(
+                422,
+                "Unprocessable Entity",
+                ErrorCode.INVALID_GLB_FILE,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(422).body(error);
     }
 
     // ========== Date coherence errors (422) ==========

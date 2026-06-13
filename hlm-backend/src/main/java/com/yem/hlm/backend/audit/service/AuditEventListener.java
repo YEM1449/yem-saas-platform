@@ -5,6 +5,7 @@ import com.yem.hlm.backend.audit.domain.CommercialAuditEvent;
 import com.yem.hlm.backend.audit.repo.CommercialAuditRepository;
 import com.yem.hlm.backend.common.event.ContactCreatedEvent;
 import com.yem.hlm.backend.common.event.ContactStatusChangedEvent;
+import com.yem.hlm.backend.common.event.SensitiveDataReadEvent;
 import com.yem.hlm.backend.dashboard.service.DashboardEmitterRegistry;
 import com.yem.hlm.backend.usermanagement.event.*;
 import org.springframework.context.event.EventListener;
@@ -27,6 +28,21 @@ public class AuditEventListener {
                                DashboardEmitterRegistry emitterRegistry) {
         this.repo            = repo;
         this.emitterRegistry = emitterRegistry;
+    }
+
+    // ── Sensitive data read events (B-004) ────────────────────────────────────
+
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSensitiveDataRead(SensitiveDataReadEvent event) {
+        CommercialAuditEvent audit = new CommercialAuditEvent();
+        audit.setSocieteId(event.getSocieteId());
+        audit.setEventType(AuditEventType.SENSITIVE_DATA_READ);
+        audit.setActorUserId(event.getActorUserId());
+        audit.setCorrelationType(event.getEntityType());
+        audit.setCorrelationId(event.getEntityId());
+        audit.setPayloadJson("{}");
+        repo.save(audit);
     }
 
     @EventListener

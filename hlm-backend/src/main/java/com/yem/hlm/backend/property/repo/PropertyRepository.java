@@ -5,6 +5,8 @@ import com.yem.hlm.backend.property.domain.Property;
 import com.yem.hlm.backend.property.domain.PropertyStatus;
 import com.yem.hlm.backend.property.domain.PropertyType;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -75,6 +77,30 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
                                    @Param("immeubleId") UUID immeubleId,
                                    @Param("type") PropertyType type,
                                    @Param("status") PropertyStatus status);
+
+    /**
+     * Paginated variant of {@link #findWithFilters} (#023). Sort comes from the Pageable;
+     * an explicit countQuery is supplied because the LEFT JOIN prevents Spring Data from
+     * deriving one reliably.
+     */
+    @Query(value = "SELECT p FROM Property p LEFT JOIN p.immeuble imm " +
+           "WHERE p.societeId = :societeId AND p.deletedAt IS NULL " +
+           "AND (:projectId IS NULL OR p.project.id = :projectId) " +
+           "AND (:immeubleId IS NULL OR imm.id = :immeubleId) " +
+           "AND (:type IS NULL OR p.type = :type) " +
+           "AND (:status IS NULL OR p.status = :status)",
+           countQuery = "SELECT COUNT(p) FROM Property p LEFT JOIN p.immeuble imm " +
+           "WHERE p.societeId = :societeId AND p.deletedAt IS NULL " +
+           "AND (:projectId IS NULL OR p.project.id = :projectId) " +
+           "AND (:immeubleId IS NULL OR imm.id = :immeubleId) " +
+           "AND (:type IS NULL OR p.type = :type) " +
+           "AND (:status IS NULL OR p.status = :status)")
+    Page<Property> findWithFiltersPaged(@Param("societeId") UUID societeId,
+                                        @Param("projectId") UUID projectId,
+                                        @Param("immeubleId") UUID immeubleId,
+                                        @Param("type") PropertyType type,
+                                        @Param("status") PropertyStatus status,
+                                        Pageable pageable);
 
     // ===== Dashboard Aggregation Queries =====
 

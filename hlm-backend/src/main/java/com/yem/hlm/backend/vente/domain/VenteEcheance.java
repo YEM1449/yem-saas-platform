@@ -61,6 +61,21 @@ public class VenteEcheance {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    /** Legal stage code (Art. 618-17) when generated from the legal template; null otherwise. */
+    @Setter
+    @Column(name = "etape", length = 80)
+    private String etape;
+
+    /** Planned percentage of the price for this legal stage (null for ad-hoc échéances). */
+    @Setter
+    @Column(name = "pct_prevu", precision = 5, scale = 2)
+    private BigDecimal pctPrevu;
+
+    /** Legal basis label (e.g. "Art. 618-17 Loi 44-00") for generated échéances. */
+    @Setter
+    @Column(name = "base_legale", length = 200)
+    private String baseLegale;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

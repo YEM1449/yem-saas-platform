@@ -514,6 +514,8 @@
       "submit": "Recevoir mon lien d'accès",
       "submitting": "Envoi en cours…",
       "hint": "Aucun mot de passe requis — nous vous enverrons un lien sécurisé à usage unique.",
+      "consent": "En demandant un lien d'accès, vous consentez au traitement de vos données personnelles dans le cadre de votre dossier d'acquisition (Loi 09-08). Voir notre",
+      "consentPrivacyLink": "politique de confidentialité",
       "sentTitle": "Vérifiez votre boîte e-mail !",
       "sentBody": "Un lien sécurisé a été envoyé à {{email}}. Il est valable 48 heures.",
       "resend": "Renvoyer un lien",
@@ -540,6 +542,11 @@
       "logoutAria": "Se déconnecter",
       "navAria": "Navigation principale",
       "footer": "Votre espace client sécurisé"
+    },
+    "legal": {
+      "privacyLink": "Politique de confidentialité",
+      "legalLink": "Mentions légales",
+      "back": "Retour"
     },
     "contract": {
       "title": "Votre contrat de vente",

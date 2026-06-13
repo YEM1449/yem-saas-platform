@@ -150,6 +150,10 @@ app:
       email:    ${APP_BOOTSTRAP_EMAIL:}
       password: ${APP_BOOTSTRAP_PASSWORD:}
 
+  viewer3d:
+    # RG-E05 — validate the actual GLB bytes (magic glTF + Draco extension) at confirm time.
+    validate-glb-binary: ${VIEWER3D_VALIDATE_GLB:true}
+
   rate-limit:
     login:
       capacity: ${RATE_LIMIT_LOGIN_CAPACITY:5}
@@ -257,6 +261,11 @@ app:
     default-retention-days: ${GDPR_RETENTION_DAYS:1825}
     # Cron for daily retention sweep (default 02:00)
     retention-cron: "${DATA_RETENTION_CRON:0 0 2 * * *}"
+
+  digest:
+    # Cron for daily alert digest email to ADMIN/MANAGER (C-006); default 07:30 Mon–Fri.
+    # Set DIGEST_CRON env var to override (e.g. "0 0 8 * * MON-FRI" for 08:00).
+    cron: "${DIGEST_CRON:0 30 7 * * MON-FRI}"
 
   # Auth cookie — httpOnly JWT carrier.
   # Set COOKIE_SECURE=true in production (requires HTTPS / TLS termination at proxy).

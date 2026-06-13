@@ -28,17 +28,24 @@ export class VentesReportComponent implements OnInit {
   error    = signal('');
 
   readonly STATUTS: { value: ReportStatut | ''; label: string }[] = [
-    { value: '',              label: 'Tous les statuts' },
-    { value: 'COMPROMIS',     label: 'Compromis' },
-    { value: 'FINANCEMENT',   label: 'Financement' },
-    { value: 'ACTE_NOTARIE',  label: 'Acte notarié' },
-    { value: 'LIVRE',         label: 'Livré' },
-    { value: 'ANNULE',        label: 'Annulé' },
+    { value: '',                    label: 'Tous les statuts' },
+    { value: 'PROSPECT',            label: 'Prospect' },
+    { value: 'OPTION',              label: 'Option' },
+    { value: 'RESERVE',             label: 'Réservé' },
+    { value: 'EN_RETRACTATION',     label: 'Délai de rétractation' },
+    { value: 'ACOMPTE',             label: 'Acompte' },
+    { value: 'COMPROMIS',           label: 'Compromis' },
+    { value: 'FINANCEMENT',         label: 'Financement' },
+    { value: 'ACTE',                label: 'Acte notarié' },
+    { value: 'LIVRE_AVEC_RESERVES', label: 'Livré (réserves)' },
+    { value: 'RESERVES_LEVEES',     label: 'Réserves levées' },
+    { value: 'LIVRE_DEFINITIF',     label: 'Livré' },
+    { value: 'ANNULE',              label: 'Annulé' },
   ];
 
   readonly STATUT_LABELS: Record<string, string> = {
     COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-    ACTE_NOTARIE: 'Acte notarié', LIVRE: 'Livré', ANNULE: 'Annulé',
+    ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
   };
 
   ngOnInit(): void {

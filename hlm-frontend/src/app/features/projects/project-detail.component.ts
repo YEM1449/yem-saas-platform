@@ -11,6 +11,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { BuildingViewComponent } from './building-view/building-view.component';
+import { Viewer3dApiService } from '../../modules/viewer-3d/services/viewer-3d-api.service';
 import { environment } from '../../../environments/environment';
 
 interface DocumentItem {
@@ -31,9 +32,13 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   private svc = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private viewer3d = inject(Viewer3dApiService);
   auth = inject(AuthService);
 
   activeTab: 'apercu' | 'plan' | 'documents' = 'apercu';
+
+  /** True once a 3D model is confirmed present — gates the "Visualiseur 3D" entry for agents. */
+  has3dModel = false;
 
   project: Project | null = null;
   kpi: ProjectKpi | null = null;
@@ -92,6 +97,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     return r === 'ROLE_ADMIN' || r === 'ROLE_MANAGER';
   }
 
+  /** Show the 3D viewer entry when a model exists, or to admins/managers so they can set one up. */
+  get show3dEntry(): boolean {
+    return this.has3dModel || this.isAdminOrManager;
+  }
+
   ngOnInit(): void {
     const id = this.projectId;
 
@@ -111,6 +121,13 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     });
 
     this.loadDocuments(id);
+
+    // Detect a 3D model so agents only see the viewer entry when there's something to view.
+    // 404 (no model yet) leaves has3dModel=false; ADMIN/MANAGER still get the entry to set it up.
+    this.viewer3d.getModel(id).subscribe({
+      next: () => { this.has3dModel = true; },
+      error: () => { this.has3dModel = false; },
+    });
 
     this.svc.getKpis(id).subscribe({
       next: (k) => {

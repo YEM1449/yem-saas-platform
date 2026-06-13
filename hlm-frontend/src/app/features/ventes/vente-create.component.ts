@@ -5,11 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { VenteService, CreateVenteRequest } from './vente.service';
 import { ReservationService, VentePrefillData } from '../reservations/reservation.service';
+import { MadInputComponent } from '../../core/components/mad-input.component';
 
 @Component({
   selector: 'app-vente-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink],
+  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, MadInputComponent],
   templateUrl: './vente-create.component.html',
   styleUrl: './vente-create.component.css',
 })
@@ -33,10 +34,10 @@ export class VenteCreateComponent implements OnInit {
   createError = signal('');
 
   readonly PIPELINE_STAGES = [
-    { key: 'COMPROMIS',    label: 'Compromis',     color: '#6366f1' },
-    { key: 'FINANCEMENT',  label: 'Financement',   color: '#f59e0b' },
-    { key: 'ACTE_NOTARIE', label: 'Acte notarié',  color: '#3b82f6' },
-    { key: 'LIVRE',        label: 'Livraison',      color: '#10b981' },
+    { key: 'COMPROMIS',       label: 'Compromis',     color: '#6366f1' },
+    { key: 'FINANCEMENT',     label: 'Financement',   color: '#f59e0b' },
+    { key: 'ACTE',            label: 'Acte notarié',  color: '#3b82f6' },
+    { key: 'LIVRE_DEFINITIF', label: 'Livraison',     color: '#10b981' },
   ];
 
   get reservationId(): string | null {

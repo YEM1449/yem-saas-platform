@@ -3,19 +3,33 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VenteStatut, MotifAnnulation, UpdateVenteStatutRequest } from './vente.service';
 
-/** Allowed forward transitions per current statut (excludes ANNULE which is separate). */
+/** Canonical single-step forward transition per current statut (ANNULE is handled separately). */
 const NEXT_MAP: Partial<Record<VenteStatut, VenteStatut>> = {
-  COMPROMIS:    'FINANCEMENT',
-  FINANCEMENT:  'ACTE_NOTARIE',
-  ACTE_NOTARIE: 'LIVRE',
+  PROSPECT:            'RESERVE',
+  OPTION:              'RESERVE',
+  RESERVE:             'ACOMPTE',
+  EN_RETRACTATION:     'ACOMPTE',
+  ACOMPTE:             'COMPROMIS',
+  COMPROMIS:           'FINANCEMENT',
+  FINANCEMENT:         'ACTE',
+  ACTE:                'LIVRE_DEFINITIF',
+  LIVRE_AVEC_RESERVES: 'RESERVES_LEVEES',
+  RESERVES_LEVEES:     'LIVRE_DEFINITIF',
 };
 
 const LABELS: Record<VenteStatut, string> = {
-  COMPROMIS:    'Compromis',
-  FINANCEMENT:  'Financement',
-  ACTE_NOTARIE: 'Acte notarié',
-  LIVRE:        'Livré',
-  ANNULE:       'Annulé',
+  PROSPECT:            'Prospect',
+  OPTION:              'Option',
+  RESERVE:             'Réservé',
+  EN_RETRACTATION:     'Délai de rétractation',
+  ACOMPTE:             'Acompte',
+  COMPROMIS:           'Compromis',
+  FINANCEMENT:         'Financement',
+  ACTE:                'Acte notarié',
+  LIVRE_AVEC_RESERVES: 'Livré (réserves)',
+  RESERVES_LEVEES:     'Réserves levées',
+  LIVRE_DEFINITIF:     'Livré',
+  ANNULE:              'Annulé',
 };
 
 @Component({
@@ -52,7 +66,7 @@ export class AdvancePipelineDialogComponent {
   }
 
   get isTerminal(): boolean {
-    return this.currentStatut === 'LIVRE' || this.currentStatut === 'ANNULE';
+    return this.currentStatut === 'LIVRE_DEFINITIF' || this.currentStatut === 'ANNULE';
   }
 
   get nextLabel(): string {
@@ -66,15 +80,15 @@ export class AdvancePipelineDialogComponent {
   /** True when the target statut (next or ANNULE) needs a date. */
   get targetNeedsDate(): boolean {
     const target = this.cancelMode ? 'ANNULE' : this.nextStatut;
-    return target === 'ACTE_NOTARIE' || target === 'LIVRE';
+    return target === 'ACTE' || target === 'LIVRE_DEFINITIF';
   }
 
   get hintTitle(): string {
     if (this.cancelMode) return 'Annulation irréversible';
     const map: Partial<Record<VenteStatut, string>> = {
-      FINANCEMENT:  'Passage en phase Financement',
-      ACTE_NOTARIE: 'Signature de l\'Acte Notarié',
-      LIVRE:        'Livraison du bien',
+      FINANCEMENT:     'Passage en phase Financement',
+      ACTE:            'Signature de l\'Acte Notarié',
+      LIVRE_DEFINITIF: 'Livraison du bien',
     };
     return this.nextStatut ? (map[this.nextStatut] ?? '') : '';
   }
@@ -84,17 +98,17 @@ export class AdvancePipelineDialogComponent {
       return 'Cette action met fin définitivement à la vente. Le motif sera enregistré pour la traçabilité. L\'acquéreur n\'est pas notifié automatiquement.';
     }
     const map: Partial<Record<VenteStatut, string>> = {
-      FINANCEMENT:  'Le dossier de financement de l\'acquéreur est en cours d\'instruction. Renseignez la date limite de la condition suspensive de crédit ci-dessous si applicable.',
-      ACTE_NOTARIE: 'La signature de l\'acte authentique devant notaire officialise le transfert de propriété. La date de signature est requise.',
-      LIVRE:        'Le bien est remis à l\'acquéreur. Renseignez la date de livraison réelle. Vous pouvez également saisir la date du PV de réception si disponible.',
+      FINANCEMENT:     'Le dossier de financement de l\'acquéreur est en cours d\'instruction. Renseignez la date limite de la condition suspensive de crédit ci-dessous si applicable.',
+      ACTE:            'La signature de l\'acte authentique devant notaire officialise le transfert de propriété. La date de signature est requise.',
+      LIVRE_DEFINITIF: 'Le bien est remis à l\'acquéreur. Renseignez la date de livraison réelle. Vous pouvez également saisir la date du PV de réception si disponible.',
     };
     return this.nextStatut ? (map[this.nextStatut] ?? '') : '';
   }
 
   get targetDateLabel(): string {
     const target = this.cancelMode ? 'ANNULE' : this.nextStatut;
-    if (target === 'ACTE_NOTARIE') return 'Date de signature de l\'acte';
-    if (target === 'LIVRE')        return 'Date de livraison réelle';
+    if (target === 'ACTE')            return 'Date de signature de l\'acte';
+    if (target === 'LIVRE_DEFINITIF') return 'Date de livraison réelle';
     return 'Date';
   }
 
@@ -111,7 +125,7 @@ export class AdvancePipelineDialogComponent {
       statut:           targetStatut,
       motifAnnulation:  this.cancelMode ? this.motifAnnulation : null,
       dateTransition:   this.dateTransition || null,
-      datePvReception:  targetStatut === 'LIVRE' && this.datePvReception
+      datePvReception:  targetStatut === 'LIVRE_DEFINITIF' && this.datePvReception
                           ? this.datePvReception : null,
       notes:            this.notes.trim() || null,
     });

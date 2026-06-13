@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 076-vente-statut-vefa-rename
+      author: yem-wave12
+      comment: >
+        Wave 12 — VEFA pipeline (Loi 44-00). Renames the two existing terminal/late
+        statut values to the new ASCII enum: ACTE_NOTARIE → ACTE, LIVRE →
+        LIVRE_DEFINITIF. COMPROMIS / FINANCEMENT / ANNULE are unchanged. New
+        intermediate states (PROSPECT, OPTION, RESERVE, EN_RETRACTATION, ACOMPTE,
+        LIVRE_AVEC_RESERVES, RESERVES_LEVEES) have no historical rows to migrate.
+      changes:
+        - update:
+            tableName: vente
+            columns:
+              - column: { name: statut, value: 'ACTE' }
+            where: "statut = 'ACTE_NOTARIE'"
+        - update:
+            tableName: vente
+            columns:
+              - column: { name: statut, value: 'LIVRE_DEFINITIF' }
+            where: "statut = 'LIVRE'"
+      rollback:
+        - update:
+            tableName: vente
+            columns:
+              - column: { name: statut, value: 'ACTE_NOTARIE' }
+            where: "statut = 'ACTE'"
+        - update:
+            tableName: vente
+            columns:
+              - column: { name: statut, value: 'LIVRE' }
+            where: "statut = 'LIVRE_DEFINITIF'"

@@ -52,6 +52,172 @@
     </div>
   </div>
 
+  <!-- ── Remboursement du dépôt (après annulation/rétractation) #028 ── -->
+  @if (v.statut === 'ANNULE') {
+    <div class="card mb-20" data-testid="remboursement-card">
+      <div class="card-body">
+        <h3 class="card-title">Remboursement du dépôt</h3>
+        @if (rembError()) { <p class="msg-error">{{ rembError() }}</p> }
+
+        @if (remboursement(); as r) {
+          <div class="info-grid">
+            <div><span class="info-label">Statut</span>
+              <span class="badge" [class.badge-success]="r.statut === 'EFFECTUE'"
+                    [class.badge-warning]="r.statut === 'DU'">
+                {{ r.statut === 'EFFECTUE' ? 'Remboursé' : (r.statut === 'DU' ? 'À rembourser' : 'Annulé') }}
+              </span>
+            </div>
+            <div><span class="info-label">Montant</span>
+              <span class="info-value">{{ r.montant | number:'1.0-0' }} MAD</span></div>
+            @if (r.statut === 'EFFECTUE') {
+              <div><span class="info-label">Moyen</span><span class="info-value">{{ moyenLabel(r.moyen) }}</span></div>
+              <div><span class="info-label">Date</span>
+                <span class="info-value">{{ r.dateRemboursement | date:'dd/MM/yyyy' }}</span></div>
+              @if (r.reference) {
+                <div><span class="info-label">Référence</span><span class="info-value">{{ r.reference }}</span></div>
+              }
+            }
+          </div>
+
+          @if (r.statut === 'DU' && canWrite) {
+            <!-- Adjust amount -->
+            <div class="remb-edit">
+              <label class="info-label">Ajuster le montant dû (MAD)</label>
+              <div class="remb-row">
+                <input type="number" min="0" class="form-control" [(ngModel)]="editMontant"
+                       [placeholder]="r.montant" />
+                <button class="btn btn-sm btn-secondary" [disabled]="rembBusy() || editMontant == null"
+                        (click)="saveMontant(v.id)">Enregistrer</button>
+              </div>
+            </div>
+
+            <!-- Mark as paid -->
+            @if (!showRembForm) {
+              <button class="btn btn-primary mt-12" (click)="showRembForm = true"
+                      data-testid="remb-mark-paid">Marquer comme remboursé</button>
+            } @else {
+              <div class="remb-form">
+                <div class="form-group">
+                  <label class="info-label">Moyen</label>
+                  <select class="form-control" [(ngModel)]="rembForm.moyen">
+                    <option value="VIREMENT">Virement</option>
+                    <option value="CHEQUE">Chèque</option>
+                    <option value="ESPECES">Espèces</option>
+                    <option value="AUTRE">Autre</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="info-label">Date</label>
+                  <input type="date" class="form-control" [(ngModel)]="rembForm.dateRemboursement" />
+                </div>
+                <div class="form-group">
+                  <label class="info-label">Référence (virement/chèque)</label>
+                  <input type="text" class="form-control" [(ngModel)]="rembForm.reference" />
+                </div>
+                <div class="remb-row">
+                  <button class="btn btn-primary" [disabled]="rembBusy()"
+                          (click)="confirmRemboursement(v.id)" data-testid="remb-confirm">Confirmer</button>
+                  <button class="btn btn-secondary" (click)="showRembForm = false">Annuler</button>
+                </div>
+              </div>
+            }
+          }
+        } @else {
+          <p class="muted">Aucun remboursement enregistré pour cette vente annulée.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── VEFA actions (Loi 44-00) ────────────────────────────── -->
+  @if (canConfirmReservation || canRetract || canRecordDelivery || showReservesPanel) {
+    <div class="card mb-20" data-testid="vefa-actions">
+      <div class="card-body">
+        <h3 class="card-title">Actions VEFA — Loi 44-00</h3>
+        @if (vefaError()) { <p class="msg-error" data-testid="vefa-error">{{ vefaError() }}</p> }
+
+        <!-- Confirmer la réservation (dépôt ≤ 5%) -->
+        @if (canConfirmReservation) {
+          @if (!showConfirmForm) {
+            <button class="btn btn-primary" (click)="showConfirmForm = true" data-testid="vefa-confirm-open">
+              Confirmer la réservation
+            </button>
+          } @else {
+            <div class="vefa-form">
+              <label class="form-label">Dépôt de garantie (MAD) — max 5% du prix (Art. 618-4)</label>
+              <input type="number" class="form-input" [(ngModel)]="depositAmount" min="0"
+                     placeholder="Montant du dépôt" data-testid="vefa-deposit"/>
+              <div class="form-actions">
+                <button class="btn btn-ghost" (click)="showConfirmForm = false">Annuler</button>
+                <button class="btn btn-primary" [disabled]="vefaBusy()"
+                        (click)="confirmReservation(v.id)" data-testid="vefa-confirm-submit">
+                  Confirmer (ouvre le délai de rétractation de 7j)
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Exercer la rétractation (fenêtre légale) -->
+        @if (canRetract) {
+          <p class="vefa-hint">Délai légal de rétractation en cours
+            @if (v.dateFinDelaiReflexion) { jusqu'au {{ v.dateFinDelaiReflexion | date:'dd/MM/yyyy' }} }.</p>
+          <button class="btn btn-danger-soft" [disabled]="vefaBusy()"
+                  (click)="exerciseRetractation(v.id)" data-testid="vefa-retract">
+            Exercer la rétractation
+          </button>
+        }
+
+        <!-- Enregistrer la livraison (avec ou sans réserves) -->
+        @if (canRecordDelivery) {
+          @if (!showDeliveryForm) {
+            <button class="btn btn-primary" (click)="showDeliveryForm = true" data-testid="vefa-delivery-open">
+              Enregistrer la livraison
+            </button>
+          } @else {
+            <div class="vefa-form">
+              <label class="form-label">Date de livraison</label>
+              <input type="date" class="form-input" [(ngModel)]="deliveryDate" data-testid="vefa-delivery-date"/>
+              <label class="form-label">Réserves (une par ligne — laisser vide pour une livraison sans réserve)</label>
+              <textarea class="form-input" rows="3" [(ngModel)]="deliveryReserves"
+                        placeholder="Ex. Fissure plafond séjour&#10;Volet roulant chambre 2"
+                        data-testid="vefa-delivery-reserves"></textarea>
+              <div class="form-actions">
+                <button class="btn btn-ghost" (click)="showDeliveryForm = false">Annuler</button>
+                <button class="btn btn-primary" [disabled]="vefaBusy()"
+                        (click)="recordDelivery(v.id)" data-testid="vefa-delivery-submit">
+                  Enregistrer la livraison
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Réserves de livraison + levée -->
+        @if (showReservesPanel) {
+          <h4 class="vefa-subtitle">Réserves de livraison</h4>
+          @if (reserves().length === 0) {
+            <p class="vefa-hint">Aucune réserve.</p>
+          } @else {
+            <ul class="vefa-reserves" data-testid="vefa-reserves-list">
+              @for (r of reserves(); track r.id) {
+                <li class="vefa-reserve" [class.lifted]="r.statut === 'LEVEE'">
+                  <span class="vefa-reserve-desc">{{ r.description }}</span>
+                  @if (r.statut === 'LEVEE') {
+                    <span class="badge badge-success">Levée @if (r.dateLeveeReelle) { le {{ r.dateLeveeReelle | date:'dd/MM/yyyy' }} }</span>
+                  } @else {
+                    <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
+                            (click)="liftReserve(v.id, r.id)" data-testid="vefa-lift-reserve">Lever</button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  }
+
   <!-- ── Deal cockpit band — answers the agent's first 3 questions:
          next deadline · what's blocking · where's the money ─────── -->
   <div class="deal-band" [class.deal-band-terminal]="isTerminal(v.statut)">
@@ -71,7 +237,7 @@
         </div>
         <p class="deadline-what">{{ nd.label }}</p>
         <p class="deadline-when">{{ nd.date | date:'EEEE d MMMM y' }}</p>
-      } @else if (v.statut === 'LIVRE') {
+      } @else if (v.statut === 'LIVRE_DEFINITIF') {
         <p class="deal-done">✓ Vente livrée @if (v.dateLivraisonReelle) { le {{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }} }</p>
       } @else if (v.statut === 'ANNULE') {
         <p class="deal-muted">Vente annulée</p>
@@ -92,7 +258,7 @@
       </ul>
       @if (canWrite && !isTerminal(v.statut)) {
         <div class="deal-actions">
-          @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE_NOTARIE')) {
+          @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
             <button class="btn btn-sm btn-secondary" (click)="generateContract(v.id)" [disabled]="contractGenerating()">
               {{ contractGenerating() ? 'Génération…' : 'Générer le contrat' }}
             </button>
@@ -162,7 +328,7 @@
           <dt>Livraison réelle</dt>
           <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
 
-          @if (v.statut === 'LIVRE') {
+          @if (v.statut === 'LIVRE_DEFINITIF') {
             <dt>PV de réception</dt>
             <dd>
               @if (!editingPostLivraison) {
@@ -429,11 +595,21 @@
     <div class="card-header">
       <h2 class="card-title">Échéancier</h2>
       @if (canWrite) {
-        <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm">
-          + Ajouter
-        </button>
+        <div class="card-header-actions">
+          @if (!hasLegalEcheancier(v)) {
+            <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
+                    (click)="generateEcheancierLegal(v.id)" data-testid="ech-generate-legal"
+                    title="Génère les 7 appels de fonds Art. 618-17 (Loi 44-00)">
+              Générer l'échéancier légal
+            </button>
+          }
+          <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm" data-testid="ech-add">
+            + Ajouter
+          </button>
+        </div>
       }
     </div>
+    @if (vefaError()) { <p class="msg-error" style="margin: 8px 16px 0">{{ vefaError() }}</p> }
 
     @if (showEcheanceForm) {
       <div class="echeance-form card-body border-top">
@@ -498,6 +674,12 @@
                       <button class="btn btn-sm btn-secondary" (click)="markPaid(v.id, e.id)">
                         Marquer payée
                       </button>
+                    } @else {
+                      <button class="btn btn-sm btn-ghost" [disabled]="docGenBusy()"
+                              (click)="generateQuittance(v.id, e.id)" data-testid="ech-quittance"
+                              title="Générer la quittance (PDF)">
+                        Quittance
+                      </button>
                     }
                   </td>
                 }
@@ -509,11 +691,77 @@
     }
   </div>
 
+  <!-- ── Co-acquéreur (VEFA) ───────────────────────────────── -->
+  <div class="card mb-20" data-testid="co-acquereur-card">
+    <div class="card-header">
+      <h2 class="card-title">Co-acquéreur</h2>
+      @if (canWrite && !showCoAcqForm) {
+        <button class="btn btn-sm btn-secondary" (click)="openCoAcqForm()" data-testid="coacq-edit">
+          {{ coAcquereur() ? 'Modifier' : '+ Ajouter' }}
+        </button>
+      }
+    </div>
+    <div class="card-body">
+      @if (coAcqError()) { <p class="msg-error">{{ coAcqError() }}</p> }
+      @if (showCoAcqForm) {
+        <div class="legal-grid">
+          <label>Nom* <input type="text" [(ngModel)]="coAcqForm.nom" data-testid="coacq-nom"/></label>
+          <label>Prénom* <input type="text" [(ngModel)]="coAcqForm.prenom" data-testid="coacq-prenom"/></label>
+          <label>Rôle
+            <select [(ngModel)]="coAcqForm.roleAcquereur">
+              @for (r of coAcqRoleOptions; track r) { <option [ngValue]="r">{{ r }}</option> }
+            </select>
+          </label>
+          <label>Type d'acquéreur
+            <select [(ngModel)]="coAcqForm.typeAcquereur">
+              <option [ngValue]="null">—</option>
+              @for (t of coAcqTypeOptions; track t) { <option [ngValue]="t">{{ t }}</option> }
+            </select>
+          </label>
+          <label>Situation matrimoniale
+            <select [(ngModel)]="coAcqForm.situationMatrimoniale">
+              <option [ngValue]="null">—</option>
+              @for (s of coAcqSituationOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+            </select>
+          </label>
+          <label>CIN <input type="text" [(ngModel)]="coAcqForm.cinNumero"/></label>
+          <label>N° passeport <input type="text" [(ngModel)]="coAcqForm.passeportNumero"/></label>
+          <label>Date de naissance <input type="date" [(ngModel)]="coAcqForm.dateNaissance"/></label>
+          <label>Nationalité <input type="text" [(ngModel)]="coAcqForm.nationalite"/></label>
+          <label>Pays de résidence <input type="text" [(ngModel)]="coAcqForm.paysResidence"/></label>
+          <label>Email <input type="email" [(ngModel)]="coAcqForm.email"/></label>
+          <label>Téléphone <input type="text" [(ngModel)]="coAcqForm.telephone"/></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showCoAcqForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm" [disabled]="coAcqBusy()"
+                  (click)="saveCoAcquereur(v.id)" data-testid="coacq-save">Enregistrer</button>
+        </div>
+      } @else {
+        @if (coAcquereur(); as co) {
+          <dl class="detail-list">
+            <dt>Nom complet</dt><dd>{{ co.prenom }} {{ co.nom }}</dd>
+            <dt>Rôle</dt><dd>{{ co.roleAcquereur ?? '—' }}</dd>
+            <dt>Type</dt><dd>{{ co.typeAcquereur ?? '—' }}</dd>
+            <dt>CIN / Passeport</dt><dd>{{ co.cinNumero || co.passeportNumero || '—' }}</dd>
+            <dt>Contact</dt><dd>{{ co.email || co.telephone || '—' }}</dd>
+          </dl>
+          @if (canWrite) {
+            <button class="btn btn-sm btn-danger-soft" [disabled]="coAcqBusy()"
+                    (click)="deleteCoAcquereur(v.id)" data-testid="coacq-delete">Supprimer</button>
+          }
+        } @else {
+          <p class="vefa-hint">Aucun co-acquéreur.</p>
+        }
+      }
+    </div>
+  </div>
+
   <!-- ── Financement ───────────────────────────────────────── -->
   <div class="card mb-20" data-testid="financing-card">
     <div class="card-header">
       <h2 class="card-title">Financement</h2>
-      @if (canWriteFinancing && v.statut !== 'ACTE_NOTARIE' && v.statut !== 'LIVRE' && v.statut !== 'ANNULE') {
+      @if (canWriteFinancing && v.statut !== 'ACTE' && v.statut !== 'LIVRE_DEFINITIF' && v.statut !== 'ANNULE') {
         <button class="btn btn-sm btn-secondary"
                 (click)="showFinancingForm ? showFinancingForm = false : openFinancingForm(v)"
                 data-testid="btn-edit-financing">
@@ -600,21 +848,96 @@
     </div>
   </div>
 
+  <!-- ── Dossier de financement (suivi) ────────────────────── -->
+  <div class="card mb-20" data-testid="dossier-financement-card">
+    <div class="card-header">
+      <h2 class="card-title">Dossier de financement</h2>
+      @if (canWriteFinancing && !showDossierForm) {
+        <button class="btn btn-sm btn-secondary" (click)="openDossierForm()" data-testid="dossier-edit">
+          {{ dossier() ? 'Modifier' : '+ Créer' }}
+        </button>
+      }
+    </div>
+    <div class="card-body">
+      @if (dossierError()) { <p class="msg-error">{{ dossierError() }}</p> }
+      @if (showDossierForm) {
+        <div class="legal-grid">
+          <label>Statut
+            <select [(ngModel)]="dossierForm.statut">
+              @for (s of statutDossierOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+            </select>
+          </label>
+          <label>Type de financement
+            <select [(ngModel)]="dossierForm.typeFinancement">
+              <option [ngValue]="null">—</option>
+              @for (t of typeFinancementOptions; track t) { <option [ngValue]="t">{{ financingLabel(t) }}</option> }
+            </select>
+          </label>
+          <label>Banque <input type="text" [(ngModel)]="dossierForm.banque"/></label>
+          <label>Montant crédit (MAD) <input type="number" [(ngModel)]="dossierForm.montantCredit"/></label>
+          <label>Taux d'intérêt (ex. 0.045) <input type="number" step="0.0001" [(ngModel)]="dossierForm.tauxInteret"/></label>
+          <label>Durée (mois) <input type="number" [(ngModel)]="dossierForm.dureeMois"/></label>
+          <label>Apport personnel (MAD) <input type="number" [(ngModel)]="dossierForm.apportPersonnel"/></label>
+          <label>Date de demande <input type="date" [(ngModel)]="dossierForm.dateDemande"/></label>
+          <label>Date d'accord <input type="date" [(ngModel)]="dossierForm.dateAccord"/></label>
+          <label>Expiration de l'accord <input type="date" [(ngModel)]="dossierForm.dateExpirationAccord"/></label>
+        </div>
+        <label class="form-label">Commentaire
+          <textarea class="form-control" rows="2" [(ngModel)]="dossierForm.commentaire"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" (click)="showDossierForm = false">Annuler</button>
+          <button class="btn btn-primary btn-sm" [disabled]="dossierBusy()"
+                  (click)="saveDossier(v.id)" data-testid="dossier-save">Enregistrer</button>
+        </div>
+      } @else {
+        @if (dossier(); as d) {
+          <dl class="detail-list">
+            <dt>Statut</dt><dd><span class="badge">{{ d.statut }}</span></dd>
+            <dt>Banque</dt><dd>{{ d.banque || '—' }}</dd>
+            <dt>Montant crédit</dt><dd>{{ d.montantCredit ? ((d.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
+            <dt>Taux / Durée</dt><dd>{{ d.tauxInteret ?? '—' }} / {{ d.dureeMois ? (d.dureeMois + ' mois') : '—' }}</dd>
+            <dt>Accord expire le</dt><dd>{{ (d.dateExpirationAccord | date:'dd/MM/yyyy') || '—' }}</dd>
+          </dl>
+        } @else {
+          <p class="vefa-hint">Aucun dossier de financement.</p>
+        }
+      }
+    </div>
+  </div>
+
   <!-- ── Documents ──────────────────────────────────────────── -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">Documents</h2>
       @if (canWrite) {
-        <label class="btn btn-sm btn-secondary" style="cursor:pointer">
-          @if (docUploading()) {
-            <span class="spinner spinner-sm"></span> Téléversement…
-          } @else {
-            + Ajouter
+        <div class="card-header-actions">
+          <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
+                  (click)="generateContratReservation(v.id)" data-testid="gen-contrat-reservation"
+                  title="Génère le contrat préliminaire de réservation (Loi 44-00)">
+            Contrat réservation
+          </button>
+          @if (v.statut === 'LIVRE_AVEC_RESERVES' || v.statut === 'RESERVES_LEVEES' || v.statut === 'LIVRE_DEFINITIF') {
+            <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
+                    (click)="generatePvLivraison(v.id)" data-testid="gen-pv-livraison"
+                    title="Génère le PV de livraison avec la liste des réserves">
+              PV livraison
+            </button>
           }
-          <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
-        </label>
+          <label class="btn btn-sm btn-secondary" style="cursor:pointer">
+            @if (docUploading()) {
+              <span class="spinner spinner-sm"></span> Téléversement…
+            } @else {
+              + Ajouter
+            }
+            <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
+          </label>
+        </div>
       }
     </div>
+    @if (docGenError()) {
+      <div class="alert alert-error" style="margin:8px 16px">{{ docGenError() }}</div>
+    }
     @if (docError()) {
       <div class="alert alert-error" style="margin:8px 16px">{{ docError() }}</div>
     }
