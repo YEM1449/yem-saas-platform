@@ -24,7 +24,10 @@ Read-only platform audit (Phases 0–8) complete. Reports: `docs/audit/audit-rep
 - **F-011 ⏳ en cours** : `absorption.spec.ts` (KPI canonique).
 - **F-013 ✅** bannière CURRENT STATE en tête de `.sprint-state.md`.
 
-**Deferred (justifié, P2/P3):** F-006 (List→Page casse les contrats FE — chantier coordonné), F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
+**Fixed (2026-06-13):**
+- **F-006 ✅** `GET /api/ventes` + `GET /api/properties` migrated to `Page<T>` → `PageResponse.of()` (`@PageableDefault` 20/50); contacts was already paginated. FE: `PagedResult<T>` type + `listPage()`; bounded callers keep capped `list()`. `GET /api/notifications`: `@Max(200) @Min(1)` added at controller layer (service already clamped). 26 sub-resource endpoints remain `List<T>` (FK-bounded). `NotificationControllerTest` (5 tests); unit suite: **200 pass**.
+
+**Deferred (justifié, P2/P3):** F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
 
 Next available changeset: **086** (084 = client_groupe_lien #005, 085 = remboursement #028).
 

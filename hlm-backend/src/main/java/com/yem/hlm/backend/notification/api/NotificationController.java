@@ -3,6 +3,9 @@ package com.yem.hlm.backend.notification.api;
 import com.yem.hlm.backend.notification.api.dto.NotificationResponse;
 import com.yem.hlm.backend.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,6 +14,7 @@ import java.util.UUID;
 @Tag(name = "Notifications", description = "In-app CRM bell notifications")
 @RestController
 @RequestMapping("/api/notifications")
+@Validated
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -22,7 +26,7 @@ public class NotificationController {
     @GetMapping
     public List<NotificationResponse> list(
             @RequestParam(value = "read", required = false) Boolean read,
-            @RequestParam(value = "size", required = false, defaultValue = "50") int size
+            @RequestParam(value = "size", required = false, defaultValue = "50") @Min(1) @Max(200) int size
     ) {
         return notificationService.list(read, size);
     }
