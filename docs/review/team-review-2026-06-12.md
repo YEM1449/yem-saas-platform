@@ -14,10 +14,10 @@
 > | Severity | Total | Open | Resolved |
 > |---|---|---|---|
 > | 🔴 Critical | 1 | 0 | 1 |
-> | 🟠 Major | 10 | 5 | 5 |
+> | 🟠 Major | 10 | 4 | 6 |
 > | 🟡 Minor | 16 | 15 | 1 |
 > | 🔵 Polish | 7 | 7 | 0 |
-> | **Total** | **34** | **27** | **7** |
+> | **Total** | **34** | **26** | **8** |
 
 ---
 
@@ -74,7 +74,7 @@ sans changer d'écran."**
 | 6 | #004 — "Deactivate everywhere" for multi-société users — ✅ done 2026-06-12 | Leila (Security) | S | No (but security hole) |
 | 7 | #001 — Vue Groupe (consolidated owner dashboard) — ✅ done 2026-06-12 | Mehdi (Business) | L | Yes for group prospects |
 | 8 | #028 — Refund (remboursement) tracking after rétractation | Nadia (Legal) | M | No, but pre-GA |
-| 9 | #016 — Resolve Contracts-vs-Ventes dual concept in nav | Karim (UX) | M | Yes (agent confusion) |
+| 9 | #016 — Resolve Contracts-vs-Ventes dual concept in nav — ✅ done 2026-06-12 | Karim (UX) | M | Yes (agent confusion) |
 | 10 | #023 — Paginate list endpoints (List→Page) | Adam (Code) | L | No (load risk at scale) |
 
 ---
@@ -528,11 +528,22 @@ init via `Viewer3dApiService.getModel()` (404 → no entry for agents). (2) "Vue
 link added to the commercial dashboard → `/app/dashboard/commercial/3d`. Both previously
 orphaned routes are now reachable from the UI. FE prod build green.
 
-**FINDING #016** — UI/UX — Karim — `Status: 🔲 OPEN`
+**FINDING #016** — UI/UX — Karim — `Status: ✅ RESOLVED (2026-06-12, legacyContracts flag)`
 Sidebar offers both "Contrats" (legacy SaleContract module) and "Pipeline Ventes" (VEFA) as
 parallel concepts; new agents can't know which to use.
 *Fix:* decide the contract module's fate — hide behind feature flag for legacy sociétés, or
 fold payment schedules under the vente; one selling concept in nav. *Effort:* M
+*Resolution:* Decision: **Pipeline Ventes is the single selling concept**; SaleContract is
+legacy (the contracts page already self-labels its content `'ventes' | 'legacy'`, and its
+non-legacy tab merely re-lists ventes that have a contract — redundant with the Ventes
+pipeline). Added `environment.features.legacyContracts` (default **false** across env.ts /
+production / ci); the shell's "Contrats" nav item is now `@if (showLegacyContracts)` and,
+when shown, relabelled "Contrats (ancien module)". Default deployments show one selling
+funnel in the Pipeline section; sociétés still on the old workflow flip the flag on. The
+`/app/contracts` route stays registered so deep links, commissions and payment schedules are
+untouched (verified: no other in-app nav links to `/app/contracts`). FE prod build green.
+*Follow-up (not blocking):* a per-société backend flag would beat an env flag if mixed
+legacy/VEFA sociétés ever share one deployment — noted for when flag infra exists.
 
 **FINDING #023** — Code — Adam — `Status: 🔲 OPEN`
 List endpoints return unpaginated `List<>` (`GET /api/ventes`, `/api/properties`, contact
