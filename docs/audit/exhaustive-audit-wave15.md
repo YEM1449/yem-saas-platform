@@ -254,7 +254,17 @@ reserve list only.** Verdict: low risk except the project-wide reserve list.
 
 ## TRACK 7 · Unhandled Scenarios & Edge Cases (Salma + Rachid)
 
-### EX-009 🟠 High — CONFIRMED (code) / SUSPECTED (prod TZ) — Legal deadlines mix `LocalDate.now()`/`LocalDateTime.now()` (JVM zone) with `Instant` — off-by-one on the 7-day rétractation
+### EX-009 🟠 High — ✅ RESOLVED (2026-06-14) — Legal deadlines mix `LocalDate.now()`/`LocalDateTime.now()` (JVM zone) with `Instant` — off-by-one on the 7-day rétractation
+> **Fix:** introduced a **market-aware `Clock`** — `MarketConfig.getZoneId()` (MA → `Africa/Casablanca`,
+> FR → `Europe/Paris`, overridable via `app.market.zone-id`) feeds a `Clock` bean
+> (`legal/MarketTimeConfig.java`). `VenteService` now injects `Clock` and every legal date/time uses
+> the zoned form (`LocalDate.now(clock)`, `LocalDateTime.now(clock)`, `Instant.now(clock)`) — the
+> rétractation window, the deadline comparison in `exerciseRetractation`, the reserve-lift window, the
+> sweeps, and the penalty calc. Test `confirmReservation_coolingOffDeadlineUsesMarketZone` pins a clock
+> at `23:30 UTC` (= `00:30` next day in Casablanca) and asserts the 7-day window ends on the
+> Casablanca date, not the UTC date (217 unit tests green). The injected clock also makes the service
+> deterministically testable. **Follow-up:** `ReservationService` expiry math still uses zero-arg
+> `now()` (commercial hold, not a Loi 44-00 right) — convert it to the same `Clock` for full consistency.
 - **Where:** `VenteService.java` — rétractation deadline `:337`
   `vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()))`;
   compromis-derived dates `:249-250` use `request.dateCompromis().plusDays(...)`; `stageEntryDate`
@@ -318,7 +328,11 @@ Office des Changes unmodeled). Phase B added `data-retention.md`, `pdf-review-ch
 `@ReadAudit` aspect, and the CNDP declaration fields (`ComplianceController`) — partial mitigations of
 the 09-08 surface, not closures.
 
-### EX-011 🟠 High — CONFIRMED — The rétractation deadline can be **null or miscomputed** depending on the write path (composite legal finding)
+### EX-011 🟠 High — ✅ RESOLVED (2026-06-14, via EX-001 + EX-009) — The rétractation deadline can be **null or miscomputed** depending on the write path (composite legal finding)
+> **Fix:** both halves are now closed — EX-001 makes `EN_RETRACTATION` reachable only through
+> `confirmReservation()` (which always sets `dateFinDelaiReflexion`), and EX-009 computes that date in
+> the Casablanca zone. The day-count rule (inclusive/exclusive of day 0) still ⚠️ **REQUIRES LEGAL
+> VERIFICATION** by counsel.
 - This is the legal synthesis of **EX-001 + EX-009**: (a) a vente reaching `EN_RETRACTATION` via the
   generic `PATCH /statut` has **no `dateFinDelaiReflexion`** (EX-001), and (b) when the dedicated path
   *does* set it, it's computed in the JVM zone and can be off by a day (EX-009). Either way the system
@@ -376,11 +390,12 @@ scaffolding.
   affordances, or (b) re-introduce `@angular/localize` or ngx-translate before France work begins.
   **Effort:** L. Owner: Product + FE.
 
-### EX-015 🟡 Medium — SUSPECTED — Multi-market legal constants partly centralized in `MarketConfig`, but time-zone and locale are not market-driven
-- **Where:** `legal/MarketConfig.java` holds delays/percentages/penalty (good — T11.3 partially met),
-  but the legal-date **zone** (EX-009) and the frontend **locale/currency** (EX-008) are hardcoded, not
-  derived from the active market. So a France société on the same instance would inherit Casablanca-zoned
-  legal math and `fr`/EUR-ish formatting regardless.
+### EX-015 🟡 Medium — PARTIALLY RESOLVED (2026-06-14) — Multi-market legal constants partly centralized in `MarketConfig`, but locale is not market-driven
+- **Where:** `legal/MarketConfig.java` holds delays/percentages/penalty (good — T11.3 partially met).
+  **Update:** the legal-date **zone** is now market-driven (`MarketConfig.getZoneId()` + `Clock` bean,
+  EX-009). Still open: the frontend **locale/currency** (EX-008) is hardcoded `fr`/EUR, not derived from
+  the active market, and the backend `Clock` is currently only consumed by `VenteService`
+  (extend to `ReservationService` and any other deadline math).
 - **Fix direction:** Extend `MarketConfig` (or a `Market` abstraction) to own `ZoneId`, `Locale`, and
   default currency; resolve per société. **Effort:** M. Links EX-008, EX-009.
 
@@ -423,7 +438,7 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 |----|-------|-----|-----------|-----|--------|-------|--------|
 | **EX-005** ✅ | T4 | 🟠 High | High | C | Flagship 3D feature silently dead after 1 navigation | FE | **DONE** |
 | **EX-001** ✅ | T1/T3/T9 | 🟠 High | Med | C | Legal deposit-cap + rétractation setup bypassable via generic PATCH | BE/Legal | **DONE** |
-| **EX-009** | T7/T9 | 🟠 High | Med | C/S | Off-by-one on 7-day legal rétractation (JVM zone) | BE/Legal | S |
+| **EX-009** ✅ | T7/T9 | 🟠 High | Med | C/S | Off-by-one on 7-day legal rétractation (JVM zone) | BE/Legal | **DONE** |
 | **EX-011** | T9 | 🟠 High | Med | C | Cannot reliably prove buyer's Art.618-3 window (EX-001+EX-009) | BE/Legal | M |
 | **EX-014** | T11 | 🟠 High | High | C | France/AR expansion blocked; marketed multi-lang non-functional | Product/FE | L |
 | DA-005 | T2 | 🟠 High | Med | C | Mail/R2 hiccup → Neon pool exhaustion → outage | BE/SRE | M |

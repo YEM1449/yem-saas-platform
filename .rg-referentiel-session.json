@@ -1,0 +1,12 @@
+{
+  "task": "generate-rg-referentiel",
+  "mode": "READ-ONLY",
+  "steps": {
+    "S0": { "label": "Inventaire code source",           "status": "done" },
+    "S1": { "label": "Extraction règles par domaine",     "status": "done" },
+    "S2": { "label": "Classement RG-A à RG-H",            "status": "done" },
+    "S3": { "label": "Rédaction du markdown (Youssef)",   "status": "in_progress" },
+    "S4": { "label": "Section fonctionnalités suggérées", "status": "pending" },
+    "S5": { "label": "Relecture qualité + commit",        "status": "pending" }
+  }
+}

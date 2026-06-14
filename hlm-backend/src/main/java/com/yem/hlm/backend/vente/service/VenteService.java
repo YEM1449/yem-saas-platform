@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,6 +80,8 @@ public class VenteService {
     private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
     private final com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
     private final com.yem.hlm.backend.notification.service.NotificationService notificationService;
+    /** Market-aware clock — all legal date/time math runs in the jurisdiction zone (EX-009). */
+    private final Clock clock;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -95,7 +98,8 @@ public class VenteService {
             VenteRefGenerator refGenerator,
             com.yem.hlm.backend.legal.MarketConfig marketConfig,
             com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository,
-            com.yem.hlm.backend.notification.service.NotificationService notificationService) {
+            com.yem.hlm.backend.notification.service.NotificationService notificationService,
+            Clock clock) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -111,6 +115,7 @@ public class VenteService {
         this.marketConfig        = marketConfig;
         this.reserveRepository   = reserveRepository;
         this.notificationService = notificationService;
+        this.clock               = clock;
     }
 
     // =========================================================================
@@ -227,7 +232,7 @@ public class VenteService {
         // If already RESERVED (from deposit/reservation workflow), keep it RESERVED.
         // Property becomes SOLD only at ACTE stage (was ACTE_NOTARIE pre-Wave-12; see updateStatut).
         if (property.getStatus() == PropertyStatus.ACTIVE) {
-            propertyWorkflow.reserve(property, LocalDateTime.now());
+            propertyWorkflow.reserve(property, LocalDateTime.now(clock));
             propertyRepository.save(property);
         } else if (property.getStatus() != PropertyStatus.RESERVED) {
             throw new InvalidPropertyStatusTransitionException(
@@ -257,7 +262,7 @@ public class VenteService {
         } else if (request.dateLivraisonPrevue() != null) {
             vente.setExpectedClosingDate(request.dateLivraisonPrevue());
         } else {
-            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(vente.getStatut())));
+            vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(vente.getStatut())));
         }
 
         return toResponse(venteRepository.save(vente));
@@ -291,16 +296,16 @@ public class VenteService {
         User agent = userRepository.findById(actorId)
                 .orElseThrow(() -> new UserNotFoundException(actorId));
         int duree = Math.min(Math.max(dureeHeures, 1), 72);
-        propertyWorkflow.reserve(property, LocalDateTime.now());
+        propertyWorkflow.reserve(property, LocalDateTime.now(clock));
         propertyRepository.save(property);
 
         Vente vente = new Vente(societeId, property.getId(), contact, agent);
         vente.setVenteRef(refGenerator.generate(societeId));
         vente.setStatut(VenteStatut.OPTION);
-        vente.setOptionExpireAt(Instant.now().plus(duree, ChronoUnit.HOURS));
+        vente.setOptionExpireAt(Instant.now(clock).plus(duree, ChronoUnit.HOURS));
         if (property.getPrice() != null) vente.setPrixVente(property.getPrice());
         vente.setProbability(defaultProbability(VenteStatut.OPTION));
-        vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
+        vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
 
         advanceContactStatus(contact, ContactStatus.QUALIFIED_PROSPECT);
         contactRepository.save(contact);
@@ -334,9 +339,9 @@ public class VenteService {
         vente.setOptionExpireAt(null);
 
         // Open the legal cooling-off window and advance to EN_RETRACTATION.
-        vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()));
+        vente.setDateFinDelaiReflexion(LocalDate.now(clock).plusDays(marketConfig.getDelaiRetractationJours()));
         vente.setStatut(VenteStatut.EN_RETRACTATION);
-        vente.setStageEntryDate(LocalDateTime.now());
+        vente.setStageEntryDate(LocalDateTime.now(clock));
         vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
 
         advanceContactStatus(vente.getContact(), ContactStatus.CLIENT);
@@ -355,14 +360,14 @@ public class VenteService {
             throw new RetractationImpossibleException("La vente n'est pas en période de rétractation.");
         }
         LocalDate deadline = vente.getDateFinDelaiReflexion();
-        if (deadline != null && LocalDate.now().isAfter(deadline)) {
+        if (deadline != null && LocalDate.now(clock).isAfter(deadline)) {
             throw new RetractationImpossibleException(
                     "Le délai légal de rétractation de " + marketConfig.getDelaiRetractationJours()
                     + " jours est expiré.");
         }
 
         vente.setStatut(VenteStatut.ANNULE);
-        vente.setRetractationExerceeAt(Instant.now());
+        vente.setRetractationExerceeAt(Instant.now(clock));
         vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
         releasePropertyForCancelledVente(societeId, vente);
         echeanceRepository.cancelAllPendingByVente(vente.getId());
@@ -383,7 +388,7 @@ public class VenteService {
     /** Cancels OPTIONs whose hold has expired. Returns the number expired. */
     @Transactional
     public int expireOverdueOptions() {
-        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now());
+        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now(clock));
         for (Vente v : overdue) {
             v.setStatut(VenteStatut.ANNULE);
             v.setMotifAnnulation(MotifAnnulation.AUTRE);
@@ -399,7 +404,7 @@ public class VenteService {
     @Transactional
     public int closeExpiredRetractations() {
         List<Vente> done = venteRepository.findByStatutAndDateFinDelaiReflexionBefore(
-                VenteStatut.EN_RETRACTATION, LocalDate.now());
+                VenteStatut.EN_RETRACTATION, LocalDate.now(clock));
         for (Vente v : done) {
             v.setStatut(VenteStatut.RESERVE);
             venteRepository.save(v);
@@ -463,7 +468,7 @@ public class VenteService {
                 target, null, request.dateLivraison(), null, null, null));
 
         if (withReserves) {
-            LocalDate echeance = LocalDate.now().plusDays(marketConfig.getDelaiLeveeReservesJours());
+            LocalDate echeance = LocalDate.now(clock).plusDays(marketConfig.getDelaiLeveeReservesJours());
             for (String description : request.reserves()) {
                 if (description != null && !description.isBlank()) {
                     reserveRepository.save(new ReserveLivraison(societeId, venteId, description.trim(), echeance));
@@ -493,7 +498,7 @@ public class VenteService {
         }
 
         reserve.setStatut(StatutReserve.LEVEE);
-        reserve.setDateLeveeReelle(LocalDate.now());
+        reserve.setDateLeveeReelle(LocalDate.now(clock));
         reserveRepository.save(reserve);
 
         long remaining = reserveRepository.countBySocieteIdAndVenteIdAndStatutNot(
@@ -502,7 +507,7 @@ public class VenteService {
             validateTransition(vente.getStatut(), VenteStatut.RESERVES_LEVEES);
             vente.setStatut(VenteStatut.RESERVES_LEVEES);
             vente.setProbability(defaultProbability(VenteStatut.RESERVES_LEVEES));
-            vente.setStageEntryDate(LocalDateTime.now());
+            vente.setStageEntryDate(LocalDateTime.now(clock));
             venteRepository.save(vente);
         }
         return toResponse(vente);
@@ -596,14 +601,14 @@ public class VenteService {
         }
 
         vente.setStatut(request.statut());
-        vente.setStageEntryDate(LocalDateTime.now());
+        vente.setStageEntryDate(LocalDateTime.now(clock));
         vente.setProbability(defaultProbability(request.statut()));
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
 
         if (request.expectedClosingDate() != null) {
             vente.setExpectedClosingDate(request.expectedClosingDate());
         } else if (vente.getExpectedClosingDate() == null) {
-            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(request.statut())));
+            vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(request.statut())));
         }
 
         // Stamp date fields based on the new statut
@@ -640,7 +645,7 @@ public class VenteService {
                 .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
         if (property != null) {
             if (request.statut() == VenteStatut.ACTE) {
-                propertyWorkflow.sell(property, LocalDateTime.now());
+                propertyWorkflow.sell(property, LocalDateTime.now(clock));
                 propertyRepository.save(property);
             } else if (request.statut() == VenteStatut.ANNULE) {
                 if (property.getStatus() == PropertyStatus.RESERVED) {
@@ -715,8 +720,8 @@ public class VenteService {
             throw new ViolationLegaleException("L'échéancier légal a déjà été généré pour cette vente.");
         }
 
-        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now()))
-                ? vente.getDateCompromis() : LocalDate.now();
+        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now(clock)))
+                ? vente.getDateCompromis() : LocalDate.now(clock);
 
         List<VenteEcheance> created = new java.util.ArrayList<>();
         for (com.yem.hlm.backend.legal.EcheancierLegal.EtapeLegale etape
@@ -1029,7 +1034,7 @@ public class VenteService {
         BigDecimal penaliteAccumulee = null;
         boolean terminal = v.getStatut() == VenteStatut.ANNULE || v.getStatut() == VenteStatut.LIVRE_DEFINITIF;
         if (!terminal && v.getDateLivraisonReelle() == null && v.getDateLivraisonPrevue() != null) {
-            LocalDate today = LocalDate.now();
+            LocalDate today = LocalDate.now(clock);
             if (today.isAfter(v.getDateLivraisonPrevue())) {
                 joursRetard = ChronoUnit.DAYS.between(v.getDateLivraisonPrevue(), today);
                 penaliteAccumulee = marketConfig.getPenaliteRetardJournalierMad()

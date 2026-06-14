@@ -80,13 +80,17 @@ class VenteServiceTest {
 
     private VenteService service;
 
+    /** Fixed market clock (Africa/Casablanca) so legal-date math is deterministic (EX-009). */
+    private static final java.time.Clock CLOCK = java.time.Clock.fixed(
+            java.time.Instant.parse("2026-06-14T09:00:00Z"), java.time.ZoneId.of("Africa/Casablanca"));
+
     @BeforeEach
     void setUp() {
         service = new VenteService(
                 venteRepository, echeanceRepository, documentRepository, contactRepository,
                 propertyRepository, userRepository, reservationRepository, propertyWorkflow,
                 societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository,
-                notificationService);
+                notificationService, CLOCK);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -307,6 +311,41 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.confirmReservation(VENTE, new java.math.BigDecimal("10000")))
                 .isInstanceOf(ViolationLegaleException.class);
         verify(vente, never()).setStatut(any());
+    }
+
+    @Test
+    @DisplayName("EX-009: cooling-off deadline is computed in the market zone (Casablanca), not the JVM/UTC zone")
+    void confirmReservation_coolingOffDeadlineUsesMarketZone() {
+        // 23:30 UTC on 2026-06-13 is already 00:30 on 2026-06-14 in Casablanca (UTC+1). A naive UTC
+        // clock would date the deadline from 2026-06-13 (off by one on a legal right); the market
+        // clock must use the Casablanca date 2026-06-14, so the 7-day window ends 2026-06-21.
+        java.time.Clock boundary = java.time.Clock.fixed(
+                java.time.Instant.parse("2026-06-13T23:30:00Z"), java.time.ZoneId.of("Africa/Casablanca"));
+        VenteService svc = new VenteService(
+                venteRepository, echeanceRepository, documentRepository, contactRepository,
+                propertyRepository, userRepository, reservationRepository, propertyWorkflow,
+                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository,
+                notificationService, boundary);
+
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        Contact contact = org.mockito.Mockito.mock(Contact.class);
+        com.yem.hlm.backend.user.domain.User agent =
+                org.mockito.Mockito.mock(com.yem.hlm.backend.user.domain.User.class);
+        when(vente.getStatut()).thenReturn(VenteStatut.OPTION);
+        when(vente.getContact()).thenReturn(contact);
+        when(contact.getStatus())
+                .thenReturn(com.yem.hlm.backend.contact.domain.ContactStatus.CLIENT);
+        when(vente.getAgent()).thenReturn(agent);
+        when(vente.getEcheances()).thenReturn(java.util.List.of());
+        when(vente.getDocuments()).thenReturn(java.util.List.of());
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(marketConfig.getDelaiRetractationJours()).thenReturn(7);
+        when(venteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        svc.confirmReservation(VENTE, null);
+
+        verify(vente).setDateFinDelaiReflexion(LocalDate.of(2026, 6, 21));
     }
 
     @Test
