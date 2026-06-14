@@ -1,10 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { PropertyService } from './property.service';
 import { ImportResult, Property } from '../../core/models/property.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -42,7 +41,7 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, DecimalPipe, HlmCardComponent],
+  imports: [FormsModule, DecimalPipe, HlmCardComponent],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })
@@ -97,13 +96,11 @@ export class PropertiesComponent implements OnInit {
 
   readonly propertyTypes = [
     'VILLA', 'APPARTEMENT', 'STUDIO', 'T2', 'T3',
-    'DUPLEX', 'COMMERCE', 'LOT', 'TERRAIN_VIERGE',
-  ];
+    'DUPLEX', 'COMMERCE', 'LOT', 'TERRAIN_VIERGE'];
 
   readonly statusOptions = [
     { value: 'DRAFT',  label: 'Draft (not yet on market)' },
-    { value: 'ACTIVE', label: 'Active (available for reservation)' },
-  ];
+    { value: 'ACTIVE', label: 'Active (available for reservation)' }];
 
   form: CreatePropertyForm = {
     projectId: '', type: '', referenceCode: '', title: '',

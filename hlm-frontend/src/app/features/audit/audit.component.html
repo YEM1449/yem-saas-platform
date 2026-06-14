@@ -1,24 +1,24 @@
 <div class="page-header">
-  <h1 class="page-title">{{ 'audit.title' | translate }}</h1>
+  <h1 class="page-title">Journal d'audit</h1>
 </div>
 
 @if (!isAuthorized) {
-  <div class="alert alert-error">{{ 'common.accessDenied' | translate }}</div>
+  <div class="alert alert-error">Accès refusé.</div>
 } @else {
   <div class="filter-bar">
     <label>
-      {{ 'dashboard.commercial.fromDate' | translate }}
+      Du
       <input type="date" [(ngModel)]="from" />
     </label>
     <label>
-      {{ 'dashboard.commercial.toDate' | translate }}
+      Au
       <input type="date" [(ngModel)]="to" />
     </label>
-    <button (click)="load()" [disabled]="loading">{{ 'common.filter' | translate }}</button>
+    <button (click)="load()" [disabled]="loading">Filtrer</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="audit-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="audit-loading-state" aria-label="Chargement...">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -30,7 +30,7 @@
   } @else if (events.length === 0) {
     <div class="card">
       <div class="empty-state">
-        <p class="empty-state-title">{{ 'audit.noEvents' | translate }}</p>
+        <p class="empty-state-title">Aucun événement d'audit.</p>
       </div>
     </div>
   } @else {
@@ -39,11 +39,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>{{ 'audit.date' | translate }}</th>
-              <th>{{ 'audit.eventType' | translate }}</th>
-              <th>{{ 'audit.actor' | translate }}</th>
-              <th>{{ 'audit.target' | translate }}</th>
-              <th>{{ 'common.reference' | translate }}</th>
+              <th>Date</th>
+              <th>Type d'événement</th>
+              <th>Acteur</th>
+              <th>Cible</th>
+              <th>Référence</th>
             </tr>
           </thead>
           <tbody>

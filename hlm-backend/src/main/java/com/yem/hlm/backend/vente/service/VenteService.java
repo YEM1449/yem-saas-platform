@@ -50,7 +50,9 @@ import java.util.UUID;
  * <p>A Vente tracks the full commercial lifecycle from compromis to livraison.
  * It can be created by converting a Reservation or directly from contact + property.
  *
- * <p>State machine: COMPROMIS → FINANCEMENT → ACTE_NOTARIE → LIVRE (or ANNULE at any step).
+ * <p>State machine (VEFA Loi 44-00, Wave 12): PROSPECT → OPTION → RESERVE → EN_RETRACTATION →
+ * ACOMPTE → COMPROMIS → FINANCEMENT → ACTE → LIVRE_AVEC_RESERVES → RESERVES_LEVEES →
+ * LIVRE_DEFINITIF. ANNULE is the terminal failure state (see {@link VenteStatut}).
  */
 @Service
 @Transactional
@@ -223,7 +225,7 @@ public class VenteService {
         // Property must be ACTIVE or RESERVED to start a vente.
         // If ACTIVE (direct creation path), reserve it now.
         // If already RESERVED (from deposit/reservation workflow), keep it RESERVED.
-        // Property becomes SOLD only at ACTE_NOTARIE stage (see updateStatut).
+        // Property becomes SOLD only at ACTE stage (was ACTE_NOTARIE pre-Wave-12; see updateStatut).
         if (property.getStatus() == PropertyStatus.ACTIVE) {
             propertyWorkflow.reserve(property, LocalDateTime.now());
             propertyRepository.save(property);

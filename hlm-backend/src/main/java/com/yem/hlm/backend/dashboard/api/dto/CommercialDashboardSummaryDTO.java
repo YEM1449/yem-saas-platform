@@ -115,7 +115,7 @@ public record CommercialDashboardSummaryDTO(
         // ── Sales pipeline by statut (non-terminal ventes) ───────────────────
         /**
          * Active vente pipeline breakdown: statut → count.
-         * Statuts: COMPROMIS, FINANCEMENT, ACTE_NOTARIE.
+         * Statuts: non-terminal VEFA stages (see VenteStatut).
          */
         Map<String, Long> ventesParStatut,
 

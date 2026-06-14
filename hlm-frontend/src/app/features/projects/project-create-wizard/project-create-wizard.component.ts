@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import {
   FormArray,
   FormBuilder,
@@ -13,7 +13,7 @@ import { TrancheService } from '../tranche.service';
 @Component({
   selector: 'app-project-create-wizard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
   templateUrl: './project-create-wizard.component.html',
   styleUrl: './project-create-wizard.component.scss',
 })
@@ -34,8 +34,7 @@ export class ProjectCreateWizardComponent {
     { value: 'IMMEUBLES', label: 'Projet Immeubles',
       hint: 'Appartements, Duplex, Commerces — plusieurs bâtiments par tranche' },
     { value: 'VILLAS',    label: 'Projet Villas',
-      hint: 'Maisons individuelles avec terrain, option piscine / jardin' },
-  ];
+      hint: 'Maisons individuelles avec terrain, option piscine / jardin' }];
 
   readonly PROPERTY_TYPES = [
     { value: 'APPARTEMENT', label: 'Appartement' },
@@ -44,8 +43,7 @@ export class ProjectCreateWizardComponent {
     { value: 'T3',          label: 'T3' },
     { value: 'DUPLEX',      label: 'Duplex' },
     { value: 'COMMERCE',    label: 'Local commercial' },
-    { value: 'VILLA',       label: 'Villa' },
-  ];
+    { value: 'VILLA',       label: 'Villa' }];
 
   get isVillaProject(): boolean {
     return this.step1.get('projectType')?.value === 'VILLAS';
@@ -53,20 +51,17 @@ export class ProjectCreateWizardComponent {
 
   readonly ORIENTATIONS = [
     'SUD', 'NORD', 'EST', 'OUEST',
-    'SUD-OUEST', 'SUD-EST', 'NORD-OUEST', 'NORD-EST',
-  ];
+    'SUD-OUEST', 'SUD-EST', 'NORD-OUEST', 'NORD-EST'];
 
   readonly NAMING_OPTIONS = [
     { value: 'LETTRE',  label: 'Lettres (A, B, C…)',   hint: 'Standard — recommandé' },
     { value: 'CHIFFRE', label: 'Chiffres (1, 2, 3…)',  hint: 'Alternative simple' },
-    { value: 'CUSTOM',  label: 'Noms personnalisés',   hint: 'Le Jasmin, La Lavande…' },
-  ];
+    { value: 'CUSTOM',  label: 'Noms personnalisés',   hint: 'Le Jasmin, La Lavande…' }];
 
   readonly REF_PATTERNS = [
     { value: 'BUILDING_FLOOR_UNIT', label: 'Bâtiment + Étage + N° (A101, B203)', hint: 'Multi-bâtiments' },
     { value: 'FLOOR_UNIT',          label: 'Étage + N° (101, 203)',              hint: 'Mono-bâtiment' },
-    { value: 'SEQUENTIAL',          label: 'Séquentiel (APT-001…)',              hint: 'Numérotation continue' },
-  ];
+    { value: 'SEQUENTIAL',          label: 'Séquentiel (APT-001…)',              hint: 'Numérotation continue' }];
 
   readonly STATUT_LABELS: Record<string, string> = {
     EN_PREPARATION:       'En préparation',

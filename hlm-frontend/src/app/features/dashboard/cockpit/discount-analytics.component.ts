@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { DiscountAnalytics } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-discount-analytics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="widget">
       <div class="widget-header">

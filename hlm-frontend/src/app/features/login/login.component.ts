@@ -1,18 +1,17 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, LanguageSwitcherComponent],
+  imports: [FormsModule, LanguageSwitcherComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

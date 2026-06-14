@@ -1,7 +1,7 @@
 import {
   Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil, switchMap, of } from 'rxjs';
@@ -26,7 +26,7 @@ export interface UserSuggestion {
 @Component({
   selector: 'app-user-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './user-picker.component.html',
   styleUrl: './user-picker.component.css',
 })

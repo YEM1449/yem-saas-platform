@@ -11,7 +11,7 @@
         </svg>
       </div>
       <h1 class="login-title">HLM CRM</h1>
-      <p class="login-subtitle">{{ 'login.title' | translate }}</p>
+      <p class="login-subtitle">HLM Login</p>
     </div>
 
     <!-- Login form -->
@@ -30,7 +30,7 @@
 
         <form (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
           <div class="field">
-            <label for="email">{{ 'login.email' | translate }}</label>
+            <label for="email">Email</label>
             <input
               id="email"
               name="email"
@@ -44,7 +44,7 @@
           </div>
 
           <div class="field">
-            <label for="password">{{ 'login.password' | translate }}</label>
+            <label for="password">Mot de passe</label>
             <div class="password-wrap">
               <input
                 id="password"
@@ -57,7 +57,7 @@
                 [attr.aria-invalid]="error ? 'true' : null"
               />
               <button type="button" class="btn-eye" (click)="showPassword = !showPassword"
-                      [attr.aria-label]="showPassword ? ('common.passwordHide' | translate) : ('common.passwordShow' | translate)"
+                      [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
                       tabindex="-1">
                 @if (showPassword) {
                   <!-- Eye-off icon -->
@@ -88,7 +88,7 @@
             @if (loading) {
               <span class="btn-spinner" aria-hidden="true"></span>
             }
-            {{ loading ? ('login.submitting' | translate) : ('login.submit' | translate) }}
+            {{ loading ? 'Connexion...' : 'Se connecter' }}
           </button>
         </form>
       </div>
@@ -98,10 +98,10 @@
     @if (showSocieteSelection) {
       <div class="login-body">
         <h2 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:var(--c-text)">
-          {{ 'login.selectSociete' | translate }}
+          Choisir une société
         </h2>
         <p style="margin:0 0 4px;font-size:.875rem;color:var(--c-text-secondary)">
-          {{ 'login.selectSocieteDesc' | translate }}
+          Votre compte est associé à plusieurs sociétés.
         </p>
 
         @if (error) {
@@ -121,14 +121,14 @@
         </div>
 
         <button class="btn-back" (click)="backToLogin()" [disabled]="loading">
-          ← {{ 'login.back' | translate }}
+          ← ← Retour
         </button>
       </div>
     }
 
     <!-- Footer: language switcher -->
     <div class="login-footer">
-      <span class="login-footer-label">{{ 'language.label' | translate }}</span>
+      <span class="login-footer-label">Langue</span>
       <app-language-switcher />
     </div>
 

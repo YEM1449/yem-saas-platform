@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, InventoryTypeRow, PipelineStageAgingRow, TypeVelocityRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
 import { MiniBarChartComponent } from './mini-bar-chart.component';
@@ -22,6 +22,8 @@ import { AgentPerformanceComponent } from './cockpit/agent-performance.component
 import { InventoryIntelligenceComponent } from './cockpit/inventory-intelligence.component';
 import { DiscountAnalyticsComponent } from './cockpit/discount-analytics.component';
 import { InsightsPanelComponent } from './cockpit/insights-panel.component';
+import { ShortcutGridComponent } from './shortcut-grid.component';
+import { VentesRecentesComponent } from './ventes-recentes.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { KPI_TARGETS, toneFor } from '../../core/config/kpi-targets';
 
@@ -38,13 +40,13 @@ interface DayPriority {
   selector: 'app-home-dashboard',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, DatePipe, DecimalPipe,
+    RouterLink, DatePipe, DecimalPipe,
     KpiDeltaChipComponent, FunnelComponent, AlertsPanelComponent,
     PipelineAnalysisComponent, ForecastWidgetComponent, AgentPerformanceComponent,
     InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
     MiniBarChartComponent, SalesByTypeComponent, InventoryAgingComponent,
-    PricePerSqmComponent, TimeToCloseComponent, PortfolioValueComponent,
-  ],
+    PricePerSqmComponent, TimeToCloseComponent, PortfolioValueComponent, LowerCasePipe,
+    ShortcutGridComponent, VentesRecentesComponent],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
 })
@@ -539,8 +541,7 @@ export class HomeDashboardComponent implements OnInit {
 
   readonly PROJECT_COLORS = [
     '#16a34a','#7c3aed','#059669','#d97706','#dc2626',
-    '#0891b2','#65a30d','#c026d3','#ea580c','#0f172a',
-  ];
+    '#0891b2','#65a30d','#c026d3','#ea580c','#0f172a'];
 
   projectColor(i: number): string {
     return this.PROJECT_COLORS[i % this.PROJECT_COLORS.length];

@@ -1,5 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { InventoryAgingRow } from '../dashboard-cockpit.service';
 
 const AGING_COLORS: Record<string, string> = {
@@ -13,7 +13,7 @@ const AGING_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-inventory-aging',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">

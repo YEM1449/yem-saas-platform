@@ -1,8 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { OutboxService } from './outbox.service';
 import {
   MessageChannel,
@@ -15,7 +14,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-outbox',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './outbox.component.html',
   styleUrl: './outbox.component.css',
 })

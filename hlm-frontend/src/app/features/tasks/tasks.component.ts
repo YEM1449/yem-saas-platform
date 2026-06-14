@@ -1,8 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, TaskStatus } from './task.model';
 import { TaskFormComponent } from './task-form.component';
@@ -11,7 +10,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskFormComponent, TranslateModule],
+  imports: [FormsModule, TaskFormComponent, DatePipe],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
 })
@@ -43,8 +42,7 @@ export class TasksComponent implements OnInit {
     { value: 'OPEN', label: 'Ouvert' },
     { value: 'IN_PROGRESS', label: 'En cours' },
     { value: 'DONE', label: 'Terminé' },
-    { value: 'CANCELED', label: 'Annulé' },
-  ];
+    { value: 'CANCELED', label: 'Annulé' }];
 
   ngOnInit(): void {
     this.load();

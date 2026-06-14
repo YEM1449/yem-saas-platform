@@ -1,4 +1,4 @@
-<h2 data-testid="tasks-page-title">{{ 'tasks.title' | translate }}</h2>
+<h2 data-testid="tasks-page-title">Tâches</h2>
 
 <div class="toolbar">
   <select data-testid="status-filter" [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
@@ -6,7 +6,7 @@
       <option [value]="s.value">{{ s.label }}</option>
     }
   </select>
-  <button data-testid="new-task-btn" (click)="openCreate()" class="btn-primary">+ {{ 'tasks.create' | translate }}</button>
+  <button data-testid="new-task-btn" (click)="openCreate()" class="btn-primary">+ Nouvelle tâche</button>
 </div>
 
 @if (success) {
@@ -27,13 +27,13 @@
 @if (!loading && tasks.length === 0) {
   <div class="empty-state" data-testid="tasks-empty-state">
     <div class="empty-state-icon">📋</div>
-    <p class="empty-state-title">{{ 'tasks.noTasks' | translate }}</p>
+    <p class="empty-state-title">Aucune tâche.</p>
     <p class="empty-state-desc">
       Créez votre première tâche pour suivre vos rendez-vous, relances et actions commerciales.
     </p>
     <div class="empty-state-actions">
       <button class="btn btn-primary" data-testid="empty-new-task-btn" (click)="openCreate()">
-        + {{ 'tasks.create' | translate }}
+        + Nouvelle tâche
       </button>
     </div>
   </div>
@@ -43,10 +43,10 @@
   <table data-testid="tasks-table">
     <thead>
       <tr>
-        <th>{{ 'tasks.titleLabel' | translate }}</th>
-        <th>{{ 'common.status' | translate }}</th>
-        <th>{{ 'tasks.dueDate' | translate }}</th>
-        <th>{{ 'common.actions' | translate }}</th>
+        <th>Titre</th>
+        <th>Statut</th>
+        <th>Échéance</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -62,10 +62,10 @@
               <button (click)="changeStatus(task, 'IN_PROGRESS')" class="btn-small">Démarrer</button>
             }
             @if (task.status === 'IN_PROGRESS') {
-              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">{{ 'tasks.done' | translate }}</button>
+              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">Terminée</button>
             }
-            <button (click)="openEdit(task)" class="btn-small">{{ 'common.edit' | translate }}</button>
-            <button (click)="deleteTask(task)" class="btn-small btn-danger">{{ 'common.delete' | translate }}</button>
+            <button (click)="openEdit(task)" class="btn-small">Modifier</button>
+            <button (click)="deleteTask(task)" class="btn-small btn-danger">Supprimer</button>
           </td>
         </tr>
       }

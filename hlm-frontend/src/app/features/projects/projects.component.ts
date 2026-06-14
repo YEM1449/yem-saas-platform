@@ -1,9 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectService } from './project.service';
@@ -15,7 +14,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule],
+  imports: [RouterLink, FormsModule, DecimalPipe],
   templateUrl: './projects.component.html',
   styleUrl: './projects.component.css',
 })

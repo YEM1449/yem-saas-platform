@@ -3,7 +3,7 @@ import {
   ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef,
   Input, signal, computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { interval, Subscription, switchMap, takeUntil, Subject, EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -47,7 +47,7 @@ const LEGEND_ITEMS = (Object.keys(LOT_STATUS_COLORS) as LotDisplayStatus[]).map(
 @Component({
   selector: 'app-project-viewer-3d',
   standalone: true,
-  imports: [CommonModule, RouterLink, LotTooltip3dComponent, ModelUploadAdminComponent],
+  imports: [RouterLink, LotTooltip3dComponent, ModelUploadAdminComponent],
   templateUrl: './project-viewer-3d.component.html',
   styleUrl:    './project-viewer-3d.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

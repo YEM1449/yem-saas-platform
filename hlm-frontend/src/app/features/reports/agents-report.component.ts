@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HomeDashboardService, AgentLeaderboardRow } from '../dashboard/home-dashboard.service';
 import { ReportExportService, ReportFilters } from './report-export.service';
@@ -7,7 +7,7 @@ import { ReportExportService, ReportFilters } from './report-export.service';
 @Component({
   selector: 'app-agents-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './agents-report.component.html',
   styleUrl: './agents-report.component.css',
 })

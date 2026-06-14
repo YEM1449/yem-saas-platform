@@ -1,5 +1,5 @@
 import { Component, Input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { AgentPerformance, AgentRow } from '../dashboard-cockpit.service';
 
 type SortKey = 'totalCA' | 'totalSales' | 'conversionRate' | 'avgDealSize' | 'avgDaysToClose' | 'activePipeline';
@@ -7,7 +7,7 @@ type SortKey = 'totalCA' | 'totalSales' | 'conversionRate' | 'avgDealSize' | 'av
 @Component({
   selector: 'app-agent-performance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="widget">
       <div class="widget-header">

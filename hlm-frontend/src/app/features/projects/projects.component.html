@@ -1,7 +1,7 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">{{ 'projects.title' | translate }}</h1>
+    <h1 class="page-title">Projets immobiliers</h1>
     <p class="page-subtitle">
       {{ activeCount }} actif{{ activeCount !== 1 ? 's' : '' }}
       @if (archivedCount > 0) { · {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }} }
@@ -13,7 +13,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        {{ 'projects.create' | translate }}
+        Nouveau projet
       </button>
     </div>
   }
@@ -28,14 +28,14 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" [placeholder]="'projects.searchPlaceholder' | translate"
+    <input class="search-input" type="search" placeholder="Rechercher un projet…"
            [(ngModel)]="searchQuery" />
   </div>
 
-  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" [attr.aria-label]="'projects.statusFilter' | translate">
-    <option value="">{{ 'common.allStatuses' | translate }}</option>
-    <option value="ACTIVE">{{ 'common.active' | translate }}</option>
-    <option value="ARCHIVED">{{ 'common.inactive' | translate }}</option>
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" aria-label="Statut">
+    <option value="">Tous les statuts</option>
+    <option value="ACTIVE">Actif</option>
+    <option value="ARCHIVED">Inactif</option>
   </select>
 
   @if (!loading) {
@@ -50,7 +50,7 @@
 
 <!-- ── Loading ──────────────────────────────────────────────── -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="projects-loading-state" [attr.aria-label]="'common.loading' | translate">
+  <div class="skeleton-stack" data-testid="projects-loading-state" aria-label="Chargement...">
     @for (i of [1,2,3,4,5]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -62,14 +62,14 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🏗️</div>
-      <p class="empty-state-title">{{ 'common.noResults' | translate }}</p>
+      <p class="empty-state-title">Aucun résultat trouvé.</p>
       <p class="empty-state-desc">Créez votre premier projet pour regrouper vos biens immobiliers.</p>
       @if (canWrite) {
         <button class="btn btn-primary" (click)="openModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          {{ 'projects.create' | translate }}
+          Nouveau projet
         </button>
       }
     </div>
@@ -80,8 +80,8 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔍</div>
-      <p class="empty-state-title">{{ 'projects.noProjectsFound' | translate }}</p>
-      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">{{ 'common.clearFilters' | translate }}</button>
+      <p class="empty-state-title">Aucun projet trouvé</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">Effacer les filtres</button>
     </div>
   </div>
 }
@@ -172,7 +172,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">{{ 'projects.create' | translate }}</h2>
+        <h2 class="modal-title">Nouveau projet</h2>
         <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
       </div>
 
@@ -182,23 +182,23 @@
         }
 
         <div class="form-group">
-          <label class="form-label required">{{ 'projects.name' | translate }}</label>
-          <input class="form-control" type="text" [placeholder]="'projects.searchPlaceholder' | translate"
+          <label class="form-label required">Nom du projet</label>
+          <input class="form-control" type="text" placeholder="Rechercher un projet…"
                  [(ngModel)]="form.name" [disabled]="submitting" autocomplete="off" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">{{ 'common.description' | translate }}</label>
+          <label class="form-label">Description</label>
           <textarea class="form-control" rows="3"
-                    [placeholder]="'common.notes' | translate"
+                    placeholder="Notes"
                     [(ngModel)]="form.description" [disabled]="submitting"></textarea>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.cancel' | translate }}</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-          @if (submitting) { {{ 'common.saving' | translate }} } @else { {{ 'common.create' | translate }} }
+          @if (submitting) { Enregistrement... } @else { Créer }
         </button>
       </div>
 

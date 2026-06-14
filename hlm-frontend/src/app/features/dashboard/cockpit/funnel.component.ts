@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
 
 /**
@@ -12,7 +12,7 @@ import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-funnel',
   standalone: true,
-  imports: [CommonModule, DecimalPipe],
+  imports: [DecimalPipe],
   template: `
     <div class="widget">
       <div class="widget-header">

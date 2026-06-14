@@ -1,5 +1,5 @@
 import { Component, Input, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { SparklinePoint } from '../dashboard-cockpit.service';
 
 /**
@@ -10,7 +10,7 @@ import { SparklinePoint } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-sparkline',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <svg class="sparkline" [attr.viewBox]="viewBox" preserveAspectRatio="none"
          [attr.aria-label]="ariaLabel">

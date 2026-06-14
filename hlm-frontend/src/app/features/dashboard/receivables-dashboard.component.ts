@@ -2,10 +2,9 @@ import {
   Component, inject, OnInit, OnDestroy,
   ViewChild, ElementRef, ChangeDetectorRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import {
   Chart,
   BarController, BarElement, CategoryScale, LinearScale,
@@ -23,7 +22,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
 @Component({
   selector: 'app-receivables-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [RouterLink, DatePipe],
   templateUrl: './receivables-dashboard.component.html',
   styleUrl: './receivables-dashboard.component.css',
 })
@@ -118,8 +117,7 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
               d.days30.amount,
               d.days60.amount,
               d.days90.amount,
-              d.days90plus.amount,
-            ],
+              d.days90plus.amount],
             backgroundColor: ['#66bb6a','#ffa726','#ef5350','#c62828','#7b1fa2'],
             borderWidth: 2,
           }],

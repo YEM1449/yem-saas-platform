@@ -12,16 +12,16 @@ PROSPECT → OPTION → RESERVE → EN_RETRACTATION → ACOMPTE → COMPROMIS
 ANNULE = terminal (depuis tout état non terminal)
 ```
 
-Chaque transition est gardée par le backend (`VenteService.validateTransition`). Une transition
-interdite renvoie **409 `INVALID_STATUS_TRANSITION`**. La machine d'états est la source de vérité ;
-l'interface n'affiche que les actions autorisées par l'état courant.
+Chaque transition est vérifiée par la plateforme — une transition interdite est refusée
+(**409 `INVALID_STATUS_TRANSITION`**). L'interface n'affiche que les actions autorisées par
+l'état courant.
 
 ## 2. L'option (blocage temporaire)
 
 - **Quoi** : bloquer un bien 24 à 72 h pour un prospect, avant réservation.
 - **Comment** : depuis un bien `ACTIVE` → « Poser une option ». Le bien passe `RESERVED`.
-- **Expiration automatique** : si l'option n'est pas confirmée avant `option_expire_at`, un
-  *scheduler horaire* l'annule (`ANNULE`) et libère le bien. Aucune action manuelle requise.
+- **Expiration automatique** : si l'option n'est pas confirmée avant l'heure d'expiration, une
+  vérification automatique toutes les heures l'annule (`ANNULE`) et libère le bien. Aucune action manuelle requise.
 - **Règle** : un seul engagement actif par bien (RG-B03) — impossible d'optionner/vendre un bien
   déjà engagé (**409 `PROPERTY_ALREADY_ENGAGED`**).
 
@@ -31,15 +31,15 @@ l'interface n'affiche que les actions autorisées par l'état courant.
   - **Plafond légal 5 %** du prix (Art. 618-4) : un dépôt supérieur est **refusé**
     (**422 `VIOLATION_LEGALE`**).
 - À la confirmation, la vente entre en **`EN_RETRACTATION`** et la plateforme ouvre le
-  **délai légal de rétractation de 7 jours** (Art. 618-3 ; configurable par marché via `MARKET_CODE`,
-  FR = 10 j). La date limite est affichée sur la fiche.
+  **délai légal de rétractation de 7 jours** (Art. 618-3 ; configurable par marché via la
+  configuration marché, ex. France = 10 j). La date limite est affichée sur la fiche.
 - **Exercer la rétractation** (bouton dédié, ADMIN/MANAGER) :
   - **Dans le délai** → la vente est annulée, le bien libéré, et un **remboursement « à rembourser »
     est créé automatiquement** sur la fiche vente (montant = dépôt versé). Le gestionnaire ajuste le
     montant si besoin puis le marque **« remboursé »** (date + moyen : virement/chèque/espèces) — la
     confirmation est tracée dans le journal d'audit (`REMBOURSEMENT_EFFECTUE`).
   - **Hors délai** → l'action est refusée (**409 `RETRACTATION_IMPOSSIBLE`**).
-  - **Sans rétractation** : à l'expiration du délai, un *scheduler* fait passer la vente en `RESERVE`
+  - **Sans rétractation** : à l'expiration du délai, une vérification automatique fait passer la vente en `RESERVE`
     (la vente continue).
 
 ## 4. L'échéancier légal des appels de fonds (Art. 618-17)

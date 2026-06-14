@@ -14,7 +14,7 @@ public record ShareholderKpiDTO(
         BigDecimal portfolioValueAtMarket,
         /** Sum of prix_vente for all LIVRE ventes (realized revenue). */
         BigDecimal soldValue,
-        /** Sum of prix_vente for active pipeline (COMPROMIS, FINANCEMENT, ACTE_NOTARIE). */
+        /** Sum of prix_vente for the active VEFA pipeline (all non-terminal stages). */
         BigDecimal projectedCompletionExposure,
         /** Per-project concentration — sorted by pct descending. */
         List<ProjectConcentrationRow> concentrationByProject,

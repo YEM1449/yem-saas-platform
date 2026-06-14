@@ -53,7 +53,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        {{ 'contacts.create' | translate }}
+        Nouveau contact
       </button>
     }
   </div>
@@ -89,7 +89,7 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" [placeholder]="'contacts.searchPlaceholder' | translate"
+    <input class="search-input" type="search" placeholder="Rechercher par nom, email, téléphone…"
            [(ngModel)]="searchQuery" />
   </div>
 
@@ -110,7 +110,7 @@
   <div class="alert alert-error">{{ error }}</div>
 }
 @if (loading) {
-  <div class="skeleton-stack" data-testid="contacts-loading-state" [attr.aria-label]="'common.loading' | translate">
+  <div class="skeleton-stack" data-testid="contacts-loading-state" aria-label="Chargement...">
     @for (i of [1,2,3,4,5,6]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -126,10 +126,10 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">{{ 'contacts.noContacts' | translate }}</p>
+        <p class="empty-state-title">Aucun contact</p>
         <p class="empty-state-desc">Ajoutez votre premier contact pour démarrer votre pipeline commercial.</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.create' | translate }}</button>
+          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
         }
       </div>
     </div>
@@ -139,7 +139,7 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">{{ 'contacts.noResultsFor' | translate: { query: searchQuery } }}</p>
+        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
         <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
       </div>
     </div>
@@ -151,11 +151,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>{{ 'common.name' | translate }}</th>
-              <th>{{ 'common.email' | translate }}</th>
-              <th>{{ 'common.phone' | translate }}</th>
-              <th>{{ 'common.type' | translate }}</th>
-              <th>{{ 'common.status' | translate }}</th>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Type</th>
+              <th>Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -172,7 +172,7 @@
                 <td class="contact-name-cell">
                   <a [routerLink]="['/app/contacts', c.id]"
                      class="row-link"
-                     [attr.aria-label]="('contacts.viewDetailAria' | translate: { name: c.fullName })"
+                     [attr.aria-label]="'Voir la fiche de ' + c.fullName"
                      (click)="$event.stopPropagation()">
                     <span class="contact-avatar-sm" [style.background]="avatarColor(c)" aria-hidden="true">{{ initials(c) }}</span>
                     <span class="row-link-text">{{ c.fullName }}</span>
@@ -200,10 +200,10 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">{{ 'contacts.noContacts' | translate }}</p>
+        <p class="empty-state-title">Aucun contact</p>
         <p class="empty-state-desc">Ajoutez votre premier contact pour démarrer votre pipeline commercial.</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.create' | translate }}</button>
+          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
         }
       </div>
     </div>
@@ -213,7 +213,7 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">{{ 'contacts.noResultsFor' | translate: { query: searchQuery } }}</p>
+        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
         <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
       </div>
     </div>
@@ -252,7 +252,7 @@
               </span>
             }
             @if (!c.email && !c.phone) {
-              <span class="contact-card-detail contact-card-detail-muted">{{ 'contacts.noCoordinates' | translate }}</span>
+              <span class="contact-card-detail contact-card-detail-muted">Aucune coordonnée</span>
             }
           </div>
           <div class="contact-card-footer">
@@ -279,17 +279,17 @@
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-blue">{{ kpiActive }}</span>
-      <span class="kpi-label">{{ 'contacts.kpiActiveClients' | translate }}</span>
+      <span class="kpi-label">Clients actifs</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-green">{{ kpiCompleted }}</span>
-      <span class="kpi-label">{{ 'contacts.kpiSalesCompleted' | translate }}</span>
+      <span class="kpi-label">Ventes réalisées</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-rate">{{ kpiConversionRate }}%</span>
-      <span class="kpi-label">{{ 'contacts.kpiConversionRate' | translate }}</span>
+      <span class="kpi-label">Taux de conversion</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
@@ -406,10 +406,10 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">{{ 'contacts.noContactsInPipeline' | translate }}</p>
+        <p class="empty-state-title">Aucun contact dans le pipeline</p>
         <p class="empty-state-desc">Créez votre premier prospect pour démarrer le suivi commercial.</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.create' | translate }}</button>
+          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
         }
       </div>
     </div>
@@ -418,7 +418,7 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">{{ 'contacts.noResultsFor' | translate: { query: searchQuery } }}</p>
+        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
         <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
       </div>
     </div>
@@ -431,7 +431,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">{{ 'contacts.create' | translate }}</h2>
+        <h2 class="modal-title">Nouveau contact</h2>
         <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Fermer">✕</button>
       </div>
 

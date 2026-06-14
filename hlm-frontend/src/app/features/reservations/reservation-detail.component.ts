@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReservationService, ReservationDetail } from './reservation.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -7,7 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-reservation-detail',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, RouterLink],
   templateUrl: './reservation-detail.component.html',
   styleUrl: './reservation-detail.component.css',
 })

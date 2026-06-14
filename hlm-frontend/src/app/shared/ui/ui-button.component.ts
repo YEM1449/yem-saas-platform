@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export type UiButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 export type UiButtonSize = 'md' | 'sm' | 'xs';
@@ -21,7 +21,7 @@ export type UiButtonSize = 'md' | 'sm' | 'xs';
 @Component({
   selector: 'ui-button',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button

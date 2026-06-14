@@ -2,9 +2,8 @@ import {
   Component, inject, OnInit, OnDestroy,
   ViewChild, ElementRef, ChangeDetectorRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
 import {
   Chart,
   BarController, BarElement, CategoryScale, LinearScale,
@@ -18,7 +17,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 @Component({
   selector: 'app-cash-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [FormsModule, DecimalPipe],
   templateUrl: './cash-dashboard.component.html',
   styleUrl: './cash-dashboard.component.css',
 })

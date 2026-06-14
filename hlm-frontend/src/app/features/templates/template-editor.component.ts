@@ -7,7 +7,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -37,7 +37,7 @@ interface CheckItem    { varName: string; desc: string; present: boolean; }
 @Component({
   selector: 'app-template-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './template-editor.component.html',
   styleUrl:    './template-editor.component.css',
 })
@@ -109,8 +109,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         { var: 'agentName',     desc: 'Nom de l\'agent' },
         { var: 'agentEmail',    desc: 'Email de l\'agent' },
         { var: 'generatedAt',   desc: 'Date/heure de génération' },
-        { var: 'createdAt',     desc: 'Date de création' },
-      ],
+        { var: 'createdAt',     desc: 'Date de création' }],
     },
     {
       id: 'property', label: 'Bien immobilier', icon: '🏠',
@@ -120,8 +119,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         { var: 'propertyType',  desc: 'Type (APPARTEMENT, VILLA…)' },
         { var: 'agreedPrice',   desc: 'Prix de vente convenu' },
         { var: 'listPrice',     desc: 'Prix catalogue' },
-        { var: 'prixVente',     desc: 'Prix de vente (pipeline)' },
-      ],
+        { var: 'prixVente',     desc: 'Prix de vente (pipeline)' }],
     },
     {
       id: 'buyer', label: 'Acheteur / Acquéreur', icon: '👤',
@@ -133,8 +131,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         { var: 'buyerAddress',     desc: 'Adresse postale' },
         { var: 'buyerNationalId',  desc: 'CIN / N° pièce d\'identité' },
         { var: 'buyerIce',         desc: 'ICE / numéro fiscal' },
-        { var: 'buyerTypeLabel',   desc: 'Personne physique / morale' },
-      ],
+        { var: 'buyerTypeLabel',   desc: 'Personne physique / morale' }],
     },
     {
       id: 'contract', label: 'Contrat & Dates', icon: '📄',
@@ -151,10 +148,8 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         { var: 'depositAmount',      desc: 'Montant de l\'acompte (MAD)' },
         { var: 'depositDate',        desc: 'Date de versement de l\'acompte' },
         { var: 'dueDate',            desc: 'Date d\'échéance' },
-        { var: 'notes',              desc: 'Notes et observations libres' },
-      ],
-    },
-  ];
+        { var: 'notes',              desc: 'Notes et observations libres' }],
+    }];
 
   filteredGroups: VarGroup[] = this.groups;
 
@@ -164,8 +159,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
     { id: 'signature', icon: '✍️', label: 'Bloc de signatures' },
     { id: 'pagebreak', icon: '📄', label: 'Saut de page' },
     { id: 'separator', icon: '—',  label: 'Séparateur horizontal' },
-    { id: 'tableinfo', icon: '📊', label: 'Tableau récapitulatif' },
-  ];
+    { id: 'tableinfo', icon: '📊', label: 'Tableau récapitulatif' }];
 
   // ── Legal clause library ──────────────────────────────────────────
   readonly clauseSections: ClauseSection[] = [
@@ -187,8 +181,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
           html: `<h3>CONDITION SUSPENSIVE D'OBTENTION D'AUTORISATION</h3>
 <p>La présente vente est conclue sous la condition suspensive de l'obtention par le vendeur des autorisations administratives nécessaires à la réalisation de l'opération immobilière objet du présent acte, dans un délai de <strong>[DÉLAI]</strong> à compter de la signature.</p>
 <p>En cas de non-obtention de ladite autorisation dans le délai imparti, le présent contrat sera réputé nul et non avenu, et toutes les sommes versées par l'acquéreur lui seront remboursées sans retard.</p>`,
-        },
-      ],
+        }],
     },
     {
       title: 'Garanties & responsabilités',
@@ -208,8 +201,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
           html: `<h3>CLAUSE PÉNALE</h3>
 <p>En cas d'inexécution par l'une des parties de ses obligations aux termes du présent contrat, la partie défaillante sera redevable envers l'autre partie d'une indemnité forfaitaire égale à <strong>dix pour cent (10 %)</strong> du prix de vente convenu, à titre de dommages et intérêts, sans préjudice du droit pour la partie lésée de demander l'exécution forcée du contrat ou sa résolution judiciaire.</p>
 <p>Cette indemnité est de plein droit et ne nécessite ni mise en demeure préalable ni intervention judiciaire pour être acquise.</p>`,
-        },
-      ],
+        }],
     },
     {
       title: 'Dispositions générales',
@@ -237,8 +229,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
           html: `<h3>MÉDIATION PRÉALABLE</h3>
 <p>En cas de litige portant sur l'interprétation ou l'exécution du présent contrat, les parties s'engagent à rechercher, avant toute action judiciaire, une solution amiable par voie de médiation auprès d'un médiateur agréé, désigné d'un commun accord ou à défaut par le Tribunal compétent.</p>
 <p>Cette tentative de médiation préalable est obligatoire. Sa durée ne saurait excéder <strong>trente (30) jours</strong> à compter de la saisine du médiateur, sauf accord des parties pour la prolonger.</p>`,
-        },
-      ],
+        }],
     },
     {
       title: 'Paiement & Finances',
@@ -263,10 +254,8 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
           html: `<h3>PÉNALITÉS DE RETARD</h3>
 <p>Tout retard de paiement d'une échéance, quelle qu'en soit la cause, donnera lieu de plein droit et sans mise en demeure préalable à l'application de pénalités de retard calculées au taux de <strong>[TAUX] %</strong> par mois de retard, calculées sur le montant de l'échéance en souffrance.</p>
 <p>Ces pénalités seront dues à compter du premier jour suivant la date d'échéance jusqu'au paiement intégral des sommes dues, en principal et intérêts.</p>`,
-        },
-      ],
-    },
-  ];
+        }],
+    }];
 
   // ── Lifecycle ──────────────────────────────────────────────────────
   ngOnInit(): void {

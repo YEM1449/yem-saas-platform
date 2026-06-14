@@ -1,5 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { SalesByTypeRow } from '../dashboard-cockpit.service';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -15,7 +15,7 @@ const TYPE_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-sales-by-type',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">

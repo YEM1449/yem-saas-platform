@@ -1,9 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProspectService } from './prospect.service';
 import { ContactInterestService } from './contact-interest.service';
@@ -22,7 +21,7 @@ import { MessageChannel } from '../../core/models/outbox.model';
 @Component({
   selector: 'app-prospect-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, TranslateModule],
+  imports: [RouterLink, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './prospect-detail.component.html',
   styleUrl: './prospect-detail.component.css',
 })

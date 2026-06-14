@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { DashboardAlert } from '../dashboard-cockpit.service';
 
@@ -12,7 +12,7 @@ import { DashboardAlert } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-alerts-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   template: `
     <div class="alerts-panel">
       <div class="alerts-head">

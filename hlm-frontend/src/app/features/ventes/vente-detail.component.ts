@@ -1,8 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import {
   VenteService, Vente, VenteStatut, EcheanceStatut, ContractStatus,
   TypeFinancement, MotifAnnulation, UpdateFinancingRequest,
@@ -44,9 +43,8 @@ interface AttentionItem {
   selector: 'app-vente-detail',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DatePipe, DecimalPipe, TranslateModule,
-    RouterLink, PipelineStepperComponent, AdvancePipelineDialogComponent,
-  ],
+    FormsModule, DatePipe, DecimalPipe,
+    RouterLink, PipelineStepperComponent, AdvancePipelineDialogComponent],
   templateUrl: './vente-detail.component.html',
   styleUrl: './vente-detail.component.css',
 })

@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { LotStatusSnapshot, LOT_STATUS_COLORS, LOT_STATUS_LABELS, LotDisplayStatus } from '../../models/lot-3d-status.model';
 import { Lot3dMappingEntry } from '../../models/project-3d-model.model';
 
 @Component({
   selector: 'app-lot-tooltip-3d',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe],
   templateUrl: './lot-tooltip-3d.component.html',
   styleUrl: './lot-tooltip-3d.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

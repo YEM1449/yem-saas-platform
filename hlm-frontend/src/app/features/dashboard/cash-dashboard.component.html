@@ -1,15 +1,15 @@
 <div class="cash-dashboard">
   <div class="dash-header dashboard-header">
-    <h2>{{ 'dashboard.cash.title' | translate }}</h2>
+    <h2>Tableau de bord — Encaissements</h2>
     <div class="date-filter filter-bar">
-      <label>{{ 'dashboard.cash.fromDate' | translate }} <input type="date" [(ngModel)]="from" /></label>
-      <label>{{ 'dashboard.cash.toDate' | translate }} <input type="date" [(ngModel)]="to" /></label>
-      <button (click)="load()">{{ 'dashboard.cash.load' | translate }}</button>
+      <label>Du <input type="date" [(ngModel)]="from" /></label>
+      <label>Au <input type="date" [(ngModel)]="to" /></label>
+      <button (click)="load()">Actualiser</button>
     </div>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="cash-dashboard-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="cash-dashboard-loading-state" aria-label="Chargement...">
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
@@ -24,19 +24,19 @@
     <!-- KPI Cards -->
     <section class="kpi-section">
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.cash.expected' | translate }}</span>
+        <span class="kpi-label">Prévu</span>
         <span class="kpi-value">{{ data.expectedInPeriod | number:'1.0-0' }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.cash.issued' | translate }}</span>
+        <span class="kpi-label">Émis</span>
         <span class="kpi-value">{{ data.issuedInPeriod | number:'1.0-0' }}</span>
       </div>
       <div class="kpi-card accent-green">
-        <span class="kpi-label">{{ 'dashboard.cash.collected' | translate }}</span>
+        <span class="kpi-label">Encaissé</span>
         <span class="kpi-value">{{ data.collectedInPeriod | number:'1.0-0' }}</span>
       </div>
       <div class="kpi-card accent-red">
-        <span class="kpi-label">{{ 'dashboard.cash.overdue' | translate }}</span>
+        <span class="kpi-label">Impayés</span>
         <span class="kpi-value">{{ data.overdueAmount | number:'1.0-0' }}</span>
         <span class="kpi-sub">{{ data.overdueCount }}</span>
       </div>
@@ -45,13 +45,13 @@
     <!-- Charts row -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>{{ 'dashboard.commercial.kpiRevenue' | translate }}</h4>
+        <h4>Chiffre d'affaires</h4>
         <canvas #kpiCanvas style="max-height:200px"></canvas>
       </div>
 
       @if (data.agingBuckets.length) {
         <div class="chart-card">
-          <h4>{{ 'dashboard.cash.agingTitle' | translate }}</h4>
+          <h4>Vieillissement des impayés</h4>
           <canvas #agingCanvas style="max-height:200px"></canvas>
         </div>
       }
@@ -60,13 +60,13 @@
     <!-- Next due items -->
     @if (data.nextDueItems.length > 0) {
       <section class="breakdown-table">
-        <h4>{{ 'dashboard.cash.nextDue' | translate }}</h4>
+        <h4>Prochaines échéances</h4>
         <table class="data-table">
           <thead>
             <tr>
-              <th>{{ 'dashboard.cash.label' | translate }}</th>
-              <th>{{ 'dashboard.cash.dueDate' | translate }}</th>
-              <th>{{ 'dashboard.cash.remaining' | translate }}</th>
+              <th>Libellé</th>
+              <th>Échéance</th>
+              <th>Restant</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +86,7 @@
   @if (!loading && !error && !data) {
     <div class="card">
       <div class="empty-state">
-        <p class="empty-state-title">{{ 'dashboard.cash.noData' | translate }}</p>
+        <p class="empty-state-title">Aucune donnée pour cette période.</p>
       </div>
     </div>
   }

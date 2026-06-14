@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, ActivationRequest, InvitationDetails } from '../models/login.model';
 
@@ -14,8 +13,6 @@ const SUPPORTED_LANGS = ['fr', 'en', 'ar'];
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private translate = inject(TranslateService);
-
   private cachedUser: MeResponse | null = null;
 
   get user(): MeResponse | null {
@@ -90,10 +87,8 @@ export class AuthService {
     return this.me().pipe(
       tap((user) => {
         this.cachedUser = user;
-        // Apply the user's persisted language preference
+        // Apply RTL direction for Arabic users
         if (user.langueInterface && SUPPORTED_LANGS.includes(user.langueInterface)) {
-          this.translate.use(user.langueInterface);
-          localStorage.setItem('hlm_lang', user.langueInterface);
           document.documentElement.dir = user.langueInterface === 'ar' ? 'rtl' : 'ltr';
           document.documentElement.lang = user.langueInterface;
         }

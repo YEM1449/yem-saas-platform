@@ -1,12 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
+
 import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-language-switcher',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="lang-bar" role="group" aria-label="Sélection de la langue">
       <svg class="lang-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -90,14 +89,12 @@ import { HttpClient } from '@angular/common/http';
   `],
 })
 export class LanguageSwitcherComponent {
-  private translate = inject(TranslateService);
   private http = inject(HttpClient);
 
   languages = [
     { code: 'fr', label: 'FR', name: 'Français' },
     { code: 'en', label: 'EN', name: 'English' },
-    { code: 'ar', label: 'عربي', name: 'العربية' },
-  ];
+    { code: 'ar', label: 'عربي', name: 'العربية' }];
 
   activeLang: string = localStorage.getItem('hlm_lang') || 'fr';
 
@@ -107,7 +104,6 @@ export class LanguageSwitcherComponent {
     document.body.style.transition = 'opacity 0.15s ease';
     document.body.style.opacity = '0.7';
 
-    this.translate.use(lang);
     localStorage.setItem('hlm_lang', lang);
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;

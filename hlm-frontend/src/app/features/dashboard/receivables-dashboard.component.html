@@ -1,10 +1,10 @@
 <div class="dashboard">
   <div class="dashboard-header">
-    <h2>{{ 'dashboard.receivables.title' | translate }}</h2>
+    <h2>Tableau de bord des créances</h2>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="receivables-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="receivables-loading-state" aria-label="Chargement...">
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
@@ -97,24 +97,24 @@
       }
     </section>
 
-    <p class="as-of">{{ 'dashboard.commercial.asOf' | translate }} {{ data.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p class="as-of">Données au {{ data.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
 
     <!-- KPI cards -->
     <section class="kpi-section">
       <div class="kpi-card accent-orange">
-        <span class="kpi-label">{{ 'dashboard.receivables.totalOutstanding' | translate }}</span>
+        <span class="kpi-label">Total en cours</span>
         <span class="kpi-value">{{ formatAmount(data.totalOutstanding) }}</span>
       </div>
       <div class="kpi-card accent-red">
-        <span class="kpi-label">{{ 'dashboard.receivables.totalOverdue' | translate }}</span>
+        <span class="kpi-label">Total en retard</span>
         <span class="kpi-value">{{ formatAmount(data.totalOverdue) }}</span>
       </div>
       <div class="kpi-card accent-green">
-        <span class="kpi-label">{{ 'dashboard.receivables.collectionRate' | translate }}</span>
+        <span class="kpi-label">Taux de recouvrement</span>
         <span class="kpi-value">{{ formatPct(data.collectionRate) }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">{{ 'dashboard.receivables.avgDays' | translate }}</span>
+        <span class="kpi-label">Délai moyen de paiement</span>
         <span class="kpi-value">{{ data.avgDaysToPayment !== null ? (data.avgDaysToPayment + ' d') : '—' }}</span>
       </div>
     </section>
@@ -122,16 +122,16 @@
     <!-- Charts row: aging doughnut + overdue by project -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>{{ 'dashboard.receivables.agingTitle' | translate }}</h4>
+        <h4>Analyse de vieillissement</h4>
         <div style="max-width:280px;margin:0 auto">
           <canvas #agingCanvas></canvas>
         </div>
       </div>
 
       <div class="chart-card">
-        <h4>{{ 'dashboard.receivables.overdueByProject' | translate }}</h4>
+        <h4>Impayés par projet (top 10)</h4>
         @if (data.overdueByProject.length === 0) {
-          <p class="no-data">{{ 'dashboard.receivables.noData' | translate }}</p>
+          <p class="no-data">Aucune donnée.</p>
         } @else {
           <div [style.height.px]="chartHeight(data.overdueByProject)">
             <canvas #projectCanvas></canvas>
@@ -143,36 +143,36 @@
     <!-- Aging detail table -->
     <section class="tables-row">
       <div class="breakdown-table">
-        <h4>{{ 'dashboard.receivables.agingTitle' | translate }}</h4>
+        <h4>Analyse de vieillissement</h4>
         <table>
           <thead><tr>
-            <th>{{ 'common.type' | translate }}</th>
-            <th>{{ 'dashboard.commercial.count' | translate }}</th>
-            <th>{{ 'common.amount' | translate }}</th>
+            <th>Type</th>
+            <th>Nb</th>
+            <th>Montant</th>
           </tr></thead>
           <tbody>
-            <tr><td>{{ 'dashboard.receivables.notYetDue' | translate }}</td><td class="num">{{ data.current.count }}</td><td class="num">{{ formatAmount(data.current.amount) }}</td></tr>
-            <tr><td>{{ 'dashboard.receivables.days30' | translate }}</td><td class="num">{{ data.days30.count }}</td><td class="num">{{ formatAmount(data.days30.amount) }}</td></tr>
-            <tr><td>{{ 'dashboard.receivables.days60' | translate }}</td><td class="num">{{ data.days60.count }}</td><td class="num">{{ formatAmount(data.days60.amount) }}</td></tr>
-            <tr><td>{{ 'dashboard.receivables.days90' | translate }}</td><td class="num">{{ data.days90.count }}</td><td class="num">{{ formatAmount(data.days90.amount) }}</td></tr>
-            <tr><td>{{ 'dashboard.receivables.days90plus' | translate }}</td><td class="num">{{ data.days90plus.count }}</td><td class="num">{{ formatAmount(data.days90plus.amount) }}</td></tr>
+            <tr><td>Non échu</td><td class="num">{{ data.current.count }}</td><td class="num">{{ formatAmount(data.current.amount) }}</td></tr>
+            <tr><td>1–30 jours</td><td class="num">{{ data.days30.count }}</td><td class="num">{{ formatAmount(data.days30.amount) }}</td></tr>
+            <tr><td>31–60 jours</td><td class="num">{{ data.days60.count }}</td><td class="num">{{ formatAmount(data.days60.amount) }}</td></tr>
+            <tr><td>61–90 jours</td><td class="num">{{ data.days90.count }}</td><td class="num">{{ formatAmount(data.days90.amount) }}</td></tr>
+            <tr><td>> 90 jours</td><td class="num">{{ data.days90plus.count }}</td><td class="num">{{ formatAmount(data.days90plus.amount) }}</td></tr>
           </tbody>
         </table>
       </div>
 
       <!-- Recent payments -->
       <div class="breakdown-table">
-        <h4>{{ 'dashboard.receivables.recentPayments' | translate }}</h4>
+        <h4>Paiements récents</h4>
         @if (data.recentPayments.length === 0) {
-          <p class="no-data">{{ 'dashboard.receivables.noData' | translate }}</p>
+          <p class="no-data">Aucune donnée.</p>
         } @else {
           <table>
             <thead>
               <tr>
-                <th>{{ 'dashboard.receivables.paymentDate' | translate }}</th>
-                <th>{{ 'common.amount' | translate }}</th>
-                <th>{{ 'dashboard.receivables.method' | translate }}</th>
-                <th>{{ 'common.project' | translate }}</th>
+                <th>Date paiement</th>
+                <th>Montant</th>
+                <th>Méthode</th>
+                <th>Projet</th>
               </tr>
             </thead>
             <tbody>

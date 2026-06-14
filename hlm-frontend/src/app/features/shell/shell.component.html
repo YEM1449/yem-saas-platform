@@ -1,9 +1,9 @@
 <!-- Impersonation warning banner -->
 @if (isImpersonating) {
   <div class="impersonation-banner">
-    ⚠ {{ 'impersonation.banner' | translate }} <strong>{{ impersonationTarget }}</strong>
+    ⚠ Mode usurpation : <strong>{{ impersonationTarget }}</strong>
     <button class="impersonation-btn" (click)="endImpersonation()">
-      {{ 'impersonation.return' | translate }}
+      Revenir au SuperAdmin
     </button>
   </div>
 }
@@ -31,7 +31,7 @@
         <rect x="2.5" y="2" width="9" height="11" rx=".5" stroke="currentColor" stroke-width="1.4"/>
         <path d="M5 5h1M8 5h1M5 7.5h1M8 7.5h1M5 10h1M8 10h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
-      <span>{{ 'app.name' | translate }}</span>
+      <span>HLM CRM</span>
     }
   </span>
 
@@ -64,18 +64,18 @@
         <span class="rail-letter" aria-hidden="true">H</span>
         <span class="brand-icon">
           <svg width="20" height="20" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <rect x="2.5" y="2" width="9" height="11" rx=".5" stroke="#16a34a" stroke-width="1.4"/>
-            <path d="M5 5h1M8 5h1M5 7.5h1M8 7.5h1M5 10h1M8 10h1" stroke="#16a34a" stroke-width="1.2" stroke-linecap="round"/>
+            <rect x="2.5" y="2" width="9" height="11" rx=".5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M5 5h1M8 5h1M5 7.5h1M8 7.5h1M5 10h1M8 10h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
         </span>
-        <span class="brand-name">{{ 'app.name' | translate }}</span>
+        <span class="brand-name">HLM CRM</span>
       }
     </div>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
 
-      <div class="nav-section-label">{{ 'nav.pipeline' | translate }}</div>
+      <div class="nav-section-label">PIPELINE COMMERCIAL</div>
 
       <a routerLink="/app/dashboard" routerLinkActive="nav-active"
          class="nav-item" title="Tableau de bord"
@@ -86,25 +86,25 @@
           <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
           <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
         </svg>
-        {{ 'nav.dashboard' | translate }}
+        Tableau de bord
       </a>
 
       <a routerLink="/app/projects" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.projects' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Projets" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <rect x="2" y="3" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
           <path d="M2 6h10M9 1.5v3M5 1.5v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        {{ 'nav.projects' | translate }}
+        Projets
       </a>
 
       <a routerLink="/app/properties" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.properties' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Propriétés" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <rect x="2.5" y="2" width="9" height="11" rx=".5" stroke="currentColor" stroke-width="1.4"/>
           <path d="M5 5h1M8 5h1M5 7.5h1M8 7.5h1M5 10h1M8 10h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
-        {{ 'nav.properties' | translate }}
+        Propriétés
       </a>
 
       <a routerLink="/app/contacts" routerLinkActive="nav-active"
@@ -119,21 +119,21 @@
       </a>
 
       <a routerLink="/app/tasks" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.tasks' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Tâches" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
           <path d="M5 7l2 2 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        {{ 'nav.tasks' | translate }}
+        Tâches
       </a>
 
       <a routerLink="/app/reservations" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.reservations' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Réservations" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M1.5 7.5L7 2l5 .5.5 5L7 13z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
           <circle cx="9" cy="5" r=".9" fill="currentColor" stroke="none"/>
         </svg>
-        {{ 'nav.reservations' | translate }}
+        Réservations
       </a>
 
       <a routerLink="/app/ventes" routerLinkActive="nav-active"
@@ -157,11 +157,11 @@
             <path d="M8 1.5v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
             <path d="M5 7h4M5 9h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
-          {{ 'nav.contracts' | translate }}
+          Contrats
         </a>
       }
 
-      <div class="nav-section-label">{{ 'nav.analytics' | translate }}</div>
+      <div class="nav-section-label">ANALYTIQUE</div>
 
       @if (isAdmin) {
         <a routerLink="/app/groupe" routerLinkActive="nav-active"
@@ -176,12 +176,12 @@
       }
 
       <a routerLink="/app/dashboard/receivables" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.receivables' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Créances" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M7 1.5L1.5 4h11z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
           <path d="M2 6v5M5 6v5M9 6v5M12 6v5M1 12.5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        {{ 'nav.receivables' | translate }}
+        Créances
       </a>
 
       <a routerLink="/app/dashboard/tresorerie" routerLinkActive="nav-active"
@@ -194,35 +194,35 @@
       </a>
 
       <a routerLink="/app/commissions" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.commissions' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Commissions" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/>
           <path d="M5 9c0 1.1.9 2 2 2h.5a1.5 1.5 0 000-3H6.5a1.5 1.5 0 010-3H8a2 2 0 012 2M7 3.5V5m0 7v1.5"
                 stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        {{ 'nav.commissions' | translate }}
+        Commissions
       </a>
 
       <div class="nav-section-label">Communication</div>
 
       @if (isAdminOrManager) {
         <a routerLink="/app/messages" routerLinkActive="nav-active"
-           class="nav-item" title="{{ 'nav.messages' | translate }}" (click)="closeSidebar()">
+           class="nav-item" title="Messages" (click)="closeSidebar()">
           <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 13V4a1 1 0 011-1z"
                   stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
           </svg>
-          {{ 'nav.messages' | translate }}
+          Messages
         </a>
       }
 
       <a routerLink="/app/notifications" routerLinkActive="nav-active"
-         class="nav-item" title="{{ 'nav.notifications' | translate }}" (click)="closeSidebar()">
+         class="nav-item" title="Notifications" (click)="closeSidebar()">
         <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M4 11V7a3 3 0 116 0v4l1 1.5H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
           <path d="M6 12.5a1 1 0 002 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        {{ 'nav.notifications' | translate }}
+        Notifications
       </a>
 
       @if (isAdminOrManager) {
@@ -257,37 +257,37 @@
       }
 
       @if (isAdminOrManager) {
-        <div class="nav-section-label">{{ 'nav.admin' | translate }}</div>
+        <div class="nav-section-label">ADMINISTRATION</div>
 
         <a routerLink="/app/audit" routerLinkActive="nav-active"
-           class="nav-item" title="{{ 'nav.audit' | translate }}" (click)="closeSidebar()">
+           class="nav-item" title="Journal d'audit" (click)="closeSidebar()">
           <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M3 4h8M3 7h8M3 10h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
             <circle cx="11" cy="10" r="2" stroke="currentColor" stroke-width="1.3"/>
             <path d="M12.5 11.5l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
-          {{ 'nav.audit' | translate }}
+          Journal d'audit
         </a>
 
         @if (isAdmin) {
           <a routerLink="/app/admin/users" routerLinkActive="nav-active"
-             class="nav-item" title="{{ 'nav.users' | translate }}" (click)="closeSidebar()">
+             class="nav-item" title="Gestion Utilisateurs" (click)="closeSidebar()">
             <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <circle cx="5" cy="5" r="2" stroke="currentColor" stroke-width="1.4"/>
               <path d="M1 12c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
               <path d="M10 7l1.5 1.5L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            {{ 'nav.users' | translate }}
+            Gestion Utilisateurs
           </a>
           <a routerLink="/app/templates" routerLinkActive="nav-active"
-             class="nav-item" title="{{ 'nav.templates' | translate }}" (click)="closeSidebar()">
+             class="nav-item" title="Modèles PDF" (click)="closeSidebar()">
             <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M3 1.5h5l3 3V12a.5.5 0 01-.5.5h-7A.5.5 0 013 12V1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
               <path d="M8 1.5v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
               <circle cx="10" cy="10" r="2.2" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="1.3"/>
               <path d="M9.3 10h1.4M10 9.3v1.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
             </svg>
-            {{ 'nav.templates' | translate }}
+            Modèles PDF
           </a>
         }
       }
@@ -318,13 +318,13 @@
           </svg>
         }
       </button>
-      <button class="logout-btn" (click)="logout()" title="{{ 'app.logout' | translate }}"
+      <button class="logout-btn" (click)="logout()" title="Déconnexion"
               data-testid="logout-button">
         <svg viewBox="0 0 15 15" fill="none" aria-hidden="true">
           <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        {{ 'app.logout' | translate }}
+        Déconnexion
       </button>
     </div>
 
@@ -338,7 +338,7 @@
       <!-- Société chip -->
       <button class="topbar-societe-chip" type="button">
         <span class="topbar-societe-avatar">{{ userInitial }}</span>
-        <span>{{ 'app.name' | translate }}</span>
+        <span>HLM CRM</span>
         <svg class="topbar-societe-caret" viewBox="0 0 10 10" fill="none" aria-hidden="true">
           <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -346,7 +346,7 @@
 
       <!-- Breadcrumbs spacer -->
       <div class="topbar-breadcrumbs" aria-label="Fil d'Ariane">
-        <span>{{ 'app.name' | translate }}</span>
+        <span>HLM CRM</span>
       </div>
 
       <!-- Command search bar -->

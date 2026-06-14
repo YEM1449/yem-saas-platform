@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ReceivablesDashboardService } from '../dashboard/receivables-dashboard.service';
 import {
   ReceivablesDashboard,
@@ -15,7 +15,7 @@ interface AgingRow {
 @Component({
   selector: 'app-creances-report',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DatePipe],
   templateUrl: './creances-report.component.html',
   styleUrl: './creances-report.component.css',
 })
@@ -41,8 +41,7 @@ export class CreancesReportComponent implements OnInit {
       { label: '1 – 30 jours',        count: d.days30.count,     amount: d.days30.amount },
       { label: '31 – 60 jours',       count: d.days60.count,     amount: d.days60.amount },
       { label: '61 – 90 jours',       count: d.days90.count,     amount: d.days90.amount },
-      { label: '> 90 jours',          count: d.days90plus.count, amount: d.days90plus.amount },
-    ];
+      { label: '> 90 jours',          count: d.days90plus.count, amount: d.days90plus.amount }];
   }
 
   get totalBucketCount(): number {

@@ -21,7 +21,7 @@ public record HomeDashboardDTO(
         LocalDateTime asOf,
 
         // ── Pipeline: ventes actives ──────────────────────────────────────────
-        /** Active ventes (all non-terminal: COMPROMIS, FINANCEMENT, ACTE_NOTARIE). */
+        /** Active ventes (all non-terminal VEFA stages — see {@link com.yem.hlm.backend.vente.domain.VenteStatut}). */
         long activeVentesCount,
         /** Sum of prixVente for active pipeline. */
         BigDecimal caActivePipeline,
@@ -150,7 +150,7 @@ public record HomeDashboardDTO(
         List<InventoryTypeRow> inventoryByType,
 
         // ── Pipeline stage aging ──────────────────────────────────────────────
-        /** Aging metrics per active vente statut (COMPROMIS/FINANCEMENT/ACTE_NOTARIE). Empty for AGENT. */
+        /** Aging metrics per active vente statut (non-terminal VEFA stages). Empty for AGENT. */
         List<PipelineStageAgingRow> pipelineStageAging,
 
         // ── Per-type velocity ─────────────────────────────────────────────────
@@ -256,7 +256,7 @@ public record HomeDashboardDTO(
     ) {}
 
     /**
-     * Aging metrics for one active pipeline stage (COMPROMIS / FINANCEMENT / ACTE_NOTARIE).
+     * Aging metrics for one active VEFA pipeline stage (e.g. OPTION, COMPROMIS, FINANCEMENT, ACTE…).
      * avgDays / maxDays = days since vente.createdAt (proxy for time in pipeline).
      * stalled30dCount = ventes in this stage for more than 30 days.
      */

@@ -7,13 +7,13 @@
   } @else {
     <div class="skeleton-stack" data-testid="vente-detail-loading-state" aria-label="Chargement de la vente…">
       <span class="skeleton skeleton-text-lg skeleton-w-75"></span>
-      <span class="skeleton skeleton-card" style="height:80px"></span>
+      <span class="skeleton skeleton-card sk-h-80"></span>
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
       </div>
-      <span class="skeleton skeleton-card" style="height:240px"></span>
+      <span class="skeleton skeleton-card sk-h-240"></span>
     </div>
   }
 }
@@ -22,8 +22,8 @@
   <!-- ── Page Header ──────────────────────────────────────────── -->
   <div class="page-header">
     <div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <h1 class="page-title" style="margin:0">Vente</h1>
+      <div class="d-flex items-center gap-10 flex-wrap">
+        <h1 class="page-title m-0">Vente</h1>
         <span class="ref-badge-lg">{{ v.venteRef }}</span>
         <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
       </div>
@@ -334,7 +334,7 @@
               @if (!editingPostLivraison) {
                 {{ (v.datePvReception | date:'dd/MM/yyyy') || '—' }}
                 @if (canWrite) {
-                  <button class="btn-link" (click)="openPostLivraisonEdit(v)" style="margin-left:6px;font-size:0.8rem">
+                  <button class="btn-link ml-6 text-sm" (click)="openPostLivraisonEdit(v)">
                     {{ v.datePvReception ? 'Modifier' : 'Saisir' }}
                   </button>
                 }
@@ -342,7 +342,7 @@
                 <input type="date" class="input-sm"
                        [value]="postLivraisonForm.datePvReception || ''"
                        (input)="postLivraisonForm.datePvReception = $any($event.target).value"
-                       style="border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;font-size:0.85rem"/>
+                       class="form-control-inline"/>
               }
             </dd>
 
@@ -354,8 +354,8 @@
                 <input type="date" class="input-sm"
                        [value]="postLivraisonForm.dateTitreFoncier || ''"
                        (input)="postLivraisonForm.dateTitreFoncier = $any($event.target).value"
-                       style="border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;font-size:0.85rem"/>
-                <div style="display:flex;gap:6px;margin-top:6px">
+                       class="form-control-inline"/>
+                <div class="d-flex gap-6 mt-6">
                   <button class="btn btn-sm btn-primary" (click)="savePostLivraison(v.id)">Enregistrer</button>
                   <button class="btn btn-sm btn-secondary" (click)="editingPostLivraison = false">Annuler</button>
                 </div>
@@ -477,7 +477,7 @@
               <span>Signer le contrat</span>
             </div>
           </div>
-          <p class="portal-desc" style="margin-top:8px">
+          <p class="portal-desc mt-8">
             Générez le PDF du contrat pour le télécharger, le faire signer, et l'archiver dans la fiche vente.
           </p>
           @if (canWrite) {
@@ -502,7 +502,7 @@
         @if (v.contractStatus === 'GENERATED') {
           <p class="portal-desc">Le contrat a été généré et est prêt à être signé.</p>
           @if (canWrite) {
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="d-flex gap-8 flex-wrap items-center">
               <button class="btn btn-primary"
                       (click)="signContract(v.id)"
                       [disabled]="contractSigning()"
@@ -545,7 +545,7 @@
                     Générer le PDF
                   }
                 </button>
-                <span class="text-muted" style="font-size:0.78rem" title="Le statut contrat est GÉNÉRÉ mais aucun PDF n'a encore été produit">
+                <span class="text-muted text-xs" title="Le statut contrat est GÉNÉRÉ mais aucun PDF n'a encore été produit">
                   Aucun PDF disponible
                 </span>
               }
@@ -577,7 +577,7 @@
               }
             }
           } @else {
-            <p class="portal-desc" style="font-size:0.82rem;color:#94a3b8;margin-top:4px">
+            <p class="portal-desc text-xs text-gray mt-4">
               Aucun PDF disponible pour ce contrat signé.
             </p>
           }
@@ -609,7 +609,7 @@
         </div>
       }
     </div>
-    @if (vefaError()) { <p class="msg-error" style="margin: 8px 16px 0">{{ vefaError() }}</p> }
+    @if (vefaError()) { <p class="msg-error alert-inset">{{ vefaError() }}</p> }
 
     @if (showEcheanceForm) {
       <div class="echeance-form card-body border-top">
@@ -807,7 +807,7 @@
                    placeholder="notaire@etude.fr" data-testid="financing-notaire-email"/>
           </div>
         </div>
-        <label class="form-label" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <label class="form-label d-flex items-center gap-8 mt-4">
           <input type="checkbox" [(ngModel)]="financing.creditObtenu" data-testid="financing-credit-obtenu"/>
           Crédit obtenu
         </label>
@@ -924,7 +924,7 @@
               PV livraison
             </button>
           }
-          <label class="btn btn-sm btn-secondary" style="cursor:pointer">
+          <label class="btn btn-sm btn-secondary cursor-pointer">
             @if (docUploading()) {
               <span class="spinner spinner-sm"></span> Téléversement…
             } @else {
@@ -936,10 +936,10 @@
       }
     </div>
     @if (docGenError()) {
-      <div class="alert alert-error" style="margin:8px 16px">{{ docGenError() }}</div>
+      <div class="alert alert-error alert-inset">{{ docGenError() }}</div>
     }
     @if (docError()) {
-      <div class="alert alert-error" style="margin:8px 16px">{{ docError() }}</div>
+      <div class="alert alert-error alert-inset">{{ docError() }}</div>
     }
     @if (v.documents.length === 0) {
       <div class="empty-state card-body">
@@ -955,7 +955,7 @@
             </svg>
             <span class="doc-name">{{ d.nomFichier }}</span>
             @if (d.uploadedByPortal) {
-              <span class="badge badge-info" style="font-size:11px;margin-left:4px">Portail</span>
+              <span class="badge badge-info text-2xs ml-4">Portail</span>
             }
             <span class="doc-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
             <button class="btn-link doc-download-btn"

@@ -7,7 +7,7 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 **→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
 (Consolidation of audit 2026-06-03 + cross-functional product review 2026-06-12 + fresh code scan 2026-06-13. Supersedes `audit-report-2026-06-03.md`, `action-plan-2026-06-03.md`, and `team-review-2026-06-12.md` for current state — those files are retained for history.)
 
-**11 open items (2026-06-13, updated):** 0 Critical · 0 Major · all A+B+C resolved. Remaining: 5 quick-wins XS (D), 5 code-quality (E). Next: Phase D or E.
+**0 open items (2026-06-13, all phases complete):** 0 Critical · 0 Major · all A+B+C+D+E resolved. 212 backend unit tests. 31 new frontend specs (VenteService ×10, PropertyService ×11, AuthService ×10). Next: Phase F (deferred) or new wave.
 
 **Solid:** multi-société isolation (`requireSocieteId()` ×280 + RLS phase 2), JWT in httpOnly cookie (no token in localStorage), 0 SQL-injection/mass-assignment surface, Vente/Tranche state machines guarded (→409), 3D WebGL hygiene (full dispose, DPR≤1.5, Page Visibility).
 
@@ -44,6 +44,13 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 - **B-005 ✅** `ComplianceController` `GET/PATCH /api/mon-espace/compliance` (ADMIN) pour saisie `numeroCndp`+`dateDeclarationCndp`.
 
 **Deferred (justifié, P2/P3):** F-009 (232 styles inline — refactor de masse), F-015 (CD — besoin secrets déploiement), F-012 (soft-delete — décision de conception).
+
+**Fixed — Phase E (2026-06-13):**
+- **E-001 ✅** CommonModule retiré de 89 fichiers TS (2-pass script) ; pipes individuels ajoutés aux `imports[]` ; lint rule `no-restricted-imports` dans `.eslintrc.json`.
+- **E-002 ✅** Micro-utilities dans `styles.css` (`.mt-*`, `.mb-*`, `.d-flex`, `.gap-*`, `.sk-h-*`, `.alert-*`) ; 25→7 inline styles dans vente-detail, 21→0 dans property-detail et home-dashboard ; `@angular-eslint/template/no-inline-styles` warn.
+- **E-003 ✅** `ShortcutGridComponent` + `VentesRecentesComponent` + `KpiCardComponent` extraits de home-dashboard ; budget `anyComponentStyle` 50 kB warning / 56 kB error.
+- **E-004 ✅** `TrancheServiceTest` (5), `ReservationServiceTest` (5), `ProjectGenerationServiceTest` (2) — suite 200 → 212 tests.
+- **E-005 ✅** `vente.service.spec.ts` (10 specs), `property.service.spec.ts` (11 specs), `auth.service.spec.ts` (10 specs) — TypeScript 0 errors, build green.
 
 Next available changeset: **086** (084 = client_groupe_lien #005, 085 = remboursement #028).
 

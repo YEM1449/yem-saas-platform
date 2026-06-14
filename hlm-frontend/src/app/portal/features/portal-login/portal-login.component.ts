@@ -1,8 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 
 type Step = 'request' | 'sent' | 'verifying' | 'error';
@@ -10,7 +9,7 @@ type Step = 'request' | 'sent' | 'verifying' | 'error';
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './portal-login.component.html',
   styleUrl: './portal-login.component.css',
 })
@@ -18,8 +17,6 @@ export class PortalLoginComponent {
   private auth      = inject(PortalAuthService);
   private router    = inject(Router);
   private route     = inject(ActivatedRoute);
-  private translate = inject(TranslateService);
-
   step    = signal<Step>('request');
   email   = '';
   societeKey = '';
@@ -56,7 +53,7 @@ export class PortalLoginComponent {
       },
       error: () => {
         this.loading.set(false);
-        this.error.set(this.translate.instant('portal.login.errorSend'));
+        this.error.set("Impossible d'envoyer le lien. Vérifiez votre adresse e-mail et réessayez.");
         this.step.set('error');
       },
     });
@@ -68,7 +65,7 @@ export class PortalLoginComponent {
         this.router.navigateByUrl('/portal');
       },
       error: () => {
-        this.error.set(this.translate.instant('portal.login.errorVerify'));
+        this.error.set('Ce lien est invalide ou expiré. Veuillez en demander un nouveau.');
         this.step.set('error');
       },
     });

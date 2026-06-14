@@ -9,10 +9,10 @@
   <!-- Invite user form -->
   <div class="add-form">
     <div class="add-form-header page-header" style="margin-bottom:12px">
-      <h4 class="page-title" style="font-size:15px">{{ 'societes.members.title' | translate }}</h4>
+      <h4 class="page-title" style="font-size:15px">Membres</h4>
       <div class="page-header-actions">
         <button class="btn btn-primary btn-sm" (click)="showInviteForm = !showInviteForm">
-          {{ showInviteForm ? ('common.cancel' | translate) : ('societes.members.invite' | translate) }}
+          {{ showInviteForm ? 'Annuler' : 'Inviter' }}
         </button>
       </div>
     </div>
@@ -21,19 +21,19 @@
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">{{ 'common.email' | translate }}</label>
+            <label class="form-label required">Email</label>
             <input class="form-control" type="email" [(ngModel)]="inviteForm.email" name="inviteEmail" />
           </div>
           <div class="form-group">
-            <label class="form-label required">{{ 'contacts.firstName' | translate }}</label>
+            <label class="form-label required">Prénom</label>
             <input class="form-control" type="text" [(ngModel)]="inviteForm.prenom" name="invitePrenom" />
           </div>
           <div class="form-group">
-            <label class="form-label required">{{ 'contacts.lastName' | translate }}</label>
+            <label class="form-label required">Nom</label>
             <input class="form-control" type="text" [(ngModel)]="inviteForm.nomFamille" name="inviteNomFamille" />
           </div>
           <div class="form-group">
-            <label class="form-label required">{{ 'societes.members.role' | translate }}</label>
+            <label class="form-label required">Rôle</label>
             <select class="form-control" [(ngModel)]="inviteForm.role" name="inviteRole">
               <option value="ADMIN">ADMIN</option>
               <option value="MANAGER">MANAGER</option>
@@ -43,7 +43,7 @@
         </div>
         <div class="modal-footer" style="padding:0">
           <button class="btn btn-primary" [disabled]="inviting" (click)="submitInvite()">
-            @if (inviting) { {{ 'admin.inviteSending' | translate }} } @else { {{ 'admin.inviteSend' | translate }} }
+            @if (inviting) { Envoi en cours... } @else { Envoyer l'invitation }
           </button>
         </div>
       </div>
@@ -52,7 +52,7 @@
 
   <!-- Members table -->
   @if (loading) {
-    <div class="skeleton-stack" data-testid="societe-members-loading-state" [attr.aria-label]="'common.loading' | translate">
+    <div class="skeleton-stack" data-testid="societe-members-loading-state" aria-label="Chargement...">
       @for (i of [1,2,3,4,5]; track i) {
         <span class="skeleton skeleton-row"></span>
       }
@@ -65,11 +65,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>{{ 'common.email' | translate }}</th>
-              <th>{{ 'societes.members.role' | translate }}</th>
-              <th>{{ 'societes.members.status' | translate }}</th>
-              <th>{{ 'common.date' | translate }}</th>
-              <th>{{ 'common.actions' | translate }}</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -90,9 +90,9 @@
                 </td>
                 <td>
                   @if (m.actif) {
-                    <span class="badge badge-active">{{ 'common.active' | translate }}</span>
+                    <span class="badge badge-active">Actif</span>
                   } @else {
-                    <span class="badge badge-inactive">{{ 'common.inactive' | translate }}</span>
+                    <span class="badge badge-inactive">Inactif</span>
                   }
                 </td>
                 <td class="td-muted">{{ m.dateAjout | date:'dd/MM/yyyy' }}</td>
@@ -110,7 +110,7 @@
                       {{ impersonating[m.userId] ? '...' : 'Imp.' }}
                     </button>
                     <button class="btn btn-sm btn-danger" (click)="removeMembre(m)">
-                      {{ 'societes.members.deactivate' | translate }}
+                      Désactiver
                     </button>
                   </div>
                 </td>
@@ -118,7 +118,7 @@
             }
             @if (membres.length === 0) {
               <tr>
-                <td colspan="5" class="empty-state">{{ 'societes.members.noMembers' | translate }}</td>
+                <td colspan="5" class="empty-state">Aucun membre.</td>
               </tr>
             }
           </tbody>

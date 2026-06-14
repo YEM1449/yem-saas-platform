@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { AdminUserService, UserQuotaRequest, UserQuotaResponse, ProjectAccessResponse } from './admin-user.service';
@@ -12,7 +12,7 @@ type Tab = 'objectifs' | 'projets';
 @Component({
   selector: 'app-user-settings-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   styles: [`
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; }
     .modal { background: #fff; border-radius: 10px; padding: 1.5rem; width: min(540px, 95vw); max-height: 90vh; overflow-y: auto;

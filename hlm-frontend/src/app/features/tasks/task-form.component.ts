@@ -1,10 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
 import { TaskService } from './task.service';
 import { Task, CreateTaskRequest, UpdateTaskRequest } from './task.model';
 import { UserPickerComponent } from '../../shared/pickers/user-picker.component';
@@ -17,7 +16,7 @@ interface PropertySuggestion { id: string; title: string; referenceCode: string;
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, UserPickerComponent, ContactPickerComponent],
+  imports: [FormsModule, UserPickerComponent, ContactPickerComponent],
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.css',
 })

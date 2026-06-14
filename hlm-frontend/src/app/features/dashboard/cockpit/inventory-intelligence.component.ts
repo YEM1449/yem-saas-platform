@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { InventoryIntelligence } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-inventory-intelligence',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   template: `
     <div class="widget">
       <div class="widget-header">
