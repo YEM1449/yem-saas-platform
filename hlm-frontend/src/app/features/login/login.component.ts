@@ -6,12 +6,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, LanguageSwitcherComponent],
+  imports: [FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

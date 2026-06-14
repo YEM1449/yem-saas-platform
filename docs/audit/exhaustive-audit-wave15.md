@@ -216,7 +216,13 @@ reserve list only.** Verdict: low risk except the project-wide reserve list.
 
 ## TRACK 6 · Ergonomics & UX Under Real Conditions (Karim) — *primary new track*
 
-### EX-007 🟡 Medium — CONFIRMED — The language switcher is cosmetic: it changes nothing but `dir`, and `dir=rtl` actively breaks the layout
+### EX-007 🟡 Medium — ✅ RESOLVED (2026-06-14) — The language switcher is cosmetic: it changes nothing but `dir`, and `dir=rtl` actively breaks the layout
+> **Fix:** removed the façade. The `LanguageSwitcherComponent` is deleted and unmounted from the CRM
+> shell, super-admin shell, and login. The `APP_INITIALIZER` no longer reads `hlm_lang`/sets `dir=rtl`;
+> it now **clears the stale `hlm_lang` key** and forces `dir=ltr` / `lang=fr`, so a user who had
+> previously selected Arabic is no longer pinned to a broken RTL layout (self-healing). Decision: the
+> product is committed FR-only (Phase D removed ngx-translate); reinstate a real i18n layer + switcher
+> together when France/Arabic work begins (EX-014). Frontend build green.
 - **Where:** `core/components/language-switcher.component.ts` (mounted in `shell`, `superadmin-shell`,
   `login`). Offers **FR / EN / عربي**. `switchLanguage()` persists to `localStorage`, PUTs
   `/auth/me/langue`, fades the body, and sets `document.documentElement.dir = lang==='ar' ? 'rtl':'ltr'`.
@@ -233,7 +239,15 @@ reserve list only.** Verdict: low risk except the project-wide reserve list.
   i18n layer (see EX-009). At minimum, remove the `dir=rtl` side effect until an RTL stylesheet exists.
 - **Effort:** S (hide) / L (real i18n). Links T11.1.
 
-### EX-008 🟡 Medium — CONFIRMED — `LOCALE_ID` is `'fr'` (metropolitan France), not `'fr-MA'`
+### EX-008 🟡 Medium — ✅ RESOLVED (2026-06-14) — `LOCALE_ID` is `'fr'` (metropolitan France), not `'fr-MA'`
+> **Fix:** `app.config.ts` now sets `LOCALE_ID = 'fr-MA'` (registers `localeFrMA`; keeps `localeFr`
+> for any explicit `:'fr'` usage) so `date`/`number`/`percent` pipes format per Morocco, and adds
+> `{ provide: DEFAULT_CURRENCY_CODE, useValue: 'MAD' }` so any `currency` pipe defaults to MAD (Angular's
+> built-in default is USD). **Note:** the codebase currently has **no `| currency` pipe usage** — money
+> is rendered via hardcoded helpers (`toLocaleString('fr-FR') + ' MAD'`, ` K/M MAD`) scattered across
+> reports/dashboards. Those are correct (always ' MAD') but duplicated and use `fr-FR` grouping; the
+> `DEFAULT_CURRENCY_CODE` change is defensive for future pipe usage. **Follow-up:** consolidate the
+> hardcoded money helpers into one shared `formatMad()` / currency pipe (consistency, France-readiness).
 - **Where:** `app.config.ts:23` `{ provide: LOCALE_ID, useValue: 'fr' }`, `registerLocaleData(localeFr)`.
 - **What:** Angular's `currency`/`number`/`date` pipes resolve against France French. The default
   currency for the `currency` pipe under `fr` is **EUR (€)** — every `{{ x | currency }}` without an
@@ -462,8 +476,8 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | DA-010 | T3 | 🟠 High | Med | — | Plaintext CIN/financials; CNDP blast radius | BE/Data | M |
 | DA-013 | T8/T9 | 🟠 High | High | — | No tamper-evident history of legal actions | BE | M |
 | DA-009 | T9 | 🟠 High | High | — | Generated reservation voidable (missing 44-00 mentions) | Legal/BE | M |
-| **EX-007** | T6/T11 | 🟡 Med | High | C | Language switcher breaks layout, changes nothing | FE | S |
-| **EX-008** | T6/T11 | 🟡 Med | High | C | `fr` locale → EUR/format leakage on a MAD product | FE | S |
+| **EX-007** ✅ | T6/T11 | 🟡 Med | High | C | Language switcher breaks layout, changes nothing | FE | **DONE** |
+| **EX-008** ✅ | T6/T11 | 🟡 Med | High | C | `fr` locale → EUR/format leakage on a MAD product | FE | **DONE** |
 | **EX-012** | T10 | 🟡 Med | High | C | Duplicated stage-entry effects → recurring legal gaps | BE | M |
 | **EX-016** | T12 | 🟡 Med | Med | S | `/health` green while R2 down → silent outage | SRE | S |
 | **EX-010** | T7/T12 | 🟡 Med | Med | S | Multi-instance scheduler double-fire (DA-025) | SRE | S |

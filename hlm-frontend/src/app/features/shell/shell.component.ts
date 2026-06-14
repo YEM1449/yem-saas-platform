@@ -4,7 +4,6 @@ import { AuthService } from '../../core/auth/auth.service';
 import { KeepAliveService } from '../../core/keep-alive.service';
 import { SocieteService } from '../superadmin/societes/societe.service';
 
-import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
 import { NotificationPollingService } from '../../core/notification-polling.service';
 import { NotificationToastComponent } from '../../core/components/notification-toast.component';
 import { environment } from '../../../environments/environment';
@@ -12,7 +11,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitcherComponent, NotificationToastComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationToastComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
