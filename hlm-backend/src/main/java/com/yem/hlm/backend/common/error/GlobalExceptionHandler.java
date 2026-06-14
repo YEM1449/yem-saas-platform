@@ -46,6 +46,7 @@ import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
 import com.yem.hlm.backend.vente.service.GuardedStageEntryException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.vente.service.RetractationWindowOpenException;
 import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
 import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
 import com.yem.hlm.backend.vente.service.ViolationLegaleException;
@@ -989,6 +990,15 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.GUARDED_STAGE_ENTRY, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(RetractationWindowOpenException.class)
+    public ResponseEntity<ErrorResponse> handleRetractationWindowOpen(
+            RetractationWindowOpenException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.RETRACTATION_WINDOW_OPEN, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 

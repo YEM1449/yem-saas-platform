@@ -340,12 +340,49 @@ class VenteServiceTest {
         when(vente.getDocuments()).thenReturn(java.util.List.of());
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
         when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
-        when(marketConfig.getDelaiRetractationJours()).thenReturn(7);
+        // withdrawalDeadline is the production day-count convention (here: from + 7 days, MA).
+        when(marketConfig.withdrawalDeadline(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(inv -> ((LocalDate) inv.getArgument(0)).plusDays(7));
         when(venteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         svc.confirmReservation(VENTE, null);
 
+        // The Casablanca date is 2026-06-14 (not the UTC 2026-06-13) → window ends 2026-06-21.
         verify(vente).setDateFinDelaiReflexion(LocalDate.of(2026, 6, 21));
+    }
+
+    @Test
+    @DisplayName("EX-011/DA-011: EN_RETRACTATION cannot advance to ACOMPTE while the cooling-off window is open")
+    void updateStatut_blocksAcompteWhileRetractationWindowOpen() {
+        Vente vente = venteWithStatut(VenteStatut.EN_RETRACTATION);
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).plusDays(3)); // still open
+
+        assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(VenteStatut.ACOMPTE)))
+                .isInstanceOf(RetractationWindowOpenException.class);
+
+        verify(vente, never()).setStatut(VenteStatut.ACOMPTE);
+    }
+
+    @Test
+    @DisplayName("EX-011: EN_RETRACTATION → ACOMPTE is allowed once the cooling-off window has closed")
+    void updateStatut_allowsAcompteAfterRetractationWindow() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        Contact contact = org.mockito.Mockito.mock(Contact.class);
+        com.yem.hlm.backend.user.domain.User agent =
+                org.mockito.Mockito.mock(com.yem.hlm.backend.user.domain.User.class);
+        when(vente.getStatut()).thenReturn(VenteStatut.EN_RETRACTATION);
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).minusDays(1)); // window closed
+        when(vente.getContact()).thenReturn(contact);
+        when(vente.getAgent()).thenReturn(agent);
+        when(vente.getEcheances()).thenReturn(java.util.List.of());
+        when(vente.getDocuments()).thenReturn(java.util.List.of());
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateStatut(VENTE, statutRequest(VenteStatut.ACOMPTE));
+
+        verify(vente).setStatut(VenteStatut.ACOMPTE);
     }
 
     @Test

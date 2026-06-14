@@ -13,7 +13,6 @@ import { VenteStatut, MotifAnnulation, UpdateVenteStatutRequest } from './vente.
  */
 const NEXT_MAP: Partial<Record<VenteStatut, VenteStatut>> = {
   RESERVE:             'ACOMPTE',
-  EN_RETRACTATION:     'ACOMPTE',
   ACOMPTE:             'COMPROMIS',
   COMPROMIS:           'FINANCEMENT',
   FINANCEMENT:         'ACTE',
@@ -21,10 +20,16 @@ const NEXT_MAP: Partial<Record<VenteStatut, VenteStatut>> = {
   RESERVES_LEVEES:     'LIVRE_DEFINITIF',
 };
 
-/** For statuts whose next step is a dedicated guarded action, the label to point the user at. */
+/**
+ * For statuts whose next step is a dedicated guarded action, the label to point the user at.
+ * EN_RETRACTATION is here too: during the legal cooling-off window the sale cannot be advanced
+ * generically (the backend blocks it, EX-011) — the buyer either withdraws via the dedicated panel
+ * or the window closes automatically and the sale moves on. The forward "Avancer" step is hidden.
+ */
 const GUARDED_ACTION: Partial<Record<VenteStatut, string>> = {
   PROSPECT:            'Confirmer la réservation',
   OPTION:              'Confirmer la réservation',
+  EN_RETRACTATION:     'Exercer la rétractation (ou attendre la fin du délai légal)',
   LIVRE_AVEC_RESERVES: 'Lever les réserves',
 };
 

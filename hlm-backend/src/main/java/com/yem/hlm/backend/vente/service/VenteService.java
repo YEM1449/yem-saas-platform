@@ -339,7 +339,8 @@ public class VenteService {
         vente.setOptionExpireAt(null);
 
         // Open the legal cooling-off window and advance to EN_RETRACTATION.
-        vente.setDateFinDelaiReflexion(LocalDate.now(clock).plusDays(marketConfig.getDelaiRetractationJours()));
+        // Deadline is computed via the single source of truth so the day-count convention stays consistent.
+        vente.setDateFinDelaiReflexion(marketConfig.withdrawalDeadline(LocalDate.now(clock)));
         vente.setStatut(VenteStatut.EN_RETRACTATION);
         vente.setStageEntryDate(LocalDateTime.now(clock));
         vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
@@ -590,6 +591,7 @@ public class VenteService {
         Vente vente = requireVente(societeId, id);
 
         validateTransition(vente.getStatut(), request.statut());
+        enforceRetractationWindow(vente, request.statut());
 
         // Cancellation reason is mandatory when annulling a sale
         if (request.statut() == VenteStatut.ANNULE) {
@@ -1020,6 +1022,28 @@ public class VenteService {
         };
         if (!allowed.contains(to)) {
             throw new InvalidVenteTransitionException(from, to);
+        }
+    }
+
+    /**
+     * Protects the buyer's legal cooling-off right (EX-011 / DA-011 / Art. 618-3 Loi 44-00).
+     *
+     * <p>While a vente is in {@code EN_RETRACTATION}, it may only be <em>cancelled</em> (the buyer's
+     * own withdrawal, {@code → ANNULE}) — it must not be advanced toward a forward stage
+     * ({@code → ACOMPTE}) until the withdrawal deadline has elapsed. The lawful way the window closes
+     * is the scheduled {@code closeExpiredRetractations()} sweep ({@code → RESERVE}); only then does
+     * forward progress become legal. The deadline boundary is inclusive (consistent with
+     * {@link #exerciseRetractation}): on the deadline day the buyer can still withdraw and the sale
+     * cannot yet advance.
+     */
+    private void enforceRetractationWindow(Vente vente, VenteStatut target) {
+        if (vente.getStatut() != VenteStatut.EN_RETRACTATION || target == VenteStatut.ANNULE) {
+            return;
+        }
+        LocalDate deadline = vente.getDateFinDelaiReflexion();
+        // Block while the window is still open (now ≤ deadline) or its end is unknown (fail-safe).
+        if (deadline == null || !LocalDate.now(clock).isAfter(deadline)) {
+            throw new RetractationWindowOpenException(deadline);
         }
     }
 

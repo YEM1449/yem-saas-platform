@@ -333,11 +333,23 @@ Office des Changes unmodeled). Phase B added `data-retention.md`, `pdf-review-ch
 `@ReadAudit` aspect, and the CNDP declaration fields (`ComplianceController`) — partial mitigations of
 the 09-08 surface, not closures.
 
-### EX-011 🟠 High — ✅ RESOLVED (2026-06-14, via EX-001 + EX-009) — The rétractation deadline can be **null or miscomputed** depending on the write path (composite legal finding)
-> **Fix:** both halves are now closed — EX-001 makes `EN_RETRACTATION` reachable only through
-> `confirmReservation()` (which always sets `dateFinDelaiReflexion`), and EX-009 computes that date in
-> the Casablanca zone. The day-count rule (inclusive/exclusive of day 0) still ⚠️ **REQUIRES LEGAL
-> VERIFICATION** by counsel.
+### EX-011 🟠 High — ✅ RESOLVED (2026-06-14, via EX-001 + EX-009 + cooling-off guard) — The rétractation deadline can be **null or miscomputed**, and the window was **defeatable by advancing the pipeline** (composite legal finding, incl. DA-011)
+> **Fix — three layers:**
+> 1. **Entry (EX-001):** `EN_RETRACTATION` is reachable only through `confirmReservation()`, which
+>    always sets `dateFinDelaiReflexion`.
+> 2. **Date math (EX-009):** the deadline is computed in the market zone (Casablanca) via a single
+>    source of truth, `MarketConfig.withdrawalDeadline(LocalDate)`, whose Javadoc states the day-count
+>    convention (⚠️ still **REQUIRES LEGAL VERIFICATION** of day-0/inclusive boundary by counsel).
+> 3. **Exit (DA-011, new):** `VenteService.enforceRetractationWindow()` blocks advancing
+>    `EN_RETRACTATION → ACOMPTE` while the window is open (or the deadline is unknown) →
+>    `RetractationWindowOpenException` (HTTP 409, `RETRACTATION_WINDOW_OPEN`). The only permitted exits
+>    during the window are the buyer's withdrawal (`→ ANNULE`, `exerciseRetractation`) and the
+>    scheduled close once the deadline elapses (`closeExpiredRetractations → RESERVE`). The boundary is
+>    inclusive, consistent with `exerciseRetractation`. Frontend: the generic "Avancer" dialog no longer
+>    offers `EN_RETRACTATION → ACOMPTE`; it shows "withdraw or wait for the window to close".
+>    Tests: `updateStatut_blocksAcompteWhileRetractationWindowOpen` +
+>    `updateStatut_allowsAcompteAfterRetractationWindow` (219 unit tests green); frontend build green.
+> **DA-011 is now closed** — the cooling-off right can no longer be curtailed by a status PATCH.
 - This is the legal synthesis of **EX-001 + EX-009**: (a) a vente reaching `EN_RETRACTATION` via the
   generic `PATCH /statut` has **no `dateFinDelaiReflexion`** (EX-001), and (b) when the dedicated path
   *does* set it, it's computed in the JVM zone and can be off by a day (EX-009). Either way the system

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZoneId;
 
 /**
@@ -27,6 +28,24 @@ public class MarketConfig {
             case "MA" -> 7;
             default   -> 7;
         };
+    }
+
+    /**
+     * Single source of truth for the buyer's withdrawal deadline (the last day on which a
+     * rétractation may still be exercised), given the reference date (typically the reservation /
+     * preliminary-contract signature date).
+     *
+     * <p><b>Convention (current):</b> the window spans {@link #getDelaiRetractationJours()} calendar
+     * days counted from {@code from} inclusive, i.e. the deadline is {@code from + N days}. Both the
+     * deadline that is stored ({@code Vente.dateFinDelaiReflexion}) and every guard that compares
+     * against it MUST go through this method so the convention stays consistent.
+     *
+     * <p>⚠️ <b>REQUIRES LEGAL VERIFICATION</b> by counsel: whether day 0 is the signature day or the
+     * following day, and whether the deadline boundary is inclusive, is jurisdiction-specific
+     * (Loi 44-00 Art. 618-3 / Loi SRU). When confirmed, adjust here only — no call-site changes.
+     */
+    public LocalDate withdrawalDeadline(LocalDate from) {
+        return from.plusDays(getDelaiRetractationJours());
     }
 
     /**
