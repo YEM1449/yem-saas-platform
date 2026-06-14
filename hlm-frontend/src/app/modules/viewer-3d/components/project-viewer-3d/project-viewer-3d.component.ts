@@ -51,6 +51,9 @@ const LEGEND_ITEMS = (Object.keys(LOT_STATUS_COLORS) as LotDisplayStatus[]).map(
   templateUrl: './project-viewer-3d.component.html',
   styleUrl:    './project-viewer-3d.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Component-scoped: each viewer mount gets a fresh engine (fresh hover$/click$/tap$ Subjects).
+  // A root singleton would keep its Subjects completed after dispose(), killing interactivity on revisit.
+  providers: [ThreeEngineService],
 })
 export class ProjectViewer3dComponent implements OnInit, AfterViewInit, OnDestroy {
 

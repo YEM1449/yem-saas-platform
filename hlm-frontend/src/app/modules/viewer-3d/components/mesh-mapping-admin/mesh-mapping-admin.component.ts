@@ -58,6 +58,9 @@ interface MeshHierarchy {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mesh-mapping-admin.component.html',
   styleUrl: './mesh-mapping-admin.component.css',
+  // Component-scoped: each mount gets a fresh engine (fresh hover$/click$/tap$ Subjects).
+  // A root singleton would keep its Subjects completed after dispose(), killing interactivity on revisit.
+  providers: [ThreeEngineService],
 })
 export class MeshMappingAdminComponent implements OnInit, OnDestroy {
 
