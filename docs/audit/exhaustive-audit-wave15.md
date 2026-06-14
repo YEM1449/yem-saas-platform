@@ -263,8 +263,13 @@ reserve list only.** Verdict: low risk except the project-wide reserve list.
 > sweeps, and the penalty calc. Test `confirmReservation_coolingOffDeadlineUsesMarketZone` pins a clock
 > at `23:30 UTC` (= `00:30` next day in Casablanca) and asserts the 7-day window ends on the
 > Casablanca date, not the UTC date (217 unit tests green). The injected clock also makes the service
-> deterministically testable. **Follow-up:** `ReservationService` expiry math still uses zero-arg
-> `now()` (commercial hold, not a Loi 44-00 right) — convert it to the same `Clock` for full consistency.
+> deterministically testable. **Extended (2026-06-14):** `ReservationService` now injects the same
+> `Clock` — the +7-day expiry deadline, the `findExpired` sweep, and the 48h expiring-soon
+> notifications all use the market zone (tests construct it with a fixed Casablanca clock; 217 unit
+> tests green). Deliberately left on wall-clock (correct by design): entity `@PrePersist`/`@PreUpdate`
+> audit stamps (`createdAt`/`updatedAt`/`confirmedAt`/etc.), dashboard "asOf" timestamps, and the
+> ref-generator year (a ~1h/year New-Year-boundary edge) — these are "when the server recorded it",
+> not legal deadlines. Convert the ref-year too if strict per-jurisdiction ref numbering is required.
 - **Where:** `VenteService.java` — rétractation deadline `:337`
   `vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()))`;
   compromis-derived dates `:249-250` use `request.dateCompromis().plusDays(...)`; `stageEntryDate`
@@ -394,8 +399,8 @@ scaffolding.
 - **Where:** `legal/MarketConfig.java` holds delays/percentages/penalty (good — T11.3 partially met).
   **Update:** the legal-date **zone** is now market-driven (`MarketConfig.getZoneId()` + `Clock` bean,
   EX-009). Still open: the frontend **locale/currency** (EX-008) is hardcoded `fr`/EUR, not derived from
-  the active market, and the backend `Clock` is currently only consumed by `VenteService`
-  (extend to `ReservationService` and any other deadline math).
+  the active market. The backend `Clock` is now consumed by both `VenteService` and
+  `ReservationService` (all VEFA + reservation deadline math is market-zoned).
 - **Fix direction:** Extend `MarketConfig` (or a `Market` abstraction) to own `ZoneId`, `Locale`, and
   default currency; resolve per société. **Effort:** M. Links EX-008, EX-009.
 
