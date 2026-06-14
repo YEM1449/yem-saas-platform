@@ -48,6 +48,7 @@ public enum ErrorCode {
     INVALID_GLB_FILE,           // 422 — uploaded GLB is malformed or not Draco-compressed (RG-E05)
     VIOLATION_LEGALE,           // 422 — operation would breach a legal constraint (Loi 44-00)
     RETRACTATION_IMPOSSIBLE,    // 409 — retraction outside the legal window or wrong state
+    GUARDED_STAGE_ENTRY,        // 409 — stage must be entered via its dedicated guarded endpoint (EX-001)
 
     // Project errors (409)
     PROJECT_NAME_EXISTS,

@@ -6,8 +6,10 @@
       <h2 class="modal-title">
         @if (cancelMode) {
           Annuler la vente
-        } @else {
+        } @else if (nextStatut) {
           Avancer vers "{{ nextLabel }}"
+        } @else {
+          Avancer le pipeline
         }
       </h2>
       <button class="modal-close" (click)="cancel()" [disabled]="saving" aria-label="Fermer">✕</button>
@@ -47,6 +49,22 @@
           <div>
             <strong>{{ hintTitle }}</strong>
             {{ hintBody }}
+          </div>
+        </div>
+      }
+
+      <!-- Guarded action — this stage advances via a dedicated VEFA panel, not the generic flow -->
+      @if (!cancelMode && !nextStatut && guardedAction) {
+        <div class="dialog-hint" data-testid="dialog-guarded-action">
+          <svg class="dialog-hint-icon" width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M7.5 6.5v4M7.5 5v-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <strong>Étape dédiée requise</strong>
+            Cette étape comporte des contrôles légaux (Loi 44-00) et se fait via l'action
+            « {{ guardedAction }} » dans le panneau « Actions VEFA », pas depuis l'avancement générique.
+            Vous pouvez néanmoins annuler la vente ci-dessous.
           </div>
         </div>
       }
@@ -138,8 +156,10 @@
           Enregistrement…
         } @else if (cancelMode) {
           Confirmer l'annulation
-        } @else {
+        } @else if (nextStatut) {
           Confirmer → {{ nextLabel }}
+        } @else {
+          Action dédiée requise
         }
       </button>
     </div>

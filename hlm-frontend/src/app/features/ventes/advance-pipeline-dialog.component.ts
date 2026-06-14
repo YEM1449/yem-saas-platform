@@ -3,18 +3,29 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { VenteStatut, MotifAnnulation, UpdateVenteStatutRequest } from './vente.service';
 
-/** Canonical single-step forward transition per current statut (ANNULE is handled separately). */
+/**
+ * Canonical single-step forward transition per current statut, **for the generic advance flow only**
+ * (ANNULE is handled separately). Stages with a dedicated guarded entry point are intentionally absent:
+ * the backend rejects entering them via PATCH /statut (EX-001), so they are driven from the dedicated
+ * VEFA action panels instead (see {@link guardedAction}):
+ *   • PROSPECT / OPTION   → "Confirmer la réservation" (deposit ≤ 5%, cooling-off)
+ *   • LIVRE_AVEC_RESERVES → "Lever les réserves"
+ */
 const NEXT_MAP: Partial<Record<VenteStatut, VenteStatut>> = {
-  PROSPECT:            'RESERVE',
-  OPTION:              'RESERVE',
   RESERVE:             'ACOMPTE',
   EN_RETRACTATION:     'ACOMPTE',
   ACOMPTE:             'COMPROMIS',
   COMPROMIS:           'FINANCEMENT',
   FINANCEMENT:         'ACTE',
   ACTE:                'LIVRE_DEFINITIF',
-  LIVRE_AVEC_RESERVES: 'RESERVES_LEVEES',
   RESERVES_LEVEES:     'LIVRE_DEFINITIF',
+};
+
+/** For statuts whose next step is a dedicated guarded action, the label to point the user at. */
+const GUARDED_ACTION: Partial<Record<VenteStatut, string>> = {
+  PROSPECT:            'Confirmer la réservation',
+  OPTION:              'Confirmer la réservation',
+  LIVRE_AVEC_RESERVES: 'Lever les réserves',
 };
 
 const LABELS: Record<VenteStatut, string> = {
@@ -62,6 +73,15 @@ export class AdvancePipelineDialogComponent {
 
   get nextStatut(): VenteStatut | null {
     return NEXT_MAP[this.currentStatut] ?? null;
+  }
+
+  /**
+   * Label of the dedicated guarded action when the current statut has no generic forward step
+   * (e.g. PROSPECT/OPTION → "Confirmer la réservation"). The generic advance dialog must NOT drive
+   * these transitions — the backend rejects them (EX-001) — so we point the user at the right panel.
+   */
+  get guardedAction(): string | null {
+    return GUARDED_ACTION[this.currentStatut] ?? null;
   }
 
   get isTerminal(): boolean {
@@ -113,6 +133,8 @@ export class AdvancePipelineDialogComponent {
 
   get confirmDisabled(): boolean {
     if (this.saving) return true;
+    // No generic forward step available (guarded action) and not cancelling → nothing to confirm.
+    if (!this.cancelMode && !this.nextStatut) return true;
     if (this.targetNeedsDate && !this.dateTransition) return true;
     if (this.cancelMode && !this.motifAnnulation) return true;
     return false;

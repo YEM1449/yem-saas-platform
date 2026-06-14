@@ -19,7 +19,17 @@ New IDs are `EX-NNN`.
 
 ## TRACK 1 · Functional Completeness & Business Rules (Salma)
 
-### EX-001 🟠 High — CONFIRMED — Generic `PATCH /statut` bypasses the legal guards of the dedicated reservation path
+### EX-001 🟠 High — ✅ RESOLVED (2026-06-14) — Generic `PATCH /statut` bypasses the legal guards of the dedicated reservation path
+> **Fix:** `VenteService.updateStatut()` split into a public guard + a private `applyStatutChange()`.
+> The public path now rejects transitions into guarded-entry stages — `OPTION`, `RESERVE`,
+> `EN_RETRACTATION`, `LIVRE_AVEC_RESERVES`, `RESERVES_LEVEES` — with `GuardedStageEntryException`
+> (HTTP 409, `ErrorCode.GUARDED_STAGE_ENTRY`), naming the dedicated endpoint to use. `recordDelivery()`
+> calls the trusted `applyStatutChange()` so legitimate delivery still works. Frontend: the generic
+> advance dialog's `NEXT_MAP` no longer offers guarded transitions (PROSPECT/OPTION/LIVRE_AVEC_RESERVES);
+> it now points the user at the dedicated VEFA panel (`confirmReservation` / `liftReserve`). Tests:
+> `VenteServiceTest.updateStatut_guardedStages_areRejected` (216 unit tests green); frontend build green.
+> Note: the EX-009 timezone half of EX-011 is still open — the deposit-cap/window *setup* is now
+> single-pathed, but the date math fix is separate.
 - **Where:** `vente/service/VenteService.java:550` `updateStatut()` vs `:280` `createOption()` / `:317` `confirmReservation()`.
 - **What:** Two parallel write paths advance a Vente. `confirmReservation()` enforces the Art. 618‑4
   deposit cap (≤ 5%) → `422`, sets `dateFinDelaiReflexion`, and seeds the rétractation window.
@@ -95,7 +105,7 @@ Still open from Wave 14: **DA-007** (GLB upload size/validation), **DA-008** (cr
 assignment), **DA-010** (plaintext CIN/financials), **DA-013** (no tamper-evident audit of pipeline
 actions).
 
-### EX-004 🟠 High — CONFIRMED — Mass-assignment of `statut` via the generic endpoint defeats pipeline + legal checks
+### EX-004 🟠 High — ✅ RESOLVED (2026-06-14, via EX-001) — Mass-assignment of `statut` via the generic endpoint defeats pipeline + legal checks
 - This is the security framing of **EX-001** (T3.4). The `UpdateVenteStatutRequest` body carries
   `statut` directly; `updateStatut()` accepts any matrix-legal target. The deposit cap and
   reflection-window setup live only in the dedicated handlers, so a `@RequestBody`-driven status move
@@ -412,7 +422,7 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | ID | Track | Sev | Likelihood | C/S | Impact | Owner | Effort |
 |----|-------|-----|-----------|-----|--------|-------|--------|
 | **EX-005** ✅ | T4 | 🟠 High | High | C | Flagship 3D feature silently dead after 1 navigation | FE | **DONE** |
-| **EX-001** | T1/T3/T9 | 🟠 High | Med | C | Legal deposit-cap + rétractation setup bypassable via generic PATCH | BE/Legal | M |
+| **EX-001** ✅ | T1/T3/T9 | 🟠 High | Med | C | Legal deposit-cap + rétractation setup bypassable via generic PATCH | BE/Legal | **DONE** |
 | **EX-009** | T7/T9 | 🟠 High | Med | C/S | Off-by-one on 7-day legal rétractation (JVM zone) | BE/Legal | S |
 | **EX-011** | T9 | 🟠 High | Med | C | Cannot reliably prove buyer's Art.618-3 window (EX-001+EX-009) | BE/Legal | M |
 | **EX-014** | T11 | 🟠 High | High | C | France/AR expansion blocked; marketed multi-lang non-functional | Product/FE | L |

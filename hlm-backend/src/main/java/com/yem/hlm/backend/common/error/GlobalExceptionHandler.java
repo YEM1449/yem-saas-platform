@@ -44,6 +44,7 @@ import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservatio
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
+import com.yem.hlm.backend.vente.service.GuardedStageEntryException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
 import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
 import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
@@ -979,6 +980,15 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.RETRACTATION_IMPOSSIBLE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(GuardedStageEntryException.class)
+    public ResponseEntity<ErrorResponse> handleGuardedStageEntry(
+            GuardedStageEntryException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.GUARDED_STAGE_ENTRY, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 

@@ -457,7 +457,9 @@ public class VenteService {
             throw new InvalidVenteTransitionException(vente.getStatut(), target);
         }
 
-        VenteResponse response = updateStatut(venteId, new UpdateVenteStatutRequest(
+        // Trusted internal call: the source-state check above is the guard; applyStatutChange bypasses
+        // the public guard so this dedicated handler can legitimately enter LIVRE_AVEC_RESERVES.
+        VenteResponse response = applyStatutChange(venteId, new UpdateVenteStatutRequest(
                 target, null, request.dateLivraison(), null, null, null));
 
         if (withReserves) {
@@ -547,7 +549,38 @@ public class VenteService {
     // Statut transition
     // =========================================================================
 
+    /**
+     * Stages that MUST be entered through their dedicated, guarded endpoint — never via the generic
+     * {@code PATCH /statut} — because each enforces a legal/operational precondition the generic path
+     * does not (deposit cap, cooling-off window, recorded reserves). See {@link GuardedStageEntryException}.
+     */
+    private static final java.util.Map<VenteStatut, String> GUARDED_ENTRY_ENDPOINTS = java.util.Map.of(
+            VenteStatut.OPTION,              "POST /api/ventes/option",
+            VenteStatut.RESERVE,             "POST /api/ventes/{id}/confirm-reservation",
+            VenteStatut.EN_RETRACTATION,     "POST /api/ventes/{id}/confirm-reservation",
+            VenteStatut.LIVRE_AVEC_RESERVES, "POST /api/ventes/{id}/livraison",
+            VenteStatut.RESERVES_LEVEES,     "PUT /api/ventes/{id}/reserves/{reserveId}/lever"
+    );
+
+    /**
+     * Public statut transition (the controller's {@code PATCH /statut}). Refuses transitions into a
+     * guarded-entry stage so the legal guards of the dedicated handlers cannot be bypassed (EX-001).
+     * All other transitions are applied via {@link #applyStatutChange}.
+     */
     public VenteResponse updateStatut(UUID id, UpdateVenteStatutRequest request) {
+        String dedicatedEndpoint = GUARDED_ENTRY_ENDPOINTS.get(request.statut());
+        if (dedicatedEndpoint != null) {
+            throw new GuardedStageEntryException(request.statut(), dedicatedEndpoint);
+        }
+        return applyStatutChange(id, request);
+    }
+
+    /**
+     * Trusted internal statut applier. Callers must have already enforced any stage-specific
+     * preconditions (e.g. {@link #recordDelivery} validates the source state and records reserves).
+     * Not exposed via the public API — do not call from a controller.
+     */
+    private VenteResponse applyStatutChange(UUID id, UpdateVenteStatutRequest request) {
         UUID societeId = societeCtx.requireSocieteId();
         Vente vente = requireVente(societeId, id);
 

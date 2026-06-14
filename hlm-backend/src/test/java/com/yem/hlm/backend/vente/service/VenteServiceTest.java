@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -244,6 +245,26 @@ class VenteServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(vente, never()).setStatut(any());
+    }
+
+    @Test
+    @DisplayName("EX-001: guarded stages cannot be entered via PATCH /statut — must use the dedicated endpoint")
+    void updateStatut_guardedStages_areRejected() {
+        // Each of these stages enforces a legal/operational precondition (deposit cap, cooling-off,
+        // recorded reserves) only in its dedicated handler. The generic statut change must refuse them.
+        for (VenteStatut guarded : java.util.List.of(
+                VenteStatut.OPTION,
+                VenteStatut.RESERVE,
+                VenteStatut.EN_RETRACTATION,
+                VenteStatut.LIVRE_AVEC_RESERVES,
+                VenteStatut.RESERVES_LEVEES)) {
+            assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(guarded)))
+                    .as("PATCH /statut → %s must be guarded", guarded)
+                    .isInstanceOf(GuardedStageEntryException.class);
+        }
+
+        // The guard short-circuits before any state load — no vente is fetched or mutated.
+        verifyNoInteractions(venteRepository);
     }
 
     // ── VEFA Loi 44-00 (OPTION + rétractation) ───────────────────────────────
