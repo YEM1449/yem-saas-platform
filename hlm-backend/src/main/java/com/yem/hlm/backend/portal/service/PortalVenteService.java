@@ -62,12 +62,16 @@ public class PortalVenteService {
 
     /**
      * Returns the storage key for a document attached to the buyer's vente.
-     * Enforces cross-contact isolation.
+     *
+     * <p>Access control is enforced at two levels: {@link #requireOwnedVente(UUID)} proves the caller
+     * owns {@code venteId}, and the document lookup is scoped to {@code (societeId, venteId)} so the
+     * document <em>must</em> belong to that vente. A {@code docId} that exists elsewhere in the société
+     * (e.g. another buyer's contract) is not reachable and yields 404 — closing the cross-contact IDOR.
      */
     public String getDocumentKey(UUID venteId, UUID docId) {
         requireOwnedVente(venteId);
         UUID societeId = requireSocieteId();
-        return documentRepository.findBySocieteIdAndId(societeId, docId)
+        return documentRepository.findBySocieteIdAndVente_IdAndId(societeId, venteId, docId)
                 .map(d -> d.getStorageKey())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
     }

@@ -363,7 +363,7 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(null);
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
 
         assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
                 .isInstanceOf(ViolationLegaleException.class);
@@ -376,12 +376,15 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("1000000"));
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
         when(echeanceRepository.existsByVente_IdAndEtapeIsNotNull(VENTE)).thenReturn(true);
 
         assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
                 .isInstanceOf(ViolationLegaleException.class);
         verify(echeanceRepository, never()).save(any());
+        // DA-003: the idempotency guard runs under a vente row lock, never the unlocked finder.
+        verify(venteRepository).findBySocieteIdAndIdForUpdate(SOC, VENTE);
+        verify(venteRepository, never()).findBySocieteIdAndId(SOC, VENTE);
     }
 
     @Test
@@ -390,7 +393,7 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("100000"));
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
         when(echeanceRepository.sumMontantByVente(SOC, VENTE)).thenReturn(new java.math.BigDecimal("95000"));
 
         var req = new com.yem.hlm.backend.vente.api.dto.CreateEcheanceRequest(
@@ -398,5 +401,8 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.addEcheance(VENTE, req))
                 .isInstanceOf(ViolationLegaleException.class);
         verify(echeanceRepository, never()).save(any());
+        // DA-003: the cumulative-cap check runs under a vente row lock, never the unlocked finder.
+        verify(venteRepository).findBySocieteIdAndIdForUpdate(SOC, VENTE);
+        verify(venteRepository, never()).findBySocieteIdAndId(SOC, VENTE);
     }
 }

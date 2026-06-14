@@ -638,7 +638,8 @@ public class VenteService {
 
     public EcheanceResponse addEcheance(UUID venteId, CreateEcheanceRequest request) {
         UUID societeId = societeCtx.requireSocieteId();
-        Vente vente = requireVente(societeId, venteId);
+        // Lock the vente: the cumulative-cap check below must be atomic w.r.t. concurrent additions (DA-003).
+        Vente vente = requireVenteForUpdate(societeId, venteId);
 
         dateCoherence.validateEcheanceDates(vente.getDateCompromis(), request.dateEcheance(), null);
         assertCumulWithinPrice(societeId, venteId, vente.getPrixVente(), request.montant());
@@ -668,7 +669,9 @@ public class VenteService {
     @Transactional
     public List<EcheanceResponse> generateEcheancierLegal(UUID venteId) {
         UUID societeId = societeCtx.requireSocieteId();
-        Vente vente = requireVente(societeId, venteId);
+        // Lock the vente: the "already generated?" idempotency guard below must be atomic so two
+        // concurrent calls cannot each create a full 100% schedule (→ 200% total) (DA-003).
+        Vente vente = requireVenteForUpdate(societeId, venteId);
 
         BigDecimal prix = vente.getPrixVente();
         if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0) {
@@ -873,6 +876,17 @@ public class VenteService {
 
     private Vente requireVente(UUID societeId, UUID venteId) {
         return venteRepository.findBySocieteIdAndId(societeId, venteId)
+                .orElseThrow(() -> new VenteNotFoundException(venteId));
+    }
+
+    /**
+     * Like {@link #requireVente} but takes a pessimistic write lock (SELECT ... FOR UPDATE) on the
+     * vente row. Use it when a method must atomically read-then-write a vente's financial children
+     * (échéances / appels de fonds): concurrent callers serialize on this row so the cumulative-cap
+     * and idempotency checks cannot be bypassed by a race (DA-003). Must run inside a transaction.
+     */
+    private Vente requireVenteForUpdate(UUID societeId, UUID venteId) {
+        return venteRepository.findBySocieteIdAndIdForUpdate(societeId, venteId)
                 .orElseThrow(() -> new VenteNotFoundException(venteId));
     }
 
