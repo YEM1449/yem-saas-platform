@@ -46,6 +46,7 @@ class VisiteServiceTest {
     @Mock UserRepository userRepo;
     @Mock AppUserSocieteRepository membershipRepo;
     @Mock SocieteContextHelper societeCtx;
+    @Mock VisiteEmailService emailService;
 
     VisiteService service;
 
@@ -54,7 +55,7 @@ class VisiteServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new VisiteService(visiteRepo, rappelRepo, contactRepo, userRepo, membershipRepo, societeCtx);
+        service = new VisiteService(visiteRepo, rappelRepo, contactRepo, userRepo, membershipRepo, societeCtx, emailService);
         lenient().when(societeCtx.requireSocieteId()).thenReturn(societeId);
         lenient().when(societeCtx.requireUserId()).thenReturn(actorId);
         lenient().when(societeCtx.getRole()).thenReturn("ROLE_MANAGER");

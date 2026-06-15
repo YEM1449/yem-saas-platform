@@ -50,19 +50,22 @@ public class VisiteService {
     private final UserRepository userRepo;
     private final AppUserSocieteRepository membershipRepo;
     private final SocieteContextHelper societeCtx;
+    private final VisiteEmailService emailService;
 
     public VisiteService(VisiteRepository visiteRepo,
                          VisiteRappelRepository rappelRepo,
                          ContactRepository contactRepo,
                          UserRepository userRepo,
                          AppUserSocieteRepository membershipRepo,
-                         SocieteContextHelper societeCtx) {
+                         SocieteContextHelper societeCtx,
+                         VisiteEmailService emailService) {
         this.visiteRepo = visiteRepo;
         this.rappelRepo = rappelRepo;
         this.contactRepo = contactRepo;
         this.userRepo = userRepo;
         this.membershipRepo = membershipRepo;
         this.societeCtx = societeCtx;
+        this.emailService = emailService;
     }
 
     // =========================================================================
@@ -142,11 +145,19 @@ public class VisiteService {
     @Transactional
     public VisiteResponse annuler(UUID id, String raison) {
         Visite visite = chargerAccessible(id);
+        boolean etaitConfirmee = visite.getStatut() == StatutVisite.CONFIRMEE;
         transition(visite, StatutVisite.ANNULEE);
         visite.setAnnulationRaison(raison);
         visite.setUpdatedAt(Instant.now());
         annulerRappelsEnAttente(visite.getId());
-        // Cancellation email to the prospect is sent by the reminder/email layer (P3) when CONFIRMEE.
+        // RG-V08 — notify the prospect only when the visite was already CONFIRMEE.
+        if (etaitConfirmee) {
+            try {
+                emailService.envoyerAnnulation(visite, raison);
+            } catch (RuntimeException e) {
+                log.warn("Échec envoi email d'annulation pour visite {}", visite.getId(), e);
+            }
+        }
         return VisiteResponse.from(visite);
     }
 
