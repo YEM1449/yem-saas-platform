@@ -6,6 +6,7 @@ Auto-load guide for Claude Code. Captures operating rules, architecture context,
 
 Branch `Epic/Dashboard-UIUX-improvement`. New `visite/` module: agent↔contact appointments to present a property/project, with agenda, conflict detection (anti double-booking), comptes-rendus, and **persistent DB-scan reminders** (never in-memory scheduler). Next changeset **088** (086 gap, 087 taken). Manifest: `.wave16-session.json`. RG-V01..RG-V10 in prompt. Timezone: store `Instant`/TIMESTAMPTZ, render Africa/Casablanca. Reuses `EmailSender` (Brevo), `VenteService.create()` for the visite→opportunité link.
 - **P0 ✅** bootstrap audit — decisions recorded in `.wave16-session.json`.
+- **P1 ✅** changeset **088** (`visite` + `visite_rappel`, RLS canonical nil-UUID bypass form so the reminder job scans cross-tenant). JPA: `Visite` (agent/contact `@ManyToOne` LAZY, property/project/vente as nullable UUID, `Instant` slots, `getFin()` for overlap), `VisiteRappel` (persistent reminders). Enums: `StatutVisite` (transition graph), `TypeVisite`, `ResultatVisite`, `TypeRappel`, `DestinataireRappel`, `StatutRappel`. Repos société-scoped; conflict via `findConflitCandidats` (overlap filtered in Java, no JPQL timestamp arithmetic).
 
 ## Audit Checkpoint — Consolidated Audit (2026-06-13)
 

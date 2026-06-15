@@ -1,0 +1,251 @@
+databaseChangeLog:
+  - changeSet:
+      id: 088-visite
+      author: yem-wave16
+      comment: >
+        Wave 16 — Module Visites & Agenda. Commercial visit (rendez-vous) between an agent
+        and a contact to present a property/project, with status pipeline, compte-rendu/result
+        and a link back to the Vente pipeline. Société-scoped + RLS. date_heure is TIMESTAMPTZ
+        (stored as instant, rendered Africa/Casablanca).
+      changes:
+        - createTable:
+            tableName: visite
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints: { nullable: false }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_visite_societe
+                    references: societe(id)
+              - column:
+                  name: agent_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_visite_agent
+                    references: app_user(id)
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_visite_contact
+                    references: contact(id)
+              - column:
+                  name: property_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_visite_property
+                    references: property(id)
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_visite_project
+                    references: project(id)
+              - column:
+                  name: date_heure
+                  type: TIMESTAMPTZ
+                  constraints: { nullable: false }
+              - column:
+                  name: duree_minutes
+                  type: int
+                  defaultValueNumeric: 30
+                  constraints: { nullable: false }
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints: { nullable: false }
+              - column:
+                  name: statut
+                  type: varchar(20)
+                  defaultValue: PLANIFIEE
+                  constraints: { nullable: false }
+              - column:
+                  name: lieu
+                  type: varchar(255)
+              - column:
+                  name: compte_rendu
+                  type: TEXT
+              - column:
+                  name: resultat
+                  type: varchar(30)
+              - column:
+                  name: vente_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_visite_vente
+                    references: vente(id)
+              - column:
+                  name: annulation_raison
+                  type: varchar(255)
+              - column:
+                  name: created_by_user_id
+                  type: uuid
+                  constraints: { nullable: false }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+
+        - createIndex:
+            tableName: visite
+            indexName: idx_visite_societe_agent_date
+            columns:
+              - column: { name: societe_id }
+              - column: { name: agent_id }
+              - column: { name: date_heure }
+
+        - createIndex:
+            tableName: visite
+            indexName: idx_visite_societe_statut_date
+            columns:
+              - column: { name: societe_id }
+              - column: { name: statut }
+              - column: { name: date_heure }
+
+        - createIndex:
+            tableName: visite
+            indexName: idx_visite_contact
+            columns:
+              - column: { name: contact_id }
+
+        - sql:
+            comment: "Enable RLS on visite"
+            sql: "ALTER TABLE visite ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy on visite (nil-UUID system bypass — canonical form, changeset 051)"
+            sql: >-
+              CREATE POLICY visite_societe_isolation ON visite
+              USING (
+                current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                OR (
+                  current_setting('app.current_societe_id', true) IS NOT NULL
+                  AND current_setting('app.current_societe_id', true) <> ''
+                  AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+              )
+              WITH CHECK (
+                current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                OR (
+                  current_setting('app.current_societe_id', true) IS NOT NULL
+                  AND current_setting('app.current_societe_id', true) <> ''
+                  AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+              )
+
+  - changeSet:
+      id: 088-visite-rappel
+      author: yem-wave16
+      comment: >
+        Wave 16 — Persistent reminders for visites (RG-V07). Rows are scanned every 5 min by a
+        @Scheduled job and emailed via Brevo. du_a is TIMESTAMPTZ; statut EN_ATTENTE → ENVOYE/ANNULE.
+        Idempotent: an ENVOYE row is never re-sent. tentatives caps retries on email failure.
+      changes:
+        - createTable:
+            tableName: visite_rappel
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: societe_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_visiterappel_societe
+                    references: societe(id)
+              - column:
+                  name: visite_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_visiterappel_visite
+                    references: visite(id)
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints: { nullable: false }
+              - column:
+                  name: destinataire
+                  type: varchar(20)
+                  constraints: { nullable: false }
+              - column:
+                  name: du_a
+                  type: TIMESTAMPTZ
+                  constraints: { nullable: false }
+              - column:
+                  name: statut
+                  type: varchar(20)
+                  defaultValue: EN_ATTENTE
+                  constraints: { nullable: false }
+              - column:
+                  name: tentatives
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints: { nullable: false }
+              - column:
+                  name: envoye_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints: { nullable: false }
+
+        - createIndex:
+            tableName: visite_rappel
+            indexName: idx_visiterappel_statut_dua
+            columns:
+              - column: { name: statut }
+              - column: { name: du_a }
+
+        - createIndex:
+            tableName: visite_rappel
+            indexName: idx_visiterappel_visite
+            columns:
+              - column: { name: visite_id }
+
+        - sql:
+            comment: "Enable RLS on visite_rappel"
+            sql: "ALTER TABLE visite_rappel ENABLE ROW LEVEL SECURITY"
+
+        - sql:
+            comment: "Société-scoped RLS policy on visite_rappel (nil-UUID system bypass — lets the @Scheduled reminder job scan cross-tenant)"
+            sql: >-
+              CREATE POLICY visiterappel_societe_isolation ON visite_rappel
+              USING (
+                current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                OR (
+                  current_setting('app.current_societe_id', true) IS NOT NULL
+                  AND current_setting('app.current_societe_id', true) <> ''
+                  AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+              )
+              WITH CHECK (
+                current_setting('app.current_societe_id', true) = '00000000-0000-0000-0000-000000000000'
+                OR (
+                  current_setting('app.current_societe_id', true) IS NOT NULL
+                  AND current_setting('app.current_societe_id', true) <> ''
+                  AND societe_id = current_setting('app.current_societe_id', true)::uuid
+                )
+              )

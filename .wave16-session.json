@@ -4,8 +4,8 @@
   "phases": {
     "P0": { "label": "Bootstrap & audit code existant", "status": "done",
       "tasks": { "P0-T1":"done","P0-T2":"done","P0-T3":"done","P0-T4":"done","P0-T5":"done" } },
-    "P1": { "label": "Backend : entité Visite + migration", "status": "pending",
-      "tasks": { "P1-T1":"pending","P1-T2":"pending","P1-T3":"pending","P1-T4":"pending" } },
+    "P1": { "label": "Backend : entité Visite + migration", "status": "done",
+      "tasks": { "P1-T1":"done","P1-T2":"done","P1-T3":"done","P1-T4":"done" } },
     "P2": { "label": "Backend : service + règles métier", "status": "pending",
       "tasks": { "P2-T1":"pending","P2-T2":"pending","P2-T3":"pending","P2-T4":"pending","P2-T5":"pending" } },
     "P3": { "label": "Backend : REST + rappels persistants", "status": "pending",
