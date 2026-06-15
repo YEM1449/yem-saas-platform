@@ -162,6 +162,11 @@ public enum ErrorCode {
     // Contract generation errors (409)
     CONTRACT_NOT_GENERATED,     // 409 — contract must be generated before signing
 
+    // Visite errors (Wave 16)
+    VISITE_NOT_FOUND,           // 404 — visite not found in société
+    VISITE_CONFLIT,             // 409 — agent already has an overlapping visite (RG-V05)
+    COMPTE_RENDU_REQUIS,        // 422 — REALISEE requires compteRendu + resultat (RG-V06)
+
     // Server errors (500)
     INTERNAL_ERROR
 }

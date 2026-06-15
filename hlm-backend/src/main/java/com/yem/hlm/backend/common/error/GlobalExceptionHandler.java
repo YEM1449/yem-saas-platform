@@ -235,7 +235,8 @@ public class GlobalExceptionHandler {
             com.yem.hlm.backend.vente.service.CoAcquereurNotFoundException.class,
             com.yem.hlm.backend.vente.service.DossierFinancementNotFoundException.class,
             TrancheNotFoundException.class,
-            Project3dModelNotFoundException.class
+            Project3dModelNotFoundException.class,
+            com.yem.hlm.backend.visite.service.VisiteNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,
@@ -351,7 +352,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    @ExceptionHandler({InvalidVenteTransitionException.class, InvalidTrancheTransitionException.class})
+    @ExceptionHandler({InvalidVenteTransitionException.class, InvalidTrancheTransitionException.class,
+            com.yem.hlm.backend.visite.service.InvalidVisiteTransitionException.class})
     public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
             RuntimeException ex,
             HttpServletRequest request
@@ -961,6 +963,26 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.of(
                 422, "Unprocessable Entity",
                 ErrorCode.PRIX_VENTE_INVALIDE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
+    }
+
+    // ========== Visite — conflit de créneau (409) / compte-rendu requis (422) ==========
+
+    @ExceptionHandler(com.yem.hlm.backend.visite.service.ConflitVisiteException.class)
+    public ResponseEntity<ErrorResponse> handleConflitVisite(
+            com.yem.hlm.backend.visite.service.ConflitVisiteException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.VISITE_CONFLIT, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(com.yem.hlm.backend.visite.service.CompteRenduRequisException.class)
+    public ResponseEntity<ErrorResponse> handleCompteRenduRequis(
+            com.yem.hlm.backend.visite.service.CompteRenduRequisException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.COMPTE_RENDU_REQUIS, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(422).body(error);
     }
 
