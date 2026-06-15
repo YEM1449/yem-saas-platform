@@ -125,6 +125,20 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
                 bucket);
     }
 
+    /** Configured bucket name — exposed for the health indicator's diagnostics. */
+    public String bucketName() {
+        return bucket;
+    }
+
+    /**
+     * Lightweight connectivity probe used by {@code ObjectStorageHealthIndicator}: a HEAD on the
+     * configured bucket. Throws if the object store is unreachable or the bucket is inaccessible
+     * (so {@code /actuator/health} can reflect an R2/S3 outage instead of staying green — EX-016).
+     */
+    public void verifyBucketReachable() {
+        s3Client.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+    }
+
     // ── store (streaming — preferred path) ───────────────────────────────────
 
     /**

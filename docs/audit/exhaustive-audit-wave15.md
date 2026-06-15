@@ -380,7 +380,19 @@ the 09-08 surface, not closures.
 
 ## TRACK 10 · Architecture Coherence & Tech Debt (Rachid)
 
-### EX-012 🟡 Medium — CONFIRMED — Stage-entry side effects are duplicated across write paths (the root cause of EX-001)
+### EX-012 🟡 Medium — ✅ RESOLVED (2026-06-14) — Stage-entry side effects are duplicated across write paths (the root cause of EX-001)
+> **Fix:** introduced one private `VenteService.applyStageEntry(vente, target)` that owns **all**
+> stage-entry side effects — the universal mechanics (`statut` + `stageEntryDate` + `probability`),
+> contact-lifecycle advancement (target-driven: `EN_RETRACTATION→CLIENT`, `LIVRE_DEFINITIF→COMPLETED_CLIENT`),
+> property workflow (`ACTE→sell`, `ANNULE→release` via the shared `releasePropertyForCancelledVente`),
+> échéance cancellation on `ANNULE`, and the `SaleFinalizedEvent`. All four write paths now delegate to
+> it: `applyStatutChange` (generic), `confirmReservation` (`→EN_RETRACTATION`), `exerciseRetractation`
+> (`→ANNULE`), `liftReserve` (`→RESERVES_LEVEES`). The previously-divergent ANNULE property release
+> (inline in `applyStatutChange` vs. helper in `exerciseRetractation`) is unified, and the
+> `setStatut+stageEntryDate+probability` triple is no longer copy-pasted in four places. Callers keep
+> only their stage-specific preconditions/fields (deposit cap, reserves, motif/dates) and the post-save
+> `VenteAnnulee` event. Behavior preserved: **219 unit tests green** (one pre-existing wall-clock-fragile
+> test made deterministic against the injected clock). This closes the systemic pattern **P1**.
 - **Where:** `VenteService` — deposit cap, reflection-window seeding, property-status driving, contact
   status advancement, and KPI events are partly in `confirmReservation()`/`exerciseRetractation()`/
   `recordDelivery()`/`liftReserve()` and partly re-implemented in `updateStatut()`. They have **drifted**
@@ -444,7 +456,16 @@ wedge deploys), **DA-029** (unmitigated cold-start on a daily-use B2B tool — N
 backend cold start = "every morning feels broken"). The `keep-alive.service.ts` ping partially addresses
 the *frontend session* keep-alive but not backend/Neon cold start.
 
-### EX-016 🟡 Medium — SUSPECTED — `/actuator/health` likely reports UP without verifying R2 reachability
+### EX-016 🟡 Medium — ✅ RESOLVED (2026-06-14) — `/actuator/health` likely reports UP without verifying R2 reachability
+> **Fix:** added `ObjectStorageHealthIndicator` (`media/health/`) — a HEAD on the configured bucket
+> (`ObjectStorageMediaStorage.verifyBucketReachable()`), result cached 20s so frequent probes don't
+> hammer R2. It's `@ConditionalOnProperty(app.media.object-storage.enabled=true)` (local-disk deploys
+> have no external storage to probe) and contributes to the **aggregate** `/actuator/health` so an R2
+> outage is visible/alertable — but it is deliberately **not** in the liveness/readiness probe groups
+> (`management.endpoint.health.probes.enabled=true`), so an R2 blip never restarts or de-routes the
+> container. `application.yml` documents that deploy probes should target `/actuator/health/readiness`.
+> Backend build green. **Note:** Brevo/SMTP health remains gated behind `MAIL_HEALTH_ENABLED` (unchanged);
+> wiring DA-026 alerting on top of these signals is the remaining observability step.
 - **Where:** `application.yml` management config + default Spring Boot health contributors.
 - **What:** Spring's default health aggregates DB + disk; **R2 (Cloudflare object storage) is an external
   HTTP dependency with no auto health contributor.** If R2 is down, `/health` can still return 200 while
@@ -478,8 +499,8 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | DA-009 | T9 | 🟠 High | High | — | Generated reservation voidable (missing 44-00 mentions) | Legal/BE | M |
 | **EX-007** ✅ | T6/T11 | 🟡 Med | High | C | Language switcher breaks layout, changes nothing | FE | **DONE** |
 | **EX-008** ✅ | T6/T11 | 🟡 Med | High | C | `fr` locale → EUR/format leakage on a MAD product | FE | **DONE** |
-| **EX-012** | T10 | 🟡 Med | High | C | Duplicated stage-entry effects → recurring legal gaps | BE | M |
-| **EX-016** | T12 | 🟡 Med | Med | S | `/health` green while R2 down → silent outage | SRE | S |
+| **EX-012** ✅ | T10 | 🟡 Med | High | C | Duplicated stage-entry effects → recurring legal gaps | BE | **DONE** |
+| **EX-016** ✅ | T12 | 🟡 Med | Med | S | `/health` green while R2 down → silent outage | SRE | **DONE** |
 | **EX-010** | T7/T12 | 🟡 Med | Med | S | Multi-instance scheduler double-fire (DA-025) | SRE | S |
 | **EX-003** | T2 | 🟡 Med | Med | S | Last-write-wins edit loss (no `@Version` everywhere) | BE | S |
 | **EX-006** | T5 | 🟡 Med | Med | S | 3D status query hotspot at fleet scale | BE | S–M |

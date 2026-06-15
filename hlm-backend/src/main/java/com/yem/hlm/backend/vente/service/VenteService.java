@@ -335,18 +335,12 @@ public class VenteService {
         // Persist the deposit so the refund obligation has a known amount on annulation (#028).
         vente.setMontantDepot(montantDepot);
 
-        vente.setStatut(VenteStatut.RESERVE);
         vente.setOptionExpireAt(null);
 
         // Open the legal cooling-off window and advance to EN_RETRACTATION.
         // Deadline is computed via the single source of truth so the day-count convention stays consistent.
         vente.setDateFinDelaiReflexion(marketConfig.withdrawalDeadline(LocalDate.now(clock)));
-        vente.setStatut(VenteStatut.EN_RETRACTATION);
-        vente.setStageEntryDate(LocalDateTime.now(clock));
-        vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
-
-        advanceContactStatus(vente.getContact(), ContactStatus.CLIENT);
-        contactRepository.save(vente.getContact());
+        applyStageEntry(vente, VenteStatut.EN_RETRACTATION); // statut + stamps + contact→CLIENT (EX-012)
 
         return toResponse(venteRepository.save(vente));
     }
@@ -367,11 +361,9 @@ public class VenteService {
                     + " jours est expiré.");
         }
 
-        vente.setStatut(VenteStatut.ANNULE);
         vente.setRetractationExerceeAt(Instant.now(clock));
         vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
-        releasePropertyForCancelledVente(societeId, vente);
-        echeanceRepository.cancelAllPendingByVente(vente.getId());
+        applyStageEntry(vente, VenteStatut.ANNULE); // statut + property release + échéance cancel (EX-012)
 
         Vente saved = venteRepository.save(vente);
         publishVenteAnnulee(societeId, saved);
@@ -506,9 +498,7 @@ public class VenteService {
                 societeId, venteId, StatutReserve.LEVEE);
         if (remaining == 0 && vente.getStatut() == VenteStatut.LIVRE_AVEC_RESERVES) {
             validateTransition(vente.getStatut(), VenteStatut.RESERVES_LEVEES);
-            vente.setStatut(VenteStatut.RESERVES_LEVEES);
-            vente.setProbability(defaultProbability(VenteStatut.RESERVES_LEVEES));
-            vente.setStageEntryDate(LocalDateTime.now(clock));
+            applyStageEntry(vente, VenteStatut.RESERVES_LEVEES); // statut + stamps (EX-012)
             venteRepository.save(vente);
         }
         return toResponse(vente);
@@ -582,6 +572,57 @@ public class VenteService {
     }
 
     /**
+     * Single source of truth for stage-entry side effects (EX-012). Applies the universal mechanics
+     * (statut, stage-entry timestamp, probability) and the per-target effects (contact lifecycle,
+     * property workflow, échéance cancellation, KPI event) so they can never drift between the
+     * generic and the dedicated write paths — the systemic root behind EX-001/EX-004/EX-011.
+     *
+     * <p>Callers enforce stage-specific preconditions (deposit cap, recorded reserves, motif/dates)
+     * and set stage-specific fields, then delegate here. This method does <b>not</b> {@code save()}
+     * the vente, and does <b>not</b> publish the {@code VenteAnnulee} event — that stays with the
+     * caller so the annulation event is fired on the persisted snapshot (refund amount).
+     */
+    private void applyStageEntry(Vente vente, VenteStatut target) {
+        UUID societeId = vente.getSocieteId();
+
+        // 1. Universal mechanics
+        vente.setStatut(target);
+        vente.setStageEntryDate(LocalDateTime.now(clock));
+        vente.setProbability(defaultProbability(target));
+
+        // 2. Contact lifecycle advancement (target-driven; advanceContactStatus never downgrades)
+        ContactStatus contactTarget = switch (target) {
+            case EN_RETRACTATION -> ContactStatus.CLIENT;
+            case LIVRE_DEFINITIF -> ContactStatus.COMPLETED_CLIENT;
+            default              -> null;
+        };
+        if (contactTarget != null && vente.getContact() != null) {
+            advanceContactStatus(vente.getContact(), contactTarget);
+            contactRepository.save(vente.getContact());
+        }
+
+        // 3. Property workflow: ACTE → SOLD (legal transfer); ANNULE → release back to ACTIVE.
+        if (target == VenteStatut.ACTE) {
+            propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId()).ifPresent(p -> {
+                propertyWorkflow.sell(p, LocalDateTime.now(clock));
+                propertyRepository.save(p);
+            });
+        } else if (target == VenteStatut.ANNULE) {
+            releasePropertyForCancelledVente(societeId, vente);
+            // Cancel pending échéances (A-001); PAYEE échéances are already collected and left as-is.
+            echeanceRepository.cancelAllPendingByVente(vente.getId());
+        }
+
+        // 4. KPI recomputation when the sale is delivered (published pre-save, as before).
+        if (target == VenteStatut.LIVRE_DEFINITIF) {
+            UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                    .map(p -> p.getTrancheId()).orElse(null);
+            eventPublisher.publishEvent(
+                    new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
+        }
+    }
+
+    /**
      * Trusted internal statut applier. Callers must have already enforced any stage-specific
      * preconditions (e.g. {@link #recordDelivery} validates the source state and records reserves).
      * Not exposed via the public API — do not call from a controller.
@@ -602,9 +643,10 @@ public class VenteService {
             vente.setMotifAnnulation(request.motifAnnulation());
         }
 
-        vente.setStatut(request.statut());
-        vente.setStageEntryDate(LocalDateTime.now(clock));
-        vente.setProbability(defaultProbability(request.statut()));
+        // Universal stage-entry mechanics + per-target side effects (EX-012).
+        applyStageEntry(vente, request.statut());
+
+        // ── Request-driven fields (not part of the universal stage mechanics) ──
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
 
         if (request.expectedClosingDate() != null) {
@@ -625,44 +667,6 @@ public class VenteService {
         // Capture PV de réception date when advancing to final delivery (optional convenience field)
         if (request.statut() == VenteStatut.LIVRE_DEFINITIF && request.datePvReception() != null) {
             vente.setDatePvReception(request.datePvReception());
-        }
-
-        // Advance contact to COMPLETED_CLIENT when sale is delivered
-        if (request.statut() == VenteStatut.LIVRE_DEFINITIF) {
-            Contact contact = vente.getContact();
-            advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
-            contactRepository.save(contact);
-
-            // Publish KPI recomputation event after commit
-            UUID trancheId = propertyRepository
-                    .findBySocieteIdAndId(societeId, vente.getPropertyId())
-                    .map(p -> p.getTrancheId()).orElse(null);
-            eventPublisher.publishEvent(
-                    new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
-        }
-
-        // Drive property status from vente stage:
-        // ACTE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
-        Property property = propertyRepository
-                .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
-        if (property != null) {
-            if (request.statut() == VenteStatut.ACTE) {
-                propertyWorkflow.sell(property, LocalDateTime.now(clock));
-                propertyRepository.save(property);
-            } else if (request.statut() == VenteStatut.ANNULE) {
-                if (property.getStatus() == PropertyStatus.RESERVED) {
-                    propertyWorkflow.releaseReservation(property);
-                } else if (property.getStatus() == PropertyStatus.SOLD) {
-                    propertyWorkflow.cancelSaleToAvailable(property);
-                }
-                propertyRepository.save(property);
-            }
-        }
-
-        // Cancel all pending échéances when a vente is annulled (A-001).
-        // PAYEE échéances are already collected and are left unchanged.
-        if (request.statut() == VenteStatut.ANNULE) {
-            echeanceRepository.cancelAllPendingByVente(vente.getId());
         }
 
         Vente saved = venteRepository.save(vente);

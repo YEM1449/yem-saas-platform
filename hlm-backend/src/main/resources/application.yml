@@ -107,6 +107,15 @@ management:
         # health + info always on; metrics + prometheus for Prometheus/Grafana scraping;
         # loggers for dynamic log-level changes without restart.
         include: health,info,metrics,prometheus,loggers
+  endpoint:
+    health:
+      show-details: when_authorized
+      # Liveness/readiness probe groups. The object-storage (R2/S3) health indicator (EX-016)
+      # contributes to the AGGREGATE /actuator/health (so an R2 outage is visible to monitoring),
+      # but NOT to these groups — so an R2 blip never restarts or de-routes the container.
+      # Deploy/orchestrator probes should target /actuator/health/readiness (not the aggregate).
+      probes:
+        enabled: true
   health:
     mail:
       enabled: ${MAIL_HEALTH_ENABLED:false}

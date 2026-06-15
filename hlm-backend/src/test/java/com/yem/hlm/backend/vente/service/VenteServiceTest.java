@@ -398,7 +398,8 @@ class VenteServiceTest {
     @DisplayName("exerciseRetractation rejected after the legal deadline has passed")
     void exerciseRetractation_rejectedAfterDeadline() {
         Vente vente = venteWithStatut(VenteStatut.EN_RETRACTATION);
-        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now().minusDays(1));
+        // Deadline strictly before the service's (fixed) clock date → deterministic, not wall-clock dependent.
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).minusDays(1));
 
         assertThatThrownBy(() -> service.exerciseRetractation(VENTE))
                 .isInstanceOf(RetractationImpossibleException.class);
