@@ -2,6 +2,11 @@
 
 Auto-load guide for Claude Code. Captures operating rules, architecture context, and the current implementation backlog.
 
+## Wave 16 — Module Visites & Agenda (in progress)
+
+Branch `Epic/Dashboard-UIUX-improvement`. New `visite/` module: agent↔contact appointments to present a property/project, with agenda, conflict detection (anti double-booking), comptes-rendus, and **persistent DB-scan reminders** (never in-memory scheduler). Next changeset **088** (086 gap, 087 taken). Manifest: `.wave16-session.json`. RG-V01..RG-V10 in prompt. Timezone: store `Instant`/TIMESTAMPTZ, render Africa/Casablanca. Reuses `EmailSender` (Brevo), `VenteService.create()` for the visite→opportunité link.
+- **P0 ✅** bootstrap audit — decisions recorded in `.wave16-session.json`.
+
 ## Audit Checkpoint — Consolidated Audit (2026-06-13)
 
 **→ Source of truth: `docs/audit/audit-report-2026-06-13.md` + `docs/audit/action-plan-2026-06-13.md`**
