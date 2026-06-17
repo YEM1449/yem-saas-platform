@@ -28,8 +28,9 @@ New IDs are `EX-NNN`.
 > advance dialog's `NEXT_MAP` no longer offers guarded transitions (PROSPECT/OPTION/LIVRE_AVEC_RESERVES);
 > it now points the user at the dedicated VEFA panel (`confirmReservation` / `liftReserve`). Tests:
 > `VenteServiceTest.updateStatut_guardedStages_areRejected` (216 unit tests green); frontend build green.
-> Note: the EX-009 timezone half of EX-011 is still open — the deposit-cap/window *setup* is now
-> single-pathed, but the date math fix is separate.
+> Note: the EX-009 timezone half (date math) is now also closed — `MarketConfig.withdrawalDeadline()`
+> + the market-zoned `Clock` (`MarketTimeConfig.marketClock` = `Clock.system(Africa/Casablanca)`) — so
+> the full EX-011 composite (setup + date math + exit guard) is resolved.
 - **Where:** `vente/service/VenteService.java:550` `updateStatut()` vs `:280` `createOption()` / `:317` `confirmReservation()`.
 - **What:** Two parallel write paths advance a Vente. `confirmReservation()` enforces the Art. 618‑4
   deposit cap (≤ 5%) → `422`, sets `dateFinDelaiReflexion`, and seeds the rétractation window.
@@ -364,6 +365,14 @@ the 09-08 surface, not closures.
 >    Tests: `updateStatut_blocksAcompteWhileRetractationWindowOpen` +
 >    `updateStatut_allowsAcompteAfterRetractationWindow` (219 unit tests green); frontend build green.
 > **DA-011 is now closed** — the cooling-off right can no longer be curtailed by a status PATCH.
+> **Re-verified 2026-06-14:** end-to-end implementation confirmed against the code on this pass —
+> public `updateStatut()` → `GuardedStageEntryException` for guarded stages → delegates to private
+> `applyStatutChange()`, which runs `validateTransition()` then `enforceRetractationWindow(vente, target)`
+> (`VenteService.java:635, :1043`); the guard compares against `LocalDate.now(clock)` where `clock` is the
+> Casablanca-zoned `marketClock` bean, blocks while the deadline is in the future **or null** (fail-safe),
+> and only permits `→ ANNULE` (buyer withdrawal). Mapped to HTTP 409 `RETRACTATION_WINDOW_OPEN`. Tests
+> exercise the **public** path; `VenteServiceTest` green (23 tests in the class; full unit suite green).
+> Only residual is the legal day-count sign-off below (not a code item).
 - This is the legal synthesis of **EX-001 + EX-009**: (a) a vente reaching `EN_RETRACTATION` via the
   generic `PATCH /statut` has **no `dateFinDelaiReflexion`** (EX-001), and (b) when the dedicated path
   *does* set it, it's computed in the JVM zone and can be off by a day (EX-009). Either way the system
@@ -421,7 +430,23 @@ scaffolding.
 
 ## TRACK 11 · Accessibility & i18n / Expansion Readiness (Karim + Lina) — *primary new track*
 
-### EX-014 🟠 High — CONFIRMED — i18n is architecturally absent: 100% hardcoded French; France/Arabic expansion is currently impossible without a rewrite
+### EX-014 🟠 High — 🟡 FOUNDATION IMPLEMENTED (2026-06-14), string migration in progress — i18n is architecturally absent: 100% hardcoded French; France/Arabic expansion is currently impossible without a rewrite
+> **Decision:** option (b) — re-introduce a real i18n layer (chosen over FR-only cleanup). The architectural
+> finding ("i18n is absent / expansion needs a rewrite") is now **resolved**: a runtime i18n layer is wired
+> and live. Re-keying every string is the remaining mechanical follow-through, tracked in
+> `docs/i18n/i18n-migration-guide.md`.
+> **Implemented:** `@ngx-translate/core` v17 + HTTP-loader catalogs (`public/i18n/{fr,en,ar}.json`);
+> `I18nService` facade (`core/i18n/`) owning language registry, persistence (`localStorage` +
+> `langueInterface` profile sync), `<html lang/dir>`, and RTL; `provideTranslateService` + APP_INITIALIZER in
+> `app.config.ts` (first paint is pre-translated, French fallback so partial migration never blanks a screen);
+> the **functional** `LanguageSwitcher` (FR/EN/عربي) restored and mounted in login + CRM shell;
+> `[dir=rtl]` baseline in `styles.css`; `AuthService` adopts the user's saved language on `/auth/me`.
+> **Fully migrated as canonical patterns:** the login screen and the entire CRM shell navigation
+> (sections, rail items + tooltips, bottom nav, search, logout), with `common`/`auth`/`nav`/`lang`
+> namespaces translated in all three languages. `npm run build` green.
+> **Remaining (the "re-key everything" tail):** ~57/62 templates + ~61 TS components, migrated feature-by-feature
+> per the guide (build stays green via the French fallback); `en`/`ar` to reach key parity; full-page RTL audit
+> beyond the chrome. France/Arabic launch is now a translation+migration effort, **not** a rewrite.
 - **Where:** Phase D removed ngx-translate (613 pipes deleted, FR-only). User strings are inline French
   across components. Only 23 files still reference "translate" (residual). The `language-switcher`
   (EX-007) is the visible symptom.
@@ -491,8 +516,8 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | **EX-005** ✅ | T4 | 🟠 High | High | C | Flagship 3D feature silently dead after 1 navigation | FE | **DONE** |
 | **EX-001** ✅ | T1/T3/T9 | 🟠 High | Med | C | Legal deposit-cap + rétractation setup bypassable via generic PATCH | BE/Legal | **DONE** |
 | **EX-009** ✅ | T7/T9 | 🟠 High | Med | C/S | Off-by-one on 7-day legal rétractation (JVM zone) | BE/Legal | **DONE** |
-| **EX-011** | T9 | 🟠 High | Med | C | Cannot reliably prove buyer's Art.618-3 window (EX-001+EX-009) | BE/Legal | M |
-| **EX-014** | T11 | 🟠 High | High | C | France/AR expansion blocked; marketed multi-lang non-functional | Product/FE | L |
+| **EX-011** ✅ | T9 | 🟠 High | Med | C | Cannot reliably prove buyer's Art.618-3 window (EX-001+EX-009) | BE/Legal | **DONE** (⚠️ day-count rule still needs counsel sign-off) |
+| **EX-014** 🟡 | T11 | 🟠 High | High | C | France/AR expansion blocked; marketed multi-lang non-functional | Product/FE | **Foundation DONE; string migration in progress** (see i18n-migration-guide.md) |
 | DA-005 | T2 | 🟠 High | Med | C | Mail/R2 hiccup → Neon pool exhaustion → outage | BE/SRE | M |
 | DA-010 | T3 | 🟠 High | Med | — | Plaintext CIN/financials; CNDP blast radius | BE/Data | M |
 | DA-013 | T8/T9 | 🟠 High | High | — | No tamper-evident history of legal actions | BE | M |
