@@ -196,6 +196,68 @@
       "ANNULE": "عملية بيع ملغاة — راجع السبب في الملف"
     },
     "contractStatus": { "PENDING": "قيد الانتظار", "GENERATED": "تم الإنشاء", "SIGNED": "موقّع" },
+    "echeanceStatut": { "EN_ATTENTE": "قيد الانتظار", "PAYEE": "مدفوعة", "EN_RETARD": "متأخرة" },
+    "paymentMethod": { "VIREMENT": "تحويل بنكي", "CHEQUE": "شيك", "ESPECES": "نقدًا", "AUTRE": "أخرى" },
+    "financing": { "COMPTANT": "نقدًا", "CREDIT_IMMOBILIER": "قرض عقاري", "PTZ": "قرض بدون فائدة (PTZ)", "MIXTE": "مختلط" },
+    "motif": {
+      "CREDIT_REFUSE": "رُفض القرض", "DESISTEMENT_ACHETEUR": "تراجع المشتري",
+      "CSP_NON_REALISEE": "لم يتحقق الشرط الواقف", "ACCORD_PARTIES": "اتفاق بين الطرفين",
+      "LITIGE": "نزاع", "AUTRE": "أخرى"
+    },
+    "detail": {
+      "deadline": {
+        "reflectionEnd": "نهاية مهلة التراجع",
+        "financingLimit": "أجل الحصول على التمويل",
+        "deliveryExpected": "التسليم المتوقع",
+        "closingExpected": "الإغلاق المتوقع"
+      },
+      "attention": {
+        "cancelled": "عملية بيع ملغاة",
+        "cancelledMotif": "عملية بيع ملغاة — {{motif}}",
+        "balanceRemaining": "الرصيد المتبقي: {{amount}}",
+        "pvMissing": "لم يُدخَل محضر الاستلام",
+        "titreMissing": "لم يُسجَّل الرسم العقاري",
+        "complete": "ملف مكتمل",
+        "retractationPossible": "لا يزال بإمكان المشتري التراجع لمدة {{days}} يومًا — البيع غير مؤمَّن",
+        "financingOverdue": "انقضى أجل التمويل دون موافقة — خطر السقوط",
+        "creditPending": "موافقة القرض قيد الانتظار ({{bank}})",
+        "financingToConfirm": "التمويل بحاجة إلى تأكيد",
+        "contractNotGenerated": "لم يُنشأ عقد البيع",
+        "contractToSign": "تم إنشاء العقد — في انتظار التوقيع",
+        "overdueEcheances": "{{count}} قسط متأخر ({{amount}})",
+        "noSchedule": "لم يُحدَّد أي جدول دفع",
+        "ready": "لا توجد إجراءات معلقة — جاهز للخطوة التالية"
+      },
+      "confirm": {
+        "retractation": "تأكيد التراجع؟ ستُلغى عملية البيع ويُحرَّر العقار.",
+        "deleteCoAcq": "حذف المشتري المشارك؟"
+      },
+      "errors": {
+        "contractGen": "فشل إنشاء العقد.",
+        "pvGen": "فشل إنشاء محضر الاستلام.",
+        "coAcqRequired": "الاسم واللقب مطلوبان.",
+        "coAcqSave": "فشل حفظ المشتري المشارك.",
+        "coAcqDelete": "فشل الحذف.",
+        "reservationConfirm": "فشل تأكيد الحجز (الوديعة > 5%؟).",
+        "retractation": "التراجع غير ممكن (انتهى الأجل؟).",
+        "deliveryRecord": "فشل تسجيل التسليم.",
+        "reserveLift": "فشل رفع التحفظ.",
+        "echeancierGen": "فشل إنشاء الجدول القانوني.",
+        "quittanceGen": "فشل إنشاء الإيصال.",
+        "upload": "فشل الرفع.",
+        "download": "فشل التنزيل.",
+        "contractGenerate": "حدث خطأ أثناء إنشاء العقد.",
+        "contractSign": "حدث خطأ أثناء توقيع العقد.",
+        "financingUpdate": "حدث خطأ أثناء التحديث.",
+        "rembAmount": "فشل حفظ المبلغ.",
+        "rembSave": "فشل حفظ الاسترداد.",
+        "dossierSave": "فشل حفظ الملف.",
+        "echeanceAdd": "حدث خطأ أثناء الإضافة.",
+        "inviteSend": "حدث خطأ أثناء الإرسال."
+      },
+      "inviteSuccess": "تم إرسال الدعوة بنجاح.",
+      "notFound": "عملية البيع غير موجودة."
+    },
     "kanbanHint": {
       "RESERVE": "حجز + وديعة", "COMPROMIS": "عقد ابتدائي موقّع",
       "FINANCEMENT": "ملف بنكي قيد الإنجاز", "ACTE": "عقد رسمي", "LIVRE_DEFINITIF": "تسليم المفاتيح"

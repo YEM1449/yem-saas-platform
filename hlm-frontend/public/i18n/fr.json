@@ -196,6 +196,68 @@
       "ANNULE": "Vente annulée — voir motif dans la fiche"
     },
     "contractStatus": { "PENDING": "En attente", "GENERATED": "Généré", "SIGNED": "Signé" },
+    "echeanceStatut": { "EN_ATTENTE": "En attente", "PAYEE": "Payée", "EN_RETARD": "En retard" },
+    "paymentMethod": { "VIREMENT": "Virement", "CHEQUE": "Chèque", "ESPECES": "Espèces", "AUTRE": "Autre" },
+    "financing": { "COMPTANT": "Comptant", "CREDIT_IMMOBILIER": "Crédit immobilier", "PTZ": "Prêt à taux zéro (PTZ)", "MIXTE": "Mixte" },
+    "motif": {
+      "CREDIT_REFUSE": "Crédit refusé", "DESISTEMENT_ACHETEUR": "Désistement acheteur",
+      "CSP_NON_REALISEE": "Condition suspensive non réalisée", "ACCORD_PARTIES": "Accord entre parties",
+      "LITIGE": "Litige", "AUTRE": "Autre"
+    },
+    "detail": {
+      "deadline": {
+        "reflectionEnd": "Fin du délai de rétractation",
+        "financingLimit": "Limite d’obtention du financement",
+        "deliveryExpected": "Livraison prévue",
+        "closingExpected": "Clôture prévue"
+      },
+      "attention": {
+        "cancelled": "Vente annulée",
+        "cancelledMotif": "Vente annulée — {{motif}}",
+        "balanceRemaining": "Solde restant : {{amount}}",
+        "pvMissing": "PV de réception non saisi",
+        "titreMissing": "Titre foncier non enregistré",
+        "complete": "Dossier complet",
+        "retractationPossible": "Rétractation acheteur possible {{days}} j — vente non sécurisée",
+        "financingOverdue": "Délai de financement dépassé sans accord — risque de caducité",
+        "creditPending": "Accord de crédit en attente ({{bank}})",
+        "financingToConfirm": "Financement à confirmer",
+        "contractNotGenerated": "Contrat de vente non généré",
+        "contractToSign": "Contrat généré — à faire signer",
+        "overdueEcheances": "{{count}} échéance(s) en retard ({{amount}})",
+        "noSchedule": "Aucun échéancier de paiement défini",
+        "ready": "Aucune action en attente — prêt pour l’étape suivante"
+      },
+      "confirm": {
+        "retractation": "Confirmer la rétractation ? La vente sera annulée et le bien libéré.",
+        "deleteCoAcq": "Supprimer le co-acquéreur ?"
+      },
+      "errors": {
+        "contractGen": "Échec de la génération du contrat.",
+        "pvGen": "Échec de la génération du PV.",
+        "coAcqRequired": "Nom et prénom sont requis.",
+        "coAcqSave": "Échec de l’enregistrement du co-acquéreur.",
+        "coAcqDelete": "La suppression a échoué.",
+        "reservationConfirm": "La confirmation de réservation a échoué (dépôt > 5% ?).",
+        "retractation": "La rétractation est impossible (délai expiré ?).",
+        "deliveryRecord": "L’enregistrement de la livraison a échoué.",
+        "reserveLift": "La levée de réserve a échoué.",
+        "echeancierGen": "La génération de l’échéancier légal a échoué.",
+        "quittanceGen": "La génération de la quittance a échoué.",
+        "upload": "Échec du téléversement.",
+        "download": "Échec du téléchargement.",
+        "contractGenerate": "Erreur lors de la génération du contrat.",
+        "contractSign": "Erreur lors de la signature du contrat.",
+        "financingUpdate": "Erreur lors de la mise à jour.",
+        "rembAmount": "Échec de l’enregistrement du montant.",
+        "rembSave": "Échec de l’enregistrement du remboursement.",
+        "dossierSave": "Échec de l’enregistrement du dossier.",
+        "echeanceAdd": "Erreur lors de l’ajout.",
+        "inviteSend": "Erreur lors de l’envoi."
+      },
+      "inviteSuccess": "Invitation envoyée avec succès.",
+      "notFound": "Vente introuvable."
+    },
     "kanbanHint": {
       "RESERVE": "Réservation + dépôt", "COMPROMIS": "Avant-contrat signé",
       "FINANCEMENT": "Dossier bancaire en cours", "ACTE": "Acte authentique", "LIVRE_DEFINITIF": "Remise des clés"

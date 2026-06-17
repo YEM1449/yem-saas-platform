@@ -196,6 +196,68 @@
       "ANNULE": "Sale cancelled — see reason in the file"
     },
     "contractStatus": { "PENDING": "Pending", "GENERATED": "Generated", "SIGNED": "Signed" },
+    "echeanceStatut": { "EN_ATTENTE": "Pending", "PAYEE": "Paid", "EN_RETARD": "Overdue" },
+    "paymentMethod": { "VIREMENT": "Bank transfer", "CHEQUE": "Cheque", "ESPECES": "Cash", "AUTRE": "Other" },
+    "financing": { "COMPTANT": "Cash", "CREDIT_IMMOBILIER": "Mortgage", "PTZ": "Zero-rate loan (PTZ)", "MIXTE": "Mixed" },
+    "motif": {
+      "CREDIT_REFUSE": "Credit refused", "DESISTEMENT_ACHETEUR": "Buyer withdrawal",
+      "CSP_NON_REALISEE": "Condition precedent not met", "ACCORD_PARTIES": "Agreement between parties",
+      "LITIGE": "Dispute", "AUTRE": "Other"
+    },
+    "detail": {
+      "deadline": {
+        "reflectionEnd": "End of withdrawal period",
+        "financingLimit": "Financing deadline",
+        "deliveryExpected": "Expected delivery",
+        "closingExpected": "Expected closing"
+      },
+      "attention": {
+        "cancelled": "Sale cancelled",
+        "cancelledMotif": "Sale cancelled — {{motif}}",
+        "balanceRemaining": "Remaining balance: {{amount}}",
+        "pvMissing": "Handover report not entered",
+        "titreMissing": "Land title not registered",
+        "complete": "File complete",
+        "retractationPossible": "Buyer can still withdraw for {{days}} days — sale not secured",
+        "financingOverdue": "Financing deadline passed without approval — risk of lapse",
+        "creditPending": "Credit approval pending ({{bank}})",
+        "financingToConfirm": "Financing to confirm",
+        "contractNotGenerated": "Sale contract not generated",
+        "contractToSign": "Contract generated — to be signed",
+        "overdueEcheances": "{{count}} overdue installment(s) ({{amount}})",
+        "noSchedule": "No payment schedule defined",
+        "ready": "No pending action — ready for the next step"
+      },
+      "confirm": {
+        "retractation": "Confirm withdrawal? The sale will be cancelled and the property released.",
+        "deleteCoAcq": "Delete the co-buyer?"
+      },
+      "errors": {
+        "contractGen": "Failed to generate the contract.",
+        "pvGen": "Failed to generate the handover report.",
+        "coAcqRequired": "First and last name are required.",
+        "coAcqSave": "Failed to save the co-buyer.",
+        "coAcqDelete": "Deletion failed.",
+        "reservationConfirm": "Reservation confirmation failed (deposit > 5%?).",
+        "retractation": "Withdrawal is not possible (deadline expired?).",
+        "deliveryRecord": "Recording the delivery failed.",
+        "reserveLift": "Lifting the reserve failed.",
+        "echeancierGen": "Generating the legal schedule failed.",
+        "quittanceGen": "Generating the receipt failed.",
+        "upload": "Upload failed.",
+        "download": "Download failed.",
+        "contractGenerate": "An error occurred while generating the contract.",
+        "contractSign": "An error occurred while signing the contract.",
+        "financingUpdate": "An error occurred while updating.",
+        "rembAmount": "Failed to save the amount.",
+        "rembSave": "Failed to save the refund.",
+        "dossierSave": "Failed to save the file.",
+        "echeanceAdd": "An error occurred while adding.",
+        "inviteSend": "An error occurred while sending."
+      },
+      "inviteSuccess": "Invitation sent successfully.",
+      "notFound": "Sale not found."
+    },
     "kanbanHint": {
       "RESERVE": "Reservation + deposit", "COMPROMIS": "Preliminary contract signed",
       "FINANCEMENT": "Bank file in progress", "ACTE": "Authentic deed", "LIVRE_DEFINITIF": "Handover of keys"
