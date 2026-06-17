@@ -17,18 +17,21 @@ import { Reservation, ReservationService, CreateReservationRequest } from '../re
 import { VenteService, Vente, VenteDocument } from '../ventes/vente.service';
 import { DocumentListComponent } from '../documents/document-list.component';
 import { ContactTasksComponent } from '../tasks/contact-tasks.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 'timeline' | 'documents' | 'tasks';
 
 @Component({
   selector: 'app-contact-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe],
+  imports: [RouterLink, FormsModule, DocumentListComponent, ContactTasksComponent, DecimalPipe, DatePipe, TranslatePipe],
   templateUrl: './contact-detail.component.html',
   styleUrl: './contact-detail.component.css',
 })
 export class ContactDetailComponent implements OnInit {
   private svc          = inject(ContactService);
+  private i18n         = inject(I18nService);
   private depositSvc   = inject(DepositService);
   private propertySvc  = inject(PropertyService);
   private reservSvc    = inject(ReservationService);
@@ -70,7 +73,7 @@ export class ContactDetailComponent implements OnInit {
     this.legalSaved = false;
     this.svc.updateLegalDetails(this.contact.id, this.legal).subscribe({
       next: (l) => { this.legal = l; this.legalSaving = false; this.legalSaved = true; },
-      error: () => { this.legalSaving = false; this.legalError = 'Échec de l\'enregistrement du profil légal.'; },
+      error: () => { this.legalSaving = false; this.legalError = this.i18n.instant('contacts.detail.errors.legalSaveFailed'); },
     });
   }
   contactId = '';
@@ -162,15 +165,7 @@ export class ContactDetailComponent implements OnInit {
   timelineLoaded = false;
 
   // ── Status machine helper ──────────────────────────────────────────────────
-  readonly STATUS_LABELS: Record<string, string> = {
-    PROSPECT:           'Prospect',
-    QUALIFIED_PROSPECT: 'Prospect qualifié',
-    CLIENT:             'Client',
-    ACTIVE_CLIENT:      'Client actif',
-    COMPLETED_CLIENT:   'Client finalisé',
-    REFERRAL:           'Référent',
-    LOST:               'Perdu',
-  };
+  // Status labels resolved from the i18n catalog (contacts.status.*).
 
   readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
     PROSPECT:           ['QUALIFIED_PROSPECT', 'LOST'],
@@ -195,9 +190,9 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if (err.status === 404) this.error = 'Contact introuvable.';
-        else if (err.status === 401) this.error = 'Session expirée.';
-        else this.error = body?.message ?? `Erreur (${err.status})`;
+        if (err.status === 404) this.error = this.i18n.instant('contacts.detail.errors.notFound');
+        else if (err.status === 401) this.error = this.i18n.instant('contacts.detail.errors.sessionExpired');
+        else this.error = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -295,7 +290,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.qualifying = false;
         const body = err.error as ErrorResponse | null;
-        this.qualifyError = body?.message ?? `Erreur (${err.status})`;
+        this.qualifyError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -330,7 +325,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.interestsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Erreur (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -377,7 +372,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.addingInterest = false;
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Erreur (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -389,7 +384,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.removingPropertyId = '';
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Erreur (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -404,7 +399,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.reservationsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+        this.reservationError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -423,7 +418,7 @@ export class ContactDetailComponent implements OnInit {
     this.reservSvc.create(req).subscribe({
       next: () => {
         this.creatingReservation = false;
-        this.reservationSuccess = 'Réservation créée. Le bien est en attente.';
+        this.reservationSuccess = this.i18n.instant('contacts.detail.errors.reservationCreated');
         this.reservationPropertyId = '';
         this.reservationPrice = null;
         this.reservationNotes = '';
@@ -436,11 +431,11 @@ export class ContactDetailComponent implements OnInit {
         this.creatingReservation = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 409) {
-          this.reservationError = 'Ce bien est déjà réservé.';
+          this.reservationError = this.i18n.instant('contacts.detail.errors.alreadyReserved');
           this.propertiesLoaded = false;
           this.loadProperties();
         } else {
-          this.reservationError = body?.message ?? `Erreur (${err.status})`;
+          this.reservationError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
         }
       },
     });
@@ -455,14 +450,14 @@ export class ContactDetailComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
-        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+        this.reservationError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
 
   convertReservationToDeposit(r: Reservation): void {
     if (!r.reservationPrice) {
-      this.reservationError = 'Veuillez saisir un montant avant de convertir.';
+      this.reservationError = this.i18n.instant('contacts.detail.errors.amountBeforeConvert');
       return;
     }
     this.reservSvc.convertToDeposit(r.id, {
@@ -477,7 +472,7 @@ export class ContactDetailComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
-        this.reservationError = body?.message ?? `Erreur (${err.status})`;
+        this.reservationError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -493,7 +488,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.convertingReservationId = null;
         const body = err.error as ErrorResponse | null;
-        this.convertReservationError = body?.message ?? `Erreur (${err.status})`;
+        this.convertReservationError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -508,7 +503,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.depositsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Erreur (${err.status})`;
+        this.depositError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -527,7 +522,7 @@ export class ContactDetailComponent implements OnInit {
     this.depositSvc.create(req).subscribe({
       next: () => {
         this.creatingDeposit = false;
-        this.depositSuccess = 'Acompte créé avec succès.';
+        this.depositSuccess = this.i18n.instant('contacts.detail.errors.depositCreated');
         this.depositPropertyId = '';
         this.depositAmount = null;
         this.depositNotes = '';
@@ -540,11 +535,11 @@ export class ContactDetailComponent implements OnInit {
         this.creatingDeposit = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 409) {
-          this.depositError = 'Ce bien est déjà réservé ou un acompte existe.';
+          this.depositError = this.i18n.instant('contacts.detail.errors.alreadyReservedOrDeposit');
           this.propertiesLoaded = false;
           this.loadProperties();
         } else {
-          this.depositError = body?.message ?? `Erreur (${err.status})`;
+          this.depositError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
         }
       },
     });
@@ -562,7 +557,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.actionDepositId = null;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Erreur (${err.status})`;
+        this.depositError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -581,7 +576,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.actionDepositId = null;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Erreur (${err.status})`;
+        this.depositError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -596,7 +591,7 @@ export class ContactDetailComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => { this.depositError = 'Échec du téléchargement PDF.'; },
+      error: () => { this.depositError = this.i18n.instant('contacts.detail.errors.pdfDownloadFailed'); },
     });
   }
 
@@ -606,14 +601,14 @@ export class ContactDetailComponent implements OnInit {
     this.venteSvc.create({ contactId: d.contactId, propertyId: d.propertyId }).subscribe({
       next: () => {
         this.convertingDepositId = null;
-        this.depositSuccess = 'Vente créée avec succès. Voir l\'onglet Ventes.';
+        this.depositSuccess = this.i18n.instant('contacts.detail.errors.venteCreated');
         this.ventesLoaded = false;
         this.svc.getById(this.contactId).subscribe({ next: (c) => { this.contact = c; } });
       },
       error: (err: HttpErrorResponse) => {
         this.convertingDepositId = null;
         const body = err.error as { message?: string } | null;
-        this.depositError = body?.message ?? `Erreur (${err.status})`;
+        this.depositError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -628,7 +623,7 @@ export class ContactDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.ventesLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.ventesError = body?.message ?? `Erreur (${err.status})`;
+        this.ventesError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -652,14 +647,7 @@ export class ContactDetailComponent implements OnInit {
   }
 
   venteStatutLabel(s: string): string {
-    const labels: Record<string, string> = {
-      COMPROMIS:    'Compromis',
-      FINANCEMENT:  'Financement',
-      ACTE: 'Acte notarié',
-      LIVRE_DEFINITIF:        'Livré',
-      ANNULE:       'Annulé',
-    };
-    return labels[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   venteStatutClass(s: string): string {
@@ -686,7 +674,7 @@ export class ContactDetailComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.timelineLoading = false;
-        this.timelineError = `Erreur (${err.status})`;
+        this.timelineError = this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -694,7 +682,7 @@ export class ContactDetailComponent implements OnInit {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   statusLabel(s: string): string {
-    return this.STATUS_LABELS[s] ?? s;
+    return this.i18n.instant('contacts.status.' + s);
   }
 
   statusClass(s: string): string {
@@ -749,13 +737,7 @@ export class ContactDetailComponent implements OnInit {
   }
 
   categoryLabel(c: string): string {
-    const map: Record<string, string> = {
-      AUDIT:         'Audit',
-      MESSAGE:       'Message',
-      NOTIFICATION:  'Notif.',
-      STATUS_CHANGE: 'Statut',
-    };
-    return map[c] ?? c;
+    return this.i18n.instant('contacts.detail.categories.' + c);
   }
 
   isTempClientExpired(): boolean {
