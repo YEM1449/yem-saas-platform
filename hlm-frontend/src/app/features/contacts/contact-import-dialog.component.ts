@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ContactService, ContactImportReport } from './contact.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /**
  * CSV contact import dialog (finding #002).
@@ -12,14 +14,14 @@ import { ContactService, ContactImportReport } from './contact.service';
 @Component({
   selector: 'app-contact-import-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <div class="modal-backdrop" (click)="close()">
       <div class="modal import-modal" (click)="$event.stopPropagation()">
 
         <div class="modal-header">
-          <h2 class="modal-title">Importer des contacts (CSV)</h2>
-          <button class="modal-close" (click)="close()" [disabled]="busy()" aria-label="Fermer">✕</button>
+          <h2 class="modal-title">{{ 'contacts.import.title' | translate }}</h2>
+          <button class="modal-close" (click)="close()" [disabled]="busy()" [attr.aria-label]="'common.actions.close' | translate">✕</button>
         </div>
 
         <div class="modal-body">
@@ -29,27 +31,26 @@ import { ContactService, ContactImportReport } from './contact.service';
 
           @if (step() === 'setup') {
             <p class="import-hint">
-              Fichier CSV (Excel : « Enregistrer sous → CSV UTF-8 »). Colonnes obligatoires :
-              <strong>prénom</strong> et <strong>nom</strong> ; reconnues : téléphone, email, CIN,
-              adresse, notes. Chaque ligne doit avoir un téléphone ou un email.
-              <a href="#" (click)="downloadTemplate($event)">Télécharger le modèle</a>
+              {{ 'contacts.import.hintIntro' | translate }}
+              <strong>{{ 'contacts.import.colFirstName' | translate }}</strong> {{ 'contacts.import.and' | translate }} <strong>{{ 'contacts.import.colLastName' | translate }}</strong>{{ 'contacts.import.hintRest' | translate }}
+              <a href="#" (click)="downloadTemplate($event)">{{ 'contacts.import.downloadTemplate' | translate }}</a>
             </p>
 
             <div class="form-group">
-              <label class="form-label required">Fichier</label>
+              <label class="form-label required">{{ 'contacts.import.fileLabel' | translate }}</label>
               <input class="form-control" type="file" accept=".csv,text/csv"
                      (change)="onFile($event)" data-testid="import-file-input" />
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Base juridique (Loi 09-08)</label>
+              <label class="form-label required">{{ 'contacts.import.legalBasis' | translate }}</label>
               <label class="radio-row">
                 <input type="radio" name="basis" value="consent" [(ngModel)]="basisChoice" />
-                Ces contacts ont donné leur consentement (papier, email…)
+                {{ 'contacts.import.basisConsent' | translate }}
               </label>
               <label class="radio-row">
                 <input type="radio" name="basis" value="legitimate" [(ngModel)]="basisChoice" />
-                Intérêt légitime — relation commerciale existante
+                {{ 'contacts.import.basisLegitimate' | translate }}
               </label>
             </div>
           }
@@ -58,22 +59,22 @@ import { ContactService, ContactImportReport } from './contact.service';
             <div class="report" [class.report-final]="step() === 'done'">
               <p class="report-headline">
                 @if (r.dryRun) {
-                  Aperçu — rien n'a encore été créé :
+                  {{ 'contacts.import.previewHeadline' | translate }}
                 } @else {
-                  Import terminé :
+                  {{ 'contacts.import.doneHeadline' | translate }}
                 }
-                <strong>{{ r.created }}</strong> contact(s) {{ r.dryRun ? 'seront créés' : 'créés' }},
-                <strong>{{ r.duplicateCount }}</strong> doublon(s) ignoré(s),
-                <strong>{{ r.errorCount }}</strong> ligne(s) en erreur
-                (sur {{ r.totalRows }} lignes).
+                <strong>{{ r.created }}</strong> {{ 'contacts.import.contactsWord' | translate }} {{ r.dryRun ? ('contacts.import.willBeCreated' | translate) : ('contacts.import.createdWord' | translate) }},
+                <strong>{{ r.duplicateCount }}</strong> {{ 'contacts.import.duplicatesIgnored' | translate }},
+                <strong>{{ r.errorCount }}</strong> {{ 'contacts.import.linesError' | translate }}
+                {{ 'contacts.import.onLines' | translate:{ count: r.totalRows } }}
               </p>
               @if (r.ignoredColumns.length > 0) {
-                <p class="report-note">Colonnes non reconnues, ignorées : {{ r.ignoredColumns.join(', ') }}</p>
+                <p class="report-note">{{ 'contacts.import.ignoredColumns' | translate }} {{ r.ignoredColumns.join(', ') }}</p>
               }
               @if (r.errors.length > 0 || r.duplicates.length > 0) {
                 <div class="issues-wrap">
                   <table class="table issues-table">
-                    <thead><tr><th>Ligne</th><th>Contact</th><th>Motif</th></tr></thead>
+                    <thead><tr><th>{{ 'contacts.import.thLine' | translate }}</th><th>{{ 'contacts.import.thContact' | translate }}</th><th>{{ 'contacts.import.thReason' | translate }}</th></tr></thead>
                     <tbody>
                       @for (e of r.errors; track e.line) {
                         <tr class="issue-error"><td>{{ e.line }}</td><td>{{ e.identity }}</td><td>{{ e.reason }}</td></tr>
@@ -84,7 +85,7 @@ import { ContactService, ContactImportReport } from './contact.service';
                     </tbody>
                   </table>
                   @if (r.truncated) {
-                    <p class="report-note">Liste tronquée — seules les 100 premières anomalies sont affichées.</p>
+                    <p class="report-note">{{ 'contacts.import.truncated' | translate }}</p>
                   }
                 </div>
               }
@@ -94,18 +95,18 @@ import { ContactService, ContactImportReport } from './contact.service';
 
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="close()" [disabled]="busy()">
-            {{ step() === 'done' ? 'Fermer' : 'Annuler' }}
+            {{ step() === 'done' ? ('common.actions.close' | translate) : ('common.actions.cancel' | translate) }}
           </button>
           @if (step() === 'setup') {
             <button class="btn btn-primary" (click)="analyze()"
                     [disabled]="!file || !basisChoice || busy()" data-testid="import-analyze">
-              {{ busy() ? 'Analyse…' : 'Analyser le fichier' }}
+              {{ busy() ? ('contacts.import.analyzing' | translate) : ('contacts.import.analyzeFile' | translate) }}
             </button>
           } @else if (step() === 'preview') {
-            <button class="btn btn-secondary" (click)="backToSetup()" [disabled]="busy()">Changer de fichier</button>
+            <button class="btn btn-secondary" (click)="backToSetup()" [disabled]="busy()">{{ 'contacts.import.changeFile' | translate }}</button>
             <button class="btn btn-primary" (click)="confirmImport()"
                     [disabled]="busy() || report()?.created === 0" data-testid="import-confirm">
-              {{ busy() ? 'Import en cours…' : 'Importer ' + (report()?.created ?? 0) + ' contact(s)' }}
+              {{ busy() ? ('contacts.import.importing' | translate) : ('contacts.import.importN' | translate:{ count: (report()?.created ?? 0) }) }}
             </button>
           }
         </div>
@@ -127,6 +128,7 @@ import { ContactService, ContactImportReport } from './contact.service';
 })
 export class ContactImportDialogComponent {
   private svc = inject(ContactService);
+  private i18n = inject(I18nService);
 
   @Output() closed = new EventEmitter<void>();
   /** Emitted after a successful (non-dry-run) import so the list can reload. */
@@ -164,7 +166,7 @@ export class ContactImportDialogComponent {
       },
       error: err => {
         this.error.set(err?.error?.message
-          ?? 'Import impossible. Vérifiez le format du fichier puis réessayez.');
+          ?? this.i18n.instant('contacts.import.importError'));
         this.busy.set(false);
       }
     });
