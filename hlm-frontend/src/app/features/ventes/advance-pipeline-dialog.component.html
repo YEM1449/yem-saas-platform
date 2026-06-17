@@ -5,21 +5,21 @@
     <div class="modal-header">
       <h2 class="modal-title">
         @if (cancelMode) {
-          Annuler la vente
+          {{ 'ventes.advance.titleCancel' | translate }}
         } @else if (nextStatut) {
-          Avancer vers "{{ nextLabel }}"
+          {{ 'ventes.advance.titleAdvanceTo' | translate:{ label: nextLabel } }}
         } @else {
-          Avancer le pipeline
+          {{ 'ventes.advance.titleAdvance' | translate }}
         }
       </h2>
-      <button class="modal-close" (click)="cancel()" [disabled]="saving" aria-label="Fermer">✕</button>
+      <button class="modal-close" (click)="cancel()" [disabled]="saving" [attr.aria-label]="'ventes.advance.closeAria' | translate">✕</button>
     </div>
 
     <div class="modal-body">
 
       <!-- Context label -->
       <div class="dialog-context">
-        <span class="dialog-context-label">Statut actuel</span>
+        <span class="dialog-context-label">{{ 'ventes.advance.currentStatut' | translate }}</span>
         <span class="dialog-context-value">{{ currentLabel }}</span>
         @if (!cancelMode && nextStatut) {
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dialog-arrow">
@@ -31,7 +31,7 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dialog-arrow">
             <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span class="dialog-context-value dialog-context-cancel">Annulé</span>
+          <span class="dialog-context-value dialog-context-cancel">{{ 'ventes.advance.cancelledTo' | translate }}</span>
         }
       </div>
 
@@ -61,10 +61,8 @@
             <path d="M7.5 6.5v4M7.5 5v-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
           <div>
-            <strong>Étape dédiée requise</strong>
-            Cette étape comporte des contrôles légaux (Loi 44-00) et se fait via l'action
-            « {{ guardedAction }} » dans le panneau « Actions VEFA », pas depuis l'avancement générique.
-            Vous pouvez néanmoins annuler la vente ci-dessous.
+            <strong>{{ 'ventes.advance.guardedTitle' | translate }}</strong>
+            {{ 'ventes.advance.guardedBody' | translate:{ action: guardedAction } }}
           </div>
         </div>
       }
@@ -86,8 +84,8 @@
       @if (!cancelMode && nextStatut === 'LIVRE_DEFINITIF') {
         <div class="form-group">
           <label class="form-label">
-            Date PV de réception
-            <span style="font-weight:400;color:#94a3b8;font-size:0.8rem">(optionnel — saisissable plus tard)</span>
+            {{ 'ventes.advance.pvDate' | translate }}
+            <span style="font-weight:400;color:#94a3b8;font-size:0.8rem">{{ 'ventes.advance.pvDateOptional' | translate }}</span>
           </label>
           <input
             class="form-control"
@@ -101,13 +99,13 @@
 
       <!-- Notes -->
       <div class="form-group">
-        <label class="form-label">Notes (optionnel)</label>
+        <label class="form-label">{{ 'ventes.advance.notesOptional' | translate }}</label>
         <textarea
           class="form-control"
           rows="2"
           [(ngModel)]="notes"
           [disabled]="saving"
-          placeholder="Remarques sur cette étape…"
+          [placeholder]="'ventes.advance.notesPlaceholder' | translate"
         ></textarea>
       </div>
 
@@ -118,32 +116,32 @@
             <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" stroke-width="1.2"/>
             <path d="M4 4l5 5M9 4L4 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
-          Annuler la vente à la place
+          {{ 'ventes.advance.cancelToggle' | translate }}
         </button>
       }
       @if (cancelMode) {
         <!-- Motif d'annulation — required -->
         <div class="form-group" style="margin-top:12px">
-          <label class="form-label required">Motif d'annulation</label>
+          <label class="form-label required">{{ 'ventes.advance.motifLabel' | translate }}</label>
           <select class="form-control"
                   [(ngModel)]="motifAnnulation"
                   [disabled]="saving"
                   data-testid="dialog-motif-annulation">
-            <option [ngValue]="null">— Sélectionner un motif —</option>
-            @for (m of motifAnnulationOptions; track m.value) {
-              <option [value]="m.value">{{ m.label }}</option>
+            <option [ngValue]="null">{{ 'ventes.advance.selectMotif' | translate }}</option>
+            @for (m of motifAnnulationOptions; track m) {
+              <option [value]="m">{{ 'ventes.motif.' + m | translate }}</option>
             }
           </select>
         </div>
         <button class="btn-cancel-toggle" type="button" (click)="cancelMode = false; motifAnnulation = null">
-          ← Retour à l'avancement normal
+          {{ 'ventes.advance.backToNormal' | translate }}
         </button>
       }
 
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving" data-testid="dialog-cancel">Annuler</button>
+      <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving" data-testid="dialog-cancel">{{ 'ventes.advance.footerCancel' | translate }}</button>
       <button
         class="btn"
         [class.btn-danger]="cancelMode"
@@ -153,13 +151,13 @@
         data-testid="dialog-confirm"
       >
         @if (saving) {
-          Enregistrement…
+          {{ 'ventes.advance.saving' | translate }}
         } @else if (cancelMode) {
-          Confirmer l'annulation
+          {{ 'ventes.advance.confirmCancel' | translate }}
         } @else if (nextStatut) {
-          Confirmer → {{ nextLabel }}
+          {{ 'ventes.advance.confirmTo' | translate:{ label: nextLabel } }}
         } @else {
-          Action dédiée requise
+          {{ 'ventes.advance.guardedFooter' | translate }}
         }
       </button>
     </div>

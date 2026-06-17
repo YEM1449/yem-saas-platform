@@ -6,11 +6,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { VenteService, CreateVenteRequest } from './vente.service';
 import { ReservationService, VentePrefillData } from '../reservations/reservation.service';
 import { MadInputComponent } from '../../core/components/mad-input.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-vente-create',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink, MadInputComponent],
+  imports: [FormsModule, DecimalPipe, RouterLink, MadInputComponent, TranslatePipe],
   templateUrl: './vente-create.component.html',
   styleUrl: './vente-create.component.css',
 })
@@ -19,6 +21,7 @@ export class VenteCreateComponent implements OnInit {
   private reservationSvc = inject(ReservationService);
   private route          = inject(ActivatedRoute);
   private router         = inject(Router);
+  private i18n           = inject(I18nService);
 
   prefill      = signal<VentePrefillData | null>(null);
   prefillError = signal('');
@@ -33,11 +36,12 @@ export class VenteCreateComponent implements OnInit {
   creating    = signal(false);
   createError = signal('');
 
+  // Stage labels resolved in the template via 'ventes.createPage.stages.<key>'.
   readonly PIPELINE_STAGES = [
-    { key: 'COMPROMIS',       label: 'Compromis',     color: '#6366f1' },
-    { key: 'FINANCEMENT',     label: 'Financement',   color: '#f59e0b' },
-    { key: 'ACTE',            label: 'Acte notarié',  color: '#3b82f6' },
-    { key: 'LIVRE_DEFINITIF', label: 'Livraison',     color: '#10b981' }];
+    { key: 'COMPROMIS',       color: '#6366f1' },
+    { key: 'FINANCEMENT',     color: '#f59e0b' },
+    { key: 'ACTE',            color: '#3b82f6' },
+    { key: 'LIVRE_DEFINITIF', color: '#10b981' }];
 
   get reservationId(): string | null {
     return this.route.snapshot.queryParamMap.get('reservationId');
@@ -74,7 +78,7 @@ export class VenteCreateComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.prefillError.set(
           (err.error as { message?: string })?.message ??
-          'Impossible de charger la réservation.'
+          this.i18n.instant('ventes.createPage.loadError')
         );
         this.loading.set(false);
       },
@@ -86,11 +90,11 @@ export class VenteCreateComponent implements OnInit {
     const p = this.prefill();
 
     if (!p) {
-      this.createError.set('Aucune réservation liée.');
+      this.createError.set(this.i18n.instant('ventes.createPage.noReservation'));
       return;
     }
     if (this.prixVente === null || this.prixVente <= 0) {
-      this.createError.set('Le prix de vente doit être supérieur à 0.');
+      this.createError.set(this.i18n.instant('ventes.createPage.priceError'));
       return;
     }
 
@@ -108,7 +112,8 @@ export class VenteCreateComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.creating.set(false);
         this.createError.set(
-          (err.error as { message?: string })?.message ?? `Erreur (${err.status})`
+          (err.error as { message?: string })?.message
+          ?? this.i18n.instant('ventes.create.genericError', { status: err.status })
         );
       },
     });
