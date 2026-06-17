@@ -1609,5 +1609,23 @@
         "TERRAIN_VIERGE": "Terrain"
       }
     }
+  },
+  "dashboard": {
+    "shortcuts": {
+      "contacts": "Contacts",
+      "biens": "Biens",
+      "reservations": "Réservations",
+      "ventes": "Ventes",
+      "projets": "Projets",
+      "taches": "Tâches",
+      "analytics": "Analytics",
+      "encaissements": "Encaissements"
+    },
+    "recentSales": {
+      "title": "Ventes récentes",
+      "seeAll": "Tout voir →",
+      "empty": "Aucune vente enregistrée",
+      "newSale": "+ Nouvelle vente"
+    }
   }
 }

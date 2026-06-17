@@ -1492,5 +1492,23 @@
         "TERRAIN_VIERGE": "Land"
       }
     }
+  },
+  "dashboard": {
+    "shortcuts": {
+      "contacts": "Contacts",
+      "biens": "Properties",
+      "reservations": "Reservations",
+      "ventes": "Sales",
+      "projets": "Projects",
+      "taches": "Tasks",
+      "analytics": "Analytics",
+      "encaissements": "Collections"
+    },
+    "recentSales": {
+      "title": "Recent sales",
+      "seeAll": "See all →",
+      "empty": "No sale recorded",
+      "newSale": "+ New sale"
+    }
   }
 }

@@ -1492,5 +1492,23 @@
         "TERRAIN_VIERGE": "أرض"
       }
     }
+  },
+  "dashboard": {
+    "shortcuts": {
+      "contacts": "جهات الاتصال",
+      "biens": "العقارات",
+      "reservations": "الحجوزات",
+      "ventes": "المبيعات",
+      "projets": "المشاريع",
+      "taches": "المهام",
+      "analytics": "التحليلات",
+      "encaissements": "التحصيلات"
+    },
+    "recentSales": {
+      "title": "المبيعات الأخيرة",
+      "seeAll": "عرض الكل →",
+      "empty": "لا توجد مبيعات مسجلة",
+      "newSale": "+ بيع جديد"
+    }
   }
 }
