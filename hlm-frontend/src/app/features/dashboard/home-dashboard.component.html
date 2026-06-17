@@ -291,45 +291,45 @@
       <div class="ceo-kpi" [attr.data-tone]="quotaTone()">
         @if (s.quotaAttainmentMtdPct != null) {
           <div class="ceo-kpi-val">{{ s.quotaAttainmentMtdPct | number:'1.0-0' }}%</div>
-          <div class="ceo-kpi-lbl">Atteinte de l'objectif (mois)</div>
+          <div class="ceo-kpi-lbl">{{ 'dashboard.home.dirigeant.kpiObjMonth' | translate }}</div>
           <div class="ceo-kpi-target">{{ formatAmount(s.caSigneMoisCourant) }} / {{ formatAmount(s.caMensuelCible) }}</div>
         } @else {
           <div class="ceo-kpi-val">{{ formatAmount(s.caSigneMoisCourant) }}</div>
-          <div class="ceo-kpi-lbl">CA signé (mois)</div>
-          <div class="ceo-kpi-target">Objectif mensuel non configuré</div>
+          <div class="ceo-kpi-lbl">{{ 'dashboard.home.dirigeant.kpiCaSigned' | translate }}</div>
+          <div class="ceo-kpi-target">{{ 'dashboard.home.dirigeant.kpiNoMonthlyTarget' | translate }}</div>
         }
       </div>
       <div class="ceo-kpi" [attr.data-tone]="cancellationTone()">
         <div class="ceo-kpi-val">{{ s.cancellationRate90d != null ? (s.cancellationRate90d | number:'1.0-1') + '%' : '—' }}</div>
-        <div class="ceo-kpi-lbl">Taux d'annulation (90 j)</div>
-        <div class="ceo-kpi-target">Cible ≤ {{ CANCELLATION_TARGET }} %</div>
+        <div class="ceo-kpi-lbl">{{ 'dashboard.home.dirigeant.kpiCancellation' | translate }}</div>
+        <div class="ceo-kpi-target">{{ 'dashboard.home.dirigeant.cibleLte' | translate:{ n: CANCELLATION_TARGET } }}</div>
       </div>
       <div class="ceo-kpi" [attr.data-tone]="ceoAbsorptionTone()"
-           title="Part vendue à l'acte notarié (clôture commerciale)">
+           [title]="'dashboard.home.dirigeant.absorptionTitle' | translate">
         <div class="ceo-kpi-val">{{ s.tauxAbsorption != null ? (s.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
-        <div class="ceo-kpi-lbl">Absorption du portefeuille</div>
-        <div class="ceo-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} % · vendu à l'acte</div>
+        <div class="ceo-kpi-lbl">{{ 'dashboard.home.dirigeant.kpiAbsorption' | translate }}</div>
+        <div class="ceo-kpi-target">{{ 'dashboard.home.dirigeant.cibleGteActe' | translate:{ n: ABSORPTION_TARGET } }}</div>
       </div>
       <div class="ceo-kpi" data-tone="neutral">
         <div class="ceo-kpi-val">{{ formatAmount(s.encaisseMoisCourant) }}</div>
-        <div class="ceo-kpi-lbl">Encaissé (mois)</div>
-        <div class="ceo-kpi-target">trésorerie recouvrée</div>
+        <div class="ceo-kpi-lbl">{{ 'dashboard.home.dirigeant.kpiCollected' | translate }}</div>
+        <div class="ceo-kpi-target">{{ 'dashboard.home.dirigeant.kpiCollectedSub' | translate }}</div>
       </div>
     </div>
 
     @if (ceoUnderperformingProjects().length > 0) {
       <div class="ceo-actions">
         <div class="ceo-actions-head">
-          <span class="ceo-actions-title">Projets sous la cible d'absorption</span>
-          <span class="ceo-actions-note">Cible ≥ {{ ABSORPTION_TARGET }} %</span>
+          <span class="ceo-actions-title">{{ 'dashboard.home.dirigeant.underTargetTitle' | translate }}</span>
+          <span class="ceo-actions-note">{{ 'dashboard.home.dirigeant.cibleGte' | translate:{ n: ABSORPTION_TARGET } }}</span>
         </div>
         <ul class="ceo-projects">
           @for (p of ceoUnderperformingProjects(); track p.projectId) {
             <li class="ceo-project-row">
               <span class="ceo-project-name">{{ p.projectName }}</span>
               <span class="ceo-project-abs">{{ p.absorptionRate | number:'1.0-1' }} %</span>
-              <span class="ceo-project-ctx">{{ p.available }}/{{ p.total }} dispo</span>
-              <a [routerLink]="['/app/projects', p.projectId]" class="ceo-project-cta">Ouvrir →</a>
+              <span class="ceo-project-ctx">{{ 'dashboard.home.dirigeant.dispoRatio' | translate:{ available: p.available, total: p.total } }}</span>
+              <a [routerLink]="['/app/projects', p.projectId]" class="ceo-project-cta">{{ 'dashboard.home.dirigeant.open' | translate }}</a>
             </li>
           }
         </ul>
@@ -341,26 +341,26 @@
        en cours (signature) → acté (clôture commerciale) → livré (clôture livraison). -->
   <section class="value-tunnel">
     <div class="vt-head">
-      <span class="vt-title">Tunnel de valeur</span>
-      <span class="vt-note">de la signature à la livraison</span>
+      <span class="vt-title">{{ 'dashboard.home.dirigeant.tunnelTitle' | translate }}</span>
+      <span class="vt-note">{{ 'dashboard.home.dirigeant.tunnelNote' | translate }}</span>
     </div>
     <div class="vt-stages">
-      <div class="vt-stage" title="Compromis + financement — pas encore acté">
+      <div class="vt-stage" [title]="'dashboard.home.dirigeant.tunnelEnCoursTitle' | translate">
         <div class="vt-amt">{{ formatAmount(caEnCours()) }}</div>
-        <div class="vt-lbl">CA en cours</div>
-        <div class="vt-sub">compromis · financement</div>
+        <div class="vt-lbl">{{ 'dashboard.home.dirigeant.caEnCours' | translate }}</div>
+        <div class="vt-sub">{{ 'dashboard.home.dirigeant.caEnCoursSub' | translate }}</div>
       </div>
       <span class="vt-arrow" aria-hidden="true">→</span>
-      <div class="vt-stage vt-acte" title="Acte notarié signé, non encore livré — clôture commerciale (= base de l'absorption)">
+      <div class="vt-stage vt-acte" [title]="'dashboard.home.dirigeant.tunnelActeTitle' | translate">
         <div class="vt-amt">{{ formatAmount(caActe()) }}</div>
-        <div class="vt-lbl">CA acté</div>
-        <div class="vt-sub">acte notarié · clôture commerciale</div>
+        <div class="vt-lbl">{{ 'dashboard.home.dirigeant.caActe' | translate }}</div>
+        <div class="vt-sub">{{ 'dashboard.home.dirigeant.caActeSub' | translate }}</div>
       </div>
       <span class="vt-arrow" aria-hidden="true">→</span>
-      <div class="vt-stage vt-livre" title="Livré — clôture livraison (= CA réalisé)">
+      <div class="vt-stage vt-livre" [title]="'dashboard.home.dirigeant.tunnelLivreTitle' | translate">
         <div class="vt-amt">{{ formatAmount(s.caLivre) }}</div>
-        <div class="vt-lbl">CA livré</div>
-        <div class="vt-sub">livraison · réalisé</div>
+        <div class="vt-lbl">{{ 'dashboard.home.dirigeant.caLivre' | translate }}</div>
+        <div class="vt-sub">{{ 'dashboard.home.dirigeant.caLivreSub' | translate }}</div>
       </div>
     </div>
   </section>
@@ -369,8 +369,8 @@
   @if (salesIntelData()) {
     <div class="section-row">
       <div class="section-head">
-        <span class="section-label">Valorisation du portefeuille</span>
-        <span class="section-sublabel">Valeur catalogue · stock invendu · prix moyen</span>
+        <span class="section-label">{{ 'dashboard.home.dirigeant.portfolioTitle' | translate }}</span>
+        <span class="section-sublabel">{{ 'dashboard.home.dirigeant.portfolioSub' | translate }}</span>
       </div>
       <app-portfolio-value [si]="salesIntelData()"></app-portfolio-value>
     </div>
@@ -382,30 +382,30 @@
   @if (isAdminOrManager) {
     <div class="section-row">
       <div class="section-head">
-        <span class="section-label">Indicateurs propriétaire complémentaires (90 jours)</span>
-        <span class="section-sublabel">Annulation · absorption · encaissé sont dans le cockpit ci-dessus</span>
+        <span class="section-label">{{ 'dashboard.home.dirigeant.ownerTitle' | translate }}</span>
+        <span class="section-sublabel">{{ 'dashboard.home.dirigeant.ownerSub' | translate }}</span>
       </div>
       <div class="owner-kpi-grid">
 
-        <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
-          <div class="owner-kpi-label">Ticket moyen (livré)</div>
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" [title]="'dashboard.home.dirigeant.seeDeliveredTitle' | translate">
+          <div class="owner-kpi-label">{{ 'dashboard.home.dirigeant.ticketLivre' | translate }}</div>
           <div class="owner-kpi-value">
             {{ formatAmount(s.avgTicketLivre) }}
           </div>
-          <div class="owner-kpi-hint">Prix moyen des ventes finalisées</div>
+          <div class="owner-kpi-hint">{{ 'dashboard.home.dirigeant.ticketLivreHint' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Pipeline actif : {{ avgPipelineDeal(s) }} moy.</span>
-            <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">Ventes →</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.pipelineAvg' | translate:{ avg: avgPipelineDeal(s) } }}</span>
+            <span class="kdt-action" (click)="$event.stopPropagation(); drillVentes()">{{ 'dashboard.home.dirigeant.ventesLink' | translate }}</span>
           </div>
         </div>
 
-        <div class="owner-kpi-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+        <div class="owner-kpi-card clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
           <div class="owner-kpi-label">
-            Conversion réservation → vente
+            {{ 'dashboard.home.dirigeant.conversionResVente' | translate }}
             @if (reservationsDelta()) {
               <app-kpi-delta-chip
                 [delta]="reservationsDelta()"
-                previousLabel="Réservations 30j précédents">
+                [previousLabel]="'dashboard.home.dirigeant.conversionPrevLabel' | translate">
               </app-kpi-delta-chip>
             }
           </div>
@@ -417,18 +417,18 @@
               <span class="owner-kpi-empty">—</span>
             }
           </div>
-          <div class="owner-kpi-hint">Sur les 30 derniers jours</div>
+          <div class="owner-kpi-hint">{{ 'dashboard.home.dirigeant.last30Days' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Cible : &gt;50%</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.cibleGt50' | translate }}</span>
             <span class="kdt-pill" [class]="conversionStatusClass(s)">{{ conversionLabel(s) }}</span>
           </div>
         </div>
 
         <!-- Visites réalisées (Wave 16, RG-V09) -->
-        <div class="owner-kpi-card clickable-card" (click)="goToVisites()" title="Voir l'agenda des visites">
-          <div class="owner-kpi-label">Visites réalisées (mois)</div>
+        <div class="owner-kpi-card clickable-card" (click)="goToVisites()" [title]="'dashboard.home.dirigeant.seeVisitesTitle' | translate">
+          <div class="owner-kpi-label">{{ 'dashboard.home.dirigeant.visitesRealisees' | translate }}</div>
           <div class="owner-kpi-value">{{ s.visitesRealiseesMoisCourant }}</div>
-          <div class="owner-kpi-hint">Conversion visite → opportunité :
+          <div class="owner-kpi-hint">{{ 'dashboard.home.dirigeant.conversionVisite' | translate }}
             @if (s.tauxConversionVisites != null) { {{ s.tauxConversionVisites }}% } @else { — }
           </div>
         </div>
@@ -444,27 +444,27 @@
       @if (s.topAgents.length > 0) {
         <div class="leaderboard-card">
           <div class="leaderboard-head">
-            <span class="leaderboard-title">🏆 Top agents — 90 derniers jours</span>
+            <span class="leaderboard-title">{{ 'dashboard.home.dirigeant.topAgentsTitle' | translate }}</span>
           </div>
           <table class="leaderboard-table">
             <thead>
               <tr>
                 <th class="lb-rank">#</th>
-                <th class="lb-name">Agent</th>
-                <th class="lb-ventes">Ventes</th>
-                <th class="lb-ca">CA signé</th>
-                <th class="lb-avg">CA moy./vente</th>
-                <th class="lb-share">Part</th>
+                <th class="lb-name">{{ 'dashboard.home.dirigeant.thAgent' | translate }}</th>
+                <th class="lb-ventes">{{ 'dashboard.home.dirigeant.thVentes' | translate }}</th>
+                <th class="lb-ca">{{ 'dashboard.home.dirigeant.thCaSigned' | translate }}</th>
+                <th class="lb-avg">{{ 'dashboard.home.dirigeant.thCaAvg' | translate }}</th>
+                <th class="lb-share">{{ 'dashboard.home.dirigeant.thShare' | translate }}</th>
               </tr>
             </thead>
             <tbody>
               @for (a of s.topAgents; track a.agentId; let i = $index) {
                 @if (i === 3 && s.topAgents.length > 3) {
                   <tr class="rank-separator" aria-hidden="true">
-                    <td colspan="6">Autres agents</td>
+                    <td colspan="6">{{ 'dashboard.home.dirigeant.otherAgents' | translate }}</td>
                   </tr>
                 }
-                <tr class="clickable-row" [class.rank-low]="i >= 3" (click)="drillByAgent(a.agentId)" title="Voir les ventes de {{ a.agentName }}">
+                <tr class="clickable-row" [class.rank-low]="i >= 3" (click)="drillByAgent(a.agentId)" [title]="'dashboard.home.dirigeant.seeAgentSalesTitle' | translate:{ name: a.agentName }">
                   <td class="lb-rank">{{ i + 1 }}</td>
                   <td class="lb-name">{{ a.agentName }}</td>
                   <td class="lb-ventes">{{ a.ventesCount }}</td>
@@ -494,22 +494,22 @@
   @if (isAdminOrManager && s.pipelineStageAging.length > 0) {
     <div class="section-row">
       <div class="section-head">
-        <span class="section-label">Santé du pipeline — par étape</span>
-        <span class="section-sublabel">Ancienneté depuis création · {{ pipelineTotalCount(s.pipelineStageAging) }} deal{{ pipelineTotalCount(s.pipelineStageAging) !== 1 ? 's' : '' }} actifs · {{ pipelineTotalStalled(s.pipelineStageAging) }} bloqués &gt;30j</span>
-        <a routerLink="/app/ventes" class="section-link">Pipeline complet →</a>
+        <span class="section-label">{{ 'dashboard.home.dirigeant.pipelineHealthTitle' | translate }}</span>
+        <span class="section-sublabel">{{ 'dashboard.home.dirigeant.pipelineHealthSub' | translate:{ deals: pipelineTotalCount(s.pipelineStageAging), stalled: pipelineTotalStalled(s.pipelineStageAging) } }}</span>
+        <a routerLink="/app/ventes" class="section-link">{{ 'dashboard.home.dirigeant.pipelineFullLink' | translate }}</a>
       </div>
 
       <div class="pipeline-aging-table">
 
         <!-- Header -->
         <div class="pa-head">
-          <span class="pa-col-stage">Étape</span>
-          <span class="pa-col-num">Deals</span>
-          <span class="pa-col-val">Valeur totale</span>
-          <span class="pa-col-days">Âge moyen</span>
-          <span class="pa-col-days">Âge max</span>
-          <span class="pa-col-stalled">Bloqués &gt;30j</span>
-          <span class="pa-col-bar">Profil d'ancienneté</span>
+          <span class="pa-col-stage">{{ 'dashboard.home.dirigeant.thStage' | translate }}</span>
+          <span class="pa-col-num">{{ 'dashboard.home.dirigeant.thDeals' | translate }}</span>
+          <span class="pa-col-val">{{ 'dashboard.home.dirigeant.thTotalValue' | translate }}</span>
+          <span class="pa-col-days">{{ 'dashboard.home.dirigeant.thAvgAge' | translate }}</span>
+          <span class="pa-col-days">{{ 'dashboard.home.dirigeant.thMaxAge' | translate }}</span>
+          <span class="pa-col-stalled">{{ 'dashboard.home.dirigeant.thStalled' | translate }}</span>
+          <span class="pa-col-bar">{{ 'dashboard.home.dirigeant.thAgeProfile' | translate }}</span>
         </div>
 
         @for (row of s.pipelineStageAging; track row.statut) {
@@ -535,7 +535,7 @@
 
             <div class="pa-col-stalled">
               @if (row.stalled30dCount === 0) {
-                <span class="stalled-ok">✓ aucun</span>
+                <span class="stalled-ok">{{ 'dashboard.home.dirigeant.stalledNone' | translate }}</span>
               } @else {
                 <span class="{{ stalledClass(row.stalled30dCount, row.count) }}">
                   {{ row.stalled30dCount }} / {{ row.count }}
@@ -548,14 +548,14 @@
               <div class="pa-bar-track">
                 <div class="pa-bar-avg {{ agingClass(row.avgDays) }}"
                      [style.width]="agingBarPct(row.avgDays) + '%'"
-                     [title]="'Âge moyen : ' + (row.avgDays | number:'1.0-0') + 'j'">
+                     [title]="'dashboard.home.dirigeant.avgAgeTitle' | translate:{ days: (row.avgDays | number:'1.0-0') }">
                 </div>
                 <div class="pa-bar-max"
                      [style.left]="agingBarPct(row.maxDays) + '%'"
-                     [title]="'Âge max : ' + (row.maxDays | number:'1.0-0') + 'j'">
+                     [title]="'dashboard.home.dirigeant.maxAgeTitle' | translate:{ days: (row.maxDays | number:'1.0-0') }">
                 </div>
               </div>
-              <span class="pa-bar-label">/ 60j</span>
+              <span class="pa-bar-label">{{ 'dashboard.home.dirigeant.barLabel60' | translate }}</span>
             </div>
 
           </div>
@@ -563,18 +563,18 @@
 
         <!-- Footer totals -->
         <div class="pa-footer">
-          <span class="pa-col-stage fw-semibold">Total pipeline</span>
+          <span class="pa-col-stage fw-semibold">{{ 'dashboard.home.dirigeant.totalPipeline' | translate }}</span>
           <span class="pa-col-num pa-count">{{ pipelineTotalCount(s.pipelineStageAging) }}</span>
           <span class="pa-col-val">{{ formatAmountShort(pipelineTotalValue(s.pipelineStageAging)) }}</span>
           <span class="pa-col-days {{ agingClass(pipelineWeightedAvgDays(s.pipelineStageAging)) }}">
-            {{ pipelineWeightedAvgDays(s.pipelineStageAging) | number:'1.0-0' }}&nbsp;j moy.
+            {{ 'dashboard.home.dirigeant.avgDaysFooter' | translate:{ days: (pipelineWeightedAvgDays(s.pipelineStageAging) | number:'1.0-0') } }}
           </span>
           <span class="pa-col-days"></span>
           <div class="pa-col-stalled">
             @if (pipelineTotalStalled(s.pipelineStageAging) > 0) {
-              <span class="stalled-bad">{{ pipelineTotalStalled(s.pipelineStageAging) }} total bloqués</span>
+              <span class="stalled-bad">{{ 'dashboard.home.dirigeant.totalStalled' | translate:{ count: pipelineTotalStalled(s.pipelineStageAging) } }}</span>
             } @else {
-              <span class="stalled-ok">Pipeline sain ✓</span>
+              <span class="stalled-ok">{{ 'dashboard.home.dirigeant.pipelineHealthy' | translate }}</span>
             }
           </div>
           <span class="pa-col-bar"></span>
@@ -591,8 +591,8 @@
   @if (isAdminOrManager) {
     <div class="section-row exec-section">
       <div class="section-head">
-        <span class="section-label">Vue dirigeant</span>
-        <span class="section-sublabel">CA, velocity, santé financière et livraisons</span>
+        <span class="section-label">{{ 'dashboard.home.dirigeant.execTitle' | translate }}</span>
+        <span class="section-sublabel">{{ 'dashboard.home.dirigeant.execSub' | translate }}</span>
       </div>
 
       <!-- Pacing gauge: MTD CA and/or ventes-count vs monthly targets -->
@@ -600,13 +600,13 @@
       @let hasVentesTarget = s.ventesMensuelCible != null && s.ventesMensuelCible > 0;
 
       @if (hasCATarget || hasVentesTarget) {
-        <div class="pacing-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+        <div class="pacing-card clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
 
           <!-- CA pacing row — only when CA target is configured -->
           @if (hasCATarget) {
             <div class="pacing-head">
               <div>
-                <div class="pacing-label">Objectif mensuel CA signé</div>
+                <div class="pacing-label">{{ 'dashboard.home.dirigeant.objMonthlyCa' | translate }}</div>
                 <div class="pacing-value">
                   {{ formatAmount(s.caSigneMoisCourant) }}
                   <span class="pacing-target">/ {{ formatAmount(s.caMensuelCible) }}</span>
@@ -622,7 +622,7 @@
               }
             </div>
             <div class="pacing-bar">
-              <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+              <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" [title]="'dashboard.home.dirigeant.expectedToday' | translate"></div>
               <div class="pacing-fill"
                    [class.good]="isPacingOnTrack(s.quotaAttainmentMtdPct)"
                    [class.warn]="isPacingBehind(s.quotaAttainmentMtdPct)"
@@ -630,7 +630,7 @@
                    [style.width]="pacingWidth(s.quotaAttainmentMtdPct)"></div>
             </div>
             <div class="pacing-legend">
-              <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
+              <span>{{ 'dashboard.home.dirigeant.pacingLegend' | translate:{ day: currentDayOfMonth(), total: daysInCurrentMonth(), pct: pacingExpectedPct() } }}</span>
               <span>{{ pacingVerdict(s.quotaAttainmentMtdPct) }}</span>
             </div>
           }
@@ -640,7 +640,7 @@
             <div class="pacing-sub-row" [style.margin-top]="hasCATarget ? '10px' : '0'">
               <div class="pacing-head">
                 <div>
-                  <div class="pacing-label">Objectif ventes signées</div>
+                  <div class="pacing-label">{{ 'dashboard.home.dirigeant.objVentesSignees' | translate }}</div>
                   <div class="pacing-value text-base">
                     {{ s.ventesSigneesMoisCourantCount }}
                     <span class="pacing-target">/ {{ s.ventesMensuelCible }}</span>
@@ -656,7 +656,7 @@
                 }
               </div>
               <div class="pacing-bar">
-                <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" title="Attendu à ce jour"></div>
+                <div class="pacing-marker" [style.left]="pacingExpectedPct() + '%'" [title]="'dashboard.home.dirigeant.expectedToday' | translate"></div>
                 <div class="pacing-fill"
                      [class.good]="isPacingOnTrack(s.quotaVentesAttainmentMtdPct)"
                      [class.warn]="isPacingBehind(s.quotaVentesAttainmentMtdPct)"
@@ -665,7 +665,7 @@
               </div>
               @if (!hasCATarget) {
                 <div class="pacing-legend">
-                  <span>J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} · Attendu {{ pacingExpectedPct() }}%</span>
+                  <span>{{ 'dashboard.home.dirigeant.pacingLegend' | translate:{ day: currentDayOfMonth(), total: daysInCurrentMonth(), pct: pacingExpectedPct() } }}</span>
                   <span>{{ pacingVerdict(s.quotaVentesAttainmentMtdPct) }}</span>
                 </div>
               }
@@ -674,7 +674,7 @@
 
           @if (s.quotaAttainmentMtdPct != null) {
             <div class="kdt">
-              <span class="kdt-text">Rythme attendu J{{ currentDayOfMonth() }}/{{ daysInCurrentMonth() }} : {{ pacingExpectedPct() }}%</span>
+              <span class="kdt-text">{{ 'dashboard.home.dirigeant.expectedRhythm' | translate:{ day: currentDayOfMonth(), total: daysInCurrentMonth(), pct: pacingExpectedPct() } }}</span>
               <span class="kdt-pill"
                     [class]="isPacingOnTrack(s.quotaAttainmentMtdPct) ? 'bench-good' : isPacingBehind(s.quotaAttainmentMtdPct) ? 'bench-warn' : 'bench-bad'">
                 {{ pacingVerdict(s.quotaAttainmentMtdPct) }}
@@ -685,8 +685,8 @@
       } @else {
         <div class="pacing-card pacing-untargeted">
           <div class="pacing-empty">
-            <strong>Aucun objectif mensuel configuré.</strong>
-            Définissez vos objectifs via Paramètres → Objectifs mensuels pour activer le suivi du rythme (pacing).
+            <strong>{{ 'dashboard.home.dirigeant.noTargetStrong' | translate }}</strong>
+            {{ 'dashboard.home.dirigeant.noTargetHint' | translate }}
           </div>
         </div>
       }
@@ -695,57 +695,57 @@
       <div class="exec-kpi-grid">
 
         <!-- CA YTD -->
-        <div class="exec-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+        <div class="exec-card clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">CA signé YTD</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.caYtd' | translate }}</span>
             @if (s.caYoYPct != null) {
               <span class="exec-delta"
                     [class.up]="s.caYoYPct >= 0"
                     [class.down]="s.caYoYPct < 0">
-                {{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ absNum(s.caYoYPct) }}% YoY
+                {{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ 'dashboard.home.dirigeant.yoy' | translate:{ pct: absNum(s.caYoYPct) } }}
               </span>
             }
           </div>
           <div class="exec-value">{{ formatAmount(s.caYtd) }}</div>
           <div class="exec-hint">
             @if (s.caSameMonthLastYear > 0) {
-              Mois n-1 : {{ formatAmount(s.caSameMonthLastYear) }}
+              {{ 'dashboard.home.dirigeant.monthN1' | translate:{ amount: formatAmount(s.caSameMonthLastYear) } }}
             } @else {
-              Pas de référence n-1
+              {{ 'dashboard.home.dirigeant.noN1Ref' | translate }}
             }
           </div>
           <div class="kdt">
-            <span class="kdt-text">Projeté fin d'année : {{ projectedYearEndCA(s) }}</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.projectedYearEnd' | translate:{ amount: projectedYearEndCA(s) } }}</span>
             @if (s.caYoYPct != null) {
-              <span class="kdt-pill" [class]="s.caYoYPct >= 0 ? 'bench-good' : 'bench-bad'">{{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ absNum(s.caYoYPct) | number:'1.0-0' }}% n-1</span>
+              <span class="kdt-pill" [class]="s.caYoYPct >= 0 ? 'bench-good' : 'bench-bad'">{{ s.caYoYPct >= 0 ? '↑' : '↓' }} {{ 'dashboard.home.dirigeant.pctN1' | translate:{ pct: (absNum(s.caYoYPct) | number:'1.0-0') } }}</span>
             }
           </div>
         </div>
 
         <!-- Velocity -->
-        <div class="exec-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+        <div class="exec-card clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">Velocity ventes</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.velocity' | translate }}</span>
           </div>
           <div class="exec-value">
             {{ s.salesVelocityPerWeek | number:'1.1-1' }}
-            <span class="exec-unit">/sem</span>
+            <span class="exec-unit">{{ 'dashboard.home.dirigeant.perWeek' | translate }}</span>
           </div>
-          <div class="exec-hint">Moyenne 4 dernières semaines</div>
+          <div class="exec-hint">{{ 'dashboard.home.dirigeant.velocityHint' | translate }}</div>
           <div class="kdt">
             @if (stockDaysToEmpty(s) != null) {
-              <span class="kdt-text">Stock actif épuisé dans : {{ stockDaysToEmpty(s) }} j</span>
-              <span class="kdt-pill" [class]="stockDaysToEmpty(s)! < 180 ? 'bench-good' : stockDaysToEmpty(s)! < 540 ? 'bench-warn' : 'bench-bad'">{{ stockDaysToEmpty(s)! < 180 ? 'Rapide' : stockDaysToEmpty(s)! < 540 ? 'Normal' : 'Lent' }}</span>
+              <span class="kdt-text">{{ 'dashboard.home.dirigeant.stockEmptyIn' | translate:{ days: stockDaysToEmpty(s) } }}</span>
+              <span class="kdt-pill" [class]="stockDaysToEmpty(s)! < 180 ? 'bench-good' : stockDaysToEmpty(s)! < 540 ? 'bench-warn' : 'bench-bad'">{{ (stockDaysToEmpty(s)! < 180 ? 'dashboard.home.dirigeant.velFast' : stockDaysToEmpty(s)! < 540 ? 'dashboard.home.dirigeant.velNormal' : 'dashboard.home.dirigeant.velSlow') | translate }}</span>
             } @else {
-              <span class="kdt-text">Rythme de vente hebdomadaire</span>
+              <span class="kdt-text">{{ 'dashboard.home.dirigeant.weeklyRhythm' | translate }}</span>
             }
           </div>
         </div>
 
         <!-- Months of supply -->
-        <div class="exec-card clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
+        <div class="exec-card clickable-card" (click)="drillProperties('ACTIVE')" [title]="'dashboard.home.dirigeant.seeAvailableTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">Mois de stock</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.monthsSupply' | translate }}</span>
           </div>
           <div class="exec-value"
                [class.exec-good]="isSupplyHealthy(s.monthsOfSupply)"
@@ -753,22 +753,22 @@
                [class.exec-bad]="isSupplyCritical(s.monthsOfSupply)">
             @if (s.monthsOfSupply != null) {
               {{ s.monthsOfSupply | number:'1.1-1' }}
-              <span class="exec-unit">mois</span>
+              <span class="exec-unit">{{ 'dashboard.home.dirigeant.months' | translate }}</span>
             } @else { — }
           </div>
-          <div class="exec-hint">Stock actif / rythme mensuel 90j</div>
+          <div class="exec-hint">{{ 'dashboard.home.dirigeant.monthsSupplyHint' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Optimal : &lt;6 mois · Critique : &gt;18 mois</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.supplyBench' | translate }}</span>
             @if (s.monthsOfSupply != null) {
-              <span class="kdt-pill" [class]="isSupplyHealthy(s.monthsOfSupply) ? 'bench-good' : isSupplyElevated(s.monthsOfSupply) ? 'bench-warn' : 'bench-bad'">{{ isSupplyHealthy(s.monthsOfSupply) ? 'Sain' : isSupplyElevated(s.monthsOfSupply) ? 'Élevé' : 'Critique' }}</span>
+              <span class="kdt-pill" [class]="isSupplyHealthy(s.monthsOfSupply) ? 'bench-good' : isSupplyElevated(s.monthsOfSupply) ? 'bench-warn' : 'bench-bad'">{{ (isSupplyHealthy(s.monthsOfSupply) ? 'dashboard.home.dirigeant.supplyHealthy' : isSupplyElevated(s.monthsOfSupply) ? 'dashboard.home.dirigeant.supplyElevated' : 'dashboard.home.dirigeant.supplyCritical') | translate }}</span>
             }
           </div>
         </div>
 
         <!-- Win rate -->
-        <div class="exec-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
+        <div class="exec-card clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" [title]="'dashboard.home.dirigeant.seeDeliveredTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">Taux de succès 90j</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.winRate' | translate }}</span>
           </div>
           <div class="exec-value"
                [class.exec-good]="(s.winRate90d ?? 0) >= 80"
@@ -778,9 +778,9 @@
               {{ s.winRate90d }}%
             } @else { — }
           </div>
-          <div class="exec-hint">Livrées / (Livrées + Annulées)</div>
+          <div class="exec-hint">{{ 'dashboard.home.dirigeant.winRateHint' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Benchmark : &gt;80% excellent</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.winRateBench' | translate }}</span>
             @if (s.winRate90d != null) {
               <span class="kdt-pill" [class]="winRateStatusClass(s)">{{ winRateLabel(s) }}</span>
             }
@@ -788,9 +788,9 @@
         </div>
 
         <!-- DSO -->
-        <div class="exec-card clickable-card" (click)="drillReceivables()" title="Voir les créances">
+        <div class="exec-card clickable-card" (click)="drillReceivables()" [title]="'dashboard.home.dirigeant.seeReceivablesTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">DSO (retard moyen)</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.dso' | translate }}</span>
           </div>
           <div class="exec-value"
                [class.exec-good]="(s.dsoRolling90d ?? 999) <= 15"
@@ -798,23 +798,23 @@
                [class.exec-bad]="(s.dsoRolling90d ?? 0) > 45">
             @if (s.dsoRolling90d != null) {
               {{ s.dsoRolling90d | number:'1.0-1' }}
-              <span class="exec-unit">j</span>
+              <span class="exec-unit">{{ 'dashboard.home.dirigeant.days' | translate }}</span>
             } @else { — }
           </div>
-          <div class="exec-hint">Impayés ÷ rythme quotidien encaissé 90j</div>
+          <div class="exec-hint">{{ 'dashboard.home.dirigeant.dsoHint' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Benchmark : &lt;15j excellent · &gt;45j critique</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.dsoBench' | translate }}</span>
             @if (s.dsoRolling90d != null) {
               <span class="kdt-pill" [class]="dsoStatusClass(s)">{{ dsoLabel(s) }}</span>
             }
-            <span class="kdt-action" (click)="drillReceivables()">Créances →</span>
+            <span class="kdt-action" (click)="drillReceivables()">{{ 'dashboard.home.dirigeant.creancesLink' | translate }}</span>
           </div>
         </div>
 
         <!-- Collection efficiency -->
-        <div class="exec-card clickable-card" (click)="drillReceivables()" title="Voir les créances">
+        <div class="exec-card clickable-card" (click)="drillReceivables()" [title]="'dashboard.home.dirigeant.seeReceivablesTitle' | translate">
           <div class="exec-card-head">
-            <span class="exec-label">Efficacité recouvrement</span>
+            <span class="exec-label">{{ 'dashboard.home.dirigeant.collectionEff' | translate }}</span>
           </div>
           <div class="exec-value"
                [class.exec-good]="(s.collectionEfficiency90d ?? 0) >= 90"
@@ -824,9 +824,9 @@
               {{ s.collectionEfficiency90d }}%
             } @else { — }
           </div>
-          <div class="exec-hint">Encaissé ÷ exigible 90 derniers jours</div>
+          <div class="exec-hint">{{ 'dashboard.home.dirigeant.collectionEffHint' | translate }}</div>
           <div class="kdt">
-            <span class="kdt-text">Cible : &gt;90% · Critique : &lt;75%</span>
+            <span class="kdt-text">{{ 'dashboard.home.dirigeant.collectionBench' | translate }}</span>
             @if (s.collectionEfficiency90d != null) {
               <span class="kdt-pill" [class]="collectionStatusClass(s)">{{ collectionLabel(s) }}</span>
             }
@@ -839,8 +839,8 @@
       @if (s.upcomingDeliveries.length > 0) {
         <div class="deliveries-card">
           <div class="deliveries-head">
-            <span class="deliveries-title">📦 Livraisons planifiées — 90 prochains jours</span>
-            <a routerLink="/app/projects" class="deliveries-link">Projets →</a>
+            <span class="deliveries-title">{{ 'dashboard.home.dirigeant.deliveriesTitle' | translate }}</span>
+            <a routerLink="/app/projects" class="deliveries-link">{{ 'dashboard.home.dirigeant.projetsLink' | translate }}</a>
           </div>
           <div class="deliveries-strip">
             @for (d of s.upcomingDeliveries; track d.trancheId) {
@@ -859,7 +859,7 @@
                         <div class="delivery-progress-fill"
                              [style.width]="(d.soldUnits / d.totalUnits * 100) + '%'"></div>
                       </div>
-                      <span class="delivery-progress-lbl">{{ d.soldUnits }}/{{ d.totalUnits }} vendus</span>
+                      <span class="delivery-progress-lbl">{{ 'dashboard.home.dirigeant.soldRatio' | translate:{ sold: d.soldUnits, total: d.totalUnits } }}</span>
                     </div>
                   }
                 </div>
@@ -1048,7 +1048,7 @@
           <div class="stock-lbl">Brouillon</div>
           <div class="kdt-sub">Publier pour commercialiser</div>
         </div>
-        <div class="stock-cell stock-active clickable-card" (click)="drillProperties('ACTIVE')" title="Voir les biens disponibles">
+        <div class="stock-cell stock-active clickable-card" (click)="drillProperties('ACTIVE')" [title]="'dashboard.home.dirigeant.seeAvailableTitle' | translate">
           <div class="stock-val">{{ s.biensActifsCount }}</div>
           <div class="stock-lbl">Disponible</div>
           <div class="kdt-sub">{{ absorptionLabel(s.tauxAbsorption) }}</div>
@@ -1346,7 +1346,7 @@
       <div class="section-head">
         <span class="section-label">Tendance CA — 6 derniers mois</span>
       </div>
-      <div class="trend-card clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+      <div class="trend-card clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
         <div class="trend-chart-area">
           <app-mini-bar-chart [points]="s.monthlyTrend"></app-mini-bar-chart>
         </div>
@@ -1374,7 +1374,7 @@
               <div class="trend-stat-lbl">CA signé YTD</div>
             </div>
             <div class="kdt">
-              <span class="kdt-text">Projeté fin d'année : {{ projectedYearEndCA(s) }}</span>
+              <span class="kdt-text">{{ 'dashboard.home.dirigeant.projectedYearEnd' | translate:{ amount: projectedYearEndCA(s) } }}</span>
               @if (moisTrend(last.caSigne, prev.caSigne) != null) {
                 <span class="kdt-pill" [class]="last.caSigne >= prev.caSigne ? 'bench-good' : 'bench-bad'">
                   {{ last.caSigne >= prev.caSigne ? '↑' : '↓' }} {{ absNum(moisTrend(last.caSigne, prev.caSigne)) }}% vs mois préc.
@@ -1526,7 +1526,7 @@
                       <div class="delivery-progress-fill"
                            [style.width]="(d.soldUnits / d.totalUnits * 100) + '%'"></div>
                     </div>
-                    <span class="delivery-progress-lbl">{{ d.soldUnits }}/{{ d.totalUnits }} vendus</span>
+                    <span class="delivery-progress-lbl">{{ 'dashboard.home.dirigeant.soldRatio' | translate:{ sold: d.soldUnits, total: d.totalUnits } }}</span>
                   </div>
                 }
               </div>
@@ -1566,7 +1566,7 @@
               <span class="kdt-action" (click)="drillProperties('ACTIVE')">Inventaire →</span>
             </div>
           </div>
-          <div class="sh-kpi-card sh-kpi-sold clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
+          <div class="sh-kpi-card sh-kpi-sold clickable-card" (click)="drillVentes('LIVRE_DEFINITIF')" [title]="'dashboard.home.dirigeant.seeDeliveredTitle' | translate">
             @let shTotal = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.soldValue) }}</div>
             <div class="sh-kpi-lbl">CA livré (LIVRE)</div>
@@ -1578,7 +1578,7 @@
               <span class="kdt-action" (click)="drillVentes('LIVRE_DEFINITIF')">Livrées →</span>
             </div>
           </div>
-          <div class="sh-kpi-card sh-kpi-exposure clickable-card" (click)="drillVentes()" title="Voir le pipeline de ventes">
+          <div class="sh-kpi-card sh-kpi-exposure clickable-card" (click)="drillVentes()" [title]="'dashboard.home.dirigeant.seePipelineTitle' | translate">
             @let shTotal2 = shareholderKpi()!.portfolioValueAtMarket + shareholderKpi()!.soldValue + shareholderKpi()!.projectedCompletionExposure;
             <div class="sh-kpi-val">{{ formatAmount(shareholderKpi()!.projectedCompletionExposure) }}</div>
             <div class="sh-kpi-lbl">Exposition pipeline</div>
@@ -1668,7 +1668,7 @@
                     </td>
                     <td class="pd-td pd-td-r pd-td-avail clickable-card"
                         (click)="drillByProject(p.projectId, 'ACTIVE')"
-                        title="Voir les biens disponibles">
+                        [title]="'dashboard.home.dirigeant.seeAvailableTitle' | translate">
                       {{ p.availableUnits }}
                     </td>
                     <td class="pd-td pd-td-date">

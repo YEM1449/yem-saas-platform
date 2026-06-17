@@ -507,10 +507,10 @@ export class HomeDashboardComponent implements OnInit {
   pacingVerdict(pct: number | null): string {
     if (pct == null) return '—';
     const exp = this.pacingExpectedPct();
-    if (pct >= exp + 10) return 'En avance';
-    if (pct >= exp - 10) return 'Dans le rythme';
-    if (pct >= exp - 25) return 'En retard';
-    return 'Sous-performance critique';
+    if (pct >= exp + 10) return this.i18n.instant('dashboard.home.pacingVerdict.ahead');
+    if (pct >= exp - 10) return this.i18n.instant('dashboard.home.pacingVerdict.onTrack');
+    if (pct >= exp - 25) return this.i18n.instant('dashboard.home.pacingVerdict.behind');
+    return this.i18n.instant('dashboard.home.pacingVerdict.critical');
   }
 
   absNum(n: number | null | undefined): number {
