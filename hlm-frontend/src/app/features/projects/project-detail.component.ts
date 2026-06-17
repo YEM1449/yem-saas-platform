@@ -1,4 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,11 +25,12 @@ interface DocumentItem {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, DocumentListComponent, BuildingViewComponent, DatePipe, DecimalPipe],
+  imports: [FormsModule, RouterLink, DocumentListComponent, BuildingViewComponent, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css',
 })
 export class ProjectDetailComponent implements OnInit, OnDestroy {
+  private i18n = inject(I18nService);
   private svc = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
@@ -114,8 +117,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         this.loadingProject = false;
         const body = err.error as ErrorResponse | null;
         this.projectError = err.status === 404
-          ? 'Project not found.'
-          : (body?.message ?? `Failed to load project (${err.status})`);
+          ? this.i18n.instant('projects.detail.errors.notFound')
+          : (body?.message ?? this.i18n.instant('projects.detail.errors.loadFailed', { status: err.status }));
       },
     });
 
@@ -139,7 +142,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
           this.kpiError = 'KPI data is not available for your role.';
         } else {
           const body = err.error as ErrorResponse | null;
-          this.kpiError = body?.message ?? `Failed to load KPIs (${err.status})`;
+          this.kpiError = body?.message ?? this.i18n.instant('projects.detail.errors.kpiLoadFailed', { status: err.status });
         }
       },
     });
@@ -197,13 +200,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   }
 
   statusLabel(key: string): string {
-    const map: Record<string, string> = {
-      DRAFT: 'Brouillon', ACTIVE: 'Disponible', RESERVED: 'Réservé',
-      SOLD: 'Vendu', WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
-      // legacy aliases (defensive)
-      AVAILABLE: 'Disponible', UNDER_CONSTRUCTION: 'En construction', UNAVAILABLE: 'Indisponible',
-    };
-    return map[key] ?? key;
+    return this.i18n.instant('projects.detail.status.' + key);
   }
 
   statusColor(key: string): string {
