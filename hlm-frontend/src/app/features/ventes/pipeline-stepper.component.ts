@@ -1,23 +1,23 @@
 import { Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { VenteStatut } from './vente.service';
 
 export interface PipelineStep {
   statut: VenteStatut;
-  label: string;
 }
 
 const VENTE_STEPS: PipelineStep[] = [
-  { statut: 'RESERVE',         label: 'Réservé'      },
-  { statut: 'COMPROMIS',       label: 'Compromis'    },
-  { statut: 'FINANCEMENT',     label: 'Financement'  },
-  { statut: 'ACTE',            label: 'Acte notarié' },
-  { statut: 'LIVRE_DEFINITIF', label: 'Livré'        }];
+  { statut: 'RESERVE'         },
+  { statut: 'COMPROMIS'       },
+  { statut: 'FINANCEMENT'     },
+  { statut: 'ACTE'            },
+  { statut: 'LIVRE_DEFINITIF' }];
 
 @Component({
   selector: 'app-pipeline-stepper',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     @if (statut === 'ANNULE') {
       <div class="stepper-cancelled">
@@ -27,7 +27,7 @@ const VENTE_STEPS: PipelineStep[] = [
             <path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </span>
-        Vente annulée
+        {{ 'ventes.stepper.cancelled' | translate }}
       </div>
     } @else {
       <div class="stepper" [class.stepper-vertical]="vertical">
@@ -45,7 +45,7 @@ const VENTE_STEPS: PipelineStep[] = [
                 <span class="step-num">{{ i + 1 }}</span>
               }
             </div>
-            <span class="step-label">{{ step.label }}</span>
+            <span class="step-label">{{ 'ventes.statut.' + step.statut | translate }}</span>
             @if (i < steps.length - 1) {
               <div class="step-connector" [class.connector-done]="isCompleted(step.statut)"></div>
             }

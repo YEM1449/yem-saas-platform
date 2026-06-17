@@ -172,5 +172,81 @@
       "constructionTitle": "Construction tracking",
       "constructionDesc": "Real-time tracking of construction progress will be available soon."
     }
+  },
+  "ventes": {
+    "statut": {
+      "PROSPECT": "Prospect", "OPTION": "Option", "RESERVE": "Reserved",
+      "EN_RETRACTATION": "Withdrawal period", "ACOMPTE": "Down payment",
+      "COMPROMIS": "Preliminary contract", "FINANCEMENT": "Financing", "ACTE": "Notarial deed",
+      "LIVRE_AVEC_RESERVES": "Delivered (reserves)", "RESERVES_LEVEES": "Reserves lifted",
+      "LIVRE_DEFINITIF": "Delivered", "ANNULE": "Cancelled"
+    },
+    "statutDesc": {
+      "PROSPECT": "Initial commercial interest — no commitment yet",
+      "OPTION": "Property held temporarily (24-72h) before reservation",
+      "RESERVE": "Reservation signed with a security deposit (≤ 5%)",
+      "EN_RETRACTATION": "Legal withdrawal period under way (7 days)",
+      "ACOMPTE": "Down payment made by the buyer",
+      "COMPROMIS": "Preliminary contract signed — financing and conditions pending",
+      "FINANCEMENT": "Financing file submitted — awaiting bank approval",
+      "ACTE": "Authentic deed signed before a notary — ownership transferred",
+      "LIVRE_AVEC_RESERVES": "Property delivered with reserves to lift",
+      "RESERVES_LEVEES": "All delivery reserves have been lifted",
+      "LIVRE_DEFINITIF": "Property handed over to the buyer — sale finalized",
+      "ANNULE": "Sale cancelled — see reason in the file"
+    },
+    "contractStatus": { "PENDING": "Pending", "GENERATED": "Generated", "SIGNED": "Signed" },
+    "kanbanHint": {
+      "RESERVE": "Reservation + deposit", "COMPROMIS": "Preliminary contract signed",
+      "FINANCEMENT": "Bank file in progress", "ACTE": "Authentic deed", "LIVRE_DEFINITIF": "Handover of keys"
+    },
+    "stepper": { "cancelled": "Sale cancelled" },
+    "list": {
+      "title": "Sales",
+      "count": "{{count}} sale(s)",
+      "new": "New sale",
+      "all": "All",
+      "showAllTitle": "Show all sales",
+      "allStatuts": "All statuses",
+      "statutAria": "Status",
+      "viewModeAria": "View mode",
+      "tableView": "Table",
+      "tableTitle": "Table view",
+      "pipelineView": "Pipeline",
+      "pipelineTitle": "Kanban pipeline view",
+      "noVente": "No sale",
+      "add": "Add",
+      "loadingAria": "Loading sales…",
+      "loadError": "An error occurred while loading sales.",
+      "emptyFiltered": "No sale with this status",
+      "empty": "No sale recorded",
+      "createFirst": "Create the first sale",
+      "delivery": "Delivery",
+      "oldVenteTitle": "Old sale",
+      "rowAria": "View details of sale {{ref}}",
+      "th": {
+        "reference": "Reference", "buyer": "Buyer", "status": "Status", "contract": "Contract",
+        "salePrice": "Sale price", "compromisDate": "Contract date", "createdAt": "Created on"
+      }
+    },
+    "create": {
+      "title": "New sale",
+      "closeAria": "Close",
+      "buyer": "Buyer",
+      "selectContact": "— Select a contact —",
+      "property": "Property",
+      "selectProperty": "— Select a property —",
+      "price": "Sale price (MAD)",
+      "catalogHint": "Catalogue price: {{price}} MAD (auto-filled)",
+      "pricePlaceholder": "e.g. 1,500,000",
+      "compromisDate": "Contract date",
+      "notes": "Notes",
+      "notesPlaceholder": "Remarks…",
+      "cancel": "Cancel",
+      "creating": "Creating…",
+      "submit": "Create the sale",
+      "priceRequired": "The sale price is required and must be positive.",
+      "genericError": "Error ({{status}})"
+    }
   }
 }

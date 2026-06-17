@@ -172,5 +172,81 @@
       "constructionTitle": "متابعة الورش",
       "constructionDesc": "ستتوفر قريبًا متابعة تقدّم الأشغال في الوقت الفعلي."
     }
+  },
+  "ventes": {
+    "statut": {
+      "PROSPECT": "عميل محتمل", "OPTION": "خيار", "RESERVE": "محجوز",
+      "EN_RETRACTATION": "مهلة التراجع", "ACOMPTE": "دفعة مقدمة",
+      "COMPROMIS": "عقد ابتدائي", "FINANCEMENT": "تمويل", "ACTE": "عقد موثّق",
+      "LIVRE_AVEC_RESERVES": "تم التسليم (مع تحفظات)", "RESERVES_LEVEES": "رُفعت التحفظات",
+      "LIVRE_DEFINITIF": "تم التسليم", "ANNULE": "ملغى"
+    },
+    "statutDesc": {
+      "PROSPECT": "اهتمام تجاري أولي — دون التزام بعد",
+      "OPTION": "العقار محجوز مؤقتًا (24-72 ساعة) قبل الحجز",
+      "RESERVE": "حجز موقّع مع وديعة ضمان (≤ 5%)",
+      "EN_RETRACTATION": "مهلة التراجع القانونية جارية (7 أيام)",
+      "ACOMPTE": "دفعة مقدمة من المشتري",
+      "COMPROMIS": "عقد ابتدائي موقّع — التمويل والشروط قيد الإنجاز",
+      "FINANCEMENT": "تم إيداع ملف التمويل — في انتظار موافقة البنك",
+      "ACTE": "عقد رسمي موقّع أمام الموثّق — تم نقل الملكية",
+      "LIVRE_AVEC_RESERVES": "تم تسليم العقار مع تحفظات يجب رفعها",
+      "RESERVES_LEVEES": "تم رفع جميع تحفظات التسليم",
+      "LIVRE_DEFINITIF": "تم تسليم العقار للمشتري — اكتملت عملية البيع",
+      "ANNULE": "عملية بيع ملغاة — راجع السبب في الملف"
+    },
+    "contractStatus": { "PENDING": "قيد الانتظار", "GENERATED": "تم الإنشاء", "SIGNED": "موقّع" },
+    "kanbanHint": {
+      "RESERVE": "حجز + وديعة", "COMPROMIS": "عقد ابتدائي موقّع",
+      "FINANCEMENT": "ملف بنكي قيد الإنجاز", "ACTE": "عقد رسمي", "LIVRE_DEFINITIF": "تسليم المفاتيح"
+    },
+    "stepper": { "cancelled": "عملية بيع ملغاة" },
+    "list": {
+      "title": "المبيعات",
+      "count": "{{count}} عملية بيع",
+      "new": "بيع جديد",
+      "all": "الكل",
+      "showAllTitle": "عرض جميع المبيعات",
+      "allStatuts": "جميع الحالات",
+      "statutAria": "الحالة",
+      "viewModeAria": "وضع العرض",
+      "tableView": "جدول",
+      "tableTitle": "عرض جدولي",
+      "pipelineView": "المسار",
+      "pipelineTitle": "عرض مسار كانبان",
+      "noVente": "لا توجد مبيعات",
+      "add": "إضافة",
+      "loadingAria": "جارٍ تحميل المبيعات…",
+      "loadError": "حدث خطأ أثناء تحميل المبيعات.",
+      "emptyFiltered": "لا توجد مبيعات بهذه الحالة",
+      "empty": "لا توجد مبيعات مسجلة",
+      "createFirst": "إنشاء أول عملية بيع",
+      "delivery": "التسليم",
+      "oldVenteTitle": "بيع قديم",
+      "rowAria": "عرض تفاصيل البيع {{ref}}",
+      "th": {
+        "reference": "المرجع", "buyer": "المشتري", "status": "الحالة", "contract": "العقد",
+        "salePrice": "سعر البيع", "compromisDate": "تاريخ العقد", "createdAt": "أُنشئ في"
+      }
+    },
+    "create": {
+      "title": "بيع جديد",
+      "closeAria": "إغلاق",
+      "buyer": "المشتري",
+      "selectContact": "— اختر جهة اتصال —",
+      "property": "العقار",
+      "selectProperty": "— اختر عقارًا —",
+      "price": "سعر البيع (درهم)",
+      "catalogHint": "سعر الكتالوج: {{price}} درهم (معبأ تلقائيًا)",
+      "pricePlaceholder": "مثال: 1,500,000",
+      "compromisDate": "تاريخ العقد",
+      "notes": "ملاحظات",
+      "notesPlaceholder": "ملاحظات…",
+      "cancel": "إلغاء",
+      "creating": "جارٍ الإنشاء…",
+      "submit": "إنشاء البيع",
+      "priceRequired": "سعر البيع مطلوب ويجب أن يكون موجبًا.",
+      "genericError": "خطأ ({{status}})"
+    }
   }
 }

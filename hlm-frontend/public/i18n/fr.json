@@ -172,5 +172,81 @@
       "constructionTitle": "Suivi de chantier",
       "constructionDesc": "Le suivi en temps réel de l'avancement des travaux sera disponible prochainement."
     }
+  },
+  "ventes": {
+    "statut": {
+      "PROSPECT": "Prospect", "OPTION": "Option", "RESERVE": "Réservé",
+      "EN_RETRACTATION": "Délai de rétractation", "ACOMPTE": "Acompte",
+      "COMPROMIS": "Compromis", "FINANCEMENT": "Financement", "ACTE": "Acte notarié",
+      "LIVRE_AVEC_RESERVES": "Livré (réserves)", "RESERVES_LEVEES": "Réserves levées",
+      "LIVRE_DEFINITIF": "Livré", "ANNULE": "Annulé"
+    },
+    "statutDesc": {
+      "PROSPECT": "Intérêt commercial initial — pas encore d'engagement",
+      "OPTION": "Bien bloqué temporairement (24-72h) avant réservation",
+      "RESERVE": "Réservation signée avec dépôt de garantie (≤ 5%)",
+      "EN_RETRACTATION": "Délai légal de rétractation en cours (7 jours)",
+      "ACOMPTE": "Acompte versé par l'acquéreur",
+      "COMPROMIS": "Avant-contrat signé — financement et conditions suspensives en cours",
+      "FINANCEMENT": "Dossier de financement déposé — en attente d'accord bancaire",
+      "ACTE": "Acte authentique signé devant notaire — transfert de propriété effectué",
+      "LIVRE_AVEC_RESERVES": "Bien livré avec réserves à lever",
+      "RESERVES_LEVEES": "Toutes les réserves de livraison sont levées",
+      "LIVRE_DEFINITIF": "Bien remis à l'acquéreur — vente finalisée",
+      "ANNULE": "Vente annulée — voir motif dans la fiche"
+    },
+    "contractStatus": { "PENDING": "En attente", "GENERATED": "Généré", "SIGNED": "Signé" },
+    "kanbanHint": {
+      "RESERVE": "Réservation + dépôt", "COMPROMIS": "Avant-contrat signé",
+      "FINANCEMENT": "Dossier bancaire en cours", "ACTE": "Acte authentique", "LIVRE_DEFINITIF": "Remise des clés"
+    },
+    "stepper": { "cancelled": "Vente annulée" },
+    "list": {
+      "title": "Ventes",
+      "count": "{{count}} vente(s)",
+      "new": "Nouvelle vente",
+      "all": "Toutes",
+      "showAllTitle": "Afficher toutes les ventes",
+      "allStatuts": "Tous les statuts",
+      "statutAria": "Statut",
+      "viewModeAria": "Mode d'affichage",
+      "tableView": "Tableau",
+      "tableTitle": "Vue tableau",
+      "pipelineView": "Pipeline",
+      "pipelineTitle": "Vue pipeline kanban",
+      "noVente": "Aucune vente",
+      "add": "Ajouter",
+      "loadingAria": "Chargement des ventes…",
+      "loadError": "Erreur lors du chargement des ventes.",
+      "emptyFiltered": "Aucune vente avec ce statut",
+      "empty": "Aucune vente enregistrée",
+      "createFirst": "Créer la première vente",
+      "delivery": "Livraison",
+      "oldVenteTitle": "Vente ancienne",
+      "rowAria": "Voir le détail de la vente {{ref}}",
+      "th": {
+        "reference": "Référence", "buyer": "Acquéreur", "status": "Statut", "contract": "Contrat",
+        "salePrice": "Prix de vente", "compromisDate": "Date compromis", "createdAt": "Créée le"
+      }
+    },
+    "create": {
+      "title": "Nouvelle vente",
+      "closeAria": "Fermer",
+      "buyer": "Acquéreur",
+      "selectContact": "— Sélectionner un contact —",
+      "property": "Bien immobilier",
+      "selectProperty": "— Sélectionner un bien —",
+      "price": "Prix de vente (MAD)",
+      "catalogHint": "Prix catalogue : {{price}} MAD (pré-rempli automatiquement)",
+      "pricePlaceholder": "Ex: 1 500 000",
+      "compromisDate": "Date compromis",
+      "notes": "Notes",
+      "notesPlaceholder": "Remarques…",
+      "cancel": "Annuler",
+      "creating": "Création…",
+      "submit": "Créer la vente",
+      "priceRequired": "Le prix de vente est obligatoire et doit être positif.",
+      "genericError": "Erreur ({{status}})"
+    }
   }
 }
