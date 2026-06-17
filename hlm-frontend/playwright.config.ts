@@ -76,6 +76,13 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: authFile },
     },
+    // visites.spec.ts: Wave 16 Visites — agenda + prise de RDV smoke/nav + create flow
+    {
+      name: 'visites-tests',
+      testMatch: /visites\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { storageState: authFile },
+    },
   ],
   // In CI the static server is started by the workflow before Playwright runs.
   // Setting undefined skips webServer so Playwright never launches `npm start`

@@ -14,8 +14,8 @@
       "tasks": { "P4-T1":"done","P4-T2":"done","P4-T3":"done","P4-T4":"done","P4-T5":"done" } },
     "P5": { "label": "Intégrations", "status": "done",
       "tasks": { "P5-T1":"done","P5-T2":"done","P5-T3":"done","P5-T4":"done","P5-T5":"done" } },
-    "P6": { "label": "Tests E2E + docs", "status": "pending",
-      "tasks": { "P6-T1":"pending","P6-T2":"pending","P6-T3":"pending" } }
+    "P6": { "label": "Tests E2E + docs", "status": "done",
+      "tasks": { "P6-T1":"done","P6-T2":"done","P6-T3":"done" } }
   },
   "decisions": {
     "next_changeset": "088 (086 is a gap, 087 = reserve-livraison-responsable; single file 088-visite.yaml with both tables)",

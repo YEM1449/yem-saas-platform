@@ -4,7 +4,7 @@
     <h1>{{ (isEdit ? 'visites.form.titleEdit' : 'visites.form.titleNew') | translate }}</h1>
   </header>
 
-  <form class="card" (ngSubmit)="submit()">
+  <form class="card" (ngSubmit)="submit()" data-testid="visite-form">
     <!-- Contact -->
     <div class="field">
       <label>{{ 'visites.form.contact' | translate }}</label>
@@ -31,7 +31,8 @@
       <!-- Date/heure -->
       <div class="field">
         <label>{{ 'visites.form.dateHeure' | translate }}</label>
-        <input type="datetime-local" [(ngModel)]="dateHeure" name="dateHeure" required />
+        <input type="datetime-local" [(ngModel)]="dateHeure" name="dateHeure" required
+               data-testid="visite-date" />
         <small class="hint">{{ 'visites.form.tzNote' | translate }}</small>
       </div>
       <!-- Durée -->
@@ -95,7 +96,8 @@
 
     <div class="actions">
       <a routerLink="/app/visites" class="btn">{{ 'visites.form.cancel' | translate }}</a>
-      <button type="submit" class="btn btn-primary" [disabled]="!canSubmit || saving()">
+      <button type="submit" class="btn btn-primary" [disabled]="!canSubmit || saving()"
+              data-testid="visite-submit">
         {{ (isEdit ? 'visites.form.submitEdit' : 'visites.form.submitNew') | translate }}
       </button>
     </div>

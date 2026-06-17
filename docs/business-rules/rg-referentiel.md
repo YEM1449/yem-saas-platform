@@ -1939,6 +1939,26 @@ la fiche bien.
 
 ---
 
+## RG-V — Module Visites & Agenda (Wave 16)
+
+Rendez-vous commerciaux agent↔contact pour présenter un bien/programme. Toutes les
+règles sont société-scoped (RG-A transverse). Code : `visite/` (controller/service/repo/domain).
+
+| Règle | Énoncé | Statut | Ancrage code |
+|---|---|---|---|
+| **RG-V01** | Une Visite lie un agent et un Contact ; bien (Property) et programme (Project) optionnels | ✅ | `Visite`, `CreateVisiteRequest` |
+| **RG-V02** | Transitions : PLANIFIEE→CONFIRMEE→REALISEE ; PLANIFIEE/CONFIRMEE→ANNULEE ; CONFIRMEE→NO_SHOW. Terminaux : REALISEE/ANNULEE/NO_SHOW | ✅ | `StatutVisite.allowedTransitions`, `VisiteService` |
+| **RG-V03** | Types : SUR_SITE \| AGENCE \| VISIO \| TELEPHONIQUE | ✅ | `TypeVisite` |
+| **RG-V04** | AGENT → ses propres visites ; MANAGER/ADMIN → toute la société ; PORTAL aucun accès | ✅ | `VisiteService.restrictedToOwnAgent()`, `@PreAuthorize` |
+| **RG-V05** | Anti double-booking : pas de chevauchement pour un même agent → 409 ; MANAGER `override=true` tracé | ✅ | `VisiteService.verifierConflit`, `ConflitVisiteException` |
+| **RG-V06** | REALISEE exige compteRendu + resultat ∈ {INTERESSE, A_RELANCER, PAS_INTERESSE, OPPORTUNITE_CREEE} ; OPPORTUNITE_CREEE → vente liée (pipeline existant) | ✅ | `enregistrerCompteRendu`, `lierVente`, `CompteRenduRequisException` (422) |
+| **RG-V07** | Rappels persistants : H24 agent+prospect, H1 agent ; job DB-scan toutes 5 min ; idempotent ENVOYE ; jamais en mémoire | ✅ | `VisiteRappel`, `RappelVisiteJob`, `VisiteRappelService` |
+| **RG-V08** | Annulation PLANIFIEE/CONFIRMEE → ANNULEE + raison ; annule rappels en attente ; email si était CONFIRMEE | ✅ | `VisiteService.annuler` |
+| **RG-V09** | KPI « Visites réalisées » = COUNT(REALISEE) sur période ; conversion = OPPORTUNITE_CREEE/REALISEE. Source unique : VisiteService | ✅ | `countRealisees`/`countOpportunites`, `HomeDashboardService` |
+| **RG-V10** | Stockage TIMESTAMPTZ (Instant) ; saisie/affichage/rappels/.ics en heure Casablanca | ✅ | `casablanca-time.ts`, `Instant` slots |
+
+---
+
 *Fin du référentiel. Identifiants RG-A à RG-H stables ; toute nouvelle règle doit
 être ajoutée à la suite de sa catégorie avec un numéro séquentiel et un ancrage
 code obligatoire.*

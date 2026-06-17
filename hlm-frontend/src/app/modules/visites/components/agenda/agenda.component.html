@@ -1,11 +1,11 @@
-<div class="agenda">
+<div class="agenda" data-testid="visites-agenda">
   <!-- Header -->
   <header class="agenda-head">
     <div class="agenda-title">
-      <h1>{{ 'visites.title' | translate }}</h1>
+      <h1 data-testid="visites-title">{{ 'visites.title' | translate }}</h1>
       <p class="muted">{{ 'visites.subtitle' | translate }}</p>
     </div>
-    <a routerLink="/app/visites/nouvelle" class="btn btn-primary">
+    <a routerLink="/app/visites/nouvelle" class="btn btn-primary" data-testid="new-visite-btn">
       + {{ 'visites.newVisit' | translate }}
     </a>
   </header>
@@ -15,6 +15,7 @@
     <div class="view-switch" role="tablist">
       @for (v of views; track v) {
         <button class="view-btn" [class.active]="state.view() === v"
+                [attr.data-testid]="'view-' + v"
                 (click)="state.setView(v)">{{ 'visites.views.' + v | translate }}</button>
       }
     </div>
