@@ -2,6 +2,8 @@ import { Component, inject, OnInit } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PropertyService, UpdatePropertyRequest, PropertyCommercial } from './property.service';
 import { Property, PropertyMedia } from '../../core/models/property.model';
@@ -13,12 +15,13 @@ import { MadInputComponent } from '../../core/components/mad-input.component';
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, DocumentListComponent, MadInputComponent, DatePipe, DecimalPipe],
+  imports: [FormsModule, RouterLink, DocumentListComponent, MadInputComponent, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.css',
 })
 export class PropertyDetailComponent implements OnInit {
   private svc = inject(PropertyService);
+  private i18n         = inject(I18nService);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
 
@@ -63,16 +66,14 @@ export class PropertyDetailComponent implements OnInit {
   get allowedStatusTransitions(): { value: string; label: string }[] {
     if (!this.property) return [];
     const current = this.property.status;
+    const tr = (v: string) => ({ value: v, label: this.i18n.instant('properties.detail.transitions.' + current + '_' + v) });
     const all: Record<string, { value: string; label: string }[]> = {
-      DRAFT:      [{ value: 'ACTIVE',     label: 'Publier (Actif)' },
-                   { value: 'ARCHIVED',   label: 'Archiver' }],
-      ACTIVE:     [{ value: 'DRAFT',      label: 'Repasser en brouillon' },
-                   { value: 'WITHDRAWN',  label: 'Retirer du marché' }],
+      DRAFT:      [tr('ACTIVE'), tr('ARCHIVED')],
+      ACTIVE:     [tr('DRAFT'), tr('WITHDRAWN')],
       RESERVED:   [],
-      WITHDRAWN:  [{ value: 'ACTIVE',     label: 'Re-publier (Actif)' },
-                   { value: 'ARCHIVED',   label: 'Archiver' }],
+      WITHDRAWN:  [tr('ACTIVE'), tr('ARCHIVED')],
       SOLD:       [],
-      ARCHIVED:   [{ value: 'DRAFT',      label: 'Remettre en brouillon' }],
+      ARCHIVED:   [tr('DRAFT')],
     };
     return all[current] ?? [];
   }
@@ -122,7 +123,7 @@ export class PropertyDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.savingEdit = false;
         const body = err.error as ErrorResponse | null;
-        this.editError = body?.message ?? `Impossible d'enregistrer (${err.status})`;
+        this.editError = body?.message ?? this.i18n.instant('properties.detail.errors.saveFailed', { status: err.status });
       },
     });
   }
@@ -143,7 +144,7 @@ export class PropertyDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.statusChanging = false;
         const body = err.error as ErrorResponse | null;
-        this.statusError = body?.message ?? `Erreur lors du changement de statut (${err.status})`;
+        this.statusError = body?.message ?? this.i18n.instant('properties.detail.errors.statusChangeFailed', { status: err.status });
       },
     });
   }
@@ -178,7 +179,7 @@ export class PropertyDetailComponent implements OnInit {
     this.commercialError = '';
     this.svc.updateCommercial(this.propertyId, this.commercialForm).subscribe({
       next: (c) => { this.commercial = c; this.showCommercialForm = false; this.commercialSaving = false; },
-      error: () => { this.commercialSaving = false; this.commercialError = 'Échec de l\'enregistrement de la fiche commerciale.'; },
+      error: () => { this.commercialSaving = false; this.commercialError = this.i18n.instant('properties.detail.errors.commercialSaveFailed'); },
     });
   }
 
@@ -195,8 +196,8 @@ export class PropertyDetailComponent implements OnInit {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
         this.error = err.status === 404
-          ? 'Property not found.'
-          : (body?.message ?? `Failed to load property (${err.status})`);
+          ? this.i18n.instant('properties.detail.errors.notFound')
+          : (body?.message ?? this.i18n.instant('properties.detail.errors.loadFailed', { status: err.status }));
       },
     });
   }
@@ -231,7 +232,7 @@ export class PropertyDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.uploadLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.uploadError = body?.message ?? `Upload failed (${err.status})`;
+        this.uploadError = body?.message ?? this.i18n.instant('properties.detail.errors.uploadFailed', { status: err.status });
         input.value = '';
       },
     });
@@ -245,7 +246,7 @@ export class PropertyDetailComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
-        this.deleteError = body?.message ?? `Delete failed (${err.status})`;
+        this.deleteError = body?.message ?? this.i18n.instant('properties.detail.errors.deleteFailed', { status: err.status });
       },
     });
   }
@@ -259,19 +260,10 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      DRAFT: 'Brouillon', ACTIVE: 'Actif', RESERVED: 'Réservé',
-      SOLD: 'Vendu', WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
-    };
-    return labels[status] ?? status;
+    return this.i18n.instant('properties.status.' + status);
   }
 
   typeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      VILLA: 'Villa', APPARTEMENT: 'Appartement', STUDIO: 'Studio',
-      T2: 'T2', T3: 'T3', DUPLEX: 'Duplex', COMMERCE: 'Commerce',
-      LOCAL: 'Local commercial', TERRAIN: 'Terrain',
-    };
-    return labels[type] ?? type;
+    return this.i18n.instant('properties.detail.type.' + type);
   }
 }
