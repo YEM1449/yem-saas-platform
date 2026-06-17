@@ -68,6 +68,28 @@
            ══════════════════════════════════════════════════════ -->
       <div class="vc-context-col">
 
+        @if (visiteOrigin()) {
+          <!-- Visite-origin context (Wave 16 P5-T2) -->
+          <div class="ctx-card ctx-card--reservation">
+            <div class="ctx-card-header">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <rect x="1.5" y="2.5" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M1.5 6h12M10 1v2.5M5 1v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span>{{ 'visites.title' | translate }}</span>
+            </div>
+            <div class="ctx-body">
+              <div class="ctx-client-name">{{ originContactName() || '—' }}</div>
+              <a class="ctx-link" [routerLink]="['/app/contacts', originContactId()]">
+                {{ 'ventes.createPage.viewContact' | translate }}
+              </a>
+              @if (originPropertyLabel()) {
+                <div class="ctx-prop-meta" style="margin-top:8px"><span>{{ originPropertyLabel() }}</span></div>
+              }
+            </div>
+          </div>
+        }
+
         @if (prefill(); as p) {
 
           <!-- Reservation source -->

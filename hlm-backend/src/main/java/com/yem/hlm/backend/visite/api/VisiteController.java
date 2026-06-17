@@ -3,6 +3,7 @@ package com.yem.hlm.backend.visite.api;
 import com.yem.hlm.backend.visite.api.dto.AnnulerVisiteRequest;
 import com.yem.hlm.backend.visite.api.dto.CompteRenduRequest;
 import com.yem.hlm.backend.visite.api.dto.CreateVisiteRequest;
+import com.yem.hlm.backend.visite.api.dto.LierVenteRequest;
 import com.yem.hlm.backend.visite.api.dto.UpdateVisiteRequest;
 import com.yem.hlm.backend.visite.api.dto.VisiteResponse;
 import com.yem.hlm.backend.visite.domain.StatutVisite;
@@ -53,6 +54,22 @@ public class VisiteController {
         return visiteService.getById(id);
     }
 
+    /** All visites of a contact (P5-T1 — contact detail tab). AGENT sees only their own. */
+    @GetMapping("/by-contact/{contactId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public List<VisiteResponse> byContact(@PathVariable UUID contactId) {
+        return visiteService.listByContact(contactId);
+    }
+
+    /** Export a visite as iCalendar (.ics) for the agent's personal calendar (P5-T4). */
+    @GetMapping(value = "/{id}/ics", produces = "text/calendar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public ResponseEntity<String> ics(@PathVariable UUID id) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"visite-" + id + ".ics\"")
+                .body(visiteService.genererIcs(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public ResponseEntity<VisiteResponse> create(@Valid @RequestBody CreateVisiteRequest req) {
@@ -87,5 +104,12 @@ public class VisiteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public VisiteResponse compteRendu(@PathVariable UUID id, @Valid @RequestBody CompteRenduRequest req) {
         return visiteService.enregistrerCompteRendu(id, req);
+    }
+
+    /** Link the vente created from an OPPORTUNITE_CREEE outcome back to this visite (P5-T2). */
+    @PostMapping("/{id}/lier-vente")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
+    public VisiteResponse lierVente(@PathVariable UUID id, @Valid @RequestBody LierVenteRequest req) {
+        return visiteService.lierVente(id, req.venteId());
     }
 }

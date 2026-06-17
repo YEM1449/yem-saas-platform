@@ -19,8 +19,10 @@ import { DocumentListComponent } from '../documents/document-list.component';
 import { ContactTasksComponent } from '../tasks/contact-tasks.component';
 import { TranslatePipe } from '@ngx-translate/core';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { VisiteApiService, Visite } from '../../modules/visites/services/visite-api.service';
+import { formatHeure, formatDateLong } from '../../modules/visites/services/casablanca-time';
 
-type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 'timeline' | 'documents' | 'tasks';
+type TabId = 'details' | 'interests' | 'reservations' | 'deposits' | 'ventes' | 'visites' | 'timeline' | 'documents' | 'tasks';
 
 @Component({
   selector: 'app-contact-detail',
@@ -36,6 +38,7 @@ export class ContactDetailComponent implements OnInit {
   private propertySvc  = inject(PropertyService);
   private reservSvc    = inject(ReservationService);
   private venteSvc     = inject(VenteService);
+  private visiteApi    = inject(VisiteApiService);
   private route        = inject(ActivatedRoute);
   private router       = inject(Router);
   private auth         = inject(AuthService);
@@ -154,6 +157,14 @@ export class ContactDetailComponent implements OnInit {
   ventesLoaded = false;
   ventesError = '';
 
+  // ── Visites (Wave 16) ────────────────────────────────────────────────────────
+  visites: Visite[] = [];
+  visitesLoading = false;
+  visitesLoaded = false;
+  visitesError = '';
+  readonly fmtHeure = formatHeure;
+  readonly fmtDateLong = formatDateLong;
+
   // ── Portal documents (from buyer portal uploads) ───────────────────────────
   portalDocs = signal<Array<{venteName: string; doc: VenteDocument}>>([]);
   portalDocsLoaded = false;
@@ -214,6 +225,9 @@ export class ContactDetailComponent implements OnInit {
         break;
       case 'ventes':
         if (!this.ventesLoaded) this.loadVentes();
+        break;
+      case 'visites':
+        if (!this.visitesLoaded) this.loadVisites();
         break;
       case 'documents':
         if (!this.portalDocsLoaded) this.loadPortalDocs();
@@ -626,6 +640,30 @@ export class ContactDetailComponent implements OnInit {
         this.ventesError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
+  }
+
+  // ── Visites (Wave 16) ────────────────────────────────────────────────────────
+
+  private loadVisites(): void {
+    this.visitesLoading = true;
+    this.visitesError = '';
+    this.visiteApi.byContact(this.contactId).subscribe({
+      next: (data) => { this.visites = data; this.visitesLoading = false; this.visitesLoaded = true; },
+      error: (err: HttpErrorResponse) => {
+        this.visitesLoading = false;
+        const body = err.error as ErrorResponse | null;
+        this.visitesError = body?.message ?? this.i18n.instant('visites.agenda.loadError');
+      },
+    });
+  }
+
+  /** Open the quick-create form pre-filled for this contact. */
+  planifierVisite(): void {
+    this.router.navigate(['/app/visites/nouvelle'], { queryParams: { contactId: this.contactId } });
+  }
+
+  openVisite(v: Visite): void {
+    this.router.navigate(['/app/visites', v.id]);
   }
 
   private loadPortalDocs(): void {

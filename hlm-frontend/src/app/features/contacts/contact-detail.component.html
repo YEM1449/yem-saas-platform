@@ -112,6 +112,7 @@
     <button class="tab-btn" [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">{{ 'contacts.detail.tabs.reservations' | translate }}</button>
     <button class="tab-btn" [class.active]="activeTab === 'deposits'"     (click)="selectTab('deposits')">{{ 'contacts.detail.tabs.deposits' | translate }}</button>
     <button class="tab-btn" [class.active]="activeTab === 'ventes'"       (click)="selectTab('ventes')">{{ 'contacts.detail.tabs.ventes' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'visites'"      (click)="selectTab('visites')">{{ 'visites.contactTab.title' | translate }}</button>
     <button class="tab-btn" [class.active]="activeTab === 'timeline'"     (click)="selectTab('timeline')">{{ 'contacts.detail.tabs.timeline' | translate }}</button>
     <button class="tab-btn" [class.active]="activeTab === 'documents'"    (click)="selectTab('documents')">{{ 'contacts.detail.tabs.documents' | translate }}</button>
     <button class="tab-btn" [class.active]="activeTab === 'tasks'"        (click)="selectTab('tasks')">{{ 'contacts.detail.tabs.tasks' | translate }}</button>
@@ -599,6 +600,50 @@
                 <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
                 <td>
                   <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">{{ 'contacts.detail.detailBtn' | translate }}</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (activeTab === 'visites') {
+    <div class="tab-actions">
+      <button class="btn btn-sm btn-primary" (click)="planifierVisite()">{{ 'visites.contactTab.plan' | translate }}</button>
+    </div>
+    @if (visitesLoading) {
+      <div class="skeleton-stack">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
+    }
+    @if (visitesError) { <p class="error">{{ visitesError }}</p> }
+    @if (!visitesLoading && visitesLoaded && visites.length === 0) {
+      <p class="empty">{{ 'visites.contactTab.empty' | translate }}</p>
+    }
+    @if (visites.length > 0) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'visites.form.dateHeure' | translate }}</th>
+              <th>{{ 'visites.form.type' | translate }}</th>
+              <th>{{ 'visites.filters.statut' | translate }}</th>
+              <th>{{ 'visites.compteRendu.resultat' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of visites; track v.id) {
+              <tr>
+                <td>{{ fmtDateLong(v.dateHeure) }} · {{ fmtHeure(v.dateHeure) }}</td>
+                <td>{{ 'visites.type.' + v.type | translate }}</td>
+                <td><span class="badge">{{ 'visites.statut.' + v.statut | translate }}</span></td>
+                <td>{{ v.resultat ? ('visites.resultat.' + v.resultat | translate) : '—' }}</td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" (click)="openVisite(v)">{{ 'contacts.detail.detailBtn' | translate }}</button>
                 </td>
               </tr>
             }

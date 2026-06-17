@@ -45,6 +45,7 @@ export class VisiteFormComponent implements OnInit {
 
   // Form model
   contactId: string | null = null;
+  initialContactId: string | null = null;   // prefill from contact detail (queryParam)
   agentId: string | null = null;
   projectId = '';
   propertyId = '';
@@ -66,6 +67,8 @@ export class VisiteFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     const prefillDate = this.route.snapshot.queryParamMap.get('date');
     if (prefillDate) this.dateHeure = prefillDate;
+    const prefillContact = this.route.snapshot.queryParamMap.get('contactId');
+    if (prefillContact) { this.initialContactId = prefillContact; this.contactId = prefillContact; }
 
     if (id) {
       this.editId.set(id);

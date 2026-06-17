@@ -171,7 +171,16 @@ public record HomeDashboardDTO(
         /** Up to 5 recent ventes for the widget. */
         List<RecentVenteRow> recentVentes,
         /** Up to 8 urgent tasks (overdue or due today). */
-        List<UrgentTaskRow> urgentTasks
+        List<UrgentTaskRow> urgentTasks,
+
+        // ── Visites (Wave 16, RG-V09) ─────────────────────────────────────────
+        /** Count of REALISEE visites in the current calendar month. Source: VisiteService (single source). */
+        long visitesRealiseesMoisCourant,
+        /**
+         * Conversion visite→opportunité this month = OPPORTUNITE_CREEE / REALISEE × 100 (1 decimal).
+         * Null when no visite was realised in the month.
+         */
+        BigDecimal tauxConversionVisites
 
 ) {
 

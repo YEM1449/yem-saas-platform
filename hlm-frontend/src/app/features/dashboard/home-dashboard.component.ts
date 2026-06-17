@@ -89,6 +89,11 @@ export class HomeDashboardComponent implements OnInit {
     this.router.navigate(['/app/ventes'], { queryParams });
   }
 
+  /** Wave 16 — open the visites agenda from the dashboard KPI. */
+  goToVisites(): void {
+    this.router.navigate(['/app/visites']);
+  }
+
   drillByAgent(agentId: string): void {
     this.router.navigate(['/app/ventes'], { queryParams: { agentId } });
   }

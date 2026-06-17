@@ -176,6 +176,42 @@ class VisiteControllerIT extends IntegrationTestBase {
         assertThat(reloaded.getEnvoyeAt()).isNotNull();
     }
 
+    @Test
+    void byContact_returnsContactVisites() throws Exception {
+        ContactResponse contact = createContact("visite-bycontact-" + uid + "@acme.com");
+        UUID id = UUID.fromString(doCreateVisite(contact.id(), futureSlot(9)).get("id").asText());
+
+        mvc.perform(get("/api/visites/by-contact/{contactId}", contact.id())
+                        .header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(id.toString()))
+                .andExpect(jsonPath("$[0].contactId").value(contact.id().toString()));
+    }
+
+    @Test
+    void ics_returnsCalendarDocument() throws Exception {
+        ContactResponse contact = createContact("visite-ics-" + uid + "@acme.com");
+        UUID id = UUID.fromString(doCreateVisite(contact.id(), futureSlot(10)).get("id").asText());
+
+        String ics = mvc.perform(get("/api/visites/{id}/ics", id).header("Authorization", adminBearer))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/calendar"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(ics).contains("BEGIN:VCALENDAR").contains("BEGIN:VEVENT").contains("UID:visite-" + id);
+    }
+
+    @Test
+    void lierVente_missingVenteId_returns400() throws Exception {
+        ContactResponse contact = createContact("visite-lier-" + uid + "@acme.com");
+        UUID id = UUID.fromString(doCreateVisite(contact.id(), futureSlot(11)).get("id").asText());
+
+        mvc.perform(post("/api/visites/{id}/lier-vente", id)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
     // ===================== Helpers =====================
 
     private Instant futureSlot(int dayOffset) {

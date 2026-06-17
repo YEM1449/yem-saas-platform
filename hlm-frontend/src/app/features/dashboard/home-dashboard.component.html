@@ -424,6 +424,15 @@
           </div>
         </div>
 
+        <!-- Visites réalisées (Wave 16, RG-V09) -->
+        <div class="owner-kpi-card clickable-card" (click)="goToVisites()" title="Voir l'agenda des visites">
+          <div class="owner-kpi-label">Visites réalisées (mois)</div>
+          <div class="owner-kpi-value">{{ s.visitesRealiseesMoisCourant }}</div>
+          <div class="owner-kpi-hint">Conversion visite → opportunité :
+            @if (s.tauxConversionVisites != null) { {{ s.tauxConversionVisites }}% } @else { — }
+          </div>
+        </div>
+
       </div>
 
       @if (funnelData()) {

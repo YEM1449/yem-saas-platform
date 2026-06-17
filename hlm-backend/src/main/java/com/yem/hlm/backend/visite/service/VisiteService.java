@@ -189,6 +189,44 @@ public class VisiteService {
     // Queries
     // =========================================================================
 
+    /**
+     * iCalendar (.ics) representation of a visite for "add to my calendar" (P5-T4).
+     * Times are emitted in UTC (basic format with {@code Z}), which every calendar app renders
+     * back into the viewer's local zone — unambiguous and avoids shipping a VTIMEZONE block.
+     */
+    @Transactional(readOnly = true)
+    public String genererIcs(UUID id) {
+        Visite v = chargerAccessible(id);
+        Instant fin = v.getDateHeure().plus(Duration.ofMinutes(v.getDureeMinutes()));
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter
+                .ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC);
+        String contactNom = v.getContact() == null ? "Visite" : v.getContact().getFullName();
+        String desc = "Type : " + v.getType()
+                + (v.getLieu() == null ? "" : "\\nLieu : " + escapeIcs(v.getLieu()));
+        return String.join("\r\n",
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "PRODID:-//YEM HLM//Visites//FR",
+                "CALSCALE:GREGORIAN",
+                "METHOD:PUBLISH",
+                "BEGIN:VEVENT",
+                "UID:visite-" + v.getId() + "@yem-hlm",
+                "DTSTAMP:" + fmt.format(Instant.now()),
+                "DTSTART:" + fmt.format(v.getDateHeure()),
+                "DTEND:" + fmt.format(fin),
+                "SUMMARY:" + escapeIcs("Visite — " + contactNom),
+                "DESCRIPTION:" + desc,
+                (v.getLieu() == null ? "" : "LOCATION:" + escapeIcs(v.getLieu())),
+                "STATUS:" + (v.getStatut() == StatutVisite.ANNULEE ? "CANCELLED" : "CONFIRMED"),
+                "END:VEVENT",
+                "END:VCALENDAR") + "\r\n";
+    }
+
+    /** RFC 5545 text escaping for SUMMARY/LOCATION/DESCRIPTION values. */
+    private static String escapeIcs(String s) {
+        return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
+    }
+
     @Transactional(readOnly = true)
     public VisiteResponse getById(UUID id) {
         return VisiteResponse.from(chargerAccessible(id));

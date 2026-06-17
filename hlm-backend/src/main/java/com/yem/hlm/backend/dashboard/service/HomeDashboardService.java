@@ -67,6 +67,7 @@ public class HomeDashboardService {
     private final SocieteRepository       societeRepo;
     private final TrancheRepository       trancheRepo;
     private final UserQuotaRepository     quotaRepo;
+    private final com.yem.hlm.backend.visite.service.VisiteService visiteService;
 
     public HomeDashboardService(VenteRepository venteRepo,
                                 VenteEcheanceRepository echeanceRepo,
@@ -76,7 +77,8 @@ public class HomeDashboardService {
                                 ReservationRepository reservationRepo,
                                 SocieteRepository societeRepo,
                                 TrancheRepository trancheRepo,
-                                UserQuotaRepository quotaRepo) {
+                                UserQuotaRepository quotaRepo,
+                                com.yem.hlm.backend.visite.service.VisiteService visiteService) {
         this.venteRepo       = venteRepo;
         this.echeanceRepo    = echeanceRepo;
         this.taskRepo        = taskRepo;
@@ -86,6 +88,7 @@ public class HomeDashboardService {
         this.societeRepo     = societeRepo;
         this.trancheRepo     = trancheRepo;
         this.quotaRepo       = quotaRepo;
+        this.visiteService   = visiteService;
     }
 
     @Cacheable(
@@ -178,6 +181,16 @@ public class HomeDashboardService {
         }
         if (caSigneMoisCourant  == null) caSigneMoisCourant  = BigDecimal.ZERO;
         if (caSigneMoisPrecedent == null) caSigneMoisPrecedent = BigDecimal.ZERO;
+
+        // ── Visites KPI (Wave 16, RG-V09 — single source: VisiteService). Current Casablanca month. ──
+        java.time.ZoneId casablanca = java.time.ZoneId.of("Africa/Casablanca");
+        java.time.Instant visMoisFrom = moisFrom.atZone(casablanca).toInstant();
+        java.time.Instant visMoisTo   = moisTo.atZone(casablanca).toInstant();
+        long visitesRealiseesMois = visiteService.countRealisees(visMoisFrom, visMoisTo);
+        long visitesOppMois       = visiteService.countOpportunites(visMoisFrom, visMoisTo);
+        BigDecimal tauxConversionVisites = visitesRealiseesMois == 0 ? null
+                : BigDecimal.valueOf(visitesOppMois * 100.0 / visitesRealiseesMois)
+                        .setScale(1, java.math.RoundingMode.HALF_UP);
 
         BigDecimal caLivre = venteRepo.sumPrixVenteByStatut(societeId, VenteStatut.LIVRE_DEFINITIF);
         if (caLivre == null) caLivre = BigDecimal.ZERO;
@@ -546,7 +559,8 @@ public class HomeDashboardService {
                 inventoryByType,
                 pipelineStageAging, typeVelocity,
                 monthlyTrend, projectBreakdown, trancheBreakdown, immeubleBreakdown,
-                recentVentes, urgentTasks
+                recentVentes, urgentTasks,
+                visitesRealiseesMois, tauxConversionVisites
         );
     }
 

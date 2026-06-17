@@ -113,7 +113,17 @@ export class VisiteApiService {
     return this.http.post<Visite>(`${BASE}/${id}/compte-rendu`, req);
   }
 
-  /** Export .ics (P5). Returned as a Blob for download. */
+  /** All visites of one contact (P5-T1 — contact tab). AGENT sees only their own. */
+  byContact(contactId: string): Observable<Visite[]> {
+    return this.http.get<Visite[]>(`${BASE}/by-contact/${contactId}`);
+  }
+
+  /** Link a created vente back to the visite (P5-T2). */
+  lierVente(id: string, venteId: string): Observable<Visite> {
+    return this.http.post<Visite>(`${BASE}/${id}/lier-vente`, { venteId });
+  }
+
+  /** Export .ics (P5-T4). Returned as a Blob for download. */
   ics(id: string): Observable<Blob> {
     return this.http.get(`${BASE}/${id}/ics`, { responseType: 'blob' });
   }

@@ -12,6 +12,7 @@
         <div class="readonly">{{ contactNom() || '—' }}</div>
       } @else {
         <app-contact-picker [placeholder]="('visites.form.contact' | translate)"
+          [initialId]="initialContactId ?? undefined"
           (contactSelected)="contactId = $event" />
       }
     </div>

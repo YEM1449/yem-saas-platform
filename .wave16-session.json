@@ -12,8 +12,8 @@
       "tasks": { "P3-T1":"done","P3-T2":"done","P3-T3":"done","P3-T4":"done","P3-T5":"done" } },
     "P4": { "label": "Frontend : agenda + formulaire", "status": "done",
       "tasks": { "P4-T1":"done","P4-T2":"done","P4-T3":"done","P4-T4":"done","P4-T5":"done" } },
-    "P5": { "label": "Intégrations", "status": "pending",
-      "tasks": { "P5-T1":"pending","P5-T2":"pending","P5-T3":"pending","P5-T4":"pending","P5-T5":"pending" } },
+    "P5": { "label": "Intégrations", "status": "done",
+      "tasks": { "P5-T1":"done","P5-T2":"done","P5-T3":"done","P5-T4":"done","P5-T5":"done" } },
     "P6": { "label": "Tests E2E + docs", "status": "pending",
       "tasks": { "P6-T1":"pending","P6-T2":"pending","P6-T3":"pending" } }
   },
