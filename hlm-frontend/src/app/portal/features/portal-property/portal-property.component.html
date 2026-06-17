@@ -6,14 +6,14 @@
            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
-      Retour aux contrats
+      {{ 'portal.common.backToContracts' | translate }}
     </a>
   </div>
 
-  <h2 class="portal-section-title">Mon Bien Immobilier</h2>
+  <h2 class="portal-section-title">{{ 'portal.property.title' | translate }}</h2>
 
   @if (loading()) {
-    <div class="skeleton-stack" data-testid="portal-property-loading-state" aria-label="Chargement de votre bien…">
+    <div class="skeleton-stack" data-testid="portal-property-loading-state" [attr.aria-label]="'portal.property.loadingAria' | translate">
       <span class="skeleton skeleton-card" style="height:200px"></span>
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
@@ -53,25 +53,25 @@
 
         @if (p.projectName) {
           <div class="portal-card-row">
-            <span class="portal-label">Projet</span>
+            <span class="portal-label">{{ 'portal.contracts.project' | translate }}</span>
             <span class="portal-value">{{ p.projectName }}</span>
           </div>
         }
         @if (p.city) {
           <div class="portal-card-row">
-            <span class="portal-label">Ville</span>
+            <span class="portal-label">{{ 'portal.property.city' | translate }}</span>
             <span class="portal-value">{{ p.city }}</span>
           </div>
         }
         @if (p.address) {
           <div class="portal-card-row">
-            <span class="portal-label">Adresse</span>
+            <span class="portal-label">{{ 'portal.property.address' | translate }}</span>
             <span class="portal-value">{{ p.address }}</span>
           </div>
         }
         @if (p.surfaceAreaSqm) {
           <div class="portal-card-row">
-            <span class="portal-label">Surface</span>
+            <span class="portal-label">{{ 'portal.property.surface' | translate }}</span>
             <span class="portal-value">{{ p.surfaceAreaSqm }} m²</span>
           </div>
         }
@@ -94,8 +94,8 @@
           </svg>
         </div>
         <div>
-          <p class="prop-progress-title">Suivi de chantier</p>
-          <p class="prop-progress-desc">Le suivi en temps réel de l'avancement des travaux sera disponible prochainement.</p>
+          <p class="prop-progress-title">{{ 'portal.property.constructionTitle' | translate }}</p>
+          <p class="prop-progress-desc">{{ 'portal.property.constructionDesc' | translate }}</p>
         </div>
       </div>
     </div>
@@ -106,7 +106,7 @@
            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
       </svg>
-      <p>Bien introuvable.</p>
+      <p>{{ 'portal.property.notFound' | translate }}</p>
     </div>
   }
 

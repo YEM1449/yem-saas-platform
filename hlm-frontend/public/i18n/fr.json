@@ -67,5 +67,110 @@
     "buyers": "Acquéreurs",
     "menu": "Menu",
     "logout": "Déconnexion"
+  },
+  "portal": {
+    "brandDefault": "Espace Client",
+    "logout": "Déconnexion",
+    "logoutAria": "Se déconnecter",
+    "nav": {
+      "ariaMain": "Navigation principale",
+      "ventes": "Mes Ventes",
+      "contracts": "Mes Contrats"
+    },
+    "footer": {
+      "tagline": "Votre espace client sécurisé",
+      "privacy": "Politique de confidentialité",
+      "legal": "Mentions légales"
+    },
+    "login": {
+      "subtitle": "Accédez à votre dossier d'acquisition en toute sécurité",
+      "organisation": "Organisation",
+      "orgPlaceholder": "ex : acme",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "vous@example.com",
+      "sending": "Envoi en cours…",
+      "requestLink": "Recevoir mon lien d'accès",
+      "hint": "Aucun mot de passe requis — nous vous enverrons un lien sécurisé à usage unique.",
+      "consent": "En demandant un lien d'accès, vous consentez au traitement de vos données personnelles dans le cadre de votre dossier d'acquisition (Loi 09-08). Voir notre",
+      "checkInbox": "Vérifiez votre boîte e-mail !",
+      "sentTo": "Un lien sécurisé a été envoyé à {{email}}. Il est valable 48 heures.",
+      "resend": "Renvoyer un lien",
+      "verifying": "Vérification de votre lien d'accès…",
+      "retry": "Réessayer"
+    },
+    "verify": {
+      "redirect": "Vous serez redirigé automatiquement.",
+      "requestNew": "Demander un nouveau lien"
+    },
+    "payments": {
+      "movedBefore": "L'échéancier de paiement est désormais disponible dans l'onglet"
+    },
+    "ventes": {
+      "title": "Mon Acquisition",
+      "loadError": "Erreur lors du chargement.",
+      "subtitle": "Suivez l'avancement de votre dossier en temps réel",
+      "loadingAria": "Chargement de votre dossier…",
+      "empty": "Aucune vente enregistrée pour votre dossier.",
+      "cardAria": "Dossier de vente",
+      "dossier": "Dossier",
+      "badge": { "delivered": "Livré", "cancelled": "Annulé", "inProgress": "En cours" },
+      "progress": "Avancement du dossier",
+      "financialSummary": "Synthèse financière",
+      "salePrice": "Prix de vente",
+      "compromisDate": "Date compromis",
+      "acte": "Acte notarié",
+      "deliveryExpected": "Livraison prévue",
+      "deliveryActual": "Livraison effective",
+      "paid": "réglés",
+      "percentOfPrice": "{{pct}}% du prix",
+      "remaining": "Restant :",
+      "scheduleTitle": "Échéancier de paiement",
+      "th": { "label": "Libellé", "amount": "Montant", "dueDate": "Échéance", "status": "Statut", "paymentDate": "Date paiement" },
+      "dueLabel": "Échéance :",
+      "paidOn": "Payé le :",
+      "contractTitle": "Votre contrat de vente",
+      "contractPending": "Votre contrat sera disponible ici dès sa génération par votre conseiller.",
+      "downloadContract": "Télécharger le contrat",
+      "uploadSigned": "Déposer le contrat signé",
+      "uploadSignedBody": "Après signature et légalisation chez le notaire, déposez ici votre exemplaire signé.",
+      "legalAck": "Je certifie avoir lu, signé et légalisé le présent contrat de vente conformément à la loi n°44-00 du 3 octobre 2002 relative à la vente en l'état futur d'achèvement (VEFA). Je reconnais avoir reçu un exemplaire du contrat, l'avoir signé en présence du notaire instrumentaire, et je transmets par la présente voie numérique un exemplaire signé et légalisé à l'agence immobilière, conformément aux dispositions du Dahir des Obligations et Contrats (D.O.C.).",
+      "selectFile": "Sélectionner un fichier",
+      "uploading": "Dépôt en cours…",
+      "signedSuccess": "Contrat signé transmis avec succès.",
+      "signedReceived": "Votre contrat signé a bien été reçu par l'agence.",
+      "myDocs": "Mes documents",
+      "portalBadge": "Portail",
+      "download": "Télécharger",
+      "addDoc": "Ajouter un document",
+      "pvReception": "PV de réception",
+      "deposit": "Déposer",
+      "otherDoc": "Autre document",
+      "notes": "Notes",
+      "ech": { "EN_ATTENTE": "En attente", "PAYEE": "Payée", "EN_RETARD": "En retard" }
+    },
+    "common": {
+      "backToContracts": "Retour aux contrats"
+    },
+    "contracts": {
+      "subtitle": "Retrouvez ici vos contrats de vente et leur statut",
+      "loadingAria": "Chargement de vos contrats…",
+      "empty": "Aucun contrat trouvé pour votre dossier.",
+      "loadError": "Échec du chargement des contrats.",
+      "project": "Projet",
+      "propertyType": "Type de bien",
+      "agreedPrice": "Prix convenu",
+      "signedOn": "Signé le",
+      "status": { "PENDING": "En attente", "GENERATED": "Généré", "SIGNED": "Signé" }
+    },
+    "property": {
+      "title": "Mon Bien Immobilier",
+      "loadingAria": "Chargement de votre bien…",
+      "notFound": "Bien introuvable.",
+      "city": "Ville",
+      "address": "Adresse",
+      "surface": "Surface",
+      "constructionTitle": "Suivi de chantier",
+      "constructionDesc": "Le suivi en temps réel de l'avancement des travaux sera disponible prochainement."
+    }
   }
 }

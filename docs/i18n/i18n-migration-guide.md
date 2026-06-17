@@ -79,6 +79,18 @@ A controlled migration script (exact string → key) is appropriate for repetiti
 
 ---
 
+## 4b. Migrated: the buyer portal (2026-06-14)
+
+The entire `portal/features/*` surface is keyed under the `portal.*` namespace in all three languages —
+shell (nav/logout/footer + switcher), login, verify, **ventes** (the flagship buyer screen, incl. the
+échéancier table, contract upload, documents), payments redirect, contracts, and property. Status labels
+that lived in TypeScript (`echLabel`, `statusLabel`) now resolve through `I18nService.instant('…')`.
+
+**Exception — legal pages (`portal-legal`, `portal-privacy`) are intentionally FR-only.** Moroccan legal
+notices (Loi 09-08 / 44-00, CNDP) must not be machine/dev-translated; EN/AR versions require
+counsel-authored text and should be served as **per-language legal documents**, not per-paragraph keys.
+This is documented in each component's header comment.
+
 ## 5. Definition of done (per language)
 
 - [ ] All 57 remaining templates + TS literals keyed.

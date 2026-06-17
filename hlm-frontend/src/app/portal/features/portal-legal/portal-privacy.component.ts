@@ -13,6 +13,10 @@ import { PortalTenantInfo } from '../../../core/models/portal.model';
  * Le contenu est rédigé en français (langue du dossier VEFA). Les éléments propres au
  * promoteur (raison sociale, n° de déclaration CNDP, contact DPO) sont à compléter par
  * l'exploitant — repérés par « [à compléter] ».
+ *
+ * i18n (EX-014): ce corps juridique reste volontairement FR-only — une notice Loi 09-08 / CNDP
+ * ne doit pas être traduite par un développeur. Les versions EN/AR exigent une rédaction validée
+ * par un juriste, servies comme documents distincts par langue le moment venu.
  */
 @Component({
   selector: 'app-portal-privacy',

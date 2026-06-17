@@ -67,5 +67,110 @@
     "buyers": "Buyers",
     "menu": "Menu",
     "logout": "Sign out"
+  },
+  "portal": {
+    "brandDefault": "Client Area",
+    "logout": "Sign out",
+    "logoutAria": "Sign out",
+    "nav": {
+      "ariaMain": "Main navigation",
+      "ventes": "My Sales",
+      "contracts": "My Contracts"
+    },
+    "footer": {
+      "tagline": "Your secure client area",
+      "privacy": "Privacy policy",
+      "legal": "Legal notice"
+    },
+    "login": {
+      "subtitle": "Access your purchase file securely",
+      "organisation": "Organization",
+      "orgPlaceholder": "e.g. acme",
+      "email": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "sending": "Sending…",
+      "requestLink": "Get my access link",
+      "hint": "No password required — we'll email you a secure single-use link.",
+      "consent": "By requesting an access link, you consent to the processing of your personal data as part of your purchase file (Law 09-08). See our",
+      "checkInbox": "Check your inbox!",
+      "sentTo": "A secure link has been sent to {{email}}. It is valid for 48 hours.",
+      "resend": "Resend a link",
+      "verifying": "Verifying your access link…",
+      "retry": "Try again"
+    },
+    "verify": {
+      "redirect": "You will be redirected automatically.",
+      "requestNew": "Request a new link"
+    },
+    "payments": {
+      "movedBefore": "The payment schedule is now available in the tab"
+    },
+    "ventes": {
+      "title": "My Purchase",
+      "loadError": "An error occurred while loading.",
+      "subtitle": "Track your file's progress in real time",
+      "loadingAria": "Loading your file…",
+      "empty": "No sale recorded for your file.",
+      "cardAria": "Sale file",
+      "dossier": "File",
+      "badge": { "delivered": "Delivered", "cancelled": "Cancelled", "inProgress": "In progress" },
+      "progress": "File progress",
+      "financialSummary": "Financial summary",
+      "salePrice": "Sale price",
+      "compromisDate": "Preliminary contract date",
+      "acte": "Notarial deed",
+      "deliveryExpected": "Expected delivery",
+      "deliveryActual": "Actual delivery",
+      "paid": "paid",
+      "percentOfPrice": "{{pct}}% of the price",
+      "remaining": "Remaining:",
+      "scheduleTitle": "Payment schedule",
+      "th": { "label": "Description", "amount": "Amount", "dueDate": "Due date", "status": "Status", "paymentDate": "Payment date" },
+      "dueLabel": "Due:",
+      "paidOn": "Paid on:",
+      "contractTitle": "Your sale contract",
+      "contractPending": "Your contract will appear here as soon as your advisor generates it.",
+      "downloadContract": "Download the contract",
+      "uploadSigned": "Upload the signed contract",
+      "uploadSignedBody": "After signing and legalization at the notary, upload your signed copy here.",
+      "legalAck": "I certify that I have read, signed and legalized this sale contract in accordance with Law No. 44-00 of 3 October 2002 on off-plan property sales (VEFA). I acknowledge having received a copy of the contract, signed it before the officiating notary, and hereby transmit a signed and legalized copy to the real-estate agency by this digital channel, in accordance with the Dahir of Obligations and Contracts (D.O.C.).",
+      "selectFile": "Select a file",
+      "uploading": "Uploading…",
+      "signedSuccess": "Signed contract submitted successfully.",
+      "signedReceived": "Your signed contract has been received by the agency.",
+      "myDocs": "My documents",
+      "portalBadge": "Portal",
+      "download": "Download",
+      "addDoc": "Add a document",
+      "pvReception": "Handover report",
+      "deposit": "Upload",
+      "otherDoc": "Other document",
+      "notes": "Notes",
+      "ech": { "EN_ATTENTE": "Pending", "PAYEE": "Paid", "EN_RETARD": "Overdue" }
+    },
+    "common": {
+      "backToContracts": "Back to contracts"
+    },
+    "contracts": {
+      "subtitle": "Find your sale contracts and their status here",
+      "loadingAria": "Loading your contracts…",
+      "empty": "No contract found for your file.",
+      "loadError": "Failed to load contracts.",
+      "project": "Project",
+      "propertyType": "Property type",
+      "agreedPrice": "Agreed price",
+      "signedOn": "Signed on",
+      "status": { "PENDING": "Pending", "GENERATED": "Generated", "SIGNED": "Signed" }
+    },
+    "property": {
+      "title": "My Property",
+      "loadingAria": "Loading your property…",
+      "notFound": "Property not found.",
+      "city": "City",
+      "address": "Address",
+      "surface": "Surface",
+      "constructionTitle": "Construction tracking",
+      "constructionDesc": "Real-time tracking of construction progress will be available soon."
+    }
   }
 }
