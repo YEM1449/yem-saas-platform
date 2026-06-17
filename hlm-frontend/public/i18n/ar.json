@@ -1,0 +1,71 @@
+{
+  "common": {
+    "actions": {
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "create": "إنشاء",
+      "delete": "حذف",
+      "edit": "تعديل",
+      "back": "رجوع",
+      "close": "إغلاق",
+      "confirm": "تأكيد",
+      "search": "بحث",
+      "loading": "جارٍ التحميل…"
+    },
+    "fields": {
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور"
+    },
+    "brand": "HLM CRM"
+  },
+  "lang": {
+    "groupAria": "اختيار اللغة",
+    "switchTo": "التبديل إلى {{name}}"
+  },
+  "auth": {
+    "login": {
+      "subtitle": "مساحة العمل المهنية",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول…",
+      "chooseSociete": "اختر شركة",
+      "multiSociete": "حسابك مرتبط بعدة شركات."
+    }
+  },
+  "nav": {
+    "sections": {
+      "pipeline": "مسار المبيعات",
+      "analytics": "التحليلات",
+      "communication": "التواصل",
+      "reports": "التقارير",
+      "administration": "الإدارة"
+    },
+    "dashboard": "لوحة القيادة",
+    "projects": "المشاريع",
+    "properties": "العقارات",
+    "contacts": "جهات الاتصال",
+    "tasks": "المهام",
+    "reservations": "الحجوزات",
+    "ventes": "المبيعات",
+    "contracts": "العقود",
+    "groupe": "المجموعة",
+    "receivables": "الذمم المدينة",
+    "tresorerie": "الخزينة",
+    "commissions": "العمولات",
+    "messages": "الرسائل",
+    "notifications": "الإشعارات",
+    "reportsVentes": "تقرير المبيعات",
+    "reportsAgents": "تقرير الوكلاء",
+    "reportsCreances": "تقرير الذمم المدينة",
+    "audit": "التدقيق",
+    "users": "المستخدمون",
+    "templates": "النماذج",
+    "search": "ابحث عن عقار أو بيع أو جهة اتصال…",
+    "lots": "الوحدات",
+    "pipelineShort": "المسار",
+    "buyers": "المشترون",
+    "menu": "القائمة",
+    "logout": "تسجيل الخروج"
+  }
+}

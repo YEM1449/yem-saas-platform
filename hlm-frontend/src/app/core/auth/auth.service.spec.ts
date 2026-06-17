@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { AuthService, SessionStatus } from './auth.service';
+import { I18nService } from '../i18n/i18n.service';
 import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
@@ -16,7 +17,11 @@ describe('AuthService', () => {
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [{ provide: Router, useValue: router }],
+      providers: [
+        { provide: Router, useValue: router },
+        // AuthService adopts the user's language via I18nService; stub it (no ngx-translate in unit tests).
+        { provide: I18nService, useValue: { adoptUserPreference: () => {} } },
+      ],
     });
 
     service = TestBed.inject(AuthService);

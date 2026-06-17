@@ -11,7 +11,8 @@
         </svg>
       </div>
       <h1 class="login-title">HLM CRM</h1>
-      <p class="login-subtitle">HLM Login</p>
+      <p class="login-subtitle">{{ 'auth.login.subtitle' | translate }}</p>
+      <div style="display:flex;justify-content:center;margin-top:12px"><app-language-switcher /></div>
     </div>
 
     <!-- Login form -->
@@ -30,7 +31,7 @@
 
         <form (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
           <div class="field">
-            <label for="email">Email</label>
+            <label for="email">{{ 'common.fields.email' | translate }}</label>
             <input
               id="email"
               name="email"
@@ -44,7 +45,7 @@
           </div>
 
           <div class="field">
-            <label for="password">Mot de passe</label>
+            <label for="password">{{ 'common.fields.password' | translate }}</label>
             <div class="password-wrap">
               <input
                 id="password"
@@ -57,7 +58,7 @@
                 [attr.aria-invalid]="error ? 'true' : null"
               />
               <button type="button" class="btn-eye" (click)="showPassword = !showPassword"
-                      [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                      [attr.aria-label]="(showPassword ? 'auth.login.hidePassword' : 'auth.login.showPassword') | translate"
                       tabindex="-1">
                 @if (showPassword) {
                   <!-- Eye-off icon -->
@@ -88,7 +89,7 @@
             @if (loading) {
               <span class="btn-spinner" aria-hidden="true"></span>
             }
-            {{ loading ? 'Connexion...' : 'Se connecter' }}
+            {{ (loading ? 'auth.login.submitting' : 'auth.login.submit') | translate }}
           </button>
         </form>
       </div>
@@ -98,10 +99,10 @@
     @if (showSocieteSelection) {
       <div class="login-body">
         <h2 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:var(--c-text)">
-          Choisir une société
+          {{ 'auth.login.chooseSociete' | translate }}
         </h2>
         <p style="margin:0 0 4px;font-size:.875rem;color:var(--c-text-secondary)">
-          Votre compte est associé à plusieurs sociétés.
+          {{ 'auth.login.multiSociete' | translate }}
         </p>
 
         @if (error) {
@@ -121,7 +122,7 @@
         </div>
 
         <button class="btn-back" (click)="backToLogin()" [disabled]="loading">
-          ← ← Retour
+          ← {{ 'common.actions.back' | translate }}
         </button>
       </div>
     }

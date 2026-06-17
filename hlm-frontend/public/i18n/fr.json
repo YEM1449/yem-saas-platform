@@ -1,0 +1,71 @@
+{
+  "common": {
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "back": "Retour",
+      "close": "Fermer",
+      "confirm": "Confirmer",
+      "search": "Rechercher",
+      "loading": "Chargement…"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Mot de passe"
+    },
+    "brand": "HLM CRM"
+  },
+  "lang": {
+    "groupAria": "Sélection de la langue",
+    "switchTo": "Passer en {{name}}"
+  },
+  "auth": {
+    "login": {
+      "subtitle": "Espace professionnel",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "chooseSociete": "Choisir une société",
+      "multiSociete": "Votre compte est associé à plusieurs sociétés."
+    }
+  },
+  "nav": {
+    "sections": {
+      "pipeline": "PIPELINE COMMERCIAL",
+      "analytics": "ANALYTIQUE",
+      "communication": "Communication",
+      "reports": "Rapports",
+      "administration": "ADMINISTRATION"
+    },
+    "dashboard": "Tableau de bord",
+    "projects": "Projets",
+    "properties": "Propriétés",
+    "contacts": "Contacts",
+    "tasks": "Tâches",
+    "reservations": "Réservations",
+    "ventes": "Ventes",
+    "contracts": "Contrats",
+    "groupe": "Groupe",
+    "receivables": "Créances",
+    "tresorerie": "Trésorerie",
+    "commissions": "Commissions",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "reportsVentes": "Rapport des ventes",
+    "reportsAgents": "Rapport des agents",
+    "reportsCreances": "Rapport des créances",
+    "audit": "Audit",
+    "users": "Utilisateurs",
+    "templates": "Modèles",
+    "search": "Rechercher bien, vente, contact…",
+    "lots": "Lots",
+    "pipelineShort": "Pipeline",
+    "buyers": "Acquéreurs",
+    "menu": "Menu",
+    "logout": "Déconnexion"
+  }
+}

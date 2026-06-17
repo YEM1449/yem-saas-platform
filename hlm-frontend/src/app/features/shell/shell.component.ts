@@ -6,12 +6,15 @@ import { SocieteService } from '../superadmin/societes/societe.service';
 
 import { NotificationPollingService } from '../../core/notification-polling.service';
 import { NotificationToastComponent } from '../../core/components/notification-toast.component';
+import { LanguageSwitcherComponent } from '../../core/components/language-switcher.component';
+import { TranslatePipe } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationToastComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationToastComponent,
+            LanguageSwitcherComponent, TranslatePipe],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })

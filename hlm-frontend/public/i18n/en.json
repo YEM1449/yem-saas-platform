@@ -1,0 +1,71 @@
+{
+  "common": {
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "create": "Create",
+      "delete": "Delete",
+      "edit": "Edit",
+      "back": "Back",
+      "close": "Close",
+      "confirm": "Confirm",
+      "search": "Search",
+      "loading": "Loading…"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "brand": "HLM CRM"
+  },
+  "lang": {
+    "groupAria": "Language selection",
+    "switchTo": "Switch to {{name}}"
+  },
+  "auth": {
+    "login": {
+      "subtitle": "Professional workspace",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "chooseSociete": "Choose a company",
+      "multiSociete": "Your account is linked to several companies."
+    }
+  },
+  "nav": {
+    "sections": {
+      "pipeline": "SALES PIPELINE",
+      "analytics": "ANALYTICS",
+      "communication": "Communication",
+      "reports": "Reports",
+      "administration": "ADMINISTRATION"
+    },
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "properties": "Properties",
+    "contacts": "Contacts",
+    "tasks": "Tasks",
+    "reservations": "Reservations",
+    "ventes": "Sales",
+    "contracts": "Contracts",
+    "groupe": "Group",
+    "receivables": "Receivables",
+    "tresorerie": "Treasury",
+    "commissions": "Commissions",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "reportsVentes": "Sales report",
+    "reportsAgents": "Agents report",
+    "reportsCreances": "Receivables report",
+    "audit": "Audit",
+    "users": "Users",
+    "templates": "Templates",
+    "search": "Search property, sale, contact…",
+    "lots": "Units",
+    "pipelineShort": "Pipeline",
+    "buyers": "Buyers",
+    "menu": "Menu",
+    "logout": "Sign out"
+  }
+}
