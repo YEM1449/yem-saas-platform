@@ -1,0 +1,71 @@
+<div class="detail-wrap">
+  <a routerLink="/app/visites" class="back">‹ {{ 'visites.detail.back' | translate }}</a>
+
+  @if (loadError()) {
+    <div class="alert">{{ loadError() }}</div>
+  }
+
+  @if (visite(); as v) {
+    <div class="head">
+      <div>
+        <h1>{{ v.contactNom || '—' }}</h1>
+        <p class="sub">{{ fmtDate(v.dateHeure) }} · {{ fmtHeure(v.dateHeure) }} · {{ v.dureeMinutes }} min</p>
+      </div>
+      <span class="pill" [class]="statutClass()">{{ 'visites.statut.' + v.statut | translate }}</span>
+    </div>
+
+    <div class="card info">
+      <dl>
+        <div><dt>{{ 'visites.form.type' | translate }}</dt><dd>{{ 'visites.type.' + v.type | translate }}</dd></div>
+        <div><dt>{{ 'visites.form.agent' | translate }}</dt><dd>{{ v.agentNom || '—' }}</dd></div>
+        @if (v.lieu) { <div><dt>{{ 'visites.form.lieu' | translate }}</dt><dd>{{ v.lieu }}</dd></div> }
+        @if (v.resultat) {
+          <div><dt>{{ 'visites.compteRendu.resultat' | translate }}</dt>
+            <dd>{{ 'visites.resultat.' + v.resultat | translate }}</dd></div>
+        }
+        @if (v.annulationRaison) {
+          <div><dt>{{ 'visites.detail.annulationRaison' | translate }}</dt><dd>{{ v.annulationRaison }}</dd></div>
+        }
+      </dl>
+
+      @if (v.propertyId) {
+        <a [routerLink]="['/app/properties', v.propertyId]" class="link-btn">{{ 'visites.detail.viewVente' | translate }}</a>
+      }
+      @if (v.compteRendu) {
+        <div class="cr"><h3>{{ 'visites.compteRendu.texte' | translate }}</h3><p>{{ v.compteRendu }}</p></div>
+      }
+      @if (v.venteId) {
+        <div class="linked">
+          <span>{{ 'visites.detail.linkedVente' | translate }}</span>
+          <a [routerLink]="['/app/ventes', v.venteId]" class="btn">{{ 'visites.detail.viewVente' | translate }}</a>
+        </div>
+      }
+    </div>
+
+    @if (actionError()) { <div class="alert">{{ actionError() }}</div> }
+
+    <!-- Annuler inline form -->
+    @if (showAnnuler()) {
+      <div class="card annuler-box">
+        <label>{{ 'visites.detail.annulerPrompt' | translate }}</label>
+        <textarea [(ngModel)]="annulerRaison" rows="2"></textarea>
+        <div class="actions">
+          <button class="btn" (click)="showAnnuler.set(false)">{{ 'visites.detail.annulerCancel' | translate }}</button>
+          <button class="btn btn-danger" [disabled]="!annulerRaison.trim() || busy()" (click)="annulerConfirm()">
+            {{ 'visites.detail.annulerConfirm' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      @if (canConfirmer()) { <button class="btn btn-primary" [disabled]="busy()" (click)="confirmer()">{{ 'visites.detail.confirmer' | translate }}</button> }
+      @if (canRealiser()) { <button class="btn btn-primary" [disabled]="busy()" (click)="compteRendu()">{{ 'visites.detail.compteRendu' | translate }}</button> }
+      @if (canNoShow()) { <button class="btn" [disabled]="busy()" (click)="noShow()">{{ 'visites.detail.noShow' | translate }}</button> }
+      @if (canModifier()) { <button class="btn" [disabled]="busy()" (click)="modifier()">{{ 'visites.detail.modifier' | translate }}</button> }
+      @if (canAnnuler()) { <button class="btn btn-danger" [disabled]="busy()" (click)="showAnnuler.set(true)">{{ 'visites.detail.annuler' | translate }}</button> }
+      @if (canIcs()) { <button class="btn" (click)="exportIcs()">{{ 'visites.detail.exportIcs' | translate }}</button> }
+    </div>
+  }
+</div>

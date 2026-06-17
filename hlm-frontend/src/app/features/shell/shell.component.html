@@ -146,6 +146,15 @@
         {{ 'nav.ventes' | translate }}
       </a>
 
+      <a routerLink="/app/visites" routerLinkActive="nav-active"
+         class="nav-item" [title]="'nav.visites' | translate" (click)="closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1.5" y="2.5" width="11" height="10" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M1.5 5.5h11M4.5 1v2.5M9.5 1v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        {{ 'nav.visites' | translate }}
+      </a>
+
       <!-- Legacy SaleContract module — hidden by default so the Pipeline section reads as a
            single selling funnel (VEFA Ventes). Enabled per-deployment for sociétés still on
            the old contract workflow (environment.features.legacyContracts). Finding #016. -->

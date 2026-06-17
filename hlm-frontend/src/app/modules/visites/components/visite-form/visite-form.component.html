@@ -1,0 +1,102 @@
+<div class="form-wrap">
+  <header class="form-head">
+    <a routerLink="/app/visites" class="back">‹ {{ 'visites.detail.back' | translate }}</a>
+    <h1>{{ (isEdit ? 'visites.form.titleEdit' : 'visites.form.titleNew') | translate }}</h1>
+  </header>
+
+  <form class="card" (ngSubmit)="submit()">
+    <!-- Contact -->
+    <div class="field">
+      <label>{{ 'visites.form.contact' | translate }}</label>
+      @if (isEdit) {
+        <div class="readonly">{{ contactNom() || '—' }}</div>
+      } @else {
+        <app-contact-picker [placeholder]="('visites.form.contact' | translate)"
+          (contactSelected)="contactId = $event" />
+      }
+    </div>
+
+    <!-- Agent (managers only, create only) -->
+    @if (isManager() && !isEdit) {
+      <div class="field">
+        <label>{{ 'visites.form.agent' | translate }}</label>
+        <app-user-picker [placeholder]="('visites.form.agentHint' | translate)"
+          (userSelected)="agentId = $event" />
+        <small class="hint">{{ 'visites.form.agentHint' | translate }}</small>
+      </div>
+    }
+
+    <div class="grid-2">
+      <!-- Date/heure -->
+      <div class="field">
+        <label>{{ 'visites.form.dateHeure' | translate }}</label>
+        <input type="datetime-local" [(ngModel)]="dateHeure" name="dateHeure" required />
+        <small class="hint">{{ 'visites.form.tzNote' | translate }}</small>
+      </div>
+      <!-- Durée -->
+      <div class="field">
+        <label>{{ 'visites.form.duree' | translate }}</label>
+        <input type="number" min="5" step="5" [(ngModel)]="dureeMinutes" name="duree" />
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Type -->
+      <div class="field">
+        <label>{{ 'visites.form.type' | translate }}</label>
+        <select [(ngModel)]="type" name="type">
+          @for (t of types; track t) {
+            <option [value]="t">{{ 'visites.type.' + t | translate }}</option>
+          }
+        </select>
+      </div>
+      <!-- Lieu -->
+      <div class="field">
+        <label>{{ 'visites.form.lieu' | translate }}</label>
+        <input type="text" [(ngModel)]="lieu" name="lieu"
+          [placeholder]="('visites.form.lieuPlaceholder' | translate)" />
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Programme -->
+      <div class="field">
+        <label>{{ 'visites.form.project' | translate }}</label>
+        <select [(ngModel)]="projectId" name="project" (change)="onProject()">
+          <option value="">—</option>
+          @for (p of projects(); track p.id) {
+            <option [value]="p.id">{{ p.name }}</option>
+          }
+        </select>
+      </div>
+      <!-- Bien -->
+      <div class="field">
+        <label>{{ 'visites.form.property' | translate }}</label>
+        <select [(ngModel)]="propertyId" name="property" [disabled]="!projectId">
+          <option value="">—</option>
+          @for (p of properties(); track p.id) {
+            <option [value]="p.id">{{ propertyLabel(p) }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Override (managers) -->
+    @if (isManager() && conflict()) {
+      <label class="override">
+        <input type="checkbox" [(ngModel)]="override" name="override" />
+        {{ 'visites.form.override' | translate }}
+        <small class="hint">{{ 'visites.form.overrideHint' | translate }}</small>
+      </label>
+    }
+
+    @if (error()) { <div class="alert" [class.conflict]="conflict()">{{ error() }}</div> }
+
+    <div class="actions">
+      <a routerLink="/app/visites" class="btn">{{ 'visites.form.cancel' | translate }}</a>
+      <button type="submit" class="btn btn-primary" [disabled]="!canSubmit || saving()">
+        {{ (isEdit ? 'visites.form.submitEdit' : 'visites.form.submitNew') | translate }}
+      </button>
+    </div>
+  </form>
+</div>

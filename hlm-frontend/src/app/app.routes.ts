@@ -50,6 +50,7 @@ export const routes: Routes = [
       { path: 'ventes', loadComponent: () => import('./features/ventes/vente-list.component').then(m => m.VenteListComponent) },
       { path: 'ventes/new', loadComponent: () => import('./features/ventes/vente-create.component').then(m => m.VenteCreateComponent) },
       { path: 'ventes/:id', loadComponent: () => import('./features/ventes/vente-detail.component').then(m => m.VenteDetailComponent) },
+      { path: 'visites', loadChildren: () => import('./modules/visites/visites.routes').then(m => m.VISITES_ROUTES) },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/home-dashboard.component').then(m => m.HomeDashboardComponent) },
       { path: 'dashboard/commercial', loadComponent: () => import('./features/dashboard/commercial-dashboard.component').then(m => m.CommercialDashboardComponent) },
       { path: 'dashboard/commercial/sales', loadComponent: () => import('./features/dashboard/commercial-dashboard-sales.component').then(m => m.CommercialDashboardSalesComponent) },

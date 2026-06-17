@@ -1,0 +1,103 @@
+<div class="agenda">
+  <!-- Header -->
+  <header class="agenda-head">
+    <div class="agenda-title">
+      <h1>{{ 'visites.title' | translate }}</h1>
+      <p class="muted">{{ 'visites.subtitle' | translate }}</p>
+    </div>
+    <a routerLink="/app/visites/nouvelle" class="btn btn-primary">
+      + {{ 'visites.newVisit' | translate }}
+    </a>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="agenda-toolbar">
+    <div class="view-switch" role="tablist">
+      @for (v of views; track v) {
+        <button class="view-btn" [class.active]="state.view() === v"
+                (click)="state.setView(v)">{{ 'visites.views.' + v | translate }}</button>
+      }
+    </div>
+
+    <div class="nav-controls">
+      <button class="icon-btn" (click)="state.prev()" [title]="'visites.nav.prev' | translate">‹</button>
+      <button class="today-btn" (click)="state.today()">{{ 'visites.nav.today' | translate }}</button>
+      <button class="icon-btn" (click)="state.next()" [title]="'visites.nav.next' | translate">›</button>
+      <span class="period">{{ periodLabel() }}</span>
+    </div>
+
+    <div class="filters">
+      @if (canFilterAgent()) {
+        <app-user-picker class="agent-filter"
+          [placeholder]="('visites.filters.allAgents' | translate)"
+          (userSelected)="onAgent($event)" />
+      }
+      <select class="filter-select" (change)="onStatut($any($event.target).value)">
+        <option value="">{{ 'visites.filters.allStatuts' | translate }}</option>
+        @for (s of statuts; track s) {
+          <option [value]="s">{{ 'visites.statut.' + s | translate }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- States -->
+  @if (state.loading()) {
+    <div class="agenda-state muted">{{ 'common.actions.loading' | translate }}</div>
+  } @else if (state.error()) {
+    <div class="agenda-state error">{{ 'visites.agenda.loadError' | translate }}</div>
+  } @else {
+    <!-- Day view -->
+    @if (state.view() === 'JOUR') {
+      <div class="day-view">
+        @let day = cells()[0];
+        @if (day.visites.length === 0) {
+          <div class="agenda-state muted clickable" (click)="createOn(day.iso)">
+            {{ 'visites.agenda.emptyDay' | translate }}
+          </div>
+        } @else {
+          @for (v of day.visites; track v.id) {
+            <button class="row-chip" [class]="statutClass(v)" (click)="openVisite(v)">
+              <span class="chip-time">{{ fmtHeure(v.dateHeure) }}</span>
+              <span class="chip-main">{{ v.contactNom || '—' }}</span>
+              <span class="chip-type">{{ 'visites.type.' + v.type | translate }}</span>
+              <span class="chip-agent muted">{{ v.agentNom }}</span>
+            </button>
+          }
+          <button class="add-slot" (click)="createOn(day.iso)">+ {{ 'visites.newVisit' | translate }}</button>
+        }
+      </div>
+    }
+
+    <!-- Week / Month grid -->
+    @if (state.view() !== 'JOUR') {
+      <div class="grid" [class.month]="state.view() === 'MOIS'">
+        @for (cell of cells(); track cell.iso) {
+          <div class="cell" [class.dim]="!cell.inMonth" [class.today]="cell.isToday">
+            <div class="cell-head">
+              <span class="cell-weekday">{{ cell.weekday }}</span>
+              <span class="cell-day">{{ cell.label }}</span>
+            </div>
+            <div class="cell-body">
+              @for (v of cell.visites; track v.id) {
+                <button class="mini-chip" [class]="statutClass(v)" (click)="openVisite(v)"
+                        [title]="v.contactNom">
+                  <span class="mini-time">{{ fmtHeure(v.dateHeure) }}</span>
+                  <span class="mini-name">{{ v.contactNom || '—' }}</span>
+                </button>
+              }
+              <button class="cell-add" (click)="createOn(cell.iso)" aria-label="add">+</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Legend -->
+  <div class="legend">
+    @for (s of statuts; track s) {
+      <span class="legend-item"><i class="dot" [class]="'chip-' + s.toLowerCase()"></i>{{ 'visites.statut.' + s | translate }}</span>
+    }
+  </div>
+</div>

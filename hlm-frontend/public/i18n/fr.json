@@ -48,6 +48,7 @@
     "tasks": "Tâches",
     "reservations": "Réservations",
     "ventes": "Ventes",
+    "visites": "Visites",
     "contracts": "Contrats",
     "groupe": "Groupe",
     "receivables": "Créances",
@@ -1146,6 +1147,123 @@
         "uploadFailed": "Échec du téléversement ({{status}}).",
         "deleteFailed": "Échec de la suppression ({{status}})."
       }
+    }
+  },
+  "visites": {
+    "title": "Visites",
+    "subtitle": "Agenda des rendez-vous commerciaux",
+    "newVisit": "Planifier une visite",
+    "views": {
+      "JOUR": "Jour",
+      "SEMAINE": "Semaine",
+      "MOIS": "Mois"
+    },
+    "nav": {
+      "today": "Aujourd'hui",
+      "prev": "Précédent",
+      "next": "Suivant"
+    },
+    "filters": {
+      "agent": "Agent",
+      "allAgents": "Tous les agents",
+      "statut": "Statut",
+      "allStatuts": "Tous les statuts"
+    },
+    "statut": {
+      "PLANIFIEE": "Planifiée",
+      "CONFIRMEE": "Confirmée",
+      "REALISEE": "Réalisée",
+      "ANNULEE": "Annulée",
+      "NO_SHOW": "Absence"
+    },
+    "type": {
+      "SUR_SITE": "Sur site",
+      "AGENCE": "En agence",
+      "VISIO": "Visio",
+      "TELEPHONIQUE": "Téléphonique"
+    },
+    "resultat": {
+      "INTERESSE": "Intéressé",
+      "A_RELANCER": "À relancer",
+      "PAS_INTERESSE": "Pas intéressé",
+      "OPPORTUNITE_CREEE": "Opportunité créée"
+    },
+    "agenda": {
+      "empty": "Aucune visite sur cette période.",
+      "emptyDay": "Aucune visite ce jour.",
+      "loadError": "Impossible de charger l'agenda.",
+      "weekOf": "Semaine du {{date}}",
+      "moreCount": "+{{count}} de plus",
+      "clickToCreate": "Cliquez sur un créneau pour planifier"
+    },
+    "form": {
+      "titleNew": "Nouvelle visite",
+      "titleEdit": "Modifier la visite",
+      "contact": "Contact",
+      "contactRequired": "Sélectionnez un contact.",
+      "agent": "Agent",
+      "agentHint": "Par défaut, vous-même.",
+      "property": "Bien (optionnel)",
+      "project": "Programme (optionnel)",
+      "dateHeure": "Date et heure",
+      "dateRequired": "La date et l'heure sont obligatoires.",
+      "duree": "Durée (minutes)",
+      "type": "Type de visite",
+      "lieu": "Lieu",
+      "lieuPlaceholder": "Adresse, salle, lien visio…",
+      "override": "Forcer malgré un conflit (manager)",
+      "overrideHint": "Outrepasse la détection de double-booking. Tracé.",
+      "submitNew": "Planifier",
+      "submitEdit": "Enregistrer",
+      "cancel": "Annuler",
+      "tzNote": "Heures en fuseau Casablanca.",
+      "conflictError": "Vous avez déjà une visite sur ce créneau.",
+      "genericError": "Échec de l'enregistrement ({{status}})."
+    },
+    "detail": {
+      "back": "Retour à l'agenda",
+      "with": "avec",
+      "createdAt": "Créée le {{date}}",
+      "actions": "Actions",
+      "confirmer": "Confirmer",
+      "compteRendu": "Saisir le compte-rendu",
+      "annuler": "Annuler la visite",
+      "noShow": "Marquer absence",
+      "modifier": "Modifier",
+      "exportIcs": "Ajouter à mon calendrier (.ics)",
+      "linkedVente": "Vente liée",
+      "viewVente": "Voir la vente",
+      "annulationRaison": "Raison de l'annulation",
+      "annulerPrompt": "Raison de l'annulation",
+      "annulerConfirm": "Confirmer l'annulation",
+      "annulerCancel": "Retour",
+      "noShowConfirm": "Confirmer l'absence du prospect ?",
+      "loadError": "Visite introuvable.",
+      "actionError": "Action impossible ({{status}})."
+    },
+    "compteRendu": {
+      "title": "Compte-rendu de visite",
+      "intro": "Renseignez le déroulé puis le résultat. La visite passera à « Réalisée ».",
+      "texte": "Compte-rendu",
+      "textePlaceholder": "Déroulé de la visite, retours du prospect, prochaines étapes…",
+      "texteRequired": "Le compte-rendu est obligatoire.",
+      "resultat": "Résultat",
+      "resultatRequired": "Sélectionnez un résultat.",
+      "opportuniteHint": "« Opportunité créée » vous proposera d'ouvrir une vente liée.",
+      "submit": "Enregistrer le compte-rendu",
+      "cancel": "Annuler",
+      "createVente": "Créer une vente",
+      "createVenteHint": "Une opportunité a été détectée. Ouvrez le pipeline de vente.",
+      "genericError": "Échec de l'enregistrement ({{status}})."
+    },
+    "contactTab": {
+      "title": "Visites",
+      "empty": "Aucune visite pour ce contact.",
+      "plan": "Planifier une visite"
+    },
+    "kpi": {
+      "realisees": "Visites réalisées",
+      "conversion": "Taux conversion visite→opportunité"
     }
   }
 }
