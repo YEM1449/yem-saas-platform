@@ -1581,6 +1581,45 @@
         "analyser": "تحليل",
         "traiter": "معالجة",
         "relancer": "متابعة"
+      },
+      "header": {
+        "greeting": "مرحبًا",
+        "subtitle": "لوحة العقارات · ",
+        "asOf": "تحديث {{time}}",
+        "refresh": "تحديث",
+        "loadingAria": "جارٍ تحميل اللوحة…",
+        "retry": "إعادة المحاولة"
+      },
+      "hero": {
+        "caEyebrow": "رقم المعاملات · {{month}}",
+        "pctOfTarget": "{{pct}}% من {{target}}",
+        "vsLastMonth": "مقابل {{amount}} الشهر الماضي",
+        "activeVentes": "{{count}} عملية بيع نشطة",
+        "pipelineEyebrow": "أين وصل المسار؟",
+        "stageSegTitle": "{{label}} · {{count}} بيع",
+        "noActiveSales": "لا توجد مبيعات نشطة حاليًا."
+      },
+      "tabs": {
+        "synthese": "ملخص",
+        "dirigeant": "المدير",
+        "commercial": "التجاري",
+        "projets": "المشاريع",
+        "actionnaire": "المساهم",
+        "chefProjet": "مدير المشروع",
+        "operationnel": "التشغيل"
+      },
+      "synthese": {
+        "prioritiesAria": "أولويات اليوم",
+        "prioritiesTitle": "ما يتطلب انتباهك",
+        "anchorPipeline": "المسار النشط",
+        "anchorPipelineSub": "{{count}} عملية بيع جارية",
+        "anchorAbsorption": "معدل الامتصاص",
+        "anchorAbsorptionSub": "{{sold}}/{{stock}} مُسوّق",
+        "anchorAvailable": "الوحدات المتاحة",
+        "anchorAvailableSub": "وحدات نشطة للبيع",
+        "anchorCollections": "التحصيلات 30 يوم",
+        "anchorCollectionsOverdue": "{{count}} متأخر",
+        "anchorCollectionsToCollect": "للتحصيل"
       }
     }
   }

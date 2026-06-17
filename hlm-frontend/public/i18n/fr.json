@@ -1698,6 +1698,45 @@
         "analyser": "Analyser",
         "traiter": "Traiter",
         "relancer": "Relancer"
+      },
+      "header": {
+        "greeting": "Bonjour",
+        "subtitle": "Tableau de bord immobilier · ",
+        "asOf": "Màj {{time}}",
+        "refresh": "Actualiser",
+        "loadingAria": "Chargement du tableau de bord…",
+        "retry": "Réessayer"
+      },
+      "hero": {
+        "caEyebrow": "Chiffre d'affaires · {{month}}",
+        "pctOfTarget": "{{pct}}% de {{target}}",
+        "vsLastMonth": "vs {{amount}} le mois passé",
+        "activeVentes": "{{count}} vente(s) actives",
+        "pipelineEyebrow": "Où en est le pipeline ?",
+        "stageSegTitle": "{{label}} · {{count}} vente(s)",
+        "noActiveSales": "Aucune vente active en ce moment."
+      },
+      "tabs": {
+        "synthese": "Synthèse",
+        "dirigeant": "Dirigeant",
+        "commercial": "Commercial",
+        "projets": "Projets",
+        "actionnaire": "Actionnaire",
+        "chefProjet": "Chef de projet",
+        "operationnel": "Opérationnel"
+      },
+      "synthese": {
+        "prioritiesAria": "Priorités du jour",
+        "prioritiesTitle": "Ce qui demande votre attention",
+        "anchorPipeline": "Pipeline actif",
+        "anchorPipelineSub": "{{count}} vente(s) en cours",
+        "anchorAbsorption": "Taux d'absorption",
+        "anchorAbsorptionSub": "{{sold}}/{{stock}} commercialisés",
+        "anchorAvailable": "Biens disponibles",
+        "anchorAvailableSub": "unités actives à vendre",
+        "anchorCollections": "Encaissements 30j",
+        "anchorCollectionsOverdue": "{{count}} en retard",
+        "anchorCollectionsToCollect": "à recouvrer"
       }
     }
   }

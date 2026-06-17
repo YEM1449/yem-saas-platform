@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -48,7 +49,7 @@ interface DayPriority {
     InventoryIntelligenceComponent, DiscountAnalyticsComponent, InsightsPanelComponent,
     MiniBarChartComponent, SalesByTypeComponent, InventoryAgingComponent,
     PricePerSqmComponent, TimeToCloseComponent, PortfolioValueComponent, LowerCasePipe,
-    ShortcutGridComponent, VentesRecentesComponent],
+    ShortcutGridComponent, VentesRecentesComponent, TranslatePipe],
   templateUrl: './home-dashboard.component.html',
   styleUrl: './home-dashboard.component.css',
 })

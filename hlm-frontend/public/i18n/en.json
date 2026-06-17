@@ -1581,6 +1581,45 @@
         "analyser": "Analyze",
         "traiter": "Handle",
         "relancer": "Follow up"
+      },
+      "header": {
+        "greeting": "Hello",
+        "subtitle": "Real-estate dashboard · ",
+        "asOf": "Upd. {{time}}",
+        "refresh": "Refresh",
+        "loadingAria": "Loading the dashboard…",
+        "retry": "Retry"
+      },
+      "hero": {
+        "caEyebrow": "Revenue · {{month}}",
+        "pctOfTarget": "{{pct}}% of {{target}}",
+        "vsLastMonth": "vs {{amount}} last month",
+        "activeVentes": "{{count}} active sale(s)",
+        "pipelineEyebrow": "Where is the pipeline?",
+        "stageSegTitle": "{{label}} · {{count}} sale(s)",
+        "noActiveSales": "No active sale right now."
+      },
+      "tabs": {
+        "synthese": "Summary",
+        "dirigeant": "Director",
+        "commercial": "Sales",
+        "projets": "Projects",
+        "actionnaire": "Shareholder",
+        "chefProjet": "Project lead",
+        "operationnel": "Operations"
+      },
+      "synthese": {
+        "prioritiesAria": "Today's priorities",
+        "prioritiesTitle": "What needs your attention",
+        "anchorPipeline": "Active pipeline",
+        "anchorPipelineSub": "{{count}} sale(s) in progress",
+        "anchorAbsorption": "Absorption rate",
+        "anchorAbsorptionSub": "{{sold}}/{{stock}} marketed",
+        "anchorAvailable": "Available units",
+        "anchorAvailableSub": "active units for sale",
+        "anchorCollections": "Collections 30d",
+        "anchorCollectionsOverdue": "{{count}} overdue",
+        "anchorCollectionsToCollect": "to collect"
       }
     }
   }
