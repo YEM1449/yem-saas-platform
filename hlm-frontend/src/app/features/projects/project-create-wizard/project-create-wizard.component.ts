@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import {
   FormArray,
@@ -13,11 +15,12 @@ import { TrancheService } from '../tranche.service';
 @Component({
   selector: 'app-project-create-wizard',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, TranslatePipe],
   templateUrl: './project-create-wizard.component.html',
   styleUrl: './project-create-wizard.component.scss',
 })
 export class ProjectCreateWizardComponent {
+  private i18n = inject(I18nService);
   private fb     = inject(FormBuilder);
   private svc    = inject(TrancheService);
   private router = inject(Router);
@@ -30,20 +33,12 @@ export class ProjectCreateWizardComponent {
   // expose Math to template
   readonly Math = Math;
 
-  readonly PROJECT_TYPES = [
-    { value: 'IMMEUBLES', label: 'Projet Immeubles',
-      hint: 'Appartements, Duplex, Commerces — plusieurs bâtiments par tranche' },
-    { value: 'VILLAS',    label: 'Projet Villas',
-      hint: 'Maisons individuelles avec terrain, option piscine / jardin' }];
+  // Labels/hints resolved in the template via projects.wizard.projectType.<value>.*
+  readonly PROJECT_TYPES = [{ value: 'IMMEUBLES' }, { value: 'VILLAS' }];
 
   readonly PROPERTY_TYPES = [
-    { value: 'APPARTEMENT', label: 'Appartement' },
-    { value: 'STUDIO',      label: 'Studio' },
-    { value: 'T2',          label: 'T2' },
-    { value: 'T3',          label: 'T3' },
-    { value: 'DUPLEX',      label: 'Duplex' },
-    { value: 'COMMERCE',    label: 'Local commercial' },
-    { value: 'VILLA',       label: 'Villa' }];
+    { value: 'APPARTEMENT' }, { value: 'STUDIO' }, { value: 'T2' }, { value: 'T3' },
+    { value: 'DUPLEX' }, { value: 'COMMERCE' }, { value: 'VILLA' }];
 
   get isVillaProject(): boolean {
     return this.step1.get('projectType')?.value === 'VILLAS';
@@ -53,23 +48,11 @@ export class ProjectCreateWizardComponent {
     'SUD', 'NORD', 'EST', 'OUEST',
     'SUD-OUEST', 'SUD-EST', 'NORD-OUEST', 'NORD-EST'];
 
-  readonly NAMING_OPTIONS = [
-    { value: 'LETTRE',  label: 'Lettres (A, B, C…)',   hint: 'Standard — recommandé' },
-    { value: 'CHIFFRE', label: 'Chiffres (1, 2, 3…)',  hint: 'Alternative simple' },
-    { value: 'CUSTOM',  label: 'Noms personnalisés',   hint: 'Le Jasmin, La Lavande…' }];
+  readonly NAMING_OPTIONS = [{ value: 'LETTRE' }, { value: 'CHIFFRE' }, { value: 'CUSTOM' }];
 
-  readonly REF_PATTERNS = [
-    { value: 'BUILDING_FLOOR_UNIT', label: 'Bâtiment + Étage + N° (A101, B203)', hint: 'Multi-bâtiments' },
-    { value: 'FLOOR_UNIT',          label: 'Étage + N° (101, 203)',              hint: 'Mono-bâtiment' },
-    { value: 'SEQUENTIAL',          label: 'Séquentiel (APT-001…)',              hint: 'Numérotation continue' }];
+  readonly REF_PATTERNS = [{ value: 'BUILDING_FLOOR_UNIT' }, { value: 'FLOOR_UNIT' }, { value: 'SEQUENTIAL' }];
 
-  readonly STATUT_LABELS: Record<string, string> = {
-    EN_PREPARATION:       'En préparation',
-    EN_COMMERCIALISATION: 'En commercialisation',
-    EN_TRAVAUX:           'En travaux',
-    ACHEVEE:              'Achevée',
-    LIVREE:               'Livrée',
-  };
+  statutLabel(s: string): string { return this.i18n.instant('projects.wizard.statut.' + s); }
 
   // ── Step 1: Project info ───────────────────────────────────────────────────
   step1 = this.fb.group({
@@ -229,10 +212,10 @@ export class ProjectCreateWizardComponent {
 
   getFloorLabel(floor: number): string {
     const rdcLabel = this.step3.get('rdcLabel')?.value || 'RDC';
-    if (floor === -1) return 'Sous-sol';
+    if (floor === -1) return this.i18n.instant('projects.wizard.floor.basement');
     if (floor === 0)  return rdcLabel;
-    if (floor === 1)  return '1er étage';
-    return `${floor}ème étage`;
+    if (floor === 1)  return this.i18n.instant('projects.wizard.floor.first');
+    return this.i18n.instant('projects.wizard.floor.nth', { n: floor });
   }
 
   // ── Preview for Step 5 ─────────────────────────────────────────────────────
@@ -391,7 +374,7 @@ export class ProjectCreateWizardComponent {
       },
       error: err => {
         this.submitting = false;
-        this.error = err?.error?.message ?? 'Une erreur est survenue.';
+        this.error = err?.error?.message ?? this.i18n.instant('projects.wizard.error');
       },
     });
   }

@@ -1188,6 +1188,200 @@
         "loadFailed": "فشل تحميل المشاريع ({{status}}).",
         "createFailed": "فشل إنشاء المشروع ({{status}})."
       }
+    },
+    "wizard": {
+      "back": "← المشاريع",
+      "title": "برنامج عقاري جديد",
+      "steps": {
+        "s1": "المشروع",
+        "s2": "الأشطر",
+        "s3b": "المباني",
+        "s3v": "الفيلات",
+        "s4l": "الوحدات",
+        "s4c": "الإعداد",
+        "s5": "التحقق"
+      },
+      "projectType": {
+        "IMMEUBLES": {
+          "label": "مشروع عمارات",
+          "hint": "شقق، دوبلكس، محلات — عدة مبانٍ لكل شطر"
+        },
+        "VILLAS": {
+          "label": "مشروع فيلات",
+          "hint": "منازل فردية مع أرض، خيار مسبح / حديقة"
+        }
+      },
+      "naming": {
+        "LETTRE": {
+          "label": "حروف (A، B، C…)",
+          "hint": "قياسي — موصى به"
+        },
+        "CHIFFRE": {
+          "label": "أرقام (1، 2، 3…)",
+          "hint": "بديل بسيط"
+        },
+        "CUSTOM": {
+          "label": "أسماء مخصصة",
+          "hint": "الياسمين، اللافندر…"
+        }
+      },
+      "refPattern": {
+        "BUILDING_FLOOR_UNIT": {
+          "label": "المبنى + الطابق + الرقم (A101، B203)",
+          "hint": "متعدد المباني"
+        },
+        "FLOOR_UNIT": {
+          "label": "الطابق + الرقم (101، 203)",
+          "hint": "مبنى واحد"
+        },
+        "SEQUENTIAL": {
+          "label": "تسلسلي (APT-001…)",
+          "hint": "ترقيم متواصل"
+        }
+      },
+      "propType": {
+        "APPARTEMENT": "شقة",
+        "STUDIO": "استوديو",
+        "T2": "T2",
+        "T3": "T3",
+        "DUPLEX": "دوبلكس",
+        "COMMERCE": "محل تجاري",
+        "VILLA": "فيلا",
+        "PARKING": "موقف"
+      },
+      "statut": {
+        "EN_PREPARATION": "قيد الإعداد",
+        "EN_COMMERCIALISATION": "قيد التسويق",
+        "EN_TRAVAUX": "قيد الإنجاز",
+        "ACHEVEE": "منجز",
+        "LIVREE": "مُسلّم"
+      },
+      "floor": {
+        "basement": "الطابق السفلي",
+        "first": "الطابق الأول",
+        "nth": "الطابق {{n}}"
+      },
+      "s1": {
+        "title": "معلومات البرنامج",
+        "intro": "أدخل المعلومات العامة لبرنامجك العقاري.",
+        "typeLabel": "نوع البرنامج *",
+        "name": "اسم البرنامج *",
+        "namePlaceholder": "مثال: إقامة الزياتين",
+        "nameReq": "الاسم مطلوب",
+        "description": "الوصف",
+        "descPlaceholder": "وصف البرنامج…",
+        "address": "العنوان",
+        "addressPlaceholder": "12 شارع الصنوبر",
+        "city": "المدينة *",
+        "cityPlaceholder": "مرسيليا",
+        "cityReq": "المدينة مطلوبة",
+        "postalCode": "الرمز البريدي",
+        "postalPlaceholder": "13000",
+        "promoterSection": "معلومات المنعش",
+        "maitreOuvrage": "صاحب المشروع",
+        "maitrePlaceholder": "مثال: مجموعة أطلس العقارية",
+        "dateOuverture": "تاريخ انطلاق التسويق",
+        "tva": "الضريبة المطبقة (%)",
+        "tvaPlaceholder": "مثال: 20",
+        "surfaceTerrain": "مساحة الأرض (م²)",
+        "surfacePlaceholder": "مثال: 5000",
+        "prixMoyen": "السعر المتوسط المستهدف (درهم/م²)",
+        "prixPlaceholder": "مثال: 12000"
+      },
+      "s2": {
+        "title": "أشطر التسليم",
+        "whatIs": "ما هو الشطر؟",
+        "explain": "يجمع الشطر المباني التي تُبنى وتُسلّم معًا في تاريخ محدد. يُدرج تاريخ تسليم كل شطر في عقود حجز المشترين. البرنامج البسيط له شطر واحد فقط.",
+        "trancheN": "الشطر {{n}}",
+        "dateToDefine": "تاريخ يُحدّد لاحقًا",
+        "count": "الأشطر ({{count}})",
+        "add": "+ إضافة شطر",
+        "nomLabel": "اسم الشطر (اختياري)",
+        "nomPlaceholder": "مثال: الشطر {{n}} — الياسمين",
+        "dateLivraison": "📅 تاريخ التسليم المتوقع *",
+        "dateHint": "مذكور في عقود الحجز",
+        "dateReq": "تاريخ التسليم مطلوب",
+        "dateDebut": "تاريخ بدء الأشغال",
+        "permis": "مرجع رخصة البناء",
+        "permisPlaceholder": "PC 13055 25 00123"
+      },
+      "s3": {
+        "villaTitle": "إعداد الفيلات",
+        "villaIntro": "حدّد التسمية وأضِف مجموعات الفيلات لكل شطر.",
+        "buildTitle": "إعداد المباني",
+        "buildIntro": "حدّد التسمية المشتركة، ثم أضِف مباني كل شطر.",
+        "nomenclature": "التسمية (مشتركة لجميع المباني)",
+        "prefixVilla": "بادئة الفيلا",
+        "prefixBuild": "بادئة المبنى",
+        "lotPrefix": "بادئة الوحدات",
+        "refLots": "مرجع الوحدات",
+        "livraisonBadge": "التسليم: {{date}}",
+        "addVillaGroup": "+ إضافة مجموعة فيلات",
+        "addBuilding": "+ إضافة مبنى",
+        "noVillaGroup": "لا توجد مجموعة فيلات — انقر أعلاه.",
+        "noBuilding": "لا يوجد مبنى — انقر أعلاه.",
+        "customName": "اسم مخصص",
+        "customVilla": "مثال: ضيعة الجنوب",
+        "customBuild": "مثال: الياسمين",
+        "floorsCount": "عدد الطوابق (أرضي+؟)",
+        "rdc": "الطابق الأرضي",
+        "yes": "نعم",
+        "no": "لا",
+        "rdcType": "نوع الطابق الأرضي",
+        "localCommercial": "محل تجاري",
+        "appartement": "شقة",
+        "mixte": "مختلط",
+        "aucunLot": "لا توجد وحدة",
+        "nbLotsRdc": "وحدات الطابق الأرضي",
+        "parking": "موقف",
+        "withParking": "مع موقف",
+        "withoutParking": "بدون موقف",
+        "nbPlaces": "الأماكن",
+        "nbVillasGroup": "عدد الفيلات في هذه المجموعة",
+        "villa": "فيلا",
+        "villas": "فيلات"
+      },
+      "s4": {
+        "villaTitle": "إعداد الفيلات",
+        "villaIntro": "لكل مجموعة فيلات، حدّد المساحة والأرض والسعر والخيارات.",
+        "lotsTitle": "أنواع الوحدات حسب الطابق",
+        "lotsIntro": "لكل مبنى، اضبط نوع وخصائص كل طابق.",
+        "places": "أماكن",
+        "lot": "وحدة",
+        "lots": "وحدات",
+        "villa": "فيلا",
+        "villas": "فيلات",
+        "surfaceVilla": "المساحة الصالحة للسكن م²",
+        "surfaceMin": "م² الأدنى",
+        "terrain": "الأرض م²",
+        "prix": "السعر درهم",
+        "bedrooms": "غرف النوم",
+        "bathrooms": "حمامات",
+        "pool": "مسبح",
+        "garden": "حديقة"
+      },
+      "s5": {
+        "title": "التحقق — الملخص",
+        "intro": "تحقّق من الإعداد قبل بدء التوليد.",
+        "ouverture": "انطلاق التسويق: {{date}}",
+        "tvaChip": "الضريبة {{n}}%",
+        "terrainChip": "{{n}} م² أرض",
+        "prixChip": "{{n}} درهم/م² مستهدف",
+        "livraison": "التسليم: {{date}}",
+        "lotN": "{{count}} وحدة",
+        "trancheTotal": "{{count}} وحدة",
+        "trancheCount": "شطر",
+        "buildingCount": "مبنى",
+        "totalLots": "وحدة إجمالًا",
+        "estimatedValue": "القيمة التقديرية"
+      },
+      "footer": {
+        "prev": "← السابق",
+        "next": "التالي →",
+        "generating": "جارٍ التوليد…",
+        "generate": "توليد البرنامج"
+      },
+      "error": "حدث خطأ."
     }
   }
 }

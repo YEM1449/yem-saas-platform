@@ -1188,6 +1188,200 @@
         "loadFailed": "Failed to load projects ({{status}}).",
         "createFailed": "Failed to create project ({{status}})."
       }
+    },
+    "wizard": {
+      "back": "← Projects",
+      "title": "New real-estate program",
+      "steps": {
+        "s1": "Project",
+        "s2": "Phases",
+        "s3b": "Buildings",
+        "s3v": "Villas",
+        "s4l": "Units",
+        "s4c": "Config.",
+        "s5": "Review"
+      },
+      "projectType": {
+        "IMMEUBLES": {
+          "label": "Buildings project",
+          "hint": "Apartments, Duplexes, Retail — several buildings per phase"
+        },
+        "VILLAS": {
+          "label": "Villas project",
+          "hint": "Individual houses with land, optional pool / garden"
+        }
+      },
+      "naming": {
+        "LETTRE": {
+          "label": "Letters (A, B, C…)",
+          "hint": "Standard — recommended"
+        },
+        "CHIFFRE": {
+          "label": "Numbers (1, 2, 3…)",
+          "hint": "Simple alternative"
+        },
+        "CUSTOM": {
+          "label": "Custom names",
+          "hint": "Le Jasmin, La Lavande…"
+        }
+      },
+      "refPattern": {
+        "BUILDING_FLOOR_UNIT": {
+          "label": "Building + Floor + No. (A101, B203)",
+          "hint": "Multi-building"
+        },
+        "FLOOR_UNIT": {
+          "label": "Floor + No. (101, 203)",
+          "hint": "Single building"
+        },
+        "SEQUENTIAL": {
+          "label": "Sequential (APT-001…)",
+          "hint": "Continuous numbering"
+        }
+      },
+      "propType": {
+        "APPARTEMENT": "Apartment",
+        "STUDIO": "Studio",
+        "T2": "T2",
+        "T3": "T3",
+        "DUPLEX": "Duplex",
+        "COMMERCE": "Commercial unit",
+        "VILLA": "Villa",
+        "PARKING": "Parking"
+      },
+      "statut": {
+        "EN_PREPARATION": "In preparation",
+        "EN_COMMERCIALISATION": "On sale",
+        "EN_TRAVAUX": "Under construction",
+        "ACHEVEE": "Completed",
+        "LIVREE": "Delivered"
+      },
+      "floor": {
+        "basement": "Basement",
+        "first": "1st floor",
+        "nth": "Floor {{n}}"
+      },
+      "s1": {
+        "title": "Program information",
+        "intro": "Enter the general information of your real-estate program.",
+        "typeLabel": "Program type *",
+        "name": "Program name *",
+        "namePlaceholder": "e.g. Résidence Les Oliviers",
+        "nameReq": "Name required",
+        "description": "Description",
+        "descPlaceholder": "Program description…",
+        "address": "Address",
+        "addressPlaceholder": "12 avenue des Pins",
+        "city": "City *",
+        "cityPlaceholder": "Marseille",
+        "cityReq": "City required",
+        "postalCode": "Postal code",
+        "postalPlaceholder": "13000",
+        "promoterSection": "Developer information",
+        "maitreOuvrage": "Project owner",
+        "maitrePlaceholder": "e.g. Groupe Immobilier Atlas",
+        "dateOuverture": "Sales launch date",
+        "tva": "Applicable VAT (%)",
+        "tvaPlaceholder": "e.g. 20",
+        "surfaceTerrain": "Land area (m²)",
+        "surfacePlaceholder": "e.g. 5000",
+        "prixMoyen": "Target average price (MAD/m²)",
+        "prixPlaceholder": "e.g. 12000"
+      },
+      "s2": {
+        "title": "Delivery phases",
+        "whatIs": "What is a phase?",
+        "explain": "A phase groups the buildings built and delivered together on a specific date. Each phase's delivery date appears in buyers' reservation contracts. A simple program has only one phase.",
+        "trancheN": "Phase {{n}}",
+        "dateToDefine": "Date to define",
+        "count": "Phases ({{count}})",
+        "add": "+ Add a phase",
+        "nomLabel": "Phase name (optional)",
+        "nomPlaceholder": "e.g. Phase {{n}} — Le Jasmin",
+        "dateLivraison": "📅 Planned delivery date *",
+        "dateHint": "Mentioned in the reservation contracts",
+        "dateReq": "Delivery date required",
+        "dateDebut": "Works start date",
+        "permis": "Building permit reference",
+        "permisPlaceholder": "PC 13055 25 00123"
+      },
+      "s3": {
+        "villaTitle": "Villa configuration",
+        "villaIntro": "Define the naming and add the villa groups per phase.",
+        "buildTitle": "Building configuration",
+        "buildIntro": "Define the common naming, then add the buildings of each phase.",
+        "nomenclature": "Naming (common to all buildings)",
+        "prefixVilla": "Villa prefix",
+        "prefixBuild": "Building prefix",
+        "lotPrefix": "Unit prefix",
+        "refLots": "Unit reference",
+        "livraisonBadge": "Delivery: {{date}}",
+        "addVillaGroup": "+ Add a villa group",
+        "addBuilding": "+ Add a building",
+        "noVillaGroup": "No villa group — click above.",
+        "noBuilding": "No building — click above.",
+        "customName": "Custom name",
+        "customVilla": "e.g. Domaine Sud",
+        "customBuild": "e.g. Le Jasmin",
+        "floorsCount": "Number of floors (G+?)",
+        "rdc": "Ground floor",
+        "yes": "Yes",
+        "no": "No",
+        "rdcType": "Ground-floor type",
+        "localCommercial": "Commercial unit",
+        "appartement": "Apartment",
+        "mixte": "Mixed",
+        "aucunLot": "No unit",
+        "nbLotsRdc": "Ground-floor units",
+        "parking": "Parking",
+        "withParking": "With parking",
+        "withoutParking": "No parking",
+        "nbPlaces": "Spaces",
+        "nbVillasGroup": "Number of villas in this group",
+        "villa": "villa",
+        "villas": "villas"
+      },
+      "s4": {
+        "villaTitle": "Villa configuration",
+        "villaIntro": "For each villa group, set the surface, land, price and options.",
+        "lotsTitle": "Unit types per floor",
+        "lotsIntro": "For each building, configure the type and features of each floor.",
+        "places": "spaces",
+        "lot": "unit",
+        "lots": "units",
+        "villa": "villa",
+        "villas": "villas",
+        "surfaceVilla": "Living area m²",
+        "surfaceMin": "m² min",
+        "terrain": "Land m²",
+        "prix": "Price MAD",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Baths",
+        "pool": "Pool",
+        "garden": "Garden"
+      },
+      "s5": {
+        "title": "Review — Summary",
+        "intro": "Check the configuration before launching generation.",
+        "ouverture": "Sales launch: {{date}}",
+        "tvaChip": "VAT {{n}}%",
+        "terrainChip": "{{n}} m² land",
+        "prixChip": "{{n}} MAD/m² target",
+        "livraison": "Delivery: {{date}}",
+        "lotN": "{{count}} unit(s)",
+        "trancheTotal": "{{count}} units",
+        "trancheCount": "phase(s)",
+        "buildingCount": "building(s)",
+        "totalLots": "units total",
+        "estimatedValue": "estimated value"
+      },
+      "footer": {
+        "prev": "← Previous",
+        "next": "Next →",
+        "generating": "Generating…",
+        "generate": "Generate the program"
+      },
+      "error": "An error occurred."
     }
   }
 }
