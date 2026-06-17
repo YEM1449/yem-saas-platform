@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HomeDashboardService, HomeDashboard, ProjectBreakdownRow, TrancheBreakdownRow, ImmeubleBreakdownRow, InventoryTypeRow, PipelineStageAgingRow, TypeVelocityRow, ShareholderKpi, ProjectDirectorKpi, AgentLeaderboardRow, ProjectProgressRow } from './home-dashboard.service';
@@ -36,6 +37,7 @@ interface DayPriority {
   nav: () => void;
 }
 
+// i18n
 @Component({
   selector: 'app-home-dashboard',
   standalone: true,
@@ -51,6 +53,7 @@ interface DayPriority {
   styleUrl: './home-dashboard.component.css',
 })
 export class HomeDashboardComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc     = inject(HomeDashboardService);
   private cockpit = inject(DashboardCockpitService);
   private router  = inject(Router);
@@ -194,8 +197,8 @@ export class HomeDashboardComponent implements OnInit {
     if (s.echeancesEnRetardCount > 0) {
       out.push({
         severity: 'critical', icon: '💸',
-        text: `${s.echeancesEnRetardCount} échéance${s.echeancesEnRetardCount > 1 ? 's' : ''} en retard · ${this.formatAmount(s.echeancesEnRetardMontant)} à recouvrer`,
-        cta: 'Encaissements',
+        text: this.i18n.instant('dashboard.home.alert.receivables', { count: s.echeancesEnRetardCount, amount: this.formatAmount(s.echeancesEnRetardMontant) }),
+        cta: this.i18n.instant('dashboard.home.cta.encaissements'),
         nav: () => this.drillReceivables(),
       });
     }
@@ -205,8 +208,8 @@ export class HomeDashboardComponent implements OnInit {
       const d = atRisk[0];
       out.push({
         severity: 'critical', icon: '⏳',
-        text: `Vente ${d.venteRef} — ${d.contactFullName} sans progression depuis ${d.agingDays} j (${this.formatAmount(d.prixVente)})`,
-        cta: 'Ouvrir',
+        text: this.i18n.instant('dashboard.home.alert.atRisk', { ref: d.venteRef, contact: d.contactFullName, days: d.agingDays, amount: this.formatAmount(d.prixVente) }),
+        cta: this.i18n.instant('dashboard.home.cta.ouvrir'),
         nav: () => this.router.navigate(['/app/ventes', d.venteId]),
       });
     }
@@ -214,8 +217,8 @@ export class HomeDashboardComponent implements OnInit {
     if (s.ventesStalleesCount > 0) {
       out.push({
         severity: 'warning', icon: '🛑',
-        text: `${s.ventesStalleesCount} vente${s.ventesStalleesCount > 1 ? 's' : ''} bloquée${s.ventesStalleesCount > 1 ? 's' : ''} dans le pipeline`,
-        cta: 'Voir',
+        text: this.i18n.instant('dashboard.home.alert.stalled', { count: s.ventesStalleesCount }),
+        cta: this.i18n.instant('dashboard.home.cta.voir'),
         nav: () => this.drillVentes(),
       });
     }
@@ -224,8 +227,8 @@ export class HomeDashboardComponent implements OnInit {
     if (weakest) {
       out.push({
         severity: 'warning', icon: '📉',
-        text: `${weakest.projectName} sous-absorbé — ${Math.round(weakest.absorptionRate!)}% (${weakest.available}/${weakest.total} dispo)`,
-        cta: 'Analyser',
+        text: this.i18n.instant('dashboard.home.alert.weakAbsorption', { project: weakest.projectName, pct: Math.round(weakest.absorptionRate!), available: weakest.available, total: weakest.total }),
+        cta: this.i18n.instant('dashboard.home.cta.analyser'),
         nav: () => this.drillByProject(weakest.projectId),
       });
     }
@@ -233,8 +236,8 @@ export class HomeDashboardComponent implements OnInit {
     if (s.overdueTasksCount > 0) {
       out.push({
         severity: 'warning', icon: '⏰',
-        text: `${s.overdueTasksCount} tâche${s.overdueTasksCount > 1 ? 's' : ''} en retard`,
-        cta: 'Traiter',
+        text: this.i18n.instant('dashboard.home.alert.overdueTasks', { count: s.overdueTasksCount }),
+        cta: this.i18n.instant('dashboard.home.cta.traiter'),
         nav: () => { this.activeTab = 'operationnel'; },
       });
     }
@@ -252,30 +255,30 @@ export class HomeDashboardComponent implements OnInit {
     if (s.overdueTasksCount > 0) {
       out.push({
         severity: 'critical', icon: '⏰',
-        text: `${s.overdueTasksCount} tâche${s.overdueTasksCount > 1 ? 's' : ''} en retard`,
-        cta: 'Traiter',
+        text: this.i18n.instant('dashboard.home.alert.overdueTasks', { count: s.overdueTasksCount }),
+        cta: this.i18n.instant('dashboard.home.cta.traiter'),
         nav: () => this.router.navigate(['/app/tasks']),
       });
     }
     if (s.tasksDueTodayCount > 0) {
       out.push({
         severity: 'warning', icon: '✅',
-        text: `${s.tasksDueTodayCount} tâche${s.tasksDueTodayCount > 1 ? 's' : ''} à faire aujourd’hui`,
-        cta: 'Voir',
+        text: this.i18n.instant('dashboard.home.alert.tasksDueToday', { count: s.tasksDueTodayCount }),
+        cta: this.i18n.instant('dashboard.home.cta.voir'),
         nav: () => this.router.navigate(['/app/tasks']),
       });
     }
     if (s.reservationsExpirantBientot > 0) {
       out.push({
         severity: 'warning', icon: '⌛',
-        text: `${s.reservationsExpirantBientot} réservation${s.reservationsExpirantBientot > 1 ? 's' : ''} expire${s.reservationsExpirantBientot > 1 ? 'nt' : ''} bientôt`,
-        cta: 'Relancer',
+        text: this.i18n.instant('dashboard.home.alert.reservationsExpiring', { count: s.reservationsExpirantBientot }),
+        cta: this.i18n.instant('dashboard.home.cta.relancer'),
         nav: () => this.router.navigate(['/app/reservations']),
       });
     }
 
     if (out.length === 0) {
-      out.push({ severity: 'info', icon: '✓', text: 'Vous êtes à jour — aucune action en attente', cta: '', nav: () => {} });
+      out.push({ severity: 'info', icon: '✓', text: this.i18n.instant('dashboard.home.alert.upToDate'), cta: '', nav: () => {} });
     }
     const rank = { critical: 0, warning: 1, info: 2 };
     return out.sort((a, b) => rank[a.severity] - rank[b.severity]);
@@ -341,17 +344,14 @@ export class HomeDashboardComponent implements OnInit {
 
   // ── Statut labels/colors ────────────────────────────────────────────────────
 
-  readonly STATUT_LABELS: Record<string, string> = {
-    COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-    ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-  };
+
 
   readonly STATUT_COLORS: Record<string, string> = {
     COMPROMIS: '#6366f1', FINANCEMENT: '#f59e0b',
     ACTE: '#3b82f6', LIVRE_DEFINITIF: '#10b981', ANNULE: '#ef4444',
   };
 
-  statutLabel(s: string): string { return this.STATUT_LABELS[s] ?? s; }
+  statutLabel(s: string): string { return this.i18n.instant('ventes.statut.' + s); }
   statutColor(s: string): string { return this.STATUT_COLORS[s] ?? '#9ca3af'; }
 
   statutClass(s: string): string {
@@ -384,9 +384,9 @@ export class HomeDashboardComponent implements OnInit {
 
   absorptionLabel(r: number | null): string {
     if (r == null) return '';
-    if (r >= 70) return 'Forte commercialisation';
-    if (r >= 40) return 'Commercialisation active';
-    return 'Stock disponible important';
+    if (r >= 70) return this.i18n.instant('dashboard.home.rating.absorptionStrong');
+    if (r >= 40) return this.i18n.instant('dashboard.home.rating.absorptionActive');
+    return this.i18n.instant('dashboard.home.rating.absorptionStock');
   }
 
   // ── Monthly trend ──────────────────────────────────────────────────────────
@@ -422,7 +422,7 @@ export class HomeDashboardComponent implements OnInit {
   // ── Hero "Month at a Glance" helpers ──────────────────────────────────────
 
   currentMonthLabel(): string {
-    return new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return new Date().toLocaleDateString(this.i18n.activeLang(), { month: 'long', year: 'numeric' });
   }
 
   quotaProgressPct(s: HomeDashboard): number {
@@ -431,12 +431,7 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   private readonly STAGE_FLOW_ORDER = ['COMPROMIS', 'FINANCEMENT', 'ACTE', 'LIVRE_DEFINITIF'];
-  private readonly STAGE_FLOW_LABELS: Record<string, string> = {
-    COMPROMIS:    'Compromis',
-    FINANCEMENT:  'Financement',
-    ACTE: 'Acte',
-    LIVRE_DEFINITIF:        'Livraison',
-  };
+
   private readonly STAGE_FLOW_COLORS: Record<string, string> = {
     COMPROMIS:    '#c2410c',
     FINANCEMENT:  '#a16207',
@@ -451,7 +446,7 @@ export class HomeDashboardComponent implements OnInit {
       .filter(k => (statuts[k] ?? 0) > 0 || agingMap.has(k))
       .map(k => ({
         key:    k,
-        label:  this.STAGE_FLOW_LABELS[k] ?? k,
+        label:  this.i18n.instant('dashboard.home.stageFlow.' + k),
         count:  statuts[k] ?? agingMap.get(k)?.count ?? 0,
         amount: agingMap.get(k)?.totalValue ?? 0,
         color:  this.STAGE_FLOW_COLORS[k] ?? '#64748b',
@@ -577,14 +572,8 @@ export class HomeDashboardComponent implements OnInit {
 
   // ── Inventory-by-type helpers ──────────────────────────────────────────────
 
-  private static readonly TYPE_LABELS: Record<string, string> = {
-    APPARTEMENT: 'Appartement', VILLA: 'Villa', DUPLEX: 'Duplex',
-    STUDIO: 'Studio', T2: 'T2', T3: 'T3',
-    COMMERCE: 'Commerce', LOT: 'Lot', TERRAIN_VIERGE: 'Terrain vierge', PARKING: 'Parking',
-  };
-
   typeLabel(type: string): string {
-    return HomeDashboardComponent.TYPE_LABELS[type] ?? type;
+    return this.i18n.instant('dashboard.home.type.' + type);
   }
 
   typeAbsorptionWidth(row: InventoryTypeRow): string {
@@ -707,9 +696,9 @@ export class HomeDashboardComponent implements OnInit {
   dsoLabel(s: HomeDashboard): string {
     const d = s.dsoRolling90d;
     if (d == null) return '—';
-    if (d <= 15) return 'Excellent';
-    if (d <= 45) return 'Correct';
-    return 'Critique';
+    if (d <= 15) return this.i18n.instant('dashboard.home.rating.excellent');
+    if (d <= 45) return this.i18n.instant('dashboard.home.rating.correct');
+    return this.i18n.instant('dashboard.home.rating.critique');
   }
 
   winRateStatusClass(s: HomeDashboard): string {
@@ -723,9 +712,9 @@ export class HomeDashboardComponent implements OnInit {
   winRateLabel(s: HomeDashboard): string {
     const w = s.winRate90d;
     if (w == null) return '—';
-    if (w >= 80) return 'Excellent';
-    if (w >= 40) return 'Correct';
-    return 'Critique';
+    if (w >= 80) return this.i18n.instant('dashboard.home.rating.excellent');
+    if (w >= 40) return this.i18n.instant('dashboard.home.rating.correct');
+    return this.i18n.instant('dashboard.home.rating.critique');
   }
 
   collectionStatusClass(s: HomeDashboard): string {
@@ -739,9 +728,9 @@ export class HomeDashboardComponent implements OnInit {
   collectionLabel(s: HomeDashboard): string {
     const c = s.collectionEfficiency90d;
     if (c == null) return '—';
-    if (c >= 90) return '✓ Cible';
-    if (c >= 75) return 'Correct';
-    return 'À améliorer';
+    if (c >= 90) return this.i18n.instant('dashboard.home.rating.cibleOk');
+    if (c >= 75) return this.i18n.instant('dashboard.home.rating.correct');
+    return this.i18n.instant('dashboard.home.rating.aAmeliorer');
   }
 
   cancellationStatusClass(s: HomeDashboard): string {
@@ -753,9 +742,9 @@ export class HomeDashboardComponent implements OnInit {
 
   cancellationLabel(s: HomeDashboard): string {
     const r = s.cancellationRate90d;
-    if (r == null || r <= 10) return 'Normal';
-    if (r <= 20) return 'Attention';
-    return 'Critique';
+    if (r == null || r <= 10) return this.i18n.instant('dashboard.home.rating.normal');
+    if (r <= 20) return this.i18n.instant('dashboard.home.rating.attention');
+    return this.i18n.instant('dashboard.home.rating.critique');
   }
 
   conversionStatusClass(s: HomeDashboard): string {
@@ -769,9 +758,9 @@ export class HomeDashboardComponent implements OnInit {
   conversionLabel(s: HomeDashboard): string {
     const c = s.conversionRate30d;
     if (c == null) return '—';
-    if (c >= 50) return 'Bonne';
-    if (c >= 25) return 'Correcte';
-    return 'Faible';
+    if (c >= 50) return this.i18n.instant('dashboard.home.rating.conversionGood');
+    if (c >= 25) return this.i18n.instant('dashboard.home.rating.conversionOk');
+    return this.i18n.instant('dashboard.home.rating.conversionWeak');
   }
 
   quotaStatusClass(s: HomeDashboard): string {

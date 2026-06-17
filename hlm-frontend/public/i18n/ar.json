@@ -1529,6 +1529,59 @@
       "noData": "لا توجد بيانات لهذه الفترة.",
       "loadError": "فشل تحميل اللوحة.",
       "amountLabel": "المبلغ (درهم)"
+    },
+    "home": {
+      "stageFlow": {
+        "COMPROMIS": "عقد ابتدائي",
+        "FINANCEMENT": "تمويل",
+        "ACTE": "عقد",
+        "LIVRE_DEFINITIF": "تسليم"
+      },
+      "type": {
+        "APPARTEMENT": "شقة",
+        "VILLA": "فيلا",
+        "DUPLEX": "دوبلكس",
+        "STUDIO": "استوديو",
+        "T2": "T2",
+        "T3": "T3",
+        "COMMERCE": "محل تجاري",
+        "LOT": "قطعة",
+        "TERRAIN_VIERGE": "أرض خام",
+        "PARKING": "موقف"
+      },
+      "rating": {
+        "absorptionStrong": "تسويق قوي",
+        "absorptionActive": "تسويق نشط",
+        "absorptionStock": "مخزون متاح كبير",
+        "excellent": "ممتاز",
+        "correct": "مقبول",
+        "critique": "حرج",
+        "cibleOk": "✓ الهدف",
+        "aAmeliorer": "بحاجة لتحسين",
+        "normal": "عادي",
+        "attention": "انتباه",
+        "conversionGood": "جيد",
+        "conversionOk": "مقبول",
+        "conversionWeak": "ضعيف"
+      },
+      "alert": {
+        "receivables": "{{count}} قسط متأخر · {{amount}} للتحصيل",
+        "atRisk": "بيع {{ref}} — {{contact}} دون تقدّم منذ {{days}} يوم ({{amount}})",
+        "stalled": "{{count}} عملية بيع متوقفة في المسار",
+        "weakAbsorption": "{{project}} ضعيف الامتصاص — {{pct}}% ({{available}}/{{total}} متاح)",
+        "overdueTasks": "{{count}} مهمة متأخرة",
+        "tasksDueToday": "{{count}} مهمة مستحقة اليوم",
+        "reservationsExpiring": "{{count}} حجز ينتهي قريبًا",
+        "upToDate": "أنت محدّث — لا إجراءات معلقة"
+      },
+      "cta": {
+        "encaissements": "التحصيلات",
+        "ouvrir": "فتح",
+        "voir": "عرض",
+        "analyser": "تحليل",
+        "traiter": "معالجة",
+        "relancer": "متابعة"
+      }
     }
   }
 }

@@ -1529,6 +1529,59 @@
       "noData": "No data for this period.",
       "loadError": "Failed to load the dashboard.",
       "amountLabel": "Amount (MAD)"
+    },
+    "home": {
+      "stageFlow": {
+        "COMPROMIS": "Preliminary",
+        "FINANCEMENT": "Financing",
+        "ACTE": "Deed",
+        "LIVRE_DEFINITIF": "Delivery"
+      },
+      "type": {
+        "APPARTEMENT": "Apartment",
+        "VILLA": "Villa",
+        "DUPLEX": "Duplex",
+        "STUDIO": "Studio",
+        "T2": "T2",
+        "T3": "T3",
+        "COMMERCE": "Retail",
+        "LOT": "Lot",
+        "TERRAIN_VIERGE": "Bare land",
+        "PARKING": "Parking"
+      },
+      "rating": {
+        "absorptionStrong": "Strong sales",
+        "absorptionActive": "Active sales",
+        "absorptionStock": "Large available stock",
+        "excellent": "Excellent",
+        "correct": "Fair",
+        "critique": "Critical",
+        "cibleOk": "✓ Target",
+        "aAmeliorer": "Needs improvement",
+        "normal": "Normal",
+        "attention": "Caution",
+        "conversionGood": "Good",
+        "conversionOk": "Fair",
+        "conversionWeak": "Low"
+      },
+      "alert": {
+        "receivables": "{{count}} overdue installment(s) · {{amount}} to collect",
+        "atRisk": "Sale {{ref}} — {{contact}} no progress for {{days}} days ({{amount}})",
+        "stalled": "{{count}} sale(s) stalled in the pipeline",
+        "weakAbsorption": "{{project}} under-absorbed — {{pct}}% ({{available}}/{{total}} avail.)",
+        "overdueTasks": "{{count}} overdue task(s)",
+        "tasksDueToday": "{{count}} task(s) due today",
+        "reservationsExpiring": "{{count}} reservation(s) expiring soon",
+        "upToDate": "You're up to date — no pending action"
+      },
+      "cta": {
+        "encaissements": "Collections",
+        "ouvrir": "Open",
+        "voir": "View",
+        "analyser": "Analyze",
+        "traiter": "Handle",
+        "relancer": "Follow up"
+      }
     }
   }
 }

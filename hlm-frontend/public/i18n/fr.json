@@ -1646,6 +1646,59 @@
       "noData": "Aucune donnée pour cette période.",
       "loadError": "Échec du chargement du tableau de bord.",
       "amountLabel": "Montant (MAD)"
+    },
+    "home": {
+      "stageFlow": {
+        "COMPROMIS": "Compromis",
+        "FINANCEMENT": "Financement",
+        "ACTE": "Acte",
+        "LIVRE_DEFINITIF": "Livraison"
+      },
+      "type": {
+        "APPARTEMENT": "Appartement",
+        "VILLA": "Villa",
+        "DUPLEX": "Duplex",
+        "STUDIO": "Studio",
+        "T2": "T2",
+        "T3": "T3",
+        "COMMERCE": "Commerce",
+        "LOT": "Lot",
+        "TERRAIN_VIERGE": "Terrain vierge",
+        "PARKING": "Parking"
+      },
+      "rating": {
+        "absorptionStrong": "Forte commercialisation",
+        "absorptionActive": "Commercialisation active",
+        "absorptionStock": "Stock disponible important",
+        "excellent": "Excellent",
+        "correct": "Correct",
+        "critique": "Critique",
+        "cibleOk": "✓ Cible",
+        "aAmeliorer": "À améliorer",
+        "normal": "Normal",
+        "attention": "Attention",
+        "conversionGood": "Bonne",
+        "conversionOk": "Correcte",
+        "conversionWeak": "Faible"
+      },
+      "alert": {
+        "receivables": "{{count}} échéance(s) en retard · {{amount}} à recouvrer",
+        "atRisk": "Vente {{ref}} — {{contact}} sans progression depuis {{days}} j ({{amount}})",
+        "stalled": "{{count}} vente(s) bloquée(s) dans le pipeline",
+        "weakAbsorption": "{{project}} sous-absorbé — {{pct}}% ({{available}}/{{total}} dispo)",
+        "overdueTasks": "{{count}} tâche(s) en retard",
+        "tasksDueToday": "{{count}} tâche(s) à faire aujourd'hui",
+        "reservationsExpiring": "{{count}} réservation(s) expire(nt) bientôt",
+        "upToDate": "Vous êtes à jour — aucune action en attente"
+      },
+      "cta": {
+        "encaissements": "Encaissements",
+        "ouvrir": "Ouvrir",
+        "voir": "Voir",
+        "analyser": "Analyser",
+        "traiter": "Traiter",
+        "relancer": "Relancer"
+      }
     }
   }
 }
