@@ -1509,6 +1509,26 @@
       "seeAll": "See all →",
       "empty": "No sale recorded",
       "newSale": "+ New sale"
+    },
+    "cash": {
+      "title": "Collections dashboard",
+      "from": "From",
+      "to": "To",
+      "refresh": "Refresh",
+      "loadingAria": "Loading...",
+      "expected": "Expected",
+      "issued": "Issued",
+      "collected": "Collected",
+      "overdue": "Overdue",
+      "revenue": "Revenue",
+      "agingTitle": "Overdue aging",
+      "nextDue": "Next due",
+      "thLabel": "Description",
+      "thDue": "Due date",
+      "thRemaining": "Remaining",
+      "noData": "No data for this period.",
+      "loadError": "Failed to load the dashboard.",
+      "amountLabel": "Amount (MAD)"
     }
   }
 }

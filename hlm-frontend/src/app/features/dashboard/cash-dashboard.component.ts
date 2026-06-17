@@ -4,6 +4,8 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import {
   Chart,
   BarController, BarElement, CategoryScale, LinearScale,
@@ -17,7 +19,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 @Component({
   selector: 'app-cash-dashboard',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, TranslatePipe],
   templateUrl: './cash-dashboard.component.html',
   styleUrl: './cash-dashboard.component.css',
 })
@@ -27,6 +29,7 @@ export class CashDashboardComponent implements OnInit, OnDestroy {
 
   private charts: Chart[] = [];
   private cdr = inject(ChangeDetectorRef);
+  private i18n = inject(I18nService);
   private svc = inject(PaymentScheduleService);
 
   data: CashDashboardResponse | null = null;
@@ -53,7 +56,7 @@ export class CashDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
         setTimeout(() => this.buildCharts(), 50);
       },
-      error: () => { this.error = 'Failed to load cash dashboard'; this.loading = false; },
+      error: () => { this.error = this.i18n.instant('dashboard.cash.loadError'); this.loading = false; },
     });
   }
 
@@ -68,7 +71,7 @@ export class CashDashboardComponent implements OnInit, OnDestroy {
       this.charts.push(new Chart(this.kpiRef.nativeElement, {
         type: 'bar',
         data: {
-          labels: ['Expected', 'Issued', 'Collected', 'Overdue'],
+          labels: [this.i18n.instant('dashboard.cash.expected'), this.i18n.instant('dashboard.cash.issued'), this.i18n.instant('dashboard.cash.collected'), this.i18n.instant('dashboard.cash.overdue')],
           datasets: [{
             data: [d.expectedInPeriod, d.issuedInPeriod, d.collectedInPeriod, d.overdueAmount],
             backgroundColor: ['#42a5f5','#66bb6a','#26c6da','#ef5350'],
@@ -91,7 +94,7 @@ export class CashDashboardComponent implements OnInit, OnDestroy {
         data: {
           labels: d.agingBuckets.map(b => b.label),
           datasets: [{
-            label: 'Amount (MAD)',
+            label: this.i18n.instant('dashboard.cash.amountLabel'),
             data: d.agingBuckets.map(b => b.totalAmount),
             backgroundColor: 'rgba(230,81,0,0.75)',
           }],

@@ -1626,6 +1626,26 @@
       "seeAll": "Tout voir →",
       "empty": "Aucune vente enregistrée",
       "newSale": "+ Nouvelle vente"
+    },
+    "cash": {
+      "title": "Tableau de bord — Encaissements",
+      "from": "Du",
+      "to": "Au",
+      "refresh": "Actualiser",
+      "loadingAria": "Chargement...",
+      "expected": "Prévu",
+      "issued": "Émis",
+      "collected": "Encaissé",
+      "overdue": "Impayés",
+      "revenue": "Chiffre d'affaires",
+      "agingTitle": "Vieillissement des impayés",
+      "nextDue": "Prochaines échéances",
+      "thLabel": "Libellé",
+      "thDue": "Échéance",
+      "thRemaining": "Restant",
+      "noData": "Aucune donnée pour cette période.",
+      "loadError": "Échec du chargement du tableau de bord.",
+      "amountLabel": "Montant (MAD)"
     }
   }
 }
