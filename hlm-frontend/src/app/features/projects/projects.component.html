@@ -1,10 +1,10 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Projets immobiliers</h1>
+    <h1 class="page-title">{{ 'projects.list.title' | translate }}</h1>
     <p class="page-subtitle">
-      {{ activeCount }} actif{{ activeCount !== 1 ? 's' : '' }}
-      @if (archivedCount > 0) { · {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }} }
+      {{ 'projects.list.activeCount' | translate:{ count: activeCount } }}
+      @if (archivedCount > 0) { · {{ 'projects.list.archivedCount' | translate:{ count: archivedCount } }} }
     </p>
   </div>
   @if (canWrite) {
@@ -13,7 +13,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Nouveau projet
+        {{ 'projects.list.new' | translate }}
       </button>
     </div>
   }
@@ -28,18 +28,18 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" placeholder="Rechercher un projet…"
+    <input class="search-input" type="search" [placeholder]="'projects.list.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
 
-  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" aria-label="Statut">
-    <option value="">Tous les statuts</option>
-    <option value="ACTIVE">Actif</option>
-    <option value="ARCHIVED">Inactif</option>
+  <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" [attr.aria-label]="'projects.list.statusAria' | translate">
+    <option value="">{{ 'projects.list.allStatuses' | translate }}</option>
+    <option value="ACTIVE">{{ 'projects.list.active' | translate }}</option>
+    <option value="ARCHIVED">{{ 'projects.list.inactive' | translate }}</option>
   </select>
 
   @if (!loading) {
-    <span class="stat-chip">{{ filtered.length }} projet{{ filtered.length !== 1 ? 's' : '' }}</span>
+    <span class="stat-chip">{{ 'projects.list.count' | translate:{ count: filtered.length } }}</span>
   }
 </div>
 
@@ -50,7 +50,7 @@
 
 <!-- ── Loading ──────────────────────────────────────────────── -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="projects-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="projects-loading-state" [attr.aria-label]="'projects.list.loadingAria' | translate">
     @for (i of [1,2,3,4,5]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -62,8 +62,8 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🏗️</div>
-      <p class="empty-state-title">Aucun résultat trouvé.</p>
-      <p class="empty-state-desc">Créez votre premier projet pour regrouper vos biens immobiliers.</p>
+      <p class="empty-state-title">{{ 'projects.list.emptyTitle' | translate }}</p>
+      <p class="empty-state-desc">{{ 'projects.list.emptyDesc' | translate }}</p>
       @if (canWrite) {
         <button class="btn btn-primary" (click)="openModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -80,8 +80,8 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔍</div>
-      <p class="empty-state-title">Aucun projet trouvé</p>
-      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">Effacer les filtres</button>
+      <p class="empty-state-title">{{ 'projects.list.noMatch' | translate }}</p>
+      <button class="btn btn-secondary btn-sm" (click)="searchQuery=''; filterStatus=''">{{ 'projects.list.clearFilters' | translate }}</button>
     </div>
   </div>
 }
@@ -107,7 +107,7 @@
             }
           </div>
           <span class="project-status-badge" [class.badge-archived]="p.status === 'ARCHIVED'">
-            {{ p.status === 'ACTIVE' ? 'Actif' : 'Archivé' }}
+            {{ p.status === 'ACTIVE' ? ('projects.list.statusActive' | translate) : ('projects.list.statusArchived' | translate) }}
           </span>
         </div>
 
@@ -116,21 +116,21 @@
           <div class="project-card-stats">
             <div class="pstat">
               <span class="pstat-val">{{ unitsOf(p) }}</span>
-              <span class="pstat-lbl">{{ unitsOf(p) === 1 ? 'lot' : 'lots' }}</span>
+              <span class="pstat-lbl">{{ unitsOf(p) === 1 ? ('projects.list.lot' | translate) : ('projects.list.lots' | translate) }}</span>
             </div>
             <div class="pstat">
               <span class="pstat-val">{{ availableOf(p) }}</span>
-              <span class="pstat-lbl">disponibles</span>
+              <span class="pstat-lbl">{{ 'projects.list.available' | translate }}</span>
             </div>
             <div class="pstat">
               <span class="pstat-val">{{ salesValueOf(p) > 0 ? formatValueShort(salesValueOf(p)) + ' MAD' : '—' }}</span>
-              <span class="pstat-lbl">ventes</span>
+              <span class="pstat-lbl">{{ 'projects.list.sales' | translate }}</span>
             </div>
           </div>
           @if (absorptionOf(p) !== null) {
             <div class="project-absorption">
               <div class="pabs-head">
-                <span class="pabs-lbl">Absorption</span>
+                <span class="pabs-lbl">{{ 'projects.list.absorption' | translate }}</span>
                 <span class="pabs-pct">{{ absorptionOf(p) | number:'1.0-1' }}%</span>
               </div>
               <div class="pabs-track">
@@ -148,11 +148,11 @@
               <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/>
               <path d="M5.5 3v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
-            Créé il y a {{ daysSince(p.createdAt) }}j
+            {{ 'projects.list.createdAgo' | translate:{ days: daysSince(p.createdAt) } }}
           </span>
           @if (p.updatedAt !== p.createdAt) {
             <span class="project-card-updated">
-              Mis à jour il y a {{ daysSince(p.updatedAt) }}j
+              {{ 'projects.list.updatedAgo' | translate:{ days: daysSince(p.updatedAt) } }}
             </span>
           }
           <svg class="project-card-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -172,8 +172,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">Nouveau projet</h2>
-        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Close">✕</button>
+        <h2 class="modal-title">{{ 'projects.list.modalTitle' | translate }}</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" [attr.aria-label]="'common.actions.close' | translate">✕</button>
       </div>
 
       <div class="modal-body">
@@ -182,23 +182,23 @@
         }
 
         <div class="form-group">
-          <label class="form-label required">Nom du projet</label>
-          <input class="form-control" type="text" placeholder="Rechercher un projet…"
+          <label class="form-label required">{{ 'projects.list.projectName' | translate }}</label>
+          <input class="form-control" type="text" [placeholder]="'projects.list.namePlaceholder' | translate"
                  [(ngModel)]="form.name" [disabled]="submitting" autocomplete="off" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Description</label>
+          <label class="form-label">{{ 'projects.list.description' | translate }}</label>
           <textarea class="form-control" rows="3"
-                    placeholder="Notes"
+                    [placeholder]="'projects.list.descPlaceholder' | translate"
                     [(ngModel)]="form.description" [disabled]="submitting"></textarea>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.actions.cancel' | translate }}</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-          @if (submitting) { Enregistrement... } @else { Créer }
+          @if (submitting) { {{ 'projects.list.creating' | translate }} } @else { {{ 'projects.list.create' | translate }} }
         </button>
       </div>
 

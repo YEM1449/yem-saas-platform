@@ -1148,5 +1148,46 @@
         "deleteFailed": "فشل الحذف ({{status}})."
       }
     }
+  },
+  "projects": {
+    "list": {
+      "title": "المشاريع العقارية",
+      "activeCount": "{{count}} نشط",
+      "archivedCount": "{{count}} مؤرشف",
+      "new": "مشروع جديد",
+      "searchPlaceholder": "ابحث عن مشروع…",
+      "statusAria": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "count": "{{count}} مشروع",
+      "loadingAria": "جارٍ التحميل...",
+      "emptyTitle": "لم يتم العثور على نتائج.",
+      "emptyDesc": "أنشئ أول مشروع لتجميع عقاراتك.",
+      "noMatch": "لم يتم العثور على مشروع",
+      "clearFilters": "مسح المرشحات",
+      "statusActive": "نشط",
+      "statusArchived": "مؤرشف",
+      "lot": "وحدة",
+      "lots": "وحدات",
+      "available": "متاح",
+      "sales": "مبيعات",
+      "absorption": "الامتصاص",
+      "createdAgo": "أُنشئ منذ {{days}} يوم",
+      "updatedAgo": "حُدّث منذ {{days}} يوم",
+      "modalTitle": "مشروع جديد",
+      "projectName": "اسم المشروع",
+      "namePlaceholder": "مثال: إقامة المجد",
+      "description": "الوصف",
+      "descPlaceholder": "ملاحظات",
+      "creating": "جارٍ الحفظ...",
+      "create": "إنشاء",
+      "errors": {
+        "sessionExpired": "انتهت الجلسة. يرجى تسجيل الدخول من جديد.",
+        "accessDenied": "تم رفض الوصول.",
+        "loadFailed": "فشل تحميل المشاريع ({{status}}).",
+        "createFailed": "فشل إنشاء المشروع ({{status}})."
+      }
+    }
   }
 }

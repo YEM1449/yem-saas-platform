@@ -1,6 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
@@ -14,11 +16,12 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe],
+  imports: [RouterLink, FormsModule, DecimalPipe, TranslatePipe],
   templateUrl: './projects.component.html',
   styleUrl: './projects.component.css',
 })
 export class ProjectsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc    = inject(ProjectService);
   private auth   = inject(AuthService);
   private router = inject(Router);
@@ -75,9 +78,9 @@ export class ProjectsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if      (err.status === 401) this.error = 'Session expired. Please log in again.';
-        else if (err.status === 403) this.error = 'Access denied.';
-        else                          this.error = body?.message ?? `Failed to load projects (${err.status})`;
+        if      (err.status === 401) this.error = this.i18n.instant('projects.list.errors.sessionExpired');
+        else if (err.status === 403) this.error = this.i18n.instant('projects.list.errors.accessDenied');
+        else                          this.error = body?.message ?? this.i18n.instant('projects.list.errors.loadFailed', { status: err.status });
       },
     });
   }
@@ -160,7 +163,7 @@ export class ProjectsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.submitting = false;
         const body = err.error as ErrorResponse | null;
-        this.submitError = body?.message ?? `Failed to create project (${err.status})`;
+        this.submitError = body?.message ?? this.i18n.instant('projects.list.errors.createFailed', { status: err.status });
       },
     });
   }

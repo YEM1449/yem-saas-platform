@@ -1265,5 +1265,46 @@
       "realisees": "Visites réalisées",
       "conversion": "Taux conversion visite→opportunité"
     }
+  },
+  "projects": {
+    "list": {
+      "title": "Projets immobiliers",
+      "activeCount": "{{count}} actif(s)",
+      "archivedCount": "{{count}} archivé(s)",
+      "new": "Nouveau projet",
+      "searchPlaceholder": "Rechercher un projet…",
+      "statusAria": "Statut",
+      "allStatuses": "Tous les statuts",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "count": "{{count}} projet(s)",
+      "loadingAria": "Chargement...",
+      "emptyTitle": "Aucun résultat trouvé.",
+      "emptyDesc": "Créez votre premier projet pour regrouper vos biens immobiliers.",
+      "noMatch": "Aucun projet trouvé",
+      "clearFilters": "Effacer les filtres",
+      "statusActive": "Actif",
+      "statusArchived": "Archivé",
+      "lot": "lot",
+      "lots": "lots",
+      "available": "disponibles",
+      "sales": "ventes",
+      "absorption": "Absorption",
+      "createdAgo": "Créé il y a {{days}}j",
+      "updatedAgo": "Mis à jour il y a {{days}}j",
+      "modalTitle": "Nouveau projet",
+      "projectName": "Nom du projet",
+      "namePlaceholder": "Ex : Résidence Al Majd",
+      "description": "Description",
+      "descPlaceholder": "Notes",
+      "creating": "Enregistrement...",
+      "create": "Créer",
+      "errors": {
+        "sessionExpired": "Session expirée. Veuillez vous reconnecter.",
+        "accessDenied": "Accès refusé.",
+        "loadFailed": "Échec du chargement des projets ({{status}}).",
+        "createFailed": "Échec de la création du projet ({{status}})."
+      }
+    }
   }
 }

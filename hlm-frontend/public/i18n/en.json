@@ -1148,5 +1148,46 @@
         "deleteFailed": "Delete failed ({{status}})."
       }
     }
+  },
+  "projects": {
+    "list": {
+      "title": "Real-estate projects",
+      "activeCount": "{{count}} active",
+      "archivedCount": "{{count}} archived",
+      "new": "New project",
+      "searchPlaceholder": "Search a project…",
+      "statusAria": "Status",
+      "allStatuses": "All statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "count": "{{count}} project(s)",
+      "loadingAria": "Loading...",
+      "emptyTitle": "No result found.",
+      "emptyDesc": "Create your first project to group your properties.",
+      "noMatch": "No project found",
+      "clearFilters": "Clear filters",
+      "statusActive": "Active",
+      "statusArchived": "Archived",
+      "lot": "unit",
+      "lots": "units",
+      "available": "available",
+      "sales": "sales",
+      "absorption": "Absorption",
+      "createdAgo": "Created {{days}}d ago",
+      "updatedAgo": "Updated {{days}}d ago",
+      "modalTitle": "New project",
+      "projectName": "Project name",
+      "namePlaceholder": "e.g. Residence Al Majd",
+      "description": "Description",
+      "descPlaceholder": "Notes",
+      "creating": "Saving...",
+      "create": "Create",
+      "errors": {
+        "sessionExpired": "Session expired. Please log in again.",
+        "accessDenied": "Access denied.",
+        "loadFailed": "Failed to load projects ({{status}}).",
+        "createFailed": "Failed to create project ({{status}})."
+      }
+    }
   }
 }
