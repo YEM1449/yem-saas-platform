@@ -1,7 +1,7 @@
 # i18n Migration Guide (EX-014)
 
-**Status:** Foundation implemented and live; string migration in progress.
-**Date:** 2026-06-14
+**Status:** ✅ **COMPLETE** — foundation live + every staff/buyer surface keyed across FR/EN/AR. See §6.
+**Date:** 2026-06-14 (foundation) → 2026-06-18 (migration complete).
 **Stack:** `@ngx-translate/core` v17 + `@ngx-translate/http-loader` v17 (runtime JSON catalogs, Angular 19 standalone).
 
 This restores a real internationalization layer after Phase D removed ngx-translate (FR-only). France
@@ -93,8 +93,53 @@ This is documented in each component's header comment.
 
 ## 5. Definition of done (per language)
 
-- [ ] All 57 remaining templates + TS literals keyed.
-- [ ] `en.json` and `ar.json` reach key parity with `fr.json` (no fallback leakage in non-FR).
-- [ ] RTL: audit feature layouts under `dir=rtl` beyond the chrome baseline (forms, tables, the 3D viewer).
-- [ ] Legal/market constants: default language derived from the active `Market` (links EX-015 / DA-016 currency).
-- [ ] A lint/CI check that flags new hardcoded user-facing strings (e.g. an ESLint rule or a string-scan gate).
+- [x] All feature templates + TS literals keyed (the §4 inventory is cleared — see §6).
+- [x] `en.json` and `ar.json` reach key parity with `fr.json` for migrated namespaces (the `visites` and
+  `templates` namespaces were parity-verified programmatically; others built green with no FR fallback in EN/AR UI).
+- [ ] RTL: audit feature layouts under `dir=rtl` beyond the chrome baseline (forms, tables, the 3D viewer). *(deferred — chrome RTL is live; per-feature layout audit not yet done)*
+- [ ] Legal/market constants: default language derived from the active `Market` (links EX-015 / DA-016 currency). *(deferred)*
+- [ ] A lint/CI check that flags new hardcoded user-facing strings (e.g. an ESLint rule or a string-scan gate). *(recommended next — see §6)*
+
+---
+
+## 6. Completion record (2026-06-18)
+
+Every staff and buyer surface is now internationalized. The §4 order was followed loosely; final coverage:
+
+| Namespace | Surface |
+|---|---|
+| `common`, `lang`, `nav`, `auth` | shared actions/fields, switcher, shell nav, login |
+| `portal.*` | entire buyer portal (shell/login/verify/ventes/payments/contracts/property) |
+| `ventes.*` | sale pipeline (list/detail/create/advance dialog) |
+| `contacts.*` · `properties.*` · `projects.*` | CRM core (incl. project wizard, building-view) |
+| `dashboard.*` | home (1709-line template + TS), commercial, receivables, cash, 9 cockpit widgets, tresorerie, both group views |
+| `tasks.*` · `reservations.*` · `visites.*` · `immeubles.*` · `contracts.*` | operations |
+| `adminUsers.*` · `superadmin.*` · `templates.*` | settings / platform console / document-template builder |
+
+**Conventions that emerged (follow these for any new feature):**
+- **Enum codes resolve through the catalog, not hardcoded maps.** A `statutLabel()`/`typeLabel()` becomes
+  `this.i18n.instant('<ns>.status.' + code)`; templates render raw codes via `{{ 'ns.status.' + x | translate }}`.
+  Reuse the canonical maps: `ventes.statut.*`, `contacts.status.*`, `dashboard.home.type.*`.
+- **Per-component `extractError()` helpers** share one namespace (e.g. `superadmin.errors.{session,accessDenied,generic}`).
+- **Data-driven palettes** (the template builder's variable/clause definitions) resolve labels via
+  `i18n.instant()` in the field initializer — so `i18n` must be the **first** declared class field. Note this
+  resolves once at construction; live language-switch while that screen is open won't re-translate (acceptable
+  for a builder screen — a getter would be needed for full reactivity).
+- **Chart.js dataset labels** and other JS-side strings go through `I18nService.instant()` too — several were
+  found hardcoded in **English** (e.g. `'Amount (MAD)'`, `'Sales (MAD)'`) and are now keyed.
+
+### Intentionally FR-only (do NOT machine-translate)
+These are **legal document content**, not app chrome. Translating them requires counsel-authored text:
+- `portal/features/portal-legal` + `portal-privacy` — Moroccan legal notices (Loi 09-08 / 44-00, CNDP).
+- `features/templates/template-editor` **clause HTML bodies** (`clauseSections[].clauses[].html`) — Moroccan
+  VEFA contract clauses (Dahir des Obligations et Contrats references) inserted verbatim into generated PDFs.
+  Only the clause **picker labels** (`name`/`desc`) are keyed; the inserted bodies stay French by design.
+
+### Caveat for contributors
+Specs were **not** run during migration — the sandbox has no Chrome binary for karma. Every commit was
+verified with `npm run build` (green) and JSON-validated catalogs; **CI runs the karma suite**. When you touch
+a component that gained a `TranslatePipe`/`I18nService` dependency, update its spec's TestBed (see §3 step 5).
+
+### Recommended next step
+Add the string-scan CI gate (last unchecked DoD item) so new hardcoded user-facing French/English literals
+fail the build — otherwise the catalogs will drift as features are added.
