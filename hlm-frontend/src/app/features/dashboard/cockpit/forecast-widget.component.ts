@@ -1,38 +1,39 @@
 import { Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { Forecast } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-forecast-widget',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Prévision de CA</span>
-        <span class="widget-sub">Pondéré par probabilité de closing</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.forecast.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.forecast.sub' | translate }}</span>
       </div>
 
       @if (!data) {
-        <div class="empty-state">Chargement…</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.forecast.loading' | translate }}</div>
       } @else {
         <div class="timeline">
           <div class="tl-item" [class.tl-highlight]="data.next30Days > 0">
-            <div class="tl-horizon">30 jours</div>
+            <div class="tl-horizon">{{ 'dashboard.cockpit.forecast.days30' | translate }}</div>
             <div class="tl-bar-track">
               <div class="tl-bar" [style.width.%]="barPct(data.next30Days)" style="background:#10b981"></div>
             </div>
             <div class="tl-value">{{ fmt(data.next30Days) }}</div>
           </div>
           <div class="tl-item">
-            <div class="tl-horizon">60 jours</div>
+            <div class="tl-horizon">{{ 'dashboard.cockpit.forecast.days60' | translate }}</div>
             <div class="tl-bar-track">
               <div class="tl-bar" [style.width.%]="barPct(data.next60Days)" style="background:#3b82f6"></div>
             </div>
             <div class="tl-value">{{ fmt(data.next60Days) }}</div>
           </div>
           <div class="tl-item">
-            <div class="tl-horizon">90 jours</div>
+            <div class="tl-horizon">{{ 'dashboard.cockpit.forecast.days90' | translate }}</div>
             <div class="tl-bar-track">
               <div class="tl-bar" [style.width.%]="barPct(data.next90Days)" style="background:#6366f1"></div>
             </div>

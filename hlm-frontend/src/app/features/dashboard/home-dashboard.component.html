@@ -1121,7 +1121,7 @@
         <span class="widget-title">
           @if (isAgent) { {{ 'dashboard.home.operationnel.urgentTasks' | translate }} } @else { {{ 'dashboard.home.operationnel.alertsTasks' | translate }} }
         </span>
-        <a routerLink="/app/tasks" class="widget-link">Gérer →</a>
+        <a routerLink="/app/tasks" class="widget-link">{{ 'dashboard.home.operationnel.manageLink' | translate }}</a>
       </div>
 
       @if (isAgent) {

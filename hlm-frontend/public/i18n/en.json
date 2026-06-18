@@ -2074,6 +2074,44 @@
         "critical": "Critical",
         "warning": "Caution",
         "info": "Info"
+      },
+      "discountAnalytics": {
+        "title": "Discount analysis",
+        "sub": "List price vs sale price",
+        "loading": "Loading…",
+        "empty": "No sale data with a list price yet.",
+        "withDiscount": "Discounted sales",
+        "avgDiscount": "Average discount",
+        "maxDiscount": "Max discount",
+        "discountedVolume": "Discounted volume",
+        "thAgent": "Agent",
+        "thWithDiscount": "Discounted",
+        "thAvgDiscount": "Avg disc.",
+        "thVolDiscount": "Disc. vol."
+      },
+      "forecast": {
+        "title": "Revenue forecast",
+        "sub": "Weighted by closing probability",
+        "loading": "Loading…",
+        "days30": "30 days",
+        "days60": "60 days",
+        "days90": "90 days"
+      },
+      "inventoryAging": {
+        "title": "Available-stock age",
+        "sub": "Active units · since listing",
+        "empty": "No active unit in stock.",
+        "valueLabel": "Value: {{amount}}",
+        "staleStock": "{{count}} unit(s) in stock for over a year — commercial action recommended."
+      },
+      "portfolioValue": {
+        "totalValue": "Total portfolio value",
+        "totalValueHint": "Full catalog (excl. drafts)",
+        "unsoldStock": "Unsold stock (active + reserved)",
+        "avgListPrice": "Average list price",
+        "avgListPriceHint": "Units available for sale",
+        "avgPricePerSqm": "Average price per m²",
+        "avgPricePerSqmHint": "Active catalog"
       }
     },
     "tresorerie": {
@@ -2155,6 +2193,23 @@
       "unlinkConfirm": "Remove this contact from the group identity?",
       "unlinked": "Contact removed from the group.",
       "unlinkError": "Could not remove this contact."
+    },
+    "commercialSales": {
+      "back": "‹ Dashboard",
+      "title": "Sales detail",
+      "loading": "Loading…",
+      "salesCount": "{{count}} sale(s)",
+      "thDateCompromis": "Preliminary date",
+      "thProjet": "Project",
+      "thBien": "Unit",
+      "thAcquereur": "Buyer",
+      "thAgent": "Agent",
+      "thPrixVente": "Sale price",
+      "prev": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {{page}} / {{total}}",
+      "empty": "No sale recorded for this period.",
+      "summaryLine": "{{count}} sale(s) — total revenue {{amount}}"
     }
   },
   "tasks": {
@@ -3038,5 +3093,31 @@
         "desc": "Automatic application of penalties for late payment."
       }
     }
+  },
+  "shell": {
+    "menu": "Menu",
+    "closeMenu": "Close the menu",
+    "topbar": "Top navigation bar",
+    "breadcrumb": "Breadcrumb",
+    "bottomNav": "Main navigation",
+    "collapse": "Collapse / expand"
+  },
+  "documents": {
+    "title": "Documents",
+    "notesPlaceholder": "Notes",
+    "loadingAria": "Loading...",
+    "empty": "No document.",
+    "thNom": "Name",
+    "thType": "Type",
+    "thTaille": "Size",
+    "thDate": "Date",
+    "thActions": "Actions",
+    "download": "Download",
+    "delete": "Delete"
+  },
+  "notifications": {
+    "dueDate": "Due:",
+    "markDone": "Mark done",
+    "close": "Close"
   }
 }

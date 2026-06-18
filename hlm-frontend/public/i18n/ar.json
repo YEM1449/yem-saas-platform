@@ -2074,6 +2074,44 @@
         "critical": "حرج",
         "warning": "انتباه",
         "info": "معلومة"
+      },
+      "discountAnalytics": {
+        "title": "تحليل الخصومات",
+        "sub": "سعر القائمة مقابل سعر البيع",
+        "loading": "جارٍ التحميل…",
+        "empty": "لا توجد بيانات مبيعات بسعر قائمة بعد.",
+        "withDiscount": "مبيعات بخصم",
+        "avgDiscount": "متوسط الخصم",
+        "maxDiscount": "أقصى خصم",
+        "discountedVolume": "حجم المخصوم",
+        "thAgent": "الوكيل",
+        "thWithDiscount": "بخصم",
+        "thAvgDiscount": "متوسط الخصم",
+        "thVolDiscount": "حجم الخصم"
+      },
+      "forecast": {
+        "title": "توقع المبيعات",
+        "sub": "مرجّح باحتمال الإغلاق",
+        "loading": "جارٍ التحميل…",
+        "days30": "30 يوم",
+        "days60": "60 يوم",
+        "days90": "90 يوم"
+      },
+      "inventoryAging": {
+        "title": "عمر المخزون المتاح",
+        "sub": "وحدات نشطة · منذ النشر",
+        "empty": "لا توجد وحدة نشطة في المخزون.",
+        "valueLabel": "القيمة: {{amount}}",
+        "staleStock": "{{count}} وحدة في المخزون منذ أكثر من سنة — يُنصح بإجراء تجاري."
+      },
+      "portfolioValue": {
+        "totalValue": "القيمة الإجمالية للمحفظة",
+        "totalValueHint": "الكتالوج الكامل (دون المسودات)",
+        "unsoldStock": "المخزون غير المباع (نشط + محجوز)",
+        "avgListPrice": "متوسط سعر القائمة",
+        "avgListPriceHint": "وحدات متاحة للبيع",
+        "avgPricePerSqm": "متوسط السعر لكل م²",
+        "avgPricePerSqmHint": "الكتالوج النشط"
       }
     },
     "tresorerie": {
@@ -2155,6 +2193,23 @@
       "unlinkConfirm": "إزالة جهة الاتصال هذه من هوية المجموعة؟",
       "unlinked": "أُزيلت جهة الاتصال من المجموعة.",
       "unlinkError": "تعذّرت إزالة جهة الاتصال."
+    },
+    "commercialSales": {
+      "back": "‹ اللوحة",
+      "title": "تفاصيل المبيعات",
+      "loading": "جارٍ التحميل…",
+      "salesCount": "{{count}} مبيعات",
+      "thDateCompromis": "تاريخ العقد الابتدائي",
+      "thProjet": "المشروع",
+      "thBien": "الوحدة",
+      "thAcquereur": "المشتري",
+      "thAgent": "الوكيل",
+      "thPrixVente": "سعر البيع",
+      "prev": "السابق",
+      "next": "التالي",
+      "pageInfo": "الصفحة {{page}} / {{total}}",
+      "empty": "لا توجد مبيعات مسجلة لهذه الفترة.",
+      "summaryLine": "{{count}} مبيعات — إجمالي المعاملات {{amount}}"
     }
   },
   "tasks": {
@@ -3038,5 +3093,31 @@
         "desc": "تطبيق تلقائي للغرامات عند تأخر الدفع."
       }
     }
+  },
+  "shell": {
+    "menu": "القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "topbar": "شريط التنقل العلوي",
+    "breadcrumb": "مسار التنقل",
+    "bottomNav": "التنقل الرئيسي",
+    "collapse": "طي / توسيع"
+  },
+  "documents": {
+    "title": "المستندات",
+    "notesPlaceholder": "ملاحظات",
+    "loadingAria": "جارٍ التحميل...",
+    "empty": "لا توجد مستندات.",
+    "thNom": "الاسم",
+    "thType": "النوع",
+    "thTaille": "الحجم",
+    "thDate": "التاريخ",
+    "thActions": "إجراءات",
+    "download": "تنزيل",
+    "delete": "حذف"
+  },
+  "notifications": {
+    "dueDate": "الاستحقاق:",
+    "markDone": "تحديد كمنجز",
+    "close": "إغلاق"
   }
 }

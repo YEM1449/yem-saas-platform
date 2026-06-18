@@ -2191,6 +2191,44 @@
         "critical": "Critique",
         "warning": "Attention",
         "info": "Info"
+      },
+      "discountAnalytics": {
+        "title": "Analyse des remises",
+        "sub": "Prix catalogue vs prix de vente",
+        "loading": "Chargement…",
+        "empty": "Pas encore de données de vente avec prix catalogue.",
+        "withDiscount": "Ventes avec remise",
+        "avgDiscount": "Remise moyenne",
+        "maxDiscount": "Remise max",
+        "discountedVolume": "Volume remisé",
+        "thAgent": "Agent",
+        "thWithDiscount": "Avec remise",
+        "thAvgDiscount": "Remise moy.",
+        "thVolDiscount": "Vol. remisé"
+      },
+      "forecast": {
+        "title": "Prévision de CA",
+        "sub": "Pondéré par probabilité de closing",
+        "loading": "Chargement…",
+        "days30": "30 jours",
+        "days60": "60 jours",
+        "days90": "90 jours"
+      },
+      "inventoryAging": {
+        "title": "Ancienneté du stock disponible",
+        "sub": "Biens actifs · depuis mise en ligne",
+        "empty": "Aucun bien actif en stock.",
+        "valueLabel": "Valeur : {{amount}}",
+        "staleStock": "{{count}} bien(s) en stock depuis plus d'un an — action commerciale recommandée."
+      },
+      "portfolioValue": {
+        "totalValue": "Valeur totale portefeuille",
+        "totalValueHint": "Catalogue complet (hors brouillons)",
+        "unsoldStock": "Stock invendu (actif + réservé)",
+        "avgListPrice": "Prix catalogue moyen",
+        "avgListPriceHint": "Biens disponibles à la vente",
+        "avgPricePerSqm": "Prix moyen au m²",
+        "avgPricePerSqmHint": "Catalogue actif"
       }
     },
     "tresorerie": {
@@ -2272,6 +2310,23 @@
       "unlinkConfirm": "Retirer ce contact de l'identité groupe ?",
       "unlinked": "Contact retiré du groupe.",
       "unlinkError": "Impossible de retirer ce contact."
+    },
+    "commercialSales": {
+      "back": "‹ Tableau de bord",
+      "title": "Détail des ventes",
+      "loading": "Chargement…",
+      "salesCount": "{{count}} vente(s)",
+      "thDateCompromis": "Date compromis",
+      "thProjet": "Projet",
+      "thBien": "Bien",
+      "thAcquereur": "Acquéreur",
+      "thAgent": "Agent",
+      "thPrixVente": "Prix de vente",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "pageInfo": "Page {{page}} / {{total}}",
+      "empty": "Aucune vente enregistrée sur cette période.",
+      "summaryLine": "{{count}} vente(s) — CA total {{amount}}"
     }
   },
   "tasks": {
@@ -3038,5 +3093,31 @@
         "desc": "Application automatique de pénalités pour retard de paiement."
       }
     }
+  },
+  "shell": {
+    "menu": "Menu",
+    "closeMenu": "Fermer le menu",
+    "topbar": "Barre de navigation supérieure",
+    "breadcrumb": "Fil d'Ariane",
+    "bottomNav": "Navigation principale",
+    "collapse": "Réduire / agrandir"
+  },
+  "documents": {
+    "title": "Documents",
+    "notesPlaceholder": "Notes",
+    "loadingAria": "Chargement...",
+    "empty": "Aucun document.",
+    "thNom": "Nom",
+    "thType": "Type",
+    "thTaille": "Taille",
+    "thDate": "Date",
+    "thActions": "Actions",
+    "download": "Télécharger",
+    "delete": "Supprimer"
+  },
+  "notifications": {
+    "dueDate": "Échéance :",
+    "markDone": "Marquer fait",
+    "close": "Fermer"
   }
 }

@@ -1,43 +1,44 @@
 import { Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { DiscountAnalytics } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-discount-analytics',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Analyse des remises</span>
-        <span class="widget-sub">Prix catalogue vs prix de vente</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.discountAnalytics.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.discountAnalytics.sub' | translate }}</span>
       </div>
 
       @if (!data) {
-        <div class="empty-state">Chargement…</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.discountAnalytics.loading' | translate }}</div>
       } @else if (data.totalDeals === 0) {
-        <div class="empty-state">Pas encore de données de vente avec prix catalogue.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.discountAnalytics.empty' | translate }}</div>
       } @else {
         <div class="disc-summary">
           <div class="disc-stat">
             <div class="disc-num">{{ data.totalDealsWithDiscount }}<span class="disc-denom">/{{ data.totalDeals }}</span></div>
-            <div class="disc-label">Ventes avec remise</div>
+            <div class="disc-label">{{ 'dashboard.cockpit.discountAnalytics.withDiscount' | translate }}</div>
           </div>
           <div class="disc-stat">
             <div class="disc-num" [class.disc-warn]="(data.avgDiscountPercent ?? 0) > 10">
               {{ data.avgDiscountPercent != null ? data.avgDiscountPercent + '%' : '—' }}
             </div>
-            <div class="disc-label">Remise moyenne</div>
+            <div class="disc-label">{{ 'dashboard.cockpit.discountAnalytics.avgDiscount' | translate }}</div>
           </div>
           <div class="disc-stat">
             <div class="disc-num" [class.disc-bad]="(data.maxDiscountPercent ?? 0) > 20">
               {{ data.maxDiscountPercent != null ? data.maxDiscountPercent + '%' : '—' }}
             </div>
-            <div class="disc-label">Remise max</div>
+            <div class="disc-label">{{ 'dashboard.cockpit.discountAnalytics.maxDiscount' | translate }}</div>
           </div>
           <div class="disc-stat">
             <div class="disc-num">{{ fmt(data.totalDiscountVolume) }}</div>
-            <div class="disc-label">Volume remisé</div>
+            <div class="disc-label">{{ 'dashboard.cockpit.discountAnalytics.discountedVolume' | translate }}</div>
           </div>
         </div>
 
@@ -46,10 +47,10 @@ import { DiscountAnalytics } from '../dashboard-cockpit.service';
             <table class="disc-table">
               <thead>
                 <tr>
-                  <th>Agent</th>
-                  <th class="num">Avec remise</th>
-                  <th class="num">Remise moy.</th>
-                  <th class="num">Vol. remisé</th>
+                  <th>{{ 'dashboard.cockpit.discountAnalytics.thAgent' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.discountAnalytics.thWithDiscount' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.discountAnalytics.thAvgDiscount' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.discountAnalytics.thVolDiscount' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
