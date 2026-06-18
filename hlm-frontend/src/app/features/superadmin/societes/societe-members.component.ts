@@ -1,4 +1,6 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,11 +11,12 @@ import { InviteUserRequest, MembreSocieteDto } from './societe.model';
 @Component({
   selector: 'app-societe-members',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './societe-members.component.html',
   styleUrl: './societe-members.component.css',
 })
 export class SocieteMembersComponent implements OnInit {
+  private i18n = inject(I18nService);
   @Input() societeId = '';
 
   private svc = inject(SocieteService);
@@ -61,7 +64,7 @@ export class SocieteMembersComponent implements OnInit {
 
   submitInvite(): void {
     if (!this.inviteForm.email.trim() || !this.inviteForm.prenom.trim() || !this.inviteForm.nomFamille.trim()) {
-      this.error = 'Email, prénom et nom de famille sont requis.';
+      this.error = this.i18n.instant('superadmin.members.requiredFields');
       return;
     }
     this.inviting = true;
@@ -70,7 +73,7 @@ export class SocieteMembersComponent implements OnInit {
     this.svc.inviteUser(this.societeId, this.inviteForm).subscribe({
       next: () => {
         this.inviting = false;
-        this.success = `Invitation envoyée à ${this.inviteForm.email}.`;
+        this.success = this.i18n.instant('superadmin.members.invitationSent', { email: this.inviteForm.email });
         this.inviteForm = { email: '', prenom: '', nomFamille: '', role: 'ADMIN' };
         this.showInviteForm = false;
         this.load();
@@ -94,7 +97,7 @@ export class SocieteMembersComponent implements OnInit {
           this.membres[idx] = updated;
           this.roleEditing[updated.userId] = updated.role;
         }
-        this.success = `Rôle de ${updated.email ?? updated.userId} mis à jour.`;
+        this.success = this.i18n.instant('superadmin.members.roleUpdated', { user: updated.email ?? updated.userId });
       },
       error: (err: HttpErrorResponse) => {
         // Reset to current role
@@ -105,12 +108,12 @@ export class SocieteMembersComponent implements OnInit {
   }
 
   removeMembre(m: MembreSocieteDto): void {
-    if (!confirm(`Retirer ${m.email ?? m.userId} de la société ?`)) return;
+    if (!confirm(this.i18n.instant('superadmin.members.removeConfirm', { user: m.email ?? m.userId }))) return;
     this.error = '';
     this.success = '';
     this.svc.removeMembre(this.societeId, m.userId).subscribe({
       next: () => {
-        this.success = `Membre ${m.email ?? m.userId} retiré.`;
+        this.success = this.i18n.instant('superadmin.members.removed', { user: m.email ?? m.userId });
         this.load();
       },
       error: (err: HttpErrorResponse) => {
@@ -120,7 +123,7 @@ export class SocieteMembersComponent implements OnInit {
   }
 
   impersonate(m: MembreSocieteDto): void {
-    if (!confirm(`Usurper l'identité de ${m.email ?? m.userId} ? Vous pourrez revenir via le bandeau en haut de page.`)) return;
+    if (!confirm(this.i18n.instant('superadmin.members.impersonateConfirm', { user: m.email ?? m.userId }))) return;
     this.impersonating[m.userId] = true;
     this.error = '';
     this.svc.impersonate(this.societeId, m.userId).subscribe({
@@ -148,11 +151,11 @@ export class SocieteMembersComponent implements OnInit {
   }
 
   private extractError(err: HttpErrorResponse): string {
-    if (err.status === 401) return 'Session expirée. Veuillez vous reconnecter.';
-    if (err.status === 403) return 'Accès refusé.';
-    if (err.status === 404) return 'Ressource introuvable.';
+    if (err.status === 401) return this.i18n.instant('superadmin.errors.session');
+    if (err.status === 403) return this.i18n.instant('superadmin.errors.accessDenied');
+    if (err.status === 404) return this.i18n.instant('superadmin.errors.notFoundResource');
     const body = err.error as { message?: string } | null;
     if (body?.message) return body.message;
-    return `Erreur (${err.status})`;
+    return this.i18n.instant('superadmin.errors.generic', { status: err.status });
   }
 }

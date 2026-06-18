@@ -1,4 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,11 +15,12 @@ type Tab = 'info' | 'stats' | 'compliance' | 'membres';
 @Component({
   selector: 'app-societe-detail',
   standalone: true,
-  imports: [FormsModule, SocieteMembersComponent, DatePipe, DecimalPipe],
+  imports: [FormsModule, SocieteMembersComponent, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './societe-detail.component.html',
   styleUrl: './societe-detail.component.css',
 })
 export class SocieteDetailComponent implements OnInit, OnDestroy {
+  private i18n = inject(I18nService);
   private svc = inject(SocieteService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -112,7 +115,7 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
       next: () => {
         this.suspending = false;
         this.showSuspendDialog = false;
-        this.success = 'Société suspendue.';
+        this.success = this.i18n.instant('superadmin.detail.suspended');
         this.loadDetail();
       },
       error: (err: HttpErrorResponse) => {
@@ -127,7 +130,7 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
     this.success = '';
     this.svc.reactiver(this.societeId).subscribe({
       next: () => {
-        this.success = 'Société réactivée.';
+        this.success = this.i18n.instant('superadmin.detail.reactivated');
         this.loadDetail();
       },
       error: (err: HttpErrorResponse) => {
@@ -176,14 +179,14 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
     if (!file) return;
     this.logoUploading = true;
     this.svc.uploadLogo(this.societeId, file).subscribe({
-      next: () => { this.logoUploading = false; this.success = 'Logo mis à jour.'; this.loadDetail(); },
+      next: () => { this.logoUploading = false; this.success = this.i18n.instant('superadmin.detail.logoUpdated'); this.loadDetail(); },
       error: (err: HttpErrorResponse) => { this.logoUploading = false; this.error = this.extractError(err); },
     });
   }
 
   deleteLogo(): void {
     this.svc.deleteLogo(this.societeId).subscribe({
-      next: () => { this.success = 'Logo supprimé.'; this.revokeLogo(); this.loadDetail(); },
+      next: () => { this.success = this.i18n.instant('superadmin.detail.logoDeleted'); this.revokeLogo(); this.loadDetail(); },
       error: (err: HttpErrorResponse) => { this.error = this.extractError(err); },
     });
   }
@@ -208,11 +211,11 @@ export class SocieteDetailComponent implements OnInit, OnDestroy {
   }
 
   private extractError(err: HttpErrorResponse): string {
-    if (err.status === 401) return 'Session expirée. Veuillez vous reconnecter.';
-    if (err.status === 403) return 'Accès refusé.';
-    if (err.status === 404) return 'Société introuvable.';
+    if (err.status === 401) return this.i18n.instant('superadmin.errors.session');
+    if (err.status === 403) return this.i18n.instant('superadmin.errors.accessDenied');
+    if (err.status === 404) return this.i18n.instant('superadmin.errors.notFoundSociete');
     const body = err.error as { message?: string } | null;
     if (body?.message) return body.message;
-    return `Erreur (${err.status})`;
+    return this.i18n.instant('superadmin.errors.generic', { status: err.status });
   }
 }

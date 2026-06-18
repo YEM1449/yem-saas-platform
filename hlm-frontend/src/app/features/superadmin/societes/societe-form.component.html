@@ -1,10 +1,10 @@
 <div class="form-page">
   <div class="page-header">
-    <h2 class="page-title">{{ isEdit ? 'Modifier' : 'Nouvelle société' }}</h2>
+    <h2 class="page-title">{{ (isEdit ? 'superadmin.form.editTitle' : 'superadmin.form.newTitle') | translate }}</h2>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="societe-form-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="societe-form-loading-state" [attr.aria-label]="'superadmin.form.loadingAria' | translate">
       <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
       <span class="skeleton skeleton-card" style="height:200px"></span>
       <span class="skeleton skeleton-card" style="height:160px"></span>
@@ -20,30 +20,30 @@
 
       <!-- Identity -->
       <section class="form-section">
-        <h3 class="section-title">Informations</h3>
+        <h3 class="section-title">{{ 'superadmin.form.sectionInfo' | translate }}</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Nom</label>
+            <label class="form-label required">{{ 'superadmin.form.nom' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="nom" name="nom" required />
           </div>
           <div class="form-group">
-            <label class="form-label required">Pays</label>
+            <label class="form-label required">{{ 'superadmin.form.pays' | translate }}</label>
             <select class="form-control" [(ngModel)]="pays" name="pays" required>
               <option value="">—</option>
-              <option value="MA">Maroc</option>
-              <option value="FR">France</option>
-              <option value="TN">Tunisie</option>
-              <option value="SN">Sénégal</option>
-              <option value="CI">Côte d'Ivoire</option>
-              <option value="OTHER">Autre</option>
+              <option value="MA">{{ 'superadmin.pays.MA' | translate }}</option>
+              <option value="FR">{{ 'superadmin.pays.FR' | translate }}</option>
+              <option value="TN">{{ 'superadmin.pays.TN' | translate }}</option>
+              <option value="SN">{{ 'superadmin.pays.SN' | translate }}</option>
+              <option value="CI">{{ 'superadmin.pays.CI' | translate }}</option>
+              <option value="OTHER">{{ 'superadmin.form.autre' | translate }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Nom commercial</label>
+            <label class="form-label">{{ 'superadmin.form.nomCommercial' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="nomCommercial" name="nomCommercial" />
           </div>
           <div class="form-group">
-            <label class="form-label">Forme juridique</label>
+            <label class="form-label">{{ 'superadmin.form.formeJuridique' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="formeJuridique" name="formeJuridique" />
           </div>
         </div>
@@ -51,26 +51,26 @@
 
       <!-- GDPR -->
       <section class="form-section">
-        <h3 class="section-title">RGPD</h3>
+        <h3 class="section-title">{{ 'superadmin.form.sectionGdpr' | translate }}</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Email DPO</label>
+            <label class="form-label">{{ 'superadmin.form.emailDpo' | translate }}</label>
             <input class="form-control" type="email" [(ngModel)]="emailDpo" name="emailDpo" />
           </div>
           <div class="form-group">
-            <label class="form-label">Nom DPO</label>
+            <label class="form-label">{{ 'superadmin.form.nomDpo' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="dpoNom" name="dpoNom" />
           </div>
           <div class="form-group">
-            <label class="form-label">Numéro CNDP</label>
+            <label class="form-label">{{ 'superadmin.form.numeroCndp' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="numeroCndp" name="numeroCndp" />
           </div>
           <div class="form-group">
-            <label class="form-label">Numéro CNIL</label>
+            <label class="form-label">{{ 'superadmin.form.numeroCnil' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="numeroCnil" name="numeroCnil" />
           </div>
           <div class="form-group">
-            <label class="form-label">Base juridique</label>
+            <label class="form-label">{{ 'superadmin.form.baseJuridique' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="baseJuridiqueDefaut" name="baseJuridiqueDefaut" />
           </div>
         </div>
@@ -78,10 +78,10 @@
 
       <!-- Subscription -->
       <section class="form-section">
-        <h3 class="section-title">Abonnement</h3>
+        <h3 class="section-title">{{ 'superadmin.form.sectionAbonnement' | translate }}</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Plan</label>
+            <label class="form-label">{{ 'superadmin.form.plan' | translate }}</label>
             <select class="form-control" [(ngModel)]="planAbonnement" name="planAbonnement">
               <option value="STARTER">STARTER</option>
               <option value="PRO">PRO</option>
@@ -89,11 +89,11 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Max Utilisateurs</label>
+            <label class="form-label">{{ 'superadmin.form.maxUtilisateurs' | translate }}</label>
             <input class="form-control" type="number" [(ngModel)]="maxUtilisateurs" name="maxUtilisateurs" min="1" />
           </div>
           <div class="form-group">
-            <label class="form-label">Max biens</label>
+            <label class="form-label">{{ 'superadmin.form.maxBiens' | translate }}</label>
             <input class="form-control" type="number" [(ngModel)]="maxBiens" name="maxBiens" min="1" />
           </div>
         </div>
@@ -101,16 +101,16 @@
 
       <!-- Internal notes -->
       <section class="form-section">
-        <h3 class="section-title">Notes</h3>
+        <h3 class="section-title">{{ 'superadmin.form.sectionNotes' | translate }}</h3>
         <div class="form-group">
           <textarea class="form-control" [(ngModel)]="notesInternes" name="notesInternes" rows="4"></textarea>
         </div>
       </section>
 
       <div class="modal-footer" style="padding:0">
-        <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">{{ 'superadmin.form.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="saving">
-          @if (saving) { Enregistrement... } @else { Enregistrer }
+          @if (saving) { {{ 'superadmin.form.saving' | translate }} } @else { {{ 'superadmin.form.save' | translate }} }
         </button>
       </div>
 

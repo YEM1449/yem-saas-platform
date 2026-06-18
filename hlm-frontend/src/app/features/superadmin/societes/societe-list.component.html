@@ -1,7 +1,7 @@
 <div class="page-header">
-  <h2 class="page-title">Sociétés</h2>
+  <h2 class="page-title">{{ 'superadmin.list.title' | translate }}</h2>
   <div class="page-header-actions">
-    <button class="btn btn-primary" routerLink="/superadmin/societes/new">+ Nouvelle société</button>
+    <button class="btn btn-primary" routerLink="/superadmin/societes/new">{{ 'superadmin.list.newSociete' | translate }}</button>
   </div>
 </div>
 
@@ -14,32 +14,32 @@
 
 <!-- Filter bar -->
 <div class="filter-bar">
-  <input class="search-input form-control" type="text" placeholder="Rechercher" [(ngModel)]="search" (keyup.enter)="applyFilters()"/>
+  <input class="search-input form-control" type="text" [placeholder]="'superadmin.list.searchPlaceholder' | translate" [(ngModel)]="search" (keyup.enter)="applyFilters()"/>
   <select class="form-control" style="width:auto" [(ngModel)]="pays" (change)="applyFilters()">
-    <option value="">Tous</option>
-    <option value="MA">Maroc</option>
-    <option value="FR">France</option>
-    <option value="TN">Tunisie</option>
-    <option value="SN">Sénégal</option>
-    <option value="CI">Côte d'Ivoire</option>
+    <option value="">{{ 'superadmin.list.all' | translate }}</option>
+    <option value="MA">{{ 'superadmin.pays.MA' | translate }}</option>
+    <option value="FR">{{ 'superadmin.pays.FR' | translate }}</option>
+    <option value="TN">{{ 'superadmin.pays.TN' | translate }}</option>
+    <option value="SN">{{ 'superadmin.pays.SN' | translate }}</option>
+    <option value="CI">{{ 'superadmin.pays.CI' | translate }}</option>
   </select>
   <select class="form-control" style="width:auto" [(ngModel)]="planAbonnement" (change)="applyFilters()">
-    <option value="">Tous</option>
+    <option value="">{{ 'superadmin.list.all' | translate }}</option>
     <option value="STARTER">STARTER</option>
     <option value="PRO">PRO</option>
     <option value="ENTERPRISE">ENTERPRISE</option>
   </select>
   <select class="form-control" style="width:auto" [(ngModel)]="actifFilter" (change)="applyFilters()">
-    <option value="">Tous</option>
-    <option value="true">Actif</option>
-    <option value="false">Inactif</option>
+    <option value="">{{ 'superadmin.list.all' | translate }}</option>
+    <option value="true">{{ 'superadmin.list.actif' | translate }}</option>
+    <option value="false">{{ 'superadmin.list.inactif' | translate }}</option>
   </select>
-  <button class="btn btn-secondary" (click)="applyFilters()">Rechercher</button>
+  <button class="btn btn-secondary" (click)="applyFilters()">{{ 'superadmin.list.search' | translate }}</button>
 </div>
 
 <!-- Loading -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="societes-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="societes-loading-state" [attr.aria-label]="'superadmin.list.loadingAria' | translate">
     @for (i of [1,2,3,4,5]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -53,12 +53,12 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Nom</th>
-            <th>Pays</th>
-            <th>Plan</th>
-            <th>GDPR</th>
-            <th>Statut</th>
-            <th>Actions</th>
+            <th>{{ 'superadmin.list.thNom' | translate }}</th>
+            <th>{{ 'superadmin.list.thPays' | translate }}</th>
+            <th>{{ 'superadmin.list.thPlan' | translate }}</th>
+            <th>{{ 'superadmin.list.thGdpr' | translate }}</th>
+            <th>{{ 'superadmin.list.thStatut' | translate }}</th>
+            <th>{{ 'superadmin.list.thActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -70,7 +70,7 @@
                   <div class="td-muted">{{ s.nomCommercial }}</div>
                 }
               </td>
-              <td>{{ s.pays }}</td>
+              <td>{{ 'superadmin.pays.' + s.pays | translate }}</td>
               <td>
                 <span class="badge" [class]="planClass(s.planAbonnement)">{{ s.planAbonnement }}</span>
               </td>
@@ -84,18 +84,18 @@
               </td>
               <td>
                 @if (s.actif) {
-                  <span class="badge badge-active">Actif</span>
+                  <span class="badge badge-active">{{ 'superadmin.list.actif' | translate }}</span>
                 } @else {
-                  <span class="badge badge-inactive">Inactif</span>
+                  <span class="badge badge-inactive">{{ 'superadmin.list.inactif' | translate }}</span>
                 }
               </td>
               <td class="td-actions">
                 <div class="row-actions">
-                  <button class="btn btn-sm btn-secondary" (click)="viewDetail(s)">Modifier</button>
+                  <button class="btn btn-sm btn-secondary" (click)="viewDetail(s)">{{ 'superadmin.list.modifier' | translate }}</button>
                   @if (s.actif) {
-                    <button class="btn btn-sm btn-danger" (click)="openSuspend(s)">Suspendre</button>
+                    <button class="btn btn-sm btn-danger" (click)="openSuspend(s)">{{ 'superadmin.list.suspendre' | translate }}</button>
                   } @else {
-                    <button class="btn btn-sm btn-secondary" (click)="reactiver(s)">Réactiver</button>
+                    <button class="btn btn-sm btn-secondary" (click)="reactiver(s)">{{ 'superadmin.list.reactiver' | translate }}</button>
                   }
                 </div>
               </td>
@@ -103,7 +103,7 @@
           }
           @if (societes.length === 0) {
             <tr>
-              <td colspan="6" class="empty-state">Aucun résultat trouvé.</td>
+              <td colspan="6" class="empty-state">{{ 'superadmin.list.emptyResult' | translate }}</td>
             </tr>
           }
         </tbody>
@@ -114,9 +114,9 @@
   <!-- Pagination -->
   @if (totalPages > 1) {
     <div class="pagination">
-      <button class="btn btn-secondary btn-sm" [disabled]="currentPage === 0" (click)="prevPage()">← Précédent</button>
-      <span class="page-info">Page {{ currentPage + 1 }} sur {{ totalPages }}</span>
-      <button class="btn btn-secondary btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">Suivant →</button>
+      <button class="btn btn-secondary btn-sm" [disabled]="currentPage === 0" (click)="prevPage()">{{ 'superadmin.list.prev' | translate }}</button>
+      <span class="page-info">{{ 'superadmin.list.pageInfo' | translate:{ page: currentPage + 1, total: totalPages } }}</span>
+      <button class="btn btn-secondary btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">{{ 'superadmin.list.next' | translate }}</button>
     </div>
   }
 }
@@ -126,18 +126,18 @@
   <div class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">Suspendre cette société ? "{{ suspendTarget.nom }}"</h3>
+        <h3 class="modal-title">{{ 'superadmin.list.suspendTitle' | translate:{ nom: suspendTarget.nom } }}</h3>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label">{{ 'superadmin.list.notes' | translate }}</label>
           <textarea class="form-control" [(ngModel)]="suspendRaison" rows="3"></textarea>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="cancelSuspend()">Annuler</button>
+        <button class="btn btn-secondary" (click)="cancelSuspend()">{{ 'superadmin.list.cancel' | translate }}</button>
         <button class="btn btn-danger" [disabled]="suspending" (click)="confirmSuspend()">
-          @if (suspending) { Enregistrement... } @else { Suspendre }
+          @if (suspending) { {{ 'superadmin.list.saving' | translate }} } @else { {{ 'superadmin.list.suspendre' | translate }} }
         </button>
       </div>
     </div>
