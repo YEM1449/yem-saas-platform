@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { RouterLink } from '@angular/router';
 import { TemplateService } from './template.service';
@@ -30,14 +32,13 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
 @Component({
   selector: 'app-template-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <div class="page-header">
       <div class="page-header-inner">
-        <h1 class="page-title">Modèles de documents</h1>
+        <h1 class="page-title">{{ 'templates.list.title' | translate }}</h1>
         <p class="page-subtitle">
-          Personnalisez les modèles PDF générés par le CRM pour chaque type de document légal.
-          Les modifications sont appliquées à toutes les générations futures.
+          {{ 'templates.list.subtitle' | translate }}
         </p>
       </div>
     </div>
@@ -50,22 +51,22 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
             <div class="card-header">
               <span class="type-icon">{{ meta(type).icon }}</span>
               <div class="type-info">
-                <h2 class="type-label">{{ meta(type).label }}</h2>
+                <h2 class="type-label">{{ 'templates.docType.' + type | translate }}</h2>
                 @if (isCustomized(type)) {
-                  <span class="badge badge-custom">Personnalisé</span>
+                  <span class="badge badge-custom">{{ 'templates.list.custom' | translate }}</span>
                 } @else {
-                  <span class="badge badge-default">Modèle intégré</span>
+                  <span class="badge badge-default">{{ 'templates.list.builtin' | translate }}</span>
                 }
               </div>
             </div>
-            <p class="type-desc">{{ meta(type).desc }}</p>
+            <p class="type-desc">{{ 'templates.docDesc.' + type | translate }}</p>
             @if (isCustomized(type)) {
               <p class="updated-label">
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                   <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/>
                   <path d="M5.5 3v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                 </svg>
-                Modifié le {{ getUpdatedAt(type) }}
+                {{ 'templates.list.modifiedOn' | translate:{ date: getUpdatedAt(type) } }}
               </p>
             }
           </div>
@@ -75,7 +76,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
                 <path d="M9 2l2 2L4 11H2V9L9 2z" stroke="currentColor" stroke-width="1.3"
                       stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              Modifier
+              {{ 'templates.list.edit' | translate }}
             </a>
             <button (click)="previewPdf(type)" class="btn btn-outline">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -83,11 +84,11 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
                       stroke="currentColor" stroke-width="1.3"/>
                 <circle cx="6.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.3"/>
               </svg>
-              Aperçu
+              {{ 'templates.list.preview' | translate }}
             </button>
             @if (isCustomized(type)) {
               <button (click)="revert(type)" class="btn btn-ghost-danger">
-                Réinitialiser
+                {{ 'templates.list.revert' | translate }}
               </button>
             }
           </div>
@@ -145,6 +146,7 @@ const TYPE_META: Record<TemplateType, { label: string; icon: string; desc: strin
   `],
 })
 export class TemplateListComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(TemplateService);
 
   allTypes   = ALL_TYPES;
@@ -159,7 +161,7 @@ export class TemplateListComponent implements OnInit {
 
   getUpdatedAt(type: TemplateType): string {
     const t = this.customized.get(type);
-    return t ? new Date(t.updatedAt).toLocaleDateString('fr-FR') : '';
+    return t ? new Date(t.updatedAt).toLocaleDateString(this.i18n.activeLang()) : '';
   }
 
   previewPdf(type: TemplateType): void {
@@ -167,7 +169,7 @@ export class TemplateListComponent implements OnInit {
   }
 
   revert(type: TemplateType): void {
-    if (!confirm(`Réinitialiser le modèle "${TYPE_META[type].label}" vers la version intégrée ?`)) return;
+    if (!confirm(this.i18n.instant('templates.list.revertConfirm', { name: this.i18n.instant('templates.docType.' + type) }))) return;
     this.svc.delete(type).subscribe(() => this.customized.delete(type));
   }
 }

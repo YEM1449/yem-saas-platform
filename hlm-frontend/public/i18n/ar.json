@@ -2855,5 +2855,188 @@
       "removed": "تمت إزالة العضو {{user}}.",
       "impersonateConfirm": "انتحال هوية {{user}}؟ يمكنك العودة عبر الشريط أعلى الصفحة."
     }
+  },
+  "templates": {
+    "docType": {
+      "CONTRACT": "عقد بيع",
+      "RESERVATION": "سند حجز",
+      "CALL_FOR_FUNDS": "طلب أموال"
+    },
+    "docDesc": {
+      "CONTRACT": "عقد بيع عقاري — موقّع من المشتري والوكيل التجاري. يشمل الشروط المالية والضمانات القانونية والشروط الواقفة.",
+      "RESERVATION": "شهادة حجز وإيداع ضمان. وثيقة قبل تعاقدية تُرسّم التزام المشتري بوحدة محددة.",
+      "CALL_FOR_FUNDS": "إشعار بتسوية أقساط جدول الدفع. يُصدر عند كل مرحلة بناء أو تسليم محددة في العقد."
+    },
+    "list": {
+      "title": "قوالب المستندات",
+      "subtitle": "خصّص قوالب PDF التي يولّدها النظام لكل نوع من المستندات القانونية. تُطبّق التعديلات على كل التوليدات المستقبلية.",
+      "custom": "مخصص",
+      "builtin": "قالب مدمج",
+      "modifiedOn": "عُدّل في {{date}}",
+      "edit": "تعديل",
+      "preview": "معاينة",
+      "revert": "إعادة تعيين",
+      "revertConfirm": "إعادة تعيين القالب \"{{name}}\" إلى النسخة المدمجة؟"
+    },
+    "editor": {
+      "back": "قوالب المستندات",
+      "custom": "مخصص",
+      "builtin": "قالب مدمج",
+      "dirty": "● تعديلات غير محفوظة",
+      "savedAt": "حُفظ {{time}}",
+      "visualMode": "الوضع المرئي",
+      "htmlSource": "مصدر HTML",
+      "previewPdf": "معاينة PDF",
+      "reset": "إعادة تعيين",
+      "saving": "جارٍ الحفظ…",
+      "save": "حفظ",
+      "saved": "✓ محفوظ",
+      "rawToggleToVisual": "العودة إلى المحرر المرئي",
+      "rawToggleToHtml": "عرض مصدر HTML",
+      "format": "التنسيق",
+      "paragraph": "فقرة",
+      "h1": "عنوان 1",
+      "h2": "عنوان 2",
+      "h3": "عنوان 3",
+      "h4": "عنوان 4",
+      "blockquote": "اقتباس",
+      "bold": "عريض (Ctrl+B)",
+      "italic": "مائل (Ctrl+I)",
+      "underline": "تسطير (Ctrl+U)",
+      "alignLeft": "يسار",
+      "alignCenter": "وسط",
+      "alignRight": "يمين",
+      "justify": "ضبط",
+      "bulletList": "قائمة نقطية",
+      "numberedList": "قائمة مرقمة",
+      "insert": "إدراج",
+      "undo": "تراجع (Ctrl+Z)",
+      "redo": "إعادة (Ctrl+Y)",
+      "insertImageTitle": "إدراج صورة (شعار، ختم…)",
+      "image": "صورة",
+      "varCount": "{{count}} متغير",
+      "placeholder": "ابدأ بكتابة مستندك أو اسحب المتغيرات من اللوحة اليمنى…",
+      "rawBanner1": "وضع HTML متقدم — التعديلات هنا تستبدل المحرر المرئي.",
+      "rawBannerTokens": "الرموز",
+      "rawBannerEq": "= المتغيرات.",
+      "tabVars": "المتغيرات",
+      "tabClauses": "البنود",
+      "tabCheck": "التحقق",
+      "searchPlaceholder": "🔍 تصفية (مثال: السعر، المشتري)…",
+      "hintVisualPre": "انقر أو اسحب متغيرًا لإدراجه.",
+      "hintVisualReq": "= إلزامي لهذا النوع من المستندات.",
+      "hintRawPre": "في وضع HTML: انقر لنسخ الرمز",
+      "hintRawPost": ".",
+      "requiredField": "حقل إلزامي",
+      "reqSuffix": " (إلزامي)",
+      "noMatch": "لا يوجد متغير يطابق « {{term}} »",
+      "clauseInsert": "+ إدراج",
+      "clauseInsertDisabled": "انتقل إلى الوضع المرئي لإدراج بند",
+      "checkAllPresent": "كل المتغيرات الإلزامية موجودة",
+      "checkSomePresent": "بعض المتغيرات الإلزامية ناقصة",
+      "checkCritical": "متغيرات حرجة غائبة",
+      "requiredVars": "المتغيرات الإلزامية",
+      "refresh": "🔄 تحديث",
+      "loadError": "تعذّر تحميل القالب.",
+      "saveError": "خطأ أثناء الحفظ.",
+      "revertError": "خطأ أثناء إعادة التعيين.",
+      "clauseInserted": "تم إدراج البند «{{name}}»",
+      "copied": "نُسخ: ${model.{{var}}}",
+      "inserted": "أُدرج: {{text}}",
+      "imageTooLarge": "الصورة كبيرة جدًا (الحد 3 ميغا)",
+      "imageError": "خطأ أثناء تحميل الصورة."
+    },
+    "varGroup": {
+      "societe": "الشركة والسياق",
+      "property": "العقار",
+      "buyer": "المشتري",
+      "contract": "العقد والتواريخ"
+    },
+    "varDesc": {
+      "societeName": "اسم الشركة",
+      "projectName": "اسم المشروع",
+      "agentName": "اسم الوكيل",
+      "agentEmail": "بريد الوكيل",
+      "generatedAt": "تاريخ/وقت التوليد",
+      "createdAt": "تاريخ الإنشاء",
+      "propertyRef": "مرجع العقار",
+      "propertyTitle": "تسمية العقار",
+      "propertyType": "النوع (شقة، فيلا…)",
+      "agreedPrice": "سعر البيع المتفق",
+      "listPrice": "سعر القائمة",
+      "prixVente": "سعر البيع (المسار)",
+      "buyerName": "الاسم واللقب الكاملان",
+      "buyerDisplayName": "الاسم المعروض",
+      "buyerPhone": "الهاتف",
+      "buyerEmail": "البريد الإلكتروني",
+      "buyerAddress": "العنوان البريدي",
+      "buyerNationalId": "البطاقة الوطنية / رقم الهوية",
+      "buyerIce": "ICE / الرقم الجبائي",
+      "buyerTypeLabel": "شخص طبيعي / اعتباري",
+      "venteRef": "مرجع البيع",
+      "contractRef": "مرجع العقد",
+      "contractStatus": "حالة العقد",
+      "statut": "حالة البيع",
+      "dateCompromis": "تاريخ العقد الابتدائي",
+      "dateActeNotarie": "تاريخ العقد الموثّق",
+      "dateLivraisonPrevue": "تاريخ التسليم المتوقع",
+      "signedAt": "تاريخ التوقيع",
+      "depositReference": "مرجع الدفعة / الحجز",
+      "depositAmount": "مبلغ الدفعة (درهم)",
+      "depositDate": "تاريخ دفع الدفعة",
+      "dueDate": "تاريخ الاستحقاق",
+      "notes": "ملاحظات حرة"
+    },
+    "preset": {
+      "article": "مادة مرقمة",
+      "signature": "كتلة التواقيع",
+      "pagebreak": "فاصل صفحة",
+      "separator": "فاصل أفقي",
+      "tableinfo": "جدول موجز"
+    },
+    "clauseSection": {
+      "conditions": "الشروط الواقفة",
+      "garanties": "الضمانات والمسؤوليات",
+      "dispositions": "أحكام عامة",
+      "paiement": "الدفع والمالية"
+    },
+    "clause": {
+      "cs-financement": {
+        "name": "شرط واقف للتمويل",
+        "desc": "إخضاع البيع للحصول على قرض بنكي."
+      },
+      "cs-permis": {
+        "name": "شرط واقف للترخيص",
+        "desc": "البيع مشروط بالحصول على ترخيص إداري."
+      },
+      "garanties-legales": {
+        "name": "الضمانات القانونية",
+        "desc": "ضمان ضد العيوب الخفية وعدم المطابقة."
+      },
+      "clause-penale": {
+        "name": "الشرط الجزائي",
+        "desc": "غرامات جزافية في حالة عدم التنفيذ."
+      },
+      "force-majeure": {
+        "name": "القوة القاهرة",
+        "desc": "إعفاء في حالة حدث غير متوقع وقاهر."
+      },
+      "election-domicile": {
+        "name": "اختيار الموطن",
+        "desc": "تحديد الموطن لكل الإشعارات القانونية."
+      },
+      "mediation": {
+        "name": "وساطة مسبقة إلزامية",
+        "desc": "اللجوء إلى الوساطة قبل أي إجراء قضائي."
+      },
+      "modalites-paiement": {
+        "name": "شروط الدفع",
+        "desc": "شروط ومواعيد تسوية الثمن."
+      },
+      "penalites-retard": {
+        "name": "غرامات التأخير",
+        "desc": "تطبيق تلقائي للغرامات عند تأخر الدفع."
+      }
+    }
   }
 }

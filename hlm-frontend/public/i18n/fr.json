@@ -2855,5 +2855,188 @@
       "removed": "Membre {{user}} retiré.",
       "impersonateConfirm": "Usurper l'identité de {{user}} ? Vous pourrez revenir via le bandeau en haut de page."
     }
+  },
+  "templates": {
+    "docType": {
+      "CONTRACT": "Contrat de vente",
+      "RESERVATION": "Bon de réservation",
+      "CALL_FOR_FUNDS": "Appel de fonds"
+    },
+    "docDesc": {
+      "CONTRACT": "Acte de vente immobilière — signé par l'acquéreur et l'agent commercial. Inclut les conditions financières, les garanties légales et les clauses suspensives.",
+      "RESERVATION": "Attestation de réservation et de dépôt de garantie. Document précontractuel officialisant l'engagement de l'acquéreur sur un bien identifié.",
+      "CALL_FOR_FUNDS": "Avis de règlement des tranches du calendrier de paiement. Émis à chaque jalon de construction ou de livraison défini dans le contrat."
+    },
+    "list": {
+      "title": "Modèles de documents",
+      "subtitle": "Personnalisez les modèles PDF générés par le CRM pour chaque type de document légal. Les modifications sont appliquées à toutes les générations futures.",
+      "custom": "Personnalisé",
+      "builtin": "Modèle intégré",
+      "modifiedOn": "Modifié le {{date}}",
+      "edit": "Modifier",
+      "preview": "Aperçu",
+      "revert": "Réinitialiser",
+      "revertConfirm": "Réinitialiser le modèle \"{{name}}\" vers la version intégrée ?"
+    },
+    "editor": {
+      "back": "Modèles de documents",
+      "custom": "Personnalisé",
+      "builtin": "Modèle intégré",
+      "dirty": "● Modifications non sauvegardées",
+      "savedAt": "Sauvegardé {{time}}",
+      "visualMode": "Mode visuel",
+      "htmlSource": "HTML source",
+      "previewPdf": "Aperçu PDF",
+      "reset": "Réinitialiser",
+      "saving": "Enregistrement…",
+      "save": "Enregistrer",
+      "saved": "✓ Enregistré",
+      "rawToggleToVisual": "Revenir à l'éditeur visuel",
+      "rawToggleToHtml": "Voir le HTML source",
+      "format": "Format",
+      "paragraph": "Paragraphe",
+      "h1": "Titre 1",
+      "h2": "Titre 2",
+      "h3": "Titre 3",
+      "h4": "Titre 4",
+      "blockquote": "Bloc citation",
+      "bold": "Gras (Ctrl+B)",
+      "italic": "Italique (Ctrl+I)",
+      "underline": "Souligné (Ctrl+U)",
+      "alignLeft": "Gauche",
+      "alignCenter": "Centré",
+      "alignRight": "Droite",
+      "justify": "Justifié",
+      "bulletList": "Liste à puces",
+      "numberedList": "Liste numérotée",
+      "insert": "Insérer",
+      "undo": "Annuler (Ctrl+Z)",
+      "redo": "Rétablir (Ctrl+Y)",
+      "insertImageTitle": "Insérer une image (logo, tampon…)",
+      "image": "Image",
+      "varCount": "{{count}} variable(s)",
+      "placeholder": "Commencez à écrire votre document ou glissez des variables depuis le panneau de droite…",
+      "rawBanner1": "Mode HTML avancé — modifications ici écrasent l'éditeur visuel.",
+      "rawBannerTokens": "Tokens",
+      "rawBannerEq": "= variables.",
+      "tabVars": "Variables",
+      "tabClauses": "Clauses",
+      "tabCheck": "Vérification",
+      "searchPlaceholder": "🔍 Filtrer (ex. prix, acheteur)…",
+      "hintVisualPre": "Cliquez ou glissez une variable pour l'insérer.",
+      "hintVisualReq": "= obligatoire pour ce type de document.",
+      "hintRawPre": "En mode HTML : cliquez pour copier le token",
+      "hintRawPost": ".",
+      "requiredField": "Champ obligatoire",
+      "reqSuffix": " (obligatoire)",
+      "noMatch": "Aucune variable ne correspond à « {{term}} »",
+      "clauseInsert": "+ Insérer",
+      "clauseInsertDisabled": "Passer en mode visuel pour insérer une clause",
+      "checkAllPresent": "Toutes les variables obligatoires sont présentes",
+      "checkSomePresent": "Certaines variables obligatoires manquent",
+      "checkCritical": "Des variables critiques sont absentes",
+      "requiredVars": "Variables obligatoires",
+      "refresh": "🔄 Actualiser",
+      "loadError": "Impossible de charger le modèle.",
+      "saveError": "Erreur lors de la sauvegarde.",
+      "revertError": "Erreur lors de la réinitialisation.",
+      "clauseInserted": "Clause «{{name}}» insérée",
+      "copied": "Copié : ${model.{{var}}}",
+      "inserted": "Inséré : {{text}}",
+      "imageTooLarge": "Image trop grande (max 3 Mo)",
+      "imageError": "Erreur lors du chargement de l'image."
+    },
+    "varGroup": {
+      "societe": "Société & contexte",
+      "property": "Bien immobilier",
+      "buyer": "Acheteur / Acquéreur",
+      "contract": "Contrat & Dates"
+    },
+    "varDesc": {
+      "societeName": "Nom de la société",
+      "projectName": "Nom du projet",
+      "agentName": "Nom de l'agent",
+      "agentEmail": "Email de l'agent",
+      "generatedAt": "Date/heure de génération",
+      "createdAt": "Date de création",
+      "propertyRef": "Référence du bien",
+      "propertyTitle": "Désignation du bien",
+      "propertyType": "Type (APPARTEMENT, VILLA…)",
+      "agreedPrice": "Prix de vente convenu",
+      "listPrice": "Prix catalogue",
+      "prixVente": "Prix de vente (pipeline)",
+      "buyerName": "Nom et prénom complets",
+      "buyerDisplayName": "Nom affiché",
+      "buyerPhone": "Téléphone",
+      "buyerEmail": "Adresse e-mail",
+      "buyerAddress": "Adresse postale",
+      "buyerNationalId": "CIN / N° pièce d'identité",
+      "buyerIce": "ICE / numéro fiscal",
+      "buyerTypeLabel": "Personne physique / morale",
+      "venteRef": "Référence de la vente",
+      "contractRef": "Référence du contrat",
+      "contractStatus": "Statut du contrat",
+      "statut": "Statut de la vente",
+      "dateCompromis": "Date du compromis",
+      "dateActeNotarie": "Date de l'acte notarié",
+      "dateLivraisonPrevue": "Date de livraison prévue",
+      "signedAt": "Date de signature",
+      "depositReference": "Réf. acompte / réservation",
+      "depositAmount": "Montant de l'acompte (MAD)",
+      "depositDate": "Date de versement de l'acompte",
+      "dueDate": "Date d'échéance",
+      "notes": "Notes et observations libres"
+    },
+    "preset": {
+      "article": "Article numéroté",
+      "signature": "Bloc de signatures",
+      "pagebreak": "Saut de page",
+      "separator": "Séparateur horizontal",
+      "tableinfo": "Tableau récapitulatif"
+    },
+    "clauseSection": {
+      "conditions": "Conditions suspensives",
+      "garanties": "Garanties & responsabilités",
+      "dispositions": "Dispositions générales",
+      "paiement": "Paiement & Finances"
+    },
+    "clause": {
+      "cs-financement": {
+        "name": "Condition suspensive de financement",
+        "desc": "Subordonner la vente à l'obtention d'un prêt bancaire."
+      },
+      "cs-permis": {
+        "name": "Condition suspensive de permis",
+        "desc": "Vente conditionnée à l'obtention d'une autorisation administrative."
+      },
+      "garanties-legales": {
+        "name": "Garanties légales",
+        "desc": "Garantie contre les vices cachés et les défauts de conformité."
+      },
+      "clause-penale": {
+        "name": "Clause pénale",
+        "desc": "Pénalités forfaitaires en cas d'inexécution."
+      },
+      "force-majeure": {
+        "name": "Force majeure",
+        "desc": "Exonération en cas d'événement imprévisible et irrésistible."
+      },
+      "election-domicile": {
+        "name": "Élection de domicile",
+        "desc": "Domiciliation pour toutes notifications légales."
+      },
+      "mediation": {
+        "name": "Médiation préalable obligatoire",
+        "desc": "Recours à la médiation avant toute action judiciaire."
+      },
+      "modalites-paiement": {
+        "name": "Modalités de paiement",
+        "desc": "Conditions et délais de règlement du prix."
+      },
+      "penalites-retard": {
+        "name": "Pénalités de retard",
+        "desc": "Application automatique de pénalités pour retard de paiement."
+      }
+    }
   }
 }
