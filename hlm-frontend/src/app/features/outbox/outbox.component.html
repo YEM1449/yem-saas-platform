@@ -2,9 +2,9 @@
 
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="page-header">
-    <h1 class="page-title">Messages envoyés</h1>
+    <h1 class="page-title">{{ 'outbox.title' | translate }}</h1>
     <div class="page-header-actions">
-      <button class="btn btn-primary" (click)="openCompose()">+ Créer</button>
+      <button class="btn btn-primary" (click)="openCompose()">{{ 'outbox.create' | translate }}</button>
     </div>
   </div>
 
@@ -17,7 +17,7 @@
   @if (showCompose) {
     <div class="card compose-card">
       <div class="card-header">
-        <h2 class="card-title">Créer</h2>
+        <h2 class="card-title">{{ 'outbox.createTitle' | translate }}</h2>
       </div>
       <div class="card-body">
         @if (composeError) {
@@ -25,7 +25,7 @@
         }
 
         <div class="form-group">
-          <label class="form-label">Canal</label>
+          <label class="form-label">{{ 'outbox.canal' | translate }}</label>
           <select class="form-control" [(ngModel)]="form.channel">
             <option value="EMAIL">Email</option>
             <option value="SMS">SMS</option>
@@ -33,20 +33,20 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Destinataire {{ isEmail ? '(email)' : '(phone)' }}</label>
+          <label class="form-label">{{ 'outbox.recipient' | translate }} {{ (isEmail ? 'outbox.recipientEmail' : 'outbox.recipientPhone') | translate }}</label>
           <input class="form-control" type="text" [(ngModel)]="form.recipient"
                  [placeholder]="isEmail ? 'user@example.com' : '+212600000000'" />
         </div>
 
         @if (isEmail) {
           <div class="form-group">
-            <label class="form-label">Objet</label>
+            <label class="form-label">{{ 'outbox.objet' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="form.subject" />
           </div>
         }
 
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label">{{ 'outbox.notes' | translate }}</label>
           <textarea class="form-control" rows="5" [(ngModel)]="form.body"></textarea>
         </div>
 
@@ -54,7 +54,7 @@
           <button class="btn btn-primary" (click)="submitCompose()" [disabled]="composing">
             @if (composing) { Enregistrement... } @else { Enregistrer }
           </button>
-          <button class="btn btn-secondary" (click)="cancelCompose()">Annuler</button>
+          <button class="btn btn-secondary" (click)="cancelCompose()">{{ 'outbox.cancel' | translate }}</button>
         </div>
       </div>
     </div>
@@ -63,22 +63,22 @@
   <!-- ── Filter bar ─────────────────────────────────────────────────────── -->
   <div class="filter-bar">
     <select class="form-control" style="width:auto" [(ngModel)]="filterChannel" (change)="applyFilters()">
-      <option value="">Tous</option>
+      <option value="">{{ 'outbox.all' | translate }}</option>
       <option value="EMAIL">Email</option>
       <option value="SMS">SMS</option>
     </select>
 
     <select class="form-control" style="width:auto" [(ngModel)]="filterStatus" (change)="applyFilters()">
-      <option value="">Tous</option>
-      <option value="PENDING">Pending</option>
-      <option value="SENT">Statut</option>
-      <option value="FAILED">Failed</option>
+      <option value="">{{ 'outbox.all' | translate }}</option>
+      <option value="PENDING">{{ 'outbox.statusPENDING' | translate }}</option>
+      <option value="SENT">{{ 'outbox.statusSENT' | translate }}</option>
+      <option value="FAILED">{{ 'outbox.statusFAILED' | translate }}</option>
     </select>
   </div>
 
   <!-- ── List ──────────────────────────────────────────────────────────── -->
   @if (listLoading) {
-    <div class="skeleton-stack" data-testid="outbox-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="outbox-loading-state" [attr.aria-label]="'outbox.loadingAria' | translate">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -89,7 +89,7 @@
   } @else if (messages.length === 0) {
     <div class="card">
       <div class="empty-state">
-        <p class="empty-state-title">Aucun message.</p>
+        <p class="empty-state-title">{{ 'outbox.empty' | translate }}</p>
       </div>
     </div>
   } @else {
@@ -98,12 +98,12 @@
         <table class="data-table message-table">
           <thead>
             <tr>
-              <th>Canal</th>
-              <th>Statut</th>
-              <th>Destinataire</th>
-              <th>Objet</th>
-              <th>Envoyé le</th>
-              <th>Tentatives</th>
+              <th>{{ 'outbox.thCanal' | translate }}</th>
+              <th>{{ 'outbox.thStatut' | translate }}</th>
+              <th>{{ 'outbox.thDestinataire' | translate }}</th>
+              <th>{{ 'outbox.thObjet' | translate }}</th>
+              <th>{{ 'outbox.thEnvoyeLe' | translate }}</th>
+              <th>{{ 'outbox.thTentatives' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -124,9 +124,9 @@
 
     <!-- Pagination -->
     <div class="pagination">
-      <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage === 0">← Précédent</button>
-      <span class="page-info">Page {{ currentPage + 1 }} sur {{ totalPages }}</span>
-      <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="(currentPage + 1) >= totalPages">Suivant →</button>
+      <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage === 0">{{ 'outbox.prev' | translate }}</button>
+      <span class="page-info">{{ 'outbox.pageInfo' | translate:{ page: currentPage + 1, total: totalPages } }}</span>
+      <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="(currentPage + 1) >= totalPages">{{ 'outbox.next' | translate }}</button>
     </div>
   }
 </div>

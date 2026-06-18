@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,11 +16,12 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-outbox',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './outbox.component.html',
   styleUrl: './outbox.component.css',
 })
 export class OutboxComponent implements OnInit {
+  private i18n = inject(I18nService);
   private outboxSvc = inject(OutboxService);
 
   // ── List state ──────────────────────────────────────────────────────────
@@ -93,11 +96,11 @@ export class OutboxComponent implements OnInit {
 
   submitCompose(): void {
     if (!this.form.body?.trim()) {
-      this.composeError = 'Body is required.';
+      this.composeError = this.i18n.instant('outbox.bodyRequired');
       return;
     }
     if (!this.form.recipient?.trim()) {
-      this.composeError = 'Recipient is required.';
+      this.composeError = this.i18n.instant('outbox.recipientRequired');
       return;
     }
 

@@ -1,9 +1,9 @@
 <div class="page-header">
-  <h1 class="page-title">Journal d'audit</h1>
+  <h1 class="page-title">{{ 'audit.title' | translate }}</h1>
 </div>
 
 @if (!isAuthorized) {
-  <div class="alert alert-error">Accès refusé.</div>
+  <div class="alert alert-error">{{ 'audit.accessDenied' | translate }}</div>
 } @else {
   <div class="filter-bar">
     <label>
@@ -14,11 +14,11 @@
       Au
       <input type="date" [(ngModel)]="to" />
     </label>
-    <button (click)="load()" [disabled]="loading">Filtrer</button>
+    <button (click)="load()" [disabled]="loading">{{ 'audit.filter' | translate }}</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="audit-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="audit-loading-state" [attr.aria-label]="'audit.loadingAria' | translate">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -30,7 +30,7 @@
   } @else if (events.length === 0) {
     <div class="card">
       <div class="empty-state">
-        <p class="empty-state-title">Aucun événement d'audit.</p>
+        <p class="empty-state-title">{{ 'audit.empty' | translate }}</p>
       </div>
     </div>
   } @else {
@@ -39,11 +39,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Type d'événement</th>
-              <th>Acteur</th>
-              <th>Cible</th>
-              <th>Référence</th>
+              <th>{{ 'audit.thDate' | translate }}</th>
+              <th>{{ 'audit.thType' | translate }}</th>
+              <th>{{ 'audit.thActeur' | translate }}</th>
+              <th>{{ 'audit.thCible' | translate }}</th>
+              <th>{{ 'audit.thReference' | translate }}</th>
             </tr>
           </thead>
           <tbody>

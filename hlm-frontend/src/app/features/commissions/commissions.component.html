@@ -1,20 +1,20 @@
 <div class="page">
   <div class="page-header">
-    <h2 class="page-title">Règles de commission</h2>
+    <h2 class="page-title">{{ 'commissions.title' | translate }}</h2>
   </div>
 
   <!-- Filters -->
   <div class="filter-bar">
     @if (isAdminOrManager) {
-      <label>Agent <input type="text" [(ngModel)]="agentId" placeholder="Référence" /></label>
+      <label>{{ 'commissions.agent' | translate }} <input type="text" [(ngModel)]="agentId" [placeholder]="'commissions.refPlaceholder' | translate" /></label>
     }
     <label>Du <input type="date" [(ngModel)]="fromDate" /></label>
     <label>Au <input type="date" [(ngModel)]="toDate" /></label>
-    <button class="btn btn-secondary" (click)="load()">Filtrer</button>
+    <button class="btn btn-secondary" (click)="load()">{{ 'commissions.filter' | translate }}</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="commissions-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="commissions-loading-state" [attr.aria-label]="'commissions.loadingAria' | translate">
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
       <span class="skeleton skeleton-row"></span>
@@ -31,7 +31,7 @@
     @if (commissions.length === 0) {
       <div class="card">
         <div class="empty-state">
-          <p class="empty-state-title">Aucun résultat trouvé.</p>
+          <p class="empty-state-title">{{ 'commissions.empty' | translate }}</p>
         </div>
       </div>
     } @else {
@@ -40,13 +40,13 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Date de signature</th>
-                <th>Projet</th>
-                <th>Référence</th>
-                <th>Agent</th>
-                <th>Prix convenu</th>
-                <th>Taux (%)</th>
-                <th>Règles de commission</th>
+                <th>{{ 'commissions.thDateSignature' | translate }}</th>
+                <th>{{ 'commissions.thProjet' | translate }}</th>
+                <th>{{ 'commissions.thReference' | translate }}</th>
+                <th>{{ 'commissions.thAgent' | translate }}</th>
+                <th>{{ 'commissions.thPrixConvenu' | translate }}</th>
+                <th>{{ 'commissions.thTaux' | translate }}</th>
+                <th>{{ 'commissions.thRegles' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -71,9 +71,9 @@
     @if (isAdmin) {
       <section style="margin-top:32px">
         <div class="page-header" style="margin-bottom:12px">
-          <h3 class="page-title" style="font-size:16px">Règles de commission</h3>
+          <h3 class="page-title" style="font-size:16px">{{ 'commissions.rulesTitle' | translate }}</h3>
           <div class="page-header-actions">
-            <button class="btn btn-primary btn-sm" (click)="openNewRule()">+ Nouvelle règle</button>
+            <button class="btn btn-primary btn-sm" (click)="openNewRule()">{{ 'commissions.newRule' | translate }}</button>
           </div>
         </div>
 
@@ -82,16 +82,16 @@
             <h4>{{ editingRuleId ? 'Modifier' : 'Nouvelle règle' }}</h4>
             @if (ruleError) { <div class="alert alert-error">{{ ruleError }}</div> }
             <div class="form-group">
-              <label class="form-label">Projet (optionnel)</label>
-              <input class="form-control" type="text" [(ngModel)]="ruleForm.projectId" placeholder="Référence" style="width:300px" />
+              <label class="form-label">{{ 'commissions.projetOptional' | translate }}</label>
+              <input class="form-control" type="text" [(ngModel)]="ruleForm.projectId" [placeholder]="'commissions.refPlaceholder' | translate" style="width:300px" />
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">Taux (%)</label>
+                <label class="form-label">{{ 'commissions.taux' | translate }}</label>
                 <input class="form-control" type="number" [(ngModel)]="ruleForm.ratePercent" min="0" step="0.01" />
               </div>
               <div class="form-group">
-                <label class="form-label">Montant fixe</label>
+                <label class="form-label">{{ 'commissions.montantFixe' | translate }}</label>
                 <input class="form-control" type="number" [(ngModel)]="ruleForm.fixedAmount" min="0" />
               </div>
             </div>
@@ -106,25 +106,25 @@
               </div>
             </div>
             <div class="modal-footer" style="padding:0">
-              <button class="btn btn-primary" (click)="saveRule()">Enregistrer</button>
-              <button class="btn btn-secondary" (click)="showRuleForm=false">Annuler</button>
+              <button class="btn btn-primary" (click)="saveRule()">{{ 'commissions.save' | translate }}</button>
+              <button class="btn btn-secondary" (click)="showRuleForm=false">{{ 'commissions.cancel' | translate }}</button>
             </div>
           </div>
         }
 
         @if (rules.length === 0) {
-          <p class="td-muted">Aucun résultat trouvé.</p>
+          <p class="td-muted">{{ 'commissions.empty' | translate }}</p>
         } @else {
           <div class="card">
             <div class="card-body-flush">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Taux (%)</th>
-                    <th>Montant fixe</th>
-                    <th>Du</th>
-                    <th>Au</th>
+                    <th>{{ 'commissions.thType' | translate }}</th>
+                    <th>{{ 'commissions.thTaux' | translate }}</th>
+                    <th>{{ 'commissions.montantFixe' | translate }}</th>
+                    <th>{{ 'commissions.thDu' | translate }}</th>
+                    <th>{{ 'commissions.thAu' | translate }}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -137,7 +137,7 @@
                       <td>{{ r.effectiveFrom }}</td>
                       <td>{{ r.effectiveTo ?? '∞' }}</td>
                       <td class="td-actions">
-                        <button class="btn btn-sm btn-secondary" (click)="editRule(r)">Modifier</button>
+                        <button class="btn btn-sm btn-secondary" (click)="editRule(r)">{{ 'commissions.edit' | translate }}</button>
                         <button class="btn btn-sm btn-danger" (click)="deleteRule(r.id)">Supprimer</button>
                       </td>
                     </tr>

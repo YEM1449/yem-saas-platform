@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,11 +13,12 @@ type PageState = 'loading' | 'form' | 'invalid' | 'done';
 @Component({
   selector: 'app-activation',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './activation.component.html',
   styleUrl: './activation.component.css',
 })
 export class ActivationComponent implements OnInit {
+  private i18n = inject(I18nService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -57,7 +60,7 @@ export class ActivationComponent implements OnInit {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
     if (!this.token) {
       this.state = 'invalid';
-      this.error = 'Lien d\'activation invalide.';
+      this.error = this.i18n.instant('activation.invalidLink');
       return;
     }
     void this.router.navigate([], {
@@ -75,18 +78,18 @@ export class ActivationComponent implements OnInit {
         this.state = 'invalid';
         this.error = err.status === 404 || err.status === 409
           ? 'Ce lien d\'activation est invalide ou a déjà été utilisé.'
-          : err.error?.message ?? 'Ce lien d\'activation a expiré ou est invalide.';
+          : err.error?.message ?? this.i18n.instant('activation.expiredLink');
       },
     });
   }
 
   onSubmit(): void {
     if (this.form.motDePasse !== this.form.confirmationMotDePasse) {
-      this.error = 'Les mots de passe ne correspondent pas.';
+      this.error = this.i18n.instant('activation.pwMismatch');
       return;
     }
     if (!this.form.consentementCgu) {
-      this.error = 'Vous devez accepter les conditions générales d\'utilisation.';
+      this.error = this.i18n.instant('activation.mustAcceptCgu');
       return;
     }
     this.submitting = true;
@@ -98,7 +101,7 @@ export class ActivationComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting = false;
-        this.error = err.error?.message ?? `Erreur (${err.status})`;
+        this.error = err.error?.message ?? this.i18n.instant('activation.genericError', { status: err.status });
       },
     });
   }

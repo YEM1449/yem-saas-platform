@@ -316,7 +316,7 @@
       <!-- Rail expand/collapse — desktop only (hidden on mobile via CSS) -->
       <button class="rail-toggle-btn" (click)="toggleRail()"
               [attr.aria-label]="railExpanded ? 'Réduire la barre latérale' : 'Agrandir la barre latérale'"
-              title="Réduire / agrandir">
+              [title]="'shell.collapse' | translate">
         @if (railExpanded) {
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
