@@ -1,29 +1,31 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject} from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-pipeline-analysis',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Intelligence pipeline</span>
-        <span class="widget-sub">Pondéré par probabilité</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.pipeline.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.pipeline.sub' | translate }}</span>
       </div>
 
       @if (!data) {
-        <div class="empty-state">Chargement…</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.pipeline.loading' | translate }}</div>
       } @else {
         <!-- Summary row -->
         <div class="summary-row">
           <div class="summary-card">
-            <div class="summary-label">Pipeline pondéré</div>
+            <div class="summary-label">{{ 'dashboard.cockpit.pipeline.weighted' | translate }}</div>
             <div class="summary-value accent">{{ fmt(data.totalWeightedValue) }}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-label">Pipeline brut</div>
+            <div class="summary-label">{{ 'dashboard.cockpit.pipeline.raw' | translate }}</div>
             <div class="summary-value">{{ fmt(data.totalRawValue) }}</div>
           </div>
         </div>
@@ -33,12 +35,12 @@ import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
           <table class="stage-table">
             <thead>
               <tr>
-                <th>Étape</th>
-                <th class="num">Dossiers</th>
-                <th class="num">CA brut</th>
-                <th class="num">CA pondéré</th>
-                <th class="num">Prob.</th>
-                <th class="num">Âge moy.</th>
+                <th>{{ 'dashboard.cockpit.pipeline.thStage' | translate }}</th>
+                <th class="num">{{ 'dashboard.cockpit.pipeline.thDossiers' | translate }}</th>
+                <th class="num">{{ 'dashboard.cockpit.pipeline.thCaBrut' | translate }}</th>
+                <th class="num">{{ 'dashboard.cockpit.pipeline.thCaWeighted' | translate }}</th>
+                <th class="num">{{ 'dashboard.cockpit.pipeline.thProb' | translate }}</th>
+                <th class="num">{{ 'dashboard.cockpit.pipeline.thAge' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -98,14 +100,10 @@ import { PipelineAnalysis, AtRiskDeal } from '../dashboard-cockpit.service';
   `],
 })
 export class PipelineAnalysisComponent {
+  private i18n = inject(I18nService);
   @Input() data: PipelineAnalysis | null = null;
 
-  private readonly labels: Record<string, string> = {
-    COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-    ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-  };
-
-  label(s: string): string { return this.labels[s] ?? s; }
+  label(s: string): string { return this.i18n.instant('ventes.statut.' + s); }
 
   fmt(n: number | null | undefined): string {
     if (n == null || n === 0) return '—';

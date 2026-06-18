@@ -1983,6 +1983,98 @@
       "amountMad": "Amount (MAD)",
       "na": "N/A",
       "unknown": "Unknown"
+    },
+    "cockpit": {
+      "funnel": {
+        "title": "Full sales funnel",
+        "sub": "Conversion between stages",
+        "emptyTitle": "No data yet",
+        "emptyHint": "The funnel will appear once the first prospect is recorded.",
+        "converted": "{{pct}}% converted",
+        "lost": "−{{pct}}% lost",
+        "cumulativeTitle": "Cumulative stage — not comparable to the previous one",
+        "cumulative": "cumulative — not comparable",
+        "noUpstream": "No upstream reference"
+      },
+      "inventory": {
+        "title": "Stock intelligence",
+        "seeProperties": "View units →",
+        "loading": "Loading…",
+        "totalLots": "Total lots",
+        "available": "Available",
+        "reserved": "Reserved",
+        "sold": "Sold",
+        "withdrawn": "Withdrawn",
+        "globalAbsorption": "Overall absorption",
+        "thProject": "Project",
+        "thAvail": "Avail.",
+        "thRes": "Res.",
+        "thSold": "Sold",
+        "thAbsorption": "Absorption",
+        "thStockValue": "Stock value",
+        "noProject": "No project with lots."
+      },
+      "agents": {
+        "title": "Agent performance",
+        "sub": "Whole company",
+        "empty": "No per-agent sales data yet.",
+        "thAgent": "Agent",
+        "thCaLivre": "Delivered rev.",
+        "thVentes": "Sales",
+        "thConv": "Conv.",
+        "thTicket": "Avg ticket",
+        "thDelai": "Avg days",
+        "thPipeline": "Pipeline"
+      },
+      "salesByType": {
+        "title": "Sales by unit type",
+        "sub": "Signed revenue · excl. cancelled",
+        "empty": "No data by type yet.",
+        "totalSigned": "Total signed portfolio",
+        "venteCount": "{{count}} sale(s)"
+      },
+      "pricePerSqm": {
+        "title": "Price per m²",
+        "sub": "Catalog stock",
+        "empty": "Surface data unavailable.",
+        "globalUnit": "/m² avg",
+        "byType": "By unit type",
+        "byProject": "By project (sales)",
+        "ventesCount": "{{count}} sales"
+      },
+      "pipeline": {
+        "title": "Pipeline intelligence",
+        "sub": "Probability-weighted",
+        "loading": "Loading…",
+        "weighted": "Weighted pipeline",
+        "raw": "Raw pipeline",
+        "thStage": "Stage",
+        "thDossiers": "Files",
+        "thCaBrut": "Raw rev.",
+        "thCaWeighted": "Weighted rev.",
+        "thProb": "Prob.",
+        "thAge": "Avg age"
+      },
+      "timeToClose": {
+        "title": "Sales cycle length",
+        "sub": "Delivered sales only",
+        "empty": "No delivered sale to compute the cycle.",
+        "avgLabel": "average closing time",
+        "avg": "avg {{days}}d",
+        "summary": "{{count}} delivered sale(s) analyzed",
+        "fast": " · {{count}} in under 30 days"
+      },
+      "kpiDelta": {
+        "noRefTitle": "No reference period",
+        "prevTitle": "Previous period: {{label}}"
+      },
+      "alerts": {
+        "title": "Operational signals",
+        "allClear": "No critical signal. Indicators are in the green.",
+        "critical": "Critical",
+        "warning": "Caution",
+        "info": "Info"
+      }
     }
   }
 }

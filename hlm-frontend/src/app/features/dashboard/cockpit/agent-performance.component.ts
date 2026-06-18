@@ -1,4 +1,5 @@
 import { Component, Input, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AgentPerformance, AgentRow } from '../dashboard-cockpit.service';
 
@@ -7,29 +8,29 @@ type SortKey = 'totalCA' | 'totalSales' | 'conversionRate' | 'avgDealSize' | 'av
 @Component({
   selector: 'app-agent-performance',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Performance agents</span>
-        <span class="widget-sub">Toute la société</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.agents.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.agents.sub' | translate }}</span>
       </div>
 
       @if (!data || data.agents.length === 0) {
-        <div class="empty-state">Pas encore de données de vente par agent.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.agents.empty' | translate }}</div>
       } @else {
         <div class="table-wrap">
           <table class="perf-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Agent</th>
-                <th class="num sortable" (click)="sort('totalCA')">CA livré {{ sortIcon('totalCA') }}</th>
-                <th class="num sortable" (click)="sort('totalSales')">Ventes {{ sortIcon('totalSales') }}</th>
-                <th class="num sortable" (click)="sort('conversionRate')">Conv. {{ sortIcon('conversionRate') }}</th>
-                <th class="num sortable" (click)="sort('avgDealSize')">Ticket moy. {{ sortIcon('avgDealSize') }}</th>
-                <th class="num sortable" (click)="sort('avgDaysToClose')">Délai moy. {{ sortIcon('avgDaysToClose') }}</th>
-                <th class="num sortable" (click)="sort('activePipeline')">Pipeline {{ sortIcon('activePipeline') }}</th>
+                <th>{{ 'dashboard.cockpit.agents.thAgent' | translate }}</th>
+                <th class="num sortable" (click)="sort('totalCA')">{{ 'dashboard.cockpit.agents.thCaLivre' | translate }} {{ sortIcon('totalCA') }}</th>
+                <th class="num sortable" (click)="sort('totalSales')">{{ 'dashboard.cockpit.agents.thVentes' | translate }} {{ sortIcon('totalSales') }}</th>
+                <th class="num sortable" (click)="sort('conversionRate')">{{ 'dashboard.cockpit.agents.thConv' | translate }} {{ sortIcon('conversionRate') }}</th>
+                <th class="num sortable" (click)="sort('avgDealSize')">{{ 'dashboard.cockpit.agents.thTicket' | translate }} {{ sortIcon('avgDealSize') }}</th>
+                <th class="num sortable" (click)="sort('avgDaysToClose')">{{ 'dashboard.cockpit.agents.thDelai' | translate }} {{ sortIcon('avgDaysToClose') }}</th>
+                <th class="num sortable" (click)="sort('activePipeline')">{{ 'dashboard.cockpit.agents.thPipeline' | translate }} {{ sortIcon('activePipeline') }}</th>
               </tr>
             </thead>
             <tbody>

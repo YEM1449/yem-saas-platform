@@ -1,4 +1,5 @@
 import { Component, Input, computed, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { KpiDelta } from '../dashboard-cockpit.service';
 
@@ -11,15 +12,15 @@ import { KpiDelta } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-kpi-delta-chip',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   template: `
     @if (delta?.deltaPct == null) {
-      <span class="kpi-chip kpi-chip-neutral" title="Pas de période de référence">—</span>
+      <span class="kpi-chip kpi-chip-neutral" [title]="'dashboard.cockpit.kpiDelta.noRefTitle' | translate">—</span>
     } @else {
       <span class="kpi-chip"
             [class.kpi-chip-up]="(delta!.deltaPct ?? 0) >= 0"
             [class.kpi-chip-down]="(delta!.deltaPct ?? 0) < 0"
-            [title]="'Période précédente : ' + previousLabel">
+            [title]="'dashboard.cockpit.kpiDelta.prevTitle' | translate:{ label: previousLabel }">
         {{ (delta!.deltaPct ?? 0) >= 0 ? '↑' : '↓' }}
         {{ absPct }}%
       </span>

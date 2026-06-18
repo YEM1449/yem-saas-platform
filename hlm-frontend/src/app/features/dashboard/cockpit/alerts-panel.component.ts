@@ -1,4 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject} from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 import { RouterLink } from '@angular/router';
 import { DashboardAlert } from '../dashboard-cockpit.service';
@@ -12,11 +14,11 @@ import { DashboardAlert } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-alerts-panel',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <div class="alerts-panel">
       <div class="alerts-head">
-        <span class="alerts-title">Signaux opérationnels</span>
+        <span class="alerts-title">{{ 'dashboard.cockpit.alerts.title' | translate }}</span>
         <span class="alerts-count" [class.alerts-count-zero]="sorted.length === 0">
           {{ sorted.length }}
         </span>
@@ -29,7 +31,7 @@ import { DashboardAlert } from '../dashboard-cockpit.service';
             <path d="M6 9.5l2 2 4-4" stroke="#10b981" stroke-width="1.6"
                   stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>Aucun signal critique. Les indicateurs sont dans le vert.</span>
+          <span>{{ 'dashboard.cockpit.alerts.allClear' | translate }}</span>
         </div>
       } @else {
         <ul class="alerts-list">
@@ -132,6 +134,7 @@ import { DashboardAlert } from '../dashboard-cockpit.service';
   `],
 })
 export class AlertsPanelComponent {
+  private i18n = inject(I18nService);
   @Input() set alerts(value: DashboardAlert[] | null | undefined) {
     this.sorted = (value ?? []).slice().sort(
       (a, b) => this.sevWeight(b.severity) - this.sevWeight(a.severity)
@@ -141,7 +144,7 @@ export class AlertsPanelComponent {
   sorted: DashboardAlert[] = [];
 
   severityLabel(s: string): string {
-    return s === 'CRITICAL' ? 'Critique' : s === 'WARNING' ? 'Attention' : 'Info';
+    return s === 'CRITICAL' ? this.i18n.instant('dashboard.cockpit.alerts.critical') : s === 'WARNING' ? this.i18n.instant('dashboard.cockpit.alerts.warning') : this.i18n.instant('dashboard.cockpit.alerts.info');
   }
 
   private sevWeight(s: string): number {

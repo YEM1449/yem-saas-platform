@@ -2100,6 +2100,98 @@
       "amountMad": "Montant (MAD)",
       "na": "N/A",
       "unknown": "Inconnu"
+    },
+    "cockpit": {
+      "funnel": {
+        "title": "Entonnoir commercial complet",
+        "sub": "Conversion entre étapes",
+        "emptyTitle": "Pas encore de données",
+        "emptyHint": "L'entonnoir s'affichera dès le premier prospect enregistré.",
+        "converted": "{{pct}}% convertis",
+        "lost": "−{{pct}}% perdus",
+        "cumulativeTitle": "Étape cumulative — non comparable à l'étape précédente",
+        "cumulative": "cumul — non comparable",
+        "noUpstream": "Pas de référence amont"
+      },
+      "inventory": {
+        "title": "Intelligence stock",
+        "seeProperties": "Voir les biens →",
+        "loading": "Chargement…",
+        "totalLots": "Total lots",
+        "available": "Disponibles",
+        "reserved": "Réservés",
+        "sold": "Vendus",
+        "withdrawn": "Retirés",
+        "globalAbsorption": "Absorption globale",
+        "thProject": "Projet",
+        "thAvail": "Dispo.",
+        "thRes": "Rés.",
+        "thSold": "Vendus",
+        "thAbsorption": "Absorption",
+        "thStockValue": "Valeur stock",
+        "noProject": "Aucun projet avec des lots."
+      },
+      "agents": {
+        "title": "Performance agents",
+        "sub": "Toute la société",
+        "empty": "Pas encore de données de vente par agent.",
+        "thAgent": "Agent",
+        "thCaLivre": "CA livré",
+        "thVentes": "Ventes",
+        "thConv": "Conv.",
+        "thTicket": "Ticket moy.",
+        "thDelai": "Délai moy.",
+        "thPipeline": "Pipeline"
+      },
+      "salesByType": {
+        "title": "Ventes par type de bien",
+        "sub": "CA signé · hors annulés",
+        "empty": "Pas encore de données par type.",
+        "totalSigned": "Total portefeuille signé",
+        "venteCount": "{{count}} vente(s)"
+      },
+      "pricePerSqm": {
+        "title": "Prix au m²",
+        "sub": "Stock catalogue",
+        "empty": "Données surface non disponibles.",
+        "globalUnit": "/m² moyen",
+        "byType": "Par type de bien",
+        "byProject": "Par projet (ventes)",
+        "ventesCount": "{{count}} ventes"
+      },
+      "pipeline": {
+        "title": "Intelligence pipeline",
+        "sub": "Pondéré par probabilité",
+        "loading": "Chargement…",
+        "weighted": "Pipeline pondéré",
+        "raw": "Pipeline brut",
+        "thStage": "Étape",
+        "thDossiers": "Dossiers",
+        "thCaBrut": "CA brut",
+        "thCaWeighted": "CA pondéré",
+        "thProb": "Prob.",
+        "thAge": "Âge moy."
+      },
+      "timeToClose": {
+        "title": "Durée du cycle de vente",
+        "sub": "Ventes livrées uniquement",
+        "empty": "Aucune vente livrée pour calculer le cycle.",
+        "avgLabel": "délai moyen de closing",
+        "avg": "moy. {{days}}j",
+        "summary": "{{count}} vente(s) livrée(s) analysées",
+        "fast": " · {{count}} en moins de 30 jours"
+      },
+      "kpiDelta": {
+        "noRefTitle": "Pas de période de référence",
+        "prevTitle": "Période précédente : {{label}}"
+      },
+      "alerts": {
+        "title": "Signaux opérationnels",
+        "allClear": "Aucun signal critique. Les indicateurs sont dans le vert.",
+        "critical": "Critique",
+        "warning": "Attention",
+        "info": "Info"
+      }
     }
   }
 }

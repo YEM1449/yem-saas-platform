@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DecimalPipe } from '@angular/common';
 import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
 
@@ -12,18 +13,18 @@ import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-funnel',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Entonnoir commercial complet</span>
-        <span class="widget-sub">Conversion entre étapes</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.funnel.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.funnel.sub' | translate }}</span>
       </div>
 
       @if (!data || data.stages.length === 0) {
         <div class="empty-state">
-          <strong>Pas encore de données</strong>
-          <span>L'entonnoir s'affichera dès le premier prospect enregistré.</span>
+          <strong>{{ 'dashboard.cockpit.funnel.emptyTitle' | translate }}</strong>
+          <span>{{ 'dashboard.cockpit.funnel.emptyHint' | translate }}</span>
         </div>
       } @else {
         <div class="funnel">
@@ -44,15 +45,15 @@ import { FunnelSnapshot, FunnelStage } from '../dashboard-cockpit.service';
                     <span class="funnel-conv"
                           [class.funnel-conv-good]="stage.conversionRate >= 50"
                           [class.funnel-conv-warn]="stage.conversionRate < 25">
-                      {{ stage.conversionRate | number:'1.0-0' }}% convertis
+                      {{ 'dashboard.cockpit.funnel.converted' | translate:{ pct: (stage.conversionRate | number:'1.0-0') } }}
                     </span>
-                    <span class="funnel-drop">−{{ stage.dropOffRate | number:'1.0-0' }}% perdus</span>
+                    <span class="funnel-drop">{{ 'dashboard.cockpit.funnel.lost' | translate:{ pct: (stage.dropOffRate | number:'1.0-0') } }}</span>
                   } @else if (stage.conversionRate != null) {
                     <!-- Later stage exceeds the earlier one (e.g. cumulative "Livrés"
                          vs point-in-time pipeline): not a valid sequential rate. -->
-                    <span class="funnel-empty" title="Étape cumulative — non comparable à l'étape précédente">cumul — non comparable</span>
+                    <span class="funnel-empty" [title]="'dashboard.cockpit.funnel.cumulativeTitle' | translate">{{ 'dashboard.cockpit.funnel.cumulative' | translate }}</span>
                   } @else {
-                    <span class="funnel-empty">Pas de référence amont</span>
+                    <span class="funnel-empty">{{ 'dashboard.cockpit.funnel.noUpstream' | translate }}</span>
                   }
                 </div>
               }
