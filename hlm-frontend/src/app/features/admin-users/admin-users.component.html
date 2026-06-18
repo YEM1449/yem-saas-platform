@@ -1,20 +1,20 @@
-<h2>Gestion des utilisateurs</h2>
+<h2>{{ 'adminUsers.list.title' | translate }}</h2>
 
 <div class="toolbar">
-  <input type="text" [(ngModel)]="search" (keyup.enter)="applyFilter()" placeholder="Rechercher un utilisateur…" class="search-input" />
+  <input type="text" [(ngModel)]="search" (keyup.enter)="applyFilter()" [placeholder]="'adminUsers.list.searchPlaceholder' | translate" class="search-input" />
   <select [(ngModel)]="filterRole" (ngModelChange)="applyFilter()">
-    <option value="">Tous les rôles</option>
+    <option value="">{{ 'adminUsers.list.allRoles' | translate }}</option>
     @for (r of roles.slice(1); track r) {
-      <option [value]="r">{{ r }}</option>
+      <option [value]="r">{{ 'adminUsers.role.' + r | translate }}</option>
     }
   </select>
   <select [(ngModel)]="filterActif" (ngModelChange)="applyFilter()">
-    <option value="">Tous</option>
-    <option value="true">Actifs</option>
-    <option value="false">Inactifs</option>
+    <option value="">{{ 'adminUsers.list.allStatus' | translate }}</option>
+    <option value="true">{{ 'adminUsers.list.actifs' | translate }}</option>
+    <option value="false">{{ 'adminUsers.list.inactifs' | translate }}</option>
   </select>
-  <button (click)="applyFilter()">Filtrer</button>
-  <button (click)="showInviteDialog = true" class="btn-primary">+ Inviter un utilisateur</button>
+  <button (click)="applyFilter()">{{ 'adminUsers.list.filter' | translate }}</button>
+  <button (click)="showInviteDialog = true" class="btn-primary">{{ 'adminUsers.list.invite' | translate }}</button>
 </div>
 
 @if (success) { <p class="success">{{ success }}</p> }
@@ -22,28 +22,28 @@
 
 @if (exportData) {
   <div class="export-box">
-    <strong>Export RGPD :</strong>
+    <strong>{{ 'adminUsers.list.exportLabel' | translate }}</strong>
     <pre>{{ exportData }}</pre>
-    <button (click)="exportData = null" class="btn-small">Fermer</button>
+    <button (click)="exportData = null" class="btn-small">{{ 'adminUsers.list.close' | translate }}</button>
   </div>
 }
 
-@if (loading) { <p>Chargement...</p> }
+@if (loading) { <p>{{ 'adminUsers.list.loading' | translate }}</p> }
 
 @if (!loading && membres.length === 0) {
-  <p class="empty">Aucun utilisateur.</p>
+  <p class="empty">{{ 'adminUsers.list.empty' | translate }}</p>
 }
 
 @if (!loading && membres.length > 0) {
   <table>
     <thead>
       <tr>
-        <th>Nom</th>
-        <th>Email</th>
-        <th>Rôle</th>
-        <th>Statut</th>
-        <th>Dernière connexion</th>
-        <th>Actions</th>
+        <th>{{ 'adminUsers.list.thNom' | translate }}</th>
+        <th>{{ 'adminUsers.list.thEmail' | translate }}</th>
+        <th>{{ 'adminUsers.list.thRole' | translate }}</th>
+        <th>{{ 'adminUsers.list.thStatut' | translate }}</th>
+        <th>{{ 'adminUsers.list.thDerniereConnexion' | translate }}</th>
+        <th>{{ 'adminUsers.list.thActions' | translate }}</th>
       </tr>
     </thead>
     <tbody>
@@ -54,28 +54,28 @@
           <td>
             <select [ngModel]="m.role" (ngModelChange)="changerRole(m, $event)">
               @for (r of assignableRoles; track r) {
-                <option [value]="r">{{ r }}</option>
+                <option [value]="r">{{ 'adminUsers.role.' + r | translate }}</option>
               }
             </select>
           </td>
           <td>
-            <span [class]="statutBadgeClass(m.statut)">{{ m.statut }}</span>
+            <span [class]="statutBadgeClass(m.statut)">{{ 'adminUsers.statut.' + m.statut | translate }}</span>
           </td>
           <td>{{ m.derniereConnexion ? (m.derniereConnexion | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
           <td class="actions">
             @if (m.statut === 'INVITE' || m.statut === 'INVITATION_EXPIREE') {
-              <button (click)="reinviter(m)" class="btn-small">Ré-inviter</button>
+              <button (click)="reinviter(m)" class="btn-small">{{ 'adminUsers.list.reinviter' | translate }}</button>
             }
             @if (m.compteBloque) {
-              <button (click)="debloquer(m)" class="btn-small btn-green">Activer</button>
+              <button (click)="debloquer(m)" class="btn-small btn-green">{{ 'adminUsers.list.activer' | translate }}</button>
             }
-            <button (click)="openSettings(m)" class="btn-small btn-settings" title="Objectifs et accès projets">Paramètres</button>
-            <button (click)="exportDonnees(m)" class="btn-small">Export RGPD</button>
-            <button (click)="anonymiser(m)" class="btn-small btn-danger">Anonymiser</button>
-            <button (click)="retirer(m)" class="btn-small btn-danger">Désactiver</button>
+            <button (click)="openSettings(m)" class="btn-small btn-settings" [title]="'adminUsers.list.settingsTitle' | translate">{{ 'adminUsers.list.settings' | translate }}</button>
+            <button (click)="exportDonnees(m)" class="btn-small">{{ 'adminUsers.list.exportRgpd' | translate }}</button>
+            <button (click)="anonymiser(m)" class="btn-small btn-danger">{{ 'adminUsers.list.anonymiser' | translate }}</button>
+            <button (click)="retirer(m)" class="btn-small btn-danger">{{ 'adminUsers.list.desactiver' | translate }}</button>
             @if (m.statut !== 'RETIRE') {
               <button (click)="desactiverPartout(m)" class="btn-small btn-danger"
-                      title="Désactiver dans toutes les sociétés (départ définitif)">Désactiver partout</button>
+                      [title]="'adminUsers.list.desactiverPartoutTitle' | translate">{{ 'adminUsers.list.desactiverPartout' | translate }}</button>
             }
           </td>
         </tr>
@@ -84,9 +84,9 @@
   </table>
 
   <div class="pagination">
-    <button (click)="prevPage()" [disabled]="page === 0">‹ Précédent</button>
-    <span>Page {{ page + 1 }} / {{ totalPages }} ({{ totalElements }} membres)</span>
-    <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">Suivant ›</button>
+    <button (click)="prevPage()" [disabled]="page === 0">{{ 'adminUsers.list.prev' | translate }}</button>
+    <span>{{ 'adminUsers.list.pageInfo' | translate:{ page: page + 1, total: totalPages, count: totalElements } }}</span>
+    <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">{{ 'adminUsers.list.next' | translate }}</button>
   </div>
 }
 
