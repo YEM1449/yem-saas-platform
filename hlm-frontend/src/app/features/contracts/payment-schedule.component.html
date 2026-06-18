@@ -1,9 +1,9 @@
 <div class="schedule-container">
   <div class="schedule-header page-header">
-    <h3 class="page-title">Échéancier de paiement</h3>
+    <h3 class="page-title">{{ 'contracts.pay.title' | translate }}</h3>
     @if (canWrite) {
       <div class="page-header-actions">
-        <button class="btn btn-primary btn-sm" (click)="showCreateForm = !showCreateForm">+ Enregistrer paiement</button>
+        <button class="btn btn-primary btn-sm" (click)="showCreateForm = !showCreateForm">{{ 'contracts.pay.recordPayment' | translate }}</button>
       </div>
     }
   </div>
@@ -15,34 +15,34 @@
   <!-- ── Create form ── -->
   @if (showCreateForm && canWrite) {
     <div class="card" style="padding:16px;margin-bottom:16px">
-      <h4>Enregistrer paiement</h4>
+      <h4>{{ 'contracts.pay.recordPaymentTitle' | translate }}</h4>
       <div class="form-group">
-        <label class="form-label required">Libellé</label>
+        <label class="form-label required">{{ 'contracts.pay.fLibelle' | translate }}</label>
         <input class="form-control" [(ngModel)]="newLabel" maxlength="200" />
       </div>
       <div class="form-group">
-        <label class="form-label required">Montant</label>
+        <label class="form-label required">{{ 'contracts.pay.fMontant' | translate }}</label>
         <input class="form-control" type="number" [(ngModel)]="newAmount" min="0.01" step="0.01" />
       </div>
       <div class="form-group">
-        <label class="form-label required">Échéance</label>
+        <label class="form-label required">{{ 'contracts.pay.fEcheance' | translate }}</label>
         <input class="form-control" type="date" [(ngModel)]="newDueDate" />
       </div>
       <div class="form-group">
-        <label class="form-label">Notes</label>
+        <label class="form-label">{{ 'contracts.pay.fNotes' | translate }}</label>
         <textarea class="form-control" [(ngModel)]="newNotes" rows="2" maxlength="2000"></textarea>
       </div>
       @if (createError) { <div class="alert alert-error">{{ createError }}</div> }
       <div class="modal-footer" style="padding:0">
-        <button class="btn btn-primary" (click)="submitCreate()">Créer</button>
-        <button class="btn btn-secondary" (click)="showCreateForm = false; resetCreateForm()">Annuler</button>
+        <button class="btn btn-primary" (click)="submitCreate()">{{ 'contracts.pay.create' | translate }}</button>
+        <button class="btn btn-secondary" (click)="showCreateForm = false; resetCreateForm()">{{ 'contracts.pay.cancel' | translate }}</button>
       </div>
     </div>
   }
 
   <!-- ── Loading / empty ── -->
   @if (loading) {
-    <div class="skeleton-stack" data-testid="payment-schedule-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="payment-schedule-loading-state" [attr.aria-label]="'contracts.pay.loadingAria' | translate">
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
@@ -56,7 +56,7 @@
   @if (!loading && error) { <div class="alert alert-error">{{ error }}</div> }
   @if (!loading && !error && items.length === 0) {
     <div class="card">
-      <div class="empty-state"><p class="empty-state-title">Aucune tranche de paiement.</p></div>
+      <div class="empty-state"><p class="empty-state-title">{{ 'contracts.pay.emptyTranches' | translate }}</p></div>
     </div>
   }
 
@@ -67,14 +67,14 @@
         <table class="data-table schedule-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Libellé</th>
-              <th>Montant</th>
-              <th>Payé</th>
-              <th>Restant</th>
-              <th>Échéance</th>
-              <th>Statut</th>
-              <th>Actions</th>
+              <th>{{ 'contracts.pay.thNum' | translate }}</th>
+              <th>{{ 'contracts.pay.thLibelle' | translate }}</th>
+              <th>{{ 'contracts.pay.thMontant' | translate }}</th>
+              <th>{{ 'contracts.pay.thPaye' | translate }}</th>
+              <th>{{ 'contracts.pay.thRestant' | translate }}</th>
+              <th>{{ 'contracts.pay.thEcheance' | translate }}</th>
+              <th>{{ 'contracts.pay.thStatut' | translate }}</th>
+              <th>{{ 'contracts.pay.thActions' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,10 +88,10 @@
                   {{ item.amountRemaining | number:'1.2-2' }}
                 </td>
                 <td>{{ item.dueDate }}</td>
-                <td><span class="badge" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td>
+                <td><span class="badge" [ngClass]="statusClass(item.status)">{{ 'contracts.payStatus.' + item.status | translate }}</span></td>
                 <td class="td-actions">
                   <!-- PDF -->
-                  <button class="btn btn-sm btn-ghost" title="Télécharger appel de fonds" (click)="downloadPdf(item)">📄</button>
+                  <button class="btn btn-sm btn-ghost" [title]="'contracts.pay.downloadAppelTitle' | translate" (click)="downloadPdf(item)">📄</button>
 
                   @if (canWrite) {
                     <!-- Issue -->
@@ -129,17 +129,17 @@
     <div class="modal-backdrop" (click)="sendItemId = null">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h4 class="modal-title">Télécharger appel de fonds</h4>
+          <h4 class="modal-title">{{ 'contracts.pay.sendModalTitle' | translate }}</h4>
           <button class="modal-close" (click)="sendItemId = null">✕</button>
         </div>
         <div class="modal-body">
-          <label><input type="checkbox" [(ngModel)]="sendEmail" /> Email</label><br/>
-          <label><input type="checkbox" [(ngModel)]="sendSms" /> SMS</label>
+          <label><input type="checkbox" [(ngModel)]="sendEmail" /> {{ 'contracts.pay.email' | translate }}</label><br/>
+          <label><input type="checkbox" [(ngModel)]="sendSms" /> {{ 'contracts.pay.sms' | translate }}</label>
           @if (sendError) { <div class="alert alert-error">{{ sendError }}</div> }
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" [disabled]="!sendEmail && !sendSms" (click)="submitSend()">Enregistrer</button>
-          <button class="btn btn-secondary" (click)="sendItemId = null">Annuler</button>
+          <button class="btn btn-primary" [disabled]="!sendEmail && !sendSms" (click)="submitSend()">{{ 'contracts.pay.save' | translate }}</button>
+          <button class="btn btn-secondary" (click)="sendItemId = null">{{ 'contracts.pay.cancel' | translate }}</button>
         </div>
       </div>
     </div>
@@ -150,17 +150,17 @@
     <div class="modal-backdrop" (click)="paymentItemId = null">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h4 class="modal-title">Enregistrer paiement — {{ paymentItemLabel }}</h4>
+          <h4 class="modal-title">{{ 'contracts.pay.paymentModalTitle' | translate:{ label: paymentItemLabel } }}</h4>
           <button class="modal-close" (click)="paymentItemId = null">✕</button>
         </div>
         <div class="modal-body">
           @if (payments.length > 0) {
             <table class="data-table payment-table">
               <thead><tr>
-                <th>Montant</th>
-                <th>Date paiement</th>
-                <th>Méthode</th>
-                <th>Référence</th>
+                <th>{{ 'contracts.pay.thMontant' | translate }}</th>
+                <th>{{ 'contracts.pay.thDatePaiement' | translate }}</th>
+                <th>{{ 'contracts.pay.thMethode' | translate }}</th>
+                <th>{{ 'contracts.pay.thReference' | translate }}</th>
               </tr></thead>
               <tbody>
                 @for (p of payments; track p.id) {
@@ -175,28 +175,28 @@
             </table>
           }
 
-          <h5>Enregistrer paiement</h5>
+          <h5>{{ 'contracts.pay.recordPaymentH5' | translate }}</h5>
           <div class="form-group">
-            <label class="form-label required">Montant</label>
+            <label class="form-label required">{{ 'contracts.pay.fMontant' | translate }}</label>
             <input class="form-control" type="number" [(ngModel)]="paymentAmount" min="0.01" step="0.01" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Date paiement</label>
+            <label class="form-label required">{{ 'contracts.pay.thDatePaiement' | translate }}</label>
             <input class="form-control" type="date" [(ngModel)]="paymentDate" />
           </div>
           <div class="form-group">
-            <label class="form-label">Méthode</label>
+            <label class="form-label">{{ 'contracts.pay.fMethode' | translate }}</label>
             <input class="form-control" [(ngModel)]="paymentChannel" maxlength="50" />
           </div>
           <div class="form-group">
-            <label class="form-label">Référence</label>
+            <label class="form-label">{{ 'contracts.pay.fReference' | translate }}</label>
             <input class="form-control" [(ngModel)]="paymentRef" maxlength="200" />
           </div>
           @if (paymentError) { <div class="alert alert-error">{{ paymentError }}</div> }
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" (click)="submitPayment()">Enregistrer</button>
-          <button class="btn btn-secondary" (click)="paymentItemId = null">Fermer</button>
+          <button class="btn btn-primary" (click)="submitPayment()">{{ 'contracts.pay.save' | translate }}</button>
+          <button class="btn btn-secondary" (click)="paymentItemId = null">{{ 'contracts.pay.close' | translate }}</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,11 +15,12 @@ import { VenteService, Vente } from '../ventes/vente.service';
 @Component({
   selector: 'app-contracts',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './contracts.component.html',
   styleUrl: './contracts.component.css',
 })
 export class ContractsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private contractSvc = inject(ContractService);
   private outboxSvc  = inject(OutboxService);
   private venteSvc   = inject(VenteService);
@@ -66,7 +69,7 @@ export class ContractsComponent implements OnInit {
         a.href = url; a.download = fileName; a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => { this.error = 'Échec du téléchargement.'; },
+      error: () => { this.error = this.i18n.instant('contracts.list.downloadError'); },
     });
   }
 
@@ -75,18 +78,11 @@ export class ContractsComponent implements OnInit {
   }
 
   venteStatutLabel(s: string): string {
-    const map: Record<string, string> = {
-      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-      ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-    };
-    return map[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   contractStatusLabel(s: string): string {
-    const map: Record<string, string> = {
-      PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé',
-    };
-    return map[s] ?? s;
+    return this.i18n.instant('contracts.contractStatus.' + s);
   }
 
   load(): void {
@@ -103,7 +99,7 @@ export class ContractsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Failed to load contracts (${err.status})`;
+        this.error = body?.message ?? this.i18n.instant('contracts.list.loadError', { status: err.status });
       },
     });
   }
@@ -119,7 +115,7 @@ export class ContractsComponent implements OnInit {
         URL.revokeObjectURL(url);
       },
       error: () => {
-        this.error = 'Failed to download PDF.';
+        this.error = this.i18n.instant('contracts.list.pdfError');
       },
     });
   }
