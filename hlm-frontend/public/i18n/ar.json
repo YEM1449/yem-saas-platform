@@ -2289,5 +2289,122 @@
     "notFound": "الحجز غير موجود.",
     "detailCancelConfirm": "إلغاء هذا الحجز؟",
     "detailCancelError": "فشل الإلغاء. يرجى المحاولة مرة أخرى."
+  },
+  "visites": {
+    "title": "الزيارات",
+    "subtitle": "أجندة المواعيد التجارية",
+    "newVisit": "جدولة زيارة",
+    "views": {
+      "JOUR": "يوم",
+      "SEMAINE": "أسبوع",
+      "MOIS": "شهر"
+    },
+    "nav": {
+      "today": "اليوم",
+      "prev": "السابق",
+      "next": "التالي"
+    },
+    "filters": {
+      "agent": "الوكيل",
+      "allAgents": "كل الوكلاء",
+      "statut": "الحالة",
+      "allStatuts": "كل الحالات"
+    },
+    "statut": {
+      "PLANIFIEE": "مجدولة",
+      "CONFIRMEE": "مؤكدة",
+      "REALISEE": "منجزة",
+      "ANNULEE": "ملغاة",
+      "NO_SHOW": "غياب"
+    },
+    "type": {
+      "SUR_SITE": "في الموقع",
+      "AGENCE": "في الوكالة",
+      "VISIO": "مكالمة فيديو",
+      "TELEPHONIQUE": "هاتفية"
+    },
+    "resultat": {
+      "INTERESSE": "مهتم",
+      "A_RELANCER": "للمتابعة",
+      "PAS_INTERESSE": "غير مهتم",
+      "OPPORTUNITE_CREEE": "فرصة مُنشأة"
+    },
+    "agenda": {
+      "empty": "لا توجد زيارات في هذه الفترة.",
+      "emptyDay": "لا توجد زيارات في هذا اليوم.",
+      "loadError": "تعذّر تحميل الأجندة.",
+      "weekOf": "أسبوع {{date}}",
+      "moreCount": "+{{count}} أخرى",
+      "clickToCreate": "انقر على خانة للجدولة"
+    },
+    "form": {
+      "titleNew": "زيارة جديدة",
+      "titleEdit": "تعديل الزيارة",
+      "contact": "جهة الاتصال",
+      "contactRequired": "اختر جهة اتصال.",
+      "agent": "الوكيل",
+      "agentHint": "افتراضيًا أنت.",
+      "property": "الوحدة (اختياري)",
+      "project": "المشروع (اختياري)",
+      "dateHeure": "التاريخ والوقت",
+      "dateRequired": "التاريخ والوقت مطلوبان.",
+      "duree": "المدة (دقائق)",
+      "type": "نوع الزيارة",
+      "lieu": "المكان",
+      "lieuPlaceholder": "العنوان، القاعة، رابط الفيديو…",
+      "override": "الفرض رغم التعارض (مدير)",
+      "overrideHint": "يتجاوز كشف الحجز المزدوج. مُسجّل.",
+      "submitNew": "جدولة",
+      "submitEdit": "حفظ",
+      "cancel": "إلغاء",
+      "tzNote": "الأوقات بتوقيت الدار البيضاء.",
+      "conflictError": "لديك بالفعل زيارة في هذه الخانة.",
+      "genericError": "فشل الحفظ ({{status}})."
+    },
+    "detail": {
+      "back": "العودة إلى الأجندة",
+      "with": "مع",
+      "createdAt": "أُنشئت في {{date}}",
+      "actions": "إجراءات",
+      "confirmer": "تأكيد",
+      "compteRendu": "تسجيل التقرير",
+      "annuler": "إلغاء الزيارة",
+      "noShow": "تسجيل غياب",
+      "modifier": "تعديل",
+      "exportIcs": "إضافة إلى تقويمي (.ics)",
+      "linkedVente": "البيع المرتبط",
+      "viewVente": "عرض البيع",
+      "annulationRaison": "سبب الإلغاء",
+      "annulerPrompt": "سبب الإلغاء",
+      "annulerConfirm": "تأكيد الإلغاء",
+      "annulerCancel": "رجوع",
+      "noShowConfirm": "تأكيد غياب العميل المحتمل؟",
+      "loadError": "الزيارة غير موجودة.",
+      "actionError": "فشل الإجراء ({{status}})."
+    },
+    "compteRendu": {
+      "title": "تقرير الزيارة",
+      "intro": "املأ سير الزيارة ثم النتيجة. ستنتقل الزيارة إلى «منجزة».",
+      "texte": "التقرير",
+      "textePlaceholder": "سير الزيارة، ملاحظات العميل، الخطوات التالية…",
+      "texteRequired": "التقرير مطلوب.",
+      "resultat": "النتيجة",
+      "resultatRequired": "اختر نتيجة.",
+      "opportuniteHint": "«فرصة مُنشأة» ستقترح فتح بيع مرتبط.",
+      "submit": "حفظ التقرير",
+      "cancel": "إلغاء",
+      "createVente": "إنشاء بيع",
+      "createVenteHint": "تم كشف فرصة. افتح مسار البيع.",
+      "genericError": "فشل الحفظ ({{status}})."
+    },
+    "contactTab": {
+      "title": "الزيارات",
+      "empty": "لا توجد زيارات لجهة الاتصال هذه.",
+      "plan": "جدولة زيارة"
+    },
+    "kpi": {
+      "realisees": "الزيارات المنجزة",
+      "conversion": "معدل تحويل الزيارة←الفرصة"
+    }
   }
 }

@@ -2289,5 +2289,122 @@
     "notFound": "Reservation not found.",
     "detailCancelConfirm": "Cancel this reservation?",
     "detailCancelError": "Cancellation failed. Please try again."
+  },
+  "visites": {
+    "title": "Visits",
+    "subtitle": "Sales appointments agenda",
+    "newVisit": "Schedule a visit",
+    "views": {
+      "JOUR": "Day",
+      "SEMAINE": "Week",
+      "MOIS": "Month"
+    },
+    "nav": {
+      "today": "Today",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "filters": {
+      "agent": "Agent",
+      "allAgents": "All agents",
+      "statut": "Status",
+      "allStatuts": "All statuses"
+    },
+    "statut": {
+      "PLANIFIEE": "Scheduled",
+      "CONFIRMEE": "Confirmed",
+      "REALISEE": "Completed",
+      "ANNULEE": "Cancelled",
+      "NO_SHOW": "No-show"
+    },
+    "type": {
+      "SUR_SITE": "On site",
+      "AGENCE": "At the agency",
+      "VISIO": "Video call",
+      "TELEPHONIQUE": "Phone"
+    },
+    "resultat": {
+      "INTERESSE": "Interested",
+      "A_RELANCER": "To follow up",
+      "PAS_INTERESSE": "Not interested",
+      "OPPORTUNITE_CREEE": "Opportunity created"
+    },
+    "agenda": {
+      "empty": "No visit in this period.",
+      "emptyDay": "No visit on this day.",
+      "loadError": "Could not load the agenda.",
+      "weekOf": "Week of {{date}}",
+      "moreCount": "+{{count}} more",
+      "clickToCreate": "Click a slot to schedule"
+    },
+    "form": {
+      "titleNew": "New visit",
+      "titleEdit": "Edit visit",
+      "contact": "Contact",
+      "contactRequired": "Select a contact.",
+      "agent": "Agent",
+      "agentHint": "Defaults to yourself.",
+      "property": "Unit (optional)",
+      "project": "Project (optional)",
+      "dateHeure": "Date and time",
+      "dateRequired": "Date and time are required.",
+      "duree": "Duration (minutes)",
+      "type": "Visit type",
+      "lieu": "Location",
+      "lieuPlaceholder": "Address, room, video link…",
+      "override": "Force despite a conflict (manager)",
+      "overrideHint": "Overrides double-booking detection. Traced.",
+      "submitNew": "Schedule",
+      "submitEdit": "Save",
+      "cancel": "Cancel",
+      "tzNote": "Times in Casablanca timezone.",
+      "conflictError": "You already have a visit in this slot.",
+      "genericError": "Failed to save ({{status}})."
+    },
+    "detail": {
+      "back": "Back to the agenda",
+      "with": "with",
+      "createdAt": "Created on {{date}}",
+      "actions": "Actions",
+      "confirmer": "Confirm",
+      "compteRendu": "Record the report",
+      "annuler": "Cancel the visit",
+      "noShow": "Mark no-show",
+      "modifier": "Edit",
+      "exportIcs": "Add to my calendar (.ics)",
+      "linkedVente": "Linked sale",
+      "viewVente": "View the sale",
+      "annulationRaison": "Cancellation reason",
+      "annulerPrompt": "Cancellation reason",
+      "annulerConfirm": "Confirm cancellation",
+      "annulerCancel": "Back",
+      "noShowConfirm": "Confirm the prospect's no-show?",
+      "loadError": "Visit not found.",
+      "actionError": "Action failed ({{status}})."
+    },
+    "compteRendu": {
+      "title": "Visit report",
+      "intro": "Fill in the proceedings then the outcome. The visit will move to “Completed”.",
+      "texte": "Report",
+      "textePlaceholder": "How the visit went, prospect feedback, next steps…",
+      "texteRequired": "The report is required.",
+      "resultat": "Outcome",
+      "resultatRequired": "Select an outcome.",
+      "opportuniteHint": "“Opportunity created” will offer to open a linked sale.",
+      "submit": "Save the report",
+      "cancel": "Cancel",
+      "createVente": "Create a sale",
+      "createVenteHint": "An opportunity was detected. Open the sales pipeline.",
+      "genericError": "Failed to save ({{status}})."
+    },
+    "contactTab": {
+      "title": "Visits",
+      "empty": "No visit for this contact.",
+      "plan": "Schedule a visit"
+    },
+    "kpi": {
+      "realisees": "Visits completed",
+      "conversion": "Visit→opportunity conversion rate"
+    }
   }
 }
