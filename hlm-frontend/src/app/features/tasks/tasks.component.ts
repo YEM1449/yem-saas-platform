@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,11 +12,12 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [FormsModule, TaskFormComponent, DatePipe],
+  imports: [FormsModule, TaskFormComponent, DatePipe, TranslatePipe],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
 })
 export class TasksComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(TaskService);
 
   tasks: Task[] = [];
@@ -38,11 +41,11 @@ export class TasksComponent implements OnInit {
   editingTask?: Task;
 
   readonly statuses: { value: TaskStatus | ''; label: string }[] = [
-    { value: '', label: 'Tous' },
-    { value: 'OPEN', label: 'Ouvert' },
-    { value: 'IN_PROGRESS', label: 'En cours' },
-    { value: 'DONE', label: 'Terminé' },
-    { value: 'CANCELED', label: 'Annulé' }];
+    { value: '', label: this.i18n.instant('tasks.filterAll') },
+    { value: 'OPEN', label: this.i18n.instant('tasks.status.OPEN') },
+    { value: 'IN_PROGRESS', label: this.i18n.instant('tasks.status.IN_PROGRESS') },
+    { value: 'DONE', label: this.i18n.instant('tasks.status.DONE') },
+    { value: 'CANCELED', label: this.i18n.instant('tasks.status.CANCELED') }];
 
   ngOnInit(): void {
     this.load();
@@ -68,7 +71,7 @@ export class TasksComponent implements OnInit {
         if (seq !== this.loadSeq) return;
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Erreur de chargement (${err.status})`;
+        this.error = body?.message ?? this.i18n.instant('tasks.loadError', { status: err.status });
       },
     });
   }
@@ -102,11 +105,11 @@ export class TasksComponent implements OnInit {
     this.showForm = false;
     if (this.editingTask) {
       this.tasks = this.tasks.map(t => t.id === task.id ? task : t);
-      this.success = 'Tâche modifiée.';
+      this.success = this.i18n.instant('tasks.modified');
     } else {
       this.tasks = [task, ...this.tasks];
       this.totalElements++;
-      this.success = 'Tâche créée.';
+      this.success = this.i18n.instant('tasks.created');
     }
   }
 
@@ -122,18 +125,18 @@ export class TasksComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Erreur (${err.status})`;
+        this.error = body?.message ?? this.i18n.instant('tasks.genericError', { status: err.status });
       },
     });
   }
 
   deleteTask(task: Task): void {
-    if (!confirm(`Supprimer la tâche "${task.title}" ?`)) return;
+    if (!confirm(this.i18n.instant('tasks.deleteConfirm', { title: task.title }))) return;
     this.svc.delete(task.id).subscribe({
-      next: () => { this.tasks = this.tasks.filter(t => t.id !== task.id); this.success = 'Tâche supprimée.'; },
+      next: () => { this.tasks = this.tasks.filter(t => t.id !== task.id); this.success = this.i18n.instant('tasks.deleted'); },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Erreur (${err.status})`;
+        this.error = body?.message ?? this.i18n.instant('tasks.genericError', { status: err.status });
       },
     });
   }
@@ -155,7 +158,7 @@ export class TasksComponent implements OnInit {
 
   statusLabel(status: TaskStatus): string {
     const map: Record<TaskStatus, string> = {
-      OPEN: 'Ouvert', IN_PROGRESS: 'En cours', DONE: 'Terminé', CANCELED: 'Annulé',
+      OPEN: this.i18n.instant('tasks.status.OPEN'), IN_PROGRESS: this.i18n.instant('tasks.status.IN_PROGRESS'), DONE: this.i18n.instant('tasks.status.DONE'), CANCELED: this.i18n.instant('tasks.status.CANCELED'),
     };
     return map[status] ?? status;
   }

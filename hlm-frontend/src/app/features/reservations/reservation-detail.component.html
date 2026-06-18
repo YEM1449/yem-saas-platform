@@ -1,13 +1,13 @@
 <!-- Back nav -->
 <div class="back-nav">
   <a class="back-link" routerLink="/app/reservations">
-    ← Réservations
+    {{ 'reservations.back' | translate }}
   </a>
 </div>
 
 <!-- Loading -->
 @if (loading()) {
-  <div class="skeleton-stack" data-testid="reservation-detail-loading-state" aria-label="Chargement de la réservation…">
+  <div class="skeleton-stack" data-testid="reservation-detail-loading-state" [attr.aria-label]="'reservations.detailLoadingAria' | translate">
     <span class="skeleton skeleton-text-lg skeleton-w-75"></span>
     <span class="skeleton skeleton-card" style="height:120px"></span>
     <div class="skeleton-grid">
@@ -27,14 +27,14 @@
   <div class="page-header">
     <div class="header-left">
       <span class="ref-badge-lg">{{ d.reservationRef }}</span>
-      <span [class]="badgeClass(d.status)" style="margin-left:10px">{{ d.status }}</span>
+      <span [class]="badgeClass(d.status)" style="margin-left:10px">{{ 'reservations.status.' + d.status | translate }}</span>
     </div>
     <div class="header-actions">
       @if (canWrite && d.status === 'ACTIVE' && !d.linkedVenteId) {
         <button class="btn btn-danger btn-sm"
                 [disabled]="cancelling()"
                 (click)="cancelReservation()">
-          {{ cancelling() ? 'Annulation…' : 'Annuler la réservation' }}
+          {{ (cancelling() ? 'reservations.cancelling' : 'reservations.cancelReservation') | translate }}
         </button>
       }
     </div>
@@ -54,11 +54,11 @@
         </svg>
       </div>
       <div class="lvc-body">
-        <p class="lvc-title">Pipeline de vente démarrée</p>
-        <p class="lvc-sub">Cette réservation a été convertie en vente active.</p>
+        <p class="lvc-title">{{ 'reservations.linkedTitle' | translate }}</p>
+        <p class="lvc-sub">{{ 'reservations.linkedSub' | translate }}</p>
       </div>
       <a class="btn btn-primary btn-sm" [routerLink]="['/app/ventes', d.linkedVenteId]">
-        Voir la vente →
+        {{ 'reservations.seeVente' | translate }}
       </a>
     </div>
   }
@@ -74,10 +74,9 @@
           </svg>
         </div>
         <div>
-          <p class="convert-banner-title">Prêt à démarrer la vente ?</p>
+          <p class="convert-banner-title">{{ 'reservations.convertReady' | translate }}</p>
           <p class="convert-banner-sub">
-            Convertissez cette réservation en vente et lancez la pipeline commerciale
-            (Compromis → Financement → Acte notarié → Livraison).
+            {{ 'reservations.convertSub' | translate }}
           </p>
         </div>
       </div>
@@ -87,7 +86,7 @@
           <path d="M2.5 7.5h10M9 4l3.5 3.5L9 11" stroke="currentColor" stroke-width="1.8"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Démarrer la pipeline de vente
+        {{ 'reservations.startPipeline' | translate }}
       </button>
     </div>
   }
@@ -98,21 +97,21 @@
     <!-- Contact card -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Client</h3>
+        <h3 class="card-title">{{ 'reservations.clientCard' | translate }}</h3>
         <a class="btn btn-ghost btn-sm" [routerLink]="['/app/contacts', d.contactId]">
-          Voir le contact →
+          {{ 'reservations.seeContact' | translate }}
         </a>
       </div>
       <div class="card-body">
         <dl class="detail-list">
-          <dt>Nom</dt>
+          <dt>{{ 'reservations.nom' | translate }}</dt>
           <dd>{{ d.contactFullName }}</dd>
           @if (d.contactPhone) {
-            <dt>Téléphone</dt>
+            <dt>{{ 'reservations.telephone' | translate }}</dt>
             <dd>{{ d.contactPhone }}</dd>
           }
           @if (d.contactEmail) {
-            <dt>Email</dt>
+            <dt>{{ 'reservations.email' | translate }}</dt>
             <dd>{{ d.contactEmail }}</dd>
           }
         </dl>
@@ -122,10 +121,10 @@
     <!-- Property card -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Bien</h3>
+        <h3 class="card-title">{{ 'reservations.bienCard' | translate }}</h3>
         @if (d.propertyId) {
           <a class="btn btn-ghost btn-sm" [routerLink]="['/app/properties', d.propertyId]">
-            Voir le bien →
+            {{ 'reservations.seeBien' | translate }}
           </a>
         }
       </div>
@@ -133,32 +132,32 @@
         @if (d.propertyId) {
           <dl class="detail-list">
             @if (d.propertyReferenceCode) {
-              <dt>Référence</dt>
+              <dt>{{ 'reservations.reference' | translate }}</dt>
               <dd>{{ d.propertyReferenceCode }}</dd>
             }
             @if (d.propertyTitle) {
-              <dt>Désignation</dt>
+              <dt>{{ 'reservations.designation' | translate }}</dt>
               <dd>{{ d.propertyTitle }}</dd>
             }
             @if (d.projectNom) {
-              <dt>Projet</dt>
+              <dt>{{ 'reservations.projet' | translate }}</dt>
               <dd>{{ d.projectNom }}</dd>
             }
             @if (d.trancheNom) {
-              <dt>Tranche</dt>
+              <dt>{{ 'reservations.tranche' | translate }}</dt>
               <dd>{{ d.trancheNom }}</dd>
             }
             @if (d.immeubleNom) {
-              <dt>Immeuble</dt>
+              <dt>{{ 'reservations.immeuble' | translate }}</dt>
               <dd>{{ d.immeubleNom }}</dd>
             }
             @if (d.propertyPrice) {
-              <dt>Prix du bien</dt>
+              <dt>{{ 'reservations.prixBien' | translate }}</dt>
               <dd>{{ d.propertyPrice | number:'1.0-0' }} MAD</dd>
             }
           </dl>
         } @else {
-          <p class="td-muted" style="margin:0">Bien introuvable</p>
+          <p class="td-muted" style="margin:0">{{ 'reservations.bienIntrouvable' | translate }}</p>
         }
       </div>
     </div>
@@ -166,29 +165,29 @@
     <!-- Reservation info card -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Réservation</h3>
+        <h3 class="card-title">{{ 'reservations.reservationCard' | translate }}</h3>
       </div>
       <div class="card-body">
         <dl class="detail-list">
-          <dt>Statut</dt>
-          <dd><span [class]="badgeClass(d.status)">{{ d.status }}</span></dd>
-          <dt>Date</dt>
+          <dt>{{ 'reservations.statut' | translate }}</dt>
+          <dd><span [class]="badgeClass(d.status)">{{ 'reservations.status.' + d.status | translate }}</span></dd>
+          <dt>{{ 'reservations.date' | translate }}</dt>
           <dd>{{ d.reservationDate | date:'dd/MM/yyyy' }}</dd>
-          <dt>Expiration</dt>
+          <dt>{{ 'reservations.expiration' | translate }}</dt>
           <dd>{{ d.expiryDate | date:'dd/MM/yyyy HH:mm' }}</dd>
           @if (d.reservationPrice) {
-            <dt>Avance</dt>
+            <dt>{{ 'reservations.avance' | translate }}</dt>
             <dd>{{ d.reservationPrice | number:'1.0-0' }} MAD</dd>
           }
           @if (d.convertedDepositId) {
-            <dt>Dépôt lié</dt>
+            <dt>{{ 'reservations.depotLie' | translate }}</dt>
             <dd>
               <a class="link-cell" [routerLink]="['/app/deposits', d.convertedDepositId]">
-                Voir le dépôt
+                {{ 'reservations.seeDepot' | translate }}
               </a>
             </dd>
           }
-          <dt>Créé le</dt>
+          <dt>{{ 'reservations.creeLe' | translate }}</dt>
           <dd>{{ d.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
         </dl>
       </div>
@@ -198,7 +197,7 @@
     @if (d.notes) {
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Notes</h3>
+          <h3 class="card-title">{{ 'reservations.notes' | translate }}</h3>
         </div>
         <div class="card-body">
           <p class="notes-text">{{ d.notes }}</p>
@@ -211,14 +210,14 @@
   <!-- ── Timeline ────────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title">Chronologie</h3>
+      <h3 class="card-title">{{ 'reservations.chronologie' | translate }}</h3>
     </div>
     <div class="card-body">
       <ol class="timeline">
         <li class="timeline-item timeline-item--done">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
-            <span class="timeline-label">Réservation créée</span>
+            <span class="timeline-label">{{ 'reservations.tlCreated' | translate }}</span>
             <span class="timeline-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
           </div>
         </li>
@@ -226,9 +225,9 @@
           <li class="timeline-item timeline-item--done">
             <div class="timeline-dot timeline-dot--vente"></div>
             <div class="timeline-content">
-              <span class="timeline-label">Convertie en vente</span>
+              <span class="timeline-label">{{ 'reservations.tlConverted' | translate }}</span>
               <a class="link-cell timeline-date" [routerLink]="['/app/ventes', d.linkedVenteId]">
-                Voir la vente →
+                {{ 'reservations.seeVente' | translate }}
               </a>
             </div>
           </li>
@@ -236,15 +235,15 @@
           <li class="timeline-item timeline-item--pending">
             <div class="timeline-dot timeline-dot--pending"></div>
             <div class="timeline-content">
-              <span class="timeline-label">En attente de conversion</span>
-              <span class="timeline-date">Expire le {{ d.expiryDate | date:'dd/MM/yyyy' }}</span>
+              <span class="timeline-label">{{ 'reservations.tlPending' | translate }}</span>
+              <span class="timeline-date">{{ 'reservations.tlExpireLe' | translate:{ date: (d.expiryDate | date:'dd/MM/yyyy') } }}</span>
             </div>
           </li>
         } @else {
           <li class="timeline-item timeline-item--closed">
             <div class="timeline-dot timeline-dot--closed"></div>
             <div class="timeline-content">
-              <span class="timeline-label">{{ d.status === 'CANCELLED' ? 'Annulée' : 'Expirée' }}</span>
+              <span class="timeline-label">{{ 'reservations.status.' + d.status | translate }}</span>
             </div>
           </li>
         }

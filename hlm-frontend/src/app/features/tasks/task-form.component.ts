@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -16,11 +18,12 @@ interface PropertySuggestion { id: string; title: string; referenceCode: string;
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [FormsModule, UserPickerComponent, ContactPickerComponent],
+  imports: [FormsModule, UserPickerComponent, ContactPickerComponent, TranslatePipe],
   templateUrl: './task-form.component.html',
   styleUrl: './task-form.component.css',
 })
 export class TaskFormComponent implements OnInit {
+  private i18n = inject(I18nService);
   @Input() task?: Task;
   @Input() prefillContactId?: string;
   @Input() prefillPropertyId?: string;
@@ -137,7 +140,7 @@ export class TaskFormComponent implements OnInit {
 
   submit(): void {
     if (!this.title.trim()) {
-      this.error = 'Le titre est obligatoire.';
+      this.error = this.i18n.instant('tasks.titreRequis');
       return;
     }
     this.submitting = true;
@@ -176,6 +179,6 @@ export class TaskFormComponent implements OnInit {
 
   private extractError(err: HttpErrorResponse): string {
     const body = err.error as ErrorResponse | null;
-    return body?.message ?? `Erreur (${err.status})`;
+    return body?.message ?? this.i18n.instant('tasks.genericError', { status: err.status });
   }
 }

@@ -1,4 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReservationService, ReservationDetail } from './reservation.service';
@@ -7,11 +9,12 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-reservation-detail',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, RouterLink, TranslatePipe],
   templateUrl: './reservation-detail.component.html',
   styleUrl: './reservation-detail.component.css',
 })
 export class ReservationDetailComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc    = inject(ReservationService);
   private auth   = inject(AuthService);
   private route  = inject(ActivatedRoute);
@@ -33,7 +36,7 @@ export class ReservationDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.svc.getDetail(id).subscribe({
       next: (d) => { this.detail.set(d); this.loading.set(false); },
-      error: ()  => { this.error.set('Réservation introuvable.'); this.loading.set(false); },
+      error: ()  => { this.error.set(this.i18n.instant('reservations.notFound')); this.loading.set(false); },
     });
   }
 
@@ -49,12 +52,12 @@ export class ReservationDetailComponent implements OnInit {
 
   cancelReservation(): void {
     const d = this.detail();
-    if (!d || !confirm('Annuler cette réservation ?')) return;
+    if (!d || !confirm(this.i18n.instant('reservations.detailCancelConfirm'))) return;
     this.cancelling.set(true);
     this.svc.cancel(d.id).subscribe({
       next: () => this.router.navigate(['/app/reservations']),
       error: () => {
-        this.cancelError.set('Échec de l\'annulation. Veuillez réessayer.');
+        this.cancelError.set(this.i18n.instant('reservations.detailCancelError'));
         this.cancelling.set(false);
       },
     });

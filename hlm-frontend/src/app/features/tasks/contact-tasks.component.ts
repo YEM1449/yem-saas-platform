@@ -1,4 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TaskService } from './task.service';
@@ -9,16 +11,16 @@ import { ErrorResponse } from '../../core/models/error-response.model';
 @Component({
   selector: 'app-contact-tasks',
   standalone: true,
-  imports: [TaskFormComponent, DatePipe],
+  imports: [TaskFormComponent, DatePipe, TranslatePipe],
   template: `
     <div class="task-widget">
       <div class="widget-header">
-        <h4>Tâches associées</h4>
-        <button (click)="showForm = true" class="btn-small-primary">+ Nouvelle tâche</button>
+        <h4>{{ 'tasks.widgetTitle' | translate }}</h4>
+        <button (click)="showForm = true" class="btn-small-primary">{{ 'tasks.newTask' | translate }}</button>
       </div>
       @if (error) { <p class="error">{{ error }}</p> }
-      @if (loading) { <p class="loading-text">Chargement...</p> }
-      @if (!loading && tasks.length === 0) { <p class="empty">Aucune tâche.</p> }
+      @if (loading) { <p class="loading-text">{{ 'tasks.widgetLoading' | translate }}</p> }
+      @if (!loading && tasks.length === 0) { <p class="empty">{{ 'tasks.widgetEmpty' | translate }}</p> }
       @if (!loading && tasks.length > 0) {
         <ul class="task-list">
           @for (t of tasks; track t.id) {
@@ -60,6 +62,7 @@ import { ErrorResponse } from '../../core/models/error-response.model';
   `],
 })
 export class ContactTasksComponent implements OnInit {
+  private i18n = inject(I18nService);
   @Input({ required: true }) contactId!: string;
 
   private svc = inject(TaskService);
@@ -75,7 +78,7 @@ export class ContactTasksComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        this.error = body?.message ?? `Erreur (${err.status})`;
+        this.error = body?.message ?? this.i18n.instant('tasks.genericError', { status: err.status });
       },
     });
   }
@@ -94,7 +97,7 @@ export class ContactTasksComponent implements OnInit {
 
   statusLabel(status: TaskStatus): string {
     const map: Record<TaskStatus, string> = {
-      OPEN: 'Ouvert', IN_PROGRESS: 'En cours', DONE: 'Terminé', CANCELED: 'Annulé',
+      OPEN: this.i18n.instant('tasks.status.OPEN'), IN_PROGRESS: this.i18n.instant('tasks.status.IN_PROGRESS'), DONE: this.i18n.instant('tasks.status.DONE'), CANCELED: this.i18n.instant('tasks.status.CANCELED'),
     };
     return map[status] ?? status;
   }
