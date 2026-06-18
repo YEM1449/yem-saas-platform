@@ -1,4 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
@@ -10,12 +12,12 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
 @Component({
   selector: 'app-tresorerie-dashboard',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, RouterLink],
+  imports: [DecimalPipe, DatePipe, RouterLink, TranslatePipe],
   template: `
     <div class="page">
       <header class="page-head">
-        <h1>Trésorerie VEFA</h1>
-        <p class="sub">Position de caisse (échéancier légal) et alertes métier.</p>
+        <h1>{{ 'dashboard.tresorerie.title' | translate }}</h1>
+        <p class="sub">{{ 'dashboard.tresorerie.sub' | translate }}</p>
       </header>
 
       @if (loading()) {
@@ -31,30 +33,30 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
        @if (data(); as d) {
         <section class="kpi-row">
           <div class="kpi-card good">
-            <span class="kpi-label">Encaissé</span>
+            <span class="kpi-label">{{ 'dashboard.tresorerie.encaisse' | translate }}</span>
             <span class="kpi-value">{{ d.encaisseTotal | number:'1.0-0' }} <small>MAD</small></span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-label">À encaisser</span>
+            <span class="kpi-label">{{ 'dashboard.tresorerie.aEncaisser' | translate }}</span>
             <span class="kpi-value">{{ d.aEncaisser | number:'1.0-0' }} <small>MAD</small></span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-label">Prévisionnel 6 mois</span>
+            <span class="kpi-label">{{ 'dashboard.tresorerie.previsionnel6' | translate }}</span>
             <span class="kpi-value">{{ d.previsionnel6Mois | number:'1.0-0' }} <small>MAD</small></span>
           </div>
           <div class="kpi-card" [class.bad]="d.enRetardCount > 0">
-            <span class="kpi-label">En retard ({{ d.enRetardCount }})</span>
+            <span class="kpi-label">{{ 'dashboard.tresorerie.enRetard' | translate:{ count: d.enRetardCount } }}</span>
             <span class="kpi-value">{{ d.enRetardMontant | number:'1.0-0' }} <small>MAD</small></span>
           </div>
         </section>
 
         <section class="card forecast">
-          <h2>Encaissements prévus par mois</h2>
-          <p class="forecast-sub">Appels de fonds à venir, non encore réglés (hors retards).</p>
+          <h2>{{ 'dashboard.tresorerie.forecastTitle' | translate }}</h2>
+          <p class="forecast-sub">{{ 'dashboard.tresorerie.forecastSub' | translate }}</p>
           @if (forecastMax(d) === 0) {
-            <p class="empty">Aucun encaissement prévu sur les 6 prochains mois.</p>
+            <p class="empty">{{ 'dashboard.tresorerie.forecastEmpty' | translate }}</p>
           } @else {
-            <div class="bars" role="img" aria-label="Prévisionnel de trésorerie sur 6 mois">
+            <div class="bars" role="img" [attr.aria-label]="'dashboard.tresorerie.forecastAria' | translate">
               @for (m of d.previsionnelParMois; track m.libelle) {
                 <div class="bar-col">
                   <span class="bar-amount">{{ m.montant > 0 ? (m.montant / 1000 | number:'1.0-0') + ' K' : '—' }}</span>
@@ -70,19 +72,19 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
         </section>
 
         <section class="alerts">
-          <span class="chip" [class.warn]="d.optionsActives > 0">⏳ {{ d.optionsActives }} option(s) active(s)</span>
-          <span class="chip" [class.warn]="d.retractationsEnCours > 0">↩ {{ d.retractationsEnCours }} en délai de rétractation</span>
-          <span class="chip" [class.bad]="d.accordsExpirant15j > 0">🏦 {{ d.accordsExpirant15j }} accord(s) bancaire(s) expirant (15j)</span>
+          <span class="chip" [class.warn]="d.optionsActives > 0">⏳ {{ 'dashboard.tresorerie.optionsActives' | translate:{ count: d.optionsActives } }}</span>
+          <span class="chip" [class.warn]="d.retractationsEnCours > 0">↩ {{ 'dashboard.tresorerie.retractations' | translate:{ count: d.retractationsEnCours } }}</span>
+          <span class="chip" [class.bad]="d.accordsExpirant15j > 0">🏦 {{ 'dashboard.tresorerie.accordsExpirant' | translate:{ count: d.accordsExpirant15j } }}</span>
         </section>
 
         <section class="card">
-          <h2>Appels de fonds en retard</h2>
+          <h2>{{ 'dashboard.tresorerie.appelsRetardTitle' | translate }}</h2>
           @if (d.appelsEnRetard.length === 0) {
-            <p class="empty">Aucun appel en retard. 🎉</p>
+            <p class="empty">{{ 'dashboard.tresorerie.aucunAppel' | translate }}</p>
           } @else {
             <table class="data-table">
               <thead>
-                <tr><th>Vente</th><th>Acquéreur</th><th>Libellé</th><th>Montant</th><th>Échéance</th><th>Retard</th><th></th></tr>
+                <tr><th>{{ 'dashboard.tresorerie.thVente' | translate }}</th><th>{{ 'dashboard.tresorerie.thAcquereur' | translate }}</th><th>{{ 'dashboard.tresorerie.thLibelle' | translate }}</th><th>{{ 'dashboard.tresorerie.thMontant' | translate }}</th><th>{{ 'dashboard.tresorerie.thEcheance' | translate }}</th><th>{{ 'dashboard.tresorerie.thRetard' | translate }}</th><th></th></tr>
               </thead>
               <tbody>
                 @for (a of d.appelsEnRetard; track a.venteId) {
@@ -92,8 +94,8 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
                     <td>{{ a.libelle }}</td>
                     <td>{{ a.montant | number:'1.0-0' }} MAD</td>
                     <td>{{ a.dateEcheance | date:'dd/MM/yyyy' }}</td>
-                    <td><span class="badge bad">{{ a.joursRetard }} j</span></td>
-                    <td><a class="link" [routerLink]="['/app/ventes', a.venteId]">Ouvrir →</a></td>
+                    <td><span class="badge bad">{{ 'dashboard.tresorerie.joursRetard' | translate:{ count: a.joursRetard } }}</span></td>
+                    <td><a class="link" [routerLink]="['/app/ventes', a.venteId]">{{ 'dashboard.tresorerie.ouvrir' | translate }}</a></td>
                   </tr>
                 }
               </tbody>
@@ -138,6 +140,7 @@ import { TresorerieService, TresorerieDashboard } from './tresorerie.service';
   `],
 })
 export class TresorerieDashboardComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(TresorerieService);
 
   data    = signal<TresorerieDashboard | null>(null);
@@ -147,7 +150,7 @@ export class TresorerieDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.svc.getTresorerie().subscribe({
       next:  (d) => { this.data.set(d); this.loading.set(false); },
-      error: ()  => { this.error.set('Impossible de charger la trésorerie.'); this.loading.set(false); },
+      error: ()  => { this.error.set(this.i18n.instant('dashboard.tresorerie.loadError')); this.loading.set(false); },
     });
   }
 

@@ -1,4 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GroupClientService, LinkCandidate, GroupClient } from './group-client.service';
@@ -13,15 +15,15 @@ import { GroupClientService, LinkCandidate, GroupClient } from './group-client.s
 @Component({
   selector: 'app-vue-groupe-clients',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, TranslatePipe],
   template: `
     <div class="page">
       <header class="page-head">
         <div>
-          <h1>Clients récurrents du groupe</h1>
-          <p class="sub">Reliez l'identité d'un acheteur présent dans plusieurs de vos sociétés.</p>
+          <h1>{{ 'dashboard.vueGroupeClients.title' | translate }}</h1>
+          <p class="sub">{{ 'dashboard.vueGroupeClients.sub' | translate }}</p>
         </div>
-        <a class="btn btn-secondary" routerLink="/app/groupe">← Vue Groupe</a>
+        <a class="btn btn-secondary" routerLink="/app/groupe">{{ 'dashboard.vueGroupeClients.backToGroupe' | translate }}</a>
       </header>
 
       @if (loading()) {
@@ -35,34 +37,34 @@ import { GroupClientService, LinkCandidate, GroupClient } from './group-client.s
 
         <!-- Candidates -->
         <section class="card">
-          <h2 class="card-title">À lier <span class="muted">({{ candidates().length }})</span></h2>
-          <p class="card-sub">Même CIN détecté dans plusieurs sociétés. Liez seulement avec l'accord du client.</p>
+          <h2 class="card-title">{{ 'dashboard.vueGroupeClients.toLink' | translate }} <span class="muted">({{ candidates().length }})</span></h2>
+          <p class="card-sub">{{ 'dashboard.vueGroupeClients.toLinkSub' | translate }}</p>
           @if (candidates().length === 0) {
-            <p class="empty">Aucun doublon inter-sociétés détecté.</p>
+            <p class="empty">{{ 'dashboard.vueGroupeClients.noDuplicate' | translate }}</p>
           } @else {
             @for (cand of candidates(); track cand.cinMasque) {
               <div class="cand">
                 <div class="cand-head">
-                  <span class="cin">CIN {{ cand.cinMasque }}</span>
-                  <span class="muted">{{ cand.contacts.length }} fiches</span>
+                  <span class="cin">{{ 'dashboard.vueGroupeClients.cin' | translate:{ cin: cand.cinMasque } }}</span>
+                  <span class="muted">{{ 'dashboard.vueGroupeClients.fiches' | translate:{ count: cand.contacts.length } }}</span>
                 </div>
                 <ul class="refs">
                   @for (c of cand.contacts; track c.contactId) {
                     <li>
                       <strong>{{ c.nomComplet }}</strong>
                       <span class="soc-chip">{{ c.societeNom }}</span>
-                      @if (c.statut) { <span class="muted">· {{ statutLabel(c.statut) }}</span> }
+                      @if (c.statut) { <span class="muted">· {{ 'contacts.status.' + c.statut | translate }}</span> }
                     </li>
                   }
                 </ul>
                 <label class="consent-row">
                   <input type="checkbox" [checked]="consentByCin()[cand.cinMasque] || false"
                          (change)="toggleConsent(cand.cinMasque)" />
-                  Le client a consenti au rapprochement de ses données entre sociétés (Loi 09-08).
+                  {{ 'dashboard.vueGroupeClients.consent' | translate }}
                 </label>
                 <button class="btn btn-primary btn-sm"
                         [disabled]="!consentByCin()[cand.cinMasque] || busy()"
-                        (click)="link(cand)">Lier ces fiches</button>
+                        (click)="link(cand)">{{ 'dashboard.vueGroupeClients.linkFiches' | translate }}</button>
               </div>
             }
           }
@@ -70,9 +72,9 @@ import { GroupClientService, LinkCandidate, GroupClient } from './group-client.s
 
         <!-- Linked clients -->
         <section class="card">
-          <h2 class="card-title">Clients liés <span class="muted">({{ linked().length }})</span></h2>
+          <h2 class="card-title">{{ 'dashboard.vueGroupeClients.linkedClients' | translate }} <span class="muted">({{ linked().length }})</span></h2>
           @if (linked().length === 0) {
-            <p class="empty">Aucune identité groupe pour le moment.</p>
+            <p class="empty">{{ 'dashboard.vueGroupeClients.noGroupIdentity' | translate }}</p>
           } @else {
             @for (gc of linked(); track gc.groupePersonneId) {
               <div class="linked">
@@ -80,12 +82,12 @@ import { GroupClientService, LinkCandidate, GroupClient } from './group-client.s
                   @for (c of gc.contacts; track c.contactId) {
                     <span class="linked-pill">
                       {{ c.nomComplet }} · {{ c.societeNom }}
-                      <button class="pill-x" title="Retirer du groupe"
+                      <button class="pill-x" [title]="'dashboard.vueGroupeClients.removeFromGroupTitle' | translate"
                               (click)="unlink(c.contactId)">✕</button>
                     </span>
                   }
                 </div>
-                <span class="muted small">Lié le {{ gc.lieLe | date:'dd/MM/yyyy' }}</span>
+                <span class="muted small">{{ 'dashboard.vueGroupeClients.linkedOn' | translate:{ date: (gc.lieLe | date:'dd/MM/yyyy') } }}</span>
               </div>
             }
           }
@@ -118,6 +120,7 @@ import { GroupClientService, LinkCandidate, GroupClient } from './group-client.s
   `]
 })
 export class VueGroupeClientsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private api = inject(GroupClientService);
 
   loading = signal(true);
@@ -137,7 +140,7 @@ export class VueGroupeClientsComponent implements OnInit {
     const done = () => { if (--pending === 0) this.loading.set(false); };
     this.api.candidates().subscribe({
       next: c => { this.candidates.set(c); done(); },
-      error: () => { this.error.set('Chargement des candidats impossible.'); done(); }
+      error: () => { this.error.set(this.i18n.instant('dashboard.vueGroupeClients.candidatesError')); done(); }
     });
     this.api.list().subscribe({
       next: l => { this.linked.set(l); done(); },
@@ -157,27 +160,20 @@ export class VueGroupeClientsComponent implements OnInit {
     this.error.set('');
     this.notice.set('');
     this.api.link(cand.contacts.map(c => c.contactId), true).subscribe({
-      next: () => { this.notice.set('Identité client liée.'); this.busy.set(false); this.reload(); },
+      next: () => { this.notice.set(this.i18n.instant('dashboard.vueGroupeClients.linked')); this.busy.set(false); this.reload(); },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Impossible de lier ces fiches.');
+        this.error.set(err?.error?.message ?? this.i18n.instant('dashboard.vueGroupeClients.linkError'));
         this.busy.set(false);
       }
     });
   }
 
   unlink(contactId: string): void {
-    if (!confirm('Retirer ce contact de l’identité groupe ?')) return;
+    if (!confirm(this.i18n.instant('dashboard.vueGroupeClients.unlinkConfirm'))) return;
     this.api.unlink(contactId).subscribe({
-      next: () => { this.notice.set('Contact retiré du groupe.'); this.reload(); },
-      error: () => { this.error.set('Impossible de retirer ce contact.'); }
+      next: () => { this.notice.set(this.i18n.instant('dashboard.vueGroupeClients.unlinked')); this.reload(); },
+      error: () => { this.error.set(this.i18n.instant('dashboard.vueGroupeClients.unlinkError')); }
     });
   }
 
-  statutLabel(s: string): string {
-    const map: Record<string, string> = {
-      PROSPECT: 'Prospect', QUALIFIED_PROSPECT: 'Prospect qualifié', CLIENT: 'Client',
-      ACTIVE_CLIENT: 'Client actif', COMPLETED_CLIENT: 'Client finalisé', LOST: 'Perdu',
-    };
-    return map[s] ?? s;
-  }
 }
