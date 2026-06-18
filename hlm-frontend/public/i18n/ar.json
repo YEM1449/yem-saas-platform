@@ -2406,5 +2406,35 @@
       "realisees": "الزيارات المنجزة",
       "conversion": "معدل تحويل الزيارة←الفرصة"
     }
+  },
+  "immeubles": {
+    "title": "المباني",
+    "subtitle": "إدارة المباني حسب المشروع",
+    "newImmeuble": "مبنى جديد",
+    "projet": "المشروع",
+    "allProjects": "كل المشاريع",
+    "loadingAria": "جارٍ التحميل...",
+    "emptyTitle": "لا توجد مبانٍ",
+    "emptyDesc": "أضف أول مبنى إلى مشروع.",
+    "thNom": "الاسم",
+    "thProjet": "المشروع",
+    "thAdresse": "العنوان",
+    "thEtages": "الطوابق",
+    "thDescription": "الوصف",
+    "modalTitle": "مبنى جديد",
+    "close": "إغلاق",
+    "selectProject": "— اختر مشروعًا —",
+    "fNom": "الاسم",
+    "nomPlaceholder": "مثال: برج A، مبنى B",
+    "fAdresse": "العنوان",
+    "adressePlaceholder": "عنوان المبنى",
+    "fEtages": "عدد الطوابق",
+    "fDescription": "الوصف",
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ...",
+    "create": "إنشاء",
+    "loadError": "فشل تحميل المباني ({{status}})",
+    "requiredFields": "المشروع والاسم مطلوبان.",
+    "createError": "فشل الإنشاء ({{status}})"
   }
 }

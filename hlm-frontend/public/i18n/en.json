@@ -2406,5 +2406,35 @@
       "realisees": "Visits completed",
       "conversion": "Visit→opportunity conversion rate"
     }
+  },
+  "immeubles": {
+    "title": "Buildings",
+    "subtitle": "Building management by project",
+    "newImmeuble": "New building",
+    "projet": "Project",
+    "allProjects": "All projects",
+    "loadingAria": "Loading...",
+    "emptyTitle": "No building",
+    "emptyDesc": "Add your first building to a project.",
+    "thNom": "Name",
+    "thProjet": "Project",
+    "thAdresse": "Address",
+    "thEtages": "Floors",
+    "thDescription": "Description",
+    "modalTitle": "New building",
+    "close": "Close",
+    "selectProject": "— Select a project —",
+    "fNom": "Name",
+    "nomPlaceholder": "E.g. Tower A, Bldg B",
+    "fAdresse": "Address",
+    "adressePlaceholder": "Building address",
+    "fEtages": "Number of floors",
+    "fDescription": "Description",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "create": "Create",
+    "loadError": "Failed to load buildings ({{status}})",
+    "requiredFields": "Project and name are required.",
+    "createError": "Failed to create ({{status}})"
   }
 }

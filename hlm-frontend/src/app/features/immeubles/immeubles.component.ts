@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { ImmeubleService, Immeuble, CreateImmeubleRequest } from './immeuble.service';
@@ -10,13 +12,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-immeubles',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './immeubles.component.html',
 })
 export class ImmeublesComponent implements OnInit {
   private svc = inject(ImmeubleService);
   private projectSvc = inject(ProjectService);
   private auth = inject(AuthService);
+  private i18n = inject(I18nService);
 
   immeubles: Immeuble[] = [];
   projects: Project[] = [];
@@ -50,7 +53,7 @@ export class ImmeublesComponent implements OnInit {
       next: (data) => { this.immeubles = data; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.error = `Failed to load buildings (${err.status})`;
+        this.error = this.i18n.instant('immeubles.loadError', { status: err.status });
       },
     });
   }
@@ -70,7 +73,7 @@ export class ImmeublesComponent implements OnInit {
 
   submitCreate(): void {
     if (!this.form.projectId || !this.form.nom.trim()) {
-      this.submitError = 'Le projet et le nom sont obligatoires.';
+      this.submitError = this.i18n.instant('immeubles.requiredFields');
       return;
     }
     this.submitting = true;
@@ -83,7 +86,7 @@ export class ImmeublesComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting = false;
-        this.submitError = err.error?.message ?? `Failed to create (${err.status})`;
+        this.submitError = err.error?.message ?? this.i18n.instant('immeubles.createError', { status: err.status });
       },
     });
   }
