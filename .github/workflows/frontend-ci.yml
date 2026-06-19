@@ -52,6 +52,9 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: i18n gate (no hardcoded French in templates)
+        run: npm run i18n:scan
+
       - name: Run unit tests (CI mode + coverage)
         env:
           CHROME_BIN: /usr/bin/google-chrome-stable

@@ -98,7 +98,8 @@ This is documented in each component's header comment.
   `templates` namespaces were parity-verified programmatically; others built green with no FR fallback in EN/AR UI).
 - [ ] RTL: audit feature layouts under `dir=rtl` beyond the chrome baseline (forms, tables, the 3D viewer). *(deferred — chrome RTL is live; per-feature layout audit not yet done)*
 - [ ] Legal/market constants: default language derived from the active `Market` (links EX-015 / DA-016 currency). *(deferred)*
-- [ ] A lint/CI check that flags new hardcoded user-facing strings (e.g. an ESLint rule or a string-scan gate). *(recommended next — see §6)*
+- [x] A lint/CI check that flags new hardcoded user-facing strings — `tools/i18n-scan.mjs`, wired
+  into `frontend-ci.yml` as `npm run i18n:scan` (see §7).
 
 ---
 
@@ -143,3 +144,34 @@ a component that gained a `TranslatePipe`/`I18nService` dependency, update its s
 ### Recommended next step
 Add the string-scan CI gate (last unchecked DoD item) so new hardcoded user-facing French/English literals
 fail the build — otherwise the catalogs will drift as features are added.
+
+---
+
+## 7. The string-scan gate (`tools/i18n-scan.mjs`)
+
+Added after the §6 "complete" claim turned out premature — a fresh scan found **116** hardcoded
+strings across ~16 surfaces the §4 inventory had missed (whole features: viewer-3d, reports,
+prospects, outbox, documents, commissions, audit, activation, portal-payments stub; plus several
+dashboard cockpit widgets and chrome stragglers). All were then migrated; the gate now passes
+(`✓ 0 hardcoded French`) and runs in CI before the unit tests.
+
+**How it works:** scans every `*.html` template + inline `template: \`…\`` block under `src/app`,
+strips interpolations / bindings / comments / svg, and flags a **French-accented** character
+(`à â ä é è ê ë î ï ô ö û ù ç`) in a visible text node or a plain text attribute
+(`title`/`placeholder`/`aria-label`/`alt`). Accents are deliberately the trigger: high signal, very
+low false-positive. **It does not catch unaccented strings** (e.g. an English "Save" or a French
+"Total") — those still need review; the gate is a regression tripwire, not a proof of completeness.
+
+**Escape hatches:** add a path fragment to `IGNORE` (used for the legal FR-only pages, the
+template-editor clause bodies, and the orphan `portal-payments.component.html`), or put
+`<!-- i18n-ignore -->` on the line.
+
+**Run locally:** `npm run i18n:scan`.
+
+**Migration gotchas worth knowing (hit during the burn-down):**
+- Empty `imports: []` arrays → the naive `, TranslatePipe` append yields `[, TranslatePipe]`. Append
+  without the leading comma when the array is empty.
+- Multi-line `import { … } from '@angular/core'` blocks → inserting a new `import` line right after the
+  bare `import {` lands it *inside* the block. Insert after the closing `} from '@angular/core';`.
+- `inject` must be declared as the **first** class field when a data-array field initializer calls
+  `this.i18n.instant(...)` (e.g. the template-builder palette, the prospects pipeline labels).

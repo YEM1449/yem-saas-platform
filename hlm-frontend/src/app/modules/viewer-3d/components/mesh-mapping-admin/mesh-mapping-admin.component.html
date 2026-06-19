@@ -5,8 +5,8 @@
 
 <div class="page-header">
   <div>
-    <h1 class="page-title">Associer les lots au modèle 3D</h1>
-    <p class="page-subtitle">Reliez chaque mesh du fichier GLB à un bien immobilier du projet.</p>
+    <h1 class="page-title">{{ 'viewer3d.mesh.title' | translate }}</h1>
+    <p class="page-subtitle">{{ 'viewer3d.mesh.subtitle' | translate }}</p>
   </div>
   <div class="page-header-actions">
     @if (!loading() && !error()) {
@@ -16,7 +16,7 @@
     }
     @if (canUndoAutoPair()) {
       <button class="btn btn-secondary btn-sm" (click)="undoAutoPair()"
-              title="Restaurer l'état précédent l'association automatique">
+              [title]="'viewer3d.mesh.undoTitle' | translate">
         ↶ Annuler l'association
       </button>
     }
@@ -42,7 +42,7 @@
 <!-- Loading skeleton ------------------------------------------------------- -->
 @if (loading()) {
   <div class="skeleton-stack" data-testid="mapping-loading-state"
-       aria-label="Chargement...">
+       [attr.aria-label]="'viewer3d.mesh.loadingAria' | translate">
     <span class="skeleton skeleton-card" style="height:480px"></span>
   </div>
 }
@@ -52,10 +52,10 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🧊</div>
-      <p class="empty-state-title">Aucun modèle 3D</p>
-      <p class="empty-state-desc">Téléversez d'abord un fichier GLB depuis la fiche du projet.</p>
+      <p class="empty-state-title">{{ 'viewer3d.mesh.emptyTitle' | translate }}</p>
+      <p class="empty-state-desc">{{ 'viewer3d.mesh.emptyDesc' | translate }}</p>
       <a [routerLink]="['/app/projets', projetId]"
-         class="btn btn-primary">Téléverser un modèle</a>
+         class="btn btn-primary">{{ 'viewer3d.mesh.uploadModel' | translate }}</a>
     </div>
   </div>
 }
@@ -68,17 +68,17 @@
   <div class="mapping-grid">
 
     <!-- 3D viewer panel -->
-    <div class="viewer-panel" aria-label="Aperçu 3D">
+    <div class="viewer-panel" [attr.aria-label]="'viewer3d.mesh.previewAria' | translate">
       <canvas #canvas class="viewer-canvas" tabindex="0"></canvas>
       <div class="viewer-legend" aria-hidden="true">
-        <span class="legend-chip"><span class="dot dot-mapped"></span>Associé</span>
-        <span class="legend-chip"><span class="dot dot-unmapped"></span>Non associé</span>
-        <span class="legend-chip"><span class="dot dot-selected"></span>Sélectionné</span>
+        <span class="legend-chip"><span class="dot dot-mapped"></span>{{ 'viewer3d.mesh.mapped' | translate }}</span>
+        <span class="legend-chip"><span class="dot dot-unmapped"></span>{{ 'viewer3d.mesh.unmapped' | translate }}</span>
+        <span class="legend-chip"><span class="dot dot-selected"></span>{{ 'viewer3d.mesh.selected' | translate }}</span>
       </div>
     </div>
 
     <!-- Side panel -->
-    <aside class="side-panel" aria-label="Liste des mesh">
+    <aside class="side-panel" [attr.aria-label]="'viewer3d.mesh.meshListAria' | translate">
       <div class="side-panel-toolbar">
         <div class="search-wrap" style="flex:1">
           <span class="search-icon" aria-hidden="true">
@@ -89,7 +89,7 @@
           </span>
           <input class="search-input"
                  type="search"
-                 placeholder="Filtrer par nom de mesh ou réf."
+                 [placeholder]="'viewer3d.mesh.filterPlaceholder' | translate"
                  [ngModel]="filterText()"
                  (ngModelChange)="filterText.set($event)" />
         </div>
@@ -97,14 +97,14 @@
           <input type="checkbox"
                  [checked]="hideMapped()"
                  (change)="hideMapped.set($any($event.target).checked)" />
-          <span>Masquer les associés</span>
+          <span>{{ 'viewer3d.mesh.hideMapped' | translate }}</span>
         </label>
       </div>
 
       <!-- Per-mesh rows -->
       @if (visibleRows().length === 0) {
         <div class="side-panel-empty">
-          <p class="text-muted">Aucun résultat</p>
+          <p class="text-muted">{{ 'viewer3d.mesh.noResult' | translate }}</p>
         </div>
       }
 
@@ -116,7 +116,7 @@
               [class.mapped]="!!draft().get(meshName)">
             <button type="button"
                     class="mesh-focus-btn"
-                    aria-label="Centrer la caméra sur ce mesh"
+                    [attr.aria-label]="'viewer3d.mesh.centerCameraAria' | translate"
                     (click)="focusMesh(meshName)">
               <span class="mesh-name" [title]="meshName">{{ meshName }}</span>
               <span class="mesh-status">
@@ -135,8 +135,8 @@
             <select class="form-control mesh-picker"
                     [ngModel]="draft().get(meshName) || ''"
                     (ngModelChange)="setMapping(meshName, $event || null)"
-                    aria-label="Sélectionner un lot">
-              <option value="">— Aucun lot —</option>
+                    [attr.aria-label]="'viewer3d.mesh.selectLotAria' | translate">
+              <option value="">{{ 'viewer3d.mesh.noLot' | translate }}</option>
               @for (p of availableForMesh(meshName); track p.id) {
                 <option [value]="p.id">{{ p.referenceCode }} — {{ p.title }}</option>
               }
@@ -161,24 +161,24 @@
             @if (expandedRows().has(meshName)) {
               <div class="hier-grid">
                 <label class="hier-label">
-                  <span>Immeuble parent</span>
+                  <span>{{ 'viewer3d.mesh.immeubleParent' | translate }}</span>
                   <select class="form-control"
                           [ngModel]="getHierarchy(meshName).immeubleMeshId || ''"
                           (ngModelChange)="setHierarchy(meshName, 'immeubleMeshId', $event || null)">
-                    <option value="">— Aucun —</option>
+                    <option value="">{{ 'viewer3d.mesh.none' | translate }}</option>
                     @for (m of parentCandidates(meshName, 'building'); track m) {
-                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'building') ? ' ·' + ('auto') : '' }}</option>
+                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'building') ? ' · ' + ('viewer3d.mesh.auto' | translate) : '' }}</option>
                     }
                   </select>
                 </label>
                 <label class="hier-label">
-                  <span>Tranche parente</span>
+                  <span>{{ 'viewer3d.mesh.trancheParent' | translate }}</span>
                   <select class="form-control"
                           [ngModel]="getHierarchy(meshName).trancheMeshId || ''"
                           (ngModelChange)="setHierarchy(meshName, 'trancheMeshId', $event || null)">
-                    <option value="">— Aucun —</option>
+                    <option value="">{{ 'viewer3d.mesh.none' | translate }}</option>
                     @for (m of parentCandidates(meshName, 'tranche'); track m) {
-                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'tranche') ? ' ·' + ('auto') : '' }}</option>
+                      <option [value]="m">{{ m }}{{ isHeuristicCandidate(m, 'tranche') ? ' · ' + ('viewer3d.mesh.auto' | translate) : '' }}</option>
                     }
                   </select>
                 </label>
@@ -206,9 +206,9 @@
   <div class="modal-backdrop" (click)="cancelAutoPair()">
     <div class="modal modal-wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">Aperçu des associations proposées</h2>
+        <h2 class="modal-title">{{ 'viewer3d.mesh.modalTitle' | translate }}</h2>
         <button class="modal-close" (click)="cancelAutoPair()"
-                aria-label="Fermer">&times;</button>
+                [attr.aria-label]="'viewer3d.mesh.closeAria' | translate">&times;</button>
       </div>
       <div class="modal-body">
         <p class="text-muted text-sm" style="margin:0 0 12px">
@@ -219,10 +219,10 @@
             <thead>
               <tr>
                 <th style="width:32px"></th>
-                <th>Mesh</th>
-                <th>Bien proposé</th>
-                <th>Stratégie</th>
-                <th class="text-right">Confiance</th>
+                <th>{{ 'viewer3d.mesh.thMesh' | translate }}</th>
+                <th>{{ 'viewer3d.mesh.thBienPropose' | translate }}</th>
+                <th>{{ 'viewer3d.mesh.thStrategie' | translate }}</th>
+                <th class="text-right">{{ 'viewer3d.mesh.thConfiance' | translate }}</th>
               </tr>
             </thead>
             <tbody>
