@@ -3216,5 +3216,62 @@
     "pwMismatch": "Les mots de passe ne correspondent pas.",
     "mustAcceptCgu": "Vous devez accepter les conditions générales d'utilisation.",
     "genericError": "Erreur ({{status}})"
+  },
+  "reports": {
+    "common": {
+      "du": "Du",
+      "au": "Au",
+      "statut": "Statut",
+      "refresh": "Actualiser",
+      "exportCsv": "Exporter CSV",
+      "exportPdf": "Exporter PDF",
+      "generating": "Génération…",
+      "total": "Total",
+      "caTotal": "CA total",
+      "allStatuses": "Tous les statuts"
+    },
+    "agents": {
+      "title": "Rapport de performance — Agents",
+      "subtitle": "Classement des agents commerciaux par CA",
+      "filterNote": "L'aperçu affiche les données du snapshot 90 jours. L'export PDF/CSV utilise la plage de dates sélectionnée.",
+      "agentChip": "agent(s)",
+      "caTotal90": "CA total (90j)",
+      "loadingAria": "Chargement du classement agents…",
+      "empty": "Aucune donnée agent disponible.",
+      "thAgent": "Agent",
+      "thCA": "CA (MAD)",
+      "thVentes": "Ventes",
+      "thCaMoy": "CA moy./vente"
+    },
+    "creances": {
+      "title": "Rapport créances — Échéancier",
+      "subtitle": "Aging des échéances impayées par tranche de retard",
+      "loadingAria": "Chargement du rapport créances…",
+      "totalEncours": "Total encours",
+      "dontEnRetard": "Dont en retard",
+      "tauxRecouvrement": "Taux de recouvrement",
+      "delaiMoyen": "Délai moyen encaissement",
+      "detailParTranche": "Détail par tranche",
+      "thTranche": "Tranche",
+      "thEcheances": "Échéances",
+      "thMontantRetard": "Montant en retard (MAD)",
+      "thPart": "Part",
+      "retardsParProjet": "Retards par projet",
+      "thProjet": "Projet",
+      "dataAsOf": "Données au {{date}}"
+    },
+    "ventes": {
+      "title": "Rapport commercial — Ventes",
+      "subtitle": "Aperçu et export des ventes filtrées",
+      "loadingAria": "Chargement du rapport ventes…",
+      "venteChip": "vente(s)",
+      "empty": "Aucune vente pour les critères sélectionnés.",
+      "thReference": "Référence",
+      "thAcquereur": "Acquéreur",
+      "thStatut": "Statut",
+      "thPrix": "Prix (MAD)",
+      "thDateCompromis": "Date compromis",
+      "thLivraison": "Livraison prévue"
+    }
   }
 }

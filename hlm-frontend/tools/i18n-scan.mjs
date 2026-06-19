@@ -31,6 +31,10 @@ const IGNORE = [
   // template-editor clause HTML bodies are Moroccan VEFA legal text held in TS data arrays,
   // not in a `template:` block — they are not scanned, but ignore defensively.
   'features/templates/template-editor.component.ts',
+  // Orphan: the portal-payments component is a small inline-template stub redirecting to the
+  // ventes tab (the real échéancier lives in portal-ventes). This .html is dead — it even
+  // calls itemStatusLabel() which the stub doesn't define. Left in place, not scanned.
+  'portal/features/portal-payments/portal-payments.component.html',
 ];
 
 const ACCENT = /[àâäéèêëîïôöûùç]/i;

@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { ReceivablesDashboardService } from '../dashboard/receivables-dashboard.service';
 import {
@@ -15,7 +16,7 @@ interface AgingRow {
 @Component({
   selector: 'app-creances-report',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, TranslatePipe],
   templateUrl: './creances-report.component.html',
   styleUrl: './creances-report.component.css',
 })

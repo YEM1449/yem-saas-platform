@@ -3216,5 +3216,62 @@
     "pwMismatch": "The passwords do not match.",
     "mustAcceptCgu": "You must accept the terms of use.",
     "genericError": "Error ({{status}})"
+  },
+  "reports": {
+    "common": {
+      "du": "From",
+      "au": "To",
+      "statut": "Status",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
+      "generating": "Generating…",
+      "total": "Total",
+      "caTotal": "Total revenue",
+      "allStatuses": "All statuses"
+    },
+    "agents": {
+      "title": "Performance report — Agents",
+      "subtitle": "Sales agents ranked by revenue",
+      "filterNote": "The preview shows the 90-day snapshot data. The PDF/CSV export uses the selected date range.",
+      "agentChip": "agent(s)",
+      "caTotal90": "Total revenue (90d)",
+      "loadingAria": "Loading the agents ranking…",
+      "empty": "No agent data available.",
+      "thAgent": "Agent",
+      "thCA": "Revenue (MAD)",
+      "thVentes": "Sales",
+      "thCaMoy": "Rev./sale avg"
+    },
+    "creances": {
+      "title": "Receivables report — Schedule",
+      "subtitle": "Aging of unpaid installments by overdue bucket",
+      "loadingAria": "Loading the receivables report…",
+      "totalEncours": "Total outstanding",
+      "dontEnRetard": "Of which overdue",
+      "tauxRecouvrement": "Collection rate",
+      "delaiMoyen": "Avg days to collect",
+      "detailParTranche": "Detail by bucket",
+      "thTranche": "Bucket",
+      "thEcheances": "Installments",
+      "thMontantRetard": "Overdue amount (MAD)",
+      "thPart": "Share",
+      "retardsParProjet": "Overdue by project",
+      "thProjet": "Project",
+      "dataAsOf": "Data as of {{date}}"
+    },
+    "ventes": {
+      "title": "Sales report — Sales",
+      "subtitle": "Preview and export of filtered sales",
+      "loadingAria": "Loading the sales report…",
+      "venteChip": "sale(s)",
+      "empty": "No sale for the selected criteria.",
+      "thReference": "Reference",
+      "thAcquereur": "Buyer",
+      "thStatut": "Status",
+      "thPrix": "Price (MAD)",
+      "thDateCompromis": "Preliminary date",
+      "thLivraison": "Planned delivery"
+    }
   }
 }

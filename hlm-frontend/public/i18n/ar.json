@@ -3216,5 +3216,62 @@
     "pwMismatch": "كلمتا المرور غير متطابقتين.",
     "mustAcceptCgu": "يجب قبول الشروط العامة للاستخدام.",
     "genericError": "خطأ ({{status}})"
+  },
+  "reports": {
+    "common": {
+      "du": "من",
+      "au": "إلى",
+      "statut": "الحالة",
+      "refresh": "تحديث",
+      "exportCsv": "تصدير CSV",
+      "exportPdf": "تصدير PDF",
+      "generating": "جارٍ التوليد…",
+      "total": "الإجمالي",
+      "caTotal": "إجمالي المعاملات",
+      "allStatuses": "كل الحالات"
+    },
+    "agents": {
+      "title": "تقرير الأداء — الوكلاء",
+      "subtitle": "ترتيب الوكلاء التجاريين حسب رقم المعاملات",
+      "filterNote": "تعرض المعاينة بيانات لقطة 90 يومًا. يستخدم تصدير PDF/CSV نطاق التواريخ المحدد.",
+      "agentChip": "وكلاء",
+      "caTotal90": "إجمالي المعاملات (90 يوم)",
+      "loadingAria": "جارٍ تحميل ترتيب الوكلاء…",
+      "empty": "لا توجد بيانات وكلاء.",
+      "thAgent": "الوكيل",
+      "thCA": "المعاملات (درهم)",
+      "thVentes": "المبيعات",
+      "thCaMoy": "متوسط/بيع"
+    },
+    "creances": {
+      "title": "تقرير الذمم — الجدول",
+      "subtitle": "تقادم الأقساط غير المدفوعة حسب شريحة التأخير",
+      "loadingAria": "جارٍ تحميل تقرير الذمم…",
+      "totalEncours": "إجمالي المستحق",
+      "dontEnRetard": "منها متأخر",
+      "tauxRecouvrement": "معدل التحصيل",
+      "delaiMoyen": "متوسط مدة التحصيل",
+      "detailParTranche": "التفصيل حسب الشريحة",
+      "thTranche": "الشريحة",
+      "thEcheances": "الأقساط",
+      "thMontantRetard": "المبلغ المتأخر (درهم)",
+      "thPart": "الحصة",
+      "retardsParProjet": "المتأخرات حسب المشروع",
+      "thProjet": "المشروع",
+      "dataAsOf": "البيانات بتاريخ {{date}}"
+    },
+    "ventes": {
+      "title": "التقرير التجاري — المبيعات",
+      "subtitle": "معاينة وتصدير المبيعات المُصفّاة",
+      "loadingAria": "جارٍ تحميل تقرير المبيعات…",
+      "venteChip": "مبيعات",
+      "empty": "لا توجد مبيعات للمعايير المحددة.",
+      "thReference": "المرجع",
+      "thAcquereur": "المشتري",
+      "thStatut": "الحالة",
+      "thPrix": "السعر (درهم)",
+      "thDateCompromis": "تاريخ العقد الابتدائي",
+      "thLivraison": "التسليم المتوقع"
+    }
   }
 }
