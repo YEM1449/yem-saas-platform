@@ -7,7 +7,7 @@
 </a>
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="prospect-detail-loading-state" aria-label="Chargement du contact…" style="margin-top:24px">
+  <div class="skeleton-stack" data-testid="prospect-detail-loading-state" [attr.aria-label]="'prospects.detail.loadingAria' | translate" style="margin-top:24px">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
     <span class="skeleton skeleton-card" style="height:140px"></span>
     <div class="skeleton-grid">
@@ -51,35 +51,35 @@
     <!-- ── LEFT COLUMN — Identity ─────────────────────────── -->
     <div class="detail-col-left">
       <div class="card">
-        <div class="card-header">Informations</div>
+        <div class="card-header">{{ 'prospects.detail.informations' | translate }}</div>
         <div class="card-body">
           <dl class="info-dl">
-            <dt>Email</dt>
+            <dt>{{ 'prospects.detail.email' | translate }}</dt>
             <dd>{{ prospect.email ?? '—' }}</dd>
 
-            <dt>Téléphone</dt>
+            <dt>{{ 'prospects.detail.telephone' | translate }}</dt>
             <dd>{{ prospect.phone ?? '—' }}</dd>
 
-            <dt>CIN / ID</dt>
+            <dt>{{ 'prospects.detail.cin' | translate }}</dt>
             <dd>{{ prospect.nationalId ?? '—' }}</dd>
 
-            <dt>Adresse</dt>
+            <dt>{{ 'prospects.detail.adresse' | translate }}</dt>
             <dd>{{ prospect.address ?? '—' }}</dd>
 
             @if (prospect.notes) {
-              <dt>Notes</dt>
+              <dt>{{ 'prospects.detail.notes' | translate }}</dt>
               <dd>{{ prospect.notes }}</dd>
             }
 
-            <dt>Qualifié</dt>
+            <dt>{{ 'prospects.detail.qualifie' | translate }}</dt>
             <dd>{{ prospect.qualified ? 'Oui' : 'Non' }}</dd>
 
             @if (prospect.processingBasis) {
-              <dt>Base légale</dt>
+              <dt>{{ 'prospects.detail.baseLegale' | translate }}</dt>
               <dd>{{ prospect.processingBasis }}</dd>
             }
 
-            <dt>Créé le</dt>
+            <dt>{{ 'prospects.detail.creeLe' | translate }}</dt>
             <dd>{{ prospect.createdAt | date:'dd/MM/yyyy' }}</dd>
           </dl>
         </div>
@@ -88,7 +88,7 @@
       <!-- ── Interests ─────────────────────────────────────── -->
       <div class="card" style="margin-top:16px">
         <div class="card-header">
-          Biens d'intérêt
+          {{ 'prospects.detail.interestsTitle' | translate }}
           @if (interests.length > 0) {
             <span class="card-header-count">{{ interests.length }}</span>
           }
@@ -124,14 +124,14 @@
           </div>
 
           @if (interestsLoading) {
-            <div class="skeleton-stack" aria-label="Chargement des biens d'intérêt…">
+            <div class="skeleton-stack" [attr.aria-label]="'prospects.detail.loadingInterestsAria' | translate">
               <span class="skeleton skeleton-row"></span>
               <span class="skeleton skeleton-row"></span>
             </div>
           }
 
           @if (!interestsLoading && interests.length === 0) {
-            <p class="text-muted" style="margin-top:8px">Aucun bien d'intérêt enregistré.</p>
+            <p class="text-muted" style="margin-top:8px">{{ 'prospects.detail.noInterest' | translate }}</p>
           }
 
           @if (!interestsLoading && interests.length > 0) {
@@ -145,7 +145,7 @@
                   <button class="btn-icon-danger"
                           (click)="removeInterest(i.propertyId)"
                           [disabled]="removingPropertyId === i.propertyId"
-                          title="Supprimer">
+                          [title]="'prospects.detail.deleteTitle' | translate">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
@@ -183,12 +183,11 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
             <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
-          Créer une réservation
+          {{ 'prospects.detail.createReservation' | translate }}
         </div>
         <div class="card-body">
           <p class="form-hint" style="margin-bottom:12px">
-            Bloque le bien pendant 7 jours et fait évoluer automatiquement
-            le statut vers <strong>Prospect Qualifié</strong>.
+            {{ 'prospects.detail.reservationHintPre' | translate }} <strong>{{ 'prospects.detail.reservationHintStrong' | translate }}</strong>.
           </p>
 
           @if (reservationError) {
@@ -199,12 +198,12 @@
           }
 
           <div class="form-group">
-            <label class="form-label required">Bien immobilier</label>
+            <label class="form-label required">{{ 'prospects.detail.bienImmobilier' | translate }}</label>
             <select class="form-control"
                     [(ngModel)]="reservationPropertyId"
                     [disabled]="creatingReservation || propertiesLoading">
               <option value="">
-                {{ propertiesLoading ? 'Chargement…' : '— Sélectionner un bien disponible —' }}
+                {{ (propertiesLoading ? 'prospects.detail.loadingShort' : 'prospects.detail.selectProperty') | translate }}
               </option>
               @for (p of activeProperties; track p.id) {
                 <option [value]="p.id">
@@ -222,19 +221,19 @@
 
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">Prix de réservation</label>
+              <label class="form-label">{{ 'prospects.detail.prixReservation' | translate }}</label>
               <input class="form-control" type="number" min="0" step="1"
                      [(ngModel)]="reservationPrice"
                      [disabled]="creatingReservation"
                      placeholder="ex. 5 000" />
-              <span class="form-hint">Optionnel — montant bloqué</span>
+              <span class="form-hint">{{ 'prospects.detail.optionalBlocked' | translate }}</span>
             </div>
             <div class="form-group">
-              <label class="form-label">Notes</label>
+              <label class="form-label">{{ 'prospects.detail.notes' | translate }}</label>
               <input class="form-control" type="text"
                      [(ngModel)]="reservationNotes"
                      [disabled]="creatingReservation"
-                     placeholder="Optionnel" />
+                     [placeholder]="'prospects.detail.optional' | translate" />
             </div>
           </div>
 
@@ -255,7 +254,7 @@
             <path d="M5.5 9.5c0 .8.7 1.5 1.5 1.5h.5c.8 0 1.5-.7 1.5-1.5s-.7-1.5-1.5-1.5H7C6.2 8 5.5 7.3 5.5 6.5S6.2 5 7 5h.5c.8 0 1.5.7 1.5 1.5M7 3.5V5m0 7v1.5"
                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          Saisir un acompte
+          {{ 'prospects.detail.saisirAcompte' | translate }}
         </div>
         <div class="card-body">
           @if (depositError) {
@@ -272,7 +271,7 @@
           }
 
           <div class="form-group">
-            <label class="form-label required">Bien immobilier</label>
+            <label class="form-label required">{{ 'prospects.detail.bienImmobilier' | translate }}</label>
             <select class="form-control"
                     [(ngModel)]="depositPropertyId"
                     [disabled]="creatingDeposit || propertiesLoading">
@@ -290,18 +289,18 @@
 
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label required">Montant</label>
+              <label class="form-label required">{{ 'prospects.detail.montant' | translate }}</label>
               <input class="form-control" type="number" min="1" step="1"
                      [(ngModel)]="depositAmount"
                      [disabled]="creatingDeposit"
                      placeholder="ex. 50 000" />
             </div>
             <div class="form-group">
-              <label class="form-label">Notes</label>
+              <label class="form-label">{{ 'prospects.detail.notes' | translate }}</label>
               <input class="form-control" type="text"
                      [(ngModel)]="depositNotes"
                      [disabled]="creatingDeposit"
-                     placeholder="Optionnel" />
+                     [placeholder]="'prospects.detail.optional' | translate" />
             </div>
           </div>
 
@@ -316,7 +315,7 @@
 
       <!-- ── Deposits list ──────────────────────────────────── -->
       @if (depositsLoading) {
-        <div class="skeleton-stack" aria-label="Chargement des dépôts…" style="margin-top:12px">
+        <div class="skeleton-stack" [attr.aria-label]="'prospects.detail.loadingDepositsAria' | translate" style="margin-top:12px">
           <span class="skeleton skeleton-row"></span>
           <span class="skeleton skeleton-row"></span>
         </div>
@@ -325,18 +324,18 @@
       @if (!depositsLoading && deposits.length > 0) {
         <div class="card" style="margin-top:16px">
           <div class="card-header">
-            Acomptes enregistrés
+            {{ 'prospects.detail.depositsTitle' | translate }}
             <span class="card-header-count">{{ deposits.length }}</span>
           </div>
           <div class="card-body-flush">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Bien</th>
-                  <th>Montant</th>
-                  <th>Statut</th>
-                  <th>Réf.</th>
-                  <th>Échéance</th>
+                  <th>{{ 'prospects.detail.thBien' | translate }}</th>
+                  <th>{{ 'prospects.detail.thMontant' | translate }}</th>
+                  <th>{{ 'prospects.detail.thStatut' | translate }}</th>
+                  <th>{{ 'prospects.detail.thRef' | translate }}</th>
+                  <th>{{ 'prospects.detail.thEcheance' | translate }}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -351,7 +350,7 @@
                     <td class="td-muted">{{ d.reference }}</td>
                     <td class="td-muted">{{ d.dueDate ? (d.dueDate | date:'dd/MM/yy') : '—' }}</td>
                     <td class="dep-actions">
-                      <button class="btn btn-sm btn-secondary" (click)="downloadReservationPdf(d)" title="PDF">
+                      <button class="btn btn-sm btn-secondary" (click)="downloadReservationPdf(d)" [title]="'prospects.detail.pdfTitle' | translate">
                         PDF
                       </button>
                       @if (prospect.email) {
@@ -388,11 +387,11 @@
               </svg>
             </div>
             <div class="vcb-body">
-              <p class="vcb-title">Acompte confirmé — Prêt pour la vente</p>
+              <p class="vcb-title">{{ 'prospects.detail.depositConfirmed' | translate }}</p>
               <p class="vcb-desc">
-                L'acompte <strong>{{ d.reference }}</strong> pour
+                {{ 'prospects.detail.convertDescPre' | translate }} <strong>{{ d.reference }}</strong> {{ 'prospects.detail.convertDescMid' | translate }}
                 <strong>{{ propertyTitle(d.propertyId) }}</strong>
-                est confirmé. Créez la vente pour poursuivre le pipeline commercial.
+                {{ 'prospects.detail.convertDescPost' | translate }}
               </p>
               @if (convertError) {
                 <p class="vcb-error">{{ convertError }}</p>
@@ -404,8 +403,8 @@
               [disabled]="convertingDepositId === d.id"
               data-testid="convert-to-vente"
             >
-              @if (convertingDepositId === d.id) { Création… }
-              @else { Créer la vente → }
+              @if (convertingDepositId === d.id) { {{ 'prospects.detail.convertCreating' | translate }} }
+              @else { {{ 'prospects.detail.convertBtn' | translate }} }
             </button>
           </div>
         }

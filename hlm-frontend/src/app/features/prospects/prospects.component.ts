@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,11 +18,12 @@ interface PipelineColumn {
 @Component({
   selector: 'app-prospects',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, TranslatePipe],
   templateUrl: './prospects.component.html',
   styleUrl: './prospects.component.css',
 })
 export class ProspectsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(ProspectService);
 
   allProspects: Prospect[] = [];
@@ -31,12 +34,12 @@ export class ProspectsComponent implements OnInit {
   showLost = false;
 
   readonly PIPELINE_COLUMNS: PipelineColumn[] = [
-    { key: 'PROSPECT',           label: 'Prospects',       colorVar: '#64748b' },
-    { key: 'QUALIFIED_PROSPECT', label: 'Qualifiés',       colorVar: '#3b82f6' },
-    { key: 'CLIENT',             label: 'Clients',         colorVar: '#8b5cf6' },
-    { key: 'ACTIVE_CLIENT',      label: 'Clients Actifs',  colorVar: '#10b981' },
-    { key: 'COMPLETED_CLIENT',   label: 'Complétés',       colorVar: '#059669' },
-    { key: 'REFERRAL',           label: 'Parrains',        colorVar: '#f59e0b' }];
+    { key: 'PROSPECT',           label: this.i18n.instant('prospects.pipeline.PROSPECT'),       colorVar: '#64748b' },
+    { key: 'QUALIFIED_PROSPECT', label: this.i18n.instant('prospects.pipeline.QUALIFIED_PROSPECT'),       colorVar: '#3b82f6' },
+    { key: 'CLIENT',             label: this.i18n.instant('prospects.pipeline.CLIENT'),         colorVar: '#8b5cf6' },
+    { key: 'ACTIVE_CLIENT',      label: this.i18n.instant('prospects.pipeline.ACTIVE_CLIENT'),  colorVar: '#10b981' },
+    { key: 'COMPLETED_CLIENT',   label: this.i18n.instant('prospects.pipeline.COMPLETED_CLIENT'),       colorVar: '#059669' },
+    { key: 'REFERRAL',           label: this.i18n.instant('prospects.pipeline.REFERRAL'),        colorVar: '#f59e0b' }];
 
   ngOnInit(): void {
     this.svc.list().subscribe({
