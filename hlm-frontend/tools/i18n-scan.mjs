@@ -16,13 +16,19 @@
  *
  * Run: `npm run i18n:scan`
  */
-import { readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src', 'app');
+
+/** Recursive file list relative to `dir`, filtered by extension. Node-20-safe (no globSync). */
+function listFiles(dir, ext) {
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith(ext))
+    .map((e) => join(e.parentPath ?? e.path, e.name).slice(dir.length + 1).split('\\').join('/'));
+}
 
 // Intentionally FR-only — legal/document content, never machine-translated (see docs/i18n).
 const IGNORE = [
@@ -74,13 +80,13 @@ function scanTemplate(relPath, tpl, lineOffset) {
   });
 }
 
-const htmlFiles = globSync('**/*.html', { cwd: SRC });
+const htmlFiles = listFiles(SRC, '.html');
 for (const f of htmlFiles) {
   if (IGNORE.some((ig) => f.includes(ig))) continue;
   scanTemplate(join('src/app', f), readFileSync(join(SRC, f), 'utf8'), 0);
 }
 
-const tsFiles = globSync('**/*.ts', { cwd: SRC });
+const tsFiles = listFiles(SRC, '.ts');
 for (const f of tsFiles) {
   if (IGNORE.some((ig) => f.includes(ig))) continue;
   const src = readFileSync(join(SRC, f), 'utf8');
