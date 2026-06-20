@@ -1,6 +1,7 @@
 package com.yem.hlm.backend.visite.service;
 
 import com.yem.hlm.backend.societe.SocieteContextHelper;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,6 +16,11 @@ import org.springframework.stereotype.Component;
  * reminders survive a redeploy/restart. Runs in system mode (cross-société) via
  * {@link SocieteContextHelper#runAsSystem}. Disabled in tests via
  * {@code spring.task.scheduling.enabled=false}.
+ *
+ * <p>{@code @SchedulerLock} (ShedLock, same pattern as the outbox dispatcher and the digest job)
+ * serialises the scan across instances: in a multi-replica deployment only one node claims the
+ * lock and sends a given batch, so an {@code EN_ATTENTE} reminder cannot be read-and-sent twice
+ * before the first transaction marks it {@code ENVOYE} — i.e. no duplicate reminder emails.
  */
 @Component
 @ConditionalOnProperty(value = "spring.task.scheduling.enabled", matchIfMissing = true)
@@ -32,6 +38,7 @@ public class RappelVisiteJob {
 
     /** Every 5 minutes — send the reminders whose due time has passed. */
     @Scheduled(fixedDelayString = "${app.visite.rappel-scan-ms:300000}")
+    @SchedulerLock(name = "visite_rappel_dispatcher", lockAtMostFor = "PT5M", lockAtLeastFor = "PT0.2S")
     public void scanRappelsDus() {
         societeCtx.runAsSystem(() -> {
             try {

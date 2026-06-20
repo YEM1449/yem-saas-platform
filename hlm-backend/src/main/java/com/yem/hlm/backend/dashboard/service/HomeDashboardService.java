@@ -186,8 +186,12 @@ public class HomeDashboardService {
         java.time.ZoneId casablanca = java.time.ZoneId.of("Africa/Casablanca");
         java.time.Instant visMoisFrom = moisFrom.atZone(casablanca).toInstant();
         java.time.Instant visMoisTo   = moisTo.atZone(casablanca).toInstant();
-        long visitesRealiseesMois = visiteService.countRealisees(visMoisFrom, visMoisTo);
-        long visitesOppMois       = visiteService.countOpportunites(visMoisFrom, visMoisTo);
+        long visitesRealiseesMois = isAgent
+                ? visiteService.countRealiseesForAgent(visMoisFrom, visMoisTo, actorId)
+                : visiteService.countRealisees(visMoisFrom, visMoisTo);
+        long visitesOppMois = isAgent
+                ? visiteService.countOpportunitesForAgent(visMoisFrom, visMoisTo, actorId)
+                : visiteService.countOpportunites(visMoisFrom, visMoisTo);
         BigDecimal tauxConversionVisites = visitesRealiseesMois == 0 ? null
                 : BigDecimal.valueOf(visitesOppMois * 100.0 / visitesRealiseesMois)
                         .setScale(1, java.math.RoundingMode.HALF_UP);

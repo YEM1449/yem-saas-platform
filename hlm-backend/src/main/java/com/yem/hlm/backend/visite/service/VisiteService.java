@@ -2,6 +2,8 @@ package com.yem.hlm.backend.visite.service;
 
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.user.domain.User;
@@ -49,6 +51,8 @@ public class VisiteService {
     private final ContactRepository contactRepo;
     private final UserRepository userRepo;
     private final AppUserSocieteRepository membershipRepo;
+    private final PropertyRepository propertyRepo;
+    private final ProjectRepository projectRepo;
     private final SocieteContextHelper societeCtx;
     private final VisiteEmailService emailService;
 
@@ -57,6 +61,8 @@ public class VisiteService {
                          ContactRepository contactRepo,
                          UserRepository userRepo,
                          AppUserSocieteRepository membershipRepo,
+                         PropertyRepository propertyRepo,
+                         ProjectRepository projectRepo,
                          SocieteContextHelper societeCtx,
                          VisiteEmailService emailService) {
         this.visiteRepo = visiteRepo;
@@ -64,6 +70,8 @@ public class VisiteService {
         this.contactRepo = contactRepo;
         this.userRepo = userRepo;
         this.membershipRepo = membershipRepo;
+        this.propertyRepo = propertyRepo;
+        this.projectRepo = projectRepo;
         this.societeCtx = societeCtx;
         this.emailService = emailService;
     }
@@ -86,6 +94,7 @@ public class VisiteService {
         int duree = (req.dureeMinutes() == null || req.dureeMinutes() <= 0) ? DUREE_DEFAUT : req.dureeMinutes();
         Instant fin = req.dateHeure().plusSeconds(duree * 60L);
         verifierConflit(societeId, agentId, req.dateHeure(), fin, null, req.override());
+        validerActifsLies(societeId, req.propertyId(), req.projectId());
 
         Visite visite = new Visite(societeId, agent, contact, req.dateHeure(), duree, req.type(), actorId);
         visite.setPropertyId(req.propertyId());
@@ -114,6 +123,7 @@ public class VisiteService {
         visite.setDureeMinutes(duree);
         visite.setType(req.type());
         visite.setLieu(req.lieu());
+        validerActifsLies(visite.getSocieteId(), req.propertyId(), req.projectId());
         visite.setPropertyId(req.propertyId());
         visite.setProjectId(req.projectId());
         visite.setUpdatedAt(Instant.now());
@@ -281,9 +291,37 @@ public class VisiteService {
                 societeCtx.requireSocieteId(), ResultatVisite.OPPORTUNITE_CREEE, from, to);
     }
 
+    /** Agent-scoped "Visites réalisées" — an AGENT's home dashboard sees only its own activity (RG-V04). */
+    @Transactional(readOnly = true)
+    public long countRealiseesForAgent(Instant from, Instant to, UUID agentId) {
+        return visiteRepo.countBySocieteIdAndAgentIdAndStatutAndDateHeureBetween(
+                societeCtx.requireSocieteId(), agentId, StatutVisite.REALISEE, from, to);
+    }
+
+    /** Agent-scoped opportunité conversion numerator (RG-V04). */
+    @Transactional(readOnly = true)
+    public long countOpportunitesForAgent(Instant from, Instant to, UUID agentId) {
+        return visiteRepo.countBySocieteIdAndAgentIdAndResultatAndDateHeureBetween(
+                societeCtx.requireSocieteId(), agentId, ResultatVisite.OPPORTUNITE_CREEE, from, to);
+    }
+
     // =========================================================================
     // Internals
     // =========================================================================
+
+    /**
+     * Tenant guard for the optional property/project FKs: a visite must only reference a bien or
+     * programme of its own société. Without this a caller could supply another tenant's UUID and
+     * the FK would persist, leaving a visite pointing at a foreign commercial asset.
+     */
+    private void validerActifsLies(UUID societeId, UUID propertyId, UUID projectId) {
+        if (propertyId != null && !propertyRepo.existsBySocieteIdAndIdAndDeletedAtIsNull(societeId, propertyId)) {
+            throw new IllegalArgumentException("Bien hors société : " + propertyId);
+        }
+        if (projectId != null && !projectRepo.existsBySocieteIdAndId(societeId, projectId)) {
+            throw new IllegalArgumentException("Programme hors société : " + projectId);
+        }
+    }
 
     /** Loads a visite in the current société, enforcing AGENT ownership (RG-V04). */
     private Visite chargerAccessible(UUID id) {
@@ -360,7 +398,10 @@ public class VisiteService {
         if (restrictedToOwnAgent() || requested == null || requested.equals(actorId)) {
             return actorId;
         }
-        membershipRepo.findByIdUserIdAndIdSocieteId(requested, societeId)
+        // Must be an *active* member: a removed/deactivated user can no longer access the société,
+        // so a visite (and its reminders) must not be assigned to them. The plain
+        // findByIdUserIdAndIdSocieteId would also match inactive memberships.
+        membershipRepo.findByUserIdAndSocieteIdAndActifTrue(requested, societeId)
                 .orElseThrow(() -> new IllegalArgumentException("Agent hors société : " + requested));
         return requested;
     }

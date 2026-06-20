@@ -64,4 +64,13 @@ public interface VisiteRepository extends JpaRepository<Visite, UUID> {
     long countBySocieteIdAndResultatAndDateHeureBetween(
             UUID societeId, com.yem.hlm.backend.visite.domain.ResultatVisite resultat,
             Instant from, Instant to);
+
+    /** Agent-scoped variant of the réalisées KPI (RG-V04 — agent sees only own activity). */
+    long countBySocieteIdAndAgentIdAndStatutAndDateHeureBetween(
+            UUID societeId, UUID agentId, StatutVisite statut, Instant from, Instant to);
+
+    /** Agent-scoped variant of the opportunité conversion KPI (RG-V04). */
+    long countBySocieteIdAndAgentIdAndResultatAndDateHeureBetween(
+            UUID societeId, UUID agentId, com.yem.hlm.backend.visite.domain.ResultatVisite resultat,
+            Instant from, Instant to);
 }

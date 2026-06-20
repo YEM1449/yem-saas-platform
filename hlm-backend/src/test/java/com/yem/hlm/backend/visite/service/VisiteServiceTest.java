@@ -2,6 +2,8 @@ package com.yem.hlm.backend.visite.service;
 
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
+import com.yem.hlm.backend.project.repo.ProjectRepository;
+import com.yem.hlm.backend.property.repo.PropertyRepository;
 import com.yem.hlm.backend.societe.AppUserSocieteRepository;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import com.yem.hlm.backend.user.domain.User;
@@ -45,6 +47,8 @@ class VisiteServiceTest {
     @Mock ContactRepository contactRepo;
     @Mock UserRepository userRepo;
     @Mock AppUserSocieteRepository membershipRepo;
+    @Mock PropertyRepository propertyRepo;
+    @Mock ProjectRepository projectRepo;
     @Mock SocieteContextHelper societeCtx;
     @Mock VisiteEmailService emailService;
 
@@ -55,7 +59,8 @@ class VisiteServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new VisiteService(visiteRepo, rappelRepo, contactRepo, userRepo, membershipRepo, societeCtx, emailService);
+        service = new VisiteService(visiteRepo, rappelRepo, contactRepo, userRepo, membershipRepo,
+                propertyRepo, projectRepo, societeCtx, emailService);
         lenient().when(societeCtx.requireSocieteId()).thenReturn(societeId);
         lenient().when(societeCtx.requireUserId()).thenReturn(actorId);
         lenient().when(societeCtx.getRole()).thenReturn("ROLE_MANAGER");

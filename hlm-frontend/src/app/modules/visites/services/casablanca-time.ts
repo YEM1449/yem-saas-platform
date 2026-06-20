@@ -62,10 +62,22 @@ export function casablancaDayStart(ref: Date): string {
   return casablancaWallToInstant(`${day}T00:00`);
 }
 
-/** End of the Casablanca calendar day containing `ref` (exclusive next-midnight). */
+/**
+ * End of the Casablanca calendar day containing `ref` (exclusive next local midnight).
+ *
+ * Computed as the *next Casablanca calendar date* at `T00:00`, not `start + 24h`: on an
+ * offset-change day (Morocco's DST/Ramadan transitions) a Casablanca day is 23 or 25 hours,
+ * so a fixed 24h step would land the agenda window an hour early/late and drop or pull in
+ * visits near the local day boundary.
+ */
 export function casablancaDayEnd(ref: Date): string {
-  const start = new Date(casablancaDayStart(ref));
-  return new Date(start.getTime() + 24 * 3600 * 1000).toISOString();
+  const [y, m, d] = casablancaDateParts(ref).split('-').map(Number);
+  // Date.UTC gives midnight-UTC of that calendar date; +24h is unambiguously the next
+  // calendar date (no zone offset involved), which we then read back via getUTC*.
+  const next = new Date(Date.UTC(y, m - 1, d) + 24 * 3600 * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const nextDate = `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+  return casablancaWallToInstant(`${nextDate}T00:00`);
 }
 
 /** `YYYY-MM-DD` of the Casablanca calendar day containing `ref`. */
