@@ -99,6 +99,20 @@ Confirmed still-current from Wave 14 (re-read, unchanged):
 > overwriting. Full unit suite green (235). *(Left as-is: VEFA/contact sub-entities edited only within a
 > single agent's dossier — CoAcquereur, DossierFinancement, ReserveLivraison, Remboursement,
 > ClientDetail, ProspectDetail — lower concurrent-edit risk; add later if a contention case appears.)*
+>
+> **Follow-up hardening (2026-06-20, review):** the JPA `@Version` field alone only catches *overlapping
+> transactions* — the common **stale-form** case (user A loads, user B saves, A submits an old payload)
+> still slips through, because `update()` reloads the row inside one TX and re-reads B's committed
+> version. Fixed for **Project** by round-tripping the version like the user/société flows already do:
+> `ProjectResponse.version` is returned on GET, `ProjectUpdateRequest.version` is required on PUT, and
+> `ProjectService.update()` compares it against the current row (mismatch/null → `409 CONCURRENT_UPDATE`)
+> *before* applying changes; frontend `project-detail` echoes `project.version` and shows a "reload"
+> message on 409. **VenteEcheance** bulk cancellation (`cancelAllPendingByVente`, a JPQL bulk UPDATE that
+> bypasses Hibernate's version bump) now does `SET … version = version + 1`, so a concurrently-loaded
+> échéance can't overwrite an `ANNULEE` after a sale annulation. New IT
+> `updateProject_staleVersion_returns409Concurrent`. *(Task/Tranche/Deposit/CommissionRule have the same
+> stale-form gap; their status edits are state-machine-guarded so lower risk — extend the same
+> version-round-trip there if a field-edit contention case appears.)*
 - **Where:** `vente/domain/Vente.java`, `property/domain/Property.java` (need field-level confirm).
 - **What:** Changeset 057 added "optimistic lock version" to some tables; it was not clear every
   concurrently-edited aggregate (Vente, Property, Echeance) carried `@Version`. Without it, two

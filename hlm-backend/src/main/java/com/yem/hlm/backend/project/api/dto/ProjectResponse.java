@@ -14,7 +14,10 @@ public record ProjectResponse(
         ProjectStatus status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String logoUrl
+        String logoUrl,
+        // Optimistic-lock version (EX-003): the client echoes this back on update so a stale edit
+        // form (loaded before another user saved) is rejected with 409 instead of silently merged.
+        Long version
 ) {
     public static ProjectResponse from(Project p) {
         String logoUrl = p.getLogoFileKey() != null
@@ -28,7 +31,8 @@ public record ProjectResponse(
                 p.getStatus(),
                 p.getCreatedAt(),
                 p.getUpdatedAt(),
-                logoUrl
+                logoUrl,
+                p.getVersion()
         );
     }
 }

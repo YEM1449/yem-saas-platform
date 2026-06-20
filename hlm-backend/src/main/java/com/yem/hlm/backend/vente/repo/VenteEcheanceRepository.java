@@ -19,7 +19,8 @@ public interface VenteEcheanceRepository extends JpaRepository<VenteEcheance, UU
     @Modifying
     @Query("""
             UPDATE VenteEcheance e
-            SET e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE
+            SET e.statut = com.yem.hlm.backend.vente.domain.EcheanceStatut.ANNULEE,
+                e.version = e.version + 1
             WHERE e.vente.id = :venteId
               AND e.statut <> com.yem.hlm.backend.vente.domain.EcheanceStatut.PAYEE
             """)

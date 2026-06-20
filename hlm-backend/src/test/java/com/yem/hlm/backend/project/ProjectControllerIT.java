@@ -237,7 +237,7 @@ class ProjectControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProject_asAdmin_returns200() throws Exception {
-        var req = new ProjectUpdateRequest("Renamed Project", "New description", null);
+        var req = new ProjectUpdateRequest("Renamed Project", "New description", null, 0L);
 
         mvc.perform(put("/api/projects/{id}", projectId)
                         .header("Authorization", adminBearer)
@@ -251,7 +251,7 @@ class ProjectControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProject_asManager_returns200() throws Exception {
-        var req = new ProjectUpdateRequest("Manager Rename", null, null);
+        var req = new ProjectUpdateRequest("Manager Rename", null, null, 0L);
 
         mvc.perform(put("/api/projects/{id}", projectId)
                         .header("Authorization", managerBearer)
@@ -263,7 +263,7 @@ class ProjectControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProject_asAgent_returns403() throws Exception {
-        var req = new ProjectUpdateRequest("Hacked Name", null, null);
+        var req = new ProjectUpdateRequest("Hacked Name", null, null, 0L);
 
         mvc.perform(put("/api/projects/{id}", projectId)
                         .header("Authorization", agentBearer)
@@ -274,7 +274,7 @@ class ProjectControllerIT extends IntegrationTestBase {
 
     @Test
     void updateProject_notFound_returns404() throws Exception {
-        var req = new ProjectUpdateRequest("Whatever", null, null);
+        var req = new ProjectUpdateRequest("Whatever", null, null, 0L);
 
         mvc.perform(put("/api/projects/{id}", UUID.randomUUID())
                         .header("Authorization", adminBearer)
@@ -291,13 +291,34 @@ class ProjectControllerIT extends IntegrationTestBase {
                         .content("{\"name\":\"Second Project\"}"))
                 .andExpect(status().isCreated());
 
-        var req = new ProjectUpdateRequest("Second Project", null, null);
+        var req = new ProjectUpdateRequest("Second Project", null, null, 0L);
         mvc.perform(put("/api/projects/{id}", projectId)
                         .header("Authorization", adminBearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("PROJECT_NAME_EXISTS"));
+    }
+
+    @Test
+    void updateProject_staleVersion_returns409Concurrent() throws Exception {
+        // EX-003 — first edit bumps the version 0 → 1.
+        var first = new ProjectUpdateRequest("First Edit", null, null, 0L);
+        mvc.perform(put("/api/projects/{id}", projectId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(first)))
+                .andExpect(status().isOk());
+
+        // A second edit carrying the now-stale version 0 (a form opened before the first save)
+        // must be rejected, not silently overwrite the first edit.
+        var stale = new ProjectUpdateRequest("Stale Overwrite", null, null, 0L);
+        mvc.perform(put("/api/projects/{id}", projectId)
+                        .header("Authorization", adminBearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(stale)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONCURRENT_UPDATE"));
     }
 
     @Test

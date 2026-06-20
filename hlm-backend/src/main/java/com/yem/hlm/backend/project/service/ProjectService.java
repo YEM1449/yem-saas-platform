@@ -19,6 +19,7 @@ import com.yem.hlm.backend.societe.QuotaService;
 import com.yem.hlm.backend.societe.SocieteContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -124,6 +126,13 @@ public class ProjectService {
 
         var project = projectRepository.findBySocieteIdAndId(societeId, projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
+
+        // EX-003 — stale-form guard. Reload-then-save inside one TX never trips JPA's @Version on its
+        // own (it would re-read the row another user just committed), so compare the version the client
+        // read against the current row. Mismatch (incl. a client that didn't send one) → 409.
+        if (!Objects.equals(request.version(), project.getVersion())) {
+            throw new ObjectOptimisticLockingFailureException(Project.class, projectId);
+        }
 
         if (request.name() != null && !request.name().equals(project.getName())) {
             if (projectRepository.existsBySocieteIdAndNameAndIdNot(societeId, request.name(), projectId)) {

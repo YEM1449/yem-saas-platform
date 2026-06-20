@@ -9,6 +9,8 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   logoUrl?: string | null;
+  /** Optimistic-lock version (EX-003) — echo back on update to detect concurrent edits. */
+  version: number;
 }
 
 export interface ProjectKpi {
@@ -32,4 +34,6 @@ export interface ProjectUpdateRequest {
   name?: string;
   description?: string;
   status?: ProjectStatus;
+  /** Version read from GET — required so the backend can reject a stale-form overwrite (EX-003). */
+  version: number;
 }
