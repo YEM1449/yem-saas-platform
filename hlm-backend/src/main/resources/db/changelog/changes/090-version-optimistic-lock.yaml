@@ -1,0 +1,60 @@
+databaseChangeLog:
+  # EX-003 — add @Version optimistic-lock columns to the remaining user-editable aggregate roots
+  # (Vente/Property/Contact/Reservation/etc. already had one). Without it, two staff editing the
+  # same Project/Task/Tranche/échéance/Deposit/CommissionRule is silent last-write-wins; with it,
+  # the second save throws ObjectOptimisticLockingFailureException → 409 CONCURRENT_UPDATE.
+  # Each block is idempotent (columnExists precondition) and seeds existing rows to 0.
+  - changeSet:
+      id: 090-version-project
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: project, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: project
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+  - changeSet:
+      id: 090-version-task
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: task, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: task
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+  - changeSet:
+      id: 090-version-tranche
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: tranche, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: tranche
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+  - changeSet:
+      id: 090-version-vente-echeance
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: vente_echeance, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: vente_echeance
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+  - changeSet:
+      id: 090-version-deposit
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: deposit, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: deposit
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }
+  - changeSet:
+      id: 090-version-commission-rule
+      author: yem-review-ex003
+      preConditions: { onFail: MARK_RAN, not: { columnExists: { tableName: commission_rule, columnName: version } } }
+      changes:
+        - addColumn:
+            tableName: commission_rule
+            columns:
+              - column: { name: version, type: BIGINT, defaultValueNumeric: 0, constraints: { nullable: false } }

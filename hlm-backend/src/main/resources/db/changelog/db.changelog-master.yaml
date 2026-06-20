@@ -177,3 +177,5 @@ databaseChangeLog:
       file: db/changelog/changes/088-visite.yaml
   - include:
       file: db/changelog/changes/089-encrypt-pii-columns.yaml
+  - include:
+      file: db/changelog/changes/090-version-optimistic-lock.yaml
