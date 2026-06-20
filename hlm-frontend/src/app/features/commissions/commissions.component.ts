@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,10 +11,11 @@ import { CommissionDTO, CommissionRuleRequest, CommissionRuleResponse } from '..
 @Component({
   selector: 'app-commissions',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './commissions.component.html',
 })
 export class CommissionsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc  = inject(CommissionService);
   private auth = inject(AuthService);
 
@@ -56,7 +59,7 @@ export class CommissionsComponent implements OnInit {
       next: data => { this.commissions = data; this.loading = false; },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.error = err.error?.message ?? `Failed to load (${err.status})`;
+        this.error = err.error?.message ?? this.i18n.instant('commissions.loadError', { status: err.status });
       },
     });
   }
@@ -99,7 +102,7 @@ export class CommissionsComponent implements OnInit {
       : this.svc.createRule(this.ruleForm);
     obs.subscribe({
       next: () => { this.showRuleForm = false; this.loadRules(); },
-      error: (err: HttpErrorResponse) => { this.ruleError = err.error?.message ?? 'Save failed'; },
+      error: (err: HttpErrorResponse) => { this.ruleError = err.error?.message ?? this.i18n.instant('commissions.saveError'); },
     });
   }
 

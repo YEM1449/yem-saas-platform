@@ -1,7 +1,9 @@
 import {
   Component, OnInit, OnDestroy, Input,
-  ChangeDetectionStrategy, ChangeDetectorRef, signal,
+  ChangeDetectionStrategy, ChangeDetectorRef, signal, inject
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { Subscription, Subject, takeUntil, catchError, EMPTY } from 'rxjs';
@@ -27,12 +29,13 @@ interface KpiEntry {
 @Component({
   selector: 'app-dashboard-3d-tab',
   standalone: true,
-  imports: [FormsModule, ProjectViewer3dComponent],
+  imports: [FormsModule, ProjectViewer3dComponent, TranslatePipe],
   templateUrl: './dashboard-3d-tab.component.html',
   styleUrl:    './dashboard-3d-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dashboard3dTabComponent implements OnInit, OnDestroy {
+  private i18n = inject(I18nService);
 
   @Input({ required: true }) projetId!: string;
 
@@ -42,7 +45,7 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
   filteredStatut: string = '';
 
   readonly statusOptions = (Object.keys(LOT_STATUS_COLORS) as LotDisplayStatus[]).map(k => ({
-    value: k, label: LOT_STATUS_LABELS[k],
+    value: k, label: this.i18n.instant('viewer3d.status.' + k),
   }));
 
   kpis = signal<KpiEntry[]>([]);
@@ -134,12 +137,12 @@ export class Dashboard3dTabComponent implements OnInit, OnDestroy {
     const pct = (n: number) => `${((n / total) * 100).toFixed(0)}%`;
 
     return [
-      { label: 'Disponibles',     value: String(disponible), sub: pct(disponible), color: '#3B82F6' },
-      { label: 'Réservés',        value: String(reserve),    sub: pct(reserve),    color: '#F59E0B' },
-      { label: 'Vendus',          value: String(vendu),      sub: pct(vendu),       color: '#10B981' },
-      { label: 'Livrés',          value: String(livre),      sub: pct(livre),       color: '#6B7280' },
-      ...(retire > 0 ? [{ label: 'Retirés', value: String(retire), sub: pct(retire), color: '#EF4444' }] : []),
-      { label: 'CA réalisé',      value: caRealise   > 0 ? fmt(caRealise)   : '—' },
-      { label: 'CA prévisionnel', value: caPrevision > 0 ? fmt(caPrevision) : '—' }];
+      { label: this.i18n.instant('viewer3d.dashboard.kpiDisponibles'),     value: String(disponible), sub: pct(disponible), color: '#3B82F6' },
+      { label: this.i18n.instant('viewer3d.dashboard.kpiReserves'),        value: String(reserve),    sub: pct(reserve),    color: '#F59E0B' },
+      { label: this.i18n.instant('viewer3d.dashboard.kpiVendus'),          value: String(vendu),      sub: pct(vendu),       color: '#10B981' },
+      { label: this.i18n.instant('viewer3d.dashboard.kpiLivres'),          value: String(livre),      sub: pct(livre),       color: '#6B7280' },
+      ...(retire > 0 ? [{ label: this.i18n.instant('viewer3d.dashboard.kpiRetires'), value: String(retire), sub: pct(retire), color: '#EF4444' }] : []),
+      { label: this.i18n.instant('viewer3d.dashboard.kpiCaRealise'),      value: caRealise   > 0 ? fmt(caRealise)   : '—' },
+      { label: this.i18n.instant('viewer3d.dashboard.kpiCaPrevisionnel'), value: caPrevision > 0 ? fmt(caPrevision) : '—' }];
   }
 }

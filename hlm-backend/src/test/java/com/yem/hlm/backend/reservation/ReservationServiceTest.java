@@ -70,7 +70,9 @@ class ReservationServiceTest {
                 reservationRepository, contactRepository, propertyRepository,
                 userRepository, propertyWorkflow, depositService, auditService,
                 eventPublisher, refGenerator, venteRepository, trancheRepository,
-                notificationService);
+                notificationService,
+                java.time.Clock.fixed(java.time.Instant.parse("2026-06-14T09:00:00Z"),
+                        java.time.ZoneId.of("Africa/Casablanca")));
     }
 
     @AfterEach

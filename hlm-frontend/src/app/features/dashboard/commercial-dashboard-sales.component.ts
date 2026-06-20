@@ -1,4 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,32 +11,31 @@ import {
 @Component({
   selector: 'app-commercial-dashboard-sales',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, TranslatePipe],
   template: `
     <div class="sales-page">
       <div class="sales-header">
-        <a routerLink="/app/dashboard/commercial">&lsaquo; Tableau de bord</a>
-        <h2>Détail des ventes</h2>
+        <a routerLink="/app/dashboard/commercial">{{ 'dashboard.commercialSales.back' | translate }}</a>
+        <h2>{{ 'dashboard.commercialSales.title' | translate }}</h2>
       </div>
 
-      @if (loading) { <p>Chargement…</p> }
+      @if (loading) { <p>{{ 'dashboard.commercialSales.loading' | translate }}</p> }
       @if (error)   { <p class="error">{{ error }}</p> }
 
       @if (!loading && !error && data) {
         <p class="summary-line">
-          <strong>{{ data.totalCount }}</strong> vente{{ data.totalCount !== 1 ? 's' : '' }} &mdash;
-          CA total <strong>{{ formatAmount(data.totalAmount) }}</strong>
+          {{ 'dashboard.commercialSales.summaryLine' | translate:{ count: data.totalCount, amount: formatAmount(data.totalAmount) } }}
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Date compromis</th>
-              <th>Projet</th>
-              <th>Bien</th>
-              <th>Acquéreur</th>
-              <th>Agent</th>
-              <th class="num">Prix de vente</th>
+              <th>{{ 'dashboard.commercialSales.thDateCompromis' | translate }}</th>
+              <th>{{ 'dashboard.commercialSales.thProjet' | translate }}</th>
+              <th>{{ 'dashboard.commercialSales.thBien' | translate }}</th>
+              <th>{{ 'dashboard.commercialSales.thAcquereur' | translate }}</th>
+              <th>{{ 'dashboard.commercialSales.thAgent' | translate }}</th>
+              <th class="num">{{ 'dashboard.commercialSales.thPrixVente' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,15 +54,15 @@ import {
 
         @if (data.totalPages > 1) {
           <div class="pagination">
-            <button [disabled]="currentPage === 0" (click)="goTo(currentPage - 1)">Prev</button>
-            <span>Page {{ currentPage + 1 }} / {{ data.totalPages }}</span>
-            <button [disabled]="currentPage >= data.totalPages - 1" (click)="goTo(currentPage + 1)">Next</button>
+            <button [disabled]="currentPage === 0" (click)="goTo(currentPage - 1)">{{ 'dashboard.commercialSales.prev' | translate }}</button>
+            <span>{{ 'dashboard.commercialSales.pageInfo' | translate:{ page: currentPage + 1, total: data.totalPages } }}</span>
+            <button [disabled]="currentPage >= data.totalPages - 1" (click)="goTo(currentPage + 1)">{{ 'dashboard.commercialSales.next' | translate }}</button>
           </div>
         }
       }
 
       @if (!loading && !error && !data) {
-        <p>Aucune vente enregistrée sur cette période.</p>
+        <p>{{ 'dashboard.commercialSales.empty' | translate }}</p>
       }
     </div>
   `,

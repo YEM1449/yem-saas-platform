@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, MeResponse, SwitchSocieteRequest, ActivationRequest, InvitationDetails } from '../models/login.model';
+import { I18nService } from '../i18n/i18n.service';
 
 export type SessionStatus = 'valid' | 'invalid' | 'unknown';
 
@@ -13,6 +14,7 @@ const SUPPORTED_LANGS = ['fr', 'en', 'ar'];
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private i18n = inject(I18nService);
   private cachedUser: MeResponse | null = null;
 
   get user(): MeResponse | null {
@@ -87,10 +89,10 @@ export class AuthService {
     return this.me().pipe(
       tap((user) => {
         this.cachedUser = user;
-        // Apply RTL direction for Arabic users
+        // Adopt the user's saved interface language (catalog + direction) unless the visitor has
+        // already made an explicit choice on this device. I18nService owns dir/lang + catalog load.
         if (user.langueInterface && SUPPORTED_LANGS.includes(user.langueInterface)) {
-          document.documentElement.dir = user.langueInterface === 'ar' ? 'rtl' : 'ltr';
-          document.documentElement.lang = user.langueInterface;
+          this.i18n.adoptUserPreference(user.langueInterface);
         }
       }),
       map((): SessionStatus => 'valid'),

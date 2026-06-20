@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,6 +80,8 @@ public class VenteService {
     private final com.yem.hlm.backend.legal.MarketConfig marketConfig;
     private final com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository;
     private final com.yem.hlm.backend.notification.service.NotificationService notificationService;
+    /** Market-aware clock — all legal date/time math runs in the jurisdiction zone (EX-009). */
+    private final Clock clock;
 
     public VenteService(
             VenteRepository venteRepository,
@@ -95,7 +98,8 @@ public class VenteService {
             VenteRefGenerator refGenerator,
             com.yem.hlm.backend.legal.MarketConfig marketConfig,
             com.yem.hlm.backend.vente.repo.ReserveLivraisonRepository reserveRepository,
-            com.yem.hlm.backend.notification.service.NotificationService notificationService) {
+            com.yem.hlm.backend.notification.service.NotificationService notificationService,
+            Clock clock) {
         this.venteRepository     = venteRepository;
         this.echeanceRepository  = echeanceRepository;
         this.documentRepository  = documentRepository;
@@ -111,6 +115,7 @@ public class VenteService {
         this.marketConfig        = marketConfig;
         this.reserveRepository   = reserveRepository;
         this.notificationService = notificationService;
+        this.clock               = clock;
     }
 
     // =========================================================================
@@ -227,7 +232,7 @@ public class VenteService {
         // If already RESERVED (from deposit/reservation workflow), keep it RESERVED.
         // Property becomes SOLD only at ACTE stage (was ACTE_NOTARIE pre-Wave-12; see updateStatut).
         if (property.getStatus() == PropertyStatus.ACTIVE) {
-            propertyWorkflow.reserve(property, LocalDateTime.now());
+            propertyWorkflow.reserve(property, LocalDateTime.now(clock));
             propertyRepository.save(property);
         } else if (property.getStatus() != PropertyStatus.RESERVED) {
             throw new InvalidPropertyStatusTransitionException(
@@ -257,7 +262,7 @@ public class VenteService {
         } else if (request.dateLivraisonPrevue() != null) {
             vente.setExpectedClosingDate(request.dateLivraisonPrevue());
         } else {
-            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(vente.getStatut())));
+            vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(vente.getStatut())));
         }
 
         return toResponse(venteRepository.save(vente));
@@ -291,16 +296,16 @@ public class VenteService {
         User agent = userRepository.findById(actorId)
                 .orElseThrow(() -> new UserNotFoundException(actorId));
         int duree = Math.min(Math.max(dureeHeures, 1), 72);
-        propertyWorkflow.reserve(property, LocalDateTime.now());
+        propertyWorkflow.reserve(property, LocalDateTime.now(clock));
         propertyRepository.save(property);
 
         Vente vente = new Vente(societeId, property.getId(), contact, agent);
         vente.setVenteRef(refGenerator.generate(societeId));
         vente.setStatut(VenteStatut.OPTION);
-        vente.setOptionExpireAt(Instant.now().plus(duree, ChronoUnit.HOURS));
+        vente.setOptionExpireAt(Instant.now(clock).plus(duree, ChronoUnit.HOURS));
         if (property.getPrice() != null) vente.setPrixVente(property.getPrice());
         vente.setProbability(defaultProbability(VenteStatut.OPTION));
-        vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
+        vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(VenteStatut.OPTION)));
 
         advanceContactStatus(contact, ContactStatus.QUALIFIED_PROSPECT);
         contactRepository.save(contact);
@@ -330,17 +335,12 @@ public class VenteService {
         // Persist the deposit so the refund obligation has a known amount on annulation (#028).
         vente.setMontantDepot(montantDepot);
 
-        vente.setStatut(VenteStatut.RESERVE);
         vente.setOptionExpireAt(null);
 
         // Open the legal cooling-off window and advance to EN_RETRACTATION.
-        vente.setDateFinDelaiReflexion(LocalDate.now().plusDays(marketConfig.getDelaiRetractationJours()));
-        vente.setStatut(VenteStatut.EN_RETRACTATION);
-        vente.setStageEntryDate(LocalDateTime.now());
-        vente.setProbability(defaultProbability(VenteStatut.EN_RETRACTATION));
-
-        advanceContactStatus(vente.getContact(), ContactStatus.CLIENT);
-        contactRepository.save(vente.getContact());
+        // Deadline is computed via the single source of truth so the day-count convention stays consistent.
+        vente.setDateFinDelaiReflexion(marketConfig.withdrawalDeadline(LocalDate.now(clock)));
+        applyStageEntry(vente, VenteStatut.EN_RETRACTATION); // statut + stamps + contact→CLIENT (EX-012)
 
         return toResponse(venteRepository.save(vente));
     }
@@ -355,17 +355,15 @@ public class VenteService {
             throw new RetractationImpossibleException("La vente n'est pas en période de rétractation.");
         }
         LocalDate deadline = vente.getDateFinDelaiReflexion();
-        if (deadline != null && LocalDate.now().isAfter(deadline)) {
+        if (deadline != null && LocalDate.now(clock).isAfter(deadline)) {
             throw new RetractationImpossibleException(
                     "Le délai légal de rétractation de " + marketConfig.getDelaiRetractationJours()
                     + " jours est expiré.");
         }
 
-        vente.setStatut(VenteStatut.ANNULE);
-        vente.setRetractationExerceeAt(Instant.now());
+        vente.setRetractationExerceeAt(Instant.now(clock));
         vente.setMotifAnnulation(MotifAnnulation.DESISTEMENT_ACHETEUR);
-        releasePropertyForCancelledVente(societeId, vente);
-        echeanceRepository.cancelAllPendingByVente(vente.getId());
+        applyStageEntry(vente, VenteStatut.ANNULE); // statut + property release + échéance cancel (EX-012)
 
         Vente saved = venteRepository.save(vente);
         publishVenteAnnulee(societeId, saved);
@@ -383,7 +381,7 @@ public class VenteService {
     /** Cancels OPTIONs whose hold has expired. Returns the number expired. */
     @Transactional
     public int expireOverdueOptions() {
-        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now());
+        List<Vente> overdue = venteRepository.findByStatutAndOptionExpireAtBefore(VenteStatut.OPTION, Instant.now(clock));
         for (Vente v : overdue) {
             v.setStatut(VenteStatut.ANNULE);
             v.setMotifAnnulation(MotifAnnulation.AUTRE);
@@ -399,7 +397,7 @@ public class VenteService {
     @Transactional
     public int closeExpiredRetractations() {
         List<Vente> done = venteRepository.findByStatutAndDateFinDelaiReflexionBefore(
-                VenteStatut.EN_RETRACTATION, LocalDate.now());
+                VenteStatut.EN_RETRACTATION, LocalDate.now(clock));
         for (Vente v : done) {
             v.setStatut(VenteStatut.RESERVE);
             venteRepository.save(v);
@@ -457,11 +455,13 @@ public class VenteService {
             throw new InvalidVenteTransitionException(vente.getStatut(), target);
         }
 
-        VenteResponse response = updateStatut(venteId, new UpdateVenteStatutRequest(
+        // Trusted internal call: the source-state check above is the guard; applyStatutChange bypasses
+        // the public guard so this dedicated handler can legitimately enter LIVRE_AVEC_RESERVES.
+        VenteResponse response = applyStatutChange(venteId, new UpdateVenteStatutRequest(
                 target, null, request.dateLivraison(), null, null, null));
 
         if (withReserves) {
-            LocalDate echeance = LocalDate.now().plusDays(marketConfig.getDelaiLeveeReservesJours());
+            LocalDate echeance = LocalDate.now(clock).plusDays(marketConfig.getDelaiLeveeReservesJours());
             for (String description : request.reserves()) {
                 if (description != null && !description.isBlank()) {
                     reserveRepository.save(new ReserveLivraison(societeId, venteId, description.trim(), echeance));
@@ -491,16 +491,14 @@ public class VenteService {
         }
 
         reserve.setStatut(StatutReserve.LEVEE);
-        reserve.setDateLeveeReelle(LocalDate.now());
+        reserve.setDateLeveeReelle(LocalDate.now(clock));
         reserveRepository.save(reserve);
 
         long remaining = reserveRepository.countBySocieteIdAndVenteIdAndStatutNot(
                 societeId, venteId, StatutReserve.LEVEE);
         if (remaining == 0 && vente.getStatut() == VenteStatut.LIVRE_AVEC_RESERVES) {
             validateTransition(vente.getStatut(), VenteStatut.RESERVES_LEVEES);
-            vente.setStatut(VenteStatut.RESERVES_LEVEES);
-            vente.setProbability(defaultProbability(VenteStatut.RESERVES_LEVEES));
-            vente.setStageEntryDate(LocalDateTime.now());
+            applyStageEntry(vente, VenteStatut.RESERVES_LEVEES); // statut + stamps (EX-012)
             venteRepository.save(vente);
         }
         return toResponse(vente);
@@ -547,11 +545,94 @@ public class VenteService {
     // Statut transition
     // =========================================================================
 
+    /**
+     * Stages that MUST be entered through their dedicated, guarded endpoint — never via the generic
+     * {@code PATCH /statut} — because each enforces a legal/operational precondition the generic path
+     * does not (deposit cap, cooling-off window, recorded reserves). See {@link GuardedStageEntryException}.
+     */
+    private static final java.util.Map<VenteStatut, String> GUARDED_ENTRY_ENDPOINTS = java.util.Map.of(
+            VenteStatut.OPTION,              "POST /api/ventes/option",
+            VenteStatut.RESERVE,             "POST /api/ventes/{id}/confirm-reservation",
+            VenteStatut.EN_RETRACTATION,     "POST /api/ventes/{id}/confirm-reservation",
+            VenteStatut.LIVRE_AVEC_RESERVES, "POST /api/ventes/{id}/livraison",
+            VenteStatut.RESERVES_LEVEES,     "PUT /api/ventes/{id}/reserves/{reserveId}/lever"
+    );
+
+    /**
+     * Public statut transition (the controller's {@code PATCH /statut}). Refuses transitions into a
+     * guarded-entry stage so the legal guards of the dedicated handlers cannot be bypassed (EX-001).
+     * All other transitions are applied via {@link #applyStatutChange}.
+     */
     public VenteResponse updateStatut(UUID id, UpdateVenteStatutRequest request) {
+        String dedicatedEndpoint = GUARDED_ENTRY_ENDPOINTS.get(request.statut());
+        if (dedicatedEndpoint != null) {
+            throw new GuardedStageEntryException(request.statut(), dedicatedEndpoint);
+        }
+        return applyStatutChange(id, request);
+    }
+
+    /**
+     * Single source of truth for stage-entry side effects (EX-012). Applies the universal mechanics
+     * (statut, stage-entry timestamp, probability) and the per-target effects (contact lifecycle,
+     * property workflow, échéance cancellation, KPI event) so they can never drift between the
+     * generic and the dedicated write paths — the systemic root behind EX-001/EX-004/EX-011.
+     *
+     * <p>Callers enforce stage-specific preconditions (deposit cap, recorded reserves, motif/dates)
+     * and set stage-specific fields, then delegate here. This method does <b>not</b> {@code save()}
+     * the vente, and does <b>not</b> publish the {@code VenteAnnulee} event — that stays with the
+     * caller so the annulation event is fired on the persisted snapshot (refund amount).
+     */
+    private void applyStageEntry(Vente vente, VenteStatut target) {
+        UUID societeId = vente.getSocieteId();
+
+        // 1. Universal mechanics
+        vente.setStatut(target);
+        vente.setStageEntryDate(LocalDateTime.now(clock));
+        vente.setProbability(defaultProbability(target));
+
+        // 2. Contact lifecycle advancement (target-driven; advanceContactStatus never downgrades)
+        ContactStatus contactTarget = switch (target) {
+            case EN_RETRACTATION -> ContactStatus.CLIENT;
+            case LIVRE_DEFINITIF -> ContactStatus.COMPLETED_CLIENT;
+            default              -> null;
+        };
+        if (contactTarget != null && vente.getContact() != null) {
+            advanceContactStatus(vente.getContact(), contactTarget);
+            contactRepository.save(vente.getContact());
+        }
+
+        // 3. Property workflow: ACTE → SOLD (legal transfer); ANNULE → release back to ACTIVE.
+        if (target == VenteStatut.ACTE) {
+            propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId()).ifPresent(p -> {
+                propertyWorkflow.sell(p, LocalDateTime.now(clock));
+                propertyRepository.save(p);
+            });
+        } else if (target == VenteStatut.ANNULE) {
+            releasePropertyForCancelledVente(societeId, vente);
+            // Cancel pending échéances (A-001); PAYEE échéances are already collected and left as-is.
+            echeanceRepository.cancelAllPendingByVente(vente.getId());
+        }
+
+        // 4. KPI recomputation when the sale is delivered (published pre-save, as before).
+        if (target == VenteStatut.LIVRE_DEFINITIF) {
+            UUID trancheId = propertyRepository.findBySocieteIdAndId(societeId, vente.getPropertyId())
+                    .map(p -> p.getTrancheId()).orElse(null);
+            eventPublisher.publishEvent(
+                    new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
+        }
+    }
+
+    /**
+     * Trusted internal statut applier. Callers must have already enforced any stage-specific
+     * preconditions (e.g. {@link #recordDelivery} validates the source state and records reserves).
+     * Not exposed via the public API — do not call from a controller.
+     */
+    private VenteResponse applyStatutChange(UUID id, UpdateVenteStatutRequest request) {
         UUID societeId = societeCtx.requireSocieteId();
         Vente vente = requireVente(societeId, id);
 
         validateTransition(vente.getStatut(), request.statut());
+        enforceRetractationWindow(vente, request.statut());
 
         // Cancellation reason is mandatory when annulling a sale
         if (request.statut() == VenteStatut.ANNULE) {
@@ -562,15 +643,16 @@ public class VenteService {
             vente.setMotifAnnulation(request.motifAnnulation());
         }
 
-        vente.setStatut(request.statut());
-        vente.setStageEntryDate(LocalDateTime.now());
-        vente.setProbability(defaultProbability(request.statut()));
+        // Universal stage-entry mechanics + per-target side effects (EX-012).
+        applyStageEntry(vente, request.statut());
+
+        // ── Request-driven fields (not part of the universal stage mechanics) ──
         vente.setNotes(request.notes() != null ? request.notes() : vente.getNotes());
 
         if (request.expectedClosingDate() != null) {
             vente.setExpectedClosingDate(request.expectedClosingDate());
         } else if (vente.getExpectedClosingDate() == null) {
-            vente.setExpectedClosingDate(LocalDate.now().plusDays(estimatedDaysToClose(request.statut())));
+            vente.setExpectedClosingDate(LocalDate.now(clock).plusDays(estimatedDaysToClose(request.statut())));
         }
 
         // Stamp date fields based on the new statut
@@ -587,44 +669,6 @@ public class VenteService {
             vente.setDatePvReception(request.datePvReception());
         }
 
-        // Advance contact to COMPLETED_CLIENT when sale is delivered
-        if (request.statut() == VenteStatut.LIVRE_DEFINITIF) {
-            Contact contact = vente.getContact();
-            advanceContactStatus(contact, ContactStatus.COMPLETED_CLIENT);
-            contactRepository.save(contact);
-
-            // Publish KPI recomputation event after commit
-            UUID trancheId = propertyRepository
-                    .findBySocieteIdAndId(societeId, vente.getPropertyId())
-                    .map(p -> p.getTrancheId()).orElse(null);
-            eventPublisher.publishEvent(
-                    new SaleFinalizedEvent(societeId, societeCtx.requireUserId(), vente.getId(), trancheId));
-        }
-
-        // Drive property status from vente stage:
-        // ACTE → SOLD (legal ownership transfer); ANNULE → release back to ACTIVE
-        Property property = propertyRepository
-                .findBySocieteIdAndId(societeId, vente.getPropertyId()).orElse(null);
-        if (property != null) {
-            if (request.statut() == VenteStatut.ACTE) {
-                propertyWorkflow.sell(property, LocalDateTime.now());
-                propertyRepository.save(property);
-            } else if (request.statut() == VenteStatut.ANNULE) {
-                if (property.getStatus() == PropertyStatus.RESERVED) {
-                    propertyWorkflow.releaseReservation(property);
-                } else if (property.getStatus() == PropertyStatus.SOLD) {
-                    propertyWorkflow.cancelSaleToAvailable(property);
-                }
-                propertyRepository.save(property);
-            }
-        }
-
-        // Cancel all pending échéances when a vente is annulled (A-001).
-        // PAYEE échéances are already collected and are left unchanged.
-        if (request.statut() == VenteStatut.ANNULE) {
-            echeanceRepository.cancelAllPendingByVente(vente.getId());
-        }
-
         Vente saved = venteRepository.save(vente);
         if (request.statut() == VenteStatut.ANNULE) {
             publishVenteAnnulee(societeId, saved);
@@ -638,7 +682,8 @@ public class VenteService {
 
     public EcheanceResponse addEcheance(UUID venteId, CreateEcheanceRequest request) {
         UUID societeId = societeCtx.requireSocieteId();
-        Vente vente = requireVente(societeId, venteId);
+        // Lock the vente: the cumulative-cap check below must be atomic w.r.t. concurrent additions (DA-003).
+        Vente vente = requireVenteForUpdate(societeId, venteId);
 
         dateCoherence.validateEcheanceDates(vente.getDateCompromis(), request.dateEcheance(), null);
         assertCumulWithinPrice(societeId, venteId, vente.getPrixVente(), request.montant());
@@ -668,7 +713,9 @@ public class VenteService {
     @Transactional
     public List<EcheanceResponse> generateEcheancierLegal(UUID venteId) {
         UUID societeId = societeCtx.requireSocieteId();
-        Vente vente = requireVente(societeId, venteId);
+        // Lock the vente: the "already generated?" idempotency guard below must be atomic so two
+        // concurrent calls cannot each create a full 100% schedule (→ 200% total) (DA-003).
+        Vente vente = requireVenteForUpdate(societeId, venteId);
 
         BigDecimal prix = vente.getPrixVente();
         if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0) {
@@ -679,8 +726,8 @@ public class VenteService {
             throw new ViolationLegaleException("L'échéancier légal a déjà été généré pour cette vente.");
         }
 
-        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now()))
-                ? vente.getDateCompromis() : LocalDate.now();
+        LocalDate base = (vente.getDateCompromis() != null && !vente.getDateCompromis().isBefore(LocalDate.now(clock)))
+                ? vente.getDateCompromis() : LocalDate.now(clock);
 
         List<VenteEcheance> created = new java.util.ArrayList<>();
         for (com.yem.hlm.backend.legal.EcheancierLegal.EtapeLegale etape
@@ -877,6 +924,17 @@ public class VenteService {
     }
 
     /**
+     * Like {@link #requireVente} but takes a pessimistic write lock (SELECT ... FOR UPDATE) on the
+     * vente row. Use it when a method must atomically read-then-write a vente's financial children
+     * (échéances / appels de fonds): concurrent callers serialize on this row so the cumulative-cap
+     * and idempotency checks cannot be bypassed by a race (DA-003). Must run inside a transaction.
+     */
+    private Vente requireVenteForUpdate(UUID societeId, UUID venteId) {
+        return venteRepository.findBySocieteIdAndIdForUpdate(societeId, venteId)
+                .orElseThrow(() -> new VenteNotFoundException(venteId));
+    }
+
+    /**
      * Advances a contact's status in the pipeline progression without downgrading.
      * LOST and REFERRAL contacts are not modified (their status is deliberate).
      *
@@ -971,6 +1029,28 @@ public class VenteService {
         }
     }
 
+    /**
+     * Protects the buyer's legal cooling-off right (EX-011 / DA-011 / Art. 618-3 Loi 44-00).
+     *
+     * <p>While a vente is in {@code EN_RETRACTATION}, it may only be <em>cancelled</em> (the buyer's
+     * own withdrawal, {@code → ANNULE}) — it must not be advanced toward a forward stage
+     * ({@code → ACOMPTE}) until the withdrawal deadline has elapsed. The lawful way the window closes
+     * is the scheduled {@code closeExpiredRetractations()} sweep ({@code → RESERVE}); only then does
+     * forward progress become legal. The deadline boundary is inclusive (consistent with
+     * {@link #exerciseRetractation}): on the deadline day the buyer can still withdraw and the sale
+     * cannot yet advance.
+     */
+    private void enforceRetractationWindow(Vente vente, VenteStatut target) {
+        if (vente.getStatut() != VenteStatut.EN_RETRACTATION || target == VenteStatut.ANNULE) {
+            return;
+        }
+        LocalDate deadline = vente.getDateFinDelaiReflexion();
+        // Block while the window is still open (now ≤ deadline) or its end is unknown (fail-safe).
+        if (deadline == null || !LocalDate.now(clock).isAfter(deadline)) {
+            throw new RetractationWindowOpenException(deadline);
+        }
+    }
+
     public VenteResponse toResponse(Vente v) {
         List<EcheanceResponse> echeances = v.getEcheances().stream()
                 .map(this::toEcheanceResponse).toList();
@@ -982,7 +1062,7 @@ public class VenteService {
         BigDecimal penaliteAccumulee = null;
         boolean terminal = v.getStatut() == VenteStatut.ANNULE || v.getStatut() == VenteStatut.LIVRE_DEFINITIF;
         if (!terminal && v.getDateLivraisonReelle() == null && v.getDateLivraisonPrevue() != null) {
-            LocalDate today = LocalDate.now();
+            LocalDate today = LocalDate.now(clock);
             if (today.isAfter(v.getDateLivraisonPrevue())) {
                 joursRetard = ChronoUnit.DAYS.between(v.getDateLivraisonPrevue(), today);
                 penaliteAccumulee = marketConfig.getPenaliteRetardJournalierMad()

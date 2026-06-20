@@ -4,6 +4,7 @@ import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class VenteVefaScheduler {
     }
 
     @Scheduled(cron = "${app.vente.vefa-sweep-cron:0 5 * * * *}")
+    @SchedulerLock(name = "vente_vefa_sweep", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     public void runVefaSweep() {
         societeContextHelper.runAsSystem(() -> {
             try {

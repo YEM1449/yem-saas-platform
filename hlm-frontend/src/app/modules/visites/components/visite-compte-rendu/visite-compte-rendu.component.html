@@ -1,0 +1,48 @@
+<div class="cr-wrap">
+  <a routerLink="/app/visites" class="back">‹ {{ 'visites.detail.back' | translate }}</a>
+  <h1>{{ 'visites.compteRendu.title' | translate }}</h1>
+
+  @if (saved(); as s) {
+    <!-- Success state -->
+    <div class="card done">
+      <p class="done-msg">✓ {{ 'visites.statut.REALISEE' | translate }}</p>
+      @if (s.resultat === 'OPPORTUNITE_CREEE') {
+        <div class="opp">
+          <p>{{ 'visites.compteRendu.createVenteHint' | translate }}</p>
+          <button class="btn btn-primary" (click)="createVente()">{{ 'visites.compteRendu.createVente' | translate }}</button>
+        </div>
+      }
+      <button class="btn" (click)="backToDetail()">{{ 'visites.detail.back' | translate }}</button>
+    </div>
+  } @else if (visite()) {
+    <p class="intro muted">{{ 'visites.compteRendu.intro' | translate }}</p>
+    <form class="card" (ngSubmit)="submit()">
+      <div class="field">
+        <label>{{ 'visites.compteRendu.texte' | translate }}</label>
+        <textarea [(ngModel)]="compteRendu" name="cr" rows="6"
+          [placeholder]="('visites.compteRendu.textePlaceholder' | translate)"></textarea>
+      </div>
+      <div class="field">
+        <label>{{ 'visites.compteRendu.resultat' | translate }}</label>
+        <select [(ngModel)]="resultat" name="resultat">
+          <option [ngValue]="null">—</option>
+          @for (r of resultats; track r) {
+            <option [ngValue]="r">{{ 'visites.resultat.' + r | translate }}</option>
+          }
+        </select>
+        <small class="hint">{{ 'visites.compteRendu.opportuniteHint' | translate }}</small>
+      </div>
+
+      @if (error()) { <div class="alert">{{ error() }}</div> }
+
+      <div class="actions">
+        <a routerLink="/app/visites" class="btn">{{ 'visites.compteRendu.cancel' | translate }}</a>
+        <button type="submit" class="btn btn-primary" [disabled]="!canSubmit || saving()">
+          {{ 'visites.compteRendu.submit' | translate }}
+        </button>
+      </div>
+    </form>
+  } @else if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+</div>

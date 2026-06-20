@@ -2,8 +2,8 @@
 
   <div class="report-header">
     <div>
-      <h1 class="report-title">Rapport créances — Échéancier</h1>
-      <p class="report-subtitle">Aging des échéances impayées par tranche de retard</p>
+      <h1 class="report-title">{{ 'reports.creances.title' | translate }}</h1>
+      <p class="report-subtitle">{{ 'reports.creances.subtitle' | translate }}</p>
     </div>
     <div class="report-actions">
       <button class="btn btn-secondary" (click)="printPage()">
@@ -22,7 +22,7 @@
   }
 
   @if (loading()) {
-    <div class="skeleton-stack" data-testid="creances-loading-state" aria-label="Chargement du rapport créances…">
+    <div class="skeleton-stack" data-testid="creances-loading-state" [attr.aria-label]="'reports.creances.loadingAria' | translate">
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
@@ -39,32 +39,32 @@
     <div class="kpi-row">
       <div class="kpi-card kpi-outstanding">
         <div class="kpi-val">{{ formatAmount(data()!.totalOutstanding) }}</div>
-        <div class="kpi-lbl">Total encours</div>
+        <div class="kpi-lbl">{{ 'reports.creances.totalEncours' | translate }}</div>
       </div>
       <div class="kpi-card kpi-overdue">
         <div class="kpi-val">{{ formatAmount(data()!.totalOverdue) }}</div>
-        <div class="kpi-lbl">Dont en retard</div>
+        <div class="kpi-lbl">{{ 'reports.creances.dontEnRetard' | translate }}</div>
       </div>
       <div class="kpi-card kpi-rate">
         <div class="kpi-val">{{ formatPct(data()!.collectionRate) }}</div>
-        <div class="kpi-lbl">Taux de recouvrement</div>
+        <div class="kpi-lbl">{{ 'reports.creances.tauxRecouvrement' | translate }}</div>
       </div>
       <div class="kpi-card kpi-days">
         <div class="kpi-val">{{ data()!.avgDaysToPayment != null ? data()!.avgDaysToPayment + ' j' : '—' }}</div>
-        <div class="kpi-lbl">Délai moyen encaissement</div>
+        <div class="kpi-lbl">{{ 'reports.creances.delaiMoyen' | translate }}</div>
       </div>
     </div>
 
     <!-- Aging table -->
-    <div class="section-head"><span class="section-label">Détail par tranche</span></div>
+    <div class="section-head"><span class="section-label">{{ 'reports.creances.detailParTranche' | translate }}</span></div>
     <div class="table-wrap">
       <table class="report-table">
         <thead>
           <tr>
-            <th>Tranche</th>
-            <th class="right">Échéances</th>
+            <th>{{ 'reports.creances.thTranche' | translate }}</th>
+            <th class="right">{{ 'reports.creances.thEcheances' | translate }}</th>
             <th class="right">Montant (MAD)</th>
-            <th class="right">Part</th>
+            <th class="right">{{ 'reports.creances.thPart' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -85,7 +85,7 @@
         </tbody>
         <tfoot>
           <tr class="total-row">
-            <td>Total</td>
+            <td>{{ 'reports.common.total' | translate }}</td>
             <td class="right">{{ totalBucketCount }}</td>
             <td class="right amount-cell">{{ formatAmount(data()!.totalOutstanding) }}</td>
             <td class="right">100%</td>
@@ -97,14 +97,14 @@
     <!-- Overdue by project -->
     @if (data()!.overdueByProject.length > 0) {
       <div class="section-head" style="margin-top:24px">
-        <span class="section-label">Retards par projet</span>
+        <span class="section-label">{{ 'reports.creances.retardsParProjet' | translate }}</span>
       </div>
       <div class="table-wrap">
         <table class="report-table">
           <thead>
             <tr>
-              <th>Projet</th>
-              <th class="right">Montant en retard (MAD)</th>
+              <th>{{ 'reports.creances.thProjet' | translate }}</th>
+              <th class="right">{{ 'reports.creances.thMontantRetard' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -119,7 +119,7 @@
       </div>
     }
 
-    <p class="asof-note">Données au {{ data()!.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p class="asof-note">{{ 'reports.creances.dataAsOf' | translate:{ date: (data()!.asOf | date:'dd/MM/yyyy HH:mm') } }}</p>
   }
 
 </div>

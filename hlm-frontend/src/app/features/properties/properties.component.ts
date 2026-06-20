@@ -1,6 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -41,12 +43,13 @@ interface CreatePropertyForm {
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, HlmCardComponent],
+  imports: [FormsModule, DecimalPipe, HlmCardComponent, TranslatePipe],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.css',
 })
 export class PropertiesComponent implements OnInit {
   private svc         = inject(PropertyService);
+  private i18n        = inject(I18nService);
   private projectSvc  = inject(ProjectService);
   private immeubleSvc = inject(ImmeubleService);
   private router      = inject(Router);
@@ -98,9 +101,8 @@ export class PropertiesComponent implements OnInit {
     'VILLA', 'APPARTEMENT', 'STUDIO', 'T2', 'T3',
     'DUPLEX', 'COMMERCE', 'LOT', 'TERRAIN_VIERGE'];
 
-  readonly statusOptions = [
-    { value: 'DRAFT',  label: 'Draft (not yet on market)' },
-    { value: 'ACTIVE', label: 'Active (available for reservation)' }];
+  // Labels resolved in the template via 'properties.statusOpt.<value>'.
+  readonly statusOptions = [{ value: 'DRAFT' }, { value: 'ACTIVE' }];
 
   form: CreatePropertyForm = {
     projectId: '', type: '', referenceCode: '', title: '',
@@ -235,7 +237,7 @@ export class PropertiesComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.bulkLoading = false;
-        this.bulkError = (err.error as ErrorResponse)?.message ?? `Erreur (${err.status})`;
+        this.bulkError = (err.error as ErrorResponse)?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -280,9 +282,9 @@ export class PropertiesComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if      (err.status === 401) this.error = 'Session expirée. Veuillez vous reconnecter.';
-        else if (err.status === 403) this.error = 'Accès refusé.';
-        else                         this.error = body?.message ?? `Erreur (${err.status})`;
+        if      (err.status === 401) this.error = this.i18n.instant('properties.errors.sessionExpired');
+        else if (err.status === 403) this.error = this.i18n.instant('properties.errors.accessDenied');
+        else                         this.error = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -369,19 +371,19 @@ export class PropertiesComponent implements OnInit {
   closeModal(): void { if (!this.submitting) this.showModal = false; }
 
   submitCreate(): void {
-    if (!this.form.projectId) { this.submitError = 'Le projet est obligatoire.'; return; }
+    if (!this.form.projectId) { this.submitError = this.i18n.instant('properties.errors.projectRequired'); return; }
     if (!this.form.type || !this.form.referenceCode.trim() || !this.form.title.trim()) {
-      this.submitError = 'Le type, le code de référence et le titre sont obligatoires.'; return;
+      this.submitError = this.i18n.instant('properties.errors.mainFieldsRequired'); return;
     }
-    if (this.form.price === null) { this.submitError = 'Le prix est obligatoire.'; return; }
+    if (this.form.price === null) { this.submitError = this.i18n.instant('properties.errors.priceRequired'); return; }
     if (this.needsSurface && !this.form.surfaceAreaSqm) {
-      this.submitError = 'La surface (m²) est obligatoire pour ce type de bien.'; return;
+      this.submitError = this.i18n.instant('properties.errors.surfaceRequired'); return;
     }
     if (this.needsLand && !this.form.landAreaSqm) {
-      this.submitError = 'La superficie du terrain est obligatoire pour ce type de bien.'; return;
+      this.submitError = this.i18n.instant('properties.errors.landRequired'); return;
     }
     if (this.needsBedrooms && (!this.form.bedrooms || !this.form.bathrooms)) {
-      this.submitError = 'Le nombre de chambres et de salles de bain est obligatoire.'; return;
+      this.submitError = this.i18n.instant('properties.errors.roomsRequired'); return;
     }
     if (this.needsFloorNumber && this.form.floorNumber === null) {
       this.submitError = "Le numéro d'étage est obligatoire pour ce type de bien."; return;
@@ -425,7 +427,7 @@ export class PropertiesComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.submitting  = false;
         const body = err.error as ErrorResponse | null;
-        this.submitError = body?.message ?? `Erreur (${err.status})`;
+        this.submitError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -434,20 +436,10 @@ export class PropertiesComponent implements OnInit {
   badgeClass(status: string): string { return 'badge badge-' + status.toLowerCase(); }
 
   statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      DRAFT: 'Brouillon', ACTIVE: 'Disponible',
-      RESERVED: 'Réservé', SOLD: 'Vendu',
-      WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
-    };
-    return labels[status] ?? status;
+    return this.i18n.instant('properties.status.' + status);
   }
 
   typeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      VILLA: 'Villa', APPARTEMENT: 'Appt.', STUDIO: 'Studio',
-      T2: 'T2', T3: 'T3', DUPLEX: 'Duplex', COMMERCE: 'Commerce',
-      LOT: 'Lot', TERRAIN_VIERGE: 'Terrain', PARKING: 'Parking',
-    };
-    return labels[type] ?? type;
+    return this.i18n.instant('properties.type.' + type);
   }
 }

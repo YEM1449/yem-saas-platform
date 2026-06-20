@@ -44,7 +44,9 @@ import com.yem.hlm.backend.reservation.service.PropertyNotAvailableForReservatio
 import com.yem.hlm.backend.reservation.service.ReservationNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteEcheanceNotFoundException;
 import com.yem.hlm.backend.vente.service.VenteNotFoundException;
+import com.yem.hlm.backend.vente.service.GuardedStageEntryException;
 import com.yem.hlm.backend.vente.service.InvalidVenteTransitionException;
+import com.yem.hlm.backend.vente.service.RetractationWindowOpenException;
 import com.yem.hlm.backend.vente.service.PropertyAlreadyEngagedException;
 import com.yem.hlm.backend.vente.service.RetractationImpossibleException;
 import com.yem.hlm.backend.vente.service.ViolationLegaleException;
@@ -57,7 +59,9 @@ import com.yem.hlm.backend.viewer3d.service.InvalidGlbException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
+import com.yem.hlm.backend.societe.TenantIsolationException;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
+import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -84,6 +88,19 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * Error-tracking meter (P4 / DA-026): every unhandled 5xx and every tenant-isolation trip is
+     * counted (tagged by exception type) so Prometheus/Grafana can alert on the error rate — failures
+     * are no longer invisible until a user calls. See docs/ops/alert-rules.md for the alert wiring.
+     *
+     * <p>Uses Micrometer's static global registry (Spring Boot binds it to the Prometheus registry by
+     * default) so this advice stays constructor-free — {@code @WebMvcTest} slices, which don't load
+     * metrics auto-config, still wire it.
+     */
+    private void countError(String type) {
+        Metrics.counter("hlm.errors.unhandled", "type", type).increment();
+    }
 
     /**
      * Handle bean validation errors (@Valid on request bodies).
@@ -233,7 +250,8 @@ public class GlobalExceptionHandler {
             com.yem.hlm.backend.vente.service.CoAcquereurNotFoundException.class,
             com.yem.hlm.backend.vente.service.DossierFinancementNotFoundException.class,
             TrancheNotFoundException.class,
-            Project3dModelNotFoundException.class
+            Project3dModelNotFoundException.class,
+            com.yem.hlm.backend.visite.service.VisiteNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException ex,
@@ -349,7 +367,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    @ExceptionHandler({InvalidVenteTransitionException.class, InvalidTrancheTransitionException.class})
+    @ExceptionHandler({InvalidVenteTransitionException.class, InvalidTrancheTransitionException.class,
+            com.yem.hlm.backend.visite.service.InvalidVisiteTransitionException.class})
     public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
             RuntimeException ex,
             HttpServletRequest request
@@ -962,6 +981,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(422).body(error);
     }
 
+    // ========== Visite — conflit de créneau (409) / compte-rendu requis (422) ==========
+
+    @ExceptionHandler(com.yem.hlm.backend.visite.service.ConflitVisiteException.class)
+    public ResponseEntity<ErrorResponse> handleConflitVisite(
+            com.yem.hlm.backend.visite.service.ConflitVisiteException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.VISITE_CONFLIT, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(com.yem.hlm.backend.visite.service.CompteRenduRequisException.class)
+    public ResponseEntity<ErrorResponse> handleCompteRenduRequis(
+            com.yem.hlm.backend.visite.service.CompteRenduRequisException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                422, "Unprocessable Entity",
+                ErrorCode.COMPTE_RENDU_REQUIS, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(422).body(error);
+    }
+
     // ========== Legal violation (422) / retraction impossible (409) ==========
 
     @ExceptionHandler(ViolationLegaleException.class)
@@ -979,6 +1018,24 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
                 ErrorCode.RETRACTATION_IMPOSSIBLE, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(GuardedStageEntryException.class)
+    public ResponseEntity<ErrorResponse> handleGuardedStageEntry(
+            GuardedStageEntryException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.GUARDED_STAGE_ENTRY, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(RetractationWindowOpenException.class)
+    public ResponseEntity<ErrorResponse> handleRetractationWindowOpen(
+            RetractationWindowOpenException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.getReasonPhrase(),
+                ErrorCode.RETRACTATION_WINDOW_OPEN, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
@@ -1063,11 +1120,34 @@ public class GlobalExceptionHandler {
      * Catch-all handler for unexpected exceptions.
      * Logs full stack trace but returns safe message to client.
      */
+    /**
+     * Tenant-isolation backstop tripped (P5): a société-scoped principal hit the DB with no société.
+     * Fail closed with a 403 (never leak which/whether a resource exists), log + count it as a
+     * security-relevant error so monitoring sees it immediately.
+     */
+    @ExceptionHandler(TenantIsolationException.class)
+    public ResponseEntity<ErrorResponse> handleTenantIsolation(
+            TenantIsolationException ex,
+            HttpServletRequest request
+    ) {
+        countError("TenantIsolationException");
+        log.error("Tenant isolation backstop tripped on {}: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                ErrorCode.FORBIDDEN,
+                "Access denied",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
             HttpServletRequest request
     ) {
+        countError(ex.getClass().getSimpleName());
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

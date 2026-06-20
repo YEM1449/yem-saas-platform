@@ -129,3 +129,29 @@ This is the high-level route map for the live application. Use [../spec/api-refe
 | GET/PATCH | `/api/contacts/{id}/legal` | CRM / ADMIN-MANAGER write | Profil légal VEFA (CIN, MRE…) |
 | GET/PATCH | `/api/properties/{id}/commercial` | CRM / ADMIN-MANAGER write | Prix HT/TVA/TTC, surfaces, charges |
 | GET | `/api/dashboard/tresorerie` | ADMIN/MANAGER | Trésorerie + alertes VEFA |
+
+## Wave 16 — Module Visites & Agenda
+
+Base path `/api/visites`. Société-scoped via `SocieteContext` (RG-V04). `from`/`to` are ISO-8601
+instants; the frontend sends Casablanca-derived bounds and renders in Africa/Casablanca (RG-V10).
+
+| Method | Path | Rôles | Notes |
+|---|---|---|---|
+| GET  | `/api/visites?agentId&statut&from&to` | ADMIN/MANAGER/AGENT | Agenda fenêtré ; AGENT forcé à ses propres visites (RG-V04) |
+| GET  | `/api/visites/{id}` | ADMIN/MANAGER/AGENT | Détail ; 404 cross-société |
+| GET  | `/api/visites/by-contact/{contactId}` | ADMIN/MANAGER/AGENT | Visites d'un contact (onglet fiche contact) |
+| POST | `/api/visites` | ADMIN/MANAGER/AGENT | Création ; conflit créneau → 409 (RG-V05) ; `override` (manager) |
+| PUT  | `/api/visites/{id}` | ADMIN/MANAGER/AGENT | Reprogrammation ; re-check conflit |
+| POST | `/api/visites/{id}/confirmer` | ADMIN/MANAGER/AGENT | PLANIFIEE → CONFIRMEE |
+| POST | `/api/visites/{id}/no-show` | ADMIN/MANAGER/AGENT | CONFIRMEE → NO_SHOW |
+| POST | `/api/visites/{id}/annuler` | ADMIN/MANAGER/AGENT | body `raison` ; annule rappels en attente (RG-V08) |
+| POST | `/api/visites/{id}/compte-rendu` | ADMIN/MANAGER/AGENT | body `compteRendu`+`resultat` → REALISEE (RG-V06) ; vide → 422 |
+| POST | `/api/visites/{id}/lier-vente` | ADMIN/MANAGER/AGENT | body `venteId` ; relie l'opportunité créée (RG-V06) |
+| GET  | `/api/visites/{id}/ics` | ADMIN/MANAGER/AGENT | Export iCalendar (text/calendar), heures UTC |
+
+**Rappels persistants** (RG-V07) : non exposés en REST. Job `@Scheduled` `RappelVisiteJob`
+(fixedDelay 5 min) scanne `visite_rappel` (bypass RLS nil-UUID), envoie via Brevo `EmailSender`,
+idempotent (`ENVOYE`), retry plafonné. Jamais de scheduler en mémoire.
+
+**Dashboard KPI** : `GET /api/dashboard/home` enrichi de `visitesRealiseesMoisCourant` +
+`tauxConversionVisites` — calculés par `VisiteService` (source unique, RG-V09).

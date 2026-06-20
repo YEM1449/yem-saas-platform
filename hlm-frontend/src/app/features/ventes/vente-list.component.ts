@@ -11,12 +11,14 @@ import { PropertyService } from '../properties/property.service';
 import { Property } from '../../core/models/property.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UiButtonComponent, UiEmptyStateComponent } from '../../shared/ui';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-vente-list',
   standalone: true,
   imports: [FormsModule, RouterLink, DatePipe, DecimalPipe,
-            UiButtonComponent, UiEmptyStateComponent],
+            UiButtonComponent, UiEmptyStateComponent, TranslatePipe],
   templateUrl: './vente-list.component.html',
   styleUrl: './vente-list.component.css',
 })
@@ -26,6 +28,7 @@ export class VenteListComponent implements OnInit {
   private contactSvc  = inject(ContactService);
   private propertySvc = inject(PropertyService);
   private route       = inject(ActivatedRoute);
+  private i18n        = inject(I18nService);
 
   ventes  = signal<Vente[]>([]);
   loading = signal(true);
@@ -89,14 +92,16 @@ export class VenteListComponent implements OnInit {
     return this.ventes().filter(v => v.statut === s).length;
   }
 
-  readonly KANBAN_COLUMNS: { key: VenteStatut; label: string; hint: string; color: string }[] = [
-    { key: 'RESERVE',         label: 'Réservé',      hint: 'Réservation + dépôt',       color: '#c2410c' },
-    { key: 'COMPROMIS',       label: 'Compromis',    hint: 'Avant-contrat signé',       color: '#c2410c' },
-    { key: 'FINANCEMENT',     label: 'Financement',  hint: 'Dossier bancaire en cours', color: '#a16207' },
-    { key: 'ACTE',            label: 'Acte notarié', hint: 'Acte authentique',          color: '#15803d' },
-    { key: 'LIVRE_DEFINITIF', label: 'Livré',        hint: 'Remise des clés',           color: '#15803d' }];
+  // Column labels/hints are resolved from the i18n catalog by `key` in the template
+  // ('ventes.statut.*' / 'ventes.kanbanHint.*'); only key + color live here.
+  readonly KANBAN_COLUMNS: { key: VenteStatut; color: string }[] = [
+    { key: 'RESERVE',         color: '#c2410c' },
+    { key: 'COMPROMIS',       color: '#c2410c' },
+    { key: 'FINANCEMENT',     color: '#a16207' },
+    { key: 'ACTE',            color: '#15803d' },
+    { key: 'LIVRE_DEFINITIF', color: '#15803d' }];
 
-  get kanbanBoard(): { col: { key: VenteStatut; label: string; hint: string; color: string }; items: Vente[] }[] {
+  get kanbanBoard(): { col: { key: VenteStatut; color: string }; items: Vente[] }[] {
     return this.KANBAN_COLUMNS.map(col => ({
       col,
       items: this.filtered.filter(v => v.statut === col.key),
@@ -126,20 +131,10 @@ export class VenteListComponent implements OnInit {
     return name.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
   }
 
-  readonly STATUT_DESC: Record<VenteStatut, string> = {
-    PROSPECT:            'Intérêt commercial initial — pas encore d\'engagement',
-    OPTION:              'Bien bloqué temporairement (24-72h) avant réservation',
-    RESERVE:             'Réservation signée avec dépôt de garantie (≤ 5%)',
-    EN_RETRACTATION:     'Délai légal de rétractation en cours (7 jours)',
-    ACOMPTE:             'Acompte versé par l\'acquéreur',
-    COMPROMIS:           'Avant-contrat signé — financement et conditions suspensives en cours',
-    FINANCEMENT:         'Dossier de financement déposé — en attente d\'accord bancaire',
-    ACTE:                'Acte authentique signé devant notaire — transfert de propriété effectué',
-    LIVRE_AVEC_RESERVES: 'Bien livré avec réserves à lever',
-    RESERVES_LEVEES:     'Toutes les réserves de livraison sont levées',
-    LIVRE_DEFINITIF:     'Bien remis à l\'acquéreur — vente finalisée',
-    ANNULE:              'Vente annulée — voir motif dans la fiche',
-  };
+  /** Tooltip description for a statut, resolved from the active language catalog. */
+  statutDesc(s: VenteStatut): string {
+    return this.i18n.instant('ventes.statutDesc.' + s);
+  }
 
   ngOnInit(): void {
     this.route.queryParamMap.pipe(take(1)).subscribe(params => {
@@ -150,19 +145,12 @@ export class VenteListComponent implements OnInit {
     });
     this.svc.list().subscribe({
       next:  (data) => { this.ventes.set(data); this.loading.set(false); },
-      error: ()     => { this.error.set('Erreur lors du chargement des ventes.'); this.loading.set(false); },
+      error: ()     => { this.error.set(this.i18n.instant('ventes.list.loadError')); this.loading.set(false); },
     });
   }
 
   statutLabel(s: VenteStatut): string {
-    const labels: Record<VenteStatut, string> = {
-      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
-      EN_RETRACTATION: 'Délai de rétractation', ACOMPTE: 'Acompte',
-      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement', ACTE: 'Acte notarié',
-      LIVRE_AVEC_RESERVES: 'Livré (réserves)', RESERVES_LEVEES: 'Réserves levées',
-      LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-    };
-    return labels[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   statutClass(s: VenteStatut): string {
@@ -177,7 +165,7 @@ export class VenteListComponent implements OnInit {
   }
 
   contractStatusLabel(s: ContractStatus): string {
-    return { PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé' }[s] ?? s;
+    return this.i18n.instant('ventes.contractStatus.' + s);
   }
 
   contractStatusClass(s: ContractStatus): string {
@@ -228,7 +216,7 @@ export class VenteListComponent implements OnInit {
   submitCreate(): void {
     if (!this.createContactId || !this.createPropertyId) return;
     if (!this.createPrixVente || this.createPrixVente <= 0) {
-      this.createError = 'Le prix de vente est obligatoire et doit être positif.';
+      this.createError = this.i18n.instant('ventes.create.priceRequired');
       return;
     }
     this.creating = true;
@@ -250,7 +238,8 @@ export class VenteListComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.creating = false;
-        this.createError = (err.error as { message?: string })?.message ?? `Erreur (${err.status})`;
+        this.createError = (err.error as { message?: string })?.message
+          ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }

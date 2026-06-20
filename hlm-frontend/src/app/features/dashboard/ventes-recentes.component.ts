@@ -1,17 +1,20 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { RecentVenteRow } from './home-dashboard.service';
 
 @Component({
   selector: 'app-ventes-recentes',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ventes-recentes.component.html',
   styleUrl: './ventes-recentes.component.css',
 })
 export class VentesRecentesComponent {
+  private i18n = inject(I18nService);
   @Input() ventes: RecentVenteRow[] = [];
 
   statutClass(s: string): string {
@@ -23,13 +26,7 @@ export class VentesRecentesComponent {
   }
 
   statutLabel(s: string): string {
-    const labels: Record<string, string> = {
-      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
-      EN_RETRACTATION: 'Rétractation', ACOMPTE: 'Acompte', COMPROMIS: 'Compromis',
-      FINANCEMENT: 'Financement', ACTE: 'Acte', LIVRE_AVEC_RESERVES: 'Livré (réserves)',
-      RESERVES_LEVEES: 'Réserves levées', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-    };
-    return labels[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   formatAmount(n: number | null | undefined): string {

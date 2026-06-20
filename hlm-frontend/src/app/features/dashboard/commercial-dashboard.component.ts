@@ -4,6 +4,8 @@ import {
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -29,7 +31,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
 @Component({
   selector: 'app-commercial-dashboard',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe],
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './commercial-dashboard.component.html',
   styleUrl: './commercial-dashboard.component.css',
 })
@@ -48,6 +50,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
   private auth    = inject(AuthService);
   private projSvc = inject(ProjectService);
   private router  = inject(Router);
+  private i18n    = inject(I18nService);
 
   summary: CommercialDashboardSummary | null = null;
   projects: Project[] = [];
@@ -101,14 +104,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
   }
 
   statutLabel(s: string): string {
-    const map: Record<string, string> = {
-      COMPROMIS:     'Compromis',
-      FINANCEMENT:   'Financement',
-      ACTE:  'Acte notarié',
-      LIVRE_DEFINITIF:         'Livré',
-      ANNULE:        'Annulé',
-    };
-    return map[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   statutColor(s: string): string {
@@ -159,7 +155,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
         if (err.status === 403) {
           this.error = 'Dashboard not available for your role.';
         } else {
-          this.error = err.error?.message ?? `Failed to load dashboard (${err.status})`;
+          this.error = err.error?.message ?? this.i18n.instant('dashboard.commercial.loadError', { status: err.status });
         }
       },
     });
@@ -183,7 +179,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
         data: {
           labels: s.salesAmountByDay.map(p => p.date),
           datasets: [{
-            label: 'Sales (MAD)',
+            label: this.i18n.instant('dashboard.commercial.salesMad'),
             data: s.salesAmountByDay.map(p => p.amount),
             backgroundColor: 'rgba(67,160,71,0.75)',
             borderColor: '#43a047',
@@ -209,7 +205,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
         data: {
           labels: s.depositsAmountByDay.map(p => p.date),
           datasets: [{
-            label: 'Deposits (MAD)',
+            label: this.i18n.instant('dashboard.commercial.depositsMad'),
             data: s.depositsAmountByDay.map(p => p.amount),
             backgroundColor: 'rgba(25,118,210,0.75)',
             borderColor: '#1976d2',
@@ -233,9 +229,9 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
       this.charts.push(new Chart(this.salesByProjectRef.nativeElement, {
         type: 'bar',
         data: {
-          labels: s.salesByProject.map(r => r.projectName ?? 'N/A'),
+          labels: s.salesByProject.map(r => r.projectName ?? this.i18n.instant('dashboard.commercial.na')),
           datasets: [{
-            label: 'Amount (MAD)',
+            label: this.i18n.instant('dashboard.commercial.amountMad'),
             data: s.salesByProject.map(r => r.salesAmount),
             backgroundColor: 'rgba(67,160,71,0.7)',
           }],
@@ -257,7 +253,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
         data: {
           labels: s.salesByAgent.map(r => r.agentEmail?.split('@')[0] ?? r.agentId?.substring(0, 8)),
           datasets: [{
-            label: 'Amount (MAD)',
+            label: this.i18n.instant('dashboard.commercial.amountMad'),
             data: s.salesByAgent.map(r => r.salesAmount),
             backgroundColor: 'rgba(25,118,210,0.7)',
           }],
@@ -303,7 +299,7 @@ export class CommercialDashboardComponent implements OnInit, OnDestroy, AfterVie
       this.charts.push(new Chart(this.prospectsRef.nativeElement, {
         type: 'doughnut',
         data: {
-          labels: s.prospectsBySource.map(r => r.source ?? 'Unknown'),
+          labels: s.prospectsBySource.map(r => r.source ?? this.i18n.instant('dashboard.commercial.unknown')),
           datasets: [{
             data: s.prospectsBySource.map(r => r.count),
             backgroundColor: s.prospectsBySource.map((_, i) => palette[i % palette.length]),

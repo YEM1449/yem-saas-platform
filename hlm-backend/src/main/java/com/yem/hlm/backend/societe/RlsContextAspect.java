@@ -65,6 +65,20 @@ public class RlsContextAspect {
           + "|| @annotation(org.springframework.transaction.annotation.Transactional)")
     public void setSocieteIdOnConnection() {
         UUID societeId = SocieteContext.getSocieteId();
+
+        // P5 — fail closed. A null société means the nil-UUID *bypass* below (all rows visible).
+        // That is correct for system/scheduler/SUPER_ADMIN mode (isSuperAdmin()==true) and for
+        // unauthenticated/pre-auth flows (login, portal magic-link) which carry no role and rely on
+        // JPQL societe_id params. But an authenticated CRM principal (ADMIN/MANAGER/AGENT) must NEVER
+        // reach the DB without a société — the JwtAuthenticationFilter guarantees one, so if it is
+        // missing here the context was lost/forgotten and bypassing would be a cross-tenant IDOR.
+        // Turn that into a hard failure instead.
+        if (societeId == null && !SocieteContext.isSuperAdmin() && isCrmTenantPrincipal()) {
+            throw new TenantIsolationException(
+                    "Société-scoped principal reached a transactional path without a société context "
+                    + "(role=" + SocieteContext.getRole() + ", user=" + SocieteContext.getUserId() + ")");
+        }
+
         String sid = (societeId != null) ? societeId.toString() : NIL_UUID;
         // set_config(name, value, is_local=true) — scoped to current transaction.
         // Uses parameterised form to prevent any injection risk.
@@ -72,5 +86,11 @@ public class RlsContextAspect {
                 "SELECT set_config('app.current_societe_id', ?, true)",
                 String.class,
                 sid);
+    }
+
+    /** True when the current principal is a tenant CRM role (ADMIN/MANAGER/AGENT) — i.e. must be société-scoped. */
+    private boolean isCrmTenantPrincipal() {
+        String role = SocieteContext.getRole();
+        return "ROLE_ADMIN".equals(role) || "ROLE_MANAGER".equals(role) || "ROLE_AGENT".equals(role);
     }
 }

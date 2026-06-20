@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { NotificationPollingService, DueTask } from '../notification-polling.service';
@@ -6,7 +7,7 @@ import { NotificationPollingService, DueTask } from '../notification-polling.ser
 @Component({
   selector: 'app-notification-toast',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, TranslatePipe],
   template: `
     <div class="toast-stack" aria-live="polite">
       @for (task of tasks.slice(0, 3); track task.id) {
@@ -15,17 +16,17 @@ import { NotificationPollingService, DueTask } from '../notification-polling.ser
             <span class="toast-icon">⏰</span>
             <div class="toast-content">
               <p class="toast-title">{{ task.title }}</p>
-              <p class="toast-date">Échéance : {{ task.dueDate | date:'dd/MM/yyyy HH:mm' }}</p>
+              <p class="toast-date">{{ 'notifications.dueDate' | translate }} {{ task.dueDate | date:'dd/MM/yyyy HH:mm' }}</p>
             </div>
           </div>
           <div class="toast-actions">
             <button class="btn btn-sm btn-primary toast-btn"
                     (click)="markDone(task)">
-              Marquer fait
+              {{ 'notifications.markDone' | translate }}
             </button>
             <button class="btn btn-sm btn-ghost toast-btn"
                     (click)="dismiss(task.id)"
-                    aria-label="Fermer">
+                    [attr.aria-label]="'notifications.close' | translate">
               ✕
             </button>
           </div>

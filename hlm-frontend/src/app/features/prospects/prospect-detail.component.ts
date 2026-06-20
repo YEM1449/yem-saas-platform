@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,11 +23,12 @@ import { MessageChannel } from '../../core/models/outbox.model';
 @Component({
   selector: 'app-prospect-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePipe, DecimalPipe],
+  imports: [RouterLink, FormsModule, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './prospect-detail.component.html',
   styleUrl: './prospect-detail.component.css',
 })
 export class ProspectDetailComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(ProspectService);
   private interestSvc = inject(ContactInterestService);
   private depositSvc = inject(DepositService);
@@ -91,13 +94,13 @@ export class ProspectDetailComponent implements OnInit {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 404) {
-          this.error = 'Prospect not found.';
+          this.error = this.i18n.instant('prospects.errors.notFound');
         } else if (err.status === 401) {
-          this.error = 'Session expired. Please log in again.';
+          this.error = this.i18n.instant('prospects.errors.sessionExpired');
         } else if (body?.message) {
           this.error = body.message;
         } else {
-          this.error = `Failed to load prospect (${err.status})`;
+          this.error = this.i18n.instant('prospects.errors.loadFailed', { status: err.status });
         }
       },
     });
@@ -115,7 +118,7 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.interestsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Failed to load interests (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('prospects.errors.interestLoadFailed', { status: err.status });
       },
     });
   }
@@ -132,9 +135,9 @@ export class ProspectDetailComponent implements OnInit {
         this.propertiesLoading = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 401) {
-          this.propertiesError = 'Session expirée. Veuillez vous reconnecter.';
+          this.propertiesError = this.i18n.instant('prospects.errors.sessionExpired');
         } else if (err.status === 403) {
-          this.propertiesError = 'Accès refusé aux biens immobiliers.';
+          this.propertiesError = this.i18n.instant('prospects.errors.propsAccessDenied');
         } else {
           this.propertiesError = body?.message
             ?? `Impossible de charger les biens (${err.status})`;
@@ -170,7 +173,7 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.addingInterest = false;
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Failed to add interest (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('prospects.errors.interestAddFailed', { status: err.status });
       },
     });
   }
@@ -187,7 +190,7 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.removingPropertyId = '';
         const body = err.error as ErrorResponse | null;
-        this.interestError = body?.message ?? `Failed to remove interest (${err.status})`;
+        this.interestError = body?.message ?? this.i18n.instant('prospects.errors.interestRemoveFailed', { status: err.status });
       },
     });
   }
@@ -204,7 +207,7 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.depositsLoading = false;
         const body = err.error as ErrorResponse | null;
-        this.depositError = body?.message ?? `Failed to load deposits (${err.status})`;
+        this.depositError = body?.message ?? this.i18n.instant('prospects.errors.depositsLoadFailed', { status: err.status });
       },
     });
   }
@@ -220,7 +223,7 @@ export class ProspectDetailComponent implements OnInit {
         URL.revokeObjectURL(url);
       },
       error: () => {
-        this.depositError = 'Failed to download PDF.';
+        this.depositError = this.i18n.instant('prospects.errors.pdfFailed');
       },
     });
   }
@@ -266,7 +269,7 @@ export class ProspectDetailComponent implements OnInit {
     this.reservationSvc.create(req).subscribe({
       next: () => {
         this.creatingReservation = false;
-        this.reservationSuccess = 'Réservation créée. Le bien est maintenant en attente.';
+        this.reservationSuccess = this.i18n.instant('prospects.errors.reservationCreated');
         this.reservationPropertyId = '';
         this.reservationPrice = null;
         this.reservationNotes = '';
@@ -281,12 +284,12 @@ export class ProspectDetailComponent implements OnInit {
         this.creatingReservation = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 409) {
-          this.reservationError = 'Ce bien est déjà réservé.';
+          this.reservationError = this.i18n.instant('prospects.errors.alreadyReserved');
           this.loadProperties();
         } else if (err.status === 404) {
-          this.reservationError = 'Bien ou contact introuvable.';
+          this.reservationError = this.i18n.instant('prospects.errors.propOrContactNotFound');
         } else {
-          this.reservationError = body?.message ?? `Échec de la réservation (${err.status})`;
+          this.reservationError = body?.message ?? this.i18n.instant('prospects.errors.reservationFailed', { status: err.status });
         }
       },
     });
@@ -306,7 +309,7 @@ export class ProspectDetailComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.convertingDepositId = null;
         const body = err.error as ErrorResponse | null;
-        this.convertError = body?.message ?? `Erreur lors de la conversion (${err.status})`;
+        this.convertError = body?.message ?? this.i18n.instant('prospects.errors.conversionFailed', { status: err.status });
       },
     });
   }
@@ -342,10 +345,10 @@ export class ProspectDetailComponent implements OnInit {
         this.creatingDeposit = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 409) {
-          this.depositError = 'Ce bien est déjà réservé ou un acompte existe déjà.';
+          this.depositError = this.i18n.instant('prospects.errors.depositAlreadyExists');
           this.loadProperties();
         } else {
-          this.depositError = body?.message ?? `Failed to create deposit (${err.status})`;
+          this.depositError = body?.message ?? this.i18n.instant('prospects.errors.depositCreateFailed', { status: err.status });
         }
       },
     });

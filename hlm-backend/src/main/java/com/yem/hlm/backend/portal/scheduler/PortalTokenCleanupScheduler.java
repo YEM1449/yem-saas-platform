@@ -5,6 +5,7 @@ import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class PortalTokenCleanupScheduler {
     }
 
     @Scheduled(cron = "${app.portal.cleanup-cron:0 0 3 * * *}")
+    @SchedulerLock(name = "portal_token_cleanup", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     @Transactional
     public void cleanup() {
         societeContextHelper.runAsSystem(() -> {

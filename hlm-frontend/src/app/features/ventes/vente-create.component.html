@@ -1,7 +1,7 @@
 <!-- Back nav -->
 <div class="back-nav">
   <a class="back-link" [routerLink]="backUrl">
-    ← Retour à la réservation@if (prefill(); as p) { {{ p.reservationRef }}}
+    {{ 'ventes.createPage.backToReservation' | translate }}@if (prefill(); as p) { {{ p.reservationRef }}}
   </a>
 </div>
 
@@ -15,14 +15,14 @@
       </svg>
     </div>
     <div>
-      <h1 class="vc-title">Démarrer la pipeline de vente</h1>
+      <h1 class="vc-title">{{ 'ventes.createPage.title' | translate }}</h1>
       @if (prefill(); as p) {
         <p class="vc-subtitle">
-          Conversion de la réservation <strong>{{ p.reservationRef }}</strong>
+          {{ 'ventes.createPage.subtitlePrefix' | translate }} <strong>{{ p.reservationRef }}</strong>
           &middot; <span class="vc-client">{{ p.contactFullName }}</span>
         </p>
       } @else {
-        <p class="vc-subtitle">Nouvelle vente</p>
+        <p class="vc-subtitle">{{ 'ventes.createPage.subtitleNew' | translate }}</p>
       }
     </div>
   </div>
@@ -30,7 +30,7 @@
 
 <!-- Loading -->
 @if (loading()) {
-  <div class="skeleton-stack" data-testid="vente-create-loading-state" aria-label="Chargement du formulaire de vente…">
+  <div class="skeleton-stack" data-testid="vente-create-loading-state" [attr.aria-label]="'ventes.createPage.loadingAria' | translate">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
     <span class="skeleton skeleton-card" style="height:140px"></span>
     <span class="skeleton skeleton-card" style="height:200px"></span>
@@ -46,12 +46,12 @@
 
   <!-- ── Pipeline entry indicator ──────────────────────────────────────── -->
   <div class="pipeline-entry-bar">
-    <span class="peb-label">Point d'entrée dans la pipeline :</span>
+    <span class="peb-label">{{ 'ventes.createPage.entryPoint' | translate }}</span>
     <div class="peb-stages">
       @for (stage of PIPELINE_STAGES; track stage.key; let i = $index) {
         <div class="peb-stage {{ stage.key === 'COMPROMIS' ? 'peb-active' : 'peb-upcoming' }}">
           <div class="peb-dot" [style.background]="stage.key === 'COMPROMIS' ? stage.color : '#e5e7eb'"></div>
-          <span class="peb-stage-label">{{ stage.label }}</span>
+          <span class="peb-stage-label">{{ 'ventes.createPage.stages.' + stage.key | translate }}</span>
         </div>
         @if (i < PIPELINE_STAGES.length - 1) {
           <div class="peb-arrow">→</div>
@@ -68,6 +68,28 @@
            ══════════════════════════════════════════════════════ -->
       <div class="vc-context-col">
 
+        @if (visiteOrigin()) {
+          <!-- Visite-origin context (Wave 16 P5-T2) -->
+          <div class="ctx-card ctx-card--reservation">
+            <div class="ctx-card-header">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <rect x="1.5" y="2.5" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M1.5 6h12M10 1v2.5M5 1v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span>{{ 'visites.title' | translate }}</span>
+            </div>
+            <div class="ctx-body">
+              <div class="ctx-client-name">{{ originContactName() || '—' }}</div>
+              <a class="ctx-link" [routerLink]="['/app/contacts', originContactId()]">
+                {{ 'ventes.createPage.viewContact' | translate }}
+              </a>
+              @if (originPropertyLabel()) {
+                <div class="ctx-prop-meta" style="margin-top:8px"><span>{{ originPropertyLabel() }}</span></div>
+              }
+            </div>
+          </div>
+        }
+
         @if (prefill(); as p) {
 
           <!-- Reservation source -->
@@ -77,17 +99,17 @@
                 <rect x="1.5" y="2.5" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
                 <path d="M1.5 6h12M10 1v2.5M5 1v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
               </svg>
-              <span>Réservation source</span>
+              <span>{{ 'ventes.createPage.reservationSource' | translate }}</span>
               <span class="ctx-badge ctx-badge--ref">{{ p.reservationRef }}</span>
             </div>
             <div class="ctx-body">
               <div class="ctx-row">
-                <span class="ctx-lbl">Statut</span>
+                <span class="ctx-lbl">{{ 'ventes.createPage.status' | translate }}</span>
                 <span class="badge badge-success">ACTIVE</span>
               </div>
               @if (p.reservationPrice) {
                 <div class="ctx-row">
-                  <span class="ctx-lbl">Avance versée</span>
+                  <span class="ctx-lbl">{{ 'ventes.createPage.advancePaid' | translate }}</span>
                   <strong class="ctx-val-accent">{{ p.reservationPrice | number:'1.0-0' }} MAD</strong>
                 </div>
               }
@@ -101,12 +123,12 @@
                 <circle cx="7.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
                 <path d="M2 14c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
               </svg>
-              <span>Acquéreur</span>
+              <span>{{ 'ventes.createPage.buyer' | translate }}</span>
             </div>
             <div class="ctx-body">
               <div class="ctx-client-name">{{ p.contactFullName }}</div>
               <a class="ctx-link" [routerLink]="['/app/contacts', p.contactId]">
-                Voir le contact →
+                {{ 'ventes.createPage.viewContact' | translate }}
               </a>
             </div>
           </div>
@@ -118,7 +140,7 @@
                 <path d="M1.5 7.5L7.5 2l6 5.5V14H10V10H5v4H1.5V7.5z"
                       stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
               </svg>
-              <span>Bien immobilier</span>
+              <span>{{ 'ventes.createPage.property' | translate }}</span>
               @if (p.propertyReferenceCode) {
                 <span class="ctx-badge ctx-badge--ref">{{ p.propertyReferenceCode }}</span>
               }
@@ -134,7 +156,7 @@
               </div>
               @if (p.propertyPrice) {
                 <div class="ctx-row" style="margin-top:10px">
-                  <span class="ctx-lbl">Prix catalogue</span>
+                  <span class="ctx-lbl">{{ 'ventes.createPage.catalogPrice' | translate }}</span>
                   <strong>{{ p.propertyPrice | number:'1.0-0' }} MAD</strong>
                 </div>
               }
@@ -144,20 +166,20 @@
           <!-- Price breakdown -->
           @if (p.propertyPrice) {
             <div class="price-breakdown">
-              <div class="pb-title">Décomposition du prix</div>
+              <div class="pb-title">{{ 'ventes.createPage.priceBreakdown' | translate }}</div>
               <div class="pb-row">
-                <span class="pb-lbl">Prix catalogue</span>
+                <span class="pb-lbl">{{ 'ventes.createPage.catalogPrice' | translate }}</span>
                 <span class="pb-val">{{ p.propertyPrice | number:'1.0-0' }} MAD</span>
               </div>
               @if (p.reservationPrice) {
                 <div class="pb-row pb-row--deduct">
-                  <span class="pb-lbl">− Avance versée</span>
+                  <span class="pb-lbl">{{ 'ventes.createPage.minusAdvance' | translate }}</span>
                   <span class="pb-val pb-val--deduct">{{ p.reservationPrice | number:'1.0-0' }} MAD</span>
                 </div>
               }
               <div class="pb-separator"></div>
               <div class="pb-row pb-row--total">
-                <span class="pb-lbl">Prix suggéré</span>
+                <span class="pb-lbl">{{ 'ventes.createPage.suggestedPrice' | translate }}</span>
                 <span class="pb-val pb-val--total">
                   {{ p.suggestedPrixVente ?? p.propertyPrice | number:'1.0-0' }} MAD
                 </span>
@@ -173,25 +195,25 @@
            ══════════════════════════════════════════════════════ -->
       <div class="vc-form-col">
 
-        <div class="form-section-title">Conditions de vente</div>
+        <div class="form-section-title">{{ 'ventes.createPage.saleTerms' | translate }}</div>
 
         <!-- Prix de vente -->
         <div class="form-group">
           <label class="form-label">
-            Prix de vente final (MAD) <span class="required">*</span>
+            {{ 'ventes.createPage.finalPrice' | translate }} <span class="required">*</span>
           </label>
           <app-mad-input
             [(ngModel)]="prixVente" name="prixVente"
             inputClass="form-control form-control--lg"
-            placeholder="Ex : 850 000 MAD"
+            [placeholder]="'ventes.createPage.pricePlaceholder' | translate"
             testId="vente-create-prix-vente"
           ></app-mad-input>
           @if (prixVente !== null && prixVente <= 0) {
-            <span class="form-error">Le prix doit être supérieur à 0.</span>
+            <span class="form-error">{{ 'ventes.createPage.priceMustBePositive' | translate }}</span>
           }
           @if (remainingBalance !== null && prefill()?.reservationPrice) {
             <div class="balance-hint">
-              Solde restant dû par l'acquéreur :
+              {{ 'ventes.createPage.remainingBalance' | translate }}
               <strong>{{ remainingBalance | number:'1.0-0' }} MAD</strong>
             </div>
           }
@@ -200,44 +222,44 @@
         <!-- Date de compromis -->
         <div class="form-group">
           <label class="form-label">
-            Date de compromis <span class="form-hint">optionnel</span>
+            {{ 'ventes.createPage.compromisDate' | translate }} <span class="form-hint">{{ 'ventes.createPage.optional' | translate }}</span>
           </label>
           <input class="form-control" type="date"
                  [(ngModel)]="dateCompromis" name="dateCompromis"
                  data-testid="vente-create-date-compromis" />
-          <span class="form-field-hint">Date de signature du compromis de vente</span>
+          <span class="form-field-hint">{{ 'ventes.createPage.compromisHint' | translate }}</span>
         </div>
 
         <!-- Date de livraison prévue -->
         <div class="form-group">
           <label class="form-label">
-            Date de livraison prévue <span class="form-hint">optionnel</span>
+            {{ 'ventes.createPage.deliveryDate' | translate }} <span class="form-hint">{{ 'ventes.createPage.optional' | translate }}</span>
           </label>
           <input class="form-control" type="date"
                  [(ngModel)]="dateLivraisonPrevue" name="dateLivraisonPrevue"
                  data-testid="vente-create-livraison" />
-          <span class="form-field-hint">Date prévisionnelle de remise des clés</span>
+          <span class="form-field-hint">{{ 'ventes.createPage.deliveryHint' | translate }}</span>
         </div>
 
         <!-- Notes -->
         <div class="form-group">
           <label class="form-label">
-            Notes <span class="form-hint">optionnel</span>
+            {{ 'ventes.createPage.notes' | translate }} <span class="form-hint">{{ 'ventes.createPage.optional' | translate }}</span>
           </label>
           <textarea class="form-control" rows="3"
                     [(ngModel)]="notes" name="notes"
-                    placeholder="Conditions particulières, observations…"
+                    [placeholder]="'ventes.createPage.notesPlaceholder' | translate"
                     data-testid="vente-create-notes"></textarea>
         </div>
 
         <!-- What happens next -->
         <div class="next-steps">
-          <div class="ns-title">Ce qui se passera après la création</div>
+          <div class="ns-title">{{ 'ventes.createPage.nextTitle' | translate }}</div>
           <ul class="ns-list">
-            <li>La vente sera créée au statut <strong>Compromis</strong></li>
-            <li>La réservation sera marquée comme convertie</li>
-            <li>Le bien sera marqué comme <strong>Vendu</strong></li>
-            <li>Le contact passera en statut <strong>Client actif</strong></li>
+            <li>{{ 'ventes.createPage.next1' | translate }} <strong>{{ 'ventes.statut.COMPROMIS' | translate }}</strong></li>
+            <li>{{ 'ventes.createPage.next2' | translate }}</li>
+            <li>{{ 'ventes.createPage.next3' | translate }} <strong>{{ 'ventes.createPage.sold' | translate }}</strong></li>
+            <li>{{ 'ventes.createPage.next4' | translate }} <strong>{{ 'ventes.createPage.activeClient' | translate }}</strong></li>
           </ul>
         </div>
 
@@ -252,19 +274,19 @@
 
     <!-- Actions -->
     <div class="vc-actions">
-      <a class="btn btn-secondary" [routerLink]="backUrl">Annuler</a>
+      <a class="btn btn-secondary" [routerLink]="backUrl">{{ 'ventes.createPage.cancel' | translate }}</a>
       <button class="btn btn-primary btn-launch"
               type="submit"
               [disabled]="creating() || !canSubmit"
               data-testid="vente-create-submit">
         @if (creating()) {
-          <span class="btn-spinner"></span> Création en cours…
+          <span class="btn-spinner"></span> {{ 'ventes.createPage.creating' | translate }}
         } @else {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right:6px">
             <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Démarrer la pipeline de vente
+          {{ 'ventes.createPage.submit' | translate }}
         }
       </button>
     </div>

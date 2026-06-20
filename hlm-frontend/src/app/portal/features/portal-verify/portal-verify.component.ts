@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
 
 type VerifyState = 'verifying' | 'error';
@@ -8,7 +9,7 @@ type VerifyState = 'verifying' | 'error';
 @Component({
   selector: 'app-portal-verify',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './portal-verify.component.html',
   styleUrl: './portal-verify.component.css',
 })

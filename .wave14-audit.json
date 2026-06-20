@@ -1,0 +1,89 @@
+{
+  "wave": "14-deep-audit",
+  "mode": "AUDIT_ONLY — read, analyze, report. ZERO code changes.",
+  "tracks": {
+    "T1": {
+      "label": "Concurrency & transaction integrity",
+      "lead": "Rachid",
+      "status": "done",
+      "findings": [
+        "DA-001",
+        "DA-002",
+        "DA-003",
+        "DA-004",
+        "DA-005"
+      ]
+    },
+    "T2": {
+      "label": "Adversarial security / tenant isolation",
+      "lead": "Imane",
+      "status": "done",
+      "findings": [
+        "DA-006",
+        "DA-007",
+        "DA-008"
+      ]
+    },
+    "T3": {
+      "label": "Legal & regulatory exposure",
+      "lead": "Nadia",
+      "status": "done",
+      "findings": [
+        "DA-009",
+        "DA-010",
+        "DA-011",
+        "DA-012",
+        "DA-013",
+        "DA-014"
+      ]
+    },
+    "T4": {
+      "label": "Financial correctness & audit trail",
+      "lead": "Omar",
+      "status": "done",
+      "findings": [
+        "DA-015",
+        "DA-016",
+        "DA-017",
+        "DA-018"
+      ]
+    },
+    "T5": {
+      "label": "Domain completeness (states the system can't represent)",
+      "lead": "Salma",
+      "status": "done",
+      "findings": [
+        "DA-019",
+        "DA-020",
+        "DA-021",
+        "DA-022",
+        "DA-023",
+        "DA-024"
+      ]
+    },
+    "T6": {
+      "label": "Resilience, failure modes, observability",
+      "lead": "Yassine",
+      "status": "done",
+      "findings": [
+        "DA-025",
+        "DA-026",
+        "DA-027",
+        "DA-028",
+        "DA-029"
+      ]
+    },
+    "T7": {
+      "label": "Cross-cutting synthesis + risk register",
+      "lead": "all",
+      "status": "done"
+    }
+  },
+  "findings_count": 29,
+  "severity": {
+    "critical": 1,
+    "high": 6,
+    "medium": 11,
+    "low": 11
+  }
+}

@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 089-encrypt-pii-columns
+      author: yem-review-da010
+      comment: >
+        DA-010 (CNDP / Loi 09-08) — encrypt CNDP-sensitive identity numbers at rest. The
+        application now stores these via an AES-256-GCM JPA converter (EncryptedStringConverter),
+        whose ciphertext ("enc::" + base64(iv‖ct+tag)) is far longer than the plaintext, so the
+        columns must be widened. Reads tolerate legacy plaintext, so this is forward-compatible:
+        no data rewrite is required, existing rows encrypt the next time they are saved.
+        Widens: contact.national_id, contact.passeport_numero, co_acquereur.cin_numero,
+        co_acquereur.passeport_numero → varchar(255).
+      changes:
+        - modifyDataType:
+            tableName: contact
+            columnName: national_id
+            newDataType: varchar(255)
+        - modifyDataType:
+            tableName: contact
+            columnName: passeport_numero
+            newDataType: varchar(255)
+        - modifyDataType:
+            tableName: co_acquereur
+            columnName: cin_numero
+            newDataType: varchar(255)
+        - modifyDataType:
+            tableName: co_acquereur
+            columnName: passeport_numero
+            newDataType: varchar(255)

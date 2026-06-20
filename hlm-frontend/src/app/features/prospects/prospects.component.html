@@ -1,7 +1,7 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Prospects</h1>
+    <h1 class="page-title">{{ 'prospects.list.title' | translate }}</h1>
     <p class="page-subtitle">
       {{ totalCount }} contact{{ totalCount !== 1 ? 's' : '' }} dans le pipeline
     </p>
@@ -25,13 +25,13 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" placeholder="Rechercher un contact…"
+    <input class="search-input" type="search" [placeholder]="'prospects.list.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
 
   <label class="lost-toggle">
     <input type="checkbox" [(ngModel)]="showLost" />
-    <span>Afficher perdus ({{ lostCount }})</span>
+    <span>{{ 'prospects.list.showLost' | translate:{ count: lostCount } }}</span>
   </label>
 </div>
 
@@ -42,7 +42,7 @@
 
 <!-- ── Loading ──────────────────────────────────────────────── -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="prospects-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="prospects-loading-state" [attr.aria-label]="'prospects.list.loadingAria' | translate">
     @for (i of [1,2,3,4,5,6]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -68,7 +68,7 @@
           <!-- Cards -->
           <div class="pipeline-col-body">
             @if (columnProspects(col.key).length === 0) {
-              <div class="pipeline-empty">Aucun contact</div>
+              <div class="pipeline-empty">{{ 'prospects.list.emptyContact' | translate }}</div>
             }
             @for (p of columnProspects(col.key); track p.id) {
               <a class="pipeline-card" [routerLink]="['/app/prospects', p.id]">
@@ -81,7 +81,7 @@
                   <div class="card-identity">
                     <span class="card-name">{{ p.fullName }}</span>
                     @if (p.tempClientUntil) {
-                      <span class="card-temp">Acompte jusqu'au {{ p.tempClientUntil | date:'dd/MM' }}</span>
+                      <span class="card-temp">{{ 'prospects.list.tempClient' | translate:{ date: (p.tempClientUntil | date:'dd/MM') } }}</span>
                     }
                   </div>
                 </div>
@@ -126,7 +126,7 @@
     @if (showLost && lostCount > 0) {
       <div class="pipeline-col pipeline-col-lost">
         <div class="pipeline-col-header" style="border-top-color:#ef4444">
-          <span class="pipeline-col-title" style="color:#ef4444">Perdus</span>
+          <span class="pipeline-col-title" style="color:#ef4444">{{ 'prospects.list.lost' | translate }}</span>
           <span class="pipeline-col-count" style="background:#ef4444">{{ lostCount }}</span>
         </div>
         <div class="pipeline-col-body">
@@ -151,9 +151,9 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">Aucun contact dans le pipeline</p>
-        <p class="empty-state-desc">Créez votre premier prospect pour commencer à suivre votre pipeline commercial.</p>
-        <a routerLink="/app/contacts/new" class="btn btn-primary">Nouveau contact</a>
+        <p class="empty-state-title">{{ 'prospects.list.emptyPipelineTitle' | translate }}</p>
+        <p class="empty-state-desc">{{ 'prospects.list.emptyPipelineDesc' | translate }}</p>
+        <a routerLink="/app/contacts/new" class="btn btn-primary">{{ 'prospects.list.newContact' | translate }}</a>
       </div>
     </div>
   }
@@ -161,8 +161,8 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
-        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+        <p class="empty-state-title">{{ 'prospects.list.noResult' | translate:{ query: searchQuery } }}</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'prospects.list.clear' | translate }}</button>
       </div>
     </div>
   }

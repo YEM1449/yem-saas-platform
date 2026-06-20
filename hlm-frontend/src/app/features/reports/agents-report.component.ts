@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { FormsModule } from '@angular/forms';
 import { HomeDashboardService, AgentLeaderboardRow } from '../dashboard/home-dashboard.service';
@@ -7,7 +8,7 @@ import { ReportExportService, ReportFilters } from './report-export.service';
 @Component({
   selector: 'app-agents-report',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './agents-report.component.html',
   styleUrl: './agents-report.component.css',
 })

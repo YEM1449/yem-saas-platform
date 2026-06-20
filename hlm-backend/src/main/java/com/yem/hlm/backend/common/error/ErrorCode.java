@@ -48,6 +48,8 @@ public enum ErrorCode {
     INVALID_GLB_FILE,           // 422 — uploaded GLB is malformed or not Draco-compressed (RG-E05)
     VIOLATION_LEGALE,           // 422 — operation would breach a legal constraint (Loi 44-00)
     RETRACTATION_IMPOSSIBLE,    // 409 — retraction outside the legal window or wrong state
+    RETRACTATION_WINDOW_OPEN,   // 409 — cannot advance out of cooling-off before the window closes (EX-011)
+    GUARDED_STAGE_ENTRY,        // 409 — stage must be entered via its dedicated guarded endpoint (EX-001)
 
     // Project errors (409)
     PROJECT_NAME_EXISTS,
@@ -159,6 +161,11 @@ public enum ErrorCode {
 
     // Contract generation errors (409)
     CONTRACT_NOT_GENERATED,     // 409 — contract must be generated before signing
+
+    // Visite errors (Wave 16)
+    VISITE_NOT_FOUND,           // 404 — visite not found in société
+    VISITE_CONFLIT,             // 409 — agent already has an overlapping visite (RG-V05)
+    COMPTE_RENDU_REQUIS,        // 422 — REALISEE requires compteRendu + resultat (RG-V06)
 
     // Server errors (500)
     INTERNAL_ERROR

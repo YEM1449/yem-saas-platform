@@ -1,0 +1,23 @@
+{
+  "wave": "15-exhaustive-audit",
+  "mode": "READ-ONLY. Find and document. Zero code changes.",
+  "report": "docs/audit/exhaustive-audit-wave15.md",
+  "tracks": {
+    "T1": { "label": "Functional completeness & business rules", "lead": "Salma", "status": "done", "findings": ["EX-001","EX-002"] },
+    "T2": { "label": "Concurrency, transactions & data consistency", "lead": "Rachid", "status": "done", "findings": ["EX-003","DA-001","DA-004","DA-005"] },
+    "T3": { "label": "Adversarial security & tenant isolation", "lead": "Imane", "status": "done", "findings": ["EX-004","DA-006-resolved","DA-007","DA-008","DA-010","DA-013"] },
+    "T4": { "label": "Memory, resource leaks & lifecycle", "lead": "Lina", "status": "done", "findings": ["EX-005","T4.1-clean","T4.11-solid"] },
+    "T5": { "label": "Scalability & performance at volume", "lead": "Rachid+Lina", "status": "done-partial", "findings": ["EX-006","T5.2-bounded"], "note": "deep N+1/index/EXPLAIN needs profiling session" },
+    "T6": { "label": "Ergonomics & UX under real conditions", "lead": "Karim", "status": "done-partial", "findings": ["EX-007","EX-008"], "note": "device/slow-network UX needs running build" },
+    "T7": { "label": "Unhandled scenarios & edge cases", "lead": "Salma+Rachid", "status": "done", "findings": ["EX-009","EX-010"] },
+    "T8": { "label": "Financial correctness & audit trail", "lead": "Omar", "status": "done", "findings": ["BigDecimal-confirmed","DA-013","DA-015","DA-017"] },
+    "T9": { "label": "Legal & regulatory exposure", "lead": "Nadia", "status": "done", "findings": ["EX-011","DA-009","DA-010","DA-011","DA-012"] },
+    "T10": { "label": "Architecture coherence & tech debt", "lead": "Rachid", "status": "done", "findings": ["EX-012","EX-013"] },
+    "T11": { "label": "Accessibility & i18n / expansion readiness", "lead": "Karim+Lina", "status": "done-partial", "findings": ["EX-014","EX-015"], "note": "WCAG/RTL needs AT tools" },
+    "T12": { "label": "Resilience, failure modes & observability", "lead": "Yassine", "status": "done", "findings": ["EX-016","DA-025","DA-026","DA-029"] },
+    "T13": { "label": "Synthesis, risk register & systemic patterns", "lead": "all", "status": "done", "findings": ["risk-register","seven-that-keep-us-up","5-systemic-patterns","solid-list","wave16-sequencing"] }
+  },
+  "findings_count": 16,
+  "new_ids": "EX-001..EX-016",
+  "status": "COMPLETE — all 13 tracks streamed to report"
+}

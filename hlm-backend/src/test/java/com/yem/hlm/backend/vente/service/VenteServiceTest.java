@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -79,13 +80,17 @@ class VenteServiceTest {
 
     private VenteService service;
 
+    /** Fixed market clock (Africa/Casablanca) so legal-date math is deterministic (EX-009). */
+    private static final java.time.Clock CLOCK = java.time.Clock.fixed(
+            java.time.Instant.parse("2026-06-14T09:00:00Z"), java.time.ZoneId.of("Africa/Casablanca"));
+
     @BeforeEach
     void setUp() {
         service = new VenteService(
                 venteRepository, echeanceRepository, documentRepository, contactRepository,
                 propertyRepository, userRepository, reservationRepository, propertyWorkflow,
                 societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository,
-                notificationService);
+                notificationService, CLOCK);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -246,6 +251,26 @@ class VenteServiceTest {
         verify(vente, never()).setStatut(any());
     }
 
+    @Test
+    @DisplayName("EX-001: guarded stages cannot be entered via PATCH /statut — must use the dedicated endpoint")
+    void updateStatut_guardedStages_areRejected() {
+        // Each of these stages enforces a legal/operational precondition (deposit cap, cooling-off,
+        // recorded reserves) only in its dedicated handler. The generic statut change must refuse them.
+        for (VenteStatut guarded : java.util.List.of(
+                VenteStatut.OPTION,
+                VenteStatut.RESERVE,
+                VenteStatut.EN_RETRACTATION,
+                VenteStatut.LIVRE_AVEC_RESERVES,
+                VenteStatut.RESERVES_LEVEES)) {
+            assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(guarded)))
+                    .as("PATCH /statut → %s must be guarded", guarded)
+                    .isInstanceOf(GuardedStageEntryException.class);
+        }
+
+        // The guard short-circuits before any state load — no vente is fetched or mutated.
+        verifyNoInteractions(venteRepository);
+    }
+
     // ── VEFA Loi 44-00 (OPTION + rétractation) ───────────────────────────────
 
     @Test
@@ -289,6 +314,78 @@ class VenteServiceTest {
     }
 
     @Test
+    @DisplayName("EX-009: cooling-off deadline is computed in the market zone (Casablanca), not the JVM/UTC zone")
+    void confirmReservation_coolingOffDeadlineUsesMarketZone() {
+        // 23:30 UTC on 2026-06-13 is already 00:30 on 2026-06-14 in Casablanca (UTC+1). A naive UTC
+        // clock would date the deadline from 2026-06-13 (off by one on a legal right); the market
+        // clock must use the Casablanca date 2026-06-14, so the 7-day window ends 2026-06-21.
+        java.time.Clock boundary = java.time.Clock.fixed(
+                java.time.Instant.parse("2026-06-13T23:30:00Z"), java.time.ZoneId.of("Africa/Casablanca"));
+        VenteService svc = new VenteService(
+                venteRepository, echeanceRepository, documentRepository, contactRepository,
+                propertyRepository, userRepository, reservationRepository, propertyWorkflow,
+                societeCtx, dateCoherence, eventPublisher, refGenerator, marketConfig, reserveRepository,
+                notificationService, boundary);
+
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        Contact contact = org.mockito.Mockito.mock(Contact.class);
+        com.yem.hlm.backend.user.domain.User agent =
+                org.mockito.Mockito.mock(com.yem.hlm.backend.user.domain.User.class);
+        when(vente.getStatut()).thenReturn(VenteStatut.OPTION);
+        when(vente.getContact()).thenReturn(contact);
+        when(contact.getStatus())
+                .thenReturn(com.yem.hlm.backend.contact.domain.ContactStatus.CLIENT);
+        when(vente.getAgent()).thenReturn(agent);
+        when(vente.getEcheances()).thenReturn(java.util.List.of());
+        when(vente.getDocuments()).thenReturn(java.util.List.of());
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        // withdrawalDeadline is the production day-count convention (here: from + 7 days, MA).
+        when(marketConfig.withdrawalDeadline(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(inv -> ((LocalDate) inv.getArgument(0)).plusDays(7));
+        when(venteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        svc.confirmReservation(VENTE, null);
+
+        // The Casablanca date is 2026-06-14 (not the UTC 2026-06-13) → window ends 2026-06-21.
+        verify(vente).setDateFinDelaiReflexion(LocalDate.of(2026, 6, 21));
+    }
+
+    @Test
+    @DisplayName("EX-011/DA-011: EN_RETRACTATION cannot advance to ACOMPTE while the cooling-off window is open")
+    void updateStatut_blocksAcompteWhileRetractationWindowOpen() {
+        Vente vente = venteWithStatut(VenteStatut.EN_RETRACTATION);
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).plusDays(3)); // still open
+
+        assertThatThrownBy(() -> service.updateStatut(VENTE, statutRequest(VenteStatut.ACOMPTE)))
+                .isInstanceOf(RetractationWindowOpenException.class);
+
+        verify(vente, never()).setStatut(VenteStatut.ACOMPTE);
+    }
+
+    @Test
+    @DisplayName("EX-011: EN_RETRACTATION → ACOMPTE is allowed once the cooling-off window has closed")
+    void updateStatut_allowsAcompteAfterRetractationWindow() {
+        Vente vente = org.mockito.Mockito.mock(Vente.class);
+        Contact contact = org.mockito.Mockito.mock(Contact.class);
+        com.yem.hlm.backend.user.domain.User agent =
+                org.mockito.Mockito.mock(com.yem.hlm.backend.user.domain.User.class);
+        when(vente.getStatut()).thenReturn(VenteStatut.EN_RETRACTATION);
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).minusDays(1)); // window closed
+        when(vente.getContact()).thenReturn(contact);
+        when(vente.getAgent()).thenReturn(agent);
+        when(vente.getEcheances()).thenReturn(java.util.List.of());
+        when(vente.getDocuments()).thenReturn(java.util.List.of());
+        when(societeCtx.requireSocieteId()).thenReturn(SOC);
+        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateStatut(VENTE, statutRequest(VenteStatut.ACOMPTE));
+
+        verify(vente).setStatut(VenteStatut.ACOMPTE);
+    }
+
+    @Test
     @DisplayName("exerciseRetractation rejected when the vente is not in the cooling-off period")
     void exerciseRetractation_rejectedWhenNotInWindow() {
         venteWithStatut(VenteStatut.COMPROMIS);
@@ -301,7 +398,8 @@ class VenteServiceTest {
     @DisplayName("exerciseRetractation rejected after the legal deadline has passed")
     void exerciseRetractation_rejectedAfterDeadline() {
         Vente vente = venteWithStatut(VenteStatut.EN_RETRACTATION);
-        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now().minusDays(1));
+        // Deadline strictly before the service's (fixed) clock date → deterministic, not wall-clock dependent.
+        when(vente.getDateFinDelaiReflexion()).thenReturn(LocalDate.now(CLOCK).minusDays(1));
 
         assertThatThrownBy(() -> service.exerciseRetractation(VENTE))
                 .isInstanceOf(RetractationImpossibleException.class);
@@ -363,7 +461,7 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(null);
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
 
         assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
                 .isInstanceOf(ViolationLegaleException.class);
@@ -376,12 +474,15 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("1000000"));
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
         when(echeanceRepository.existsByVente_IdAndEtapeIsNotNull(VENTE)).thenReturn(true);
 
         assertThatThrownBy(() -> service.generateEcheancierLegal(VENTE))
                 .isInstanceOf(ViolationLegaleException.class);
         verify(echeanceRepository, never()).save(any());
+        // DA-003: the idempotency guard runs under a vente row lock, never the unlocked finder.
+        verify(venteRepository).findBySocieteIdAndIdForUpdate(SOC, VENTE);
+        verify(venteRepository, never()).findBySocieteIdAndId(SOC, VENTE);
     }
 
     @Test
@@ -390,7 +491,7 @@ class VenteServiceTest {
         Vente vente = org.mockito.Mockito.mock(Vente.class);
         when(vente.getPrixVente()).thenReturn(new java.math.BigDecimal("100000"));
         when(societeCtx.requireSocieteId()).thenReturn(SOC);
-        when(venteRepository.findBySocieteIdAndId(SOC, VENTE)).thenReturn(Optional.of(vente));
+        when(venteRepository.findBySocieteIdAndIdForUpdate(SOC, VENTE)).thenReturn(Optional.of(vente));
         when(echeanceRepository.sumMontantByVente(SOC, VENTE)).thenReturn(new java.math.BigDecimal("95000"));
 
         var req = new com.yem.hlm.backend.vente.api.dto.CreateEcheanceRequest(
@@ -398,5 +499,8 @@ class VenteServiceTest {
         assertThatThrownBy(() -> service.addEcheance(VENTE, req))
                 .isInstanceOf(ViolationLegaleException.class);
         verify(echeanceRepository, never()).save(any());
+        // DA-003: the cumulative-cap check runs under a vente row lock, never the unlocked finder.
+        verify(venteRepository).findBySocieteIdAndIdForUpdate(SOC, VENTE);
+        verify(venteRepository, never()).findBySocieteIdAndId(SOC, VENTE);
     }
 }

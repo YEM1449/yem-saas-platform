@@ -211,8 +211,9 @@ test.describe('Buyer Portal', () => {
     await expect(page.locator('app-pipeline-stepper')).toBeVisible({ timeout: 8000 });
 
     // Financial summary visible — the price appears somewhere in the vente card
-    // (.summary-value matches multiple elements; check the card container instead)
-    await expect(page.locator('.portal-vente-card')).toContainText('1 500 000');
+    // (.summary-value matches multiple elements; check the card container instead).
+    // Grouped with dots under the app's fr-MA (Morocco) locale: 1500000 → "1.500.000".
+    await expect(page.locator('.portal-vente-card')).toContainText('1.500.000');
   });
 
   test('portal ventes shows echeances when present', async ({ page }) => {

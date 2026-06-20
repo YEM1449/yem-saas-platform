@@ -1,38 +1,38 @@
 <div class="dashboard">
   <div class="dashboard-header">
-    <h2>Tableau de bord commercial</h2>
+    <h2>{{ 'dashboard.commercial.title' | translate }}</h2>
     <div class="dashboard-header-links">
-      <a routerLink="/app/dashboard/commercial/3d" class="btn-link">Vue 3D &rsaquo;</a>
-      <a routerLink="/app/dashboard/commercial/sales" class="btn-link">Voir les détails des ventes &rsaquo;</a>
+      <a routerLink="/app/dashboard/commercial/3d" class="btn-link">{{ 'dashboard.commercial.vue3d' | translate }}</a>
+      <a routerLink="/app/dashboard/commercial/sales" class="btn-link">{{ 'dashboard.commercial.voirDetails' | translate }}</a>
     </div>
   </div>
 
   <!-- Filter bar -->
   <div class="filter-bar">
-    <label>Du
+    <label>{{ 'dashboard.commercial.du' | translate }}
       <input type="date" [(ngModel)]="fromDate" />
     </label>
-    <label>Au
+    <label>{{ 'dashboard.commercial.au' | translate }}
       <input type="date" [(ngModel)]="toDate" />
     </label>
     @if (isAdminOrManager) {
-      <label>Projet
+      <label>{{ 'dashboard.commercial.projet' | translate }}
         <select [(ngModel)]="projectId">
-          <option value="">Tous les projets</option>
+          <option value="">{{ 'dashboard.commercial.tousProjets' | translate }}</option>
           @for (p of projects; track p.id) {
             <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
       </label>
-      <label>Agent
+      <label>{{ 'dashboard.commercial.agent' | translate }}
         <input type="text" [(ngModel)]="agentId" placeholder="UUID" />
       </label>
     }
-    <button (click)="load()">Filtrer</button>
+    <button (click)="load()">{{ 'dashboard.commercial.filtrer' | translate }}</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="commercial-dashboard-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="commercial-dashboard-loading-state" [attr.aria-label]="'dashboard.commercial.loadingAria' | translate">
       <div class="skeleton-grid">
         <span class="skeleton skeleton-card"></span>
         <span class="skeleton skeleton-card"></span>
@@ -57,39 +57,39 @@
       <div class="cd-kpis">
         <div class="cd-kpi" [attr.data-tone]="absorptionTone(summary.tauxAbsorption)">
           <div class="cd-kpi-val">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
-          <div class="cd-kpi-lbl">Taux d'absorption</div>
-          <div class="cd-kpi-target">Cible ≥ {{ ABSORPTION_TARGET }} % · {{ summary.stockCommercialise }} commercialisés</div>
+          <div class="cd-kpi-lbl">{{ 'dashboard.commercial.tauxAbsorption' | translate }}</div>
+          <div class="cd-kpi-target">{{ 'dashboard.commercial.cibleGteCommercialises' | translate:{ n: ABSORPTION_TARGET, stock: summary.stockCommercialise } }}</div>
         </div>
         <div class="cd-kpi" [attr.data-tone]="discountTone(summary.avgDiscountPercent)">
           <div class="cd-kpi-val">{{ summary.avgDiscountPercent != null ? (summary.avgDiscountPercent | number:'1.0-1') + '%' : '—' }}</div>
-          <div class="cd-kpi-lbl">Remise moyenne</div>
-          <div class="cd-kpi-target">Cible ≤ {{ DISCOUNT_TARGET }} %@if (summary.maxDiscountPercent != null) { · max {{ summary.maxDiscountPercent | number:'1.0-1' }} % }</div>
+          <div class="cd-kpi-lbl">{{ 'dashboard.commercial.remiseMoyenne' | translate }}</div>
+          <div class="cd-kpi-target">{{ 'dashboard.commercial.cibleLte' | translate:{ n: DISCOUNT_TARGET } }}@if (summary.maxDiscountPercent != null) {{{ 'dashboard.commercial.maxInline' | translate:{ pct: (summary.maxDiscountPercent | number:'1.0-1') } }}}</div>
         </div>
         <div class="cd-kpi" data-tone="neutral">
           <div class="cd-kpi-val">{{ formatAmount(summary.caActivePipeline) }}</div>
-          <div class="cd-kpi-lbl">Pipeline actif</div>
-          <div class="cd-kpi-target">valeur en cours de signature</div>
+          <div class="cd-kpi-lbl">{{ 'dashboard.commercial.pipelineActif' | translate }}</div>
+          <div class="cd-kpi-target">{{ 'dashboard.commercial.valeurEnCours' | translate }}</div>
         </div>
         <div class="cd-kpi" [attr.data-tone]="conversionTone(summary.conversionDepositToSaleRate)">
           <div class="cd-kpi-val">{{ formatPct(summary.conversionDepositToSaleRate) }}</div>
-          <div class="cd-kpi-lbl">Conversion dépôt → vente</div>
-          <div class="cd-kpi-target">Cible ≥ {{ CONVERSION_TARGET }} %</div>
+          <div class="cd-kpi-lbl">{{ 'dashboard.commercial.conversionDepot' | translate }}</div>
+          <div class="cd-kpi-target">{{ 'dashboard.commercial.cibleGte' | translate:{ n: CONVERSION_TARGET } }}</div>
         </div>
       </div>
 
       @if (topDiscounters().length > 0) {
         <div class="cd-actions">
           <div class="cd-actions-head">
-            <span class="cd-actions-title">Fuite sur remises — au-dessus de la cible</span>
-            <span class="cd-actions-note">Cible ≤ {{ DISCOUNT_TARGET }} %</span>
+            <span class="cd-actions-title">{{ 'dashboard.commercial.fuiteRemises' | translate }}</span>
+            <span class="cd-actions-note">{{ 'dashboard.commercial.cibleLte' | translate:{ n: DISCOUNT_TARGET } }}</span>
           </div>
           <ul class="cd-leak">
             @for (r of topDiscounters(); track r.agentId) {
               <li class="cd-leak-row">
                 <span class="cd-leak-name">{{ r.agentEmail }}</span>
                 <span class="cd-leak-pct">{{ r.avgDiscountPercent | number:'1.0-1' }} %</span>
-                <span class="cd-leak-ctx">{{ r.salesCount }} vente{{ r.salesCount > 1 ? 's' : '' }}</span>
-                <a [routerLink]="['/app/ventes']" [queryParams]="{ agentId: r.agentId }" class="cd-leak-cta">Voir →</a>
+                <span class="cd-leak-ctx">{{ 'dashboard.commercial.venteCount' | translate:{ count: r.salesCount } }}</span>
+                <a [routerLink]="['/app/ventes']" [queryParams]="{ agentId: r.agentId }" class="cd-leak-cta">{{ 'dashboard.commercial.voir' | translate }}</a>
               </li>
             }
           </ul>
@@ -97,24 +97,24 @@
       }
     </section>
 
-    <p class="as-of">Données au {{ summary.asOf | date:'dd/MM/yyyy HH:mm' }}</p>
+    <p class="as-of">{{ 'dashboard.commercial.dataAsOf' | translate:{ date: (summary.asOf | date:'dd/MM/yyyy HH:mm') } }}</p>
 
     <!-- KPI cards -->
     <section class="kpi-section">
 
-      <div class="kpi-card accent-green" (click)="goVentes()" title="Voir les ventes">
+      <div class="kpi-card accent-green" (click)="goVentes()" [title]="'dashboard.commercial.voirVentes' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M3 16l4-5 3 3 3-5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Chiffre d'affaires</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.ca' | translate }}</div>
           <div class="kpi-value">{{ formatAmount(summary.salesTotalAmount) }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-green" (click)="goVentes()" title="Voir les ventes">
+      <div class="kpi-card accent-green" (click)="goVentes()" [title]="'dashboard.commercial.voirVentes' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M14 2H6a1 1 0 00-1 1v14a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.7"/>
@@ -122,12 +122,12 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Ventes confirmées</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.ventesConfirmees' | translate }}</div>
           <div class="kpi-value">{{ summary.salesCount }}</div>
         </div>
       </div>
 
-      <div class="kpi-card" (click)="goVentes('LIVRE_DEFINITIF')" title="Voir les ventes livrées">
+      <div class="kpi-card" (click)="goVentes('LIVRE_DEFINITIF')" [title]="'dashboard.commercial.voirVentesLivrees' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.7"/>
@@ -135,12 +135,12 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Valeur moyenne</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.valeurMoyenne' | translate }}</div>
           <div class="kpi-value">{{ formatAmount(summary.avgSaleValue) }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-purple" (click)="goVentes()" title="Voir le pipeline de ventes">
+      <div class="kpi-card accent-purple" (click)="goVentes()" [title]="'dashboard.commercial.voirPipeline' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <rect x="2" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/>
@@ -149,13 +149,13 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">CA Pipeline actif</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.caPipelineActif' | translate }}</div>
           <div class="kpi-value">{{ formatAmount(summary.caActivePipeline) }}</div>
-          <div class="kpi-sub">Ventes non livrées</div>
+          <div class="kpi-sub">{{ 'dashboard.commercial.ventesNonLivrees' | translate }}</div>
         </div>
       </div>
 
-      <div class="kpi-card {{ (summary.tauxAbsorption ?? 0) >= 70 ? 'accent-green' : (summary.tauxAbsorption ?? 0) >= 40 ? 'accent-orange' : 'accent-red' }}" (click)="goProperties('ACTIVE')" title="Voir les biens disponibles">
+      <div class="kpi-card {{ (summary.tauxAbsorption ?? 0) >= 70 ? 'accent-green' : (summary.tauxAbsorption ?? 0) >= 40 ? 'accent-orange' : 'accent-red' }}" (click)="goProperties('ACTIVE')" [title]="'dashboard.commercial.voirBiensDispo' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.7"/>
@@ -163,25 +163,25 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Taux d'absorption</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.tauxAbsorption' | translate }}</div>
           <div class="kpi-value">{{ summary.tauxAbsorption != null ? (summary.tauxAbsorption | number:'1.0-1') + '%' : '—' }}</div>
-          <div class="kpi-sub">{{ summary.stockCommercialise }} biens commercialisés</div>
+          <div class="kpi-sub">{{ 'dashboard.commercial.biensCommercialises' | translate:{ count: summary.stockCommercialise } }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-blue" (click)="goReservations()" title="Voir les réservations">
+      <div class="kpi-card accent-blue" (click)="goReservations()" [title]="'dashboard.commercial.voirReservations' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M10 2l2.5 5H17l-4 3.5 1.5 5.5L10 13l-4.5 3L7 11 3 7.5h4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Montant réservations</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.montantReservations' | translate }}</div>
           <div class="kpi-value">{{ formatAmount(summary.depositsTotalAmount) }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-blue" (click)="goReservations()" title="Voir les réservations">
+      <div class="kpi-card accent-blue" (click)="goReservations()" [title]="'dashboard.commercial.voirReservations' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M7 10l3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -189,12 +189,12 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Réservations</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.reservations' | translate }}</div>
           <div class="kpi-value">{{ summary.depositsCount }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-orange" (click)="goReservations()" title="Voir les réservations">
+      <div class="kpi-card accent-orange" (click)="goReservations()" [title]="'dashboard.commercial.voirReservations' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
@@ -202,24 +202,24 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Holds actifs</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.holdsActifs' | translate }}</div>
           <div class="kpi-value">{{ summary.activeReservationsCount }}</div>
         </div>
       </div>
 
-      <div class="kpi-card" (click)="goVentes()" title="Voir les ventes">
+      <div class="kpi-card" (click)="goVentes()" [title]="'dashboard.commercial.voirVentes' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M2 10h4M14 10h4M10 2v4M10 14v4M4.9 4.9l2.8 2.8M12.3 12.3l2.8 2.8M15.1 4.9l-2.8 2.8M7.7 12.3l-2.8 2.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Taux de conversion</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.tauxConversion' | translate }}</div>
           <div class="kpi-value">{{ formatPct(summary.conversionDepositToSaleRate) }}</div>
         </div>
       </div>
 
-      <div class="kpi-card" (click)="goVentes()" title="Voir les ventes">
+      <div class="kpi-card" (click)="goVentes()" [title]="'dashboard.commercial.voirVentes' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.7"/>
@@ -227,25 +227,25 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Délai moy. vente (j)</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.delaiMoyVente' | translate }}</div>
           <div class="kpi-value">{{ summary.avgDaysDepositToSale !== null ? (summary.avgDaysDepositToSale + ' j') : '—' }}</div>
         </div>
       </div>
 
-      <div class="kpi-card accent-orange" (click)="goReservations()" title="Voir les réservations">
+      <div class="kpi-card accent-orange" (click)="goReservations()" [title]="'dashboard.commercial.voirReservations' | translate">
         <div class="kpi-icon">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path d="M3 9.5L10 3l7 6.5V18H13v-4.5h-4V18H3V9.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <div class="kpi-label">Biens en hold</div>
+          <div class="kpi-label">{{ 'dashboard.commercial.biensEnHold' | translate }}</div>
           <div class="kpi-value">{{ summary.propertyHoldsCount }}</div>
         </div>
       </div>
 
       @if (summary.propertyHoldsExpiringSoon > 0) {
-        <div class="kpi-card accent-warning" (click)="goReservations()" title="Voir les réservations expirantes">
+        <div class="kpi-card accent-warning" (click)="goReservations()" [title]="'dashboard.commercial.voirReservationsExpirantes' | translate">
           <div class="kpi-icon">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path d="M10 2.5a6 6 0 016 6v3.5l1.5 2h-15L4 12V8.5a6 6 0 016-6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
@@ -253,7 +253,7 @@
             </svg>
           </div>
           <div class="kpi-body">
-            <div class="kpi-label">Holds expirant bientôt</div>
+            <div class="kpi-label">{{ 'dashboard.commercial.holdsExpirantBientot' | translate }}</div>
             <div class="kpi-value">{{ summary.propertyHoldsExpiringSoon }}</div>
           </div>
         </div>
@@ -264,7 +264,7 @@
     <!-- Pipeline funnel (ventes par statut) -->
     @if (pipelineEntries.length > 0) {
       <section class="pipeline-section">
-        <h4 class="section-heading">Pipeline ventes actif</h4>
+        <h4 class="section-heading">{{ 'dashboard.commercial.pipelineVentesActif' | translate }}</h4>
         <div class="pipeline-rows">
           @for (e of pipelineEntries; track e.statut) {
             <div class="pl-row">
@@ -283,17 +283,17 @@
     <!-- Charts row 1: daily timelines -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>Ventes quotidiennes</h4>
+        <h4>{{ 'dashboard.commercial.ventesQuotidiennes' | translate }}</h4>
         @if (summary.salesAmountByDay.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <canvas #salesByDayCanvas style="max-height:180px"></canvas>
         }
       </div>
       <div class="chart-card">
-        <h4>Réservations quotidiennes</h4>
+        <h4>{{ 'dashboard.commercial.reservationsQuotidiennes' | translate }}</h4>
         @if (summary.depositsAmountByDay.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <canvas #depositsByDayCanvas style="max-height:180px"></canvas>
         }
@@ -303,9 +303,9 @@
     <!-- Charts row 2: inventory doughnut + prospect sources -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>Inventaire par statut</h4>
+        <h4>{{ 'dashboard.commercial.inventaireParStatut' | translate }}</h4>
         @if (inventoryEntries.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <div style="max-width:260px;margin:0 auto">
             <canvas #inventoryCanvas></canvas>
@@ -313,9 +313,9 @@
         }
       </div>
       <div class="chart-card">
-        <h4>Sources de prospects</h4>
+        <h4>{{ 'dashboard.commercial.sourcesProspects' | translate }}</h4>
         @if (summary.prospectsBySource.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <div style="max-width:260px;margin:0 auto">
             <canvas #prospectsCanvas></canvas>
@@ -327,9 +327,9 @@
     <!-- Charts row 3: sales by project + agent (horizontal bars) -->
     <section class="charts-row">
       <div class="chart-card">
-        <h4>Ventes par projet</h4>
+        <h4>{{ 'dashboard.commercial.ventesParProjet' | translate }}</h4>
         @if (summary.salesByProject.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <div [style.height.px]="chartHeight(summary.salesByProject)">
             <canvas #salesByProjectCanvas></canvas>
@@ -337,9 +337,9 @@
         }
       </div>
       <div class="chart-card">
-        <h4>Ventes par agent</h4>
+        <h4>{{ 'dashboard.commercial.ventesParAgent' | translate }}</h4>
         @if (summary.salesByAgent.length === 0) {
-          <p class="no-data">Aucune donnée pour cette période.</p>
+          <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
         } @else {
           <div [style.height.px]="chartHeight(summary.salesByAgent)">
             <canvas #salesByAgentCanvas></canvas>
@@ -351,7 +351,7 @@
     <!-- Inventory by type strip -->
     @if (inventoryTypeEntries.length > 0) {
       <section class="inventory-types">
-        <h4>Inventaire par type</h4>
+        <h4>{{ 'dashboard.commercial.inventaireParType' | translate }}</h4>
         <div class="inv-type-row">
           @for (e of inventoryTypeEntries; track e.label) {
             <span class="inv-type-chip">{{ e.label }} <strong>{{ e.value }}</strong></span>
@@ -363,23 +363,23 @@
     <!-- Discount analytics -->
     <section class="tables-row">
       <div class="breakdown-table">
-        <h4>Analytique des remises</h4>
+        <h4>{{ 'dashboard.commercial.analytiqueRemises' | translate }}</h4>
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
           <div class="kpi-card" style="min-width:120px">
-            <span class="kpi-label">Remise moyenne</span>
+            <span class="kpi-label">{{ 'dashboard.commercial.remiseMoyenne' | translate }}</span>
             <span class="kpi-value">{{ summary.avgDiscountPercent !== null ? (summary.avgDiscountPercent + ' %') : '—' }}</span>
           </div>
           <div class="kpi-card" style="min-width:120px">
-            <span class="kpi-label">Remise maximale</span>
+            <span class="kpi-label">{{ 'dashboard.commercial.remiseMaximale' | translate }}</span>
             <span class="kpi-value">{{ summary.maxDiscountPercent !== null ? (summary.maxDiscountPercent + ' %') : '—' }}</span>
           </div>
         </div>
         @if (summary.discountByAgent.length > 0) {
           <table>
             <thead><tr>
-              <th>Agent</th>
-              <th>Ventes confirmées</th>
-              <th>Remise moyenne</th>
+              <th>{{ 'dashboard.commercial.agent' | translate }}</th>
+              <th>{{ 'dashboard.commercial.thVentesConfirmees' | translate }}</th>
+              <th>{{ 'dashboard.commercial.remiseMoyenne' | translate }}</th>
             </tr></thead>
             <tbody>
               @for (r of summary.discountByAgent; track r.agentId) {
@@ -397,6 +397,6 @@
   }
 
   @if (!loading && !error && !summary) {
-    <p class="no-data">Aucune donnée pour cette période.</p>
+    <p class="no-data">{{ 'dashboard.commercial.noDataPeriod' | translate }}</p>
   }
 </div>

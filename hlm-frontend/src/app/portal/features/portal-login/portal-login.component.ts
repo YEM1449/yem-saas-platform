@@ -2,14 +2,16 @@ import { Component, inject, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PortalAuthService } from '../../core/portal-auth.service';
+import { LanguageSwitcherComponent } from '../../../core/components/language-switcher.component';
 
 type Step = 'request' | 'sent' | 'verifying' | 'error';
 
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './portal-login.component.html',
   styleUrl: './portal-login.component.css',
 })

@@ -68,6 +68,9 @@ export interface HomeDashboard {
   // Widgets
   recentVentes: RecentVenteRow[];
   urgentTasks: UrgentTaskRow[];
+  // Visites (Wave 16, RG-V09)
+  visitesRealiseesMoisCourant: number;
+  tauxConversionVisites: number | null;
 }
 
 export interface MonthlyTrendPoint {

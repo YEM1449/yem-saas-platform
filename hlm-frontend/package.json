@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "i18n:scan": "node tools/i18n-scan.mjs",
     "lint": "ng lint",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",

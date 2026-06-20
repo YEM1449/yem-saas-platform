@@ -1,4 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { InventoryAgingRow } from '../dashboard-cockpit.service';
 
@@ -13,21 +14,21 @@ const AGING_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-inventory-aging',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Ancienneté du stock disponible</span>
-        <span class="widget-sub">Biens actifs · depuis mise en ligne</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.inventoryAging.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.inventoryAging.sub' | translate }}</span>
       </div>
 
       @if (totalUnits === 0) {
-        <div class="empty-state">Aucun bien actif en stock.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.inventoryAging.empty' | translate }}</div>
       } @else {
         <div class="summary-row">
           <span class="summary-label">{{ totalUnits }} biens disponibles</span>
-          <span class="summary-val">Valeur : {{ fmtAmount(totalValue) }}</span>
+          <span class="summary-val">{{ 'dashboard.cockpit.inventoryAging.valueLabel' | translate:{ amount: fmtAmount(totalValue) } }}</span>
         </div>
 
         <!-- Stacked aging bar -->
@@ -66,8 +67,7 @@ const AGING_COLORS: Record<string, string> = {
               <path d="M7 4.5v3" stroke="#dc2626" stroke-width="1.6" stroke-linecap="round"/>
               <circle cx="7" cy="9.5" r=".6" fill="#dc2626"/>
             </svg>
-            {{ staleCount }} bien{{ staleCount > 1 ? 's' : '' }} en stock depuis plus d'un an —
-            action commerciale recommandée.
+            {{ 'dashboard.cockpit.inventoryAging.staleStock' | translate:{ count: staleCount } }}
           </div>
         }
       }

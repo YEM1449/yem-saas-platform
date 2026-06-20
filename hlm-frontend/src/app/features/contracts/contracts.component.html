@@ -1,8 +1,8 @@
 <!-- Page header -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Contrats</h1>
-    <p class="page-subtitle">Manage sale agreements across all projects</p>
+    <h1 class="page-title">{{ 'contracts.list.pageTitle' | translate }}</h1>
+    <p class="page-subtitle">{{ 'contracts.list.pageSubtitle' | translate }}</p>
   </div>
 </div>
 
@@ -10,14 +10,14 @@
 <div class="tabs mb-20">
   <button class="tab-btn" [class.active]="activeTab === 'ventes'"
           (click)="activeTab = 'ventes'">
-    Contrats de vente
+    {{ 'contracts.list.tabVentes' | translate }}
     @if (venteContracts.length > 0) {
       <span class="tab-count">{{ venteContracts.length }}</span>
     }
   </button>
   <button class="tab-btn" [class.active]="activeTab === 'legacy'"
           (click)="activeTab = 'legacy'">
-    Anciens contrats
+    {{ 'contracts.list.tabLegacy' | translate }}
   </button>
 </div>
 
@@ -30,7 +30,7 @@
   }
 
   @if (venteContractsLoading) {
-    <div class="skeleton-stack" data-testid="vente-contracts-loading-state" aria-label="Chargement des contrats…">
+    <div class="skeleton-stack" data-testid="vente-contracts-loading-state" [attr.aria-label]="'contracts.list.loadingVentesAria' | translate">
       @for (i of [1,2,3,4]; track i) {
         <span class="skeleton skeleton-row"></span>
       }
@@ -41,9 +41,9 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">📄</div>
-        <p class="empty-state-title">Aucun contrat généré</p>
+        <p class="empty-state-title">{{ 'contracts.list.emptyVentesTitle' | translate }}</p>
         <p class="empty-state-desc">
-          Générez un contrat depuis la fiche vente pour le voir apparaître ici.
+          {{ 'contracts.list.emptyVentesDesc' | translate }}
         </p>
       </div>
     </div>
@@ -55,11 +55,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Référence</th>
-              <th>Acquéreur</th>
-              <th>Statut vente</th>
-              <th>Statut contrat</th>
-              <th class="text-right">Actions</th>
+              <th>{{ 'contracts.list.thReference' | translate }}</th>
+              <th>{{ 'contracts.list.thAcquereur' | translate }}</th>
+              <th>{{ 'contracts.list.thStatutVente' | translate }}</th>
+              <th>{{ 'contracts.list.thStatutContrat' | translate }}</th>
+              <th class="text-right">{{ 'contracts.list.thActions' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -81,21 +81,21 @@
                         <button class="btn btn-sm btn-ghost"
                                 (click)="downloadVenteContract(v.id, d.id, d.nomFichier)"
                                 data-testid="contracts-page-download"
-                                title="Télécharger le PDF">
+                                [title]="'contracts.list.downloadPdfTitle' | translate">
                           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                             <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
                                   stroke="currentColor" stroke-width="1.5"
                                   stroke-linecap="round" stroke-linejoin="round"/>
                           </svg>
-                          PDF
+                          {{ 'contracts.list.pdf' | translate }}
                         </button>
                       }
                     }
                   } @else {
                     <a [routerLink]="['/app/ventes', v.id]"
                        class="btn btn-sm btn-ghost"
-                       title="Aucun PDF — ouvrir la fiche vente pour générer">
-                      Générer →
+                       [title]="'contracts.list.noPdfTitle' | translate">
+                       {{ 'contracts.list.generer' | translate }}
                     </a>
                   }
                 </td>
@@ -115,15 +115,15 @@
 
 <!-- Status filter toolbar -->
 <div class="toolbar">
-  <label class="form-label" style="margin:0; white-space:nowrap;">Statut</label>
+  <label class="form-label" style="margin:0; white-space:nowrap;">{{ 'contracts.list.statutLabel' | translate }}</label>
   <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus" (change)="load()">
-    <option value="">Tous les statuts</option>
+    <option value="">{{ 'contracts.list.allStatuses' | translate }}</option>
     @for (s of statuses; track s) {
-      <option [value]="s">{{ s }}</option>
+      <option [value]="s">{{ 'contracts.saleStatus.' + s | translate }}</option>
     }
   </select>
   @if (!loading) {
-    <span class="stat-chip">{{ contracts.length }} contract{{ contracts.length !== 1 ? 's' : '' }}</span>
+    <span class="stat-chip">{{ 'contracts.list.countContracts' | translate:{ count: contracts.length } }}</span>
   }
 </div>
 
@@ -140,7 +140,7 @@
 
 <!-- Loading -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="legacy-contracts-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="legacy-contracts-loading-state" [attr.aria-label]="'contracts.list.loadingAria' | translate">
     @for (i of [1,2,3,4]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -152,16 +152,16 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">📄</div>
-      <p class="empty-state-title">Aucun résultat trouvé.</p>
+      <p class="empty-state-title">{{ 'contracts.list.emptyTitle' | translate }}</p>
       <p class="empty-state-desc">
         @if (filterStatus) {
-          No contracts with status <strong>{{ filterStatus }}</strong>. Try changing the filter.
+          {{ 'contracts.list.emptyWithFilter' | translate:{ status: filterStatus } }}
         } @else {
-          Contracts will appear here once created from a prospect's profile.
+          {{ 'contracts.list.emptyNoFilter' | translate }}
         }
       </p>
       @if (filterStatus) {
-        <button class="btn btn-secondary btn-sm" (click)="filterStatus = ''; load()">Clear filter</button>
+        <button class="btn btn-secondary btn-sm" (click)="filterStatus = ''; load()">{{ 'contracts.list.clearFilter' | translate }}</button>
       }
     </div>
   </div>
@@ -174,14 +174,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Ref</th>
-            <th>Projet</th>
-            <th>Acheteur</th>
-            <th>Prix convenu</th>
-            <th>Statut</th>
-            <th>Created</th>
-            <th>Date de signature</th>
-            <th class="text-right">Actions</th>
+            <th>{{ 'contracts.list.thRef' | translate }}</th>
+            <th>{{ 'contracts.list.thProjet' | translate }}</th>
+            <th>{{ 'contracts.list.thAcheteur' | translate }}</th>
+            <th>{{ 'contracts.list.thPrixConvenu' | translate }}</th>
+            <th>{{ 'contracts.list.thStatut' | translate }}</th>
+            <th>{{ 'contracts.list.thCreated' | translate }}</th>
+            <th>{{ 'contracts.list.thDateSignature' | translate }}</th>
+            <th class="text-right">{{ 'contracts.list.thActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -192,7 +192,7 @@
               <td>{{ c.buyerDisplayName ?? '—' }}</td>
               <td class="text-right">{{ c.agreedPrice | number:'1.0-0' }}</td>
               <td>
-                <span class="badge" [class]="'badge-' + c.status.toLowerCase()">{{ c.status }}</span>
+                <span class="badge" [class]="'badge-' + c.status.toLowerCase()">{{ 'contracts.saleStatus.' + c.status | translate }}</span>
               </td>
               <td class="td-muted">{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
               <td class="td-muted">{{ c.signedAt ? (c.signedAt | date:'dd/MM/yyyy') : '—' }}</td>
@@ -200,12 +200,12 @@
                 <div class="row-actions">
                   <!-- Detail link (resolved from merge conflict) -->
                   <a class="btn btn-sm btn-secondary" [routerLink]="['/app/contracts', c.id]"
-                     title="Contrats">Detail</a>
+                     [title]="'contracts.list.detailTitle' | translate">{{ 'contracts.list.detail' | translate }}</a>
                   <!-- Schedule / Payments link -->
                   <a class="btn btn-sm btn-ghost" [routerLink]="['/app/contracts', c.id, 'payments']"
-                     title="Appels de fonds">Appels de fonds</a>
+                     [title]="'contracts.list.appelsFonds' | translate">{{ 'contracts.list.appelsFonds' | translate }}</a>
                   <!-- PDF download -->
-                  <button class="btn btn-sm btn-ghost" (click)="downloadPdf(c)" title="Télécharger PDF">
+                  <button class="btn btn-sm btn-ghost" (click)="downloadPdf(c)" [title]="'contracts.list.downloadPdf' | translate">
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                       <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -217,8 +217,8 @@
                     <button class="btn btn-sm btn-ghost msg-email"
                             [disabled]="sendingId === c.id"
                             (click)="sendMessage(c, 'EMAIL')"
-                            title="Send email to buyer">
-                      {{ sendingId === c.id ? '…' : 'Email' }}
+                            [title]="'contracts.list.emailBuyerTitle' | translate">
+                      {{ sendingId === c.id ? '…' : ('contracts.list.email' | translate) }}
                     </button>
                   }
                   <!-- SMS -->
@@ -226,8 +226,8 @@
                     <button class="btn btn-sm btn-ghost msg-sms"
                             [disabled]="sendingId === c.id"
                             (click)="sendMessage(c, 'SMS')"
-                            title="Send SMS to buyer">
-                      {{ sendingId === c.id ? '…' : 'SMS' }}
+                            [title]="'contracts.list.smsBuyerTitle' | translate">
+                      {{ sendingId === c.id ? '…' : ('contracts.list.sms' | translate) }}
                     </button>
                   }
                 </div>

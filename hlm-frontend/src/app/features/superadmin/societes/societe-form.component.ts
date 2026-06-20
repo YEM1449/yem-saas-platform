@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,11 +11,12 @@ import { SocieteDetailDto } from './societe.model';
 @Component({
   selector: 'app-societe-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './societe-form.component.html',
   styleUrl: './societe-form.component.css',
 })
 export class SocieteFormComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc = inject(SocieteService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -86,7 +89,7 @@ export class SocieteFormComponent implements OnInit {
 
   submit(): void {
     if (!this.nom.trim() || !this.pays.trim()) {
-      this.error = 'Le nom et le pays sont obligatoires.';
+      this.error = this.i18n.instant('superadmin.form.requiredFields');
       return;
     }
     this.saving = true;

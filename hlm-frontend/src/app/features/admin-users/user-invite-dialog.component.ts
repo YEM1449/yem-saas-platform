@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,7 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-user-invite-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './user-invite-dialog.component.html',
   styles: [`
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; }
@@ -31,6 +33,7 @@ import { AuthService } from '../../core/auth/auth.service';
   `],
 })
 export class UserInviteDialogComponent {
+  private i18n = inject(I18nService);
   @Output() invited = new EventEmitter<MembreDto>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -52,7 +55,7 @@ export class UserInviteDialogComponent {
 
   submit(): void {
     if (!this.email.trim() || !this.prenom.trim() || !this.nomFamille.trim()) {
-      this.error = 'Email, prénom et nom sont obligatoires.';
+      this.error = this.i18n.instant('adminUsers.invite.requiredFields');
       return;
     }
     this.submitting = true;
@@ -71,9 +74,9 @@ export class UserInviteDialogComponent {
         this.submitting = false;
         const body = err.error as ErrorResponse | null;
         if (err.status === 403 && body?.code === 'ROLE_ESCALATION_FORBIDDEN') {
-          this.error = 'Action non autorisée : seul un Super Administrateur peut attribuer le rôle Administrateur.';
+          this.error = this.i18n.instant('adminUsers.invite.roleEscalation');
         } else {
-          this.error = body?.message ?? `Erreur (${err.status})`;
+          this.error = body?.message ?? this.i18n.instant('adminUsers.invite.genericError', { status: err.status });
         }
       },
     });

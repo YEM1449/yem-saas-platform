@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +56,8 @@ public class ReservationService {
     private final VenteRepository venteRepository;
     private final TrancheRepository trancheRepository;
     private final NotificationService notificationService;
+    /** Market-aware clock — reservation expiry deadlines use the jurisdiction zone (EX-009). */
+    private final Clock clock;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -68,7 +71,8 @@ public class ReservationService {
             ReservationRefGenerator refGenerator,
             VenteRepository venteRepository,
             TrancheRepository trancheRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            Clock clock
     ) {
         this.reservationRepository = reservationRepository;
         this.contactRepository = contactRepository;
@@ -82,6 +86,7 @@ public class ReservationService {
         this.venteRepository = venteRepository;
         this.trancheRepository = trancheRepository;
         this.notificationService = notificationService;
+        this.clock = clock;
     }
 
     /**
@@ -116,7 +121,7 @@ public class ReservationService {
 
         LocalDateTime expiry = (req.expiryDate() != null)
                 ? req.expiryDate()
-                : LocalDateTime.now().plusDays(7);
+                : LocalDateTime.now(clock).plusDays(7);
 
         String ref = refGenerator.generate(societeId);
         Reservation reservation = new Reservation(societeId, contact, req.propertyId(), agent, ref);
@@ -346,7 +351,7 @@ public class ReservationService {
      */
     @Transactional
     public void runExpiryCheck() {
-        List<Reservation> expired = reservationRepository.findExpired(LocalDateTime.now());
+        List<Reservation> expired = reservationRepository.findExpired(LocalDateTime.now(clock));
         for (Reservation r : expired) {
             expireReservation(r);
         }
@@ -358,7 +363,7 @@ public class ReservationService {
      */
     @Transactional
     public void runExpirySoonCheck() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         List<Reservation> expiringSoon = reservationRepository
                 .findExpiringSoonUnnotified(now, now.plusHours(48));
         for (Reservation r : expiringSoon) {
@@ -380,7 +385,7 @@ public class ReservationService {
     }
 
     public long countExpiringSoon(UUID societeId) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         return reservationRepository.countExpiringBefore(societeId, now, now.plusHours(48));
     }
 

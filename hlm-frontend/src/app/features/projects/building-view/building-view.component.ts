@@ -1,4 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -28,11 +30,12 @@ interface StatusStats {
 @Component({
   selector: 'app-building-view',
   standalone: true,
-  imports: [RouterModule, DecimalPipe],
+  imports: [RouterModule, DecimalPipe, TranslatePipe],
   templateUrl: './building-view.component.html',
   styleUrl: './building-view.component.css',
 })
 export class BuildingViewComponent implements OnInit {
+  private i18n = inject(I18nService);
   @Input() projectId!: string;
 
   private trancheSvc = inject(TrancheService);
@@ -145,7 +148,7 @@ export class BuildingViewComponent implements OnInit {
       .sort(([a], [b]) => b - a)
       .map(([num, units]) => ({
         number: num,
-        label:  num < 0 ? 'Non défini' : num === 0 ? 'RDC' : `ÉTAGE ${num}`,
+        label:  num < 0 ? this.i18n.instant('projects.building.floor.nonDefini') : num === 0 ? this.i18n.instant('projects.building.floor.rdc') : this.i18n.instant('projects.building.floor.etage', { n: num }),
         units:  units.sort((a, b) => (a.referenceCode ?? '').localeCompare(b.referenceCode ?? '')),
       }));
   }
@@ -171,20 +174,11 @@ export class BuildingViewComponent implements OnInit {
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      ACTIVE: 'Disponible', DRAFT: 'Brouillon', RESERVED: 'Réservé',
-      SOLD: 'Vendu', WITHDRAWN: 'Retiré', ARCHIVED: 'Archivé',
-    };
-    return map[status] ?? status;
+    return this.i18n.instant('projects.detail.status.' + status);
   }
 
   typeLabel(type: string): string {
-    const map: Record<string, string> = {
-      APPARTEMENT: 'Appartement', VILLA: 'Villa', PARKING: 'Parking',
-      DUPLEX: 'Duplex', STUDIO: 'Studio', T2: 'T2', T3: 'T3',
-      LOCAL_COMMERCIAL: 'Local commercial', LOT: 'Lot', TERRAIN_VIERGE: 'Terrain',
-    };
-    return map[type] ?? type;
+    return this.i18n.instant('projects.building.type.' + type);
   }
 
   formatPrice(value: number | null): string {
@@ -213,6 +207,6 @@ export class BuildingViewComponent implements OnInit {
 
   floorBadgeLabel(p: Property): string {
     if (p.floorNumber === null || p.floorNumber === undefined) return '--';
-    return p.floorNumber === 0 ? 'RDC' : String(p.floorNumber);
+    return p.floorNumber === 0 ? this.i18n.instant('projects.building.floor.rdc') : String(p.floorNumber);
   }
 }

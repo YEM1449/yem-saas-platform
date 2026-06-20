@@ -1,4 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -9,11 +11,12 @@ import { VenteService, Vente } from '../ventes/vente.service';
 @Component({
   selector: 'app-ventes-report',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './ventes-report.component.html',
   styleUrl: './ventes-report.component.css',
 })
 export class VentesReportComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc    = inject(ReportExportService);
   private venteSvc = inject(VenteService);
   private route  = inject(ActivatedRoute);
@@ -28,24 +31,21 @@ export class VentesReportComponent implements OnInit {
   error    = signal('');
 
   readonly STATUTS: { value: ReportStatut | ''; label: string }[] = [
-    { value: '',                    label: 'Tous les statuts' },
-    { value: 'PROSPECT',            label: 'Prospect' },
-    { value: 'OPTION',              label: 'Option' },
-    { value: 'RESERVE',             label: 'Réservé' },
-    { value: 'EN_RETRACTATION',     label: 'Délai de rétractation' },
-    { value: 'ACOMPTE',             label: 'Acompte' },
-    { value: 'COMPROMIS',           label: 'Compromis' },
-    { value: 'FINANCEMENT',         label: 'Financement' },
-    { value: 'ACTE',                label: 'Acte notarié' },
-    { value: 'LIVRE_AVEC_RESERVES', label: 'Livré (réserves)' },
-    { value: 'RESERVES_LEVEES',     label: 'Réserves levées' },
-    { value: 'LIVRE_DEFINITIF',     label: 'Livré' },
-    { value: 'ANNULE',              label: 'Annulé' }];
+    { value: '', label: this.i18n.instant('reports.common.allStatuses') },
+    { value: 'PROSPECT',            label: this.i18n.instant('ventes.statut.PROSPECT') },
+    { value: 'OPTION',              label: this.i18n.instant('ventes.statut.OPTION') },
+    { value: 'RESERVE',             label: this.i18n.instant('ventes.statut.RESERVE') },
+    { value: 'EN_RETRACTATION',     label: this.i18n.instant('ventes.statut.EN_RETRACTATION') },
+    { value: 'ACOMPTE',             label: this.i18n.instant('ventes.statut.ACOMPTE') },
+    { value: 'COMPROMIS',           label: this.i18n.instant('ventes.statut.COMPROMIS') },
+    { value: 'FINANCEMENT',         label: this.i18n.instant('ventes.statut.FINANCEMENT') },
+    { value: 'ACTE',                label: this.i18n.instant('ventes.statut.ACTE') },
+    { value: 'LIVRE_AVEC_RESERVES', label: this.i18n.instant('ventes.statut.LIVRE_AVEC_RESERVES') },
+    { value: 'RESERVES_LEVEES',     label: this.i18n.instant('ventes.statut.RESERVES_LEVEES') },
+    { value: 'LIVRE_DEFINITIF',     label: this.i18n.instant('ventes.statut.LIVRE_DEFINITIF') },
+    { value: 'ANNULE',              label: this.i18n.instant('ventes.statut.ANNULE') }];
 
-  readonly STATUT_LABELS: Record<string, string> = {
-    COMPROMIS: 'Compromis', FINANCEMENT: 'Financement',
-    ACTE: 'Acte notarié', LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-  };
+  
 
   ngOnInit(): void {
     this.route.queryParamMap.pipe(take(1)).subscribe(p => {
@@ -108,7 +108,7 @@ export class VentesReportComponent implements OnInit {
     return n.toLocaleString('fr-FR') + ' MAD';
   }
 
-  statutLabel(s: string): string { return this.STATUT_LABELS[s] ?? s; }
+  statutLabel(s: string): string { return this.i18n.instant('ventes.statut.' + s); }
 
   private filters(): ReportFilters {
     return {

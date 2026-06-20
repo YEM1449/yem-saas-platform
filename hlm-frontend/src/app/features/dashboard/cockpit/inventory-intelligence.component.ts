@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { RouterLink } from '@angular/router';
 import { InventoryIntelligence } from '../dashboard-cockpit.service';
@@ -6,45 +7,45 @@ import { InventoryIntelligence } from '../dashboard-cockpit.service';
 @Component({
   selector: 'app-inventory-intelligence',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Intelligence stock</span>
-        <a routerLink="/app/properties" class="widget-link">Voir les biens →</a>
+        <span class="widget-title">{{ 'dashboard.cockpit.inventory.title' | translate }}</span>
+        <a routerLink="/app/properties" class="widget-link">{{ 'dashboard.cockpit.inventory.seeProperties' | translate }}</a>
       </div>
 
       @if (!data) {
-        <div class="empty-state">Chargement…</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.inventory.loading' | translate }}</div>
       } @else {
         <div class="stock-summary">
           <div class="stock-stat">
             <div class="stock-num">{{ data.overall.total }}</div>
-            <div class="stock-label">Total lots</div>
+            <div class="stock-label">{{ 'dashboard.cockpit.inventory.totalLots' | translate }}</div>
           </div>
           <div class="stock-stat stat-avail">
             <div class="stock-num">{{ data.overall.available }}</div>
-            <div class="stock-label">Disponibles</div>
+            <div class="stock-label">{{ 'dashboard.cockpit.inventory.available' | translate }}</div>
           </div>
           <div class="stock-stat stat-res">
             <div class="stock-num">{{ data.overall.reserved }}</div>
-            <div class="stock-label">Réservés</div>
+            <div class="stock-label">{{ 'dashboard.cockpit.inventory.reserved' | translate }}</div>
           </div>
           <div class="stock-stat stat-sold">
             <div class="stock-num">{{ data.overall.sold }}</div>
-            <div class="stock-label">Vendus</div>
+            <div class="stock-label">{{ 'dashboard.cockpit.inventory.sold' | translate }}</div>
           </div>
           @if (data.overall.withdrawn > 0) {
             <div class="stock-stat stat-withd">
               <div class="stock-num">{{ data.overall.withdrawn }}</div>
-              <div class="stock-label">Retirés</div>
+              <div class="stock-label">{{ 'dashboard.cockpit.inventory.withdrawn' | translate }}</div>
             </div>
           }
         </div>
 
         @if (data.overall.absorptionRate != null) {
           <div class="absorption-row">
-            <span class="abs-label">Absorption globale</span>
+            <span class="abs-label">{{ 'dashboard.cockpit.inventory.globalAbsorption' | translate }}</span>
             <div class="abs-track">
               <div class="abs-fill"
                    [style.width.%]="Math.min(data.overall.absorptionRate, 100)"
@@ -61,12 +62,12 @@ import { InventoryIntelligence } from '../dashboard-cockpit.service';
             <table class="inv-table">
               <thead>
                 <tr>
-                  <th>Projet</th>
-                  <th class="num">Dispo.</th>
-                  <th class="num">Rés.</th>
-                  <th class="num">Vendus</th>
-                  <th class="num">Absorption</th>
-                  <th class="num">Valeur stock</th>
+                  <th>{{ 'dashboard.cockpit.inventory.thProject' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.inventory.thAvail' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.inventory.thRes' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.inventory.thSold' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.inventory.thAbsorption' | translate }}</th>
+                  <th class="num">{{ 'dashboard.cockpit.inventory.thStockValue' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,7 +95,7 @@ import { InventoryIntelligence } from '../dashboard-cockpit.service';
             </table>
           </div>
         } @else {
-          <div class="empty-state">Aucun projet avec des lots.</div>
+          <div class="empty-state">{{ 'dashboard.cockpit.inventory.noProject' | translate }}</div>
         }
       }
     </div>

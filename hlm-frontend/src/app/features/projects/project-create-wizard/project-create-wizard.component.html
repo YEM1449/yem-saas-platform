@@ -2,8 +2,8 @@
 
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div class="wizard-header">
-    <a class="back-link" routerLink="/app/projects">← Projets</a>
-    <h1 class="wizard-title">Nouveau programme immobilier</h1>
+    <a class="back-link" routerLink="/app/projects">{{ 'projects.wizard.back' | translate }}</a>
+    <h1 class="wizard-title">{{ 'projects.wizard.title' | translate }}</h1>
   </div>
 
   <!-- ── Progress bar ────────────────────────────────────────────────────── -->
@@ -20,11 +20,11 @@
           <div class="step-circle">{{ currentStep > s ? '✓' : s }}</div>
           <div class="step-label">
             @switch (s) {
-              @case (1) { Projet }
-              @case (2) { Tranches }
-              @case (3) { @if (isVillaProject) { Villas } @else { Bâtiments } }
-              @case (4) { @if (isVillaProject) { Config. } @else { Lots } }
-              @case (5) { Validation }
+              @case (1) { {{ 'projects.wizard.steps.s1' | translate }} }
+              @case (2) { {{ 'projects.wizard.steps.s2' | translate }} }
+              @case (3) { @if (isVillaProject) { {{ 'projects.wizard.steps.s3v' | translate }} } @else { {{ 'projects.wizard.steps.s3b' | translate }} } }
+              @case (4) { @if (isVillaProject) { {{ 'projects.wizard.steps.s4c' | translate }} } @else { {{ 'projects.wizard.steps.s4l' | translate }} } }
+              @case (5) { {{ 'projects.wizard.steps.s5' | translate }} }
             }
           </div>
         </div>
@@ -39,14 +39,14 @@
     @if (currentStep === 1) {
       <div class="step-panel" data-testid="wizard-step-1">
         <div class="step-intro">
-          <h2>Informations du programme</h2>
-          <p>Renseignez les informations générales de votre programme immobilier.</p>
+          <h2>{{ 'projects.wizard.s1.title' | translate }}</h2>
+          <p>{{ 'projects.wizard.s1.intro' | translate }}</p>
         </div>
         <form [formGroup]="step1" class="form-grid">
 
           <!-- Project type picker -->
           <div class="field field-full required" style="margin-bottom:24px">
-            <label style="font-weight:600;margin-bottom:10px;display:block">Type de programme *</label>
+            <label style="font-weight:600;margin-bottom:10px;display:block">{{ 'projects.wizard.s1.typeLabel' | translate }}</label>
             <div style="display:flex;gap:12px;flex-wrap:wrap">
               @for (pt of PROJECT_TYPES; track pt.value) {
                 <label class="radio-card"
@@ -55,8 +55,8 @@
                        style="flex:1;min-width:200px;cursor:pointer;padding:14px 16px;border:2px solid #e2e8f0;border-radius:8px;display:flex;align-items:flex-start;gap:10px">
                   <input type="radio" formControlName="projectType" [value]="pt.value" style="margin-top:2px" />
                   <div>
-                    <div style="font-weight:600;font-size:14px">{{ pt.label }}</div>
-                    <div style="font-size:12px;color:#64748b;margin-top:2px">{{ pt.hint }}</div>
+                    <div style="font-weight:600;font-size:14px">{{ 'projects.wizard.projectType.' + pt.value + '.label' | translate }}</div>
+                    <div style="font-size:12px;color:#64748b;margin-top:2px">{{ 'projects.wizard.projectType.' + pt.value + '.hint' | translate }}</div>
                   </div>
                 </label>
               }
@@ -64,62 +64,62 @@
           </div>
 
           <div class="field field-full required">
-            <label>Nom du programme *</label>
+            <label>{{ 'projects.wizard.s1.name' | translate }}</label>
             <input formControlName="projectNom"
                    data-testid="wizard-project-nom"
-                   placeholder="Ex : Résidence Les Oliviers" />
+                   [placeholder]="'projects.wizard.s1.namePlaceholder' | translate" />
             @if (step1.get('projectNom')?.invalid && step1.get('projectNom')?.touched) {
-              <span class="field-error">Nom requis</span>
+              <span class="field-error">{{ 'projects.wizard.s1.nameReq' | translate }}</span>
             }
           </div>
           <div class="field field-full">
-            <label>Description</label>
+            <label>{{ 'projects.wizard.s1.description' | translate }}</label>
             <textarea formControlName="projectDescription" rows="3"
-                      placeholder="Description du programme…"></textarea>
+                      [placeholder]="'projects.wizard.s1.descPlaceholder' | translate"></textarea>
           </div>
           <div class="field">
-            <label>Adresse</label>
-            <input formControlName="projectAdresse" placeholder="12 avenue des Pins" />
+            <label>{{ 'projects.wizard.s1.address' | translate }}</label>
+            <input formControlName="projectAdresse" [placeholder]="'projects.wizard.s1.addressPlaceholder' | translate" />
           </div>
           <div class="field required">
-            <label>Ville *</label>
+            <label>{{ 'projects.wizard.s1.city' | translate }}</label>
             <input formControlName="projectVille"
                    data-testid="wizard-project-ville"
-                   placeholder="Marseille" />
+                   [placeholder]="'projects.wizard.s1.cityPlaceholder' | translate" />
             @if (step1.get('projectVille')?.invalid && step1.get('projectVille')?.touched) {
-              <span class="field-error">Ville requise</span>
+              <span class="field-error">{{ 'projects.wizard.s1.cityReq' | translate }}</span>
             }
           </div>
           <div class="field field-sm">
-            <label>Code postal</label>
-            <input formControlName="projectCodePostal" placeholder="13000" />
+            <label>{{ 'projects.wizard.s1.postalCode' | translate }}</label>
+            <input formControlName="projectCodePostal" [placeholder]="'projects.wizard.s1.postalPlaceholder' | translate" />
           </div>
 
           <!-- ── Informations professionnelles ── -->
           <div class="field field-full" style="margin-top:8px">
-            <div class="section-divider-label">Informations promoteur</div>
+            <div class="section-divider-label">{{ 'projects.wizard.s1.promoterSection' | translate }}</div>
           </div>
 
           <div class="field field-half">
-            <label>Maître d'ouvrage</label>
-            <input formControlName="maitreOuvrage" placeholder="Ex : Groupe Immobilier Atlas" />
+            <label>{{ 'projects.wizard.s1.maitreOuvrage' | translate }}</label>
+            <input formControlName="maitreOuvrage" [placeholder]="'projects.wizard.s1.maitrePlaceholder' | translate" />
           </div>
           <div class="field field-half">
-            <label>Date d'ouverture commercialisation</label>
+            <label>{{ 'projects.wizard.s1.dateOuverture' | translate }}</label>
             <input type="date" formControlName="dateOuvertureCommercialisation" />
           </div>
 
           <div class="field field-third">
-            <label>TVA applicable (%)</label>
-            <input type="number" formControlName="tvaTaux" placeholder="Ex : 20" min="0" max="100" step="0.01" />
+            <label>{{ 'projects.wizard.s1.tva' | translate }}</label>
+            <input type="number" formControlName="tvaTaux" [placeholder]="'projects.wizard.s1.tvaPlaceholder' | translate" min="0" max="100" step="0.01" />
           </div>
           <div class="field field-third">
-            <label>Surface terrain (m²)</label>
-            <input type="number" formControlName="surfaceTerrainM2" placeholder="Ex : 5000" min="0" />
+            <label>{{ 'projects.wizard.s1.surfaceTerrain' | translate }}</label>
+            <input type="number" formControlName="surfaceTerrainM2" [placeholder]="'projects.wizard.s1.surfacePlaceholder' | translate" min="0" />
           </div>
           <div class="field field-third">
-            <label>Prix moyen cible (MAD/m²)</label>
-            <input type="number" formControlName="prixMoyenM2Cible" placeholder="Ex : 12000" min="0" />
+            <label>{{ 'projects.wizard.s1.prixMoyen' | translate }}</label>
+            <input type="number" formControlName="prixMoyenM2Cible" [placeholder]="'projects.wizard.s1.prixPlaceholder' | translate" min="0" />
           </div>
         </form>
       </div>
@@ -129,17 +129,15 @@
     @if (currentStep === 2) {
       <div class="step-panel" data-testid="wizard-step-2">
         <div class="step-intro">
-          <h2>Tranches de livraison</h2>
+          <h2>{{ 'projects.wizard.s2.title' | translate }}</h2>
         </div>
 
         <div class="domain-explainer">
           <span class="explainer-icon">ℹ</span>
           <div>
-            <strong>Qu'est-ce qu'une tranche ?</strong>
+            <strong>{{ 'projects.wizard.s2.whatIs' | translate }}</strong>
             <p>
-              Une tranche regroupe les bâtiments construits et livrés ensemble à une date
-              précise. La date de livraison de chaque tranche est inscrite dans les contrats
-              de réservation des acquéreurs. Un programme simple n'a qu'une seule tranche.
+              {{ 'projects.wizard.s2.explain' | translate }}
             </p>
           </div>
         </div>
@@ -150,9 +148,9 @@
             <div class="timeline-item">
               <div class="timeline-dot">{{ ti + 1 }}</div>
               <div class="timeline-content">
-                <div class="timeline-nom">{{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}</div>
+                <div class="timeline-nom">{{ t.get('nom')?.value || ('projects.wizard.s2.trancheN' | translate:{ n: ti + 1 }) }}</div>
                 <div class="timeline-date">
-                  {{ t.get('dateLivraisonPrevue')?.value || 'Date à définir' }}
+                  {{ t.get('dateLivraisonPrevue')?.value || ('projects.wizard.s2.dateToDefine' | translate) }}
                 </div>
               </div>
               @if (ti < tranches.length - 1) {
@@ -164,12 +162,12 @@
 
         <!-- Tranche cards -->
         <div class="section-header">
-          <h3>Tranches ({{ tranches.length }})</h3>
+          <h3>{{ 'projects.wizard.s2.count' | translate:{ count: tranches.length } }}</h3>
           <button type="button" class="btn btn-sm btn-outline"
                   data-testid="wizard-add-tranche"
                   (click)="addTranche()"
                   [disabled]="tranches.length >= 5">
-            + Ajouter une tranche
+            {{ 'projects.wizard.s2.add' | translate }}
           </button>
         </div>
 
@@ -178,7 +176,7 @@
             @for (t of tranches.controls; track $index; let ti = $index) {
               <div [formGroupName]="ti" class="tranche-card">
                 <div class="tranche-card-header">
-                  <span class="badge badge-tranche">Tranche {{ ti + 1 }}</span>
+                  <span class="badge badge-tranche">{{ 'projects.wizard.s2.trancheN' | translate:{ n: ti + 1 } }}</span>
                   @if (tranches.length > 1) {
                     <button type="button" class="btn-icon-remove"
                             (click)="removeTranche(ti)">✕</button>
@@ -186,30 +184,30 @@
                 </div>
                 <div class="form-row">
                   <div class="field">
-                    <label>Nom de la tranche (optionnel)</label>
+                    <label>{{ 'projects.wizard.s2.nomLabel' | translate }}</label>
                     <input formControlName="nom"
-                           [placeholder]="'Ex : Tranche ' + (ti+1) + ' — Le Jasmin'" />
+                           [placeholder]="'projects.wizard.s2.nomPlaceholder' | translate:{ n: ti+1 }" />
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="field required">
-                    <label>📅 Date de livraison prévue *</label>
+                    <label>{{ 'projects.wizard.s2.dateLivraison' | translate }}</label>
                     <input type="date" formControlName="dateLivraisonPrevue"
                            [attr.data-testid]="'wizard-tranche-' + ti + '-livraison'" />
-                    <span class="field-hint">Mentionnée dans les contrats de réservation</span>
+                    <span class="field-hint">{{ 'projects.wizard.s2.dateHint' | translate }}</span>
                     @if (t.get('dateLivraisonPrevue')?.invalid && t.get('dateLivraisonPrevue')?.touched) {
-                      <span class="field-error">Date de livraison requise</span>
+                      <span class="field-error">{{ 'projects.wizard.s2.dateReq' | translate }}</span>
                     }
                   </div>
                   <div class="field">
-                    <label>Date début des travaux</label>
+                    <label>{{ 'projects.wizard.s2.dateDebut' | translate }}</label>
                     <input type="date" formControlName="dateDebutTravaux" />
                   </div>
                 </div>
                 <div class="field">
-                  <label>Référence permis de construire</label>
+                  <label>{{ 'projects.wizard.s2.permis' | translate }}</label>
                   <input formControlName="permisConstruireRef"
-                         placeholder="PC 13055 25 00123" />
+                         [placeholder]="'projects.wizard.s2.permisPlaceholder' | translate" />
                 </div>
               </div>
             }
@@ -223,26 +221,26 @@
       <div class="step-panel" data-testid="wizard-step-3">
         <div class="step-intro">
           @if (isVillaProject) {
-            <h2>Configuration des villas</h2>
-            <p>Définissez la nomenclature et ajoutez les groupes de villas par tranche.</p>
+            <h2>{{ 'projects.wizard.s3.villaTitle' | translate }}</h2>
+            <p>{{ 'projects.wizard.s3.villaIntro' | translate }}</p>
           } @else {
-            <h2>Configuration des bâtiments</h2>
-            <p>Définissez la nomenclature commune, puis ajoutez les bâtiments de chaque tranche.</p>
+            <h2>{{ 'projects.wizard.s3.buildTitle' | translate }}</h2>
+            <p>{{ 'projects.wizard.s3.buildIntro' | translate }}</p>
           }
         </div>
 
         <!-- Naming config -->
         <form [formGroup]="step3">
           <div class="config-box">
-            <h3 class="config-box-title">Nomenclature (commune à tous les bâtiments)</h3>
+            <h3 class="config-box-title">{{ 'projects.wizard.s3.nomenclature' | translate }}</h3>
 
             <div class="naming-options">
               @for (opt of NAMING_OPTIONS; track opt.value) {
                 <label class="radio-card">
                   <input type="radio" formControlName="buildingNaming" [value]="opt.value" />
                   <div class="radio-card-body">
-                    <span class="radio-label">{{ opt.label }}</span>
-                    <span class="radio-hint">{{ opt.hint }}</span>
+                    <span class="radio-label">{{ 'projects.wizard.naming.' + opt.value + '.label' | translate }}</span>
+                    <span class="radio-hint">{{ 'projects.wizard.naming.' + opt.value + '.hint' | translate }}</span>
                   </div>
                 </label>
               }
@@ -250,25 +248,25 @@
 
             <div class="form-row">
               <div class="field">
-                <label>{{ isVillaProject ? 'Préfixe villa' : 'Préfixe bâtiment' }}</label>
+                <label>{{ isVillaProject ? ('projects.wizard.s3.prefixVilla' | translate) : ('projects.wizard.s3.prefixBuild' | translate) }}</label>
                 <input formControlName="buildingPrefix"
                        [placeholder]="isVillaProject ? 'Villa' : 'Bâtiment'" />
               </div>
               <div class="field" [class.field-hidden]="step3.get('unitRefPattern')?.value !== 'SEQUENTIAL'">
-                <label>Préfixe des lots</label>
+                <label>{{ 'projects.wizard.s3.lotPrefix' | translate }}</label>
                 <input formControlName="unitPrefix"
                        [placeholder]="isVillaProject ? 'VILLA-' : 'APT-'" />
               </div>
             </div>
 
             <div class="ref-options">
-              <label class="field-label">Référence des lots</label>
+              <label class="field-label">{{ 'projects.wizard.s3.refLots' | translate }}</label>
               @for (p of REF_PATTERNS; track p.value) {
                 <label class="radio-card-sm">
                   <input type="radio" formControlName="unitRefPattern" [value]="p.value" />
                   <div>
-                    <span class="radio-label">{{ p.label }}</span>
-                    <span class="radio-hint">{{ p.hint }}</span>
+                    <span class="radio-label">{{ 'projects.wizard.refPattern.' + p.value + '.label' | translate }}</span>
+                    <span class="radio-hint">{{ 'projects.wizard.refPattern.' + p.value + '.hint' | translate }}</span>
                   </div>
                 </label>
               }
@@ -281,22 +279,22 @@
           <div class="tranche-buildings-section">
             <div class="tranche-section-header">
               <h3>
-                {{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}
+                {{ t.get('nom')?.value || ('projects.wizard.s2.trancheN' | translate:{ n: ti + 1 }) }}
                 @if (t.get('dateLivraisonPrevue')?.value) {
-                  <span class="badge-date">Livraison : {{ t.get('dateLivraisonPrevue')?.value }}</span>
+                  <span class="badge-date">{{ 'projects.wizard.s3.livraisonBadge' | translate:{ date: t.get('dateLivraisonPrevue')?.value } }}</span>
                 }
               </h3>
               <button type="button" class="btn btn-sm btn-outline"
                       [attr.data-testid]="'wizard-add-building-' + ti"
                       (click)="addBuilding(ti)"
                       [disabled]="totalBuildingCount >= 26">
-                {{ isVillaProject ? '+ Ajouter un groupe de villas' : '+ Ajouter un bâtiment' }}
+                {{ isVillaProject ? ('projects.wizard.s3.addVillaGroup' | translate) : ('projects.wizard.s3.addBuilding' | translate) }}
               </button>
             </div>
 
             @if (getTrancheBuildings(ti).length === 0) {
               <div class="empty-state-sm">
-                <p>{{ isVillaProject ? 'Aucun groupe de villas — cliquez ci-dessus.' : 'Aucun bâtiment — cliquez ci-dessus.' }}</p>
+                <p>{{ isVillaProject ? ('projects.wizard.s3.noVillaGroup' | translate) : ('projects.wizard.s3.noBuilding' | translate) }}</p>
               </div>
             }
 
@@ -314,16 +312,16 @@
 
                   @if (step3.get('buildingNaming')?.value === 'CUSTOM') {
                     <div class="field">
-                      <label>Nom personnalisé</label>
+                      <label>{{ 'projects.wizard.s3.customName' | translate }}</label>
                       <input formControlName="customName"
-                             [placeholder]="isVillaProject ? 'Ex : Domaine Sud' : 'Ex : Le Jasmin'" />
+                             [placeholder]="(isVillaProject ? 'projects.wizard.s3.customVilla' : 'projects.wizard.s3.customBuild') | translate" />
                     </div>
                   }
 
                   @if (!isVillaProject) {
                     <div class="form-row">
                       <div class="field">
-                        <label>Nombre d'étages (R+?)</label>
+                        <label>{{ 'projects.wizard.s3.floorsCount' | translate }}</label>
                         <div class="stepper">
                           <button type="button"
                                   (click)="b.get('floorCount')?.setValue(Math.max(1,(b.get('floorCount')?.value??1)-1))">−</button>
@@ -334,26 +332,26 @@
                       </div>
 
                       <div class="field">
-                        <label>Rez-de-chaussée</label>
+                        <label>{{ 'projects.wizard.s3.rdc' | translate }}</label>
                         <label class="toggle">
                           <input type="checkbox" formControlName="hasRdc" />
-                          <span>{{ b.get('hasRdc')?.value ? 'Oui' : 'Non' }}</span>
+                          <span>{{ b.get('hasRdc')?.value ? ('projects.wizard.s3.yes' | translate) : ('projects.wizard.s3.no' | translate) }}</span>
                         </label>
                       </div>
 
                       @if (b.get('hasRdc')?.value) {
                         <div class="field">
-                          <label>Type RDC</label>
+                          <label>{{ 'projects.wizard.s3.rdcType' | translate }}</label>
                           <select formControlName="rdcType">
-                            <option value="COMMERCE">Local commercial</option>
-                            <option value="APPARTEMENT">Appartement</option>
-                            <option value="MIXTE">Mixte</option>
-                            <option value="NONE">Aucun lot</option>
+                            <option value="COMMERCE">{{ 'projects.wizard.s3.localCommercial' | translate }}</option>
+                            <option value="APPARTEMENT">{{ 'projects.wizard.s3.appartement' | translate }}</option>
+                            <option value="MIXTE">{{ 'projects.wizard.s3.mixte' | translate }}</option>
+                            <option value="NONE">{{ 'projects.wizard.s3.aucunLot' | translate }}</option>
                           </select>
                         </div>
                         @if (b.get('rdcType')?.value !== 'NONE') {
                           <div class="field field-sm">
-                            <label>Nb lots RDC</label>
+                            <label>{{ 'projects.wizard.s3.nbLotsRdc' | translate }}</label>
                             <input type="number" formControlName="rdcUnitCount" min="1" max="10" />
                           </div>
                         }
@@ -362,15 +360,15 @@
 
                     <div class="form-row">
                       <div class="field">
-                        <label>Parking</label>
+                        <label>{{ 'projects.wizard.s3.parking' | translate }}</label>
                         <label class="toggle">
                           <input type="checkbox" formControlName="hasParking" />
-                          <span>{{ b.get('hasParking')?.value ? 'Avec parking' : 'Sans parking' }}</span>
+                          <span>{{ b.get('hasParking')?.value ? ('projects.wizard.s3.withParking' | translate) : ('projects.wizard.s3.withoutParking' | translate) }}</span>
                         </label>
                       </div>
                       @if (b.get('hasParking')?.value) {
                         <div class="field field-sm">
-                          <label>Nb de places</label>
+                          <label>{{ 'projects.wizard.s3.nbPlaces' | translate }}</label>
                           <input type="number" formControlName="parkingCount" min="1" />
                         </div>
                       }
@@ -379,11 +377,11 @@
                     <!-- Villa mode: just the count in this group -->
                     <div class="form-row">
                       <div class="field">
-                        <label>Nombre de villas dans ce groupe</label>
+                        <label>{{ 'projects.wizard.s3.nbVillasGroup' | translate }}</label>
                         <div class="stepper">
                           <button type="button"
                                   (click)="b.get('rdcUnitCount')?.setValue(Math.max(1,(b.get('rdcUnitCount')?.value??1)-1))">−</button>
-                          <span class="stepper-value">{{ b.get('rdcUnitCount')?.value }} villa{{ (b.get('rdcUnitCount')?.value??1) > 1 ? 's' : '' }}</span>
+                          <span class="stepper-value">{{ b.get('rdcUnitCount')?.value }} {{ ((b.get('rdcUnitCount')?.value??1) > 1 ? 'projects.wizard.s3.villas' : 'projects.wizard.s3.villa') | translate }}</span>
                           <button type="button"
                                   (click)="b.get('rdcUnitCount')?.setValue(Math.min(20,(b.get('rdcUnitCount')?.value??1)+1))">+</button>
                         </div>
@@ -403,20 +401,20 @@
       <div class="step-panel" data-testid="wizard-step-4">
         <div class="step-intro">
           @if (isVillaProject) {
-            <h2>Configuration des villas</h2>
-            <p>Pour chaque groupe de villas, définissez la surface, le terrain, le prix et les options.</p>
+            <h2>{{ 'projects.wizard.s4.villaTitle' | translate }}</h2>
+            <p>{{ 'projects.wizard.s4.villaIntro' | translate }}</p>
           } @else {
-            <h2>Types de lots par étage</h2>
-            <p>Pour chaque bâtiment, configurez le type et les caractéristiques de chaque étage.</p>
+            <h2>{{ 'projects.wizard.s4.lotsTitle' | translate }}</h2>
+            <p>{{ 'projects.wizard.s4.lotsIntro' | translate }}</p>
           }
         </div>
 
         @for (t of tranches.controls; track $index; let ti = $index) {
           <div class="tranche-floors-section">
             <h3 class="tranche-section-title">
-              {{ t.get('nom')?.value || ('Tranche ' + (ti + 1)) }}
+              {{ t.get('nom')?.value || ('projects.wizard.s2.trancheN' | translate:{ n: ti + 1 }) }}
               @if (t.get('dateLivraisonPrevue')?.value) {
-                <span class="badge-date">Livraison : {{ t.get('dateLivraisonPrevue')?.value }}</span>
+                <span class="badge-date">{{ 'projects.wizard.s3.livraisonBadge' | translate:{ date: t.get('dateLivraisonPrevue')?.value } }}</span>
               }
             </h3>
 
@@ -432,9 +430,9 @@
 
                 @if (!isVillaProject && b.get('hasParking')?.value && (b.get('parkingCount')?.value ?? 0) > 0) {
                   <div class="floor-row floor-parking">
-                    <span class="floor-label">Sous-sol</span>
+                    <span class="floor-label">{{ 'projects.wizard.floor.basement' | translate }}</span>
                     <span class="floor-type-badge">PARKING</span>
-                    <span class="floor-count-label">{{ b.get('parkingCount')?.value }} places</span>
+                    <span class="floor-count-label">{{ b.get('parkingCount')?.value }} {{ 'projects.wizard.s4.places' | translate }}</span>
                   </div>
                 }
 
@@ -447,7 +445,7 @@
                     @if (!isVillaProject) {
                       <select formControlName="propertyType" class="floor-type-select">
                         @for (pt of PROPERTY_TYPES; track pt.value) {
-                          <option [value]="pt.value">{{ pt.label }}</option>
+                          <option [value]="pt.value">{{ 'projects.wizard.propType.' + pt.value | translate }}</option>
                         }
                       </select>
                     }
@@ -455,20 +453,20 @@
                     <div class="floor-unit-count">
                       <button type="button"
                               (click)="f.get('unitCount')?.setValue(Math.max(1,(f.get('unitCount')?.value??1)-1))">−</button>
-                      <span>{{ f.get('unitCount')?.value }} {{ isVillaProject ? 'villa' : 'lot' }}{{ (f.get('unitCount')?.value??1) > 1 ? 's' : '' }}</span>
+                      <span>{{ f.get('unitCount')?.value }} {{ (isVillaProject ? ((f.get('unitCount')?.value??1) > 1 ? 'projects.wizard.s4.villas' : 'projects.wizard.s4.villa') : ((f.get('unitCount')?.value??1) > 1 ? 'projects.wizard.s4.lots' : 'projects.wizard.s4.lot')) | translate }}</span>
                       <button type="button"
                               (click)="f.get('unitCount')?.setValue(Math.min(20,(f.get('unitCount')?.value??1)+1))">+</button>
                     </div>
 
                     <div class="floor-fields">
                       <input type="number" formControlName="surfaceMin"
-                             class="field-sm-input" [placeholder]="isVillaProject ? 'Surface habitable m²' : 'm² min'" min="1" />
+                             class="field-sm-input" [placeholder]="(isVillaProject ? 'projects.wizard.s4.surfaceVilla' : 'projects.wizard.s4.surfaceMin') | translate" min="1" />
                       @if (isVillaProject) {
                         <input type="number" formControlName="landAreaSqm"
-                               class="field-sm-input" placeholder="Terrain m²" min="1" />
+                               class="field-sm-input" [placeholder]="'projects.wizard.s4.terrain' | translate" min="1" />
                       }
                       <input type="number" formControlName="prixBase"
-                             class="field-sm-input" placeholder="Prix MAD" min="0" />
+                             class="field-sm-input" [placeholder]="'projects.wizard.s4.prix' | translate" min="0" />
                       @if (!isVillaProject) {
                         <select formControlName="orientation" class="orientation-select">
                           @for (o of ORIENTATIONS; track o) {
@@ -483,17 +481,17 @@
                       <div style="display:flex;gap:16px;align-items:center;width:100%;margin-top:8px;flex-wrap:wrap">
                         <div style="display:flex;gap:8px">
                           <input type="number" formControlName="bedrooms"
-                                 class="field-sm-input" placeholder="Chambres" min="1" style="width:90px" />
+                                 class="field-sm-input" [placeholder]="'projects.wizard.s4.bedrooms' | translate" min="1" style="width:90px" />
                           <input type="number" formControlName="bathrooms"
-                                 class="field-sm-input" placeholder="SDB" min="1" style="width:70px" />
+                                 class="field-sm-input" [placeholder]="'projects.wizard.s4.bathrooms' | translate" min="1" style="width:70px" />
                         </div>
                         <label class="toggle-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
                           <input type="checkbox" formControlName="hasPool" />
-                          Piscine
+                          {{ 'projects.wizard.s4.pool' | translate }}
                         </label>
                         <label class="toggle-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
                           <input type="checkbox" formControlName="hasGarden" />
-                          Jardin
+                          {{ 'projects.wizard.s4.garden' | translate }}
                         </label>
                         <select formControlName="orientation" class="orientation-select" style="width:120px">
                           @for (o of ORIENTATIONS; track o) {
@@ -515,8 +513,8 @@
     @if (currentStep === 5) {
       <div class="step-panel" data-testid="wizard-step-5">
         <div class="step-intro">
-          <h2>Validation — Récapitulatif</h2>
-          <p>Vérifiez la configuration avant de lancer la génération.</p>
+          <h2>{{ 'projects.wizard.s5.title' | translate }}</h2>
+          <p>{{ 'projects.wizard.s5.intro' | translate }}</p>
         </div>
 
         <!-- Project info summary card -->
@@ -530,19 +528,19 @@
               <span>🏢 {{ step1.get('maitreOuvrage')?.value }}</span>
             }
             @if (step1.get('dateOuvertureCommercialisation')?.value) {
-              <span>📅 Ouverture commercialisation : {{ step1.get('dateOuvertureCommercialisation')?.value }}</span>
+              <span>📅 {{ 'projects.wizard.s5.ouverture' | translate:{ date: step1.get('dateOuvertureCommercialisation')?.value } }}</span>
             }
           </div>
           @if (step1.get('tvaTaux')?.value || step1.get('surfaceTerrainM2')?.value || step1.get('prixMoyenM2Cible')?.value) {
             <div class="preview-project-kpis">
               @if (step1.get('tvaTaux')?.value) {
-                <span class="preview-kpi-chip">TVA {{ step1.get('tvaTaux')?.value }}%</span>
+                <span class="preview-kpi-chip">{{ 'projects.wizard.s5.tvaChip' | translate:{ n: step1.get('tvaTaux')?.value } }}</span>
               }
               @if (step1.get('surfaceTerrainM2')?.value) {
-                <span class="preview-kpi-chip">{{ step1.get('surfaceTerrainM2')?.value | number:'1.0-0' }} m² terrain</span>
+                <span class="preview-kpi-chip">{{ 'projects.wizard.s5.terrainChip' | translate:{ n: (step1.get('surfaceTerrainM2')?.value | number:'1.0-0') } }}</span>
               }
               @if (step1.get('prixMoyenM2Cible')?.value) {
-                <span class="preview-kpi-chip">{{ step1.get('prixMoyenM2Cible')?.value | number:'1.0-0' }} MAD/m² cible</span>
+                <span class="preview-kpi-chip">{{ 'projects.wizard.s5.prixChip' | translate:{ n: (step1.get('prixMoyenM2Cible')?.value | number:'1.0-0') } }}</span>
               }
             </div>
           }
@@ -557,7 +555,7 @@
                   <th>
                     <div class="preview-th-nom">{{ t.nom }}</div>
                     @if (t.date) {
-                      <div class="preview-th-date">Livraison : {{ t.date }}</div>
+                      <div class="preview-th-date">{{ 'projects.wizard.s5.livraison' | translate:{ date: t.date } }}</div>
                     }
                   </th>
                 }
@@ -570,7 +568,7 @@
                     @for (b of t.buildings; track b.nom) {
                       <div class="preview-building">
                         <strong>{{ b.nom }}</strong>
-                        <span class="preview-count">{{ b.unitCount }} lot{{ b.unitCount !== 1 ? 's' : '' }}</span>
+                        <span class="preview-count">{{ 'projects.wizard.s5.lotN' | translate:{ count: b.unitCount } }}</span>
                       </div>
                     }
                   </td>
@@ -578,7 +576,7 @@
               </tr>
               <tr class="preview-totals-row">
                 @for (t of preview.tranches; track t.numero) {
-                  <td class="preview-tranche-total">{{ t.unitCount }} lots</td>
+                  <td class="preview-tranche-total">{{ 'projects.wizard.s5.trancheTotal' | translate:{ count: t.unitCount } }}</td>
                 }
               </tr>
             </tbody>
@@ -589,20 +587,20 @@
         <div class="preview-totals-grid">
           <div class="total-chip">
             <span class="total-chip-value">{{ preview.totals.trancheCount }}</span>
-            <span class="total-chip-label">tranche{{ preview.totals.trancheCount !== 1 ? 's' : '' }}</span>
+            <span class="total-chip-label">{{ 'projects.wizard.s5.trancheCount' | translate }}</span>
           </div>
           <div class="total-chip">
             <span class="total-chip-value">{{ preview.totals.buildingCount }}</span>
-            <span class="total-chip-label">bâtiment{{ preview.totals.buildingCount !== 1 ? 's' : '' }}</span>
+            <span class="total-chip-label">{{ 'projects.wizard.s5.buildingCount' | translate }}</span>
           </div>
           <div class="total-chip">
             <span class="total-chip-value" data-testid="wizard-total-units">{{ preview.totals.unitCount }}</span>
-            <span class="total-chip-label">lots au total</span>
+            <span class="total-chip-label">{{ 'projects.wizard.s5.totalLots' | translate }}</span>
           </div>
           @if (preview.totals.estimatedValue > 0) {
             <div class="total-chip total-chip-value-est">
               <span class="total-chip-value">{{ preview.totals.estimatedValue | number:'1.0-0' }} MAD</span>
-              <span class="total-chip-label">valeur estimée</span>
+              <span class="total-chip-label">{{ 'projects.wizard.s5.estimatedValue' | translate }}</span>
             </div>
           }
         </div>
@@ -612,7 +610,7 @@
           @for (entry of typeEntries(preview.totals.byType); track entry[0]) {
             <div class="type-chip">
               <span class="type-count">{{ entry[1] }}</span>
-              <span class="type-label">{{ entry[0] }}</span>
+              <span class="type-label">{{ 'projects.wizard.propType.' + entry[0] | translate }}</span>
             </div>
           }
         </div>
@@ -632,7 +630,7 @@
             data-testid="wizard-prev"
             (click)="prev()"
             [disabled]="currentStep === 1">
-      ← Précédent
+      {{ 'projects.wizard.footer.prev' | translate }}
     </button>
 
     <div class="wizard-footer-right">
@@ -641,14 +639,14 @@
                 data-testid="wizard-next"
                 (click)="next()"
                 [disabled]="!canGoNext()">
-          Suivant →
+          {{ 'projects.wizard.footer.next' | translate }}
         </button>
       } @else {
         <button type="button" class="btn btn-success"
                 data-testid="wizard-generate"
                 (click)="generate()"
                 [disabled]="submitting">
-          {{ submitting ? 'Génération en cours…' : 'Générer le programme' }}
+          {{ submitting ? ('projects.wizard.footer.generating' | translate) : ('projects.wizard.footer.generate' | translate) }}
         </button>
       }
     </div>

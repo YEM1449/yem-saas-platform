@@ -1,4 +1,4 @@
-<h2 data-testid="tasks-page-title">Tâches</h2>
+<h2 data-testid="tasks-page-title">{{ 'tasks.title' | translate }}</h2>
 
 <div class="toolbar">
   <select data-testid="status-filter" [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()">
@@ -6,7 +6,7 @@
       <option [value]="s.value">{{ s.label }}</option>
     }
   </select>
-  <button data-testid="new-task-btn" (click)="openCreate()" class="btn-primary">+ Nouvelle tâche</button>
+  <button data-testid="new-task-btn" (click)="openCreate()" class="btn-primary">{{ 'tasks.newTask' | translate }}</button>
 </div>
 
 @if (success) {
@@ -17,7 +17,7 @@
 }
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="tasks-loading-state" aria-label="Chargement…">
+  <div class="skeleton-stack" data-testid="tasks-loading-state" [attr.aria-label]="'tasks.loadingAria' | translate">
     @for (i of [1,2,3,4,5]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -27,13 +27,13 @@
 @if (!loading && tasks.length === 0) {
   <div class="empty-state" data-testid="tasks-empty-state">
     <div class="empty-state-icon">📋</div>
-    <p class="empty-state-title">Aucune tâche.</p>
+    <p class="empty-state-title">{{ 'tasks.emptyTitle' | translate }}</p>
     <p class="empty-state-desc">
-      Créez votre première tâche pour suivre vos rendez-vous, relances et actions commerciales.
+      {{ 'tasks.emptyDesc' | translate }}
     </p>
     <div class="empty-state-actions">
       <button class="btn btn-primary" data-testid="empty-new-task-btn" (click)="openCreate()">
-        + Nouvelle tâche
+        {{ 'tasks.newTask' | translate }}
       </button>
     </div>
   </div>
@@ -43,10 +43,10 @@
   <table data-testid="tasks-table">
     <thead>
       <tr>
-        <th>Titre</th>
-        <th>Statut</th>
-        <th>Échéance</th>
-        <th>Actions</th>
+        <th>{{ 'tasks.thTitre' | translate }}</th>
+        <th>{{ 'tasks.thStatut' | translate }}</th>
+        <th>{{ 'tasks.thEcheance' | translate }}</th>
+        <th>{{ 'tasks.thActions' | translate }}</th>
       </tr>
     </thead>
     <tbody>
@@ -59,13 +59,13 @@
           <td>{{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
           <td class="actions">
             @if (task.status === 'OPEN') {
-              <button (click)="changeStatus(task, 'IN_PROGRESS')" class="btn-small">Démarrer</button>
+              <button (click)="changeStatus(task, 'IN_PROGRESS')" class="btn-small">{{ 'tasks.start' | translate }}</button>
             }
             @if (task.status === 'IN_PROGRESS') {
-              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">Terminée</button>
+              <button (click)="changeStatus(task, 'DONE')" class="btn-small btn-green">{{ 'tasks.done' | translate }}</button>
             }
-            <button (click)="openEdit(task)" class="btn-small">Modifier</button>
-            <button (click)="deleteTask(task)" class="btn-small btn-danger">Supprimer</button>
+            <button (click)="openEdit(task)" class="btn-small">{{ 'tasks.edit' | translate }}</button>
+            <button (click)="deleteTask(task)" class="btn-small btn-danger">{{ 'tasks.delete' | translate }}</button>
           </td>
         </tr>
       }
@@ -73,9 +73,9 @@
   </table>
 
   <div class="pagination">
-    <button (click)="prevPage()" [disabled]="page === 0">‹ Précédent</button>
-    <span>Page {{ page + 1 }} / {{ totalPages }} ({{ totalElements }} tâches)</span>
-    <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">Suivant ›</button>
+    <button (click)="prevPage()" [disabled]="page === 0">{{ 'tasks.prev' | translate }}</button>
+    <span>{{ 'tasks.pageInfo' | translate:{ page: page + 1, total: totalPages, count: totalElements } }}</span>
+    <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">{{ 'tasks.next' | translate }}</button>
   </div>
 }
 

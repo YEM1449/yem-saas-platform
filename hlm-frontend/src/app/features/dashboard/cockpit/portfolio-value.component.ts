@@ -1,11 +1,12 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { SalesIntelligence } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-portfolio-value',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pv-row">
@@ -20,8 +21,8 @@ import { SalesIntelligence } from '../dashboard-cockpit.service';
         </div>
         <div class="pv-body">
           <div class="pv-val">{{ fmt(si?.totalPortfolioValue) }}</div>
-          <div class="pv-label">Valeur totale portefeuille</div>
-          <div class="pv-hint">Catalogue complet (hors brouillons)</div>
+          <div class="pv-label">{{ 'dashboard.cockpit.portfolioValue.totalValue' | translate }}</div>
+          <div class="pv-hint">{{ 'dashboard.cockpit.portfolioValue.totalValueHint' | translate }}</div>
         </div>
       </div>
 
@@ -34,7 +35,7 @@ import { SalesIntelligence } from '../dashboard-cockpit.service';
         </div>
         <div class="pv-body">
           <div class="pv-val pv-val-amber">{{ fmt(si?.unsoldInventoryValue) }}</div>
-          <div class="pv-label">Stock invendu (actif + réservé)</div>
+          <div class="pv-label">{{ 'dashboard.cockpit.portfolioValue.unsoldStock' | translate }}</div>
           <div class="pv-hint">
             {{ si?.activeUnitsCount ?? 0 }} disponibles ·
             {{ si?.reservedUnitsCount ?? 0 }} réservés
@@ -52,8 +53,8 @@ import { SalesIntelligence } from '../dashboard-cockpit.service';
         </div>
         <div class="pv-body">
           <div class="pv-val pv-val-blue">{{ fmt(si?.avgListPriceActive) }}</div>
-          <div class="pv-label">Prix catalogue moyen</div>
-          <div class="pv-hint">Biens disponibles à la vente</div>
+          <div class="pv-label">{{ 'dashboard.cockpit.portfolioValue.avgListPrice' | translate }}</div>
+          <div class="pv-hint">{{ 'dashboard.cockpit.portfolioValue.avgListPriceHint' | translate }}</div>
         </div>
       </div>
 
@@ -68,8 +69,8 @@ import { SalesIntelligence } from '../dashboard-cockpit.service';
           </div>
           <div class="pv-body">
             <div class="pv-val pv-val-purple">{{ fmtSqm(si!.globalAvgPricePerSqm) }}</div>
-            <div class="pv-label">Prix moyen au m²</div>
-            <div class="pv-hint">Catalogue actif</div>
+            <div class="pv-label">{{ 'dashboard.cockpit.portfolioValue.avgPricePerSqm' | translate }}</div>
+            <div class="pv-hint">{{ 'dashboard.cockpit.portfolioValue.avgPricePerSqmHint' | translate }}</div>
           </div>
         </div>
       }

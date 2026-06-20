@@ -2,6 +2,8 @@ import {
   Component, Input, Output, EventEmitter,
   signal, inject, ChangeDetectionStrategy,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import { Viewer3dApiService } from '../../services/viewer-3d-api.service';
 import { Project3dModel } from '../../models/project-3d-model.model';
@@ -12,12 +14,13 @@ type UploadStep = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 
 @Component({
   selector: 'app-model-upload-admin',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   templateUrl: './model-upload-admin.component.html',
   styleUrl: './model-upload-admin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelUploadAdminComponent {
+  private i18n = inject(I18nService);
   @Input({ required: true }) projetId!: string;
   /** Emitted after a successful upload+confirm cycle. */
   @Output() uploaded = new EventEmitter<Project3dModel>();
@@ -35,12 +38,12 @@ export class ModelUploadAdminComponent {
     if (!file) return;
 
     if (!file.name.endsWith('.glb')) {
-      this.errorMsg.set('Seuls les fichiers .glb sont acceptés.');
+      this.errorMsg.set(this.i18n.instant('viewer3d.upload.errGlbOnly'));
       this.step.set('error');
       return;
     }
     if (file.size > 52_428_800) {
-      this.errorMsg.set('Taille maximale : 50 MB.');
+      this.errorMsg.set(this.i18n.instant('viewer3d.upload.errMaxSize'));
       this.step.set('error');
       return;
     }
@@ -100,7 +103,7 @@ export class ModelUploadAdminComponent {
       xhr.onload  = () => (xhr.status >= 200 && xhr.status < 300)
         ? resolve()
         : reject(new Error(`Upload R2 échoué : ${xhr.status}`));
-      xhr.onerror = () => reject(new Error('Erreur réseau pendant l\'upload.'));
+      xhr.onerror = () => reject(new Error(this.i18n.instant('viewer3d.upload.errNetwork')));
       xhr.send(file);
     });
   }

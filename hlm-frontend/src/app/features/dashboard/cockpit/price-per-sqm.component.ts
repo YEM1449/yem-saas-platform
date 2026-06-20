@@ -1,11 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, inject} from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 import { PricePerSqmRow, PricePerSqmProjectRow } from '../dashboard-cockpit.service';
-
-const TYPE_LABELS: Record<string, string> = {
-  APPARTEMENT: 'Appartement', VILLA: 'Villa', STUDIO: 'Studio',
-  DUPLEX: 'Duplex', T2: 'T2', T3: 'T3', PARKING: 'Parking',
-};
 
 const TYPE_COLORS = [
   '#16a34a','#7c3aed','#059669','#d97706','#0891b2','#65a30d','#94a3b8'];
@@ -13,26 +10,26 @@ const TYPE_COLORS = [
 @Component({
   selector: 'app-price-per-sqm',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Prix au m²</span>
-        <span class="widget-sub">Stock catalogue</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.pricePerSqm.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.pricePerSqm.sub' | translate }}</span>
       </div>
 
       @if (byType.length === 0) {
-        <div class="empty-state">Données surface non disponibles.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.pricePerSqm.empty' | translate }}</div>
       } @else {
         <div class="global-row">
           @if (globalAvg) {
-            <div class="global-val">{{ fmtSqm(globalAvg) }}<span class="global-unit">/m² moyen</span></div>
+            <div class="global-val">{{ fmtSqm(globalAvg) }}<span class="global-unit">{{ 'dashboard.cockpit.pricePerSqm.globalUnit' | translate }}</span></div>
           }
         </div>
 
         <!-- By type bars -->
-        <div class="section-label">Par type de bien</div>
+        <div class="section-label">{{ 'dashboard.cockpit.pricePerSqm.byType' | translate }}</div>
         <div class="sqm-list">
           @for (r of byType; track r.propertyType; let i = $index) {
             <div class="sqm-row">
@@ -49,7 +46,7 @@ const TYPE_COLORS = [
         </div>
 
         @if (byProject.length > 0) {
-          <div class="section-label" style="margin-top:16px">Par projet (ventes)</div>
+          <div class="section-label" style="margin-top:16px">{{ 'dashboard.cockpit.pricePerSqm.byProject' | translate }}</div>
           <div class="proj-list">
             @for (r of byProject; track r.projectId; let i = $index) {
               <div class="sqm-row">
@@ -60,7 +57,7 @@ const TYPE_COLORS = [
                        [style.background]="TYPE_COLORS[(i + 3) % TYPE_COLORS.length]"></div>
                 </div>
                 <span class="sqm-val">{{ fmtSqm(r.avgPricePerSqm) }}</span>
-                <span class="sqm-count">{{ r.sampleSize }} ventes</span>
+                <span class="sqm-count">{{ 'dashboard.cockpit.pricePerSqm.ventesCount' | translate:{ count: r.sampleSize } }}</span>
               </div>
             }
           </div>
@@ -89,13 +86,14 @@ const TYPE_COLORS = [
   `],
 })
 export class PricePerSqmComponent {
+  private i18n = inject(I18nService);
   @Input() byType: PricePerSqmRow[] = [];
   @Input() byProject: PricePerSqmProjectRow[] = [];
   @Input() globalAvg: number | null = null;
 
   readonly TYPE_COLORS = TYPE_COLORS;
 
-  typeLabel(t: string): string { return TYPE_LABELS[t] ?? t; }
+  typeLabel(t: string): string { return this.i18n.instant('dashboard.home.type.' + t); }
 
   get maxTypeSqm(): number {
     return Math.max(...this.byType.map(r => r.avgPricePerSqm ?? 0), 1);

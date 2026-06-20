@@ -1,0 +1,30 @@
+.form-wrap { max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; }
+.form-head { margin-bottom: 1rem; }
+.back { color: var(--text-secondary); text-decoration: none; font-size: .85rem; }
+.back:hover { color: var(--text); }
+.form-head h1 { margin: .35rem 0 0; font-size: 1.3rem; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.field { display: flex; flex-direction: column; gap: .35rem; }
+.field > label { font-size: .82rem; font-weight: 600; color: var(--text-secondary); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+input, select { border: 1px solid var(--border); border-radius: 8px; padding: .5rem .65rem; background: var(--bg); color: var(--text); font-size: .9rem; }
+input:focus, select:focus { outline: none; border-color: var(--primary); }
+select:disabled { opacity: .5; }
+.readonly { padding: .5rem .65rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-hover); color: var(--text); font-size: .9rem; }
+.hint { font-size: .74rem; color: var(--text-muted); }
+
+.override { display: flex; align-items: center; gap: .5rem; font-size: .85rem; flex-wrap: wrap; }
+.override input { width: auto; }
+
+.alert { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: .6rem .8rem; border-radius: 8px; font-size: .85rem; }
+.alert.conflict { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+
+.actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .25rem; }
+.btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: .55rem 1rem; border-radius: 8px; cursor: pointer; font-size: .875rem; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-600); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }

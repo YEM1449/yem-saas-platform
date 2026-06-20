@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -12,11 +14,12 @@ type Tab = 'info' | 'payments' | 'documents';
 @Component({
   selector: 'app-contract-detail',
   standalone: true,
-  imports: [PaymentScheduleComponent, DocumentListComponent, DatePipe, DecimalPipe],
+  imports: [PaymentScheduleComponent, DocumentListComponent, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './contract-detail.component.html',
   styleUrl: './contract-detail.component.css',
 })
 export class ContractDetailComponent implements OnInit {
+  private i18n = inject(I18nService);
   private route       = inject(ActivatedRoute);
   private contractSvc = inject(ContractService);
 
@@ -30,7 +33,7 @@ export class ContractDetailComponent implements OnInit {
     this.contractSvc.getById(id).subscribe({
       next: c => { this.contract = c; this.loading = false; },
       error: (e: HttpErrorResponse) => {
-        this.error = e.error?.message ?? 'Contract not found';
+        this.error = e.error?.message ?? this.i18n.instant('contracts.detail.notFound');
         this.loading = false;
       },
     });

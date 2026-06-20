@@ -2,9 +2,11 @@ package com.yem.hlm.backend.vente.repo;
 
 import com.yem.hlm.backend.vente.domain.Vente;
 import com.yem.hlm.backend.vente.domain.VenteStatut;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,6 +17,18 @@ import java.util.UUID;
 public interface VenteRepository extends JpaRepository<Vente, UUID> {
 
     Optional<Vente> findBySocieteIdAndId(UUID societeId, UUID id);
+
+    /**
+     * Find a vente with a pessimistic write lock (SELECT ... FOR UPDATE).
+     *
+     * <p>Used to serialize writes to a vente's financial children (échéances / appels de fonds):
+     * concurrent {@code addEcheance}/{@code generateEcheancierLegal} calls block on this row, which
+     * makes the "cumulative échéances ≤ prix" check (Art. 618-17 Loi 44-00) and the legal-échéancier
+     * idempotency guard atomic — closing the check-then-insert race (DA-003).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT v FROM Vente v WHERE v.societeId = :societeId AND v.id = :id")
+    Optional<Vente> findBySocieteIdAndIdForUpdate(@Param("societeId") UUID societeId, @Param("id") UUID id);
 
     Optional<Vente> findBySocieteIdAndReservationId(UUID societeId, UUID reservationId);
 

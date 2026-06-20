@@ -10,8 +10,9 @@
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
       </div>
-      <h1 class="portal-login-title" data-testid="portal-login-title">Espace Client</h1>
-      <p class="portal-login-subtitle">Accédez à votre dossier d'acquisition en toute sécurité</p>
+      <h1 class="portal-login-title" data-testid="portal-login-title">{{ 'portal.brandDefault' | translate }}</h1>
+      <p class="portal-login-subtitle">{{ 'portal.login.subtitle' | translate }}</p>
+      <div style="display:flex;justify-content:center;margin-top:12px"><app-language-switcher /></div>
     </div>
 
     <!-- Steps -->
@@ -20,31 +21,31 @@
       @if (step() === 'request') {
         <form (ngSubmit)="requestLink()" #loginForm="ngForm" data-testid="portal-request-form">
           <div class="portal-form-group">
-            <label for="societeKey">Organisation</label>
+            <label for="societeKey">{{ 'portal.login.organisation' | translate }}</label>
             <input id="societeKey" type="text" [(ngModel)]="societeKey" name="societeKey"
-                   placeholder="ex : acme"
+                   [placeholder]="'portal.login.orgPlaceholder' | translate"
                    required autocomplete="organization" />
           </div>
           <div class="portal-form-group">
-            <label for="email">Adresse e-mail</label>
+            <label for="email">{{ 'portal.login.email' | translate }}</label>
             <input id="email" type="email" [(ngModel)]="email" name="email"
-                   placeholder="vous@example.com"
+                   [placeholder]="'portal.login.emailPlaceholder' | translate"
                    required autocomplete="email" />
           </div>
           <button type="submit" class="portal-btn-primary" [disabled]="loading()">
             @if (loading()) {
               <span class="portal-btn-spinner" aria-hidden="true"></span>
-              Envoi en cours…
+              {{ 'portal.login.sending' | translate }}
             } @else {
-              Recevoir mon lien d'accès
+              {{ 'portal.login.requestLink' | translate }}
             }
           </button>
           <p class="portal-login-hint">
-            Aucun mot de passe requis — nous vous enverrons un lien sécurisé à usage unique.
+            {{ 'portal.login.hint' | translate }}
           </p>
           <p class="portal-login-consent">
-            En demandant un lien d'accès, vous consentez au traitement de vos données personnelles dans le cadre de votre dossier d'acquisition (Loi 09-08). Voir notre
-            <a routerLink="/portal/privacy">politique de confidentialité</a>.
+            {{ 'portal.login.consent' | translate }}
+            <a routerLink="/portal/privacy">{{ 'portal.footer.privacy' | translate }}</a>.
           </p>
         </form>
       }
@@ -57,19 +58,19 @@
             <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
           <div>
-            <strong>Vérifiez votre boîte e-mail !</strong>
-            <p>Un lien sécurisé a été envoyé à {{ email }}. Il est valable 48 heures.</p>
+            <strong>{{ 'portal.login.checkInbox' | translate }}</strong>
+            <p>{{ 'portal.login.sentTo' | translate:{ email: email } }}</p>
           </div>
         </div>
         <button class="portal-btn-secondary" (click)="step.set('request')">
-          Renvoyer un lien
+          {{ 'portal.login.resend' | translate }}
         </button>
       }
 
       @if (step() === 'verifying') {
         <div class="portal-verify-inline" data-testid="portal-verifying-message">
           <span class="portal-btn-spinner portal-btn-spinner--large" aria-hidden="true"></span>
-          <p>Vérification de votre lien d'accès…</p>
+          <p>{{ 'portal.login.verifying' | translate }}</p>
         </div>
       }
 
@@ -84,16 +85,16 @@
           <div>{{ error() }}</div>
         </div>
         <button class="portal-btn-secondary" (click)="step.set('request')">
-          Réessayer
+          {{ 'portal.login.retry' | translate }}
         </button>
       }
 
     </div>
 
-    <nav class="portal-login-legal" aria-label="Politique de confidentialité">
-      <a routerLink="/portal/privacy">Politique de confidentialité</a>
+    <nav class="portal-login-legal" [attr.aria-label]="'portal.footer.privacy' | translate">
+      <a routerLink="/portal/privacy">{{ 'portal.footer.privacy' | translate }}</a>
       <span aria-hidden="true">·</span>
-      <a routerLink="/portal/mentions-legales">Mentions légales</a>
+      <a routerLink="/portal/mentions-legales">{{ 'portal.footer.legal' | translate }}</a>
     </nav>
   </div>
 </div>

@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,11 +13,12 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-reservations',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, DocumentListComponent],
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, DocumentListComponent, TranslatePipe],
   templateUrl: './reservations.component.html',
   styleUrl: './reservations.component.css',
 })
 export class ReservationsComponent implements OnInit {
+  private i18n = inject(I18nService);
   private svc    = inject(ReservationService);
   private auth   = inject(AuthService);
   private router = inject(Router);
@@ -60,7 +63,7 @@ export class ReservationsComponent implements OnInit {
         this.resolveNames(data);
       },
       error: err => {
-        this.error = err?.error?.message ?? 'Failed to load reservations.';
+        this.error = err?.error?.message ?? this.i18n.instant('reservations.loadError');
         this.loading = false;
       },
     });
@@ -114,12 +117,12 @@ export class ReservationsComponent implements OnInit {
   }
 
   cancel(r: Reservation): void {
-    if (!confirm(`Annuler la réservation pour ${this.propertyName(r.propertyId)} ?`)) return;
+    if (!confirm(this.i18n.instant('reservations.cancelConfirm', { property: this.propertyName(r.propertyId) }))) return;
     this.actionSuccess = '';
     this.actionError = '';
     this.svc.cancel(r.id).subscribe({
-      next: () => { this.actionSuccess = 'Réservation annulée.'; this.load(); },
-      error: err => { this.actionError = err?.error?.message ?? 'Annulation échouée.'; },
+      next: () => { this.actionSuccess = this.i18n.instant('reservations.cancelled'); this.load(); },
+      error: err => { this.actionError = err?.error?.message ?? this.i18n.instant('reservations.cancelFailed'); },
     });
   }
 

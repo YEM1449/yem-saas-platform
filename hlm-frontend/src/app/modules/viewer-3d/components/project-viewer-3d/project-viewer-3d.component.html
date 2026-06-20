@@ -1,12 +1,12 @@
-<div class="viewer-host" (keydown)="onKeyDown($event)" tabindex="0" aria-label="Visualiseur 3D du projet — utilisez Tab pour naviguer entre les lots">
+<div class="viewer-host" (keydown)="onKeyDown($event)" tabindex="0" [attr.aria-label]="'viewer3d.viewer.hostAria' | translate">
 
   <!-- ── Loading state ────────────────────────────────────────────────────── -->
   @if (state() === 'loading') {
     <div class="viewer-overlay">
       <div class="skeleton-scene"></div>
       <div class="load-status">
-        <div class="spinner" role="status" aria-label="Chargement du modèle 3D…"></div>
-        <p class="load-label">Chargement du modèle 3D…</p>
+        <div class="spinner" role="status" [attr.aria-label]="'viewer3d.viewer.loadingAria' | translate"></div>
+        <p class="load-label">{{ 'viewer3d.viewer.loadLabel' | translate }}</p>
         @if (loadProgress() > 0) {
           <div class="progress-bar-track" role="progressbar" [attr.aria-valuenow]="loadProgress()" aria-valuemin="0" aria-valuemax="100">
             <div class="progress-bar-fill" [style.width.%]="loadProgress()"></div>
@@ -36,8 +36,8 @@
       } @else {
         <div class="no-model-info" role="status">
           <div class="no-model-icon" aria-hidden="true">🏗️</div>
-          <p class="no-model-title">Aucun modèle 3D configuré</p>
-          <p class="no-model-hint">La maquette 3D de ce projet n'est pas encore disponible. Contactez un administrateur pour la téléverser.</p>
+          <p class="no-model-title">{{ 'viewer3d.viewer.noModelTitle' | translate }}</p>
+          <p class="no-model-hint">{{ 'viewer3d.viewer.noModelHint' | translate }}</p>
         </div>
       }
     </div>
@@ -45,7 +45,7 @@
 
   <!-- ── 3D Canvas ─────────────────────────────────────────────────────────── -->
   <canvas #canvas class="three-canvas" [class.hidden]="state() !== 'loaded'"
-          aria-label="Vue 3D interactive — cliquez sur un lot pour plus de détails"></canvas>
+          [attr.aria-label]="'viewer3d.viewer.canvasAria' | translate"></canvas>
 
   <!-- ── Tooltip overlay (hover on desktop · pinned on touch) ─────────────── -->
   @if ((pinnedMapping() && pinnedStatus()) || (hoveredMapping() && hoveredStatus())) {
@@ -61,11 +61,11 @@
 
   <!-- ── Colour legend ─────────────────────────────────────────────────────── -->
   @if (state() === 'loaded') {
-    <div class="legend" [class.hidden]="!legendVisible()" role="region" aria-label="Légende des statuts">
+    <div class="legend" [class.hidden]="!legendVisible()" role="region" [attr.aria-label]="'viewer3d.viewer.legendAria' | translate">
       @for (item of legendItems; track item.status) {
         <div class="legend-item">
           <span class="legend-dot" [style.background]="item.color" aria-hidden="true"></span>
-          <span class="legend-label">{{ item.label }}</span>
+          <span class="legend-label">{{ 'viewer3d.status.' + item.status | translate }}</span>
         </div>
       }
       <button class="legend-toggle" (click)="toggleLegend()" [attr.aria-label]="legendVisible() ? 'Masquer la légende' : 'Afficher la légende'">
@@ -74,13 +74,13 @@
     </div>
 
     @if (!legendVisible()) {
-      <button class="legend-peek" (click)="toggleLegend()" aria-label="Afficher la légende des statuts">?</button>
+      <button class="legend-peek" (click)="toggleLegend()" [attr.aria-label]="'viewer3d.viewer.showLegend' | translate">?</button>
     }
 
     <!-- ── Floor filter (P4-T5) ──────────────────────────────────────────── -->
     @if (etages().length > 1) {
-      <div class="etage-filter" role="group" aria-label="Filtre par étage" data-testid="etage-filter">
-        <button [class.active]="etageActif() === null" (click)="filterEtage(null)">Tous</button>
+      <div class="etage-filter" role="group" [attr.aria-label]="'viewer3d.viewer.etageFilterAria' | translate" data-testid="etage-filter">
+        <button [class.active]="etageActif() === null" (click)="filterEtage(null)">{{ 'viewer3d.viewer.tous' | translate }}</button>
         @for (e of etages(); track e) {
           <button [class.active]="etageActif() === e" (click)="filterEtage(e)">{{ etageLabel(e) }}</button>
         }

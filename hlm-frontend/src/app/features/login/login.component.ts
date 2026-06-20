@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { LoginRequest, SocieteChoice } from '../../core/models/login.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
@@ -11,7 +12,7 @@ import { LanguageSwitcherComponent } from '../../core/components/language-switch
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, LanguageSwitcherComponent],
+  imports: [FormsModule, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

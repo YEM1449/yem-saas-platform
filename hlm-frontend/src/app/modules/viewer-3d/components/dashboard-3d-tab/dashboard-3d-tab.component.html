@@ -3,9 +3,9 @@
   <!-- ── Toolbar ────────────────────────────────────────────────────────── -->
   <div class="d3-toolbar">
     <div class="filter-group">
-      <label for="filter-statut" class="filter-label">Statut</label>
+      <label for="filter-statut" class="filter-label">{{ 'viewer3d.dashboard.statut' | translate }}</label>
       <select id="filter-statut" class="filter-select" [(ngModel)]="filteredStatut">
-        <option value="">Tous</option>
+        <option value="">{{ 'viewer3d.dashboard.tous' | translate }}</option>
         @for (opt of statusOptions; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
         }
@@ -16,7 +16,7 @@
       <button class="btn-ghost" (click)="toggleKpi()" [attr.aria-expanded]="kpiVisible()">
         {{ kpiVisible() ? 'Masquer KPIs' : 'Afficher KPIs' }}
       </button>
-      <button class="btn-export" (click)="exportPdf()" [disabled]="exporting()" aria-label="Exporter vue PDF">
+      <button class="btn-export" (click)="exportPdf()" [disabled]="exporting()" [attr.aria-label]="'viewer3d.dashboard.exportAria' | translate">
         @if (exporting()) { <span class="btn-spinner"></span> }
         Exporter PDF
       </button>
@@ -32,10 +32,10 @@
 
     <!-- KPI overlay panel (floating, dismissible) -->
     @if (kpiVisible() && kpis().length) {
-      <div class="kpi-overlay" role="complementary" aria-label="Indicateurs clés du projet">
+      <div class="kpi-overlay" role="complementary" [attr.aria-label]="'viewer3d.dashboard.kpiAria' | translate">
         <div class="kpi-header">
-          <span class="kpi-title">KPIs Projet</span>
-          <button class="kpi-close" (click)="toggleKpi()" aria-label="Fermer le panneau KPI">×</button>
+          <span class="kpi-title">{{ 'viewer3d.dashboard.kpiTitle' | translate }}</span>
+          <button class="kpi-close" (click)="toggleKpi()" [attr.aria-label]="'viewer3d.dashboard.closeKpiAria' | translate">×</button>
         </div>
         <div class="kpi-grid">
           @for (kpi of kpis(); track kpi.label) {

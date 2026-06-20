@@ -6,6 +6,11 @@ import { PortalTenantInfo } from '../../../core/models/portal.model';
 /**
  * Mentions légales — portail acquéreur (finding #025). Page publique.
  * Éléments propres à l'exploitant à compléter (« [à compléter] »).
+ *
+ * i18n (EX-014): the legal body is intentionally kept FR-only. Moroccan legal notices
+ * (Loi 09-08 / 44-00, CNDP) must not be machine/dev-translated — EN/AR versions require
+ * counsel-authored, reviewed text. When those exist, add per-language legal documents
+ * (e.g. served per active language) rather than per-paragraph translation keys.
  */
 @Component({
   selector: 'app-portal-legal',

@@ -1,10 +1,10 @@
 <div class="detail-page">
   <div class="back-link">
-    <button class="btn-back" (click)="goBack()">&#8592; Retour</button>
+    <button class="btn-back" (click)="goBack()">{{ 'superadmin.detail.back' | translate }}</button>
   </div>
 
   @if (loading) {
-    <div class="skeleton-stack" data-testid="societe-detail-loading-state" aria-label="Chargement de la société…">
+    <div class="skeleton-stack" data-testid="societe-detail-loading-state" [attr.aria-label]="'superadmin.detail.loadingAria' | translate">
       <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
       <span class="skeleton skeleton-card" style="height:160px"></span>
       <div class="skeleton-grid">
@@ -33,22 +33,22 @@
         }
         <div class="header-badges">
           @if (detail.actif) {
-            <span class="badge badge-active">Actif</span>
+            <span class="badge badge-active">{{ 'superadmin.detail.actif' | translate }}</span>
           } @else {
-            <span class="badge badge-inactive">Inactif</span>
+            <span class="badge badge-inactive">{{ 'superadmin.detail.inactif' | translate }}</span>
           }
           <span class="badge badge-plan" [class]="planClass(detail.planAbonnement)">{{ detail.planAbonnement }}</span>
           @if (detail.periodeEssai) {
-            <span class="badge badge-trial">Essai</span>
+            <span class="badge badge-trial">{{ 'superadmin.detail.essai' | translate }}</span>
           }
         </div>
       </div>
       <div class="detail-header-actions">
-        <button class="btn btn-secondary" (click)="goEdit()">Modifier</button>
+        <button class="btn btn-secondary" (click)="goEdit()">{{ 'superadmin.detail.modifier' | translate }}</button>
         @if (detail.actif) {
-          <button class="btn btn-danger" (click)="openSuspend()">Suspendre</button>
+          <button class="btn btn-danger" (click)="openSuspend()">{{ 'superadmin.detail.suspendre' | translate }}</button>
         } @else {
-          <button class="btn btn-secondary" (click)="reactiver()">Réactiver</button>
+          <button class="btn btn-secondary" (click)="reactiver()">{{ 'superadmin.detail.reactiver' | translate }}</button>
         }
       </div>
     </div>
@@ -57,26 +57,26 @@
     <div class="logo-section">
       @if (detail.logoDownloadUrl) {
         @if (logoSrc) {
-          <img [src]="logoSrc" alt="Logo société" class="societe-logo" />
+          <img [src]="logoSrc" [alt]="'superadmin.detail.logoAlt' | translate" class="societe-logo" />
         } @else {
-          <span class="muted-text">Chargement...</span>
+          <span class="muted-text">{{ 'superadmin.detail.loading' | translate }}</span>
         }
-        <button class="btn-danger btn-sm" (click)="deleteLogo()">Supprimer le logo</button>
+        <button class="btn-danger btn-sm" (click)="deleteLogo()">{{ 'superadmin.detail.deleteLogo' | translate }}</button>
       } @else {
-        <span class="muted-text">Aucun logo</span>
+        <span class="muted-text">{{ 'superadmin.detail.noLogo' | translate }}</span>
       }
       <label class="btn-upload btn-sm">
-        @if (logoUploading) { Envoi... } @else { Téléverser un logo }
+        @if (logoUploading) { {{ 'superadmin.detail.uploading' | translate }} } @else { {{ 'superadmin.detail.uploadLogo' | translate }} }
         <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onLogoFileSelected($event)" style="display:none" data-testid="societe-logo-upload" />
       </label>
     </div>
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">Informations</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'stats'" (click)="setTab('stats')">Statut</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'compliance'" (click)="setTab('compliance')">RGPD</button>
-      <button class="tab-btn" [class.tab-active]="activeTab === 'membres'" (click)="setTab('membres')">Membres</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'info'" (click)="setTab('info')">{{ 'superadmin.detail.tabInfo' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'stats'" (click)="setTab('stats')">{{ 'superadmin.detail.tabStats' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'compliance'" (click)="setTab('compliance')">{{ 'superadmin.detail.tabCompliance' | translate }}</button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'membres'" (click)="setTab('membres')">{{ 'superadmin.detail.tabMembres' | translate }}</button>
     </div>
 
     <!-- Tab: Informations -->
@@ -84,64 +84,64 @@
       <div class="tab-content">
         <div class="info-grid">
           <div class="info-section">
-            <h4 class="info-section-title">Identité</h4>
+            <h4 class="info-section-title">{{ 'superadmin.detail.identite' | translate }}</h4>
             <dl class="info-dl">
-              <dt>Clé</dt><dd>{{ detail.key ?? '—' }}</dd>
-              <dt>Pays</dt><dd>{{ detail.pays }}</dd>
-              <dt>Forme juridique</dt><dd>{{ detail.formeJuridique ?? '—' }}</dd>
-              <dt>Capital social</dt><dd>{{ detail.capitalSocial !== null && detail.capitalSocial !== undefined ? (detail.capitalSocial | number) : '—' }}</dd>
-              <dt>SIRET / ICE</dt><dd>{{ detail.siretIce ?? '—' }}</dd>
-              <dt>RC</dt><dd>{{ detail.rc ?? '—' }}</dd>
-              <dt>Numéro agréement</dt><dd>{{ detail.numeroAgrement ?? '—' }}</dd>
-              <dt>Type d'activité</dt><dd>{{ detail.typeActivite ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.cle' | translate }}</dt><dd>{{ detail.key ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.pays' | translate }}</dt><dd>{{ detail.pays }}</dd>
+              <dt>{{ 'superadmin.detail.formeJuridique' | translate }}</dt><dd>{{ detail.formeJuridique ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.capitalSocial' | translate }}</dt><dd>{{ detail.capitalSocial !== null && detail.capitalSocial !== undefined ? (detail.capitalSocial | number) : '—' }}</dd>
+              <dt>{{ 'superadmin.detail.siretIce' | translate }}</dt><dd>{{ detail.siretIce ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.rc' | translate }}</dt><dd>{{ detail.rc ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.numeroAgrement' | translate }}</dt><dd>{{ detail.numeroAgrement ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.typeActivite' | translate }}</dt><dd>{{ detail.typeActivite ?? '—' }}</dd>
             </dl>
           </div>
           <div class="info-section">
-            <h4 class="info-section-title">Contact</h4>
+            <h4 class="info-section-title">{{ 'superadmin.detail.contact' | translate }}</h4>
             <dl class="info-dl">
-              <dt>Email contact</dt><dd>{{ detail.emailContact ?? '—' }}</dd>
-              <dt>Téléphone</dt><dd>{{ detail.telephone ?? '—' }}</dd>
-              <dt>Site web</dt><dd>{{ detail.siteWeb ?? '—' }}</dd>
-              <dt>Ville</dt><dd>{{ detail.ville ?? '—' }}</dd>
-              <dt>Adresse</dt><dd>{{ detail.adresse ?? '—' }}</dd>
-              <dt>Code postal</dt><dd>{{ detail.codePostal ?? '—' }}</dd>
-              <dt>Région</dt><dd>{{ detail.region ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.emailContact' | translate }}</dt><dd>{{ detail.emailContact ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.telephone' | translate }}</dt><dd>{{ detail.telephone ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.siteWeb' | translate }}</dt><dd>{{ detail.siteWeb ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.ville' | translate }}</dt><dd>{{ detail.ville ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.adresse' | translate }}</dt><dd>{{ detail.adresse ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.codePostal' | translate }}</dt><dd>{{ detail.codePostal ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.region' | translate }}</dt><dd>{{ detail.region ?? '—' }}</dd>
             </dl>
           </div>
           <div class="info-section">
-            <h4 class="info-section-title">RGPD</h4>
+            <h4 class="info-section-title">{{ 'superadmin.detail.gdpr' | translate }}</h4>
             <dl class="info-dl">
-              <dt>Email DPO</dt><dd>{{ detail.emailDpo ?? '—' }}</dd>
-              <dt>Nom DPO</dt><dd>{{ detail.dpoNom ?? '—' }}</dd>
-              <dt>Numéro CNDP</dt><dd>{{ detail.numeroCndp ?? '—' }}</dd>
-              <dt>Numéro CNIL</dt><dd>{{ detail.numeroCnil ?? '—' }}</dd>
-              <dt>Base juridique</dt><dd>{{ detail.baseJuridiqueDefaut ?? '—' }}</dd>
-              <dt>Durée rétention (j)</dt><dd>{{ detail.dureeRetentionJours ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.emailDpo' | translate }}</dt><dd>{{ detail.emailDpo ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.nomDpo' | translate }}</dt><dd>{{ detail.dpoNom ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.numeroCndp' | translate }}</dt><dd>{{ detail.numeroCndp ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.numeroCnil' | translate }}</dt><dd>{{ detail.numeroCnil ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.baseJuridique' | translate }}</dt><dd>{{ detail.baseJuridiqueDefaut ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.dureeRetention' | translate }}</dt><dd>{{ detail.dureeRetentionJours ?? '—' }}</dd>
             </dl>
           </div>
           <div class="info-section">
-            <h4 class="info-section-title">Abonnement</h4>
+            <h4 class="info-section-title">{{ 'superadmin.detail.abonnement' | translate }}</h4>
             <dl class="info-dl">
-              <dt>Plan</dt><dd>{{ detail.planAbonnement }}</dd>
-              <dt>Période d'essai</dt><dd>{{ detail.periodeEssai ? 'Oui' : 'Non' }}</dd>
-              <dt>Début abonnement</dt><dd>{{ detail.dateDebutAbonnement ?? '—' }}</dd>
-              <dt>Fin abonnement</dt><dd>{{ detail.dateFinAbonnement ?? '—' }}</dd>
-              <dt>Max utilisateurs</dt><dd>{{ detail.maxUtilisateurs ?? 'Illimité' }}</dd>
-              <dt>Max biens</dt><dd>{{ detail.maxBiens ?? 'Illimité' }}</dd>
-              <dt>Max contacts</dt><dd>{{ detail.maxContacts ?? 'Illimité' }}</dd>
-              <dt>Max projets</dt><dd>{{ detail.maxProjets ?? 'Illimité' }}</dd>
+              <dt>{{ 'superadmin.detail.plan' | translate }}</dt><dd>{{ detail.planAbonnement }}</dd>
+              <dt>{{ 'superadmin.detail.periodeEssai' | translate }}</dt><dd>{{ (detail.periodeEssai ? 'superadmin.detail.oui' : 'superadmin.detail.non') | translate }}</dd>
+              <dt>{{ 'superadmin.detail.debutAbo' | translate }}</dt><dd>{{ detail.dateDebutAbonnement ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.finAbo' | translate }}</dt><dd>{{ detail.dateFinAbonnement ?? '—' }}</dd>
+              <dt>{{ 'superadmin.detail.maxUtilisateurs' | translate }}</dt><dd>{{ detail.maxUtilisateurs ?? ('superadmin.detail.illimite' | translate) }}</dd>
+              <dt>{{ 'superadmin.detail.maxBiens' | translate }}</dt><dd>{{ detail.maxBiens ?? ('superadmin.detail.illimite' | translate) }}</dd>
+              <dt>{{ 'superadmin.detail.maxContacts' | translate }}</dt><dd>{{ detail.maxContacts ?? ('superadmin.detail.illimite' | translate) }}</dd>
+              <dt>{{ 'superadmin.detail.maxProjets' | translate }}</dt><dd>{{ detail.maxProjets ?? ('superadmin.detail.illimite' | translate) }}</dd>
             </dl>
           </div>
         </div>
         @if (detail.notesInternes) {
           <div class="notes-box">
-            <h4 class="info-section-title">Notes internes</h4>
+            <h4 class="info-section-title">{{ 'superadmin.detail.notesInternes' | translate }}</h4>
             <p class="notes-text">{{ detail.notesInternes }}</p>
           </div>
         }
         <div class="meta-info">
-          <span>Créé le {{ detail.createdAt | date:'dd/MM/yyyy' }}</span>
-          <span>Mis à jour le {{ detail.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span>{{ 'superadmin.detail.creeLe' | translate:{ date: (detail.createdAt | date:'dd/MM/yyyy') } }}</span>
+          <span>{{ 'superadmin.detail.misAJour' | translate:{ date: (detail.updatedAt | date:'dd/MM/yyyy HH:mm') } }}</span>
         </div>
       </div>
     }
@@ -150,7 +150,7 @@
     @if (activeTab === 'stats') {
       <div class="tab-content">
         @if (loadingStats) {
-          <div class="skeleton-grid" aria-label="Chargement des statistiques…">
+          <div class="skeleton-grid" [attr.aria-label]="'superadmin.detail.loadingStatsAria' | translate">
             <span class="skeleton skeleton-card"></span>
             <span class="skeleton skeleton-card"></span>
             <span class="skeleton skeleton-card"></span>
@@ -161,7 +161,7 @@
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-value">{{ stats.totalMembres }}</div>
-              <div class="stat-label">Membres total</div>
+              <div class="stat-label">{{ 'superadmin.detail.membresTotal' | translate }}</div>
               @if (stats.maxUtilisateurs) {
                 <div class="quota-bar-bg">
                   <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalMembres, stats.maxUtilisateurs)" [style.width.%]="quotaBarWidth(stats.totalMembres, stats.maxUtilisateurs)"></div>
@@ -171,11 +171,11 @@
             </div>
             <div class="stat-card">
               <div class="stat-value">{{ stats.membresActifs }}</div>
-              <div class="stat-label">Membres actifs</div>
+              <div class="stat-label">{{ 'superadmin.detail.membresActifs' | translate }}</div>
             </div>
             <div class="stat-card">
               <div class="stat-value">{{ stats.totalContacts }}</div>
-              <div class="stat-label">Contacts</div>
+              <div class="stat-label">{{ 'superadmin.detail.contacts' | translate }}</div>
               @if (stats.maxContacts) {
                 <div class="quota-bar-bg">
                   <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalContacts, stats.maxContacts)" [style.width.%]="quotaBarWidth(stats.totalContacts, stats.maxContacts)"></div>
@@ -185,7 +185,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-value">{{ stats.totalBiens }}</div>
-              <div class="stat-label">Biens</div>
+              <div class="stat-label">{{ 'superadmin.detail.biens' | translate }}</div>
               @if (stats.maxBiens) {
                 <div class="quota-bar-bg">
                   <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalBiens, stats.maxBiens)" [style.width.%]="quotaBarWidth(stats.totalBiens, stats.maxBiens)"></div>
@@ -195,7 +195,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-value">{{ stats.totalProjets }}</div>
-              <div class="stat-label">Projets</div>
+              <div class="stat-label">{{ 'superadmin.detail.projets' | translate }}</div>
               @if (stats.maxProjets) {
                 <div class="quota-bar-bg">
                   <div class="quota-bar-fill" [class]="quotaBarClass(stats.totalProjets, stats.maxProjets)" [style.width.%]="quotaBarWidth(stats.totalProjets, stats.maxProjets)"></div>
@@ -205,7 +205,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-value">{{ stats.totalContrats }}</div>
-              <div class="stat-label">Contrats</div>
+              <div class="stat-label">{{ 'superadmin.detail.contrats' | translate }}</div>
             </div>
           </div>
         }
@@ -216,7 +216,7 @@
     @if (activeTab === 'compliance') {
       <div class="tab-content">
         @if (loadingCompliance) {
-          <div class="skeleton-stack" aria-label="Chargement de la conformité…">
+          <div class="skeleton-stack" [attr.aria-label]="'superadmin.detail.loadingComplianceAria' | translate">
             <span class="skeleton skeleton-card" style="height:120px"></span>
             <span class="skeleton skeleton-row"></span>
             <span class="skeleton skeleton-row"></span>
@@ -228,7 +228,7 @@
             <div class="compliance-score-circle" [class]="complianceBarClass(compliance.score)">
               {{ compliance.score }}%
             </div>
-            <div class="compliance-score-label">Score de conformité RGPD</div>
+            <div class="compliance-score-label">{{ 'superadmin.detail.scoreLabel' | translate }}</div>
           </div>
           <div class="compliance-bar-lg">
             <div class="compliance-bar-lg-fill" [class]="complianceBarClass(compliance.score)" [style.width.%]="compliance.score"></div>
@@ -237,33 +237,33 @@
           <div class="compliance-checks">
             <div class="check-item" [class.check-ok]="compliance.hasNom" [class.check-fail]="!compliance.hasNom">
               <span class="check-icon">{{ compliance.hasNom ? '&#10003;' : '&#10007;' }}</span>
-              Raison sociale renseignée
+              {{ 'superadmin.detail.checkNom' | translate }}
             </div>
             <div class="check-item" [class.check-ok]="compliance.hasEmailDpo" [class.check-fail]="!compliance.hasEmailDpo">
               <span class="check-icon">{{ compliance.hasEmailDpo ? '&#10003;' : '&#10007;' }}</span>
-              Email DPO renseigné
+              {{ 'superadmin.detail.checkEmailDpo' | translate }}
             </div>
             <div class="check-item" [class.check-ok]="compliance.hasDpoNom" [class.check-fail]="!compliance.hasDpoNom">
               <span class="check-icon">{{ compliance.hasDpoNom ? '&#10003;' : '&#10007;' }}</span>
-              Nom DPO renseigné
+              {{ 'superadmin.detail.checkDpoNom' | translate }}
             </div>
             <div class="check-item" [class.check-ok]="compliance.hasAdresse" [class.check-fail]="!compliance.hasAdresse">
               <span class="check-icon">{{ compliance.hasAdresse ? '&#10003;' : '&#10007;' }}</span>
-              Adresse renseignée
+              {{ 'superadmin.detail.checkAdresse' | translate }}
             </div>
             <div class="check-item" [class.check-ok]="compliance.hasRegistreNumber" [class.check-fail]="!compliance.hasRegistreNumber">
               <span class="check-icon">{{ compliance.hasRegistreNumber ? '&#10003;' : '&#10007;' }}</span>
-              Numéro registre (CNDP/CNIL) renseigné
+              {{ 'superadmin.detail.checkRegistre' | translate }}
             </div>
             <div class="check-item" [class.check-ok]="compliance.hasBaseJuridique" [class.check-fail]="!compliance.hasBaseJuridique">
               <span class="check-icon">{{ compliance.hasBaseJuridique ? '&#10003;' : '&#10007;' }}</span>
-              Base juridique renseignée
+              {{ 'superadmin.detail.checkBaseJuridique' | translate }}
             </div>
           </div>
 
           @if (compliance.missingFields.length > 0) {
             <div class="missing-fields">
-              <h4>Champs manquants</h4>
+              <h4>{{ 'superadmin.detail.champsManquants' | translate }}</h4>
               <ul>
                 @for (f of compliance.missingFields; track f) {
                   <li>{{ f }}</li>
@@ -287,16 +287,16 @@
   @if (showSuspendDialog) {
     <div class="dialog-overlay">
       <div class="dialog">
-        <h3>Suspendre la société</h3>
-        <p>Cette action désactivera la société et tous ses accès.</p>
+        <h3>{{ 'superadmin.detail.suspendDialogTitle' | translate }}</h3>
+        <p>{{ 'superadmin.detail.suspendDialogText' | translate }}</p>
         <label class="dialog-label">
-          Raison de suspension
-          <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" placeholder="Motif..."></textarea>
+          {{ 'superadmin.detail.raisonSuspension' | translate }}
+          <textarea class="dialog-textarea" [(ngModel)]="suspendRaison" rows="3" [placeholder]="'superadmin.detail.motifPlaceholder' | translate"></textarea>
         </label>
         <div class="dialog-actions">
-          <button class="btn btn-secondary" (click)="cancelSuspend()">Annuler</button>
+          <button class="btn btn-secondary" (click)="cancelSuspend()">{{ 'superadmin.detail.cancel' | translate }}</button>
           <button class="btn btn-danger" [disabled]="suspending" (click)="confirmSuspend()">
-            @if (suspending) { Enregistrement... } @else { Suspendre }
+            @if (suspending) { {{ 'superadmin.detail.suspending' | translate }} } @else { {{ 'superadmin.detail.suspendre' | translate }} }
           </button>
         </div>
       </div>

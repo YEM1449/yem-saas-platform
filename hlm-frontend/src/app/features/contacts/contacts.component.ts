@@ -8,6 +8,8 @@ import { Contact } from '../../core/models/contact.model';
 import { ErrorResponse } from '../../core/models/error-response.model';
 import { AuthService } from '../../core/auth/auth.service';
 import { ContactImportDialogComponent } from './contact-import-dialog.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface CreateContactForm {
   firstName: string;
@@ -25,7 +27,6 @@ interface PrivacyNotice {
 
 interface PipelineColumn {
   key: string;
-  label: string;
   color: string;
 }
 
@@ -35,7 +36,7 @@ const PIPELINE_STATUSES = new Set([
 @Component({
   selector: 'app-contacts',
   standalone: true,
-  imports: [RouterLink, FormsModule, ContactImportDialogComponent, DatePipe, LowerCasePipe, TitleCasePipe],
+  imports: [RouterLink, FormsModule, ContactImportDialogComponent, DatePipe, LowerCasePipe, TitleCasePipe, TranslatePipe],
   templateUrl: './contacts.component.html',
   styleUrl: './contacts.component.css',
 })
@@ -44,6 +45,7 @@ export class ContactsComponent implements OnInit {
   private auth   = inject(AuthService);
   private http   = inject(HttpClient);
   private router = inject(Router);
+  private i18n   = inject(I18nService);
 
   contacts: Contact[] = [];
   loading = true;
@@ -75,13 +77,14 @@ export class ContactsComponent implements OnInit {
   privacyNotice: PrivacyNotice | null = null;
   privacyBannerVisible = false;
 
+  // Column labels resolved in the template via 'contacts.columns.<key>'.
   readonly PIPELINE_COLUMNS: PipelineColumn[] = [
-    { key: 'PROSPECT',           label: 'Prospects',      color: '#64748b' },
-    { key: 'QUALIFIED_PROSPECT', label: 'Qualifiés',      color: '#3b82f6' },
-    { key: 'CLIENT',             label: 'Clients',        color: '#8b5cf6' },
-    { key: 'ACTIVE_CLIENT',      label: 'Clients Actifs', color: '#10b981' },
-    { key: 'COMPLETED_CLIENT',   label: 'Complétés',      color: '#059669' },
-    { key: 'REFERRAL',           label: 'Parrains',       color: '#f59e0b' }];
+    { key: 'PROSPECT',           color: '#64748b' },
+    { key: 'QUALIFIED_PROSPECT', color: '#3b82f6' },
+    { key: 'CLIENT',             color: '#8b5cf6' },
+    { key: 'ACTIVE_CLIENT',      color: '#10b981' },
+    { key: 'COMPLETED_CLIENT',   color: '#059669' },
+    { key: 'REFERRAL',           color: '#f59e0b' }];
 
   // ── Auth ────────────────────────────────────────────────────
 
@@ -194,9 +197,9 @@ export class ContactsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         const body = err.error as ErrorResponse | null;
-        if      (err.status === 401) this.error = 'Session expirée. Veuillez vous reconnecter.';
-        else if (err.status === 403) this.error = 'Accès refusé.';
-        else                          this.error = body?.message ?? `Erreur de chargement (${err.status})`;
+        if      (err.status === 401) this.error = this.i18n.instant('contacts.errors.sessionExpired');
+        else if (err.status === 403) this.error = this.i18n.instant('contacts.errors.accessDenied');
+        else                          this.error = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }
@@ -230,11 +233,11 @@ export class ContactsComponent implements OnInit {
 
   submitCreate(): void {
     if (!this.form.firstName.trim() || !this.form.lastName.trim()) {
-      this.submitError = 'Prénom et nom obligatoires.';
+      this.submitError = this.i18n.instant('contacts.errors.nameRequired');
       return;
     }
     if (!this.form.email.trim() && !this.form.phone.trim()) {
-      this.submitError = 'Téléphone ou email obligatoire.';
+      this.submitError = this.i18n.instant('contacts.errors.phoneOrEmailRequired');
       return;
     }
     this.submitting  = true;
@@ -258,7 +261,7 @@ export class ContactsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.submitting = false;
         const body = err.error as ErrorResponse | null;
-        this.submitError = body?.message ?? `Erreur lors de la création (${err.status})`;
+        this.submitError = body?.message ?? this.i18n.instant('ventes.create.genericError', { status: err.status });
       },
     });
   }

@@ -4,6 +4,7 @@ import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,7 @@ public class ReminderScheduler {
      * Default: 07:00 UTC every day.
      */
     @Scheduled(cron = "${app.payments.reminder-cron:0 0 7 * * *}")
+    @SchedulerLock(name = "payments_reminder", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     public void run() {
         societeContextHelper.runAsSystem(() -> {
             log.info("ReminderScheduler: starting daily reminder run");

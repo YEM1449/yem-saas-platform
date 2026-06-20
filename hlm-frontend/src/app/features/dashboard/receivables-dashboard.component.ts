@@ -4,6 +4,8 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Chart,
@@ -22,7 +24,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale,
 @Component({
   selector: 'app-receivables-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, TranslatePipe],
   templateUrl: './receivables-dashboard.component.html',
   styleUrl: './receivables-dashboard.component.css',
 })
@@ -34,6 +36,7 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private svc  = inject(ReceivablesDashboardService);
   private auth = inject(AuthService);
+  private i18n = inject(I18nService);
 
   data: ReceivablesDashboard | null = null;
   venteReceivables: VenteReceivablesSummary | null = null;
@@ -94,7 +97,7 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.error = err.error?.message ?? `Failed to load (${err.status})`;
+        this.error = err.error?.message ?? this.i18n.instant('dashboard.receivables.loadError', { status: err.status });
       },
     });
   }
@@ -110,7 +113,7 @@ export class ReceivablesDashboardComponent implements OnInit, OnDestroy {
       this.charts.push(new Chart(this.agingRef.nativeElement, {
         type: 'doughnut',
         data: {
-          labels: ['Not yet due', '1–30 d', '31–60 d', '61–90 d', '>90 d'],
+          labels: [this.i18n.instant('dashboard.receivables.chart.notYetDue'), this.i18n.instant('dashboard.receivables.chart.d1to30'), this.i18n.instant('dashboard.receivables.chart.d31to60'), this.i18n.instant('dashboard.receivables.chart.d61to90'), this.i18n.instant('dashboard.receivables.chart.over90')],
           datasets: [{
             data: [
               d.current.amount,

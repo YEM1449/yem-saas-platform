@@ -1,63 +1,63 @@
 <div class="form-overlay" (click)="cancel()"></div>
 <div class="form-modal">
-  <h3>{{ isEdit ? 'Modifier la tâche' : 'Nouvelle tâche' }}</h3>
+  <h3>{{ (isEdit ? 'tasks.editTitle' : 'tasks.newTitle') | translate }}</h3>
 
   @if (error) {
     <p class="error">{{ error }}</p>
   }
 
   <label>
-    Titre <span class="required">*</span>
+    {{ 'tasks.fTitre' | translate }} <span class="required">*</span>
     <input data-testid="task-title" type="text" [(ngModel)]="title"
-           placeholder="Ex: Rappeler le client" maxlength="300" />
+           [placeholder]="'tasks.titrePlaceholder' | translate" maxlength="300" />
   </label>
 
   <label>
-    Description
-    <textarea [(ngModel)]="description" rows="3" placeholder="Détails optionnels…"></textarea>
+    {{ 'tasks.fDescription' | translate }}
+    <textarea [(ngModel)]="description" rows="3" [placeholder]="'tasks.descPlaceholder' | translate"></textarea>
   </label>
 
   <label>
-    Échéance
+    {{ 'tasks.fEcheance' | translate }}
     <input type="datetime-local" [(ngModel)]="dueDate" />
   </label>
 
   <!-- Assignee — name typeahead, UUID never shown -->
   <label>
-    Assigné à
+    {{ 'tasks.assignee' | translate }}
     <app-user-picker
-      placeholder="Rechercher un collaborateur…"
+      [placeholder]="'tasks.assigneePlaceholder' | translate"
       [initialId]="assigneeId"
       [disabled]="submitting"
       (userSelected)="onUserSelected($event)" />
-    <span class="field-hint">Laissez vide pour vous assigner la tâche automatiquement.</span>
+    <span class="field-hint">{{ 'tasks.assigneeHint' | translate }}</span>
   </label>
 
   @if (!isEdit) {
     <!-- Contact — name/email/phone typeahead -->
     <label>
-      Contact lié
+      {{ 'tasks.contactLie' | translate }}
       <app-contact-picker
-        placeholder="Rechercher par nom, email ou téléphone…"
+        [placeholder]="'tasks.contactPlaceholder' | translate"
         [initialId]="contactId"
         [disabled]="submitting"
         (contactSelected)="onContactSelected($event)" />
-      <span class="field-hint">Optionnel — lie la tâche à un contact.</span>
+      <span class="field-hint">{{ 'tasks.contactHint' | translate }}</span>
     </label>
 
     <!-- Property — inline typeahead (avoids loading the full list) -->
     <label>
-      Bien immobilier lié
+      {{ 'tasks.bienLie' | translate }}
       <div style="position:relative">
         <input type="text"
                [(ngModel)]="propertyQuery"
                (ngModelChange)="onPropertyInput()"
                (blur)="closePropertyDrop()"
                [disabled]="submitting"
-               placeholder="Taper pour rechercher un bien…"
+               [placeholder]="'tasks.bienPlaceholder' | translate"
                autocomplete="off" />
         @if (propertyLoading) {
-          <span class="field-hint">Recherche…</span>
+          <span class="field-hint">{{ 'tasks.searching' | translate }}</span>
         }
         @if (propertyQuery && !propertyId) {
           <button type="button" class="btn-ghost-sm" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:12px;"
@@ -76,14 +76,14 @@
           </ul>
         }
       </div>
-      <span class="field-hint">Optionnel — tapez au moins 2 caractères pour chercher.</span>
+      <span class="field-hint">{{ 'tasks.bienHint' | translate }}</span>
     </label>
   }
 
   <div class="form-actions">
-    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">Annuler</button>
+    <button (click)="cancel()" [disabled]="submitting" class="btn-secondary">{{ 'tasks.cancel' | translate }}</button>
     <button data-testid="task-submit" (click)="submit()" [disabled]="submitting || !title.trim()" class="btn-primary">
-      {{ submitting ? 'Enregistrement...' : (isEdit ? 'Modifier' : 'Créer') }}
+      {{ submitting ? ('tasks.saving' | translate) : ((isEdit ? 'tasks.edit' : 'tasks.create') | translate) }}
     </button>
   </div>
 </div>

@@ -36,6 +36,7 @@ app:
       capacity: 10000
       refill-period: PT1H
   security:
+    field-encryption-key: NUn55+xkaFJjyya11OrWBwZPBGEzvg46rwZEJuBEDtI=
     rate-limit:
       login:
         ip-max: 1000

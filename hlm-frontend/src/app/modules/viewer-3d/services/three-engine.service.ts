@@ -10,11 +10,18 @@ export interface PointerEvent3D {
 }
 
 /**
- * Singleton Three.js engine.
- * Owns the WebGLRenderer, scene, camera, OrbitControls and the RAF loop.
+ * Three.js engine — **component-scoped, not a root singleton**.
+ *
+ * It owns the WebGLRenderer, scene, camera, OrbitControls and the RAF loop, plus the
+ * {@link hover$}/{@link click$}/{@link tap$} Subjects. {@link dispose} completes those Subjects,
+ * so the service MUST be provided per host component (`providers: [ThreeEngineService]`) and never
+ * `providedIn: 'root'`: a singleton would keep its Subjects completed after the first viewer is
+ * destroyed, leaving hover/click/tap dead on every subsequent visit. Component scoping gives each
+ * mount a fresh instance (and Angular fires {@link ngOnDestroy} → {@link dispose} on teardown).
+ *
  * All Three.js work runs outside Angular's zone to avoid unnecessary CD cycles.
  */
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class ThreeEngineService implements OnDestroy {
 
   scene!:    THREE.Scene;

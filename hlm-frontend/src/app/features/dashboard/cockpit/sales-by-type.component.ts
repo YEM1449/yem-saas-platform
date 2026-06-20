@@ -1,11 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, inject} from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import { SalesByTypeRow } from '../dashboard-cockpit.service';
-
-const TYPE_LABELS: Record<string, string> = {
-  APPARTEMENT: 'Appartement', VILLA: 'Villa', STUDIO: 'Studio',
-  DUPLEX: 'Duplex', T2: 'T2', T3: 'T3', PARKING: 'Parking',
-};
 
 const TYPE_COLORS: Record<string, string> = {
   APPARTEMENT: '#16a34a', VILLA: '#7c3aed', STUDIO: '#059669',
@@ -15,21 +12,21 @@ const TYPE_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-sales-by-type',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Ventes par type de bien</span>
-        <span class="widget-sub">CA signé · hors annulés</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.salesByType.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.salesByType.sub' | translate }}</span>
       </div>
 
       @if (!rows || rows.length === 0) {
-        <div class="empty-state">Pas encore de données par type.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.salesByType.empty' | translate }}</div>
       } @else {
         <!-- Total row -->
         <div class="total-row">
-          <span class="total-label">Total portefeuille signé</span>
+          <span class="total-label">{{ 'dashboard.cockpit.salesByType.totalSigned' | translate }}</span>
           <span class="total-val">{{ fmt(totalCA) }}</span>
         </div>
 
@@ -49,7 +46,7 @@ const TYPE_COLORS: Record<string, string> = {
             <div class="type-row">
               <span class="type-dot" [style.background]="color(r.propertyType)"></span>
               <span class="type-name">{{ label(r.propertyType) }}</span>
-              <span class="type-count">{{ r.ventesCount }} vente{{ r.ventesCount !== 1 ? 's' : '' }}</span>
+              <span class="type-count">{{ 'dashboard.cockpit.salesByType.venteCount' | translate:{ count: r.ventesCount } }}</span>
               <div class="type-bar-wrap">
                 <div class="type-bar"
                      [style.width.%]="pct(r.totalCA)"
@@ -93,6 +90,7 @@ const TYPE_COLORS: Record<string, string> = {
   `],
 })
 export class SalesByTypeComponent {
+  private i18n = inject(I18nService);
   @Input() rows: SalesByTypeRow[] = [];
 
   get totalCA(): number {
@@ -105,7 +103,7 @@ export class SalesByTypeComponent {
     return Math.round((ca / t) * 100);
   }
 
-  label(type: string): string { return TYPE_LABELS[type] ?? type; }
+  label(type: string): string { return this.i18n.instant('dashboard.home.type.' + type); }
   color(type: string): string { return TYPE_COLORS[type] ?? '#6b7280'; }
 
   fmt(n: number): string {

@@ -7,6 +7,8 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -37,11 +39,12 @@ interface CheckItem    { varName: string; desc: string; present: boolean; }
 @Component({
   selector: 'app-template-editor',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, TranslatePipe],
   templateUrl: './template-editor.component.html',
   styleUrl:    './template-editor.component.css',
 })
 export class TemplateEditorComponent implements OnInit, AfterViewInit {
+  private i18n = inject(I18nService);
   private route  = inject(ActivatedRoute);
   private router = inject(Router);
   private svc    = inject(TemplateService);
@@ -77,8 +80,8 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   private loadedHtml = '';
   private draggingGroupId = '';
 
-  get typeLabel():      string { return TYPE_LABELS[this.type] ?? this.type; }
-  get rawToggleTitle(): string { return this.rawMode ? "Revenir à l'éditeur visuel" : 'Voir le HTML source'; }
+  get typeLabel():      string { return this.i18n.instant('templates.docType.' + this.type); }
+  get rawToggleTitle(): string { return this.i18n.instant(this.rawMode ? 'templates.editor.rawToggleToVisual' : 'templates.editor.rawToggleToHtml'); }
   get previewHref():    string { return this.svc.previewUrl(this.type); }
   private get editorEl(): HTMLDivElement { return this.editorRef?.nativeElement; }
 
@@ -102,142 +105,142 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   // ── Variable catalog ──────────────────────────────────────────────
   readonly groups: VarGroup[] = [
     {
-      id: 'societe', label: 'Société & contexte', icon: '🏢',
+      id: 'societe', label: this.i18n.instant('templates.varGroup.societe'), icon: '🏢',
       vars: [
-        { var: 'societeName',   desc: 'Nom de la société' },
-        { var: 'projectName',   desc: 'Nom du projet' },
-        { var: 'agentName',     desc: 'Nom de l\'agent' },
-        { var: 'agentEmail',    desc: 'Email de l\'agent' },
-        { var: 'generatedAt',   desc: 'Date/heure de génération' },
-        { var: 'createdAt',     desc: 'Date de création' }],
+        { var: 'societeName',   desc: this.i18n.instant('templates.varDesc.societeName') },
+        { var: 'projectName',   desc: this.i18n.instant('templates.varDesc.projectName') },
+        { var: 'agentName',     desc: this.i18n.instant('templates.varDesc.agentName') },
+        { var: 'agentEmail',    desc: this.i18n.instant('templates.varDesc.agentEmail') },
+        { var: 'generatedAt',   desc: this.i18n.instant('templates.varDesc.generatedAt') },
+        { var: 'createdAt',     desc: this.i18n.instant('templates.varDesc.createdAt') }],
     },
     {
-      id: 'property', label: 'Bien immobilier', icon: '🏠',
+      id: 'property', label: this.i18n.instant('templates.varGroup.property'), icon: '🏠',
       vars: [
-        { var: 'propertyRef',   desc: 'Référence du bien' },
-        { var: 'propertyTitle', desc: 'Désignation du bien' },
-        { var: 'propertyType',  desc: 'Type (APPARTEMENT, VILLA…)' },
-        { var: 'agreedPrice',   desc: 'Prix de vente convenu' },
-        { var: 'listPrice',     desc: 'Prix catalogue' },
-        { var: 'prixVente',     desc: 'Prix de vente (pipeline)' }],
+        { var: 'propertyRef',   desc: this.i18n.instant('templates.varDesc.propertyRef') },
+        { var: 'propertyTitle', desc: this.i18n.instant('templates.varDesc.propertyTitle') },
+        { var: 'propertyType',  desc: this.i18n.instant('templates.varDesc.propertyType') },
+        { var: 'agreedPrice',   desc: this.i18n.instant('templates.varDesc.agreedPrice') },
+        { var: 'listPrice',     desc: this.i18n.instant('templates.varDesc.listPrice') },
+        { var: 'prixVente',     desc: this.i18n.instant('templates.varDesc.prixVente') }],
     },
     {
-      id: 'buyer', label: 'Acheteur / Acquéreur', icon: '👤',
+      id: 'buyer', label: this.i18n.instant('templates.varGroup.buyer'), icon: '👤',
       vars: [
-        { var: 'buyerName',        desc: 'Nom et prénom complets' },
-        { var: 'buyerDisplayName', desc: 'Nom affiché' },
-        { var: 'buyerPhone',       desc: 'Téléphone' },
-        { var: 'buyerEmail',       desc: 'Adresse e-mail' },
-        { var: 'buyerAddress',     desc: 'Adresse postale' },
-        { var: 'buyerNationalId',  desc: 'CIN / N° pièce d\'identité' },
-        { var: 'buyerIce',         desc: 'ICE / numéro fiscal' },
-        { var: 'buyerTypeLabel',   desc: 'Personne physique / morale' }],
+        { var: 'buyerName',        desc: this.i18n.instant('templates.varDesc.buyerName') },
+        { var: 'buyerDisplayName', desc: this.i18n.instant('templates.varDesc.buyerDisplayName') },
+        { var: 'buyerPhone',       desc: this.i18n.instant('templates.varDesc.buyerPhone') },
+        { var: 'buyerEmail',       desc: this.i18n.instant('templates.varDesc.buyerEmail') },
+        { var: 'buyerAddress',     desc: this.i18n.instant('templates.varDesc.buyerAddress') },
+        { var: 'buyerNationalId',  desc: this.i18n.instant('templates.varDesc.buyerNationalId') },
+        { var: 'buyerIce',         desc: this.i18n.instant('templates.varDesc.buyerIce') },
+        { var: 'buyerTypeLabel',   desc: this.i18n.instant('templates.varDesc.buyerTypeLabel') }],
     },
     {
-      id: 'contract', label: 'Contrat & Dates', icon: '📄',
+      id: 'contract', label: this.i18n.instant('templates.varGroup.contract'), icon: '📄',
       vars: [
-        { var: 'venteRef',           desc: 'Référence de la vente' },
-        { var: 'contractRef',        desc: 'Référence du contrat' },
-        { var: 'contractStatus',     desc: 'Statut du contrat' },
-        { var: 'statut',             desc: 'Statut de la vente' },
-        { var: 'dateCompromis',      desc: 'Date du compromis' },
-        { var: 'dateActeNotarie',    desc: 'Date de l\'acte notarié' },
-        { var: 'dateLivraisonPrevue', desc: 'Date de livraison prévue' },
-        { var: 'signedAt',           desc: 'Date de signature' },
-        { var: 'depositReference',   desc: 'Réf. acompte / réservation' },
-        { var: 'depositAmount',      desc: 'Montant de l\'acompte (MAD)' },
-        { var: 'depositDate',        desc: 'Date de versement de l\'acompte' },
-        { var: 'dueDate',            desc: 'Date d\'échéance' },
-        { var: 'notes',              desc: 'Notes et observations libres' }],
+        { var: 'venteRef',           desc: this.i18n.instant('templates.varDesc.venteRef') },
+        { var: 'contractRef',        desc: this.i18n.instant('templates.varDesc.contractRef') },
+        { var: 'contractStatus',     desc: this.i18n.instant('templates.varDesc.contractStatus') },
+        { var: 'statut',             desc: this.i18n.instant('templates.varDesc.statut') },
+        { var: 'dateCompromis',      desc: this.i18n.instant('templates.varDesc.dateCompromis') },
+        { var: 'dateActeNotarie',    desc: this.i18n.instant('templates.varDesc.dateActeNotarie') },
+        { var: 'dateLivraisonPrevue', desc: this.i18n.instant('templates.varDesc.dateLivraisonPrevue') },
+        { var: 'signedAt',           desc: this.i18n.instant('templates.varDesc.signedAt') },
+        { var: 'depositReference',   desc: this.i18n.instant('templates.varDesc.depositReference') },
+        { var: 'depositAmount',      desc: this.i18n.instant('templates.varDesc.depositAmount') },
+        { var: 'depositDate',        desc: this.i18n.instant('templates.varDesc.depositDate') },
+        { var: 'dueDate',            desc: this.i18n.instant('templates.varDesc.dueDate') },
+        { var: 'notes',              desc: this.i18n.instant('templates.varDesc.notes') }],
     }];
 
   filteredGroups: VarGroup[] = this.groups;
 
   // ── Section presets ────────────────────────────────────────────────
   readonly sectionPresets: SectionPreset[] = [
-    { id: 'article',   icon: '§',  label: 'Article numéroté' },
-    { id: 'signature', icon: '✍️', label: 'Bloc de signatures' },
-    { id: 'pagebreak', icon: '📄', label: 'Saut de page' },
-    { id: 'separator', icon: '—',  label: 'Séparateur horizontal' },
-    { id: 'tableinfo', icon: '📊', label: 'Tableau récapitulatif' }];
+    { id: 'article',   icon: '§',  label: this.i18n.instant('templates.preset.article') },
+    { id: 'signature', icon: '✍️', label: this.i18n.instant('templates.preset.signature') },
+    { id: 'pagebreak', icon: '📄', label: this.i18n.instant('templates.preset.pagebreak') },
+    { id: 'separator', icon: '—',  label: this.i18n.instant('templates.preset.separator') },
+    { id: 'tableinfo', icon: '📊', label: this.i18n.instant('templates.preset.tableinfo') }];
 
   // ── Legal clause library ──────────────────────────────────────────
   readonly clauseSections: ClauseSection[] = [
     {
-      title: 'Conditions suspensives',
+      title: this.i18n.instant('templates.clauseSection.conditions'),
       clauses: [
         {
           id: 'cs-financement',
-          icon: '🏦', name: 'Condition suspensive de financement',
-          desc: 'Subordonner la vente à l\'obtention d\'un prêt bancaire.',
+          icon: '🏦', name: this.i18n.instant('templates.clause.cs-financement.name'),
+          desc: this.i18n.instant('templates.clause.cs-financement.desc'),
           html: `<h3>CONDITION SUSPENSIVE D'OBTENTION DE FINANCEMENT</h3>
 <p>La présente vente est conclue sous la condition suspensive de l'obtention par l'acquéreur d'un prêt immobilier d'un montant minimum de <strong>[MONTANT À COMPLÉTER]</strong> dirhams (MAD), auprès de tout établissement bancaire ou organisme de crédit de son choix, dans les conditions habituelles du marché.</p>
 <p>L'acquéreur s'engage à accomplir toutes les démarches nécessaires auprès des organismes prêteurs dans un délai de <strong>soixante (60) jours</strong> à compter de la date de signature des présentes. Passé ce délai, si la condition ne s'est pas réalisée, toutes les sommes versées seront intégralement restituées à l'acquéreur, sans pénalité ni frais.</p>`,
         },
         {
           id: 'cs-permis',
-          icon: '📜', name: 'Condition suspensive de permis',
-          desc: 'Vente conditionnée à l\'obtention d\'une autorisation administrative.',
+          icon: '📜', name: this.i18n.instant('templates.clause.cs-permis.name'),
+          desc: this.i18n.instant('templates.clause.cs-permis.desc'),
           html: `<h3>CONDITION SUSPENSIVE D'OBTENTION D'AUTORISATION</h3>
 <p>La présente vente est conclue sous la condition suspensive de l'obtention par le vendeur des autorisations administratives nécessaires à la réalisation de l'opération immobilière objet du présent acte, dans un délai de <strong>[DÉLAI]</strong> à compter de la signature.</p>
 <p>En cas de non-obtention de ladite autorisation dans le délai imparti, le présent contrat sera réputé nul et non avenu, et toutes les sommes versées par l'acquéreur lui seront remboursées sans retard.</p>`,
         }],
     },
     {
-      title: 'Garanties & responsabilités',
+      title: this.i18n.instant('templates.clauseSection.garanties'),
       clauses: [
         {
           id: 'garanties-legales',
-          icon: '🛡️', name: 'Garanties légales',
-          desc: 'Garantie contre les vices cachés et les défauts de conformité.',
+          icon: '🛡️', name: this.i18n.instant('templates.clause.garanties-legales.name'),
+          desc: this.i18n.instant('templates.clause.garanties-legales.desc'),
           html: `<h3>GARANTIES LÉGALES</h3>
 <p>Le vendeur garantit l'acquéreur contre tous vices cachés qui rendraient le bien immobilier impropre à l'usage auquel il est destiné, ou qui diminueraient tellement cet usage que l'acquéreur ne l'aurait pas acquis ou n'en aurait donné qu'un moindre prix s'il les avait connus, conformément aux dispositions du Dahir des Obligations et Contrats.</p>
 <p>Le vendeur déclare et garantit que le bien est libre de toute servitude non apparente, hypothèque, inscription ou charge quelconque pouvant nuire à la libre jouissance de l'acquéreur, sauf celles expressément mentionnées aux présentes.</p>`,
         },
         {
           id: 'clause-penale',
-          icon: '⚠️', name: 'Clause pénale',
-          desc: 'Pénalités forfaitaires en cas d\'inexécution.',
+          icon: '⚠️', name: this.i18n.instant('templates.clause.clause-penale.name'),
+          desc: this.i18n.instant('templates.clause.clause-penale.desc'),
           html: `<h3>CLAUSE PÉNALE</h3>
 <p>En cas d'inexécution par l'une des parties de ses obligations aux termes du présent contrat, la partie défaillante sera redevable envers l'autre partie d'une indemnité forfaitaire égale à <strong>dix pour cent (10 %)</strong> du prix de vente convenu, à titre de dommages et intérêts, sans préjudice du droit pour la partie lésée de demander l'exécution forcée du contrat ou sa résolution judiciaire.</p>
 <p>Cette indemnité est de plein droit et ne nécessite ni mise en demeure préalable ni intervention judiciaire pour être acquise.</p>`,
         }],
     },
     {
-      title: 'Dispositions générales',
+      title: this.i18n.instant('templates.clauseSection.dispositions'),
       clauses: [
         {
           id: 'force-majeure',
-          icon: '🌪️', name: 'Force majeure',
-          desc: 'Exonération en cas d\'événement imprévisible et irrésistible.',
+          icon: '🌪️', name: this.i18n.instant('templates.clause.force-majeure.name'),
+          desc: this.i18n.instant('templates.clause.force-majeure.desc'),
           html: `<h3>FORCE MAJEURE</h3>
 <p>Aucune des parties ne pourra être tenue responsable d'un retard ou d'un manquement à ses obligations contractuelles résultant d'un événement constitutif de force majeure au sens de l'article 269 du Dahir formant Code des Obligations et des Contrats.</p>
 <p>La partie invoquant la force majeure devra en informer l'autre partie par écrit dans les <strong>soixante-douze (72) heures</strong> suivant la survenance de l'événement. Les obligations des parties seront suspendues pendant la durée de l'événement de force majeure.</p>`,
         },
         {
           id: 'election-domicile',
-          icon: '📍', name: 'Élection de domicile',
-          desc: 'Domiciliation pour toutes notifications légales.',
+          icon: '📍', name: this.i18n.instant('templates.clause.election-domicile.name'),
+          desc: this.i18n.instant('templates.clause.election-domicile.desc'),
           html: `<h3>ÉLECTION DE DOMICILE</h3>
 <p>Pour l'exécution des présentes et de leurs suites, les parties font élection de domicile à leurs adresses respectives telles qu'indiquées en tête du présent acte.</p>
 <p>Tout changement d'adresse devra être notifié à l'autre partie par lettre recommandée avec accusé de réception dans un délai de <strong>quinze (15) jours</strong> ouvrables. À défaut de notification, toute correspondance adressée à la dernière adresse connue sera réputée valablement délivrée.</p>`,
         },
         {
           id: 'mediation',
-          icon: '🤝', name: 'Médiation préalable obligatoire',
-          desc: 'Recours à la médiation avant toute action judiciaire.',
+          icon: '🤝', name: this.i18n.instant('templates.clause.mediation.name'),
+          desc: this.i18n.instant('templates.clause.mediation.desc'),
           html: `<h3>MÉDIATION PRÉALABLE</h3>
 <p>En cas de litige portant sur l'interprétation ou l'exécution du présent contrat, les parties s'engagent à rechercher, avant toute action judiciaire, une solution amiable par voie de médiation auprès d'un médiateur agréé, désigné d'un commun accord ou à défaut par le Tribunal compétent.</p>
 <p>Cette tentative de médiation préalable est obligatoire. Sa durée ne saurait excéder <strong>trente (30) jours</strong> à compter de la saisine du médiateur, sauf accord des parties pour la prolonger.</p>`,
         }],
     },
     {
-      title: 'Paiement & Finances',
+      title: this.i18n.instant('templates.clauseSection.paiement'),
       clauses: [
         {
           id: 'modalites-paiement',
-          icon: '💰', name: 'Modalités de paiement',
-          desc: 'Conditions et délais de règlement du prix.',
+          icon: '💰', name: this.i18n.instant('templates.clause.modalites-paiement.name'),
+          desc: this.i18n.instant('templates.clause.modalites-paiement.desc'),
           html: `<h3>MODALITÉS DE PAIEMENT</h3>
 <p>Le prix de vente convenu sera réglé selon les modalités suivantes :</p>
 <ul>
@@ -249,8 +252,8 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         },
         {
           id: 'penalites-retard',
-          icon: '⏰', name: 'Pénalités de retard',
-          desc: 'Application automatique de pénalités pour retard de paiement.',
+          icon: '⏰', name: this.i18n.instant('templates.clause.penalites-retard.name'),
+          desc: this.i18n.instant('templates.clause.penalites-retard.desc'),
           html: `<h3>PÉNALITÉS DE RETARD</h3>
 <p>Tout retard de paiement d'une échéance, quelle qu'en soit la cause, donnera lieu de plein droit et sans mise en demeure préalable à l'application de pénalités de retard calculées au taux de <strong>[TAUX] %</strong> par mois de retard, calculées sur le montant de l'échéance en souffrance.</p>
 <p>Ces pénalités seront dues à compter du premier jour suivant la date d'échéance jusqu'au paiement intégral des sommes dues, en principal et intérêts.</p>`,
@@ -268,7 +271,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
           this.loadIntoEditor(res.htmlContent);
         }
       },
-      error: () => { this.saveError = 'Impossible de charger le modèle.'; },
+      error: () => { this.saveError = this.i18n.instant('templates.editor.loadError'); },
     });
   }
 
@@ -379,7 +382,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         this.saving    = false;
-        this.saveError = err?.error?.message ?? 'Erreur lors de la sauvegarde.';
+        this.saveError = err?.error?.message ?? this.i18n.instant('templates.editor.saveError');
       },
     });
   }
@@ -388,7 +391,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
     if (!confirm(`Réinitialiser "${this.typeLabel}" vers le modèle intégré ? Cette action est irréversible.`)) return;
     this.svc.delete(this.type).subscribe({
       next: () => { this.isCustom = false; this.router.navigateByUrl('/app/templates'); },
-      error: (err) => { this.saveError = err?.error?.message ?? 'Erreur lors de la réinitialisation.'; },
+      error: (err) => { this.saveError = err?.error?.message ?? this.i18n.instant('templates.editor.revertError'); },
     });
   }
 
@@ -496,13 +499,13 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         sel.addRange(range);
         this.savedRange = range.cloneRange();
         this.markDirty();
-        this.flashToast(`Clause «${clause.name}» insérée`);
+        this.flashToast(this.i18n.instant('templates.editor.clauseInserted', { name: clause.name }));
         return;
       }
     }
     while (tempDiv.firstChild) this.editorEl.appendChild(tempDiv.firstChild);
     this.markDirty();
-    this.flashToast(`Clause «${clause.name}» insérée`);
+    this.flashToast(this.i18n.instant('templates.editor.clauseInserted', { name: clause.name }));
   }
 
   // ── Selection management ───────────────────────────────────────────
@@ -550,14 +553,14 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
         this.savedRange = range.cloneRange();
         this.recountInserted();
         this.markDirty();
-        this.flashToast(`Inséré : ${chip.textContent}`);
+        this.flashToast(this.i18n.instant('templates.editor.inserted', { text: chip.textContent }));
         return;
       }
     }
     this.editorEl.appendChild(chip);
     this.recountInserted();
     this.markDirty();
-    this.flashToast(`Inséré : ${chip.textContent}`);
+    this.flashToast(this.i18n.instant('templates.editor.inserted', { text: chip.textContent }));
   }
 
   private makeChip(varName: string): HTMLSpanElement {
@@ -620,7 +623,7 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
     this.editorEl.focus();
     this.recountInserted();
     this.markDirty();
-    this.flashToast(`Inséré : ${chip.textContent}`);
+    this.flashToast(this.i18n.instant('templates.editor.inserted', { text: chip.textContent }));
   }
 
   // ── Search / filter ────────────────────────────────────────────────
@@ -667,14 +670,14 @@ export class TemplateEditorComponent implements OnInit, AfterViewInit {
   onImageFileSelected(ev: Event): void {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) { this.flashToast('Image trop grande (max 3 Mo)'); return; }
+    if (file.size > 3 * 1024 * 1024) { this.flashToast(this.i18n.instant('templates.editor.imageTooLarge')); return; }
     const form = new FormData();
     form.append('file', file);
     this.imageUploading = true;
     this.saveSelection();
     this.http.post<{ dataUri: string }>('/api/templates/images', form).subscribe({
       next: ({ dataUri }) => { this.imageUploading = false; this.insertImage(dataUri, file.name); },
-      error: () => { this.imageUploading = false; this.flashToast('Erreur lors du chargement de l\'image.'); },
+      error: () => { this.imageUploading = false; this.flashToast(this.i18n.instant('templates.editor.imageError')); },
     });
   }
 

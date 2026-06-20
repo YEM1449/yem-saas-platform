@@ -5,7 +5,7 @@
   @if (error()) {
     <div class="alert alert-error">{{ error() }}</div>
   } @else {
-    <div class="skeleton-stack" data-testid="vente-detail-loading-state" aria-label="Chargement de la vente…">
+    <div class="skeleton-stack" data-testid="vente-detail-loading-state" [attr.aria-label]="'ventes.detail.ui.loadingAria' | translate">
       <span class="skeleton skeleton-text-lg skeleton-w-75"></span>
       <span class="skeleton skeleton-card sk-h-80"></span>
       <div class="skeleton-grid">
@@ -23,23 +23,23 @@
   <div class="page-header">
     <div>
       <div class="d-flex items-center gap-10 flex-wrap">
-        <h1 class="page-title m-0">Vente</h1>
+        <h1 class="page-title m-0">{{ 'ventes.detail.ui.title' | translate }}</h1>
         <span class="ref-badge-lg">{{ v.venteRef }}</span>
         <span class="badge" [class]="statutClass(v.statut)">{{ statutLabel(v.statut) }}</span>
       </div>
       <p class="page-subtitle">
-        Créée le {{ v.createdAt | date:'dd/MM/yyyy' }}
-        @if (v.reservationId) { · issue d'une réservation }
+        {{ 'ventes.detail.ui.createdOn' | translate }} {{ v.createdAt | date:'dd/MM/yyyy' }}
+        @if (v.reservationId) { {{ 'ventes.detail.ui.fromReservation' | translate }} }
       </p>
     </div>
     @if (canWrite && !isTerminal(v.statut)) {
       <div class="page-header-actions">
         <button class="btn btn-primary" (click)="openAdvanceDialog()" data-testid="advance-pipeline"
-                title="Faire passer la vente à l'étape suivante du pipeline, ou l'annuler">
+                [title]="'ventes.detail.ui.advancePipelineTitle' | translate">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <path d="M3 6.5h7M7.5 3.5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Avancer le pipeline
+          {{ 'ventes.detail.ui.advancePipeline' | translate }}
         </button>
       </div>
     }
@@ -56,25 +56,25 @@
   @if (v.statut === 'ANNULE') {
     <div class="card mb-20" data-testid="remboursement-card">
       <div class="card-body">
-        <h3 class="card-title">Remboursement du dépôt</h3>
+        <h3 class="card-title">{{ 'ventes.detail.ui.rembTitle' | translate }}</h3>
         @if (rembError()) { <p class="msg-error">{{ rembError() }}</p> }
 
         @if (remboursement(); as r) {
           <div class="info-grid">
-            <div><span class="info-label">Statut</span>
+            <div><span class="info-label">{{ 'ventes.detail.ui.status' | translate }}</span>
               <span class="badge" [class.badge-success]="r.statut === 'EFFECTUE'"
                     [class.badge-warning]="r.statut === 'DU'">
-                {{ r.statut === 'EFFECTUE' ? 'Remboursé' : (r.statut === 'DU' ? 'À rembourser' : 'Annulé') }}
+                {{ r.statut === 'EFFECTUE' ? ('ventes.detail.ui.rembRefunded' | translate) : (r.statut === 'DU' ? ('ventes.detail.ui.rembDue' | translate) : ('ventes.detail.ui.rembCancelled' | translate)) }}
               </span>
             </div>
-            <div><span class="info-label">Montant</span>
+            <div><span class="info-label">{{ 'ventes.detail.ui.amount' | translate }}</span>
               <span class="info-value">{{ r.montant | number:'1.0-0' }} MAD</span></div>
             @if (r.statut === 'EFFECTUE') {
-              <div><span class="info-label">Moyen</span><span class="info-value">{{ moyenLabel(r.moyen) }}</span></div>
-              <div><span class="info-label">Date</span>
+              <div><span class="info-label">{{ 'ventes.detail.ui.moyen' | translate }}</span><span class="info-value">{{ moyenLabel(r.moyen) }}</span></div>
+              <div><span class="info-label">{{ 'ventes.detail.ui.date' | translate }}</span>
                 <span class="info-value">{{ r.dateRemboursement | date:'dd/MM/yyyy' }}</span></div>
               @if (r.reference) {
-                <div><span class="info-label">Référence</span><span class="info-value">{{ r.reference }}</span></div>
+                <div><span class="info-label">{{ 'ventes.detail.ui.reference' | translate }}</span><span class="info-value">{{ r.reference }}</span></div>
               }
             }
           </div>
@@ -82,48 +82,48 @@
           @if (r.statut === 'DU' && canWrite) {
             <!-- Adjust amount -->
             <div class="remb-edit">
-              <label class="info-label">Ajuster le montant dû (MAD)</label>
+              <label class="info-label">{{ 'ventes.detail.ui.adjustAmount' | translate }}</label>
               <div class="remb-row">
                 <input type="number" min="0" class="form-control" [(ngModel)]="editMontant"
                        [placeholder]="r.montant" />
                 <button class="btn btn-sm btn-secondary" [disabled]="rembBusy() || editMontant == null"
-                        (click)="saveMontant(v.id)">Enregistrer</button>
+                        (click)="saveMontant(v.id)">{{ 'common.actions.save' | translate }}</button>
               </div>
             </div>
 
             <!-- Mark as paid -->
             @if (!showRembForm) {
               <button class="btn btn-primary mt-12" (click)="showRembForm = true"
-                      data-testid="remb-mark-paid">Marquer comme remboursé</button>
+                      data-testid="remb-mark-paid">{{ 'ventes.detail.ui.markRefunded' | translate }}</button>
             } @else {
               <div class="remb-form">
                 <div class="form-group">
-                  <label class="info-label">Moyen</label>
+                  <label class="info-label">{{ 'ventes.detail.ui.moyen' | translate }}</label>
                   <select class="form-control" [(ngModel)]="rembForm.moyen">
-                    <option value="VIREMENT">Virement</option>
-                    <option value="CHEQUE">Chèque</option>
-                    <option value="ESPECES">Espèces</option>
-                    <option value="AUTRE">Autre</option>
+                    <option value="VIREMENT">{{ 'ventes.paymentMethod.VIREMENT' | translate }}</option>
+                    <option value="CHEQUE">{{ 'ventes.paymentMethod.CHEQUE' | translate }}</option>
+                    <option value="ESPECES">{{ 'ventes.paymentMethod.ESPECES' | translate }}</option>
+                    <option value="AUTRE">{{ 'ventes.paymentMethod.AUTRE' | translate }}</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="info-label">Date</label>
+                  <label class="info-label">{{ 'ventes.detail.ui.date' | translate }}</label>
                   <input type="date" class="form-control" [(ngModel)]="rembForm.dateRemboursement" />
                 </div>
                 <div class="form-group">
-                  <label class="info-label">Référence (virement/chèque)</label>
+                  <label class="info-label">{{ 'ventes.detail.ui.referenceVirement' | translate }}</label>
                   <input type="text" class="form-control" [(ngModel)]="rembForm.reference" />
                 </div>
                 <div class="remb-row">
                   <button class="btn btn-primary" [disabled]="rembBusy()"
-                          (click)="confirmRemboursement(v.id)" data-testid="remb-confirm">Confirmer</button>
-                  <button class="btn btn-secondary" (click)="showRembForm = false">Annuler</button>
+                          (click)="confirmRemboursement(v.id)" data-testid="remb-confirm">{{ 'common.actions.confirm' | translate }}</button>
+                  <button class="btn btn-secondary" (click)="showRembForm = false">{{ 'common.actions.cancel' | translate }}</button>
                 </div>
               </div>
             }
           }
         } @else {
-          <p class="muted">Aucun remboursement enregistré pour cette vente annulée.</p>
+          <p class="muted">{{ 'ventes.detail.ui.noRemboursement' | translate }}</p>
         }
       </div>
     </div>
@@ -133,25 +133,25 @@
   @if (canConfirmReservation || canRetract || canRecordDelivery || showReservesPanel) {
     <div class="card mb-20" data-testid="vefa-actions">
       <div class="card-body">
-        <h3 class="card-title">Actions VEFA — Loi 44-00</h3>
+        <h3 class="card-title">{{ 'ventes.detail.ui.vefaTitle' | translate }}</h3>
         @if (vefaError()) { <p class="msg-error" data-testid="vefa-error">{{ vefaError() }}</p> }
 
         <!-- Confirmer la réservation (dépôt ≤ 5%) -->
         @if (canConfirmReservation) {
           @if (!showConfirmForm) {
             <button class="btn btn-primary" (click)="showConfirmForm = true" data-testid="vefa-confirm-open">
-              Confirmer la réservation
+              {{ 'ventes.detail.ui.confirmReservation' | translate }}
             </button>
           } @else {
             <div class="vefa-form">
-              <label class="form-label">Dépôt de garantie (MAD) — max 5% du prix (Art. 618-4)</label>
+              <label class="form-label">{{ 'ventes.detail.ui.depositLabel' | translate }}</label>
               <input type="number" class="form-input" [(ngModel)]="depositAmount" min="0"
-                     placeholder="Montant du dépôt" data-testid="vefa-deposit"/>
+                     [placeholder]="'ventes.detail.ui.depositPlaceholder' | translate" data-testid="vefa-deposit"/>
               <div class="form-actions">
-                <button class="btn btn-ghost" (click)="showConfirmForm = false">Annuler</button>
+                <button class="btn btn-ghost" (click)="showConfirmForm = false">{{ 'common.actions.cancel' | translate }}</button>
                 <button class="btn btn-primary" [disabled]="vefaBusy()"
                         (click)="confirmReservation(v.id)" data-testid="vefa-confirm-submit">
-                  Confirmer (ouvre le délai de rétractation de 7j)
+                  {{ 'ventes.detail.ui.confirmOpensWindow' | translate }}
                 </button>
               </div>
             </div>
@@ -160,11 +160,11 @@
 
         <!-- Exercer la rétractation (fenêtre légale) -->
         @if (canRetract) {
-          <p class="vefa-hint">Délai légal de rétractation en cours
-            @if (v.dateFinDelaiReflexion) { jusqu'au {{ v.dateFinDelaiReflexion | date:'dd/MM/yyyy' }} }.</p>
+          <p class="vefa-hint">{{ 'ventes.detail.ui.retractInProgress' | translate }}
+            @if (v.dateFinDelaiReflexion) { {{ 'ventes.detail.ui.until' | translate }} {{ v.dateFinDelaiReflexion | date:'dd/MM/yyyy' }} }.</p>
           <button class="btn btn-danger-soft" [disabled]="vefaBusy()"
                   (click)="exerciseRetractation(v.id)" data-testid="vefa-retract">
-            Exercer la rétractation
+            {{ 'ventes.detail.ui.exerciseRetract' | translate }}
           </button>
         }
 
@@ -172,21 +172,21 @@
         @if (canRecordDelivery) {
           @if (!showDeliveryForm) {
             <button class="btn btn-primary" (click)="showDeliveryForm = true" data-testid="vefa-delivery-open">
-              Enregistrer la livraison
+              {{ 'ventes.detail.ui.recordDelivery' | translate }}
             </button>
           } @else {
             <div class="vefa-form">
-              <label class="form-label">Date de livraison</label>
+              <label class="form-label">{{ 'ventes.detail.ui.deliveryDateLabel' | translate }}</label>
               <input type="date" class="form-input" [(ngModel)]="deliveryDate" data-testid="vefa-delivery-date"/>
-              <label class="form-label">Réserves (une par ligne — laisser vide pour une livraison sans réserve)</label>
+              <label class="form-label">{{ 'ventes.detail.ui.reservesLabel' | translate }}</label>
               <textarea class="form-input" rows="3" [(ngModel)]="deliveryReserves"
-                        placeholder="Ex. Fissure plafond séjour&#10;Volet roulant chambre 2"
+                        [placeholder]="'ventes.detail.ui.reservesPlaceholder' | translate"
                         data-testid="vefa-delivery-reserves"></textarea>
               <div class="form-actions">
-                <button class="btn btn-ghost" (click)="showDeliveryForm = false">Annuler</button>
+                <button class="btn btn-ghost" (click)="showDeliveryForm = false">{{ 'common.actions.cancel' | translate }}</button>
                 <button class="btn btn-primary" [disabled]="vefaBusy()"
                         (click)="recordDelivery(v.id)" data-testid="vefa-delivery-submit">
-                  Enregistrer la livraison
+                  {{ 'ventes.detail.ui.recordDelivery' | translate }}
                 </button>
               </div>
             </div>
@@ -195,19 +195,19 @@
 
         <!-- Réserves de livraison + levée -->
         @if (showReservesPanel) {
-          <h4 class="vefa-subtitle">Réserves de livraison</h4>
+          <h4 class="vefa-subtitle">{{ 'ventes.detail.ui.reservesTitle' | translate }}</h4>
           @if (reserves().length === 0) {
-            <p class="vefa-hint">Aucune réserve.</p>
+            <p class="vefa-hint">{{ 'ventes.detail.ui.noReserve' | translate }}</p>
           } @else {
             <ul class="vefa-reserves" data-testid="vefa-reserves-list">
               @for (r of reserves(); track r.id) {
                 <li class="vefa-reserve" [class.lifted]="r.statut === 'LEVEE'">
                   <span class="vefa-reserve-desc">{{ r.description }}</span>
                   @if (r.statut === 'LEVEE') {
-                    <span class="badge badge-success">Levée @if (r.dateLeveeReelle) { le {{ r.dateLeveeReelle | date:'dd/MM/yyyy' }} }</span>
+                    <span class="badge badge-success">{{ 'ventes.detail.ui.lifted' | translate }} @if (r.dateLeveeReelle) { {{ 'ventes.detail.ui.liftedOn' | translate }} {{ r.dateLeveeReelle | date:'dd/MM/yyyy' }} }</span>
                   } @else {
                     <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
-                            (click)="liftReserve(v.id, r.id)" data-testid="vefa-lift-reserve">Lever</button>
+                            (click)="liftReserve(v.id, r.id)" data-testid="vefa-lift-reserve">{{ 'ventes.detail.ui.lift' | translate }}</button>
                   }
                 </li>
               }
@@ -224,31 +224,31 @@
 
     <!-- 1. Prochaine échéance -->
     <section class="deal-col deal-deadline">
-      <h2 class="deal-col-label">Prochaine échéance</h2>
+      <h2 class="deal-col-label">{{ 'ventes.detail.ui.nextDeadlineCol' | translate }}</h2>
       @if (nextDeadline(v); as nd) {
         <div class="deadline-headline" [class]="nd.urgency">
           @if (nd.days > 0) {
-            <span class="deadline-num">{{ nd.days }}</span><span class="deadline-unit">j restants</span>
+            <span class="deadline-num">{{ nd.days }}</span><span class="deadline-unit">{{ 'ventes.detail.ui.daysRemaining' | translate }}</span>
           } @else if (nd.days === 0) {
-            <span class="deadline-num deadline-today">Aujourd’hui</span>
+            <span class="deadline-num deadline-today">{{ 'ventes.detail.ui.today' | translate }}</span>
           } @else {
-            <span class="deadline-num">{{ -nd.days }}</span><span class="deadline-unit">j de retard</span>
+            <span class="deadline-num">{{ -nd.days }}</span><span class="deadline-unit">{{ 'ventes.detail.ui.daysLate' | translate }}</span>
           }
         </div>
         <p class="deadline-what">{{ nd.label }}</p>
         <p class="deadline-when">{{ nd.date | date:'EEEE d MMMM y' }}</p>
       } @else if (v.statut === 'LIVRE_DEFINITIF') {
-        <p class="deal-done">✓ Vente livrée @if (v.dateLivraisonReelle) { le {{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }} }</p>
+        <p class="deal-done">{{ 'ventes.detail.ui.saleDelivered' | translate }} @if (v.dateLivraisonReelle) { {{ 'ventes.detail.ui.deliveredOn' | translate }} {{ v.dateLivraisonReelle | date:'dd/MM/yyyy' }} }</p>
       } @else if (v.statut === 'ANNULE') {
-        <p class="deal-muted">Vente annulée</p>
+        <p class="deal-muted">{{ 'ventes.detail.ui.saleCancelled' | translate }}</p>
       } @else {
-        <p class="deal-muted">Aucune échéance datée à ce stade</p>
+        <p class="deal-muted">{{ 'ventes.detail.ui.noDatedDeadline' | translate }}</p>
       }
     </section>
 
     <!-- 2. À traiter -->
     <section class="deal-col deal-todo">
-      <h2 class="deal-col-label">À traiter</h2>
+      <h2 class="deal-col-label">{{ 'ventes.detail.ui.todoCol' | translate }}</h2>
       <ul class="attention-list">
         @for (item of attentionItems(v); track item.text) {
           <li class="attention-item att-{{ item.severity }}">
@@ -260,15 +260,15 @@
         <div class="deal-actions">
           @if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
             <button class="btn btn-sm btn-secondary" (click)="generateContract(v.id)" [disabled]="contractGenerating()">
-              {{ contractGenerating() ? 'Génération…' : 'Générer le contrat' }}
+              {{ contractGenerating() ? ('ventes.detail.ui.generating' | translate) : ('ventes.detail.ui.generateContract' | translate) }}
             </button>
           } @else if (v.contractStatus === 'GENERATED') {
             <button class="btn btn-sm btn-secondary" (click)="signContract(v.id)" [disabled]="contractSigning()">
-              {{ contractSigning() ? 'Signature…' : 'Signer le contrat' }}
+              {{ contractSigning() ? ('ventes.detail.ui.signing' | translate) : ('ventes.detail.ui.signContract' | translate) }}
             </button>
           }
           <button class="btn btn-sm btn-primary" (click)="openAdvanceDialog()" data-testid="deal-advance">
-            Avancer le pipeline →
+            {{ 'ventes.detail.ui.advanceArrow' | translate }}
           </button>
         </div>
       }
@@ -276,21 +276,21 @@
 
     <!-- 3. Position financière -->
     <section class="deal-col deal-money">
-      <h2 class="deal-col-label">Position financière</h2>
+      <h2 class="deal-col-label">{{ 'ventes.detail.ui.moneyCol' | translate }}</h2>
       @if (dealFinancials(v); as f) {
-        <div class="money-headline">{{ formatMad(f.encaisse) }}<span class="money-sub"> encaissé</span></div>
+        <div class="money-headline">{{ formatMad(f.encaisse) }}<span class="money-sub"> {{ 'ventes.detail.ui.collected' | translate }}</span></div>
         @if (f.total > 0) {
           <div class="money-bar" role="progressbar"
                [attr.aria-valuenow]="f.pct" aria-valuemin="0" aria-valuemax="100"
                [attr.aria-label]="'Paiement: ' + f.pct + '%'">
             <div class="money-fill" [style.width.%]="f.pct"></div>
           </div>
-          <p class="money-line"><strong>{{ f.pct }}%</strong> du prix · reste {{ formatMad(f.reste) }}</p>
+          <p class="money-line"><strong>{{ f.pct }}%</strong> {{ 'ventes.detail.ui.ofPriceRest' | translate }} {{ formatMad(f.reste) }}</p>
         } @else {
-          <p class="deal-muted">Prix de vente non défini</p>
+          <p class="deal-muted">{{ 'ventes.detail.ui.priceUndefined' | translate }}</p>
         }
         @if (f.overdueCount > 0) {
-          <p class="money-overdue">⚠ {{ f.overdueCount }} échéance{{ f.overdueCount > 1 ? 's' : '' }} en retard · {{ formatMad(f.overdueAmount) }}</p>
+          <p class="money-overdue">⚠ {{ 'ventes.detail.ui.moneyOverdue' | translate:{ count: f.overdueCount, amount: formatMad(f.overdueAmount) } }}</p>
         }
       }
     </section>
@@ -302,40 +302,40 @@
     <!-- Info card -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Informations</h2>
+        <h2 class="card-title">{{ 'ventes.detail.ui.infoTitle' | translate }}</h2>
       </div>
       <div class="card-body">
         <dl class="detail-list">
-          <dt>Acquéreur</dt>
+          <dt>{{ 'ventes.detail.ui.buyer' | translate }}</dt>
           <dd>
             <a [routerLink]="['/app/contacts', v.contactId]" class="link-subtle">
               {{ v.contactFullName || v.contactId }}
             </a>
           </dd>
 
-          <dt>Prix de vente</dt>
+          <dt>{{ 'ventes.detail.ui.salePrice' | translate }}</dt>
           <dd>{{ v.prixVente ? ((v.prixVente | number:'1.0-0') + ' MAD') : '—' }}</dd>
 
-          <dt>Date compromis</dt>
+          <dt>{{ 'ventes.detail.ui.compromisDate' | translate }}</dt>
           <dd>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</dd>
 
-          <dt>Date acte notarié</dt>
+          <dt>{{ 'ventes.detail.ui.acteDate' | translate }}</dt>
           <dd>{{ (v.dateActeNotarie | date:'dd/MM/yyyy') || '—' }}</dd>
 
-          <dt>Livraison prévue</dt>
+          <dt>{{ 'ventes.detail.ui.deliveryExpected' | translate }}</dt>
           <dd>{{ (v.dateLivraisonPrevue | date:'dd/MM/yyyy') || '—' }}</dd>
 
-          <dt>Livraison réelle</dt>
+          <dt>{{ 'ventes.detail.ui.deliveryActual' | translate }}</dt>
           <dd>{{ (v.dateLivraisonReelle | date:'dd/MM/yyyy') || '—' }}</dd>
 
           @if (v.statut === 'LIVRE_DEFINITIF') {
-            <dt>PV de réception</dt>
+            <dt>{{ 'ventes.detail.ui.pvReception' | translate }}</dt>
             <dd>
               @if (!editingPostLivraison) {
                 {{ (v.datePvReception | date:'dd/MM/yyyy') || '—' }}
                 @if (canWrite) {
                   <button class="btn-link ml-6 text-sm" (click)="openPostLivraisonEdit(v)">
-                    {{ v.datePvReception ? 'Modifier' : 'Saisir' }}
+                    {{ v.datePvReception ? ('ventes.detail.ui.edit' | translate) : ('ventes.detail.ui.enter' | translate) }}
                   </button>
                 }
               } @else {
@@ -346,7 +346,7 @@
               }
             </dd>
 
-            <dt>Titre foncier</dt>
+            <dt>{{ 'ventes.detail.ui.titreFoncier' | translate }}</dt>
             <dd>
               @if (!editingPostLivraison) {
                 {{ (v.dateTitreFoncier | date:'dd/MM/yyyy') || '—' }}
@@ -356,16 +356,16 @@
                        (input)="postLivraisonForm.dateTitreFoncier = $any($event.target).value"
                        class="form-control-inline"/>
                 <div class="d-flex gap-6 mt-6">
-                  <button class="btn btn-sm btn-primary" (click)="savePostLivraison(v.id)">Enregistrer</button>
-                  <button class="btn btn-sm btn-secondary" (click)="editingPostLivraison = false">Annuler</button>
+                  <button class="btn btn-sm btn-primary" (click)="savePostLivraison(v.id)">{{ 'common.actions.save' | translate }}</button>
+                  <button class="btn btn-sm btn-secondary" (click)="editingPostLivraison = false">{{ 'common.actions.cancel' | translate }}</button>
                 </div>
               }
             </dd>
           }
 
           @if (v.dateCompromis) {
-            <dt title="Délai légal de rétractation de 10 jours (Art. L271-1) — L'acquéreur peut annuler sans motif avant cette date">
-              Délai SRU
+            <dt [title]="'ventes.detail.ui.delaiSruTitle' | translate">
+              {{ 'ventes.detail.ui.delaiSru' | translate }}
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="vertical-align:0;margin-left:3px;opacity:.5">
                 <circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1"/>
                 <path d="M5.5 4.5v3M5.5 3.5v.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
@@ -373,16 +373,16 @@
             </dt>
             <dd>
               <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateFinDelaiReflexion)"
-                    title="Délai de réflexion / rétractation acheteur">
+                    [title]="'ventes.detail.ui.reflexionBadgeTitle' | translate">
                 {{ (v.dateFinDelaiReflexion | date:'dd/MM/yyyy') || '—' }}
                 @if (daysUntil(v.dateFinDelaiReflexion); as d) {
-                  &nbsp;({{ d > 0 ? d + 'j restants' : 'expiré' }})
+                  &nbsp;({{ d > 0 ? d + ('ventes.detail.ui.daysRemaining' | translate) : ('ventes.detail.ui.expired' | translate) }})
                 }
               </span>
             </dd>
 
-            <dt title="Date limite pour obtenir le financement — condition suspensive">
-              Limite financement
+            <dt [title]="'ventes.detail.ui.limiteFinancementTitle' | translate">
+              {{ 'ventes.detail.ui.limiteFinancement' | translate }}
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="vertical-align:0;margin-left:3px;opacity:.5">
                 <circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1"/>
                 <path d="M5.5 4.5v3M5.5 3.5v.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
@@ -390,26 +390,26 @@
             </dt>
             <dd>
               <span [class]="'deadline-badge ' + deadlineUrgencyClass(v.dateLimiteFinancement)"
-                    title="Condition suspensive d'obtention du financement">
+                    [title]="'ventes.detail.ui.cspBadgeTitle' | translate">
                 {{ (v.dateLimiteFinancement | date:'dd/MM/yyyy') || '—' }}
                 @if (daysUntil(v.dateLimiteFinancement); as d) {
-                  &nbsp;({{ d > 0 ? d + 'j restants' : 'expiré' }})
+                  &nbsp;({{ d > 0 ? d + ('ventes.detail.ui.daysRemaining' | translate) : ('ventes.detail.ui.expired' | translate) }})
                 }
               </span>
             </dd>
           }
 
           @if (v.notaireAcquereurNom) {
-            <dt>Notaire acquéreur</dt>
+            <dt>{{ 'ventes.detail.ui.notaireAcq' | translate }}</dt>
             <dd>{{ v.notaireAcquereurNom }}</dd>
           }
           @if (v.notaireAcquereurEmail) {
-            <dt>Email notaire</dt>
+            <dt>{{ 'ventes.detail.ui.emailNotaire' | translate }}</dt>
             <dd>{{ v.notaireAcquereurEmail }}</dd>
           }
 
           @if (v.notes) {
-            <dt>Notes</dt>
+            <dt>{{ 'ventes.detail.ui.notes' | translate }}</dt>
             <dd>{{ v.notes }}</dd>
           }
         </dl>
@@ -419,7 +419,7 @@
     <!-- Portal invite card -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Portail acquéreur</h2>
+        <h2 class="card-title">{{ 'ventes.detail.ui.portalTitle' | translate }}</h2>
       </div>
       <div class="card-body">
         @if (inviteMsg()) {
@@ -429,18 +429,17 @@
           <div class="alert alert-error mb-10">{{ inviteError() }}</div>
         }
         <p class="portal-desc">
-          Envoyez un lien d'accès sécurisé à l'acquéreur pour qu'il puisse
-          consulter l'avancement de sa vente et ses échéances.
+          {{ 'ventes.detail.ui.portalDesc' | translate }}
         </p>
         @if (canWrite) {
           <button class="btn btn-secondary" (click)="inviteBuyer(v.id)" [disabled]="inviting()">
             @if (inviting()) {
-              <span class="spinner spinner-sm"></span> Envoi…
+              <span class="spinner spinner-sm"></span> {{ 'ventes.detail.ui.sending' | translate }}
             } @else {
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <path d="M1 2.5l5.5 4.5L12 2.5M1 2.5h11v9H1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
               </svg>
-              Inviter l'acquéreur
+              {{ 'ventes.detail.ui.inviteBuyer' | translate }}
             }
           </button>
         }
@@ -453,7 +452,7 @@
   @if (v.statut !== 'ANNULE') {
     <div class="card mb-20" data-testid="contract-card">
       <div class="card-header">
-        <h2 class="card-title">Contrat de vente</h2>
+        <h2 class="card-title">{{ 'ventes.detail.ui.contractTitle' | translate }}</h2>
         <span class="badge" [class]="contractStatusClass(v.contractStatus)">
           {{ contractStatusLabel(v.contractStatus) }}
         </span>
@@ -467,51 +466,51 @@
           <div class="contract-workflow-hint">
             <div class="cwh-step cwh-active">
               <span class="cwh-num">1</span>
-              <span>Générer le PDF</span>
+              <span>{{ 'ventes.detail.ui.contractGenStep1' | translate }}</span>
             </div>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="cwh-arrow">
               <path d="M4 8h8M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
             <div class="cwh-step">
               <span class="cwh-num">2</span>
-              <span>Signer le contrat</span>
+              <span>{{ 'ventes.detail.ui.contractSignStep2' | translate }}</span>
             </div>
           </div>
           <p class="portal-desc mt-8">
-            Générez le PDF du contrat pour le télécharger, le faire signer, et l'archiver dans la fiche vente.
+            {{ 'ventes.detail.ui.contractPendingDesc' | translate }}
           </p>
           @if (canWrite) {
             <button class="btn btn-secondary"
                     (click)="generateContract(v.id)"
                     [disabled]="contractGenerating()"
                     data-testid="btn-generate-contract"
-                    title="Crée un document PDF récapitulatif à partir des données de la vente">
+                    [title]="'ventes.detail.ui.contractPendingDesc' | translate">
               @if (contractGenerating()) {
-                <span class="spinner spinner-sm"></span> Génération en cours…
+                <span class="spinner spinner-sm"></span> {{ 'ventes.detail.ui.generatingFull' | translate }}
               } @else {
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:5px">
                   <rect x="2" y="1" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
                   <path d="M4 4.5h5M4 6.5h3M4 8.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                 </svg>
-                Générer le contrat PDF
+                {{ 'ventes.detail.ui.generateContractPdf' | translate }}
               }
             </button>
           }
         }
 
         @if (v.contractStatus === 'GENERATED') {
-          <p class="portal-desc">Le contrat a été généré et est prêt à être signé.</p>
+          <p class="portal-desc">{{ 'ventes.detail.ui.contractGeneratedDesc' | translate }}</p>
           @if (canWrite) {
             <div class="d-flex gap-8 flex-wrap items-center">
               <button class="btn btn-primary"
                       (click)="signContract(v.id)"
                       [disabled]="contractSigning()"
                       data-testid="btn-sign-contract"
-                      title="Marquer le contrat comme signé par toutes les parties">
+                      [title]="'ventes.detail.ui.contractSignStep2' | translate">
                 @if (contractSigning()) {
-                  <span class="spinner spinner-sm"></span> Signature…
+                  <span class="spinner spinner-sm"></span> {{ 'ventes.detail.ui.signing' | translate }}
                 } @else {
-                  Signer le contrat
+                  {{ 'ventes.detail.ui.signContract' | translate }}
                 }
               </button>
               @if (hasContratGenereDoc(v)) {
@@ -520,12 +519,12 @@
                     <button class="btn btn-secondary"
                             (click)="downloadDoc(v.id, d.id, d.nomFichier)"
                             data-testid="btn-download-contract"
-                            title="Télécharger le PDF du contrat">
+                            [title]="'ventes.detail.ui.downloadContractTitle' | translate">
                       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:4px">
                         <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
-                      Télécharger le PDF
+                      {{ 'ventes.detail.ui.downloadPdf' | translate }}
                     </button>
                   }
                 }
@@ -534,19 +533,19 @@
                         (click)="generateContract(v.id)"
                         [disabled]="contractGenerating()"
                         data-testid="btn-regenerate-contract"
-                        title="Le PDF n'existe pas encore — cliquez pour générer le document PDF">
+                        [title]="'ventes.detail.ui.regenerateTitle' | translate">
                   @if (contractGenerating()) {
-                    <span class="spinner spinner-sm"></span> Génération…
+                    <span class="spinner spinner-sm"></span> {{ 'ventes.detail.ui.generating' | translate }}
                   } @else {
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:4px">
                       <path d="M6.5 1v7.5M4 7l2.5 2.5L9 7M2 10.5V12h9v-1.5"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Générer le PDF
+                    {{ 'ventes.detail.ui.generatePdf' | translate }}
                   }
                 </button>
-                <span class="text-muted text-xs" title="Le statut contrat est GÉNÉRÉ mais aucun PDF n'a encore été produit">
-                  Aucun PDF disponible
+                <span class="text-muted text-xs" [title]="'ventes.detail.ui.noPdfTitle' | translate">
+                  {{ 'ventes.detail.ui.noPdf' | translate }}
                 </span>
               }
             </div>
@@ -559,7 +558,7 @@
               <circle cx="7" cy="7" r="6" stroke="#10b981" stroke-width="1.5"/>
               <path d="M4.5 7l2 2 3-3" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Contrat signé par toutes les parties.
+            {{ 'ventes.detail.ui.contractSignedAll' | translate }}
           </p>
           @if (hasContratGenereDoc(v)) {
             @for (d of v.documents; track d.id) {
@@ -567,24 +566,24 @@
                 <button class="btn btn-secondary"
                         (click)="downloadDoc(v.id, d.id, d.nomFichier)"
                         data-testid="btn-download-contract-signed"
-                        title="Télécharger le PDF du contrat signé">
+                        [title]="'ventes.detail.ui.downloadSignedTitle' | translate">
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:4px">
                     <path d="M2 10.5V12h9v-1.5M6.5 1v7.5M4 7l2.5 2.5L9 7"
                           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
-                  Télécharger le contrat
+                  {{ 'ventes.detail.ui.downloadContract' | translate }}
                 </button>
               }
             }
           } @else {
             <p class="portal-desc text-xs text-gray mt-4">
-              Aucun PDF disponible pour ce contrat signé.
+              {{ 'ventes.detail.ui.noPdfSigned' | translate }}
             </p>
           }
         }
 
         @if (!canWrite && v.contractStatus === 'PENDING') {
-          <p class="portal-desc">Statut du contrat : <strong>{{ contractStatusLabel(v.contractStatus) }}</strong></p>
+          <p class="portal-desc">{{ 'ventes.detail.ui.contractStatusPrefix' | translate }} <strong>{{ contractStatusLabel(v.contractStatus) }}</strong></p>
         }
       </div>
     </div>
@@ -593,18 +592,18 @@
   <!-- ── Échéancier ──────────────────────────────────────────── -->
   <div class="card mb-20">
     <div class="card-header">
-      <h2 class="card-title">Échéancier</h2>
+      <h2 class="card-title">{{ 'ventes.detail.ui.echeancierTitle' | translate }}</h2>
       @if (canWrite) {
         <div class="card-header-actions">
           @if (!hasLegalEcheancier(v)) {
             <button class="btn btn-sm btn-primary" [disabled]="vefaBusy()"
                     (click)="generateEcheancierLegal(v.id)" data-testid="ech-generate-legal"
-                    title="Génère les 7 appels de fonds Art. 618-17 (Loi 44-00)">
-              Générer l'échéancier légal
+                    [title]="'ventes.detail.ui.generateLegalTitle' | translate">
+              {{ 'ventes.detail.ui.generateLegalEcheancier' | translate }}
             </button>
           }
           <button class="btn btn-sm btn-secondary" (click)="showEcheanceForm = !showEcheanceForm" data-testid="ech-add">
-            + Ajouter
+            {{ 'ventes.detail.ui.add' | translate }}
           </button>
         </div>
       }
@@ -615,17 +614,17 @@
       <div class="echeance-form card-body border-top">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label required">Libellé</label>
+            <label class="form-label required">{{ 'ventes.detail.ui.libelle' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="ech.libelle"
-                   placeholder="Ex : Acompte 30%" data-testid="ech-libelle"/>
+                   [placeholder]="'ventes.detail.ui.libellePlaceholder' | translate" data-testid="ech-libelle"/>
           </div>
           <div class="form-group">
-            <label class="form-label required">Montant (MAD)</label>
+            <label class="form-label required">{{ 'ventes.detail.ui.montant' | translate }}</label>
             <input class="form-control" type="number" [(ngModel)]="ech.montant"
                    placeholder="0" data-testid="ech-montant"/>
           </div>
           <div class="form-group">
-            <label class="form-label required">Date d'échéance</label>
+            <label class="form-label required">{{ 'ventes.detail.ui.dateEcheance' | translate }}</label>
             <input class="form-control" type="date" [(ngModel)]="ech.dateEcheance" data-testid="ech-date"/>
           </div>
         </div>
@@ -633,15 +632,15 @@
           <div class="alert alert-error mt-8">{{ echError() }}</div>
         }
         <div class="form-actions">
-          <button class="btn btn-secondary btn-sm" (click)="showEcheanceForm = false">Annuler</button>
-          <button class="btn btn-primary btn-sm" (click)="addEcheance(v.id)" data-testid="ech-submit">Enregistrer</button>
+          <button class="btn btn-secondary btn-sm" (click)="showEcheanceForm = false">{{ 'common.actions.cancel' | translate }}</button>
+          <button class="btn btn-primary btn-sm" (click)="addEcheance(v.id)" data-testid="ech-submit">{{ 'common.actions.save' | translate }}</button>
         </div>
       </div>
     }
 
     @if (v.echeances.length === 0 && !showEcheanceForm) {
       <div class="empty-state card-body">
-        <p class="empty-state-title">Aucune échéance enregistrée</p>
+        <p class="empty-state-title">{{ 'ventes.detail.ui.noEcheance' | translate }}</p>
       </div>
     }
 
@@ -650,11 +649,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Libellé</th>
-              <th>Montant</th>
-              <th>Échéance</th>
-              <th>Statut</th>
-              <th>Paiement</th>
+              <th>{{ 'ventes.detail.ui.libelle' | translate }}</th>
+              <th>{{ 'ventes.detail.ui.amount' | translate }}</th>
+              <th>{{ 'ventes.detail.ui.thEcheance' | translate }}</th>
+              <th>{{ 'ventes.detail.ui.status' | translate }}</th>
+              <th>{{ 'ventes.detail.ui.thPaiement' | translate }}</th>
               @if (canWrite) { <th></th> }
             </tr>
           </thead>
@@ -672,13 +671,13 @@
                   <td>
                     @if (e.statut !== 'PAYEE') {
                       <button class="btn btn-sm btn-secondary" (click)="markPaid(v.id, e.id)">
-                        Marquer payée
+                        {{ 'ventes.detail.ui.markPaid' | translate }}
                       </button>
                     } @else {
                       <button class="btn btn-sm btn-ghost" [disabled]="docGenBusy()"
                               (click)="generateQuittance(v.id, e.id)" data-testid="ech-quittance"
-                              title="Générer la quittance (PDF)">
-                        Quittance
+                              [title]="'ventes.detail.ui.quittanceTitle' | translate">
+                        {{ 'ventes.detail.ui.quittance' | translate }}
                       </button>
                     }
                   </td>
@@ -694,10 +693,10 @@
   <!-- ── Co-acquéreur (VEFA) ───────────────────────────────── -->
   <div class="card mb-20" data-testid="co-acquereur-card">
     <div class="card-header">
-      <h2 class="card-title">Co-acquéreur</h2>
+      <h2 class="card-title">{{ 'ventes.detail.ui.coAcqTitle' | translate }}</h2>
       @if (canWrite && !showCoAcqForm) {
         <button class="btn btn-sm btn-secondary" (click)="openCoAcqForm()" data-testid="coacq-edit">
-          {{ coAcquereur() ? 'Modifier' : '+ Ajouter' }}
+          {{ coAcquereur() ? ('common.actions.edit' | translate) : ('ventes.detail.ui.add' | translate) }}
         </button>
       }
     </div>
@@ -705,53 +704,53 @@
       @if (coAcqError()) { <p class="msg-error">{{ coAcqError() }}</p> }
       @if (showCoAcqForm) {
         <div class="legal-grid">
-          <label>Nom* <input type="text" [(ngModel)]="coAcqForm.nom" data-testid="coacq-nom"/></label>
-          <label>Prénom* <input type="text" [(ngModel)]="coAcqForm.prenom" data-testid="coacq-prenom"/></label>
-          <label>Rôle
+          <label>{{ 'ventes.detail.ui.nomReq' | translate }} <input type="text" [(ngModel)]="coAcqForm.nom" data-testid="coacq-nom"/></label>
+          <label>{{ 'ventes.detail.ui.prenomReq' | translate }} <input type="text" [(ngModel)]="coAcqForm.prenom" data-testid="coacq-prenom"/></label>
+          <label>{{ 'ventes.detail.ui.role' | translate }}
             <select [(ngModel)]="coAcqForm.roleAcquereur">
               @for (r of coAcqRoleOptions; track r) { <option [ngValue]="r">{{ r }}</option> }
             </select>
           </label>
-          <label>Type d'acquéreur
+          <label>{{ 'ventes.detail.ui.typeAcq' | translate }}
             <select [(ngModel)]="coAcqForm.typeAcquereur">
               <option [ngValue]="null">—</option>
               @for (t of coAcqTypeOptions; track t) { <option [ngValue]="t">{{ t }}</option> }
             </select>
           </label>
-          <label>Situation matrimoniale
+          <label>{{ 'ventes.detail.ui.situationMat' | translate }}
             <select [(ngModel)]="coAcqForm.situationMatrimoniale">
               <option [ngValue]="null">—</option>
               @for (s of coAcqSituationOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
             </select>
           </label>
-          <label>CIN <input type="text" [(ngModel)]="coAcqForm.cinNumero"/></label>
-          <label>N° passeport <input type="text" [(ngModel)]="coAcqForm.passeportNumero"/></label>
-          <label>Date de naissance <input type="date" [(ngModel)]="coAcqForm.dateNaissance"/></label>
-          <label>Nationalité <input type="text" [(ngModel)]="coAcqForm.nationalite"/></label>
-          <label>Pays de résidence <input type="text" [(ngModel)]="coAcqForm.paysResidence"/></label>
-          <label>Email <input type="email" [(ngModel)]="coAcqForm.email"/></label>
-          <label>Téléphone <input type="text" [(ngModel)]="coAcqForm.telephone"/></label>
+          <label>{{ 'ventes.detail.ui.cin' | translate }} <input type="text" [(ngModel)]="coAcqForm.cinNumero"/></label>
+          <label>{{ 'ventes.detail.ui.passeport' | translate }} <input type="text" [(ngModel)]="coAcqForm.passeportNumero"/></label>
+          <label>{{ 'ventes.detail.ui.dateNaissance' | translate }} <input type="date" [(ngModel)]="coAcqForm.dateNaissance"/></label>
+          <label>{{ 'ventes.detail.ui.nationalite' | translate }} <input type="text" [(ngModel)]="coAcqForm.nationalite"/></label>
+          <label>{{ 'ventes.detail.ui.paysResidence' | translate }} <input type="text" [(ngModel)]="coAcqForm.paysResidence"/></label>
+          <label>{{ 'ventes.detail.ui.email' | translate }} <input type="email" [(ngModel)]="coAcqForm.email"/></label>
+          <label>{{ 'ventes.detail.ui.telephone' | translate }} <input type="text" [(ngModel)]="coAcqForm.telephone"/></label>
         </div>
         <div class="form-actions">
-          <button class="btn btn-secondary btn-sm" (click)="showCoAcqForm = false">Annuler</button>
+          <button class="btn btn-secondary btn-sm" (click)="showCoAcqForm = false">{{ 'common.actions.cancel' | translate }}</button>
           <button class="btn btn-primary btn-sm" [disabled]="coAcqBusy()"
-                  (click)="saveCoAcquereur(v.id)" data-testid="coacq-save">Enregistrer</button>
+                  (click)="saveCoAcquereur(v.id)" data-testid="coacq-save">{{ 'common.actions.save' | translate }}</button>
         </div>
       } @else {
         @if (coAcquereur(); as co) {
           <dl class="detail-list">
-            <dt>Nom complet</dt><dd>{{ co.prenom }} {{ co.nom }}</dd>
-            <dt>Rôle</dt><dd>{{ co.roleAcquereur ?? '—' }}</dd>
-            <dt>Type</dt><dd>{{ co.typeAcquereur ?? '—' }}</dd>
-            <dt>CIN / Passeport</dt><dd>{{ co.cinNumero || co.passeportNumero || '—' }}</dd>
-            <dt>Contact</dt><dd>{{ co.email || co.telephone || '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.nomComplet' | translate }}</dt><dd>{{ co.prenom }} {{ co.nom }}</dd>
+            <dt>{{ 'ventes.detail.ui.role' | translate }}</dt><dd>{{ co.roleAcquereur ?? '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.type' | translate }}</dt><dd>{{ co.typeAcquereur ?? '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.cinPasseport' | translate }}</dt><dd>{{ co.cinNumero || co.passeportNumero || '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.contact' | translate }}</dt><dd>{{ co.email || co.telephone || '—' }}</dd>
           </dl>
           @if (canWrite) {
             <button class="btn btn-sm btn-danger-soft" [disabled]="coAcqBusy()"
-                    (click)="deleteCoAcquereur(v.id)" data-testid="coacq-delete">Supprimer</button>
+                    (click)="deleteCoAcquereur(v.id)" data-testid="coacq-delete">{{ 'common.actions.delete' | translate }}</button>
           }
         } @else {
-          <p class="vefa-hint">Aucun co-acquéreur.</p>
+          <p class="vefa-hint">{{ 'ventes.detail.ui.noCoAcq' | translate }}</p>
         }
       }
     </div>
@@ -760,12 +759,12 @@
   <!-- ── Financement ───────────────────────────────────────── -->
   <div class="card mb-20" data-testid="financing-card">
     <div class="card-header">
-      <h2 class="card-title">Financement</h2>
+      <h2 class="card-title">{{ 'ventes.detail.ui.financingTitle' | translate }}</h2>
       @if (canWriteFinancing && v.statut !== 'ACTE' && v.statut !== 'LIVRE_DEFINITIF' && v.statut !== 'ANNULE') {
         <button class="btn btn-sm btn-secondary"
                 (click)="showFinancingForm ? showFinancingForm = false : openFinancingForm(v)"
                 data-testid="btn-edit-financing">
-          {{ showFinancingForm ? 'Annuler' : 'Modifier' }}
+          {{ showFinancingForm ? ('common.actions.cancel' | translate) : ('common.actions.edit' | translate) }}
         </button>
       }
     </div>
@@ -773,74 +772,74 @@
       @if (showFinancingForm) {
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Type de financement</label>
+            <label class="form-label">{{ 'ventes.detail.ui.typeFinancement' | translate }}</label>
             <select class="form-control" [(ngModel)]="financing.typeFinancement" data-testid="financing-type">
-              <option [ngValue]="null">— Sélectionner —</option>
+              <option [ngValue]="null">{{ 'ventes.detail.ui.selectDash' | translate }}</option>
               @for (t of typeFinancementOptions; track t) {
                 <option [value]="t">{{ financingLabel(t) }}</option>
               }
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Montant crédit (MAD)</label>
+            <label class="form-label">{{ 'ventes.detail.ui.montantCredit' | translate }}</label>
             <input class="form-control" type="number" [(ngModel)]="financing.montantCredit"
                    placeholder="0" data-testid="financing-montant"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Banque / Établissement</label>
+            <label class="form-label">{{ 'ventes.detail.ui.banqueEtab' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="financing.banqueCredit"
-                   placeholder="Ex : BNP, Crédit Agricole…" data-testid="financing-banque"/>
+                   [placeholder]="'ventes.detail.ui.banquePlaceholder' | translate" data-testid="financing-banque"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Limite financement</label>
+            <label class="form-label">{{ 'ventes.detail.ui.limiteFinancement' | translate }}</label>
             <input class="form-control" type="date" [(ngModel)]="financing.dateLimiteFinancement"
                    data-testid="financing-date-csp"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Notaire acquéreur</label>
+            <label class="form-label">{{ 'ventes.detail.ui.notaireAcq' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="financing.notaireAcquereurNom"
-                   placeholder="Nom du notaire" data-testid="financing-notaire-nom"/>
+                   [placeholder]="'ventes.detail.ui.notairePlaceholder' | translate" data-testid="financing-notaire-nom"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Email notaire</label>
+            <label class="form-label">{{ 'ventes.detail.ui.emailNotaire' | translate }}</label>
             <input class="form-control" type="email" [(ngModel)]="financing.notaireAcquereurEmail"
-                   placeholder="notaire@etude.fr" data-testid="financing-notaire-email"/>
+                   [placeholder]="'ventes.detail.ui.emailNotairePlaceholder' | translate" data-testid="financing-notaire-email"/>
           </div>
         </div>
         <label class="form-label d-flex items-center gap-8 mt-4">
           <input type="checkbox" [(ngModel)]="financing.creditObtenu" data-testid="financing-credit-obtenu"/>
-          Crédit obtenu
+          {{ 'ventes.detail.ui.creditObtenu' | translate }}
         </label>
         @if (financingError()) {
           <div class="alert alert-error mt-8">{{ financingError() }}</div>
         }
         <div class="form-actions">
-          <button class="btn btn-secondary btn-sm" (click)="showFinancingForm = false">Annuler</button>
+          <button class="btn btn-secondary btn-sm" (click)="showFinancingForm = false">{{ 'common.actions.cancel' | translate }}</button>
           <button class="btn btn-primary btn-sm"
                   (click)="saveFinancement(v.id)"
                   [disabled]="financingSaving()"
                   data-testid="financing-submit">
-            {{ financingSaving() ? 'Enregistrement…' : 'Enregistrer' }}
+            {{ financingSaving() ? ('ventes.advance.saving' | translate) : ('common.actions.save' | translate) }}
           </button>
         </div>
       } @else {
         <dl class="detail-list">
-          <dt>Type</dt>
+          <dt>{{ 'ventes.detail.ui.type' | translate }}</dt>
           <dd>{{ financingLabel(v.typeFinancement) }}</dd>
-          <dt>Montant crédit</dt>
+          <dt>{{ 'ventes.detail.ui.montantCredit' | translate }}</dt>
           <dd>{{ v.montantCredit ? ((v.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
-          <dt>Banque</dt>
+          <dt>{{ 'ventes.detail.ui.banque' | translate }}</dt>
           <dd>{{ v.banqueCredit || '—' }}</dd>
-          <dt>Crédit obtenu</dt>
+          <dt>{{ 'ventes.detail.ui.creditObtenu' | translate }}</dt>
           <dd>
             @if (v.creditObtenu) {
-              <span class="badge badge-success">Oui</span>
+              <span class="badge badge-success">{{ 'ventes.detail.ui.oui' | translate }}</span>
             } @else {
-              <span class="badge badge-secondary">Non</span>
+              <span class="badge badge-secondary">{{ 'ventes.detail.ui.non' | translate }}</span>
             }
           </dd>
           @if (v.motifAnnulation) {
-            <dt>Motif d'annulation</dt>
+            <dt>{{ 'ventes.detail.ui.motifAnnulation' | translate }}</dt>
             <dd>{{ motifLabel(v.motifAnnulation) }}</dd>
           }
         </dl>
@@ -851,10 +850,10 @@
   <!-- ── Dossier de financement (suivi) ────────────────────── -->
   <div class="card mb-20" data-testid="dossier-financement-card">
     <div class="card-header">
-      <h2 class="card-title">Dossier de financement</h2>
+      <h2 class="card-title">{{ 'ventes.detail.ui.dossierTitle' | translate }}</h2>
       @if (canWriteFinancing && !showDossierForm) {
         <button class="btn btn-sm btn-secondary" (click)="openDossierForm()" data-testid="dossier-edit">
-          {{ dossier() ? 'Modifier' : '+ Créer' }}
+          {{ dossier() ? ('common.actions.edit' | translate) : ('ventes.detail.ui.createPlus' | translate) }}
         </button>
       }
     </div>
@@ -862,45 +861,45 @@
       @if (dossierError()) { <p class="msg-error">{{ dossierError() }}</p> }
       @if (showDossierForm) {
         <div class="legal-grid">
-          <label>Statut
+          <label>{{ 'ventes.detail.ui.status' | translate }}
             <select [(ngModel)]="dossierForm.statut">
               @for (s of statutDossierOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
             </select>
           </label>
-          <label>Type de financement
+          <label>{{ 'ventes.detail.ui.typeFinancement' | translate }}
             <select [(ngModel)]="dossierForm.typeFinancement">
               <option [ngValue]="null">—</option>
               @for (t of typeFinancementOptions; track t) { <option [ngValue]="t">{{ financingLabel(t) }}</option> }
             </select>
           </label>
-          <label>Banque <input type="text" [(ngModel)]="dossierForm.banque"/></label>
-          <label>Montant crédit (MAD) <input type="number" [(ngModel)]="dossierForm.montantCredit"/></label>
-          <label>Taux d'intérêt (ex. 0.045) <input type="number" step="0.0001" [(ngModel)]="dossierForm.tauxInteret"/></label>
-          <label>Durée (mois) <input type="number" [(ngModel)]="dossierForm.dureeMois"/></label>
-          <label>Apport personnel (MAD) <input type="number" [(ngModel)]="dossierForm.apportPersonnel"/></label>
-          <label>Date de demande <input type="date" [(ngModel)]="dossierForm.dateDemande"/></label>
-          <label>Date d'accord <input type="date" [(ngModel)]="dossierForm.dateAccord"/></label>
-          <label>Expiration de l'accord <input type="date" [(ngModel)]="dossierForm.dateExpirationAccord"/></label>
+          <label>{{ 'ventes.detail.ui.banque' | translate }} <input type="text" [(ngModel)]="dossierForm.banque"/></label>
+          <label>{{ 'ventes.detail.ui.montantCredit' | translate }} <input type="number" [(ngModel)]="dossierForm.montantCredit"/></label>
+          <label>{{ 'ventes.detail.ui.tauxInteret' | translate }} <input type="number" step="0.0001" [(ngModel)]="dossierForm.tauxInteret"/></label>
+          <label>{{ 'ventes.detail.ui.dureeMois' | translate }} <input type="number" [(ngModel)]="dossierForm.dureeMois"/></label>
+          <label>{{ 'ventes.detail.ui.apportPersonnel' | translate }} <input type="number" [(ngModel)]="dossierForm.apportPersonnel"/></label>
+          <label>{{ 'ventes.detail.ui.dateDemande' | translate }} <input type="date" [(ngModel)]="dossierForm.dateDemande"/></label>
+          <label>{{ 'ventes.detail.ui.dateAccord' | translate }} <input type="date" [(ngModel)]="dossierForm.dateAccord"/></label>
+          <label>{{ 'ventes.detail.ui.expirationAccord' | translate }} <input type="date" [(ngModel)]="dossierForm.dateExpirationAccord"/></label>
         </div>
-        <label class="form-label">Commentaire
+        <label class="form-label">{{ 'ventes.detail.ui.commentaire' | translate }}
           <textarea class="form-control" rows="2" [(ngModel)]="dossierForm.commentaire"></textarea>
         </label>
         <div class="form-actions">
-          <button class="btn btn-secondary btn-sm" (click)="showDossierForm = false">Annuler</button>
+          <button class="btn btn-secondary btn-sm" (click)="showDossierForm = false">{{ 'common.actions.cancel' | translate }}</button>
           <button class="btn btn-primary btn-sm" [disabled]="dossierBusy()"
-                  (click)="saveDossier(v.id)" data-testid="dossier-save">Enregistrer</button>
+                  (click)="saveDossier(v.id)" data-testid="dossier-save">{{ 'common.actions.save' | translate }}</button>
         </div>
       } @else {
         @if (dossier(); as d) {
           <dl class="detail-list">
-            <dt>Statut</dt><dd><span class="badge">{{ d.statut }}</span></dd>
-            <dt>Banque</dt><dd>{{ d.banque || '—' }}</dd>
-            <dt>Montant crédit</dt><dd>{{ d.montantCredit ? ((d.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
-            <dt>Taux / Durée</dt><dd>{{ d.tauxInteret ?? '—' }} / {{ d.dureeMois ? (d.dureeMois + ' mois') : '—' }}</dd>
-            <dt>Accord expire le</dt><dd>{{ (d.dateExpirationAccord | date:'dd/MM/yyyy') || '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.status' | translate }}</dt><dd><span class="badge">{{ d.statut }}</span></dd>
+            <dt>{{ 'ventes.detail.ui.banque' | translate }}</dt><dd>{{ d.banque || '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.montantCredit' | translate }}</dt><dd>{{ d.montantCredit ? ((d.montantCredit | number:'1.0-0') + ' MAD') : '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.tauxDuree' | translate }}</dt><dd>{{ d.tauxInteret ?? '—' }} / {{ d.dureeMois ? (d.dureeMois + ' ' + ('ventes.detail.ui.months' | translate)) : '—' }}</dd>
+            <dt>{{ 'ventes.detail.ui.accordExpire' | translate }}</dt><dd>{{ (d.dateExpirationAccord | date:'dd/MM/yyyy') || '—' }}</dd>
           </dl>
         } @else {
-          <p class="vefa-hint">Aucun dossier de financement.</p>
+          <p class="vefa-hint">{{ 'ventes.detail.ui.noDossier' | translate }}</p>
         }
       }
     </div>
@@ -909,26 +908,26 @@
   <!-- ── Documents ──────────────────────────────────────────── -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Documents</h2>
+      <h2 class="card-title">{{ 'ventes.detail.ui.documentsTitle' | translate }}</h2>
       @if (canWrite) {
         <div class="card-header-actions">
           <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
                   (click)="generateContratReservation(v.id)" data-testid="gen-contrat-reservation"
-                  title="Génère le contrat préliminaire de réservation (Loi 44-00)">
-            Contrat réservation
+                  [title]="'ventes.detail.ui.contratReservationTitle' | translate">
+            {{ 'ventes.detail.ui.contratReservation' | translate }}
           </button>
           @if (v.statut === 'LIVRE_AVEC_RESERVES' || v.statut === 'RESERVES_LEVEES' || v.statut === 'LIVRE_DEFINITIF') {
             <button class="btn btn-sm btn-secondary" [disabled]="docGenBusy()"
                     (click)="generatePvLivraison(v.id)" data-testid="gen-pv-livraison"
-                    title="Génère le PV de livraison avec la liste des réserves">
-              PV livraison
+                    [title]="'ventes.detail.ui.pvLivraisonTitle' | translate">
+              {{ 'ventes.detail.ui.pvLivraison' | translate }}
             </button>
           }
           <label class="btn btn-sm btn-secondary cursor-pointer">
             @if (docUploading()) {
-              <span class="spinner spinner-sm"></span> Téléversement…
+              <span class="spinner spinner-sm"></span> {{ 'ventes.detail.ui.uploading' | translate }}
             } @else {
-              + Ajouter
+              {{ 'ventes.detail.ui.add' | translate }}
             }
             <input type="file" hidden (change)="onDocFileSelected($event, v.id)" [disabled]="docUploading()"/>
           </label>
@@ -943,7 +942,7 @@
     }
     @if (v.documents.length === 0) {
       <div class="empty-state card-body">
-        <p class="empty-state-title">Aucun document</p>
+        <p class="empty-state-title">{{ 'ventes.detail.ui.noDocument' | translate }}</p>
       </div>
     } @else {
       <ul class="doc-list card-body">
@@ -955,13 +954,13 @@
             </svg>
             <span class="doc-name">{{ d.nomFichier }}</span>
             @if (d.uploadedByPortal) {
-              <span class="badge badge-info text-2xs ml-4">Portail</span>
+              <span class="badge badge-info text-2xs ml-4">{{ 'ventes.detail.ui.portalBadge' | translate }}</span>
             }
             <span class="doc-date">{{ d.createdAt | date:'dd/MM/yyyy' }}</span>
             <button class="btn-link doc-download-btn"
                     (click)="downloadDoc(v.id, d.id, d.nomFichier)"
                     data-testid="btn-download-document"
-                    title="Télécharger">
+                    [title]="'ventes.detail.ui.downloadTitle' | translate">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

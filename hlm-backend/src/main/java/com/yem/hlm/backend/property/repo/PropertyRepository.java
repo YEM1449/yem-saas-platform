@@ -31,6 +31,9 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     Optional<Property> findBySocieteIdAndId(UUID societeId, UUID propertyId);
 
+    /** Tenant-ownership guard for optional FK references (e.g. a visite's linked property). */
+    boolean existsBySocieteIdAndIdAndDeletedAtIsNull(UUID societeId, UUID propertyId);
+
     Optional<Property> findBySocieteIdAndIdAndDeletedAtIsNull(UUID societeId, UUID propertyId);
 
     List<Property> findBySocieteIdAndDeletedAtIsNull(UUID societeId);

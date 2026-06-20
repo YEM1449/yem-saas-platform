@@ -1,4 +1,6 @@
 import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -15,11 +17,12 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-payment-schedule',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, NgClass],
+  imports: [FormsModule, DatePipe, DecimalPipe, NgClass, TranslatePipe],
   templateUrl: './payment-schedule.component.html',
   styleUrl: './payment-schedule.component.css',
 })
 export class PaymentScheduleComponent implements OnChanges {
+  private i18n = inject(I18nService);
   @Input({ required: true }) contractId!: string;
   /** Buyer contact ID — passed through for outbox resolution */
   @Input() buyerContactId: string | null = null;
@@ -78,7 +81,7 @@ export class PaymentScheduleComponent implements OnChanges {
     this.svc.list(this.contractId).subscribe({
       next: items => { this.items = items; this.loading = false; },
       error: (e: HttpErrorResponse) => {
-        this.error = e.error?.message ?? 'Failed to load schedule';
+        this.error = e.error?.message ?? this.i18n.instant('contracts.pay.loadError');
         this.loading = false;
       },
     });
@@ -101,7 +104,7 @@ export class PaymentScheduleComponent implements OnChanges {
         this.resetCreateForm();
       },
       error: (e: HttpErrorResponse) => {
-        this.createError = e.error?.message ?? 'Create failed';
+        this.createError = e.error?.message ?? this.i18n.instant('contracts.pay.createError');
       },
     });
   }
@@ -120,7 +123,7 @@ export class PaymentScheduleComponent implements OnChanges {
     this.svc.issue(item.id).subscribe({
       next: updated => this.replaceItem(updated),
       error: (e: HttpErrorResponse) => {
-        this.actionError = e.error?.message ?? 'Issue failed';
+        this.actionError = e.error?.message ?? this.i18n.instant('contracts.pay.issueError');
       },
     });
   }
@@ -144,11 +147,11 @@ export class PaymentScheduleComponent implements OnChanges {
     this.svc.send(this.sendItemId, req).subscribe({
       next: updated => {
         this.replaceItem(updated);
-        this.sendSuccess = 'Notification envoyée.';
+        this.sendSuccess = this.i18n.instant('contracts.pay.sendSuccess');
         this.sendItemId = null;
       },
       error: (e: HttpErrorResponse) => {
-        this.sendError = e.error?.message ?? 'Send failed';
+        this.sendError = e.error?.message ?? this.i18n.instant('contracts.pay.sendError');
       },
     });
   }
@@ -161,7 +164,7 @@ export class PaymentScheduleComponent implements OnChanges {
     this.svc.cancel(item.id).subscribe({
       next: updated => this.replaceItem(updated),
       error: (e: HttpErrorResponse) => {
-        this.actionError = e.error?.message ?? 'Cancel failed';
+        this.actionError = e.error?.message ?? this.i18n.instant('contracts.pay.cancelError');
       },
     });
   }
@@ -174,7 +177,7 @@ export class PaymentScheduleComponent implements OnChanges {
     this.svc.delete(item.id).subscribe({
       next: () => { this.items = this.items.filter(i => i.id !== item.id); },
       error: (e: HttpErrorResponse) => {
-        this.actionError = e.error?.message ?? 'Delete failed';
+        this.actionError = e.error?.message ?? this.i18n.instant('contracts.pay.deleteError');
       },
     });
   }
@@ -191,7 +194,7 @@ export class PaymentScheduleComponent implements OnChanges {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => { this.actionError = 'PDF download failed'; },
+      error: () => { this.actionError = this.i18n.instant('contracts.pay.pdfError'); },
     });
   }
 
@@ -232,7 +235,7 @@ export class PaymentScheduleComponent implements OnChanges {
         this.loadItems();
       },
       error: (e: HttpErrorResponse) => {
-        this.paymentError = e.error?.message ?? 'Payment failed';
+        this.paymentError = e.error?.message ?? this.i18n.instant('contracts.pay.paymentError');
       },
     });
   }

@@ -1,10 +1,10 @@
 <div class="widget widget-tall">
   <div class="widget-header">
-    <span class="widget-title">Ventes récentes</span>
-    <a routerLink="/app/ventes" class="widget-link">Tout voir →</a>
+    <span class="widget-title">{{ 'dashboard.recentSales.title' | translate }}</span>
+    <a routerLink="/app/ventes" class="widget-link">{{ 'dashboard.recentSales.seeAll' | translate }}</a>
   </div>
   @if (ventes.length === 0) {
-    <div class="widget-empty">Aucune vente enregistrée</div>
+    <div class="widget-empty">{{ 'dashboard.recentSales.empty' | translate }}</div>
   } @else {
     <div class="vente-list">
       @for (v of ventes; track v.id) {
@@ -26,7 +26,7 @@
   }
   <div class="widget-actions mt-auto">
     <a routerLink="/app/ventes" class="btn btn-sm btn-primary">
-      + Nouvelle vente
+      {{ 'dashboard.recentSales.newSale' | translate }}
     </a>
   </div>
 </div>

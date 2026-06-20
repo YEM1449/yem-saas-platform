@@ -1,0 +1,36 @@
+{
+  "wave": "16-visites-agenda",
+  "mode": "Implémentation. Commits atomiques. Reprise par phase.",
+  "phases": {
+    "P0": { "label": "Bootstrap & audit code existant", "status": "done",
+      "tasks": { "P0-T1":"done","P0-T2":"done","P0-T3":"done","P0-T4":"done","P0-T5":"done" } },
+    "P1": { "label": "Backend : entité Visite + migration", "status": "done",
+      "tasks": { "P1-T1":"done","P1-T2":"done","P1-T3":"done","P1-T4":"done" } },
+    "P2": { "label": "Backend : service + règles métier", "status": "done",
+      "tasks": { "P2-T1":"done","P2-T2":"done","P2-T3":"done","P2-T4":"done","P2-T5":"done" } },
+    "P3": { "label": "Backend : REST + rappels persistants", "status": "done",
+      "tasks": { "P3-T1":"done","P3-T2":"done","P3-T3":"done","P3-T4":"done","P3-T5":"done" } },
+    "P4": { "label": "Frontend : agenda + formulaire", "status": "done",
+      "tasks": { "P4-T1":"done","P4-T2":"done","P4-T3":"done","P4-T4":"done","P4-T5":"done" } },
+    "P5": { "label": "Intégrations", "status": "done",
+      "tasks": { "P5-T1":"done","P5-T2":"done","P5-T3":"done","P5-T4":"done","P5-T5":"done" } },
+    "P6": { "label": "Tests E2E + docs", "status": "done",
+      "tasks": { "P6-T1":"done","P6-T2":"done","P6-T3":"done" } }
+  },
+  "decisions": {
+    "next_changeset": "088 (086 is a gap, 087 = reserve-livraison-responsable; single file 088-visite.yaml with both tables)",
+    "roles": "ADMIN, MANAGER, AGENT, PORTAL, SUPER_ADMIN. @PreAuthorize style: hasAnyRole('ADMIN','MANAGER','AGENT') — NO ROLE_ prefix. JWT authorities have ROLE_ prefix.",
+    "email_sender": "interface com.yem.hlm.backend.outbox.service.provider.EmailSender.send(to, subject, body). Brevo default impl (BrevoHttpEmailSender). Inject the interface.",
+    "scheduler_pattern": "@Component + @ConditionalOnProperty(value='spring.task.scheduling.enabled', matchIfMissing=true) + @Scheduled(fixedDelay) + societeContextHelper.runAsSystem(() -> service.scan()). PERSISTENT DB scan — NOT taskScheduler in-memory.",
+    "tenant_context": "Inject SocieteContextHelper; requireSocieteId() + requireUserId(). Static SocieteContext.getRole()/isSuperAdmin(). RLS via current_setting('app.current_societe_id') GUC + nil-uuid 00000000-... bypass.",
+    "vente_reuse": "com.yem.hlm.backend.vente.service.VenteService.create(CreateVenteRequest). Fields: reservationId, contactId, propertyId, agentId, prixVente, reduction, dateCompromis, dateLivraisonPrevue, expectedClosingDate, notes. DO NOT reimplement pipeline.",
+    "contact_entity": "com.yem.hlm.backend.contact.domain.Contact — email field (length 160).",
+    "user_entity": "com.yem.hlm.backend.user.domain.User — table app_user — email field (NOT NULL, 160).",
+    "error_code_enum": "com.yem.hlm.backend.common.error.ErrorCode + GlobalExceptionHandler.",
+    "jpa_conventions": "@Entity @Table(name,indexes) ; @Id @GeneratedValue(strategy=GenerationType.UUID) ; @Version Long version ; societeId UUID @Column(name=societe_id, nullable=false) ; Instant for TIMESTAMPTZ ; @ManyToOne(fetch=LAZY)+@JoinColumn for FK ; lombok @Getter @NoArgsConstructor(access=PROTECTED).",
+    "liquibase_format": "YAML createTable + FK constraints.foreignKeyName/references + ENABLE ROW LEVEL SECURITY + CREATE POLICY <table>_societe_isolation USING (societe_id = NULLIF(current_setting('app.current_societe_id', TRUE),'')::uuid OR societe_id = '00000000-...'::uuid). Register in db.changelog-master.yaml.",
+    "frontend": "Guard core/auth/auth.guard.ts (authGuard). Vente components features/ventes/ (vente-create, advance-pipeline-dialog, pipeline-stepper). Contact detail features/contacts/contact-detail.component.ts. Angular 19 standalone @if/@for, signals.",
+    "timezone": "Store Instant (TIMESTAMPTZ). Display/saisie/ICS/reminders in Africa/Casablanca (UTC+1, no DST). Reminder dueAt = dateHeure.minus(24h)/minus(1h) — pure Instant math; Casablanca for rendering only.",
+    "api_prefix": "/api/visites (CRM /api/* family)."
+  }
+}

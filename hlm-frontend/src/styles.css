@@ -1131,3 +1131,37 @@ select.form-control   { cursor: pointer; }
   }
   .upload-zone-label { color: var(--c-primary, #16a34a); }
 }
+
+/* ============================================================================
+   RTL baseline (Arabic) — EX-014
+   Minimal, safe right-to-left support driven by <html dir="rtl"> (set by
+   I18nService for Arabic). This is a foundation, not a full RTL theme: it flips
+   text alignment, list direction, and the most directional primitives so the
+   layout is usable in Arabic. Components using CSS logical properties
+   (margin-inline, padding-inline, inset-inline) adapt automatically; the rules
+   below cover common physical-property cases in the shared chrome.
+   ============================================================================ */
+[dir="rtl"] body,
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* Keep numbers, code, money and Latin-script brand marks left-to-right. */
+[dir="rtl"] .topbar-kbd,
+[dir="rtl"] [data-ltr],
+[dir="rtl"] .brand-name,
+[dir="rtl"] .mono { direction: ltr; unicode-bidi: isolate; }
+
+/* The icon rail / drawer sits on the right in RTL. */
+[dir="rtl"] .app-layout { flex-direction: row-reverse; }
+
+/* Flip horizontal flex bars that rely on physical order in the shared chrome. */
+[dir="rtl"] .lang-bar,
+[dir="rtl"] .user-info,
+[dir="rtl"] .nav-item,
+[dir="rtl"] .bnav-item,
+[dir="rtl"] .topbar-search { flex-direction: row-reverse; }
+
+/* Directional affordances that would otherwise point the wrong way. */
+[dir="rtl"] .btn-back { transform: scaleX(-1); }
+[dir="rtl"] .btn-back > * { transform: scaleX(-1); } /* keep the label readable */

@@ -6,14 +6,14 @@
         <path d="M9 2L5 7l4 5" stroke="currentColor" stroke-width="1.5"
               stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      Modèles de documents
+      {{ 'templates.editor.back' | translate }}
     </a>
     <div class="ed-title-row">
       <h1 class="ed-title">{{ typeLabel }}</h1>
-      @if (isCustom && !isDirty) { <span class="badge-custom">Personnalisé</span> }
-      @if (!isCustom && !isDirty) { <span class="badge-default">Modèle intégré</span> }
-      @if (isDirty) { <span class="badge-dirty">● Modifications non sauvegardées</span> }
-      @if (lastSavedAt && !isDirty) { <span class="last-saved">Sauvegardé {{ lastSavedAt | date:'HH:mm' }}</span> }
+      @if (isCustom && !isDirty) { <span class="badge-custom">{{ 'templates.editor.custom' | translate }}</span> }
+      @if (!isCustom && !isDirty) { <span class="badge-default">{{ 'templates.editor.builtin' | translate }}</span> }
+      @if (isDirty) { <span class="badge-dirty">{{ 'templates.editor.dirty' | translate }}</span> }
+      @if (lastSavedAt && !isDirty) { <span class="last-saved">{{ 'templates.editor.savedAt' | translate:{ time: (lastSavedAt | date:'HH:mm') } }}</span> }
     </div>
   </div>
   <div class="ed-actions">
@@ -22,7 +22,7 @@
            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
       </svg>
-      {{ rawMode ? 'Mode visuel' : 'HTML source' }}
+      {{ (rawMode ? 'templates.editor.visualMode' : 'templates.editor.htmlSource') | translate }}
     </button>
     <a [href]="previewHref" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -30,9 +30,9 @@
               stroke="currentColor" stroke-width="1.3"/>
         <circle cx="6.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.3"/>
       </svg>
-      Aperçu PDF
+      {{ 'templates.editor.previewPdf' | translate }}
     </a>
-    @if (isCustom) { <button (click)="revert()" class="btn btn-danger-soft">Réinitialiser</button> }
+    @if (isCustom) { <button (click)="revert()" class="btn btn-danger-soft">{{ 'templates.editor.reset' | translate }}</button> }
     <button (click)="save()" [disabled]="saving" class="btn btn-primary"
             title="Enregistrer (Ctrl+S)">
       @if (!saving) {
@@ -47,10 +47,10 @@
           <path d="M6.5 1.5A5 5 0 0 1 11.5 6.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
         </svg>
       }
-      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+      {{ (saving ? 'templates.editor.saving' : 'templates.editor.save') | translate }}
     </button>
     @if (saveError) { <span class="msg-error">{{ saveError }}</span> }
-    @if (saveSuccess) { <span class="msg-success">✓ Enregistré</span> }
+    @if (saveSuccess) { <span class="msg-success">{{ 'templates.editor.saved' | translate }}</span> }
   </div>
 </div>
 
@@ -60,27 +60,27 @@
   <!-- Block format -->
   <select class="fmt-select" (mousedown)="$event.preventDefault()"
           (change)="execFormatBlock($any($event.target).value); $any($event.target).value = ''">
-    <option value="" disabled selected>Format</option>
-    <option value="p">Paragraphe</option>
-    <option value="h1">Titre 1</option>
-    <option value="h2">Titre 2</option>
-    <option value="h3">Titre 3</option>
-    <option value="h4">Titre 4</option>
-    <option value="blockquote">Bloc citation</option>
+    <option value="" disabled selected>{{ 'templates.editor.format' | translate }}</option>
+    <option value="p">{{ 'templates.editor.paragraph' | translate }}</option>
+    <option value="h1">{{ 'templates.editor.h1' | translate }}</option>
+    <option value="h2">{{ 'templates.editor.h2' | translate }}</option>
+    <option value="h3">{{ 'templates.editor.h3' | translate }}</option>
+    <option value="h4">{{ 'templates.editor.h4' | translate }}</option>
+    <option value="blockquote">{{ 'templates.editor.blockquote' | translate }}</option>
   </select>
 
   <div class="fmt-sep"></div>
 
   <!-- Text style -->
-  <button class="fmt-btn" title="Gras (Ctrl+B)"
+  <button class="fmt-btn" [title]="'templates.editor.bold' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('bold')">
     <strong>G</strong>
   </button>
-  <button class="fmt-btn" title="Italique (Ctrl+I)"
+  <button class="fmt-btn" [title]="'templates.editor.italic' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('italic')">
     <em>I</em>
   </button>
-  <button class="fmt-btn" title="Souligné (Ctrl+U)"
+  <button class="fmt-btn" [title]="'templates.editor.underline' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('underline')">
     <u>S</u>
   </button>
@@ -88,7 +88,7 @@
   <div class="fmt-sep"></div>
 
   <!-- Alignment -->
-  <button class="fmt-btn" title="Gauche"
+  <button class="fmt-btn" [title]="'templates.editor.alignLeft' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('justifyLeft')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -96,7 +96,7 @@
       <line x1="1" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
-  <button class="fmt-btn" title="Centré"
+  <button class="fmt-btn" [title]="'templates.editor.alignCenter' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('justifyCenter')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <line x1="1" y1="3"  x2="13" y2="3"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -104,7 +104,7 @@
       <line x1="2" y1="11" x2="12" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
-  <button class="fmt-btn" title="Droite"
+  <button class="fmt-btn" [title]="'templates.editor.alignRight' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('justifyRight')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <line x1="1"  y1="3"  x2="13" y2="3"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -112,7 +112,7 @@
       <line x1="3"  y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
-  <button class="fmt-btn" title="Justifié"
+  <button class="fmt-btn" [title]="'templates.editor.justify' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('justifyFull')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <line x1="1" y1="3"  x2="13" y2="3"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -124,7 +124,7 @@
   <div class="fmt-sep"></div>
 
   <!-- Lists -->
-  <button class="fmt-btn" title="Liste à puces"
+  <button class="fmt-btn" [title]="'templates.editor.bulletList' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('insertUnorderedList')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <circle cx="2" cy="4"  r="1.2" fill="currentColor"/>
@@ -133,7 +133,7 @@
       <line x1="5" y1="10" x2="13" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
-  <button class="fmt-btn" title="Liste numérotée"
+  <button class="fmt-btn" [title]="'templates.editor.numberedList' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('insertOrderedList')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <text x="1" y="5.5" font-size="5" fill="currentColor" font-family="sans-serif">1.</text>
@@ -154,7 +154,7 @@
         <line x1="6.5" y1="1" x2="6.5" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="1" y1="6.5" x2="12" y2="6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      Insérer
+      {{ 'templates.editor.insert' | translate }}
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
         <path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
       </svg>
@@ -176,7 +176,7 @@
   <div class="fmt-sep"></div>
 
   <!-- Undo / Redo -->
-  <button class="fmt-btn" title="Annuler (Ctrl+Z)"
+  <button class="fmt-btn" [title]="'templates.editor.undo' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('undo')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <path d="M2 5H8a4 4 0 0 1 0 8H5" stroke="currentColor" stroke-width="1.5"
@@ -185,7 +185,7 @@
                 stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
-  <button class="fmt-btn" title="Rétablir (Ctrl+Y)"
+  <button class="fmt-btn" [title]="'templates.editor.redo' | translate"
           (mousedown)="$event.preventDefault()" (click)="exec('redo')">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <path d="M12 5H6a4 4 0 0 0 0 8h3" stroke="currentColor" stroke-width="1.5"
@@ -198,7 +198,7 @@
   <div class="fmt-sep"></div>
 
   <!-- Image upload -->
-  <button class="fmt-btn fmt-btn-image" title="Insérer une image (logo, tampon…)"
+  <button class="fmt-btn fmt-btn-image" [title]="'templates.editor.insertImageTitle' | translate"
           (mousedown)="$event.preventDefault()" (click)="triggerImagePicker()"
           [disabled]="imageUploading">
     @if (!imageUploading) {
@@ -215,7 +215,7 @@
         <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
       </svg>
     }
-    Image
+    {{ 'templates.editor.image' | translate }}
   </button>
   <input #imageInput type="file" accept="image/jpeg,image/png,image/gif,image/webp"
          style="display:none" (change)="onImageFileSelected($event)"/>
@@ -225,7 +225,7 @@
   <!-- Variable count badge -->
   @if (insertedCount > 0) {
     <span class="var-count-badge">
-      {{ insertedCount }} variable{{ insertedCount > 1 ? 's' : '' }}
+      {{ 'templates.editor.varCount' | translate:{ count: insertedCount } }}
     </span>
   }
 </div>
@@ -250,7 +250,7 @@
              contenteditable="true"
              (blur)="saveSelection()"
              (input)="onEditorInput()"
-             data-placeholder="Commencez à écrire votre document ou glissez des variables depuis le panneau de droite…">
+             [attr.data-placeholder]="'templates.editor.placeholder' | translate">
         </div>
       </div>
     }
@@ -265,8 +265,8 @@
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Mode HTML avancé — modifications ici écrasent l'éditeur visuel.
-          Tokens&nbsp;<code>&#36;&#123;model.varName&#125;</code> = variables.
+          {{ 'templates.editor.rawBanner1' | translate }}
+          {{ 'templates.editor.rawBannerTokens' | translate }}&nbsp;<code>&#36;&#123;model.varName&#125;</code> {{ 'templates.editor.rawBannerEq' | translate }}
         </div>
         <textarea #rawEditor class="html-editor" [(ngModel)]="rawHtml"
                   (input)="markDirty()" spellcheck="false">
@@ -282,15 +282,15 @@
     <div class="ref-tabs">
       <button class="ref-tab" [class.active]="sidebarTab==='vars'"
               (click)="sidebarTab='vars'">
-        <span class="ref-tab-icon">🏷️</span>Variables
+        <span class="ref-tab-icon">🏷️</span>{{ 'templates.editor.tabVars' | translate }}
       </button>
       <button class="ref-tab" [class.active]="sidebarTab==='clauses'"
               (click)="sidebarTab='clauses'">
-        <span class="ref-tab-icon">📋</span>Clauses
+        <span class="ref-tab-icon">📋</span>{{ 'templates.editor.tabClauses' | translate }}
       </button>
       <button class="ref-tab" [class.active]="sidebarTab==='check'"
               (click)="sidebarTab='check'; computeCheck()">
-        <span class="ref-tab-icon">✅</span>Vérification
+        <span class="ref-tab-icon">✅</span>{{ 'templates.editor.tabCheck' | translate }}
       </button>
     </div>
 
@@ -298,19 +298,19 @@
     @if (sidebarTab==='vars') {
       <div class="ref-body">
         <input type="text" class="ref-search"
-               placeholder="🔍 Filtrer (ex. prix, acheteur)…"
+               [placeholder]="'templates.editor.searchPlaceholder' | translate"
                [(ngModel)]="searchTerm"
                (input)="filterVars()"/>
 
         @if (!rawMode) {
           <div class="ref-hint">
-            Cliquez ou glissez une variable pour l'insérer.<br/>
-            <strong style="color:#dc2626">★</strong> = obligatoire pour ce type de document.
+            {{ 'templates.editor.hintVisualPre' | translate }}<br/>
+            <strong style="color:#dc2626">★</strong> {{ 'templates.editor.hintVisualReq' | translate }}
           </div>
         }
         @if (rawMode) {
           <div class="ref-hint">
-            En mode HTML : cliquez pour copier le token <code>&#36;&#123;model.*&#125;</code>.
+            {{ 'templates.editor.hintRawPre' | translate }} <code>&#36;&#123;model.*&#125;</code>{{ 'templates.editor.hintRawPost' | translate }}
           </div>
         }
 
@@ -328,12 +328,12 @@
                      (dragstart)="onDragStart($event, v.var, g.id)"
                      (dragend)="onDragEnd()"
                      (click)="onVarClick(v.var)"
-                     [title]="v.desc + (isRequired(v.var) ? ' (obligatoire)' : '')">
+                     [title]="v.desc + (isRequired(v.var) ? ('templates.editor.reqSuffix' | translate) : '')">
                   <div class="var-chip-left">
                     <span class="var-chip-label">{{ v.desc }}</span>
                     <code class="var-chip-token">{{ varToken(v.var) }}</code>
                   </div>
-                  @if (isRequired(v.var)) { <span class="var-chip-req" title="Champ obligatoire">★</span> }
+                  @if (isRequired(v.var)) { <span class="var-chip-req" [title]="'templates.editor.requiredField' | translate">★</span> }
                 </div>
               }
             </div>
@@ -341,7 +341,7 @@
         }
 
         @if (filteredGroups.length === 0) {
-          <div class="ref-empty">Aucune variable ne correspond à «&#160;{{ searchTerm }}&#160;»</div>
+          <div class="ref-empty">{{ 'templates.editor.noMatch' | translate:{ term: searchTerm } }}</div>
         }
 
         @if (toast) { <div class="toast">{{ toast }}</div> }
@@ -365,8 +365,8 @@
               <button class="clause-insert-btn"
                       (click)="insertClause(c.id)"
                       [disabled]="rawMode"
-                      [title]="rawMode ? 'Passer en mode visuel pour insérer une clause' : ''">
-                + Insérer
+                      [title]="rawMode ? ('templates.editor.clauseInsertDisabled' | translate) : ''">
+                {{ 'templates.editor.clauseInsert' | translate }}
               </button>
             </div>
           }
@@ -386,14 +386,14 @@
             {{ checkScore }}%
           </div>
           <div class="check-score-label">
-            {{ checkScore===100 ? 'Toutes les variables obligatoires sont présentes' :
-               checkScore>=50   ? 'Certaines variables obligatoires manquent' :
-                                  'Des variables critiques sont absentes' }}
+            {{ (checkScore===100 ? 'templates.editor.checkAllPresent' :
+               checkScore>=50   ? 'templates.editor.checkSomePresent' :
+                                  'templates.editor.checkCritical') | translate }}
           </div>
         </div>
 
         <!-- Required vars check -->
-        <div class="check-section-title">Variables obligatoires</div>
+        <div class="check-section-title">{{ 'templates.editor.requiredVars' | translate }}</div>
         @for (item of checkItems; track item.varName) {
           <div class="check-item" [class.present]="item.present" [class.missing]="!item.present">
             <span class="check-item-icon">{{ item.present ? '✅' : '❌' }}</span>
@@ -404,7 +404,7 @@
         <div style="height:8px"></div>
         <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;"
                 (click)="computeCheck()">
-          🔄 Actualiser
+          {{ 'templates.editor.refresh' | translate }}
         </button>
       </div>
     }

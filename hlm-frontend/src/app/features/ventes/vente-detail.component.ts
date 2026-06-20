@@ -13,6 +13,8 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { PipelineStepperComponent } from './pipeline-stepper.component';
 import { AdvancePipelineDialogComponent } from './advance-pipeline-dialog.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /** Synthesised financial position of a sale — paid vs. remaining vs. overdue. */
 interface DealFinancials {
@@ -44,7 +46,7 @@ interface AttentionItem {
   standalone: true,
   imports: [
     FormsModule, DatePipe, DecimalPipe,
-    RouterLink, PipelineStepperComponent, AdvancePipelineDialogComponent],
+    RouterLink, PipelineStepperComponent, AdvancePipelineDialogComponent, TranslatePipe],
   templateUrl: './vente-detail.component.html',
   styleUrl: './vente-detail.component.css',
 })
@@ -52,6 +54,7 @@ export class VenteDetailComponent implements OnInit {
   private svc   = inject(VenteService);
   private auth  = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private i18n  = inject(I18nService);
 
   vente    = signal<Vente | null>(null);
   error    = signal('');
@@ -136,7 +139,7 @@ export class VenteDetailComponent implements OnInit {
         this.loadDossier(v.id);
         if (v.statut === 'ANNULE') this.loadRemboursement(v.id);
       },
-      error: ()  => this.error.set('Vente introuvable.'),
+      error: ()  => this.error.set(this.i18n.instant('ventes.detail.notFound')),
     });
   }
 
@@ -150,7 +153,7 @@ export class VenteDetailComponent implements OnInit {
     this.svc.generateContratReservation(venteId).subscribe({
       next: () => { this.docGenBusy.set(false); this.reload(venteId); },
       error: (e) => { this.docGenBusy.set(false);
-        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du contrat.'); },
+        this.docGenError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.contractGen')); },
     });
   }
 
@@ -160,7 +163,7 @@ export class VenteDetailComponent implements OnInit {
     this.svc.generatePvLivraison(venteId).subscribe({
       next: () => { this.docGenBusy.set(false); this.reload(venteId); },
       error: (e) => { this.docGenBusy.set(false);
-        this.docGenError.set(e?.error?.message ?? 'Échec de la génération du PV.'); },
+        this.docGenError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.pvGen')); },
     });
   }
 
@@ -193,7 +196,7 @@ export class VenteDetailComponent implements OnInit {
     this.svc.upsertRemboursement(venteId, this.editMontant).subscribe({
       next: (r) => { this.remboursement.set(r); this.editMontant = null; this.rembBusy.set(false); },
       error: (e) => { this.rembBusy.set(false);
-        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du montant.'); },
+        this.rembError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.rembAmount')); },
     });
   }
 
@@ -203,12 +206,12 @@ export class VenteDetailComponent implements OnInit {
       this.rembForm.dateRemboursement || undefined, this.rembForm.reference || undefined).subscribe({
       next: (r) => { this.remboursement.set(r); this.showRembForm = false; this.rembBusy.set(false); },
       error: (e) => { this.rembBusy.set(false);
-        this.rembError.set(e?.error?.message ?? 'Échec de l\'enregistrement du remboursement.'); },
+        this.rembError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.rembSave')); },
     });
   }
 
   moyenLabel(m: MoyenRemboursement | null): string {
-    return { VIREMENT: 'Virement', CHEQUE: 'Chèque', ESPECES: 'Espèces', AUTRE: 'Autre' }[m ?? 'AUTRE'] ?? '—';
+    return this.i18n.instant('ventes.paymentMethod.' + (m ?? 'AUTRE'));
   }
 
   openDossierForm(): void {
@@ -224,7 +227,7 @@ export class VenteDetailComponent implements OnInit {
     this.svc.upsertDossierFinancement(venteId, this.dossierForm).subscribe({
       next: (d) => { this.dossier.set(d); this.showDossierForm = false; this.dossierBusy.set(false); },
       error: (e) => { this.dossierBusy.set(false);
-        this.dossierError.set(e?.error?.message ?? 'Échec de l\'enregistrement du dossier.'); },
+        this.dossierError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.dossierSave')); },
     });
   }
 
@@ -243,7 +246,7 @@ export class VenteDetailComponent implements OnInit {
 
   saveCoAcquereur(venteId: string): void {
     if (!this.coAcqForm.nom?.trim() || !this.coAcqForm.prenom?.trim()) {
-      this.coAcqError.set('Nom et prénom sont requis.');
+      this.coAcqError.set(this.i18n.instant('ventes.detail.errors.coAcqRequired'));
       return;
     }
     this.coAcqBusy.set(true);
@@ -255,17 +258,17 @@ export class VenteDetailComponent implements OnInit {
     obs.subscribe({
       next: (c) => { this.coAcquereur.set(c); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
       error: (e) => { this.coAcqBusy.set(false);
-        this.coAcqError.set(e?.error?.message ?? 'Échec de l\'enregistrement du co-acquéreur.'); },
+        this.coAcqError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.coAcqSave')); },
     });
   }
 
   deleteCoAcquereur(venteId: string): void {
     const existing = this.coAcquereur();
-    if (!existing?.id || !confirm('Supprimer le co-acquéreur ?')) return;
+    if (!existing?.id || !confirm(this.i18n.instant('ventes.detail.confirm.deleteCoAcq'))) return;
     this.coAcqBusy.set(true);
     this.svc.deleteCoAcquereur(venteId, existing.id).subscribe({
       next: () => { this.coAcquereur.set(null); this.showCoAcqForm = false; this.coAcqBusy.set(false); },
-      error: () => { this.coAcqBusy.set(false); this.coAcqError.set('La suppression a échoué.'); },
+      error: () => { this.coAcqBusy.set(false); this.coAcqError.set(this.i18n.instant('ventes.detail.errors.coAcqDelete')); },
     });
   }
 
@@ -305,18 +308,18 @@ export class VenteDetailComponent implements OnInit {
     this.svc.confirmReservation(venteId, this.depositAmount ?? 0).subscribe({
       next: (v) => { this.showConfirmForm = false; this.depositAmount = null; this.applyVente(v); },
       error: (e) => { this.vefaBusy.set(false);
-        this.vefaError.set(e?.error?.message ?? 'La confirmation de réservation a échoué (dépôt > 5% ?).'); },
+        this.vefaError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.reservationConfirm')); },
     });
   }
 
   exerciseRetractation(venteId: string): void {
-    if (!confirm('Confirmer la rétractation ? La vente sera annulée et le bien libéré.')) return;
+    if (!confirm(this.i18n.instant('ventes.detail.confirm.retractation'))) return;
     this.vefaError.set('');
     this.vefaBusy.set(true);
     this.svc.exerciseRetractation(venteId).subscribe({
       next: (v) => this.applyVente(v),
       error: (e) => { this.vefaBusy.set(false);
-        this.vefaError.set(e?.error?.message ?? 'La rétractation est impossible (délai expiré ?).'); },
+        this.vefaError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.retractation')); },
     });
   }
 
@@ -336,7 +339,7 @@ export class VenteDetailComponent implements OnInit {
     this.vefaBusy.set(true);
     this.svc.liftReserve(venteId, reserveId).subscribe({
       next: (v) => this.applyVente(v),
-      error: () => { this.vefaBusy.set(false); this.vefaError.set('La levée de réserve a échoué.'); },
+      error: () => { this.vefaBusy.set(false); this.vefaError.set(this.i18n.instant('ventes.detail.errors.reserveLift')); },
     });
   }
 
@@ -351,7 +354,7 @@ export class VenteDetailComponent implements OnInit {
     this.svc.generateEcheancierLegal(venteId).subscribe({
       next: () => { this.vefaBusy.set(false); this.reload(venteId); },
       error: (e) => { this.vefaBusy.set(false);
-        this.vefaError.set(e?.error?.message ?? 'La génération de l\'échéancier légal a échoué.'); },
+        this.vefaError.set(e?.error?.message ?? this.i18n.instant('ventes.detail.errors.echeancierGen')); },
     });
   }
 
@@ -382,7 +385,7 @@ export class VenteDetailComponent implements OnInit {
         this.ech = { libelle: '', montant: 0, dateEcheance: '' };
         this.reload(venteId);
       },
-      error: () => this.echError.set('Erreur lors de l\'ajout.'),
+      error: () => this.echError.set(this.i18n.instant('ventes.detail.errors.echeanceAdd')),
     });
   }
 
@@ -390,7 +393,7 @@ export class VenteDetailComponent implements OnInit {
     this.docGenBusy.set(true);
     this.svc.generateQuittance(venteId, echeanceId).subscribe({
       next: () => { this.docGenBusy.set(false); this.reload(venteId); },
-      error: () => { this.docGenBusy.set(false); this.docError.set('La génération de la quittance a échoué.'); },
+      error: () => { this.docGenBusy.set(false); this.docError.set(this.i18n.instant('ventes.detail.errors.quittanceGen')); },
     });
   }
 
@@ -407,8 +410,8 @@ export class VenteDetailComponent implements OnInit {
     this.inviteMsg.set('');
     this.inviteError.set('');
     this.svc.inviteBuyer(venteId).subscribe({
-      next:  () => { this.inviting.set(false); this.inviteMsg.set('Invitation envoyée avec succès.'); },
-      error: () => { this.inviting.set(false); this.inviteError.set('Erreur lors de l\'envoi.'); },
+      next:  () => { this.inviting.set(false); this.inviteMsg.set(this.i18n.instant('ventes.detail.inviteSuccess')); },
+      error: () => { this.inviting.set(false); this.inviteError.set(this.i18n.instant('ventes.detail.errors.inviteSend')); },
     });
   }
 
@@ -420,7 +423,7 @@ export class VenteDetailComponent implements OnInit {
     this.docError.set('');
     this.svc.uploadDocument(venteId, file).subscribe({
       next: () => { this.docUploading.set(false); this.reload(venteId); },
-      error: () => { this.docUploading.set(false); this.docError.set('Échec du téléversement.'); },
+      error: () => { this.docUploading.set(false); this.docError.set(this.i18n.instant('ventes.detail.errors.upload')); },
     });
     input.value = '';
   }
@@ -435,7 +438,7 @@ export class VenteDetailComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => this.docError.set('Échec du téléchargement.'),
+      error: () => this.docError.set(this.i18n.instant('ventes.detail.errors.download')),
     });
   }
 
@@ -462,7 +465,7 @@ export class VenteDetailComponent implements OnInit {
     this.contractError.set('');
     this.svc.generateContract(venteId).subscribe({
       next:  (v) => { this.vente.set(v); this.contractGenerating.set(false); },
-      error: ()  => { this.contractGenerating.set(false); this.contractError.set('Erreur lors de la génération du contrat.'); },
+      error: ()  => { this.contractGenerating.set(false); this.contractError.set(this.i18n.instant('ventes.detail.errors.contractGenerate')); },
     });
   }
 
@@ -471,7 +474,7 @@ export class VenteDetailComponent implements OnInit {
     this.contractError.set('');
     this.svc.signContract(venteId).subscribe({
       next:  (v) => { this.vente.set(v); this.contractSigning.set(false); },
-      error: ()  => { this.contractSigning.set(false); this.contractError.set('Erreur lors de la signature du contrat.'); },
+      error: ()  => { this.contractSigning.set(false); this.contractError.set(this.i18n.instant('ventes.detail.errors.contractSign')); },
     });
   }
 
@@ -497,7 +500,7 @@ export class VenteDetailComponent implements OnInit {
         this.financingSaving.set(false);
         this.showFinancingForm = false;
       },
-      error: () => { this.financingSaving.set(false); this.financingError.set('Erreur lors de la mise à jour.'); },
+      error: () => { this.financingSaving.set(false); this.financingError.set(this.i18n.instant('ventes.detail.errors.financingUpdate')); },
     });
   }
 
@@ -517,14 +520,7 @@ export class VenteDetailComponent implements OnInit {
   }
 
   statutLabel(s: VenteStatut): string {
-    const labels: Record<VenteStatut, string> = {
-      PROSPECT: 'Prospect', OPTION: 'Option', RESERVE: 'Réservé',
-      EN_RETRACTATION: 'Délai de rétractation', ACOMPTE: 'Acompte',
-      COMPROMIS: 'Compromis', FINANCEMENT: 'Financement', ACTE: 'Acte notarié',
-      LIVRE_AVEC_RESERVES: 'Livré (réserves)', RESERVES_LEVEES: 'Réserves levées',
-      LIVRE_DEFINITIF: 'Livré', ANNULE: 'Annulé',
-    };
-    return labels[s] ?? s;
+    return this.i18n.instant('ventes.statut.' + s);
   }
 
   statutClass(s: VenteStatut): string {
@@ -539,7 +535,7 @@ export class VenteDetailComponent implements OnInit {
   }
 
   echLabel(s: EcheanceStatut): string {
-    return { EN_ATTENTE: 'En attente', PAYEE: 'Payée', EN_RETARD: 'En retard' }[s] ?? s;
+    return this.i18n.instant('ventes.echeanceStatut.' + s);
   }
 
   echClass(s: EcheanceStatut): string {
@@ -547,7 +543,7 @@ export class VenteDetailComponent implements OnInit {
   }
 
   contractStatusLabel(s: ContractStatus): string {
-    return { PENDING: 'En attente', GENERATED: 'Généré', SIGNED: 'Signé' }[s] ?? s;
+    return this.i18n.instant('ventes.contractStatus.' + s);
   }
 
   contractStatusClass(s: ContractStatus): string {
@@ -572,26 +568,12 @@ export class VenteDetailComponent implements OnInit {
 
   financingLabel(t: TypeFinancement | null): string {
     if (!t) return '—';
-    const labels: Record<TypeFinancement, string> = {
-      COMPTANT:          'Comptant',
-      CREDIT_IMMOBILIER: 'Crédit immobilier',
-      PTZ:               'Prêt à taux zéro (PTZ)',
-      MIXTE:             'Mixte',
-    };
-    return labels[t];
+    return this.i18n.instant('ventes.financing.' + t);
   }
 
   motifLabel(m: MotifAnnulation | null): string {
     if (!m) return '—';
-    const labels: Record<MotifAnnulation, string> = {
-      CREDIT_REFUSE:    'Crédit refusé',
-      DESISTEMENT_ACHETEUR: 'Désistement acheteur',
-      CSP_NON_REALISEE: 'Condition suspensive non réalisée',
-      ACCORD_PARTIES:   'Accord entre parties',
-      LITIGE:           'Litige',
-      AUTRE:            'Autre',
-    };
-    return labels[m];
+    return this.i18n.instant('ventes.motif.' + m);
   }
 
   // ── Deal cockpit synthesis (workflow-first) ─────────────────────
@@ -627,16 +609,16 @@ export class VenteDetailComponent implements OnInit {
     if (this.isTerminal(v.statut)) return null;
     const candidates: Array<{ label: string; date: string | null }> = [];
     if (v.statut === 'COMPROMIS' && v.dateFinDelaiReflexion) {
-      candidates.push({ label: 'Fin du délai de rétractation', date: v.dateFinDelaiReflexion });
+      candidates.push({ label: this.i18n.instant('ventes.detail.deadline.reflectionEnd'), date: v.dateFinDelaiReflexion });
     }
     if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && v.dateLimiteFinancement) {
-      candidates.push({ label: 'Limite d’obtention du financement', date: v.dateLimiteFinancement });
+      candidates.push({ label: this.i18n.instant('ventes.detail.deadline.financingLimit'), date: v.dateLimiteFinancement });
     }
     if (v.statut === 'ACTE' && v.dateLivraisonPrevue) {
-      candidates.push({ label: 'Livraison prévue', date: v.dateLivraisonPrevue });
+      candidates.push({ label: this.i18n.instant('ventes.detail.deadline.deliveryExpected'), date: v.dateLivraisonPrevue });
     }
     if (v.expectedClosingDate) {
-      candidates.push({ label: 'Clôture prévue', date: v.expectedClosingDate });
+      candidates.push({ label: this.i18n.instant('ventes.detail.deadline.closingExpected'), date: v.expectedClosingDate });
     }
     const valid = candidates.filter((c): c is { label: string; date: string } => !!c.date);
     if (valid.length === 0) return null;
@@ -667,17 +649,19 @@ export class VenteDetailComponent implements OnInit {
 
     if (v.statut === 'ANNULE') {
       items.push({
-        text: 'Vente annulée' + (v.motifAnnulation ? ' — ' + this.motifLabel(v.motifAnnulation) : ''),
+        text: v.motifAnnulation
+          ? this.i18n.instant('ventes.detail.attention.cancelledMotif', { motif: this.motifLabel(v.motifAnnulation) })
+          : this.i18n.instant('ventes.detail.attention.cancelled'),
         severity: 'info',
       });
       return items;
     }
 
     if (v.statut === 'LIVRE_DEFINITIF') {
-      if (fin.reste > 0) items.push({ text: 'Solde restant : ' + this.formatMad(fin.reste), severity: 'warning' });
-      if (!v.datePvReception) items.push({ text: 'PV de réception non saisi', severity: 'warning' });
-      if (!v.dateTitreFoncier) items.push({ text: 'Titre foncier non enregistré', severity: 'info' });
-      if (items.length === 0) items.push({ text: 'Dossier complet', severity: 'info' });
+      if (fin.reste > 0) items.push({ text: this.i18n.instant('ventes.detail.attention.balanceRemaining', { amount: this.formatMad(fin.reste) }), severity: 'warning' });
+      if (!v.datePvReception) items.push({ text: this.i18n.instant('ventes.detail.attention.pvMissing'), severity: 'warning' });
+      if (!v.dateTitreFoncier) items.push({ text: this.i18n.instant('ventes.detail.attention.titreMissing'), severity: 'info' });
+      if (items.length === 0) items.push({ text: this.i18n.instant('ventes.detail.attention.complete'), severity: 'info' });
       return items;
     }
 
@@ -687,36 +671,36 @@ export class VenteDetailComponent implements OnInit {
     if (v.statut === 'COMPROMIS' && v.dateFinDelaiReflexion) {
       const d = this.daysUntil(v.dateFinDelaiReflexion);
       if (d !== null && d >= 0) {
-        items.push({ text: `Rétractation acheteur possible ${d} j — vente non sécurisée`, severity: 'info' });
+        items.push({ text: this.i18n.instant('ventes.detail.attention.retractationPossible', { days: d }), severity: 'info' });
       }
     }
     if (finDays !== null && finDays < 0 && !v.creditObtenu && needsCredit) {
-      items.push({ text: 'Délai de financement dépassé sans accord — risque de caducité', severity: 'critical' });
+      items.push({ text: this.i18n.instant('ventes.detail.attention.financingOverdue'), severity: 'critical' });
     } else if ((v.statut === 'COMPROMIS' || v.statut === 'FINANCEMENT') && !v.creditObtenu && needsCredit) {
       const crit = finDays !== null && finDays <= 7;
       items.push({
-        text: v.banqueCredit ? `Accord de crédit en attente (${v.banqueCredit})` : 'Financement à confirmer',
+        text: v.banqueCredit ? this.i18n.instant('ventes.detail.attention.creditPending', { bank: v.banqueCredit }) : this.i18n.instant('ventes.detail.attention.financingToConfirm'),
         severity: crit ? 'critical' : 'warning',
       });
     }
     if (v.contractStatus === 'PENDING' && (v.statut === 'FINANCEMENT' || v.statut === 'ACTE')) {
-      items.push({ text: 'Contrat de vente non généré', severity: 'warning' });
+      items.push({ text: this.i18n.instant('ventes.detail.attention.contractNotGenerated'), severity: 'warning' });
     }
     if (v.contractStatus === 'GENERATED') {
-      items.push({ text: 'Contrat généré — à faire signer', severity: 'info' });
+      items.push({ text: this.i18n.instant('ventes.detail.attention.contractToSign'), severity: 'info' });
     }
     if (fin.overdueCount > 0) {
       items.push({
-        text: `${fin.overdueCount} échéance${fin.overdueCount > 1 ? 's' : ''} en retard (${this.formatMad(fin.overdueAmount)})`,
+        text: this.i18n.instant('ventes.detail.attention.overdueEcheances', { count: fin.overdueCount, amount: this.formatMad(fin.overdueAmount) }),
         severity: 'critical',
       });
     }
     if (!fin.hasEcheances && v.statut !== 'COMPROMIS') {
-      items.push({ text: 'Aucun échéancier de paiement défini', severity: 'info' });
+      items.push({ text: this.i18n.instant('ventes.detail.attention.noSchedule'), severity: 'info' });
     }
 
     if (items.length === 0) {
-      items.push({ text: 'Aucune action en attente — prêt pour l’étape suivante', severity: 'info' });
+      items.push({ text: this.i18n.instant('ventes.detail.attention.ready'), severity: 'info' });
     }
     // Surface the most severe items first.
     const rank = { critical: 0, warning: 1, info: 2 };

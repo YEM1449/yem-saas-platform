@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 /**
  * Market-aware legal constants (VEFA). Values are driven by the {@code MARKET_CODE}
@@ -27,6 +29,45 @@ public class MarketConfig {
             default   -> 7;
         };
     }
+
+    /**
+     * Single source of truth for the buyer's withdrawal deadline (the last day on which a
+     * rétractation may still be exercised), given the reference date (typically the reservation /
+     * preliminary-contract signature date).
+     *
+     * <p><b>Convention (current):</b> the window spans {@link #getDelaiRetractationJours()} calendar
+     * days counted from {@code from} inclusive, i.e. the deadline is {@code from + N days}. Both the
+     * deadline that is stored ({@code Vente.dateFinDelaiReflexion}) and every guard that compares
+     * against it MUST go through this method so the convention stays consistent.
+     *
+     * <p>⚠️ <b>REQUIRES LEGAL VERIFICATION</b> by counsel: whether day 0 is the signature day or the
+     * following day, and whether the deadline boundary is inclusive, is jurisdiction-specific
+     * (Loi 44-00 Art. 618-3 / Loi SRU). When confirmed, adjust here only — no call-site changes.
+     */
+    public LocalDate withdrawalDeadline(LocalDate from) {
+        return from.plusDays(getDelaiRetractationJours());
+    }
+
+    /**
+     * Time zone of the active market's legal jurisdiction. Legal deadlines (cooling-off,
+     * option holds, delivery-reserve windows) MUST be computed in this zone — never the JVM
+     * default — so a server running UTC does not produce an off-by-one on a date-precise legal
+     * right (EX-009). Morocco is UTC+1 year-round; France is Europe/Paris (with DST).
+     * Override via {@code app.market.zone-id} if the deployment needs a non-default zone.
+     */
+    public ZoneId getZoneId() {
+        if (zoneIdOverride != null && !zoneIdOverride.isBlank()) {
+            return ZoneId.of(zoneIdOverride.trim());
+        }
+        return switch (marketCode) {
+            case "FR" -> ZoneId.of("Europe/Paris");
+            case "MA" -> ZoneId.of("Africa/Casablanca");
+            default   -> ZoneId.of("Africa/Casablanca");
+        };
+    }
+
+    @Value("${app.market.zone-id:}")
+    private String zoneIdOverride;
 
     /** Max security deposit at signature, as a fraction of price (Art. 618-4 = 5%). */
     public BigDecimal getDepotGarantieMaxPct() {

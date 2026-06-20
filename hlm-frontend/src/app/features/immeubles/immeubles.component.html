@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
-    <h1 class="page-title">Immeubles</h1>
-    <p class="page-subtitle">Gestion des immeubles par projet</p>
+    <h1 class="page-title">{{ 'immeubles.title' | translate }}</h1>
+    <p class="page-subtitle">{{ 'immeubles.subtitle' | translate }}</p>
   </div>
   @if (canCreate) {
     <div class="page-header-actions">
@@ -9,7 +9,7 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Nouvel immeuble
+        {{ 'immeubles.newImmeuble' | translate }}
       </button>
     </div>
   }
@@ -19,8 +19,8 @@
 <div class="toolbar">
   <select class="form-control" style="max-width:250px;height:34px"
           [(ngModel)]="filterProjectId" (ngModelChange)="onFilterChange()"
-          aria-label="Projet">
-    <option value="">Tous les projets</option>
+          [attr.aria-label]="'immeubles.projet' | translate">
+    <option value="">{{ 'immeubles.allProjects' | translate }}</option>
     @for (p of projects; track p.id) {
       <option [value]="p.id">{{ p.name }}</option>
     }
@@ -32,7 +32,7 @@
 }
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="immeubles-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="immeubles-loading-state" [attr.aria-label]="'immeubles.loadingAria' | translate">
     @for (i of [1,2,3,4]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -43,8 +43,8 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🏢</div>
-      <p class="empty-state-title">Aucun immeuble</p>
-      <p class="empty-state-desc">Ajoutez votre premier immeuble dans un projet.</p>
+      <p class="empty-state-title">{{ 'immeubles.emptyTitle' | translate }}</p>
+      <p class="empty-state-desc">{{ 'immeubles.emptyDesc' | translate }}</p>
     </div>
   </div>
 }
@@ -55,11 +55,11 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Nom</th>
-            <th>Projet</th>
-            <th>Adresse</th>
-            <th>Étages</th>
-            <th>Description</th>
+            <th>{{ 'immeubles.thNom' | translate }}</th>
+            <th>{{ 'immeubles.thProjet' | translate }}</th>
+            <th>{{ 'immeubles.thAdresse' | translate }}</th>
+            <th>{{ 'immeubles.thEtages' | translate }}</th>
+            <th>{{ 'immeubles.thDescription' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -83,43 +83,43 @@
   <div class="modal-backdrop" (click)="closeModal()"></div>
   <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title">Nouvel immeuble</h2>
-      <button class="modal-close" (click)="closeModal()" aria-label="Fermer">&times;</button>
+      <h2 class="modal-title">{{ 'immeubles.modalTitle' | translate }}</h2>
+      <button class="modal-close" (click)="closeModal()" [attr.aria-label]="'immeubles.close' | translate">&times;</button>
     </div>
     <div class="modal-body">
       @if (submitError) {
         <div class="alert alert-error" style="margin-bottom:12px;">{{ submitError }}</div>
       }
       <div class="form-group">
-        <label class="form-label">Projet <span class="required">*</span></label>
+        <label class="form-label">{{ 'immeubles.projet' | translate }} <span class="required">*</span></label>
         <select class="form-control" [(ngModel)]="form.projectId">
-          <option value="">— Sélectionner un projet —</option>
+          <option value="">{{ 'immeubles.selectProject' | translate }}</option>
           @for (p of projects; track p.id) {
             <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Nom <span class="required">*</span></label>
-        <input class="form-control" [(ngModel)]="form.nom" placeholder="Ex: Tour A, Bât. B" />
+        <label class="form-label">{{ 'immeubles.fNom' | translate }} <span class="required">*</span></label>
+        <input class="form-control" [(ngModel)]="form.nom" [placeholder]="'immeubles.nomPlaceholder' | translate" />
       </div>
       <div class="form-group">
-        <label class="form-label">Adresse</label>
-        <input class="form-control" [(ngModel)]="form.adresse" placeholder="Adresse de l'immeuble" />
+        <label class="form-label">{{ 'immeubles.fAdresse' | translate }}</label>
+        <input class="form-control" [(ngModel)]="form.adresse" [placeholder]="'immeubles.adressePlaceholder' | translate" />
       </div>
       <div class="form-group">
-        <label class="form-label">Nombre d'étages</label>
+        <label class="form-label">{{ 'immeubles.fEtages' | translate }}</label>
         <input type="number" class="form-control" [(ngModel)]="form.nbEtages" min="0" />
       </div>
       <div class="form-group">
-        <label class="form-label">Description</label>
+        <label class="form-label">{{ 'immeubles.fDescription' | translate }}</label>
         <textarea class="form-control" [(ngModel)]="form.description" rows="3"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
+      <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'immeubles.cancel' | translate }}</button>
       <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting">
-        @if (submitting) { Enregistrement... } @else { Créer }
+        @if (submitting) { {{ 'immeubles.saving' | translate }} } @else { {{ 'immeubles.create' | translate }} }
       </button>
     </div>
   </div>

@@ -361,9 +361,10 @@ test.describe('Vente pipeline', () => {
     await page.fill('[data-testid="ech-date"]', '2026-12-31');
     await page.click('[data-testid="ech-submit"]');
 
-    // Row should appear in the table
+    // Row should appear in the table. Amounts are grouped with dots under the app's
+    // fr-MA (Morocco) locale — see LOCALE_ID in app.config.ts — e.g. 450000 → "450.000".
     await expect(page.locator('.data-table tbody')).toContainText('Acompte 30%', { timeout: 8000 });
-    await expect(page.locator('.data-table tbody')).toContainText('450 000');
+    await expect(page.locator('.data-table tbody')).toContainText('450.000');
   });
 
 });

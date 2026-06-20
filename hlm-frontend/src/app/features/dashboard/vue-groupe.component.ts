@@ -1,4 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GroupDashboardService, GroupDashboard } from './group-dashboard.service';
@@ -13,17 +15,17 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
 @Component({
   selector: 'app-vue-groupe',
   standalone: true,
-  imports: [DecimalPipe, RouterLink],
+  imports: [DecimalPipe, RouterLink, TranslatePipe],
   template: `
     <div class="page">
       <header class="page-head">
         <div>
-          <h1>Vue Groupe</h1>
-          <p class="sub">Vos sociétés consolidées · chiffre d'affaires, stock, trésorerie et alertes.</p>
+          <h1>{{ 'dashboard.vueGroupe.title' | translate }}</h1>
+          <p class="sub">{{ 'dashboard.vueGroupe.sub' | translate }}</p>
         </div>
         <div class="head-actions">
-          <a class="btn btn-sm btn-secondary" routerLink="/app/groupe/clients">Clients récurrents</a>
-          <button class="btn btn-sm btn-secondary" (click)="reload()" title="Actualiser">Actualiser</button>
+          <a class="btn btn-sm btn-secondary" routerLink="/app/groupe/clients">{{ 'dashboard.vueGroupe.recurringClients' | translate }}</a>
+          <button class="btn btn-sm btn-secondary" (click)="reload()" [title]="'dashboard.vueGroupe.refresh' | translate">{{ 'dashboard.vueGroupe.refresh' | translate }}</button>
         </div>
       </header>
 
@@ -38,7 +40,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
         <div class="empty-state">
           <p>{{ error() }}</p>
           <div class="empty-state-actions">
-            <button class="btn btn-secondary" (click)="reload()">Réessayer</button>
+            <button class="btn btn-secondary" (click)="reload()">{{ 'dashboard.vueGroupe.retry' | translate }}</button>
           </div>
         </div>
       }
@@ -47,24 +49,24 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
         <!-- Group totals -->
         <section class="kpi-row" data-testid="groupe-totals">
           <div class="kpi-card good">
-            <span class="kpi-label">CA confirmé groupe (acte et au-delà)</span>
+            <span class="kpi-label">{{ 'dashboard.vueGroupe.caConfirme' | translate }}</span>
             <span class="kpi-value">{{ d.totals.caConfirme | number:'1.0-0' }} <small>MAD</small></span>
-            <span class="kpi-foot">{{ d.totals.caEnCours | number:'1.0-0' }} MAD en pipeline</span>
+            <span class="kpi-foot">{{ 'dashboard.vueGroupe.caEnPipeline' | translate:{ amount: (d.totals.caEnCours | number:'1.0-0') } }}</span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-label">Encaissé</span>
+            <span class="kpi-label">{{ 'dashboard.vueGroupe.encaisse' | translate }}</span>
             <span class="kpi-value">{{ d.totals.encaisseTotal | number:'1.0-0' }} <small>MAD</small></span>
-            <span class="kpi-foot">{{ d.totals.aEncaisser | number:'1.0-0' }} MAD à encaisser</span>
+            <span class="kpi-foot">{{ 'dashboard.vueGroupe.aEncaisser' | translate:{ amount: (d.totals.aEncaisser | number:'1.0-0') } }}</span>
           </div>
           <div class="kpi-card" [class.bad]="d.totals.enRetardCount > 0">
-            <span class="kpi-label">En retard ({{ d.totals.enRetardCount }})</span>
+            <span class="kpi-label">{{ 'dashboard.vueGroupe.enRetard' | translate:{ count: d.totals.enRetardCount } }}</span>
             <span class="kpi-value">{{ d.totals.enRetardMontant | number:'1.0-0' }} <small>MAD</small></span>
-            <span class="kpi-foot">appels de fonds échus, toutes sociétés</span>
+            <span class="kpi-foot">{{ 'dashboard.vueGroupe.appelsEchus' | translate }}</span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-label">Stock groupe</span>
-            <span class="kpi-value">{{ d.totals.unitsDisponibles }} <small>disponibles</small></span>
-            <span class="kpi-foot">{{ d.totals.unitsVendus }} vendus · absorption {{ d.totals.absorptionPct | number:'1.0-1' }} %</span>
+            <span class="kpi-label">{{ 'dashboard.vueGroupe.stockGroupe' | translate }}</span>
+            <span class="kpi-value">{{ d.totals.unitsDisponibles }} <small>{{ 'dashboard.vueGroupe.disponibles' | translate }}</small></span>
+            <span class="kpi-foot">{{ 'dashboard.vueGroupe.vendusAbsorption' | translate:{ sold: d.totals.unitsVendus, pct: (d.totals.absorptionPct | number:'1.0-1') } }}</span>
           </div>
         </section>
 
@@ -72,32 +74,32 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
         @if (d.totals.optionsActives + d.totals.retractationsEnCours + d.totals.ventesStallees > 0) {
           <section class="alert-strip" data-testid="groupe-alerts">
             @if (d.totals.optionsActives > 0) {
-              <span class="alert-chip">{{ d.totals.optionsActives }} option(s) active(s)</span>
+              <span class="alert-chip">{{ 'dashboard.vueGroupe.optionsActives' | translate:{ count: d.totals.optionsActives } }}</span>
             }
             @if (d.totals.retractationsEnCours > 0) {
-              <span class="alert-chip warn">{{ d.totals.retractationsEnCours }} rétractation(s) en cours</span>
+              <span class="alert-chip warn">{{ 'dashboard.vueGroupe.retractations' | translate:{ count: d.totals.retractationsEnCours } }}</span>
             }
             @if (d.totals.ventesStallees > 0) {
-              <span class="alert-chip bad">{{ d.totals.ventesStallees }} vente(s) bloquée(s) 30 j+</span>
+              <span class="alert-chip bad">{{ 'dashboard.vueGroupe.ventesBloquees' | translate:{ count: d.totals.ventesStallees } }}</span>
             }
           </section>
         }
 
         <!-- Per-société comparison -->
         <section class="card societes-card">
-          <h2 class="card-title">Par société <span class="muted">({{ d.totals.societesCount }})</span></h2>
+          <h2 class="card-title">{{ 'dashboard.vueGroupe.parSociete' | translate }} <span class="muted">({{ d.totals.societesCount }})</span></h2>
           <div class="table-wrap">
             <table class="table" data-testid="groupe-societes-table">
               <thead>
                 <tr>
-                  <th>Société</th>
-                  <th class="num">Stock (dispo · rés. · vendus)</th>
-                  <th class="num">Absorption</th>
-                  <th class="num">CA confirmé</th>
-                  <th class="num">Pipeline en cours</th>
-                  <th class="num">Encaissé</th>
-                  <th class="num">En retard</th>
-                  <th class="num">Alertes</th>
+                  <th>{{ 'dashboard.vueGroupe.thSociete' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thStock' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thAbsorption' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thCaConfirme' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thPipeline' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thEncaisse' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thEnRetard' | translate }}</th>
+                  <th class="num">{{ 'dashboard.vueGroupe.thAlertes' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,7 +117,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
                     <td class="num">{{ s.encaisseTotal | number:'1.0-0' }} MAD</td>
                     <td class="num">
                       @if (s.enRetardCount > 0) {
-                        <span class="badge badge-error">{{ s.enRetardMontant | number:'1.0-0' }} MAD ({{ s.enRetardCount }})</span>
+                        <span class="badge badge-error">{{ 'dashboard.vueGroupe.enRetardBadge' | translate:{ amount: (s.enRetardMontant | number:'1.0-0'), count: s.enRetardCount } }}</span>
                       } @else {
                         <span class="muted">—</span>
                       }
@@ -123,7 +125,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
                     <td class="num">
                       @if (s.optionsActives + s.retractationsEnCours + s.ventesStallees > 0) {
                         <span class="muted">
-                          {{ s.optionsActives }} opt · {{ s.retractationsEnCours }} rétr. · {{ s.ventesStallees }} bloq.
+                          {{ 'dashboard.vueGroupe.alertesShort' | translate:{ opt: s.optionsActives, retr: s.retractationsEnCours, bloq: s.ventesStallees } }}
                         </span>
                       } @else {
                         <span class="muted">—</span>
@@ -136,8 +138,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
           </div>
           @if (d.societes.length === 1) {
             <p class="single-note">
-              Une seule société est rattachée à votre compte administrateur. La Vue Groupe prend
-              tout son sens dès qu'une deuxième société vous est rattachée.
+              {{ 'dashboard.vueGroupe.singleNote' | translate }}
             </p>
           }
         </section>
@@ -177,6 +178,7 @@ import { GroupDashboardService, GroupDashboard } from './group-dashboard.service
   `]
 })
 export class VueGroupeComponent implements OnInit {
+  private i18n = inject(I18nService);
   private api = inject(GroupDashboardService);
 
   loading = signal(true);
@@ -191,7 +193,7 @@ export class VueGroupeComponent implements OnInit {
     this.api.getDashboard().subscribe({
       next: d => { this.data.set(d); this.loading.set(false); },
       error: () => {
-        this.error.set('Impossible de charger la Vue Groupe. Vérifiez votre connexion puis réessayez.');
+        this.error.set(this.i18n.instant('dashboard.vueGroupe.loadError'));
         this.loading.set(false);
       }
     });

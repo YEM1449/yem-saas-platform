@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -12,7 +14,7 @@ type Tab = 'objectifs' | 'projets';
 @Component({
   selector: 'app-user-settings-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   styles: [`
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; }
     .modal { background: #fff; border-radius: 10px; padding: 1.5rem; width: min(540px, 95vw); max-height: 90vh; overflow-y: auto;
@@ -50,19 +52,19 @@ type Tab = 'objectifs' | 'projets';
       <div class="modal">
         <div class="modal-header">
           <div>
-            <div class="modal-title">Paramètres — {{ membre.nomComplet }}</div>
+            <div class="modal-title">{{ 'adminUsers.settings.title' | translate:{ name: membre.nomComplet } }}</div>
             <div class="modal-sub">{{ membre.email }}</div>
           </div>
-          <button class="close-btn" (click)="close.emit()" title="Fermer">✕</button>
+          <button class="close-btn" (click)="close.emit()" [title]="'adminUsers.settings.close' | translate">✕</button>
         </div>
 
         <div class="tabs">
-          <button class="tab" [class.active]="tab === 'objectifs'" (click)="tab = 'objectifs'">Objectifs mensuels</button>
-          <button class="tab" [class.active]="tab === 'projets'" (click)="tab = 'projets'">Accès projets</button>
+          <button class="tab" [class.active]="tab === 'objectifs'" (click)="tab = 'objectifs'">{{ 'adminUsers.settings.tabObjectifs' | translate }}</button>
+          <button class="tab" [class.active]="tab === 'projets'" (click)="tab = 'projets'">{{ 'adminUsers.settings.tabProjets' | translate }}</button>
         </div>
 
         @if (loading) {
-          <div class="loading">Chargement…</div>
+          <div class="loading">{{ 'adminUsers.settings.loading' | translate }}</div>
         } @else {
 
           <!-- ── Objectifs tab ─────────────────────────────────────────────── -->
@@ -72,31 +74,31 @@ type Tab = 'objectifs' | 'projets';
               @if (quotaSuccess) { <div class="alert alert-success">{{ quotaSuccess }}</div> }
 
               <label>
-                Mois
+                {{ 'adminUsers.settings.mois' | translate }}
                 <input type="month" [(ngModel)]="quotaMonth" (change)="onMonthChange()" />
               </label>
 
               <div class="row2">
                 <label>
-                  Objectif CA (€)
-                  <input type="number" [(ngModel)]="caCible" min="0" step="1000" placeholder="ex: 500000" />
-                  <span class="hint">Laisser vide = pas d'objectif CA</span>
+                  {{ 'adminUsers.settings.objectifCa' | translate }}
+                  <input type="number" [(ngModel)]="caCible" min="0" step="1000" [placeholder]="'adminUsers.settings.caPlaceholder' | translate" />
+                  <span class="hint">{{ 'adminUsers.settings.caHint' | translate }}</span>
                 </label>
                 <label>
-                  Objectif ventes (nb)
-                  <input type="number" [(ngModel)]="ventesCountCible" min="0" step="1" placeholder="ex: 5" />
-                  <span class="hint">Laisser vide = pas d'objectif ventes</span>
+                  {{ 'adminUsers.settings.objectifVentes' | translate }}
+                  <input type="number" [(ngModel)]="ventesCountCible" min="0" step="1" [placeholder]="'adminUsers.settings.ventesPlaceholder' | translate" />
+                  <span class="hint">{{ 'adminUsers.settings.ventesHint' | translate }}</span>
                 </label>
               </div>
 
               <div class="info-box">
-                Les objectifs mensuels personnalisés ont priorité sur les objectifs de la société. Ils s'affichent dans la barre de pacing du tableau de bord.
+                {{ 'adminUsers.settings.infoObjectifs' | translate }}
               </div>
 
               <div class="actions">
-                <button class="btn-secondary" (click)="close.emit()">Annuler</button>
+                <button class="btn-secondary" (click)="close.emit()">{{ 'adminUsers.settings.cancel' | translate }}</button>
                 <button class="btn-primary" [disabled]="savingQuota" (click)="saveQuota()">
-                  {{ savingQuota ? 'Enregistrement…' : 'Enregistrer' }}
+                  {{ (savingQuota ? 'adminUsers.settings.saving' : 'adminUsers.settings.save') | translate }}
                 </button>
               </div>
             </div>
@@ -109,11 +111,11 @@ type Tab = 'objectifs' | 'projets';
               @if (accessSuccess) { <div class="alert alert-success">{{ accessSuccess }}</div> }
 
               <div class="info-box" style="margin-bottom: 0.75rem">
-                <strong>Liste vide = accès total</strong> à tous les projets. Cochez des projets pour restreindre l'accès.
+                <strong>{{ 'adminUsers.settings.infoProjetsStrong' | translate }}</strong>{{ 'adminUsers.settings.infoProjetsRest' | translate }}
               </div>
 
               @if (projects.length === 0) {
-                <div style="color:#6b7280; font-size:0.85rem; padding:0.5rem 0">Aucun projet trouvé.</div>
+                <div style="color:#6b7280; font-size:0.85rem; padding:0.5rem 0">{{ 'adminUsers.settings.noProjects' | translate }}</div>
               } @else {
                 <div class="project-list">
                   @for (p of projects; track p.id) {
@@ -123,7 +125,7 @@ type Tab = 'objectifs' | 'projets';
                              (change)="toggleProject(p.id)" />
                       {{ p.name }}
                       @if (p.status === 'ARCHIVED') {
-                        <span style="font-size:0.7rem;color:#9ca3af;margin-left:auto">(archivé)</span>
+                        <span style="font-size:0.7rem;color:#9ca3af;margin-left:auto">{{ 'adminUsers.settings.archived' | translate }}</span>
                       }
                     </label>
                   }
@@ -131,13 +133,13 @@ type Tab = 'objectifs' | 'projets';
               }
 
               <div style="font-size:0.78rem;color:#6b7280;margin-top:0.5rem">
-                {{ selectedProjectIds.size === 0 ? 'Accès total (aucune restriction)' : selectedProjectIds.size + ' projet(s) sélectionné(s)' }}
+                {{ selectedProjectIds.size === 0 ? ('adminUsers.settings.accessTotal' | translate) : ('adminUsers.settings.projectsSelected' | translate:{ count: selectedProjectIds.size }) }}
               </div>
 
               <div class="actions">
-                <button class="btn-secondary" (click)="close.emit()">Annuler</button>
+                <button class="btn-secondary" (click)="close.emit()">{{ 'adminUsers.settings.cancel' | translate }}</button>
                 <button class="btn-primary" [disabled]="savingAccess" (click)="saveAccess()">
-                  {{ savingAccess ? 'Enregistrement…' : 'Enregistrer' }}
+                  {{ (savingAccess ? 'adminUsers.settings.saving' : 'adminUsers.settings.save') | translate }}
                 </button>
               </div>
             </div>
@@ -153,6 +155,7 @@ export class UserSettingsDialogComponent implements OnInit {
 
   private svc     = inject(AdminUserService);
   private projSvc = inject(ProjectService);
+  private i18n = inject(I18nService);
 
   tab: Tab = 'objectifs';
   loading = true;
@@ -213,11 +216,11 @@ export class UserSettingsDialogComponent implements OnInit {
     this.svc.upsertQuota(this.membre.id, req).subscribe({
       next: (q) => {
         this.applyQuota(q);
-        this.quotaSuccess = 'Objectifs enregistrés.';
+        this.quotaSuccess = this.i18n.instant('adminUsers.settings.objectifsSaved');
         this.savingQuota  = false;
       },
       error: () => {
-        this.quotaError  = 'Erreur lors de l\'enregistrement.';
+        this.quotaError  = this.i18n.instant('adminUsers.settings.saveError');
         this.savingQuota = false;
       },
     });
@@ -235,11 +238,11 @@ export class UserSettingsDialogComponent implements OnInit {
     this.svc.setProjectAccess(this.membre.id, { projectIds: [...this.selectedProjectIds] }).subscribe({
       next: (res) => {
         this.selectedProjectIds = new Set(res.projectIds);
-        this.accessSuccess = 'Accès projets enregistrés.';
+        this.accessSuccess = this.i18n.instant('adminUsers.settings.accessSaved');
         this.savingAccess  = false;
       },
       error: () => {
-        this.accessError  = 'Erreur lors de l\'enregistrement.';
+        this.accessError  = this.i18n.instant('adminUsers.settings.saveError');
         this.savingAccess = false;
       },
     });

@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.vente.domain;
 
+import com.yem.hlm.backend.common.crypto.EncryptedStringConverter;
 import com.yem.hlm.backend.contact.domain.SituationMatrimoniale;
 import com.yem.hlm.backend.contact.domain.TypeAcquereur;
 import jakarta.persistence.*;
@@ -33,9 +34,11 @@ public class CoAcquereur {
 
     @Setter @Column(name = "nom", nullable = false, length = 100)    private String nom;
     @Setter @Column(name = "prenom", nullable = false, length = 100) private String prenom;
-    @Setter @Column(name = "cin_numero", length = 20)                private String cinNumero;
+    @Setter @Convert(converter = EncryptedStringConverter.class)     // DA-010 — CIN at rest (CNDP)
+    @Column(name = "cin_numero", length = 255)                       private String cinNumero;
     @Setter @Column(name = "cin_date_delivrance")                    private LocalDate cinDateDelivrance;
-    @Setter @Column(name = "passeport_numero", length = 30)          private String passeportNumero;
+    @Setter @Convert(converter = EncryptedStringConverter.class)     // DA-010
+    @Column(name = "passeport_numero", length = 255)                 private String passeportNumero;
     @Setter @Column(name = "date_naissance")                         private LocalDate dateNaissance;
     @Setter @Column(name = "nationalite", length = 50)               private String nationalite;
     @Setter @Column(name = "pays_residence", length = 50)            private String paysResidence;

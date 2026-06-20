@@ -1,26 +1,27 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DecimalPipe } from '@angular/common';
 import { TimeToCloseRow } from '../dashboard-cockpit.service';
 
 @Component({
   selector: 'app-time-to-close',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="widget">
       <div class="widget-header">
-        <span class="widget-title">Durée du cycle de vente</span>
-        <span class="widget-sub">Ventes livrées uniquement</span>
+        <span class="widget-title">{{ 'dashboard.cockpit.timeToClose.title' | translate }}</span>
+        <span class="widget-sub">{{ 'dashboard.cockpit.timeToClose.sub' | translate }}</span>
       </div>
 
       @if (totalDeals === 0) {
-        <div class="empty-state">Aucune vente livrée pour calculer le cycle.</div>
+        <div class="empty-state">{{ 'dashboard.cockpit.timeToClose.empty' | translate }}</div>
       } @else {
         @if (avgDays) {
           <div class="avg-row">
             <span class="avg-val">{{ avgDays | number:'1.0-0' }} jours</span>
-            <span class="avg-label">délai moyen de closing</span>
+            <span class="avg-label">{{ 'dashboard.cockpit.timeToClose.avgLabel' | translate }}</span>
             <span class="avg-chip" [class.chip-good]="avgDays < 60"
                   [class.chip-warn]="avgDays >= 60 && avgDays < 120"
                   [class.chip-bad]="avgDays >= 120">
@@ -43,7 +44,7 @@ import { TimeToCloseRow } from '../dashboard-cockpit.service';
               <span class="ttc-count">{{ r.count }}</span>
               <span class="ttc-pct">{{ barPct(r.count) | number:'1.0-0' }}%</span>
               @if (r.avgDays != null) {
-                <span class="ttc-avg">moy. {{ r.avgDays | number:'1.0-0' }}j</span>
+                <span class="ttc-avg">{{ 'dashboard.cockpit.timeToClose.avg' | translate:{ days: (r.avgDays | number:'1.0-0') } }}</span>
               }
             </div>
           }
@@ -55,8 +56,7 @@ import { TimeToCloseRow } from '../dashboard-cockpit.service';
             <path d="M6 4v3" stroke="#6366f1" stroke-width="1.4" stroke-linecap="round"/>
             <circle cx="6" cy="8.5" r=".5" fill="#6366f1"/>
           </svg>
-          <span>{{ totalDeals }} vente{{ totalDeals > 1 ? 's' : '' }} livrée{{ totalDeals > 1 ? 's' : '' }} analysées
-            @if (fastCount > 0) { · {{ fastCount }} en moins de 30 jours }</span>
+          <span>{{ 'dashboard.cockpit.timeToClose.summary' | translate:{ count: totalDeals } }}@if (fastCount > 0) {{{ 'dashboard.cockpit.timeToClose.fast' | translate:{ count: fastCount } }}}</span>
         </div>
       }
     </div>

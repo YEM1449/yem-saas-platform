@@ -1,21 +1,21 @@
 <!-- Page header -->
 <div class="page-header">
   <div>
-    <h1 class="page-title">Réservations</h1>
+    <h1 class="page-title">{{ 'reservations.title' | translate }}</h1>
   </div>
 </div>
 
 <!-- Filter toolbar -->
 <div class="toolbar">
-  <label class="form-label" style="margin:0; white-space:nowrap;">Statut</label>
+  <label class="form-label" style="margin:0; white-space:nowrap;">{{ 'reservations.statutLabel' | translate }}</label>
   <select class="form-control" style="width:auto; height:34px;" [(ngModel)]="filterStatus">
-    <option value="">Tous les statuts</option>
+    <option value="">{{ 'reservations.allStatuses' | translate }}</option>
     @for (s of statuses; track s) {
-      <option [value]="s">{{ s }}</option>
+      <option [value]="s">{{ 'reservations.status.' + s | translate }}</option>
     }
   </select>
   @if (!loading) {
-    <span class="stat-chip">{{ filtered.length }} réservation(s)</span>
+    <span class="stat-chip">{{ 'reservations.count' | translate:{ count: filtered.length } }}</span>
   }
 </div>
 
@@ -26,7 +26,7 @@
 
 <!-- Loading -->
 @if (loading) {
-  <div class="skeleton-stack" data-testid="reservations-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="reservations-loading-state" [attr.aria-label]="'reservations.loadingAria' | translate">
     <span class="skeleton skeleton-row"></span>
     <span class="skeleton skeleton-row"></span>
     <span class="skeleton skeleton-row"></span>
@@ -39,9 +39,9 @@
   <div class="card">
     <div class="empty-state">
       <div class="empty-state-icon">🔖</div>
-      <p class="empty-state-title">Aucun résultat trouvé.</p>
+      <p class="empty-state-title">{{ 'reservations.emptyTitle' | translate }}</p>
       @if (filterStatus) {
-        <button class="btn btn-secondary btn-sm" (click)="filterStatus=''">Filtrer</button>
+        <button class="btn btn-secondary btn-sm" (click)="filterStatus=''">{{ 'reservations.filter' | translate }}</button>
       }
     </div>
   </div>
@@ -53,14 +53,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Réf.</th>
-            <th>Client</th>
-            <th>Bien réservé</th>
-            <th class="text-right">Montant</th>
-            <th>Statut</th>
-            <th>Date</th>
-            <th>Expiration</th>
-            <th class="text-right">Actions</th>
+            <th>{{ 'reservations.thRef' | translate }}</th>
+            <th>{{ 'reservations.thClient' | translate }}</th>
+            <th>{{ 'reservations.thBien' | translate }}</th>
+            <th class="text-right">{{ 'reservations.thMontant' | translate }}</th>
+            <th>{{ 'reservations.thStatut' | translate }}</th>
+            <th>{{ 'reservations.thDate' | translate }}</th>
+            <th>{{ 'reservations.thExpiration' | translate }}</th>
+            <th class="text-right">{{ 'reservations.thActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -70,10 +70,10 @@
               <td>
                 <div style="display:flex;align-items:center;gap:6px">
                   <a class="ref-badge" [routerLink]="['/app/reservations', r.id]"
-                     title="Voir le détail">{{ r.reservationRef }}</a>
+                     [title]="'reservations.seeDetailTitle' | translate">{{ r.reservationRef }}</a>
                   <button class="btn btn-ghost btn-sm"
                           style="padding:2px 6px;font-size:11px"
-                          [title]="copiedRef === r.reservationRef ? 'Copié !' : 'Copier'"
+                          [title]="(copiedRef === r.reservationRef ? 'reservations.copied' : 'reservations.copy') | translate"
                           (click)="copyRef(r.reservationRef)">
                     @if (copiedRef === r.reservationRef) { ✓ } @else { ⎘ }
                   </button>
@@ -97,9 +97,9 @@
                 }
               </td>
               <td>
-                <span [class]="badgeClass(r.status)">{{ r.status }}</span>
+                <span [class]="badgeClass(r.status)">{{ 'reservations.status.' + r.status | translate }}</span>
                 @if (isExpiringSoon(r)) {
-                  <span class="badge badge-warning" style="margin-left:4px">⚠ Expire bientôt</span>
+                  <span class="badge badge-warning" style="margin-left:4px">{{ 'reservations.expireSoon' | translate }}</span>
                 }
               </td>
               <td class="td-muted">{{ r.reservationDate | date:'dd/MM/yyyy' }}</td>
@@ -111,21 +111,21 @@
                           [class.btn-secondary]="!isDocExpanded(r.id)"
                           [class.btn-primary]="isDocExpanded(r.id)"
                           (click)="toggleDocs(r.id)"
-                          title="Documents de réservation">
+                          [title]="'reservations.docsTitle' | translate">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-right:3px">
                       <rect x="2" y="1" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/>
                       <path d="M4 4h4M4 6.5h4M4 9h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                     </svg>
-                    Docs
+                    {{ 'reservations.docs' | translate }}
                   </button>
                   @if (canWrite && r.status === 'ACTIVE') {
                     <button class="btn btn-sm btn-primary"
                             (click)="openConvertToVente(r)"
-                            title="Transformer en vente">
-                      Convertir en vente
+                            [title]="'reservations.convertTitle' | translate">
+                      {{ 'reservations.convert' | translate }}
                     </button>
                     <button class="btn btn-sm btn-danger"
-                            (click)="cancel(r)">Annuler la réservation</button>
+                            (click)="cancel(r)">{{ 'reservations.cancelReservation' | translate }}</button>
                   }
                 </div>
               </td>
@@ -138,9 +138,9 @@
                   <div class="doc-panel">
                     <div class="doc-panel-header">
                       <span class="doc-panel-title">
-                        Documents — {{ contactName(r.contactId) }} · {{ propertyName(r.propertyId) }}
+                        {{ 'reservations.docsPanel' | translate:{ contact: contactName(r.contactId), property: propertyName(r.propertyId) } }}
                       </span>
-                      <button class="btn btn-sm btn-ghost" (click)="toggleDocs(r.id)">✕ Fermer</button>
+                      <button class="btn btn-sm btn-ghost" (click)="toggleDocs(r.id)">{{ 'reservations.close' | translate }}</button>
                     </div>
                     <app-document-list
                       entityType="RESERVATION"

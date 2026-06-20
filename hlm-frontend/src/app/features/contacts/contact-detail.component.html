@@ -1,7 +1,7 @@
-<p><a routerLink="/app/contacts">&larr; Retour aux contacts</a></p>
+<p><a routerLink="/app/contacts">{{ 'contacts.detail.back' | translate }}</a></p>
 
 @if (loading) {
-  <div class="skeleton-stack" data-testid="contact-detail-loading-state" aria-label="Chargement du contact…">
+  <div class="skeleton-stack" data-testid="contact-detail-loading-state" [attr.aria-label]="'contacts.detail.loadingAria' | translate">
     <span class="skeleton skeleton-text-lg skeleton-w-50"></span>
     <span class="skeleton skeleton-card" style="height:140px"></span>
     <div class="skeleton-grid">
@@ -31,20 +31,20 @@
 
     @if (isTempClientExpired()) {
       <div class="alert alert-warning">
-        Attention : la période client temporaire est expirée. Le contact doit être converti ou relancé.
+        {{ 'contacts.detail.tempExpired' | translate }}
       </div>
     }
 
     @if (contact.tempClientUntil && !isTempClientExpired()) {
       <div class="alert alert-info">
-        Client temporaire jusqu'au {{ contact.tempClientUntil | date:'dd/MM/yyyy' }}.
+        {{ 'contacts.detail.tempUntil' | translate }} {{ contact.tempClientUntil | date:'dd/MM/yyyy' }}.
       </div>
     }
 
     <!-- Status transition buttons -->
     @if (allowedTransitions.length > 0) {
       <div class="transition-bar">
-        <span class="transition-label">Changer le statut :</span>
+        <span class="transition-label">{{ 'contacts.detail.changeStatus' | translate }}</span>
         @for (s of allowedTransitions; track s) {
           <button class="btn btn-sm btn-outline"
                   [disabled]="updatingStatus"
@@ -62,7 +62,7 @@
     @if (!contact.qualified) {
       <div class="transition-bar">
         <button class="btn btn-sm btn-primary" (click)="toggleQualifyForm()">
-          {{ showQualifyForm ? 'Annuler' : 'Qualifier comme prospect' }}
+          {{ showQualifyForm ? ('common.actions.cancel' | translate) : ('contacts.detail.qualifyAsProspect' | translate) }}
         </button>
       </div>
     }
@@ -71,7 +71,7 @@
   <!-- ── Qualify form ──────────────────────────────────────────────────────── -->
   @if (showQualifyForm) {
     <div class="card qualify-form">
-      <h3 class="card-title">Qualifier le prospect</h3>
+      <h3 class="card-title">{{ 'contacts.detail.qualifyTitle' | translate }}</h3>
 
       @if (qualifyError) {
         <p class="error">{{ qualifyError }}</p>
@@ -79,42 +79,43 @@
 
       <div class="form-grid">
         <div class="field">
-          <label>Source</label>
-          <input type="text" [(ngModel)]="qualifySource" placeholder="Ex : Site web, Référence…" maxlength="100" />
+          <label>{{ 'contacts.detail.source' | translate }}</label>
+          <input type="text" [(ngModel)]="qualifySource" [placeholder]="'contacts.detail.sourcePlaceholder' | translate" maxlength="100" />
         </div>
         <div class="field">
-          <label>Budget min (MAD)</label>
+          <label>{{ 'contacts.detail.budgetMin' | translate }}</label>
           <input type="number" [(ngModel)]="qualifyBudgetMin" min="0" placeholder="0" />
         </div>
         <div class="field">
-          <label>Budget max (MAD)</label>
+          <label>{{ 'contacts.detail.budgetMax' | translate }}</label>
           <input type="number" [(ngModel)]="qualifyBudgetMax" min="0" placeholder="0" />
         </div>
         <div class="field field-full">
-          <label>Notes</label>
-          <textarea [(ngModel)]="qualifyNotes" rows="3" maxlength="5000" placeholder="Informations complémentaires…"></textarea>
+          <label>{{ 'contacts.detail.notes' | translate }}</label>
+          <textarea [(ngModel)]="qualifyNotes" rows="3" maxlength="5000" [placeholder]="'contacts.detail.qualifyNotesPlaceholder' | translate"></textarea>
         </div>
       </div>
 
       <div class="form-actions">
         <button class="btn btn-primary" [disabled]="qualifying" (click)="qualify()">
-          {{ qualifying ? 'Qualification…' : 'Valider' }}
+          {{ qualifying ? ('contacts.detail.qualifying' | translate) : ('contacts.detail.validate' | translate) }}
         </button>
-        <button class="btn btn-outline" (click)="toggleQualifyForm()">Annuler</button>
+        <button class="btn btn-outline" (click)="toggleQualifyForm()">{{ 'common.actions.cancel' | translate }}</button>
       </div>
     </div>
   }
 
   <!-- ── Tabs ─────────────────────────────────────────────────────────────── -->
   <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab === 'details'"      (click)="selectTab('details')">Fiche</button>
-    <button class="tab-btn" [class.active]="activeTab === 'interests'"    (click)="selectTab('interests')">Intérêts</button>
-    <button class="tab-btn" [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">Réservations</button>
-    <button class="tab-btn" [class.active]="activeTab === 'deposits'"     (click)="selectTab('deposits')">Acomptes</button>
-    <button class="tab-btn" [class.active]="activeTab === 'ventes'"       (click)="selectTab('ventes')">Ventes</button>
-    <button class="tab-btn" [class.active]="activeTab === 'timeline'"     (click)="selectTab('timeline')">Historique</button>
-    <button class="tab-btn" [class.active]="activeTab === 'documents'"    (click)="selectTab('documents')">Documents</button>
-    <button class="tab-btn" [class.active]="activeTab === 'tasks'"        (click)="selectTab('tasks')">Tâches</button>
+    <button class="tab-btn" [class.active]="activeTab === 'details'"      (click)="selectTab('details')">{{ 'contacts.detail.tabs.details' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'interests'"    (click)="selectTab('interests')">{{ 'contacts.detail.tabs.interests' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">{{ 'contacts.detail.tabs.reservations' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'deposits'"     (click)="selectTab('deposits')">{{ 'contacts.detail.tabs.deposits' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'ventes'"       (click)="selectTab('ventes')">{{ 'contacts.detail.tabs.ventes' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'visites'"      (click)="selectTab('visites')">{{ 'visites.contactTab.title' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'timeline'"     (click)="selectTab('timeline')">{{ 'contacts.detail.tabs.timeline' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'documents'"    (click)="selectTab('documents')">{{ 'contacts.detail.tabs.documents' | translate }}</button>
+    <button class="tab-btn" [class.active]="activeTab === 'tasks'"        (click)="selectTab('tasks')">{{ 'contacts.detail.tabs.tasks' | translate }}</button>
   </div>
 
   <!-- ═══════════════════════════ DETAILS ════════════════════════════════════ -->
@@ -124,65 +125,65 @@
       @if (canWrite) {
         <div class="transition-bar">
           <button class="btn btn-sm btn-primary" (click)="toggleEditForm()">
-            Modifier la fiche
+            {{ 'contacts.detail.editRecord' | translate }}
           </button>
         </div>
       }
       <dl>
-        <dt>Prénom</dt>       <dd>{{ contact.firstName }}</dd>
-        <dt>Nom</dt>          <dd>{{ contact.lastName }}</dd>
-        <dt>Email</dt>        <dd>{{ contact.email ?? '—' }}</dd>
-        <dt>Téléphone</dt>    <dd>{{ contact.phone ?? '—' }}</dd>
-        <dt>CIN / Passeport</dt> <dd>{{ contact.nationalId ?? '—' }}</dd>
-        <dt>Adresse</dt>      <dd>{{ contact.address ?? '—' }}</dd>
-        <dt>Notes</dt>        <dd>{{ contact.notes ?? '—' }}</dd>
-        <dt>Qualifié</dt>     <dd>{{ contact.qualified ? 'Oui' : 'Non' }}</dd>
-        <dt>Consentement</dt> <dd>{{ contact.consentGiven ? 'Donné' : 'Non donné' }}</dd>
-        <dt>Base légale</dt>  <dd>{{ contact.processingBasis ?? '—' }}</dd>
-        <dt>Créé le</dt>      <dd>{{ contact.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
-        <dt>Modifié le</dt>   <dd>{{ contact.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>{{ 'contacts.detail.firstName' | translate }}</dt>       <dd>{{ contact.firstName }}</dd>
+        <dt>{{ 'contacts.detail.lastName' | translate }}</dt>          <dd>{{ contact.lastName }}</dd>
+        <dt>{{ 'contacts.detail.email' | translate }}</dt>        <dd>{{ contact.email ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.phone' | translate }}</dt>    <dd>{{ contact.phone ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.cinPasseport' | translate }}</dt> <dd>{{ contact.nationalId ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.address' | translate }}</dt>      <dd>{{ contact.address ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.notes' | translate }}</dt>        <dd>{{ contact.notes ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.qualified' | translate }}</dt>     <dd>{{ contact.qualified ? ('contacts.detail.yes' | translate) : ('contacts.detail.no' | translate) }}</dd>
+        <dt>{{ 'contacts.detail.consent' | translate }}</dt> <dd>{{ contact.consentGiven ? ('contacts.detail.consentGiven' | translate) : ('contacts.detail.consentNot' | translate) }}</dd>
+        <dt>{{ 'contacts.detail.legalBasis' | translate }}</dt>  <dd>{{ contact.processingBasis ?? '—' }}</dd>
+        <dt>{{ 'contacts.detail.createdAt' | translate }}</dt>      <dd>{{ contact.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>{{ 'contacts.detail.updatedAt' | translate }}</dt>   <dd>{{ contact.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
       </dl>
     }
 
     <!-- ── Profil légal VEFA (Loi 44-00) ─────────────────────────────── -->
     <div class="card" style="margin-top:16px" data-testid="contact-legal">
       <div class="card-header">
-        <h3 class="card-title">Profil légal VEFA (Loi 44-00)</h3>
+        <h3 class="card-title">{{ 'contacts.detail.legalTitle' | translate }}</h3>
         <button class="btn btn-sm btn-secondary" (click)="toggleLegal()" data-testid="legal-toggle">
-          {{ showLegal ? 'Masquer' : 'Afficher' }}
+          {{ showLegal ? ('contacts.detail.hide' | translate) : ('contacts.detail.show' | translate) }}
         </button>
       </div>
       @if (showLegal) {
         <div class="card-body">
           @if (legalError) { <p class="msg-error">{{ legalError }}</p> }
-          @if (legalSaved) { <p class="msg-success">✓ Profil légal enregistré</p> }
+          @if (legalSaved) { <p class="msg-success">{{ 'contacts.detail.legalSaved' | translate }}</p> }
           <div class="legal-grid">
-            <label>Type d'acquéreur
+            <label>{{ 'contacts.detail.typeAcq' | translate }}
               <select [(ngModel)]="legal.typeAcquereur" [disabled]="!canWrite">
                 <option [ngValue]="null">—</option>
                 @for (t of typeAcquereurOptions; track t) { <option [ngValue]="t">{{ t }}</option> }
               </select>
             </label>
-            <label>Situation matrimoniale
+            <label>{{ 'contacts.detail.situationMat' | translate }}
               <select [(ngModel)]="legal.situationMatrimoniale" [disabled]="!canWrite">
                 <option [ngValue]="null">—</option>
                 @for (s of situationOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
               </select>
             </label>
-            <label>Date de naissance <input type="date" [(ngModel)]="legal.dateNaissance" [disabled]="!canWrite"/></label>
-            <label>Lieu de naissance <input type="text" [(ngModel)]="legal.lieuNaissance" [disabled]="!canWrite"/></label>
-            <label>Nationalité <input type="text" [(ngModel)]="legal.nationalite" [disabled]="!canWrite"/></label>
-            <label>Pays de résidence <input type="text" [(ngModel)]="legal.paysResidence" [disabled]="!canWrite"/></label>
-            <label>CIN délivrée le <input type="date" [(ngModel)]="legal.cinDateDelivrance" [disabled]="!canWrite"/></label>
-            <label>Autorité (CIN) <input type="text" [(ngModel)]="legal.cinAutorite" [disabled]="!canWrite"/></label>
-            <label>N° passeport (MRE/étranger) <input type="text" [(ngModel)]="legal.passeportNumero" [disabled]="!canWrite"/></label>
-            <label>Passeport expire le <input type="date" [(ngModel)]="legal.passeportExpire" [disabled]="!canWrite"/></label>
-            <label>Apport personnel (MAD) <input type="number" [(ngModel)]="legal.apportPersonnel" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.dateNaissance' | translate }} <input type="date" [(ngModel)]="legal.dateNaissance" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.lieuNaissance' | translate }} <input type="text" [(ngModel)]="legal.lieuNaissance" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.nationalite' | translate }} <input type="text" [(ngModel)]="legal.nationalite" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.paysResidence' | translate }} <input type="text" [(ngModel)]="legal.paysResidence" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.cinDelivree' | translate }} <input type="date" [(ngModel)]="legal.cinDateDelivrance" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.cinAutorite' | translate }} <input type="text" [(ngModel)]="legal.cinAutorite" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.passeportNum' | translate }} <input type="text" [(ngModel)]="legal.passeportNumero" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.passeportExpire' | translate }} <input type="date" [(ngModel)]="legal.passeportExpire" [disabled]="!canWrite"/></label>
+            <label>{{ 'contacts.detail.apportPersonnel' | translate }} <input type="number" [(ngModel)]="legal.apportPersonnel" [disabled]="!canWrite"/></label>
           </div>
           @if (canWrite) {
             <div class="form-actions">
               <button class="btn btn-primary btn-sm" [disabled]="legalSaving" (click)="saveLegal()" data-testid="legal-save">
-                Enregistrer le profil légal
+                {{ 'contacts.detail.saveLegal' | translate }}
               </button>
             </div>
           }
@@ -192,7 +193,7 @@
 
     @if (showEditForm) {
       <div class="card qualify-form">
-        <h3 class="card-title">Modifier la fiche contact</h3>
+        <h3 class="card-title">{{ 'contacts.detail.editTitle' | translate }}</h3>
 
         @if (editError) {
           <p class="error">{{ editError }}</p>
@@ -200,41 +201,41 @@
 
         <div class="form-grid">
           <div class="field">
-            <label>Prénom</label>
+            <label>{{ 'contacts.detail.firstName' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.firstName" maxlength="120" />
           </div>
           <div class="field">
-            <label>Nom</label>
+            <label>{{ 'contacts.detail.lastName' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.lastName" maxlength="120" />
           </div>
           <div class="field">
-            <label>Email</label>
+            <label>{{ 'contacts.detail.email' | translate }}</label>
             <input type="email" [(ngModel)]="editForm.email" maxlength="160" />
           </div>
           <div class="field">
-            <label>Téléphone</label>
+            <label>{{ 'contacts.detail.phone' | translate }}</label>
             <input type="tel" [(ngModel)]="editForm.phone" maxlength="30" />
           </div>
           <div class="field">
-            <label>CIN / Passeport</label>
+            <label>{{ 'contacts.detail.cinPasseport' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.nationalId" maxlength="100" />
           </div>
           <div class="field field-full">
-            <label>Adresse</label>
+            <label>{{ 'contacts.detail.address' | translate }}</label>
             <input type="text" [(ngModel)]="editForm.address" maxlength="500" />
           </div>
           <div class="field field-full">
-            <label>Notes</label>
+            <label>{{ 'contacts.detail.notes' | translate }}</label>
             <textarea [(ngModel)]="editForm.notes" rows="3" maxlength="2000"></textarea>
           </div>
         </div>
 
         <div class="form-actions">
           <button class="btn btn-primary" [disabled]="savingEdit" (click)="saveEdit()">
-            {{ savingEdit ? 'Enregistrement…' : 'Enregistrer' }}
+            {{ savingEdit ? ('contacts.detail.saving' | translate) : ('common.actions.save' | translate) }}
           </button>
           <button class="btn btn-outline" [disabled]="savingEdit" (click)="toggleEditForm()">
-            Annuler
+            {{ 'common.actions.cancel' | translate }}
           </button>
         </div>
       </div>
@@ -246,24 +247,24 @@
 
     <!-- Add interest form -->
     <div class="card">
-      <h3 class="card-title">Ajouter un intérêt</h3>
+      <h3 class="card-title">{{ 'contacts.detail.addInterest' | translate }}</h3>
 
       @if (interestError) {
         <p class="error">{{ interestError }}</p>
       }
 
       @if (propertiesLoading) {
-        <p class="muted">Chargement des biens…</p>
+        <p class="muted">{{ 'contacts.detail.loadingProps' | translate }}</p>
       }
 
       @if (!propertiesLoading && availableForInterest.length === 0) {
-        <p class="muted">Aucun bien disponible à associer.</p>
+        <p class="muted">{{ 'contacts.detail.noProps' | translate }}</p>
       }
 
       @if (!propertiesLoading && availableForInterest.length > 0) {
         <div class="inline-form">
           <select [(ngModel)]="selectedPropertyId">
-            <option value="">— Sélectionner un bien —</option>
+            <option value="">{{ 'contacts.detail.selectProperty' | translate }}</option>
             @for (p of availableForInterest; track p.id) {
               <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
             }
@@ -271,7 +272,7 @@
           <button class="btn btn-primary"
                   [disabled]="!selectedPropertyId || addingInterest"
                   (click)="addInterest()">
-            {{ addingInterest ? 'Ajout…' : 'Ajouter' }}
+            {{ addingInterest ? ('contacts.detail.adding' | translate) : ('contacts.detail.add' | translate) }}
           </button>
         </div>
       }
@@ -279,7 +280,7 @@
 
     <!-- Interests list -->
     @if (interestsLoading) {
-      <div class="skeleton-stack" aria-label="Chargement des biens d'intérêt…">
+      <div class="skeleton-stack" [attr.aria-label]="'contacts.detail.loadingInterestsAria' | translate">
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
@@ -287,16 +288,16 @@
     }
 
     @if (!interestsLoading && interests.length === 0 && interestsLoaded) {
-      <p class="empty">Aucun intérêt enregistré.</p>
+      <p class="empty">{{ 'contacts.detail.noInterest' | translate }}</p>
     }
 
     @if (!interestsLoading && interests.length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Bien</th>
-            <th>Statut intérêt</th>
-            <th>Ajouté le</th>
+            <th>{{ 'contacts.detail.thProperty' | translate }}</th>
+            <th>{{ 'contacts.detail.thInterestStatus' | translate }}</th>
+            <th>{{ 'contacts.detail.thAddedOn' | translate }}</th>
             <th></th>
           </tr>
         </thead>
@@ -310,7 +311,7 @@
                 <button class="btn btn-sm btn-danger"
                         [disabled]="removingPropertyId === i.propertyId"
                         (click)="removeInterest(i.propertyId)">
-                  Retirer
+                  {{ 'contacts.detail.remove' | translate }}
                 </button>
               </td>
             </tr>
@@ -325,7 +326,7 @@
 
     <!-- Create reservation form -->
     <div class="card">
-      <h3 class="card-title">Nouvelle réservation</h3>
+      <h3 class="card-title">{{ 'contacts.detail.newReservation' | translate }}</h3>
 
       @if (reservationError) {
         <p class="error">{{ reservationError }}</p>
@@ -338,27 +339,27 @@
       }
 
       @if (propertiesLoading) {
-        <p class="muted">Chargement des biens…</p>
+        <p class="muted">{{ 'contacts.detail.loadingProps' | translate }}</p>
       }
 
       @if (!propertiesLoading) {
         <div class="form-grid">
           <div class="field">
-            <label>Bien <span class="required">*</span></label>
+            <label>{{ 'contacts.detail.property' | translate }} <span class="required">*</span></label>
             <select [(ngModel)]="reservationPropertyId">
-              <option value="">— Sélectionner un bien —</option>
+              <option value="">{{ 'contacts.detail.selectProperty' | translate }}</option>
               @for (p of activeProperties; track p.id) {
                 <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
               }
             </select>
           </div>
           <div class="field">
-            <label>Prix de réservation (MAD)</label>
+            <label>{{ 'contacts.detail.reservationPrice' | translate }}</label>
             <input type="number" [(ngModel)]="reservationPrice" min="0" placeholder="0" />
           </div>
           <div class="field field-full">
-            <label>Notes</label>
-            <textarea [(ngModel)]="reservationNotes" rows="2" maxlength="2000" placeholder="Remarques…"></textarea>
+            <label>{{ 'contacts.detail.notes' | translate }}</label>
+            <textarea [(ngModel)]="reservationNotes" rows="2" maxlength="2000" [placeholder]="'contacts.detail.notesPlaceholder' | translate"></textarea>
           </div>
         </div>
 
@@ -366,7 +367,7 @@
           <button class="btn btn-primary"
                   [disabled]="!reservationPropertyId || creatingReservation"
                   (click)="createReservation()">
-            {{ creatingReservation ? 'Création…' : 'Réserver le bien' }}
+            {{ creatingReservation ? ('contacts.detail.creating' | translate) : ('contacts.detail.reserve' | translate) }}
           </button>
         </div>
       }
@@ -374,7 +375,7 @@
 
     <!-- Reservations list -->
     @if (reservationsLoading) {
-      <div class="skeleton-stack" aria-label="Chargement des réservations…">
+      <div class="skeleton-stack" [attr.aria-label]="'contacts.detail.loadingReservationsAria' | translate">
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
@@ -382,19 +383,19 @@
     }
 
     @if (!reservationsLoading && reservations.length === 0 && reservationsLoaded) {
-      <p class="empty">Aucune réservation enregistrée.</p>
+      <p class="empty">{{ 'contacts.detail.noReservation' | translate }}</p>
     }
 
     @if (!reservationsLoading && reservations.length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Bien</th>
-            <th>Prix</th>
-            <th>Date</th>
-            <th>Expiration</th>
-            <th>Statut</th>
-            <th>Actions</th>
+            <th>{{ 'contacts.detail.thProperty' | translate }}</th>
+            <th>{{ 'contacts.detail.thPrice' | translate }}</th>
+            <th>{{ 'contacts.detail.thDate' | translate }}</th>
+            <th>{{ 'contacts.detail.thExpiration' | translate }}</th>
+            <th>{{ 'contacts.detail.thStatus' | translate }}</th>
+            <th>{{ 'contacts.detail.thActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -412,17 +413,17 @@
                         [class.btn-outline]="!isReservationDocExpanded(r.id)"
                         [class.btn-primary]="isReservationDocExpanded(r.id)"
                         (click)="toggleReservationDocs(r.id)"
-                        title="Documents de réservation">Docs</button>
+                        [title]="'contacts.detail.docsForTitle' | translate">{{ 'contacts.detail.docs' | translate }}</button>
                 @if (r.status === 'ACTIVE') {
-                  <button class="btn btn-sm btn-outline" (click)="cancelReservation(r.id)">Annuler</button>
+                  <button class="btn btn-sm btn-outline" (click)="cancelReservation(r.id)">{{ 'common.actions.cancel' | translate }}</button>
                   <button class="btn btn-sm btn-secondary" (click)="convertReservationToDeposit(r)">
-                    → Acompte
+                    {{ 'contacts.detail.toDeposit' | translate }}
                   </button>
                   <button class="btn btn-sm btn-primary"
                           [disabled]="convertingReservationId === r.id"
                           (click)="convertReservationToVente(r)"
-                          title="Convertir directement en vente">
-                    {{ convertingReservationId === r.id ? '…' : '→ Vente' }}
+                          [title]="'contacts.detail.convertDirectTitle' | translate">
+                    {{ convertingReservationId === r.id ? '…' : ('contacts.detail.toVente' | translate) }}
                   </button>
                 }
               </td>
@@ -432,8 +433,8 @@
                 <td colspan="6">
                   <div class="doc-panel">
                     <div class="doc-panel-header">
-                      <span class="doc-panel-title">Documents — {{ propertyLabel(r.propertyId) }}</span>
-                      <button class="btn btn-sm btn-ghost" (click)="toggleReservationDocs(r.id)">✕ Fermer</button>
+                      <span class="doc-panel-title">{{ 'contacts.detail.docsFor' | translate }} {{ propertyLabel(r.propertyId) }}</span>
+                      <button class="btn btn-sm btn-ghost" (click)="toggleReservationDocs(r.id)">{{ 'contacts.detail.close' | translate }}</button>
                     </div>
                     <app-document-list entityType="RESERVATION" [entityId]="r.id" />
                   </div>
@@ -451,7 +452,7 @@
 
     <!-- Create deposit form -->
     <div class="card">
-      <h3 class="card-title">Nouvel acompte</h3>
+      <h3 class="card-title">{{ 'contacts.detail.newDeposit' | translate }}</h3>
 
       @if (depositError) {
         <p class="error">{{ depositError }}</p>
@@ -461,27 +462,27 @@
       }
 
       @if (propertiesLoading) {
-        <p class="muted">Chargement des biens…</p>
+        <p class="muted">{{ 'contacts.detail.loadingProps' | translate }}</p>
       }
 
       @if (!propertiesLoading) {
         <div class="form-grid">
           <div class="field">
-            <label>Bien <span class="required">*</span></label>
+            <label>{{ 'contacts.detail.property' | translate }} <span class="required">*</span></label>
             <select [(ngModel)]="depositPropertyId">
-              <option value="">— Sélectionner un bien —</option>
+              <option value="">{{ 'contacts.detail.selectProperty' | translate }}</option>
               @for (p of activeProperties; track p.id) {
                 <option [value]="p.id">{{ p.title }} — {{ p.referenceCode }}</option>
               }
             </select>
           </div>
           <div class="field">
-            <label>Montant (MAD) <span class="required">*</span></label>
+            <label>{{ 'contacts.detail.amount' | translate }} <span class="required">*</span></label>
             <input type="number" [(ngModel)]="depositAmount" min="0" placeholder="0" />
           </div>
           <div class="field field-full">
-            <label>Notes</label>
-            <textarea [(ngModel)]="depositNotes" rows="2" maxlength="2000" placeholder="Remarques…"></textarea>
+            <label>{{ 'contacts.detail.notes' | translate }}</label>
+            <textarea [(ngModel)]="depositNotes" rows="2" maxlength="2000" [placeholder]="'contacts.detail.notesPlaceholder' | translate"></textarea>
           </div>
         </div>
 
@@ -489,7 +490,7 @@
           <button class="btn btn-primary"
                   [disabled]="!depositPropertyId || !depositAmount || creatingDeposit"
                   (click)="createDeposit()">
-            {{ creatingDeposit ? 'Création…' : 'Enregistrer l\'acompte' }}
+            {{ creatingDeposit ? ('contacts.detail.creating' | translate) : ('contacts.detail.saveDeposit' | translate) }}
           </button>
         </div>
       }
@@ -497,7 +498,7 @@
 
     <!-- Deposits list -->
     @if (depositsLoading) {
-      <div class="skeleton-stack" aria-label="Chargement des dépôts…">
+      <div class="skeleton-stack" [attr.aria-label]="'contacts.detail.loadingDepositsAria' | translate">
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
@@ -505,19 +506,19 @@
     }
 
     @if (!depositsLoading && deposits.length === 0 && depositsLoaded) {
-      <p class="empty">Aucun acompte enregistré.</p>
+      <p class="empty">{{ 'contacts.detail.noDeposit' | translate }}</p>
     }
 
     @if (!depositsLoading && deposits.length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Référence</th>
-            <th>Bien</th>
+            <th>{{ 'contacts.detail.thReference' | translate }}</th>
+            <th>{{ 'contacts.detail.thProperty' | translate }}</th>
             <th>Montant</th>
-            <th>Date</th>
-            <th>Statut</th>
-            <th>Actions</th>
+            <th>{{ 'contacts.detail.thDate' | translate }}</th>
+            <th>{{ 'contacts.detail.thStatus' | translate }}</th>
+            <th>{{ 'contacts.detail.thActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -535,12 +536,12 @@
                   <button class="btn btn-sm btn-primary"
                           [disabled]="actionDepositId === d.id"
                           (click)="confirmDeposit(d)">
-                    Confirmer
+                    {{ 'contacts.detail.confirm' | translate }}
                   </button>
                   <button class="btn btn-sm btn-danger"
                           [disabled]="actionDepositId === d.id"
                           (click)="cancelDeposit(d)">
-                    Annuler
+                    {{ 'common.actions.cancel' | translate }}
                   </button>
                 }
                 @if (d.status === 'CONFIRMED') {
@@ -550,7 +551,7 @@
                   <button class="btn btn-sm btn-primary"
                           [disabled]="convertingDepositId === d.id"
                           (click)="convertDepositToVente(d)">
-                    {{ convertingDepositId === d.id ? '…' : 'Convertir en vente' }}
+                    {{ convertingDepositId === d.id ? '…' : ('contacts.detail.convertToVente' | translate) }}
                   </button>
                 }
               </td>
@@ -564,7 +565,7 @@
   <!-- ═══════════════════════════ VENTES ════════════════════════════════════ -->
   @if (activeTab === 'ventes') {
     @if (ventesLoading) {
-      <div class="skeleton-stack" aria-label="Chargement des ventes…">
+      <div class="skeleton-stack" [attr.aria-label]="'contacts.detail.loadingVentesAria' | translate">
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
@@ -572,17 +573,17 @@
     }
     @if (ventesError) { <p class="error">{{ ventesError }}</p> }
     @if (!ventesLoading && ventesLoaded && ventes.length === 0) {
-      <p class="empty">Aucune vente associée à ce contact.</p>
+      <p class="empty">{{ 'contacts.detail.noVente' | translate }}</p>
     }
     @if (ventes.length > 0) {
       <div class="table-container">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Statut</th>
-              <th>Prix de vente</th>
-              <th>Date compromis</th>
-              <th>Créée le</th>
+              <th>{{ 'contacts.detail.thStatus' | translate }}</th>
+              <th>{{ 'contacts.detail.thSalePrice' | translate }}</th>
+              <th>{{ 'contacts.detail.thCompromisDate' | translate }}</th>
+              <th>{{ 'contacts.detail.thCreatedAt' | translate }}</th>
               <th></th>
             </tr>
           </thead>
@@ -598,7 +599,51 @@
                 <td>{{ (v.dateCompromis | date:'dd/MM/yyyy') || '—' }}</td>
                 <td class="td-muted">{{ v.createdAt | date:'dd/MM/yyyy' }}</td>
                 <td>
-                  <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">Détail</a>
+                  <a [routerLink]="['/app/ventes', v.id]" class="btn btn-sm btn-secondary">{{ 'contacts.detail.detailBtn' | translate }}</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (activeTab === 'visites') {
+    <div class="tab-actions">
+      <button class="btn btn-sm btn-primary" (click)="planifierVisite()">{{ 'visites.contactTab.plan' | translate }}</button>
+    </div>
+    @if (visitesLoading) {
+      <div class="skeleton-stack">
+        <span class="skeleton skeleton-row"></span>
+        <span class="skeleton skeleton-row"></span>
+      </div>
+    }
+    @if (visitesError) { <p class="error">{{ visitesError }}</p> }
+    @if (!visitesLoading && visitesLoaded && visites.length === 0) {
+      <p class="empty">{{ 'visites.contactTab.empty' | translate }}</p>
+    }
+    @if (visites.length > 0) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'visites.form.dateHeure' | translate }}</th>
+              <th>{{ 'visites.form.type' | translate }}</th>
+              <th>{{ 'visites.filters.statut' | translate }}</th>
+              <th>{{ 'visites.compteRendu.resultat' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of visites; track v.id) {
+              <tr>
+                <td>{{ fmtDateLong(v.dateHeure) }} · {{ fmtHeure(v.dateHeure) }}</td>
+                <td>{{ 'visites.type.' + v.type | translate }}</td>
+                <td><span class="badge">{{ 'visites.statut.' + v.statut | translate }}</span></td>
+                <td>{{ v.resultat ? ('visites.resultat.' + v.resultat | translate) : '—' }}</td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" (click)="openVisite(v)">{{ 'contacts.detail.detailBtn' | translate }}</button>
                 </td>
               </tr>
             }
@@ -611,7 +656,7 @@
   <!-- ═══════════════════════════ TIMELINE ═══════════════════════════════════ -->
   @if (activeTab === 'timeline') {
     @if (timelineLoading) {
-      <div class="skeleton-stack" aria-label="Chargement de la timeline…">
+      <div class="skeleton-stack" [attr.aria-label]="'contacts.detail.loadingTimelineAria' | translate">
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
         <span class="skeleton skeleton-row"></span>
@@ -622,7 +667,7 @@
       <p class="error">{{ timelineError }}</p>
     }
     @if (!timelineLoading && timeline.length === 0 && timelineLoaded) {
-      <p class="empty">Aucun événement enregistré.</p>
+      <p class="empty">{{ 'contacts.detail.noEvent' | translate }}</p>
     }
     @if (!timelineLoading && timeline.length > 0) {
       <ul class="timeline">
@@ -645,11 +690,11 @@
 
     @if (portalDocs().length > 0) {
       <div class="portal-docs-section">
-        <h4 class="section-subtitle">Documents déposés via le portail</h4>
+        <h4 class="section-subtitle">{{ 'contacts.detail.portalDocsTitle' | translate }}</h4>
         <ul class="doc-list">
           @for (item of portalDocs(); track item.doc.id) {
             <li class="doc-item">
-              <span class="badge badge-info" style="font-size:11px">Portail</span>
+              <span class="badge badge-info" style="font-size:11px">{{ 'contacts.detail.portalBadge' | translate }}</span>
               <span class="doc-name">{{ item.doc.nomFichier }}</span>
               <span class="doc-meta">{{ item.venteName }} — {{ item.doc.createdAt | date:'dd/MM/yyyy' }}</span>
             </li>

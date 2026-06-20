@@ -1,18 +1,21 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PortalVentesService } from '../../core/portal-ventes.service';
 import { Vente, EcheanceStatut, VenteDocument } from '../../../features/ventes/vente.service';
 import { PipelineStepperComponent } from '../../../features/ventes/pipeline-stepper.component';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-portal-ventes',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, PipelineStepperComponent],
+  imports: [DatePipe, DecimalPipe, PipelineStepperComponent, TranslatePipe],
   templateUrl: './portal-ventes.component.html',
   styleUrl: './portal-ventes.component.css',
 })
 export class PortalVentesComponent implements OnInit {
   private svc = inject(PortalVentesService);
+  private i18n = inject(I18nService);
 
   ventes  = signal<Vente[]>([]);
   loading = signal(true);
@@ -27,12 +30,12 @@ export class PortalVentesComponent implements OnInit {
   ngOnInit(): void {
     this.svc.list().subscribe({
       next:  (data) => { this.ventes.set(data); this.loading.set(false); },
-      error: ()     => { this.error.set('Erreur lors du chargement.'); this.loading.set(false); },
+      error: ()     => { this.error.set(this.i18n.instant('portal.ventes.loadError')); this.loading.set(false); },
     });
   }
 
   echLabel(s: EcheanceStatut): string {
-    return { EN_ATTENTE: 'En attente', PAYEE: 'Payée', EN_RETARD: 'En retard' }[s] ?? s;
+    return this.i18n.instant('portal.ventes.ech.' + s);
   }
 
   echClass(s: EcheanceStatut): string {

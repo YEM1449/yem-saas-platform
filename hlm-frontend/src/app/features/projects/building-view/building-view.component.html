@@ -1,6 +1,6 @@
 <!-- ── Loading / Error ─────────────────────────────────────────── -->
 @if (loadingTranches) {
-  <div class="skeleton-stack" data-testid="building-view-loading-state" aria-label="Chargement du plan de commercialisation…">
+  <div class="skeleton-stack" data-testid="building-view-loading-state" [attr.aria-label]="'projects.building.loadingAria' | translate">
     <span class="skeleton skeleton-text-lg skeleton-w-25"></span>
     <span class="skeleton skeleton-card" style="height:48px"></span>
     <span class="skeleton skeleton-card" style="height:340px"></span>
@@ -14,55 +14,55 @@
       <path d="M16 42V28h16v14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
       <path d="M6 20l18-12 18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <p class="bv-empty-title">Aucun bâtiment pour ce projet</p>
-    <p class="bv-empty-hint">Utilisez le générateur de projet pour créer les tranches et bâtiments.</p>
+    <p class="bv-empty-title">{{ 'projects.building.emptyTitle' | translate }}</p>
+    <p class="bv-empty-hint">{{ 'projects.building.emptyHint' | translate }}</p>
   </div>
 } @else {
 
   <!-- ── Status legend bar ──────────────────────────────────────── -->
   <div class="bv-legend-bar">
     <button class="bv-legend-chip chip-active"    [class.chip-on]="statusFilter === 'ACTIVE'"    (click)="toggleFilter('ACTIVE')">
-      <span class="chip-dot dot-active"></span>Disponible <strong>{{ stats.disponible }}</strong>
+      <span class="chip-dot dot-active"></span>{{ 'projects.building.available' | translate }} <strong>{{ stats.disponible }}</strong>
     </button>
     <button class="bv-legend-chip chip-reserved"  [class.chip-on]="statusFilter === 'RESERVED'"  (click)="toggleFilter('RESERVED')">
-      <span class="chip-dot dot-reserved"></span>Réservé <strong>{{ stats.reserve }}</strong>
+      <span class="chip-dot dot-reserved"></span>{{ 'projects.building.reserved' | translate }} <strong>{{ stats.reserve }}</strong>
     </button>
     <button class="bv-legend-chip chip-sold"      [class.chip-on]="statusFilter === 'SOLD'"      (click)="toggleFilter('SOLD')">
-      <span class="chip-dot dot-sold"></span>Vendu <strong>{{ stats.vendu }}</strong>
+      <span class="chip-dot dot-sold"></span>{{ 'projects.building.sold' | translate }} <strong>{{ stats.vendu }}</strong>
     </button>
     <button class="bv-legend-chip chip-draft"     [class.chip-on]="statusFilter === 'DRAFT'"     (click)="toggleFilter('DRAFT')">
-      <span class="chip-dot dot-draft"></span>Brouillon <strong>{{ stats.brouillon }}</strong>
+      <span class="chip-dot dot-draft"></span>{{ 'projects.building.draft' | translate }} <strong>{{ stats.brouillon }}</strong>
     </button>
     <button class="bv-legend-chip chip-withdrawn" [class.chip-on]="statusFilter === 'WITHDRAWN'" (click)="toggleFilter('WITHDRAWN')">
-      <span class="chip-dot dot-withdrawn"></span>Retiré <strong>{{ stats.retire }}</strong>
+      <span class="chip-dot dot-withdrawn"></span>{{ 'projects.building.withdrawn' | translate }} <strong>{{ stats.retire }}</strong>
     </button>
     <div class="bv-legend-sep"></div>
-    <span class="bv-absorption">Absorption&nbsp;: <strong>{{ stats.absorption | number:'1.0-1' }}%</strong></span>
+    <span class="bv-absorption">{{ 'projects.building.absorption' | translate }}&nbsp;: <strong>{{ stats.absorption | number:'1.0-1' }}%</strong></span>
   </div>
 
   <!-- ── Tranche pager ─────────────────────────────────────────── -->
   @if (tranches.length > 0) {
     <div class="bv-tranche-pager">
-      <button class="bv-pager-arrow" (click)="prevTranche()" [disabled]="trancheIdx === 0" aria-label="Tranche précédente">
+      <button class="bv-pager-arrow" (click)="prevTranche()" [disabled]="trancheIdx === 0" [attr.aria-label]="'projects.building.prevTranche' | translate">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <div class="bv-pager-center">
         <span class="bv-pager-label">
-          Tranche {{ selectedTranche?.numero ?? (trancheIdx + 1) }}
+          {{ 'projects.building.tranche' | translate:{ n: (selectedTranche?.numero ?? (trancheIdx + 1)) } }}
           @if (selectedTranche?.nom) { — {{ selectedTranche!.nom }} }
         </span>
         @if (tranches.length > 1) {
           <div class="bv-pager-dots">
             @for (t of tranches; track t.id; let i = $index) {
               <button class="bv-pager-dot" [class.dot-active]="i === trancheIdx"
-                      (click)="selectTranche(i)" [attr.aria-label]="'Tranche ' + (i + 1)"></button>
+                      (click)="selectTranche(i)" [attr.aria-label]="'projects.building.trancheAria' | translate:{ n: i + 1 }"></button>
             }
           </div>
         }
       </div>
-      <button class="bv-pager-arrow" (click)="nextTranche()" [disabled]="trancheIdx === tranches.length - 1" aria-label="Tranche suivante">
+      <button class="bv-pager-arrow" (click)="nextTranche()" [disabled]="trancheIdx === tranches.length - 1" [attr.aria-label]="'projects.building.nextTranche' | translate">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -94,7 +94,7 @@
       @if (loadingBuilding) {
         <div class="bv-loading"><div class="spinner spinner-sm"></div></div>
       } @else if (!floors.length) {
-        <p class="bv-empty-stack">Aucun bien enregistré dans ce bâtiment.</p>
+        <p class="bv-empty-stack">{{ 'projects.building.noUnitInBuilding' | translate }}</p>
       } @else {
         <!-- horizontal scroll container -->
         <div class="bv-stack">
@@ -102,7 +102,7 @@
             <div class="bv-floor-row">
               <div class="bv-floor-label">
                 <span class="bv-floor-name">{{ floor.label }}</span>
-                <span class="bv-floor-count">{{ floor.units.length }}&nbsp;bien{{ floor.units.length > 1 ? 's' : '' }}</span>
+                <span class="bv-floor-count">{{ 'projects.building.unitsCount' | translate:{ count: floor.units.length } }}</span>
               </div>
               <div class="bv-floor-units">
                 @for (unit of floor.units; track unit.id) {
@@ -136,7 +136,7 @@
             {{ floorBadgeLabel(selectedProperty) }}
           </div>
           <div class="bv-panel-title-block">
-            <h3 class="bv-panel-title">Bien {{ selectedProperty.referenceCode }}</h3>
+            <h3 class="bv-panel-title">{{ 'projects.building.bienTitle' | translate:{ ref: selectedProperty.referenceCode } }}</h3>
             <p class="bv-panel-subtitle">
               {{ typeLabel(selectedProperty.type) }}
               @if (selectedProperty.surfaceAreaSqm) {&nbsp;·&nbsp;{{ selectedProperty.surfaceAreaSqm }}&nbsp;m²}
@@ -145,7 +145,7 @@
           <span class="bv-status-pill {{ statusClass(selectedProperty.status) }}">
             {{ statusLabel(selectedProperty.status) }}
           </span>
-          <button class="bv-panel-close" (click)="selectedProperty = null" aria-label="Fermer">
+          <button class="bv-panel-close" (click)="selectedProperty = null" [attr.aria-label]="'projects.building.closeAria' | translate">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
@@ -155,34 +155,34 @@
         <!-- Metrics grid -->
         <div class="bv-metrics-grid">
           <div class="bv-metric">
-            <span class="bv-metric-label">PRIX</span>
+            <span class="bv-metric-label">{{ 'projects.building.prix' | translate }}</span>
             <span class="bv-metric-value">{{ formatPrice(selectedProperty.price) }}&nbsp;MAD</span>
           </div>
           <div class="bv-metric">
-            <span class="bv-metric-label">PRIX&nbsp;/&nbsp;M²</span>
+            <span class="bv-metric-label">{{ 'projects.building.prixM2' | translate }}</span>
             <span class="bv-metric-value">{{ pricePerSqm(selectedProperty) }}&nbsp;MAD</span>
           </div>
           @if (selectedProperty.orientation) {
             <div class="bv-metric">
-              <span class="bv-metric-label">EXPOSITION</span>
+              <span class="bv-metric-label">{{ 'projects.building.exposition' | translate }}</span>
               <span class="bv-metric-value">{{ selectedProperty.orientation }}</span>
             </div>
           }
           @if (selectedProperty.parkingSpaces !== null) {
             <div class="bv-metric">
-              <span class="bv-metric-label">PARKINGS</span>
+              <span class="bv-metric-label">{{ 'projects.building.parkings' | translate }}</span>
               <span class="bv-metric-value">{{ selectedProperty.parkingSpaces }}</span>
             </div>
           }
           @if (selectedProperty.bedrooms !== null) {
             <div class="bv-metric">
-              <span class="bv-metric-label">CHAMBRES</span>
+              <span class="bv-metric-label">{{ 'projects.building.chambres' | translate }}</span>
               <span class="bv-metric-value">{{ selectedProperty.bedrooms }}</span>
             </div>
           }
           @if (selectedProperty.surfaceAreaSqm) {
             <div class="bv-metric">
-              <span class="bv-metric-label">SURFACE</span>
+              <span class="bv-metric-label">{{ 'projects.building.surface' | translate }}</span>
               <span class="bv-metric-value">{{ selectedProperty.surfaceAreaSqm }}&nbsp;m²</span>
             </div>
           }
@@ -190,14 +190,14 @@
 
         <!-- Parcours juridique -->
         <div class="bv-pipeline-section">
-          <p class="bv-pipeline-label">PARCOURS JURIDIQUE</p>
+          <p class="bv-pipeline-label">{{ 'projects.building.parcoursJuridique' | translate }}</p>
           <div class="bv-pipeline">
-            @for (step of ['Réservation', 'Compromis', 'Acte', 'Livraison']; track step; let i = $index) {
+            @for (step of ['reservation', 'compromis', 'acte', 'livraison']; track step; let i = $index) {
               <div class="bv-pipe-step"
                    [class.pipe-done]="pipelineStep(selectedProperty.status) > i"
                    [class.pipe-active]="pipelineStep(selectedProperty.status) === i + 1">
                 <div class="bv-pipe-node"></div>
-                <span class="bv-pipe-lbl">{{ step }}</span>
+                <span class="bv-pipe-lbl">{{ 'projects.building.pipeline.' + step | translate }}</span>
               </div>
               @if (i < 3) {
                 <div class="bv-pipe-line" [class.line-done]="pipelineStep(selectedProperty.status) > i"></div>
@@ -212,12 +212,12 @@
             <a class="btn btn-sm btn-primary"
                [routerLink]="['/app/ventes/new']"
                [queryParams]="{ propertyId: selectedProperty.id }">
-              + Créer vente
+              {{ 'projects.building.createVente' | translate }}
             </a>
           }
           <a class="btn btn-sm btn-secondary"
              [routerLink]="['/app/properties', selectedProperty.id]">
-            Fiche bien
+             {{ 'projects.building.ficheBien' | translate }}
           </a>
         </div>
 

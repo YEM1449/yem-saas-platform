@@ -10,6 +10,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -54,12 +56,16 @@ interface MeshHierarchy {
 @Component({
   selector: 'app-mesh-mapping-admin',
   standalone: true,
-  imports: [FormsModule, RouterLink, DecimalPipe],
+  imports: [FormsModule, RouterLink, DecimalPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mesh-mapping-admin.component.html',
   styleUrl: './mesh-mapping-admin.component.css',
+  // Component-scoped: each mount gets a fresh engine (fresh hover$/click$/tap$ Subjects).
+  // A root singleton would keep its Subjects completed after dispose(), killing interactivity on revisit.
+  providers: [ThreeEngineService],
 })
 export class MeshMappingAdminComponent implements OnInit, OnDestroy {
+  private i18n = inject(I18nService);
 
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -141,7 +147,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.projetId = this.route.snapshot.paramMap.get('projetId') ?? '';
     if (!this.projetId) {
-      this.error.set('Projet introuvable.');
+      this.error.set(this.i18n.instant('viewer3d.mesh.projetNotFound'));
       this.loading.set(false);
       return;
     }
@@ -163,7 +169,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
           if (err?.status === 404) {
             this.error.set('NO_MODEL');
           } else {
-            this.error.set(err?.error?.message ?? 'Erreur de chargement du modèle 3D.');
+            this.error.set(err?.error?.message ?? this.i18n.instant('viewer3d.mesh.loadError'));
           }
           this.loading.set(false);
         },
@@ -211,7 +217,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
           }
         },
         error: () => {
-          this.error.set('Impossible de charger le fichier GLB.');
+          this.error.set(this.i18n.instant('viewer3d.mesh.glbLoadFailed'));
           this.loading.set(false);
         },
       })
@@ -307,7 +313,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
     );
 
     if (proposals.length === 0) {
-      alert('Aucune association automatique trouvée. Les noms de mesh ne correspondent à aucune référence de bien.');
+      alert(this.i18n.instant('viewer3d.mesh.noAutoPair'));
       return;
     }
 
@@ -412,7 +418,7 @@ export class MeshMappingAdminComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.saving.set(false);
-          this.error.set(err?.error?.message ?? 'Erreur lors de l\'enregistrement.');
+          this.error.set(err?.error?.message ?? this.i18n.instant('viewer3d.mesh.saveError'));
         },
       })
     );

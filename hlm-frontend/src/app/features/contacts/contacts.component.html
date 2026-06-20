@@ -1,43 +1,43 @@
 <!-- ── Page Header ──────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1 class="page-title" data-testid="contacts-page-title">Contacts</h1>
+    <h1 class="page-title" data-testid="contacts-page-title">{{ 'nav.contacts' | translate }}</h1>
     <p class="page-subtitle">
       @if (viewMode === 'list' || viewMode === 'cards') {
-        {{ contacts.length }} contact{{ contacts.length !== 1 ? 's' : '' }}
+        {{ 'contacts.count' | translate:{ count: contacts.length } }}
       } @else {
-        {{ pipelineTotal }} contact{{ pipelineTotal !== 1 ? 's' : '' }} dans le pipeline
+        {{ 'contacts.countPipeline' | translate:{ count: pipelineTotal } }}
       }
     </p>
   </div>
   <div class="page-header-actions">
 
     <!-- View toggle -->
-    <div class="view-toggle" role="group" aria-label="Mode d'affichage">
-      <button class="view-btn" [class.active]="viewMode === 'list'" (click)="setView('list')" title="Vue liste">
+    <div class="view-toggle" role="group" [attr.aria-label]="'contacts.viewModeAria' | translate">
+      <button class="view-btn" [class.active]="viewMode === 'list'" (click)="setView('list')" [title]="'contacts.viewListTitle' | translate">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect x="1.5" y="3" width="11" height="1.5" rx=".75" fill="currentColor"/>
           <rect x="1.5" y="6.25" width="11" height="1.5" rx=".75" fill="currentColor"/>
           <rect x="1.5" y="9.5" width="11" height="1.5" rx=".75" fill="currentColor"/>
         </svg>
-        Liste
+        {{ 'contacts.viewList' | translate }}
       </button>
-      <button class="view-btn" [class.active]="viewMode === 'cards'" (click)="setView('cards')" title="Vue cartes">
+      <button class="view-btn" [class.active]="viewMode === 'cards'" (click)="setView('cards')" [title]="'contacts.viewCardsTitle' | translate">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
           <rect x="7.5" y="1" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
           <rect x="1" y="7.5" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
           <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1.2" fill="currentColor"/>
         </svg>
-        Cartes
+        {{ 'contacts.viewCards' | translate }}
       </button>
-      <button class="view-btn" [class.active]="viewMode === 'pipeline'" (click)="setView('pipeline')" title="Vue pipeline">
+      <button class="view-btn" [class.active]="viewMode === 'pipeline'" (click)="setView('pipeline')" [title]="'contacts.viewPipelineTitle' | translate">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect x="1" y="2" width="3" height="10" rx="1" fill="currentColor"/>
           <rect x="5.5" y="2" width="3" height="10" rx="1" fill="currentColor"/>
           <rect x="10" y="2" width="3" height="10" rx="1" fill="currentColor"/>
         </svg>
-        Pipeline
+        {{ 'contacts.viewPipeline' | translate }}
       </button>
     </div>
 
@@ -47,13 +47,13 @@
           <path d="M7 9.5V1.5M4 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M1.5 9.5v2a1 1 0 001 1h9a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        Importer
+        {{ 'contacts.import' | translate }}
       </button>
       <button class="btn btn-primary" (click)="openModal()" data-testid="create-contact">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Nouveau contact
+        {{ 'contacts.new' | translate }}
       </button>
     }
   </div>
@@ -68,15 +68,15 @@
           <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
           <path d="M8 5v4M8 10.5v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        Notice d'information — Protection des données personnelles
+        {{ 'contacts.privacyTitle' | translate }}
       </span>
-      <button class="privacy-banner-dismiss" (click)="dismissPrivacyBanner()" aria-label="Fermer">✕</button>
+      <button class="privacy-banner-dismiss" (click)="dismissPrivacyBanner()" [attr.aria-label]="'common.actions.close' | translate">✕</button>
     </div>
     <details class="privacy-banner-details">
-      <summary>Afficher la notice complète (RGPD / Loi 09-08)</summary>
+      <summary>{{ 'contacts.privacyShowFull' | translate }}</summary>
       <pre class="privacy-banner-text">{{ privacyNotice.text }}</pre>
     </details>
-    <p class="privacy-banner-version">Version {{ privacyNotice.version }} — {{ privacyNotice.lastUpdated }}</p>
+    <p class="privacy-banner-version">{{ 'contacts.versionPrefix' | translate }} {{ privacyNotice.version }} — {{ privacyNotice.lastUpdated }}</p>
   </div>
 }
 
@@ -89,14 +89,14 @@
         <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </span>
-    <input class="search-input" type="search" placeholder="Rechercher par nom, email, téléphone…"
+    <input class="search-input" type="search" [placeholder]="'contacts.searchPlaceholder' | translate"
            [(ngModel)]="searchQuery" />
   </div>
 
   @if (viewMode === 'pipeline') {
     <label class="lost-toggle">
       <input type="checkbox" [(ngModel)]="showLost" />
-      <span>Afficher perdus ({{ lostCount }})</span>
+      <span>{{ 'contacts.showLost' | translate:{ count: lostCount } }}</span>
     </label>
   }
 
@@ -110,7 +110,7 @@
   <div class="alert alert-error">{{ error }}</div>
 }
 @if (loading) {
-  <div class="skeleton-stack" data-testid="contacts-loading-state" aria-label="Chargement...">
+  <div class="skeleton-stack" data-testid="contacts-loading-state" [attr.aria-label]="'contacts.loadingAria' | translate">
     @for (i of [1,2,3,4,5,6]; track i) {
       <span class="skeleton skeleton-row"></span>
     }
@@ -126,10 +126,10 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">Aucun contact</p>
-        <p class="empty-state-desc">Ajoutez votre premier contact pour démarrer votre pipeline commercial.</p>
+        <p class="empty-state-title">{{ 'contacts.emptyTitle' | translate }}</p>
+        <p class="empty-state-desc">{{ 'contacts.emptyDesc' | translate }}</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
+          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.new' | translate }}</button>
         }
       </div>
     </div>
@@ -139,8 +139,8 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
-        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+        <p class="empty-state-title">{{ 'contacts.noResult' | translate:{ q: searchQuery } }}</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'contacts.clear' | translate }}</button>
       </div>
     </div>
   }
@@ -151,11 +151,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Téléphone</th>
-              <th>Type</th>
-              <th>Statut</th>
+              <th>{{ 'contacts.thName' | translate }}</th>
+              <th>{{ 'contacts.thEmail' | translate }}</th>
+              <th>{{ 'contacts.thPhone' | translate }}</th>
+              <th>{{ 'contacts.thType' | translate }}</th>
+              <th>{{ 'contacts.thStatus' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -172,7 +172,7 @@
                 <td class="contact-name-cell">
                   <a [routerLink]="['/app/contacts', c.id]"
                      class="row-link"
-                     [attr.aria-label]="'Voir la fiche de ' + c.fullName"
+                     [attr.aria-label]="'contacts.rowAria' | translate:{ name: c.fullName }"
                      (click)="$event.stopPropagation()">
                     <span class="contact-avatar-sm" [style.background]="avatarColor(c)" aria-hidden="true">{{ initials(c) }}</span>
                     <span class="row-link-text">{{ c.fullName }}</span>
@@ -200,10 +200,10 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">Aucun contact</p>
-        <p class="empty-state-desc">Ajoutez votre premier contact pour démarrer votre pipeline commercial.</p>
+        <p class="empty-state-title">{{ 'contacts.emptyTitle' | translate }}</p>
+        <p class="empty-state-desc">{{ 'contacts.emptyDesc' | translate }}</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
+          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.new' | translate }}</button>
         }
       </div>
     </div>
@@ -213,8 +213,8 @@
     <div class="card">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
-        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+        <p class="empty-state-title">{{ 'contacts.noResult' | translate:{ q: searchQuery } }}</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'contacts.clear' | translate }}</button>
       </div>
     </div>
   }
@@ -252,7 +252,7 @@
               </span>
             }
             @if (!c.email && !c.phone) {
-              <span class="contact-card-detail contact-card-detail-muted">Aucune coordonnée</span>
+              <span class="contact-card-detail contact-card-detail-muted">{{ 'contacts.noCoord' | translate }}</span>
             }
           </div>
           <div class="contact-card-footer">
@@ -274,27 +274,27 @@
   <div class="kpi-bar">
     <div class="kpi-item">
       <span class="kpi-value">{{ kpiProspects }}</span>
-      <span class="kpi-label">Prospects</span>
+      <span class="kpi-label">{{ 'contacts.kpiProspects' | translate }}</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-blue">{{ kpiActive }}</span>
-      <span class="kpi-label">Clients actifs</span>
+      <span class="kpi-label">{{ 'contacts.kpiActiveClients' | translate }}</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-green">{{ kpiCompleted }}</span>
-      <span class="kpi-label">Ventes réalisées</span>
+      <span class="kpi-label">{{ 'contacts.kpiSalesDone' | translate }}</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-rate">{{ kpiConversionRate }}%</span>
-      <span class="kpi-label">Taux de conversion</span>
+      <span class="kpi-label">{{ 'contacts.kpiConversionRate' | translate }}</span>
     </div>
     <div class="kpi-divider"></div>
     <div class="kpi-item">
       <span class="kpi-value kpi-muted">{{ lostCount }}</span>
-      <span class="kpi-label">Perdus</span>
+      <span class="kpi-label">{{ 'contacts.kpiLost' | translate }}</span>
     </div>
   </div>
 
@@ -304,7 +304,7 @@
         <div class="pipeline-col">
 
           <div class="pipeline-col-header" [style.border-top-color]="col.color">
-            <span class="pipeline-col-title" [style.color]="col.color">{{ col.label }}</span>
+            <span class="pipeline-col-title" [style.color]="col.color">{{ 'contacts.columns.' + col.key | translate }}</span>
             <span class="pipeline-col-count" [style.background]="col.color">
               {{ columnContacts(col.key).length }}
             </span>
@@ -312,7 +312,7 @@
 
           <div class="pipeline-col-body">
             @if (columnContacts(col.key).length === 0) {
-              <div class="pipeline-empty">Aucun contact</div>
+              <div class="pipeline-empty">{{ 'contacts.pipelineEmpty' | translate }}</div>
             }
             @for (c of columnContacts(col.key); track c.id) {
               <a class="pipeline-card" [class.pipeline-card-completed]="col.key === 'COMPLETED_CLIENT'"
@@ -323,12 +323,12 @@
                   <div class="card-identity">
                     <span class="card-name">{{ c.fullName }}</span>
                     @if (c.tempClientUntil) {
-                      <span class="card-temp">Acompte jusqu'au {{ c.tempClientUntil | date:'dd/MM' }}</span>
+                      <span class="card-temp">{{ 'contacts.depositUntil' | translate }} {{ c.tempClientUntil | date:'dd/MM' }}</span>
                     }
                   </div>
                   @if (col.key === 'COMPLETED_CLIENT') {
                     <svg class="card-sold-badge" width="16" height="16" viewBox="0 0 16 16" fill="none"
-                         title="Vente réalisée">
+                         [title]="'contacts.saleDoneTitle' | translate">
                       <circle cx="8" cy="8" r="7" fill="#059669"/>
                       <path d="M5 8.5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"
                             stroke-linejoin="round"/>
@@ -361,7 +361,7 @@
                         <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.1"/>
                         <path d="M5 3v2.5l1.5 1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
                       </svg>
-                      {{ daysSince(c.createdAt) }}j dans le pipeline
+                      {{ 'contacts.daysInPipeline' | translate:{ days: daysSince(c.createdAt) } }}
                     </span>
                   }
                 </div>
@@ -383,7 +383,7 @@
     @if (showLost && lostCount > 0) {
       <div class="pipeline-col pipeline-col-lost">
         <div class="pipeline-col-header" style="border-top-color:#ef4444">
-          <span class="pipeline-col-title" style="color:#ef4444">Perdus</span>
+          <span class="pipeline-col-title" style="color:#ef4444">{{ 'contacts.lost' | translate }}</span>
           <span class="pipeline-col-count" style="background:#ef4444">{{ lostCount }}</span>
         </div>
         <div class="pipeline-col-body">
@@ -406,10 +406,10 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">👥</div>
-        <p class="empty-state-title">Aucun contact dans le pipeline</p>
-        <p class="empty-state-desc">Créez votre premier prospect pour démarrer le suivi commercial.</p>
+        <p class="empty-state-title">{{ 'contacts.pipelineEmptyTitle' | translate }}</p>
+        <p class="empty-state-desc">{{ 'contacts.pipelineEmptyDesc' | translate }}</p>
         @if (canWrite) {
-          <button class="btn btn-primary" (click)="openModal()">Nouveau contact</button>
+          <button class="btn btn-primary" (click)="openModal()">{{ 'contacts.new' | translate }}</button>
         }
       </div>
     </div>
@@ -418,8 +418,8 @@
     <div class="card" style="margin-top:16px">
       <div class="empty-state">
         <div class="empty-state-icon">🔍</div>
-        <p class="empty-state-title">Aucun résultat pour "{{ searchQuery }}"</p>
-        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">Effacer</button>
+        <p class="empty-state-title">{{ 'contacts.noResult' | translate:{ q: searchQuery } }}</p>
+        <button class="btn btn-secondary btn-sm" (click)="searchQuery = ''">{{ 'contacts.clear' | translate }}</button>
       </div>
     </div>
   }
@@ -431,8 +431,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2 class="modal-title">Nouveau contact</h2>
-        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" aria-label="Fermer">✕</button>
+        <h2 class="modal-title">{{ 'contacts.modalTitle' | translate }}</h2>
+        <button class="modal-close" (click)="closeModal()" [disabled]="submitting" [attr.aria-label]="'common.actions.close' | translate">✕</button>
       </div>
 
       <div class="modal-body">
@@ -442,55 +442,54 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Prénom</label>
-            <input class="form-control" type="text" placeholder="ex. Jean"
+            <label class="form-label required">{{ 'contacts.firstName' | translate }}</label>
+            <input class="form-control" type="text" [placeholder]="'contacts.firstNamePlaceholder' | translate"
                    [(ngModel)]="form.firstName" [disabled]="submitting" autocomplete="off"
                    data-testid="firstName" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Nom</label>
-            <input class="form-control" type="text" placeholder="ex. Dupont"
+            <label class="form-label required">{{ 'contacts.lastName' | translate }}</label>
+            <input class="form-control" type="text" [placeholder]="'contacts.lastNamePlaceholder' | translate"
                    [(ngModel)]="form.lastName" [disabled]="submitting" autocomplete="off"
                    data-testid="lastName" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-control" type="email" placeholder="jean.dupont@example.com"
+          <label class="form-label">{{ 'contacts.email' | translate }}</label>
+          <input class="form-control" type="email" [placeholder]="'contacts.emailPlaceholder' | translate"
                  [(ngModel)]="form.email" [disabled]="submitting" />
-          <span class="form-hint">Utilisé pour le portail client et la messagerie automatique</span>
+          <span class="form-hint">{{ 'contacts.emailHint' | translate }}</span>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Téléphone</label>
-          <input class="form-control" type="tel" placeholder="+212 6 xx xx xx xx"
+          <label class="form-label">{{ 'contacts.phone' | translate }}</label>
+          <input class="form-control" type="tel" [placeholder]="'contacts.phonePlaceholder' | translate"
                  [(ngModel)]="form.phone" [disabled]="submitting" />
         </div>
 
         @if (!form.email.trim() && !form.phone.trim()) {
           <p class="form-hint" style="color:var(--c-warning,#f59e0b);margin-top:0">
-            Téléphone ou email obligatoire
+            {{ 'contacts.phoneOrEmail' | translate }}
           </p>
         }
 
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label">{{ 'contacts.notes' | translate }}</label>
           <textarea class="form-control" rows="3"
-                    placeholder="Source du lead, contexte du premier contact, intérêts…"
+                    [placeholder]="'contacts.notesPlaceholder' | translate"
                     [(ngModel)]="form.notes" [disabled]="submitting"></textarea>
         </div>
 
         <p class="form-hint" style="margin-top:0">
-          Le contact est créé avec le statut <strong>Prospect</strong>. Vous pourrez gérer
-          le suivi commercial (réservations, acomptes) depuis sa fiche.
+          {{ 'contacts.createHintPrefix' | translate }} <strong>{{ 'contacts.prospect' | translate }}</strong>{{ 'contacts.createHintSuffix' | translate }}
         </p>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">Annuler</button>
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">{{ 'common.actions.cancel' | translate }}</button>
         <button class="btn btn-primary" (click)="submitCreate()" [disabled]="submitting" data-testid="save-button">
-          @if (submitting) { Création… } @else { Créer le contact }
+          @if (submitting) { {{ 'contacts.creating' | translate }} } @else { {{ 'contacts.createSubmit' | translate }} }
         </button>
       </div>
 

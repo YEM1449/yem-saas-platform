@@ -9,10 +9,10 @@
   <!-- Invite user form -->
   <div class="add-form">
     <div class="add-form-header page-header" style="margin-bottom:12px">
-      <h4 class="page-title" style="font-size:15px">Membres</h4>
+      <h4 class="page-title" style="font-size:15px">{{ 'superadmin.members.membres' | translate }}</h4>
       <div class="page-header-actions">
         <button class="btn btn-primary btn-sm" (click)="showInviteForm = !showInviteForm">
-          {{ showInviteForm ? 'Annuler' : 'Inviter' }}
+          {{ (showInviteForm ? 'superadmin.members.cancel' : 'superadmin.members.inviter') | translate }}
         </button>
       </div>
     </div>
@@ -21,19 +21,19 @@
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label required">Email</label>
+            <label class="form-label required">{{ 'superadmin.members.email' | translate }}</label>
             <input class="form-control" type="email" [(ngModel)]="inviteForm.email" name="inviteEmail" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Prénom</label>
+            <label class="form-label required">{{ 'superadmin.members.prenom' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="inviteForm.prenom" name="invitePrenom" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Nom</label>
+            <label class="form-label required">{{ 'superadmin.members.nom' | translate }}</label>
             <input class="form-control" type="text" [(ngModel)]="inviteForm.nomFamille" name="inviteNomFamille" />
           </div>
           <div class="form-group">
-            <label class="form-label required">Rôle</label>
+            <label class="form-label required">{{ 'superadmin.members.role' | translate }}</label>
             <select class="form-control" [(ngModel)]="inviteForm.role" name="inviteRole">
               <option value="ADMIN">ADMIN</option>
               <option value="MANAGER">MANAGER</option>
@@ -43,7 +43,7 @@
         </div>
         <div class="modal-footer" style="padding:0">
           <button class="btn btn-primary" [disabled]="inviting" (click)="submitInvite()">
-            @if (inviting) { Envoi en cours... } @else { Envoyer l'invitation }
+            @if (inviting) { {{ 'superadmin.members.sending' | translate }} } @else { {{ 'superadmin.members.sendInvite' | translate }} }
           </button>
         </div>
       </div>
@@ -52,7 +52,7 @@
 
   <!-- Members table -->
   @if (loading) {
-    <div class="skeleton-stack" data-testid="societe-members-loading-state" aria-label="Chargement...">
+    <div class="skeleton-stack" data-testid="societe-members-loading-state" [attr.aria-label]="'superadmin.members.loadingAria' | translate">
       @for (i of [1,2,3,4,5]; track i) {
         <span class="skeleton skeleton-row"></span>
       }
@@ -65,11 +65,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Email</th>
-              <th>Rôle</th>
-              <th>Statut</th>
-              <th>Date</th>
-              <th>Actions</th>
+              <th>{{ 'superadmin.members.thEmail' | translate }}</th>
+              <th>{{ 'superadmin.members.thRole' | translate }}</th>
+              <th>{{ 'superadmin.members.thStatut' | translate }}</th>
+              <th>{{ 'superadmin.members.thDate' | translate }}</th>
+              <th>{{ 'superadmin.members.thActions' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -90,9 +90,9 @@
                 </td>
                 <td>
                   @if (m.actif) {
-                    <span class="badge badge-active">Actif</span>
+                    <span class="badge badge-active">{{ 'superadmin.members.actif' | translate }}</span>
                   } @else {
-                    <span class="badge badge-inactive">Inactif</span>
+                    <span class="badge badge-inactive">{{ 'superadmin.members.inactif' | translate }}</span>
                   }
                 </td>
                 <td class="td-muted">{{ m.dateAjout | date:'dd/MM/yyyy' }}</td>
@@ -107,10 +107,10 @@
                       <option value="AGENT">AGENT</option>
                     </select>
                     <button class="btn btn-sm btn-ghost" [disabled]="impersonating[m.userId]" (click)="impersonate(m)">
-                      {{ impersonating[m.userId] ? '...' : 'Imp.' }}
+                      {{ impersonating[m.userId] ? '...' : ('superadmin.members.imp' | translate) }}
                     </button>
                     <button class="btn btn-sm btn-danger" (click)="removeMembre(m)">
-                      Désactiver
+                      {{ 'superadmin.members.desactiver' | translate }}
                     </button>
                   </div>
                 </td>
@@ -118,7 +118,7 @@
             }
             @if (membres.length === 0) {
               <tr>
-                <td colspan="5" class="empty-state">Aucun membre.</td>
+                <td colspan="5" class="empty-state">{{ 'superadmin.members.emptyMembres' | translate }}</td>
               </tr>
             }
           </tbody>

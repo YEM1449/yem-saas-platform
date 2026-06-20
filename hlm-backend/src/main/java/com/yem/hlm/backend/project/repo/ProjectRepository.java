@@ -23,6 +23,9 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     Optional<Project> findBySocieteIdAndId(UUID societeId, UUID projectId);
 
+    /** Tenant-ownership guard for optional FK references (e.g. a visite's linked project). */
+    boolean existsBySocieteIdAndId(UUID societeId, UUID projectId);
+
     List<Project> findBySocieteIdOrderByNameAsc(UUID societeId);
 
     List<Project> findBySocieteIdAndStatusOrderByNameAsc(UUID societeId, ProjectStatus status);

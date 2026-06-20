@@ -11,5 +11,12 @@ public interface VenteDocumentRepository extends JpaRepository<VenteDocument, UU
 
     Optional<VenteDocument> findBySocieteIdAndId(UUID societeId, UUID id);
 
+    /**
+     * Société- <i>and</i> vente-scoped lookup. The {@code vente_id} predicate is the access-control
+     * boundary for the buyer portal: a document is only reachable through the vente it is attached to,
+     * so a caller cannot read another vente's (or another buyer's) document by guessing its id.
+     */
+    Optional<VenteDocument> findBySocieteIdAndVente_IdAndId(UUID societeId, UUID venteId, UUID id);
+
     List<VenteDocument> findAllByVente_IdOrderByCreatedAtDesc(UUID venteId);
 }

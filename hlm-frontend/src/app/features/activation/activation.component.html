@@ -49,7 +49,7 @@
       @if (state === 'loading') {
         <div class="state-loading" data-testid="activation-loading-state">
           <div class="spinner spinner-lg"></div>
-          <p class="state-loading-text">Vérification de votre lien…</p>
+          <p class="state-loading-text">{{ 'activation.loadingText' | translate }}</p>
         </div>
       }
 
@@ -62,9 +62,9 @@
               <path d="M9 9l10 10M19 9L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <h1 class="state-title">Lien invalide</h1>
+          <h1 class="state-title">{{ 'activation.invalidTitle' | translate }}</h1>
           <p class="state-desc">{{ error }}</p>
-          <a href="/login" class="btn btn-primary btn-full">Retour à la connexion</a>
+          <a href="/login" class="btn btn-primary btn-full">{{ 'activation.backToLogin' | translate }}</a>
         </div>
       }
 
@@ -77,8 +77,8 @@
               <path d="M8 14l4.5 4.5L20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <h1 class="state-title">Compte activé !</h1>
-          <p class="state-desc">Votre compte est prêt. Vous allez être redirigé vers la page de connexion…</p>
+          <h1 class="state-title">{{ 'activation.activatedTitle' | translate }}</h1>
+          <p class="state-desc">{{ 'activation.activatedDesc' | translate }}</p>
           <div class="success-progress"></div>
         </div>
       }
@@ -86,9 +86,9 @@
       <!-- ── Activation Form ───────────────────────────────────  -->
       @if (state === 'form' && invitation) {
         <div class="form-header" data-testid="activation-form-state">
-          <h1 class="form-title">Activez votre compte</h1>
+          <h1 class="form-title">{{ 'activation.formTitle' | translate }}</h1>
           <p class="form-subtitle">
-            Bienvenue, <strong>{{ invitation.prenom }}</strong>&nbsp;—
+            {{ 'activation.welcomePrefix' | translate }} <strong>{{ invitation.prenom }}</strong>&nbsp;—
             {{ invitation.societeNom }}
             <span class="role-chip">{{ invitation.role }}</span>
           </p>
@@ -100,7 +100,7 @@
           }
 
           <div class="form-group">
-            <label class="form-label required" for="motDePasse">Mot de passe</label>
+            <label class="form-label required" for="motDePasse">{{ 'activation.password' | translate }}</label>
             <input
               class="form-control"
               id="motDePasse"
@@ -110,7 +110,7 @@
               required
               minlength="12"
               [disabled]="submitting"
-              placeholder="Minimum 12 caractères"
+              [placeholder]="'activation.pwPlaceholder' | translate"
               autocomplete="new-password"
             />
             @if (form.motDePasse) {
@@ -125,16 +125,16 @@
               </div>
             }
             <ul class="password-requirements">
-              <li [class.req-ok]="pwHasLength">12 caractères minimum</li>
-              <li [class.req-ok]="pwHasUpper">Une lettre majuscule</li>
-              <li [class.req-ok]="pwHasLower">Une lettre minuscule</li>
-              <li [class.req-ok]="pwHasDigit">Un chiffre</li>
-              <li [class.req-ok]="pwHasSpecial">Un caractère spécial</li>
+              <li [class.req-ok]="pwHasLength">{{ 'activation.req12' | translate }}</li>
+              <li [class.req-ok]="pwHasUpper">{{ 'activation.reqUpper' | translate }}</li>
+              <li [class.req-ok]="pwHasLower">{{ 'activation.reqLower' | translate }}</li>
+              <li [class.req-ok]="pwHasDigit">{{ 'activation.reqDigit' | translate }}</li>
+              <li [class.req-ok]="pwHasSpecial">{{ 'activation.reqSpecial' | translate }}</li>
             </ul>
           </div>
 
           <div class="form-group">
-            <label class="form-label required" for="confirmationMotDePasse">Confirmer le mot de passe</label>
+            <label class="form-label required" for="confirmationMotDePasse">{{ 'activation.confirmPassword' | translate }}</label>
             <input
               class="form-control"
               id="confirmationMotDePasse"
@@ -143,7 +143,7 @@
               [(ngModel)]="form.confirmationMotDePasse"
               required
               [disabled]="submitting"
-              placeholder="Ressaisissez votre mot de passe"
+              [placeholder]="'activation.confirmPlaceholder' | translate"
               autocomplete="new-password"
             />
           </div>
@@ -160,7 +160,7 @@
               />
               <span class="cgu-text">
                 J'accepte les
-                <a href="/cgu" target="_blank" rel="noopener" class="cgu-link">conditions générales d'utilisation</a>
+                <a href="/cgu" target="_blank" rel="noopener" class="cgu-link">{{ 'activation.cguLink' | translate }}</a>
                 (v{{ form.consentementCguVersion }})
               </span>
             </label>
