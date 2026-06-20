@@ -11,6 +11,7 @@ import com.yem.hlm.backend.societe.domain.Societe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,7 @@ public class DataRetentionScheduler {
     }
 
     @Scheduled(cron = "${app.gdpr.retention-cron:0 0 2 * * *}")
+    @SchedulerLock(name = "gdpr_data_retention", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     @Transactional
     public void runRetention() {
         societeContextHelper.runAsSystem(() -> {

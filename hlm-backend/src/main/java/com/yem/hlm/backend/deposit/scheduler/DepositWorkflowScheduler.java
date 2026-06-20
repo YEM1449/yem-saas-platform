@@ -3,6 +3,7 @@ package com.yem.hlm.backend.deposit.scheduler;
 import com.yem.hlm.backend.deposit.service.DepositService;
 import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class DepositWorkflowScheduler {
 
     /** Runs every hour at minute 0. */
     @Scheduled(cron = "0 0 * * * *")
+    @SchedulerLock(name = "deposit_workflow", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     public void hourly() {
         societeContextHelper.runAsSystem(() ->
             depositService.runHourlyWorkflow(Duration.ofHours(24))

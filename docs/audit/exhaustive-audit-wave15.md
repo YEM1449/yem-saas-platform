@@ -302,16 +302,22 @@ reserve list only.** Verdict: low risk except the project-wide reserve list.
   `LocalDate.now(ZoneId.of("Africa/Casablanca"))`, or inject a market-aware `Clock`. Centralize so the
   France market can swap the zone. **Effort:** S. Links DA-011, T9.7, T11.3.
 
-### EX-010 🟡 Medium — SUSPECTED — In-memory `@Scheduled` sweeps + no durable trigger for option/legal expiries across redeploys
+### EX-010 🟡 Medium — ✅ RESOLVED (2026-06-20) — In-memory `@Scheduled` sweeps + no durable trigger for option/legal expiries across redeploys
+> **Fix (EX-010 + DA-025):** `@SchedulerLock` (ShedLock, the outbox-dispatcher pattern) now wraps every
+> DB-backed domain sweep, so on a multi-instance deploy only one node runs a given sweep — the
+> one-shot side effects (freeing a property, closing a rétractation window, sending one reminder/expiry
+> email, deleting tokens, GDPR retention) can no longer double-fire. Locked: `VenteVefaScheduler`,
+> `ReservationExpiryScheduler`, `DepositWorkflowScheduler`, `PortalTokenCleanupScheduler`,
+> `DataRetentionScheduler`, `reminder.ReminderScheduler`, `payments.ReminderScheduler` (joining the
+> already-locked outbox dispatcher, notification digest, and visite reminder job).
+> **Deliberately not locked:** `LoginRateLimiter.cleanupIdleBuckets` cleans a per-instance in-memory
+> `ConcurrentHashMap` — it *must* run on every node, so a cluster lock there would be a bug.
+> Durability was already fine (deadline state is DB-persisted); this closes the multi-instance idempotency gap.
 - **Where:** `VenteVefaScheduler` (hourly option-expiry + VEFA sweeps), `ReservationExpiryScheduler`.
 - **What:** These are cron `@Scheduled` sweeps reading DB rows (`optionExpireAtBefore(now)`), so the
   *deadline state is persisted in the DB* — good, a redeploy doesn't lose the data. **However** Wave 14
-  **DA-025** flagged that most schedulers lack ShedLock → on multi-instance deploy the sweeps
-  double-execute. Combined: durability is OK (DB-backed), but **idempotency under multi-instance is not**.
-  Confirm whether any expiry logic is one-shot-side-effecting (e.g., sends one email / frees one property)
-  in a way that double-fires.
-- **Fix direction:** Apply `@SchedulerLock` to every domain sweep (the pattern already exists for the
-  outbox dispatcher). **Effort:** S. Links DA-025.
+  **DA-025** flagged that most schedulers lacked ShedLock → on multi-instance deploy the sweeps
+  double-executed. Durability was OK (DB-backed), but **idempotency under multi-instance was not**.
 
 Still open from Wave 14 (re-confirmed relevant): **DA-019** (no buyer payment-default state),
 **DA-020** (no cession/transfert de contrat), **DA-022** (no document versioning/signed state),
@@ -526,7 +532,7 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | **EX-008** ✅ | T6/T11 | 🟡 Med | High | C | `fr` locale → EUR/format leakage on a MAD product | FE | **DONE** |
 | **EX-012** ✅ | T10 | 🟡 Med | High | C | Duplicated stage-entry effects → recurring legal gaps | BE | **DONE** |
 | **EX-016** ✅ | T12 | 🟡 Med | Med | S | `/health` green while R2 down → silent outage | SRE | **DONE** |
-| **EX-010** | T7/T12 | 🟡 Med | Med | S | Multi-instance scheduler double-fire (DA-025) | SRE | S |
+| **EX-010** ✅ | T7/T12 | 🟡 Med | Med | S | Multi-instance scheduler double-fire (DA-025) | SRE | **DONE** |
 | **EX-003** | T2 | 🟡 Med | Med | S | Last-write-wins edit loss (no `@Version` everywhere) | BE | S |
 | **EX-006** | T5 | 🟡 Med | Med | S | 3D status query hotspot at fleet scale | BE | S–M |
 | **EX-015** | T11 | 🟡 Med | Low | S | Market zone/locale not config-driven | BE | M |
@@ -599,8 +605,9 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 4. EX-005 component-scope the 3D engine. *(flagship feature correctness — small, high ROI)*
 
 **Blocks "production confidence":**
-5. P4 observability pass: error tracking + R2 `HealthIndicator` (EX-016) + ShedLock on all sweeps
-   (EX-010/DA-025) + DA-026 alerting.
+5. P4 observability pass: error tracking + R2 `HealthIndicator` (EX-016 ✅) + ShedLock on all sweeps
+   (EX-010/DA-025 ✅) + DA-026 alerting. *(Remaining: DA-026 error-tracking/alerting — needs an
+   external sink + secrets.)*
 6. DA-013 immutable transition/audit ledger.
 7. EX-003 `@Version` on user-editable aggregates.
 

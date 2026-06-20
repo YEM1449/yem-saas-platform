@@ -4,6 +4,7 @@ import com.yem.hlm.backend.societe.SocieteContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class ReservationExpiryScheduler {
 
     /** Runs every hour — expire overdue reservations and warn about those expiring within 48h. */
     @Scheduled(cron = "${app.reservation.expiry-cron:0 0 * * * *}")
+    @SchedulerLock(name = "reservation_expiry", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0.5S")
     public void runExpiryCheck() {
         societeContextHelper.runAsSystem(() -> {
             log.info("Reservation expiry check starting");
