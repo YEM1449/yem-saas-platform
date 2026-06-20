@@ -1,6 +1,8 @@
 package com.yem.hlm.backend.contact.domain;
 
+import com.yem.hlm.backend.common.crypto.EncryptedStringConverter;
 import jakarta.persistence.*;
+import jakarta.persistence.Convert;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -100,7 +102,8 @@ public class Contact {
     private String email;
 
     @Setter
-    @Column(name = "national_id", length = 100)
+    @Convert(converter = EncryptedStringConverter.class) // DA-010 — CIN encrypted at rest (CNDP)
+    @Column(name = "national_id", length = 255)
     private String nationalId;
 
     @Setter
@@ -110,7 +113,8 @@ public class Contact {
     // ── VEFA legal identity (Loi 44-00 / Office des Changes) — Wave 12 ────────
     @Setter @Column(name = "cin_date_delivrance")            private LocalDate cinDateDelivrance;
     @Setter @Column(name = "cin_autorite", length = 100)     private String cinAutorite;
-    @Setter @Column(name = "passeport_numero", length = 30)  private String passeportNumero;
+    @Setter @Convert(converter = EncryptedStringConverter.class) // DA-010
+    @Column(name = "passeport_numero", length = 255)             private String passeportNumero;
     @Setter @Column(name = "passeport_expire")               private LocalDate passeportExpire;
     @Setter @Column(name = "date_naissance")                 private LocalDate dateNaissance;
     @Setter @Column(name = "lieu_naissance", length = 100)   private String lieuNaissance;

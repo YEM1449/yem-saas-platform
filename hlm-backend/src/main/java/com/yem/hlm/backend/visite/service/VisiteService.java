@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.visite.service;
 
+import com.yem.hlm.backend.common.tx.AfterCommit;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
 import com.yem.hlm.backend.project.repo.ProjectRepository;
@@ -162,10 +163,21 @@ public class VisiteService {
         annulerRappelsEnAttente(visite.getId());
         // RG-V08 — notify the prospect only when the visite was already CONFIRMEE.
         if (etaitConfirmee) {
-            try {
-                emailService.envoyerAnnulation(visite, raison);
-            } catch (RuntimeException e) {
-                log.warn("Échec envoi email d'annulation pour visite {}", visite.getId(), e);
+            // Force-initialise the LAZY contact inside the tx so the deferred send reads cached
+            // data (no LazyInitializationException after the session closes); getDateHeure() is a
+            // plain field. The send itself runs AFTER commit (DA-005) so the Brevo round-trip does
+            // not hold the Neon connection.
+            boolean hasEmail = visite.getContact() != null
+                    && visite.getContact().getEmail() != null
+                    && !visite.getContact().getEmail().isBlank();
+            if (hasEmail) {
+                AfterCommit.run(() -> {
+                    try {
+                        emailService.envoyerAnnulation(visite, raison);
+                    } catch (RuntimeException e) {
+                        log.warn("Échec envoi email d'annulation pour visite {}", visite.getId(), e);
+                    }
+                });
             }
         }
         return VisiteResponse.from(visite);

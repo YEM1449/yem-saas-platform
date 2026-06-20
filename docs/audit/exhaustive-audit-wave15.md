@@ -80,8 +80,13 @@ Confirmed still-current from Wave 14 (re-read, unchanged):
   `DataIntegrityViolationException` is not mapped to a clean 409. **T2.1 status: constraint exists ✔,
   clean-409 mapping ✘.**
 - **DA-004** (🟡) payment recording has no idempotency key → double-submit double-records. **Open.**
-- **DA-005** (🟠) external I/O (R2 pre-sign, Brevo send) inside `@Transactional` holding a Neon
-  connection across a network call → pool starvation. **Open — high-value at Neon's low ceiling.**
+- **DA-005** (🟠) external I/O (R2, Brevo send) inside `@Transactional` holding a Neon connection
+  across a network call → pool starvation. **✅ RESOLVED (2026-06-20):** (a) bounded HTTP timeouts —
+  Brevo `RestClient` connect/read (5s/15s, configurable) and the S3 client `apiCallTimeout`/
+  `apiCallAttemptTimeout` (30s/10s) so a stalled endpoint fails fast instead of hanging a thread;
+  (b) the synchronous request-path sends (portal magic-link, visite cancellation) now run via
+  `AfterCommit.run(...)`, which defers them to `afterCommit` so the Neon connection is back in the
+  pool before the network round-trip. (R2 *presigning* is local crypto, not network I/O.)
 
 ### EX-003 🟡 Medium — SUSPECTED — `@Version` optimistic locking is not uniformly present on hot entities
 - **Where:** `vente/domain/Vente.java`, `property/domain/Property.java` (need field-level confirm).
@@ -103,7 +108,7 @@ Confirmed solid (re-read this wave):
 - DA-006 (portal cross-contact document download) is **RESOLVED** (commit 1602fa8, this branch).
 
 Still open from Wave 14: **DA-007** (GLB upload size/validation), **DA-008** (cross-société agent
-assignment), **DA-010** (plaintext CIN/financials), **DA-013** (no tamper-evident audit of pipeline
+assignment), **DA-010** (plaintext CIN/financials — ✅ now AES-256-GCM at rest), **DA-013** (no tamper-evident audit of pipeline
 actions).
 
 ### EX-004 🟠 High — ✅ RESOLVED (2026-06-14, via EX-001) — Mass-assignment of `statut` via the generic endpoint defeats pipeline + legal checks
@@ -524,8 +529,8 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | **EX-009** ✅ | T7/T9 | 🟠 High | Med | C/S | Off-by-one on 7-day legal rétractation (JVM zone) | BE/Legal | **DONE** |
 | **EX-011** ✅ | T9 | 🟠 High | Med | C | Cannot reliably prove buyer's Art.618-3 window (EX-001+EX-009) | BE/Legal | **DONE** (⚠️ day-count rule still needs counsel sign-off) |
 | **EX-014** 🟡 | T11 | 🟠 High | High | C | France/AR expansion blocked; marketed multi-lang non-functional | Product/FE | **Foundation DONE; string migration in progress** (see i18n-migration-guide.md) |
-| DA-005 | T2 | 🟠 High | Med | C | Mail/R2 hiccup → Neon pool exhaustion → outage | BE/SRE | M |
-| DA-010 | T3 | 🟠 High | Med | — | Plaintext CIN/financials; CNDP blast radius | BE/Data | M |
+| DA-005 ✅ | T2 | 🟠 High | Med | C | Mail/R2 hiccup → Neon pool exhaustion → outage | BE/SRE | **DONE** |
+| DA-010 ✅ | T3 | 🟠 High | Med | — | Plaintext CIN/financials; CNDP blast radius | BE/Data | **DONE** |
 | DA-013 | T8/T9 | 🟠 High | High | — | No tamper-evident history of legal actions | BE | M |
 | DA-009 | T9 | 🟠 High | High | — | Generated reservation voidable (missing 44-00 mentions) | Legal/BE | M |
 | **EX-007** ✅ | T6/T11 | 🟡 Med | High | C | Language switcher breaks layout, changes nothing | FE | **DONE** |
@@ -600,8 +605,8 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 **Blocks "first real client / legal go-live":**
 1. EX-001 + EX-009 + EX-011 (one workstream): single guarded `enterStage()` + Casablanca `Clock`. Closes
    the rétractation/deposit legal gaps. *(P1 + P2)*
-2. DA-010 encrypt CIN/financials at rest. *(CNDP)*
-3. DA-005 move R2/Brevo I/O out of `@Transactional`; add HTTP timeouts. *(outage prevention)*
+2. DA-010 encrypt CIN/financials at rest. *(CNDP)* ✅
+3. DA-005 move R2/Brevo I/O out of `@Transactional`; add HTTP timeouts. *(outage prevention)* ✅
 4. EX-005 component-scope the 3D engine. *(flagship feature correctness — small, high ROI)*
 
 **Blocks "production confidence":**

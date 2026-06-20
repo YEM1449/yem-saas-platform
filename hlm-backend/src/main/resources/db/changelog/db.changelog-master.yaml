@@ -175,3 +175,5 @@ databaseChangeLog:
       file: db/changelog/changes/087-reserve-livraison-responsable.yaml
   - include:
       file: db/changelog/changes/088-visite.yaml
+  - include:
+      file: db/changelog/changes/089-encrypt-pii-columns.yaml

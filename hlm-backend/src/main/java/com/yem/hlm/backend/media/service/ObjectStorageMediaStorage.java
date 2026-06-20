@@ -99,7 +99,14 @@ public class ObjectStorageMediaStorage implements MediaStorageService {
                 .region(Region.of(props.region()))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
-                .serviceConfiguration(s3Config);
+                .serviceConfiguration(s3Config)
+                // Bounded timeouts (DA-005): the SDK has no apiCallTimeout by default, so a stalled
+                // R2/S3 endpoint would block the calling thread indefinitely — fatal on the request
+                // path where it pins a Neon connection. apiCallAttemptTimeout bounds each network try;
+                // apiCallTimeout bounds the whole call incl. retries.
+                .overrideConfiguration(c -> c
+                        .apiCallAttemptTimeout(Duration.ofSeconds(10))
+                        .apiCallTimeout(Duration.ofSeconds(30)));
 
         if (props.endpoint() != null && !props.endpoint().isBlank()) {
             builder.endpointOverride(URI.create(props.endpoint()));

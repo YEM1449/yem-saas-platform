@@ -1,5 +1,6 @@
 package com.yem.hlm.backend.outbox.service.provider;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -49,16 +51,26 @@ public class BrevoHttpEmailSender implements EmailSender {
             @Value("${app.email.brevo.base-url:https://api.brevo.com}") String baseUrl,
             @Value("${app.email.brevo.api-key}") String apiKey,
             @Value("${app.email.from}") String from,
-            @Value("${app.email.from-name:}") String fromName) {
+            @Value("${app.email.from-name:}") String fromName,
+            @Value("${app.email.brevo.connect-timeout-ms:5000}")  int connectTimeoutMs,
+            @Value("${app.email.brevo.read-timeout-ms:15000}")    int readTimeoutMs) {
         this.from     = from;
         this.fromName = fromName;
+        // Bounded connect/read timeouts (DA-005): without them a stalled Brevo endpoint would
+        // hang the calling thread indefinitely — and on the request path that holds a scarce Neon
+        // connection until it gives up, cascading into pool starvation.
+        SimpleClientHttpRequestFactory rf = new SimpleClientHttpRequestFactory();
+        rf.setConnectTimeout(Duration.ofMillis(connectTimeoutMs));
+        rf.setReadTimeout(Duration.ofMillis(readTimeoutMs));
         this.client   = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(rf)
                 .defaultHeader("api-key", apiKey)
                 .defaultHeader("accept", MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .build();
-        log.info("[BREVO-HTTP] Email sender initialised — baseUrl={} from={}", baseUrl, from);
+        log.info("[BREVO-HTTP] Email sender initialised — baseUrl={} from={} connectTimeoutMs={} readTimeoutMs={}",
+                baseUrl, from, connectTimeoutMs, readTimeoutMs);
     }
 
     @Override

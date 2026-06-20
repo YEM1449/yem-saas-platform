@@ -3,6 +3,7 @@ package com.yem.hlm.backend.portal.service;
 import com.yem.hlm.backend.common.ratelimit.RateLimiterService;
 import com.yem.hlm.backend.contact.domain.Contact;
 import com.yem.hlm.backend.contact.repo.ContactRepository;
+import com.yem.hlm.backend.common.tx.AfterCommit;
 import com.yem.hlm.backend.outbox.service.provider.EmailSender;
 import com.yem.hlm.backend.portal.api.dto.MagicLinkResponse;
 import com.yem.hlm.backend.portal.api.dto.PortalTokenVerifyResponse;
@@ -10,6 +11,8 @@ import com.yem.hlm.backend.portal.domain.PortalToken;
 import com.yem.hlm.backend.portal.repo.PortalTokenRepository;
 import com.yem.hlm.backend.societe.SocieteRepository;
 import com.yem.hlm.backend.societe.domain.Societe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +42,7 @@ import java.util.HexFormat;
 @Transactional
 public class PortalAuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(PortalAuthService.class);
     private static final long TOKEN_TTL_HOURS = 48;
     private static final String GENERIC_LINK_RESPONSE =
             "If the account exists, a magic link has been sent.";
@@ -142,13 +146,19 @@ public class PortalAuthService {
                 </body></html>
                 """.formatted(magicLinkUrl, societeName);
 
-        // Send email (fire-and-forget; NoopEmailSender used in dev/test)
-        try {
-            emailSender.send(contact.getEmail(), subject, html);
-        } catch (RuntimeException ex) {
-            // Email delivery failure must not break the token generation.
-            // The raw URL is still returned in the response body for dev/test.
-        }
+        // Send the email AFTER the token commits (DA-005): this releases the Neon connection
+        // before the Brevo network round-trip, so a mail hiccup can't pin a pooled connection.
+        // Fire-and-forget; NoopEmailSender is used in dev/test.
+        final String to = contact.getEmail();
+        AfterCommit.run(() -> {
+            try {
+                emailSender.send(to, subject, html);
+            } catch (RuntimeException ex) {
+                // Email delivery failure must not break the token generation.
+                // The raw URL is still returned in the response body for dev/test.
+                log.warn("Portal magic-link email send failed for token {}: {}", tokenHash, ex.getMessage());
+            }
+        });
 
         return new MagicLinkResponse(
                 GENERIC_LINK_RESPONSE,
