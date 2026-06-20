@@ -174,12 +174,16 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.svc.update(this.project.id, {
       name: this.editForm.name.trim(),
       description: this.editForm.description.trim() || undefined,
+      version: this.project.version,
     }).subscribe({
       next: (p) => { this.project = p; this.editing = false; this.editSaving = false; },
       error: (err: HttpErrorResponse) => {
         this.editSaving = false;
         const body = err.error as ErrorResponse | null;
-        this.editError = body?.message ?? 'Erreur lors de la sauvegarde.';
+        // 409 = another user saved while this form was open (EX-003): tell them to reload.
+        this.editError = err.status === 409
+          ? 'Ce projet a été modifié entre-temps. Rechargez la page et réessayez.'
+          : body?.message ?? 'Erreur lors de la sauvegarde.';
       },
     });
   }

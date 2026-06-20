@@ -88,15 +88,35 @@ Confirmed still-current from Wave 14 (re-read, unchanged):
   `AfterCommit.run(...)`, which defers them to `afterCommit` so the Neon connection is back in the
   pool before the network round-trip. (R2 *presigning* is local crypto, not network I/O.)
 
-### EX-003 🟡 Medium — SUSPECTED — `@Version` optimistic locking is not uniformly present on hot entities
+### EX-003 🟡 Medium — ✅ RESOLVED (2026-06-20) — `@Version` optimistic locking is not uniformly present on hot entities
+> **Confirmed + fixed:** Vente, Property, Contact, Reservation, SaleContract, Immeuble, Visite, User,
+> Societe already carried `@Version`; the gaps were the other concurrently-edited aggregate roots —
+> **Project, Task, Tranche, VenteEcheance (the "Echeance" named here), Deposit, CommissionRule**.
+> Added `@Version Long version` to those six + changeset **090** (`version BIGINT NOT NULL DEFAULT 0`,
+> idempotent `columnExists` preconditions, existing rows seeded to 0). The 409 path was already wired —
+> `GlobalExceptionHandler.handleOptimisticLock` maps `ObjectOptimisticLockingFailureException` →
+> **409 `CONCURRENT_UPDATE`** — so a stale save now returns a clean conflict instead of silently
+> overwriting. Full unit suite green (235). *(Left as-is: VEFA/contact sub-entities edited only within a
+> single agent's dossier — CoAcquereur, DossierFinancement, ReserveLivraison, Remboursement,
+> ClientDetail, ProspectDetail — lower concurrent-edit risk; add later if a contention case appears.)*
+>
+> **Follow-up hardening (2026-06-20, review):** the JPA `@Version` field alone only catches *overlapping
+> transactions* — the common **stale-form** case (user A loads, user B saves, A submits an old payload)
+> still slips through, because `update()` reloads the row inside one TX and re-reads B's committed
+> version. Fixed for **Project** by round-tripping the version like the user/société flows already do:
+> `ProjectResponse.version` is returned on GET, `ProjectUpdateRequest.version` is required on PUT, and
+> `ProjectService.update()` compares it against the current row (mismatch/null → `409 CONCURRENT_UPDATE`)
+> *before* applying changes; frontend `project-detail` echoes `project.version` and shows a "reload"
+> message on 409. **VenteEcheance** bulk cancellation (`cancelAllPendingByVente`, a JPQL bulk UPDATE that
+> bypasses Hibernate's version bump) now does `SET … version = version + 1`, so a concurrently-loaded
+> échéance can't overwrite an `ANNULEE` after a sale annulation. New IT
+> `updateProject_staleVersion_returns409Concurrent`. *(Task/Tranche/Deposit/CommissionRule have the same
+> stale-form gap; their status edits are state-machine-guarded so lower risk — extend the same
+> version-round-trip there if a field-edit contention case appears.)*
 - **Where:** `vente/domain/Vente.java`, `property/domain/Property.java` (need field-level confirm).
-- **What:** Changeset 057 added "optimistic lock version" to some tables; it is not clear every
-  concurrently-edited aggregate (Vente, Property, Echeance) carries `@Version`. Without it, two
+- **What:** Changeset 057 added "optimistic lock version" to some tables; it was not clear every
+  concurrently-edited aggregate (Vente, Property, Echeance) carried `@Version`. Without it, two
   staff editing the same Vente/Property is last-write-wins with silent field loss (T2.6 / T7.3).
-- **How to confirm:** `grep -rn "@Version" hlm-backend/src/main/java` and cross-check against the
-  list of user-editable entities.
-- **Fix direction:** `@Version Long version` on every user-editable aggregate + 409 on
-  `OptimisticLockException`. **Effort:** S–M.
 
 ---
 
@@ -542,7 +562,9 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | **EX-006** | T5 | 🟡 Med | Med | S | 3D status query hotspot at fleet scale | BE | S–M |
 | **EX-015** | T11 | 🟡 Med | Low | S | Market zone/locale not config-driven | BE | M |
 | DA-026 ◑ | T12 | 🟡 Med | High | — | Prod failures invisible until user calls | SRE | **emit ✅ / route=ops** |
-| DA-015/017/004 | T8/T2 | 🟡 Med | Med | — | Rounding drift / overpayment / double-record | BE | S |
+| 
+
+| T8/T2 | 🟡 Med | Med | — | Rounding drift / overpayment / double-record | BE | S |
 | **EX-002** | T1 | ⚪ Low | Low | C | `RESERVES_LEVEES` near dead-end | Product | S |
 | **EX-013** | T10 | ⚪ Low | Low | C | Stale CLAUDE.md state-machine docs | BE | S |
 | DA-029 | T12 | ⚪ Low | High | — | Daily cold-start looks broken | SRE | S |
