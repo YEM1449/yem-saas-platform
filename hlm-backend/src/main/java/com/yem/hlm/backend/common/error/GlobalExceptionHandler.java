@@ -59,7 +59,9 @@ import com.yem.hlm.backend.viewer3d.service.InvalidGlbException;
 import com.yem.hlm.backend.tranche.service.InvalidTrancheTransitionException;
 import com.yem.hlm.backend.gdpr.service.GdprErasureBlockedException;
 import com.yem.hlm.backend.gdpr.service.GdprExportNotFoundException;
+import com.yem.hlm.backend.societe.TenantIsolationException;
 import com.yem.hlm.backend.usermanagement.exception.BusinessRuleException;
+import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -86,6 +88,19 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * Error-tracking meter (P4 / DA-026): every unhandled 5xx and every tenant-isolation trip is
+     * counted (tagged by exception type) so Prometheus/Grafana can alert on the error rate — failures
+     * are no longer invisible until a user calls. See docs/ops/alert-rules.md for the alert wiring.
+     *
+     * <p>Uses Micrometer's static global registry (Spring Boot binds it to the Prometheus registry by
+     * default) so this advice stays constructor-free — {@code @WebMvcTest} slices, which don't load
+     * metrics auto-config, still wire it.
+     */
+    private void countError(String type) {
+        Metrics.counter("hlm.errors.unhandled", "type", type).increment();
+    }
 
     /**
      * Handle bean validation errors (@Valid on request bodies).
@@ -1105,11 +1120,34 @@ public class GlobalExceptionHandler {
      * Catch-all handler for unexpected exceptions.
      * Logs full stack trace but returns safe message to client.
      */
+    /**
+     * Tenant-isolation backstop tripped (P5): a société-scoped principal hit the DB with no société.
+     * Fail closed with a 403 (never leak which/whether a resource exists), log + count it as a
+     * security-relevant error so monitoring sees it immediately.
+     */
+    @ExceptionHandler(TenantIsolationException.class)
+    public ResponseEntity<ErrorResponse> handleTenantIsolation(
+            TenantIsolationException ex,
+            HttpServletRequest request
+    ) {
+        countError("TenantIsolationException");
+        log.error("Tenant isolation backstop tripped on {}: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                ErrorCode.FORBIDDEN,
+                "Access denied",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
             HttpServletRequest request
     ) {
+        countError(ex.getClass().getSimpleName());
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

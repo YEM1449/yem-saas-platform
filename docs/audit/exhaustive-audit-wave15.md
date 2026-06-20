@@ -541,7 +541,7 @@ the *frontend session* keep-alive but not backend/Neon cold start.
 | **EX-003** | T2 | 🟡 Med | Med | S | Last-write-wins edit loss (no `@Version` everywhere) | BE | S |
 | **EX-006** | T5 | 🟡 Med | Med | S | 3D status query hotspot at fleet scale | BE | S–M |
 | **EX-015** | T11 | 🟡 Med | Low | S | Market zone/locale not config-driven | BE | M |
-| DA-026 | T12 | 🟡 Med | High | — | Prod failures invisible until user calls | SRE | M |
+| DA-026 ◑ | T12 | 🟡 Med | High | — | Prod failures invisible until user calls | SRE | **emit ✅ / route=ops** |
 | DA-015/017/004 | T8/T2 | 🟡 Med | Med | — | Rounding drift / overpayment / double-record | BE | S |
 | **EX-002** | T1 | ⚪ Low | Low | C | `RESERVES_LEVEES` near dead-end | Product | S |
 | **EX-013** | T10 | ⚪ Low | Low | C | Stale CLAUDE.md state-machine docs | BE | S |
@@ -556,7 +556,7 @@ the *frontend session* keep-alive but not backend/Neon cold start.
    the generic-PATCH path that never sets the reflection date and the JVM-zone date math that can land a
    day early near midnight Casablanca, the system cannot reliably prove the Art. 618‑3 right. In a
    dispute, that is a voidable reservation and a CNDP/consumer-protection exposure.
-3. **One mail or R2 hiccup can take the whole app down (DA-005), and `/health` won't tell you (EX-016,
+3. **One mail or R2 hiccup can take the whole app down (DA-005 ✅ fixed), and `/health` now reflects it (EX-016 ✅,
    DA-026).** External I/O inside a DB transaction holds a scarce Neon connection across a network call;
    under a Brevo/R2 slowdown the pool exhausts and the app stops serving — while the health check stays
    green and no alert fires.
@@ -581,11 +581,23 @@ the *frontend session* keep-alive but not backend/Neon cold start.
   currency, and legal constants, resolved per société.
 - **P3 — Singleton lifetime vs component lifetime (EX-005).** A `providedIn:'root'` service that holds
   per-view, disposable resources. *Fix once:* component-scoped providers for anything with a `dispose()`.
-- **P4 — Invisibility of failure (DA-026, EX-016, DA-025).** No alerting, health doesn't reflect external
-  deps, sweeps can double-fire. *Fix once:* error tracking + real health contributors + ShedLock on all
-  sweeps, as one observability hardening pass.
-- **P5 — Hand-rolled tenant isolation (T10.2).** `requireSocieteId()` per method; RLS is the backstop but
-  a forgotten call is a latent IDOR. *Fix once:* an enforced aspect/interceptor that fails closed.
+- **P4 — Invisibility of failure (DA-026, EX-016, DA-025).** ✅ **RESOLVED (2026-06-20)** as one
+  observability pass: ShedLock on every DB sweep (DA-025/EX-010 ✅); R2 `ObjectStorageHealthIndicator`
+  (EX-016 ✅) + a new `EmailProviderHealthIndicator` so both external deps show on `/actuator/health`
+  (the email one flags a Noop sender silently dropping mail); and **error tracking** — an
+  `hlm.errors.unhandled` Micrometer counter (tagged by exception type) incremented in
+  `GlobalExceptionHandler` on every unhandled 5xx, feeding the already-wired Prometheus endpoint.
+  The external **route-to-human** half (Alertmanager → Slack/PagerDuty) ships as ready-to-use rules in
+  `docs/ops/alert-rules.md`; standing up Alertmanager is the remaining ops deployment step.
+- **P5 — Hand-rolled tenant isolation (T10.2).** ✅ **RESOLVED (2026-06-20):** `RlsContextAspect` (which
+  already runs before every `@Transactional`) now **fails closed** — if a société-scoped CRM principal
+  (ROLE_ADMIN/MANAGER/AGENT) reaches the DB layer with no société, it throws `TenantIsolationException`
+  (403) instead of falling through to the nil-UUID RLS *bypass* that would expose every tenant. System/
+  SUPER_ADMIN mode (`isSuperAdmin()`) and unauthenticated/pre-auth flows (login, portal magic-link;
+  role==null, JPQL `societe_id` params do the filtering) keep the legitimate bypass. The
+  `JwtAuthenticationFilter` already guarantees a société for CRM tokens, so this is a defense-in-depth
+  net that turns a future "forgotten/cleared context" bug from a silent cross-tenant read into a hard,
+  alerted failure. `RlsContextAspectTest` covers all four branches.
 
 ### 4. What's Genuinely Solid (do not touch)
 
